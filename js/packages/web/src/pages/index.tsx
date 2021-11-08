@@ -51,7 +51,7 @@ export async function getServerSideProps(context: NextPageContext) {
   };
 }
 
-function App({ storefront }: AppProps) {
+function AppWrapper({ storefront }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [hasLogo, setHasLogo] = useState(false);
   const [hasStylesheet, setHasStylesheet] = useState(false);
@@ -95,12 +95,12 @@ function App({ storefront }: AppProps) {
             <link rel="icon" type="image/png" href={storefront.meta.favicon} />
           </>
         )}
-        <meta name="description" content={storefront.meta.description} />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content={storefront.theme.logo} />
-        <meta property="og:title" content={storefront.meta.title} />
-        <meta property="og:description" content={storefront.meta.description} />
         <title>{storefront.meta.title}</title>
+        <meta name="description" content={storefront.meta.description} key="description" />
+        <meta property="og:title" content={storefront.meta.title} key="og:title" />
+        <meta property="og:description" content={storefront.meta.description} key="og:description" />
+        <meta property="og:image" content={storefront.theme.logo} key="og:image" />
+        <meta property="og:type" content="website" key="og:type" />
       </Head>
       {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}
     </>
@@ -115,4 +115,4 @@ function App({ storefront }: AppProps) {
   return <>{appBody}</>;
 }
 
-export default App;
+export default AppWrapper;

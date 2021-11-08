@@ -14,10 +14,8 @@ export const Congrats = (props: {
 
   const newTweetURL = () => {
     const params = {
-      text: "I've created a new NFT artwork on Metaplex, check it out!",
-      url: `${
-        window.location.origin
-      }/#/art/${props.nft?.metadataAccount.toString()}`,
+      text: "I've created a new NFT on my @Holaplex store, check it out!",
+      url: `${window.location.origin}/#/artworks/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
