@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ENDPOINTS, useConnectionConfig, useStore } from '@oyster/common';
 import { useLocation } from 'react-router';
@@ -7,12 +7,12 @@ import { useSolPrice } from '../../contexts';
 export const GOOGLE_ANALYTICS_ID =
   process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
 
-type AnalyticsOptions = {
+interface AnalyticsUserProperties {
   // user dimensions
   user_id: string; // google reserved
   pubkey: string; // same as user_id, but for use in custom reports
-} & CustomEventDimensions;
 
+}
 interface CustomEventDimensions {
   // event dimensions
   store_domain: string;
@@ -25,8 +25,7 @@ interface CustomEventDimensions {
 }
 
 const AnalyticsContext = React.createContext<{
-  // analyticsState: AnalyticsOptions | {};
-  configureAnalytics: (options: AnalyticsOptions) => void;
+  configureAnalytics: (options: CustomEventDimensions) => void;
   pageview: (path: string) => void;
   track: (action: string, attributes: { [key: string]: any }) => void;
 } | null>(null);
@@ -35,12 +34,8 @@ const AnalyticsContext = React.createContext<{
 const gtag = window.gtag
 
 export function AnalyticsProvider(props: { children: React.ReactNode }) {
-
-  // const [analyticsState, setAnalyticsState] = useState<{} | AnalyticsOptions>(
-  //   {},
-  // );
-  const { publicKey, connected } = useWallet();
-  const { storefront, ownerAddress } = useStore();
+  const { publicKey } = useWallet();
+  const { storefront } = useStore();
   const { endpoint } = useConnectionConfig();
   const location = useLocation();
   const solPrice = useSolPrice()
@@ -51,10 +46,10 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
   useEffect(() => {
     // const isStoreOwner = ownerAddress === publicKey?.toBase58();
 
-    gtag('set', 'user_properties', {
+    setUserProperties({
       user_id: pubkey,
       pubkey: pubkey,
-    });
+    })
 
     // initial config
     configureAnalytics({
@@ -65,39 +60,24 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       storefront_pubkey: storefront.pubkey,
     });
 
-    console.log(
-      'initial log',
-      JSON.parse(
-        JSON.stringify({
-          gtag: gtag,
-          newLocation: location.pathname,
-          actual: {
-            pubkey,
-            endpoint,
-            endpointName,
-            connected,
-            isOwner: storefront.pubkey === pubkey,
-          },
-          // analytics: {
-          //   analyticsState,
-          // },
-        }),
-      ),
-    );
   }, [pubkey, endpointName]);
 
   useEffect(() => {
     pageview(location.pathname);
   }, [location]);
 
-  function configureAnalytics(options: Partial<AnalyticsOptions>) {
-    console.log('analytics configured', options);
+  function setUserProperties(attributes: AnalyticsUserProperties) {
+    gtag('set', 'user_properties', {
+      ...attributes,
+    });
+  }
+
+  function configureAnalytics(options: Partial<CustomEventDimensions>) {
     if (!gtag) return;
     gtag('config', GOOGLE_ANALYTICS_ID, {
       ...options,
       send_page_view: false,
     });
-    // setAnalyticsState({ ...analyticsState, ...options });
   }
 
   function pageview(path: string) {
@@ -118,14 +98,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       [key: string]: string | number | undefined | any[];
     } & Partial<CustomEventDimensions>,
   ) {
-    console.log('event', action, {
-      event_category: attributes?.category,
-      event_label: attributes?.label,
-      value: attributes?.value,
-      ...attributes,
-    });
     if (!gtag) return;
-    // return;
     gtag('event', action, {
       event_category: attributes?.category,
       event_label: attributes?.label,
@@ -142,7 +115,6 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
   return (
     <AnalyticsContext.Provider
       value={{
-        // analyticsState,
         configureAnalytics,
         track,
         pageview,

@@ -658,7 +658,7 @@ export const AuctionCard = ({
                 setLoading(false);
                 track('bid_submitted', {
                   category: 'auction',
-                  label: '',
+                  // label: '',
                   sol_value: value,
                 })
               }
