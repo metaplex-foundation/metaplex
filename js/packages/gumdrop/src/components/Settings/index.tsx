@@ -7,6 +7,7 @@ import { ModalEnum, useModal, useWalletModal } from "../../contexts";
 import {
   Button,
   FormControl,
+  Link,
   NativeSelect,
   Stack,
 } from "@mui/material";
@@ -36,8 +37,8 @@ export const Settings = ({
   return (
     <>
       <Stack
-        spacing={2}
         direction="row"
+        spacing={2}
         sx={{
           display: "flex",
           height: "62px",
@@ -48,7 +49,7 @@ export const Settings = ({
       >
         {!connected && (
           <>
-            <FormControl>
+            <FormControl style={{minWidth: "10ch"}}>
               <NativeSelect
                 style={{ marginBottom: 5 }}
                 onChange={(e) => {
@@ -61,12 +62,14 @@ export const Settings = ({
                 ))}
               </NativeSelect>
             </FormControl>
-            <Button
-              variant="contained"
-              onClick={handleConnect}
-            >
-              Connect
-            </Button>
+            <Link underline="none">
+              <Button
+                variant="contained"
+                onClick={handleConnect}
+              >
+                Connect
+              </Button>
+            </Link>
           </>
         )}
         {connected && (

@@ -232,7 +232,6 @@ function App() {
         <CssBaseline />
         <Header />
         <Box
-          height={ `${height * 0.8}px` }
           width="60ch"
           style={{
             marginLeft: "auto",
