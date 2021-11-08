@@ -1,3 +1,4 @@
+#![cfg(feature = "test-bpf")]
 mod utils;
 
 use metaplex_token_metadata::{error::MetadataError, id, instruction, state::Key};
