@@ -9,6 +9,7 @@ import {
   Drawer,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Stack,
 } from "@mui/material";
@@ -87,11 +88,11 @@ export const Header = ({ narrow }) => {
                   <Divider />
                   {navs.map((nav, idx) => {
                     return (
-                      <ListItem key={idx}>
-                        <Link to={nav.href}>
+                      <Link to={nav.href} key={idx} style={{color: "inherit"}}>
+                        <ListItemButton>
                           {nav.innerNarrow || nav.inner}
-                        </Link>
-                      </ListItem>
+                        </ListItemButton>
+                      </Link>
                     );
                   })}
                 </List>
