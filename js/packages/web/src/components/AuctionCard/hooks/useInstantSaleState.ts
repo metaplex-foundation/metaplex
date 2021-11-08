@@ -14,32 +14,24 @@ export const useInstantSaleState = (
 ): ActionButtonContentProps => {
   const wallet = useWallet();
 
-  const {
-    isInstantSale,
-    auctionManager,
-    auction,
-    myBidderPot,
-    myBidderMetadata,
-    myBidRedemption,
-  } = auctionView;
+  const { isInstantSale, auctionManager, auction, myBidRedemption } =
+    auctionView;
 
+  const items = auctionView.items;
+  let isAlreadyBought: boolean = false;
+
+  for (const item of items) {
+    for (const subItem of item) {
+      const bidRedeemed = myBidRedemption?.info.getBidRedeemed(
+        subItem.safetyDeposit.info.order,
+      );
+      isAlreadyBought = bidRedeemed ? bidRedeemed : false;
+      if (isAlreadyBought) break;
+    }
+  }
+  const canClaimPurchasedItem = isAlreadyBought;
   const isOwner = auctionManager.authority === wallet?.publicKey?.toBase58();
   const isAuctionEnded = auction.info.endedAt;
-  const isBidCanceled = !!myBidderMetadata?.info.cancelled;
-  let winnerIndex;
-  if (auctionView.myBidderPot?.pubkey)
-    winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
-      auctionView.myBidderPot?.info.bidderAct,
-    );
-  const isAlreadyBought = !!myBidRedemption?.info.getBidRedeemed(
-    auctionView.items[0][0].safetyDeposit.info.order,
-  );
-  const canClaimPurchasedItem =
-    isAlreadyBought &&
-    !myBidRedemption?.info.getBidRedeemed(
-      auctionView.items[0][0].safetyDeposit.info.order,
-    );
-
   const canClaimItem = !!(isOwner && isAuctionEnded);
   const canEndInstantSale = isOwner && !isAuctionEnded;
 
