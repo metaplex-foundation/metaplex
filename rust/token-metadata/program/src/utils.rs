@@ -900,12 +900,15 @@ pub fn process_create_metadata_accounts_logic(
 
 /// Strings need to be appended with `\0`s in order to have a deterministic length.
 /// This supports the `memcmp` filter  on get program account calls.
+/// NOTE: it is assumed that the metadata fields are never larger than the respective MAX_LENGTH
 pub fn puff_out_data_fields(metadata: &mut Metadata) {
     metadata.data.name = puffed_out_string(&metadata.data.name, MAX_NAME_LENGTH);
     metadata.data.symbol = puffed_out_string(&metadata.data.symbol, MAX_SYMBOL_LENGTH);
     metadata.data.uri = puffed_out_string(&metadata.data.uri, MAX_URI_LENGTH);
 }
 
+/// Pads the string to the desired size with `0u8`s.
+/// NOTE: it is assumed that the string's size is never larger than the given size.
 pub fn puffed_out_string(s: &String, size: usize) -> String {
     let mut array_of_zeroes = vec![];
     let puff_amount = size - s.len();
