@@ -128,6 +128,7 @@ function useGapTickCheck(
   gapTick: number | null,
   gapTime: number,
   auctionView: AuctionView,
+  LAMPORTS_PER_MINT: number,
 ): boolean {
   return !!useMemo(() => {
     if (gapTick && value && gapTime && !auctionView.auction.info.ended()) {
@@ -137,7 +138,7 @@ function useGapTickCheck(
       if (endedAt) {
         const ended = endedAt.toNumber();
         if (now > ended) {
-          const toLamportVal = value * LAMPORTS_PER_SOL;
+          const toLamportVal = value * LAMPORTS_PER_MINT;
           // Ok, we are in gap time, since now is greater than ended and we're not actually an ended auction yt.
           // Check that the bid is at least gapTick % bigger than the next biggest one in the stack.
           for (
@@ -243,6 +244,10 @@ export const AuctionCard = ({
     ? 'SOL'
     : 'CUSTOM';
 
+
+  const LAMPORTS_PER_MINT = tokenInfo? Math.ceil(10 ** tokenInfo.decimals): LAMPORTS_PER_SOL;
+
+
   //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
   let winnerIndex: number | null = null;
@@ -273,10 +278,10 @@ export const AuctionCard = ({
   const tickSizeInvalid = !!(
     tickSize &&
     value &&
-    (value * LAMPORTS_PER_SOL) % tickSize.toNumber() != 0
+    (value * LAMPORTS_PER_MINT) % tickSize.toNumber() != 0
   );
 
-  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
+  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView, LAMPORTS_PER_MINT);
 
   const isAuctionManagerAuthorityNotWalletOwner =
     auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
@@ -301,14 +306,14 @@ export const AuctionCard = ({
       : isStarted && bids.length > 0
       ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
       : 9999999) +
-      tickSize.toNumber() / LAMPORTS_PER_SOL;
+      tickSize.toNumber() / LAMPORTS_PER_MINT;
 
   const invalidBid =
     tickSizeInvalid ||
     gapBidInvalid ||
     !myPayingAccount ||
     value === undefined ||
-    value * LAMPORTS_PER_SOL < priceFloor ||
+    value * LAMPORTS_PER_MINT < priceFloor ||
     (minBid && value < minBid) ||
     loading ||
     !accountByMint.get(QUOTE_MINT.toBase58());
@@ -798,7 +803,7 @@ export const AuctionCard = ({
         )}
         {tickSizeInvalid && tickSize && (
           <span style={{ color: 'red' }}>
-            Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
+            Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_MINT}.
           </span>
         )}
         {gapBidInvalid && (
@@ -909,7 +914,7 @@ export const AuctionCard = ({
           required by the auction for printing bidders&apos; limited or open
           edition NFTs. If you wish to withdraw them, you are agreeing to foot
           the cost of up to an estimated ◎
-          <b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b> plus transaction fees
+          <b>{(printingCost || 0) / LAMPORTS_PER_MINT}</b> plus transaction fees
           to redeem their bids for them right now.
         </h3>
       </MetaplexModal>

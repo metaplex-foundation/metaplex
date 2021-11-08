@@ -488,7 +488,7 @@ export const AuctionCreateView = () => {
       tokenMint: attributes.quoteMintAddress,
       gapTickSizePercentage: attributes.tickSizeEndingPhase || null,
       tickSize: attributes.priceTick
-        ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
+        ? new BN(attributes.priceTick * LAMPORTS_PER_TOKEN)
         : null,
       instantSalePrice: attributes.instantSalePrice
         ? new BN((attributes.instantSalePrice || 0) * LAMPORTS_PER_TOKEN)
