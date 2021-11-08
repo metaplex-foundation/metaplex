@@ -1,5 +1,10 @@
 name: Install Rust
 
+inputs:
+  toolchain:
+    description: The Rust version to use, default env.RUST_TOOLCHAIN
+    required: true
+
 runs:
   using: "composite"
   steps:
@@ -7,7 +12,7 @@ runs:
       id: rust_toolchain
       uses: actions-rs/toolchain@v1
       with:
-          toolchain: ${{ env.RUST_STABLE }} 
+          toolchain: ${{ inputs.toolchain }} 
           override: true
           profile: minimal
           components: rustfmt, clippy
@@ -19,7 +24,7 @@ runs:
 
     - name: Verify Rust install 
       run: |
-        echo "Verifying rust '${{ env.RUST_STABLE }}' ..."
+        echo "Verifying rust '${{ inputs.toolchain }}' ..."
         rustc --version
         cargo --version
         cargo clippy --version

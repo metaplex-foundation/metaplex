@@ -1,4 +1,10 @@
 name: Install Solana
+
+inputs:
+  solana_version:
+    description: Version of Solana to install, default env.SOLANA_VERSION
+    required: true
+
 runs:
   using: "composite"
   steps:

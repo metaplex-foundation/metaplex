@@ -9,7 +9,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   SOLANA_VERSION: 1.8.2
-  RUST_STABLE: stable
+  RUST_TOOLCHAIN: stable
 
 jobs:
   # -----------------
@@ -33,13 +33,17 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/install-linux-build-deps
       - uses: ./.github/actions/install-solana
+        with: 
+          solana_version: ${{ env.SOLANA_VERSION }}
       - uses: ./.github/actions/install-rust
+        with: 
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: test-token-vault-program
         working-directory: ./rust/token-vault/program
         run: |
-          cargo +${{ env.RUST_STABLE }} test-bpf --version
-          cargo +${{ env.RUST_STABLE }} test-bpf
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf
           
   # -----------------
   # Test Token Metadata
@@ -51,11 +55,14 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/install-linux-build-deps
       - uses: ./.github/actions/install-solana
+        with: 
+          solana_version: ${{ env.SOLANA_VERSION }}
       - uses: ./.github/actions/install-rust
-      - uses: ./.github/actions/build-token-vault
+        with: 
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: test-token-metadata-program
         working-directory: ./rust/token-metadata/program
         run: |
-          cargo +${{ env.RUST_STABLE }} test-bpf --version
-          cargo +${{ env.RUST_STABLE }} test-bpf
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf
