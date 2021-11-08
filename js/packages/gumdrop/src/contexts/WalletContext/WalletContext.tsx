@@ -71,12 +71,12 @@ export const WalletModal: FC = () => {
         style={{
           color: "white",
           fontWeight: "bold",
-          fontSize: 20,
+          fontSize: "1.2rem",
         }}
       >
         {selected ? "Change provider" : ""}
       </h2>
-      <p style={{ color: "white", fontSize: 14 }}>
+      <p style={{ color: "white", fontSize: "1rem"}}>
         {selected
           ? "Choose from the following options:"
           : "Please sign into your wallet"}

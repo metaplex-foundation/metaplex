@@ -136,21 +136,21 @@ const resendOnlyRender = ({ show, onSubmit, onDismiss }) => {
     <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
       <p style={{
         color: "white",
-        fontSize: "1rem",
-        width: "50ch",
+        fontSize: "0.9rem",
         marginTop: 8,
+        width: "90%",
       }}>
         Uploaded distribution list has URLs for all claimants.
         Skip creation of airdrop and only re-send links?
       </p>
       <br />
-      <Stack direction="row" spacing={2}>
+      <Stack direction="row" spacing={2} style={{width: "100%"}}>
       {options.map((opt) => {
         return (
           <Button
             key={opt.name}
             style={{
-              width: "30ch",
+              width: "100%",
               color: "white",
               marginBottom: 8,
             }}
@@ -185,12 +185,12 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
           style={{
             color: "white",
             fontWeight: "bold",
-            fontSize: 20,
+            fontSize: "1.2rem",
           }}
         >
           Claim Distribution Preview{claimants.length > limit ? ` (First ${limit})` : ""}
         </h2>
-        <p style={{ color: "white", fontSize: 14, textAlign: "center" }}>
+        <p style={{ color: "white", fontSize: "1rem", textAlign: "center" }}>
           Approving will save the keypair authority generated for gumdrop
           state. This keypair is necessary to close the gumdrop later!
         </p>
@@ -235,10 +235,10 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
           </Table>
         </TableContainer>
         <Box style={{ height: "3ch" }} />
-        <Stack direction="row" spacing={2}>
+        <Stack direction="row" spacing={2} style={{width: "100%"}}>
           <Button
             style={{
-              width: "30ch",
+              width: "100%",
               color: "white",
               marginBottom: 8,
             }}
@@ -251,7 +251,7 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
             href={hyperLinkData(Array.from(baseKey.secretKey))}
             download={`${baseKey.publicKey.toBase58()}.json`}
             underline="none"
-            style={{width: "30ch"}}
+            style={{width: "100%"}}
           >
             <Button
               style={{
