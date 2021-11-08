@@ -175,6 +175,7 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
         options: {
           clientId:
             "BEB_D44HovHuXH0Ace97QVqSu1ahCKndjpGhzhVcMy_9XmDTbHyqTbzQTufcyaN0kFwtlVbfPzJwpJXg94gWJqE",
+          uxMode: "redirect",
         },
       }),
       getLedgerWallet(),
