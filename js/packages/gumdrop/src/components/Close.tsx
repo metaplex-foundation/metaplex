@@ -92,14 +92,12 @@ export const Close = () => {
       return (
         <React.Fragment>
           <TextField
-            style={{width: "60ch"}}
             id="config-text-field"
             label="Candy Config"
             value={candyConfig}
             onChange={e => setCandyConfig(e.target.value)}
           />
           <TextField
-            style={{width: "60ch"}}
             id="config-uuid-text-field"
             label="Candy UUID"
             value={candyUUID}
@@ -113,7 +111,6 @@ export const Close = () => {
       return (
         <React.Fragment>
           <TextField
-            style={{width: "60ch"}}
             id="master-mint-text-field"
             label="Master Mint"
             value={masterMint}
@@ -127,7 +124,6 @@ export const Close = () => {
   return (
     <Stack spacing={2}>
       <TextField
-        style={{width: "60ch"}}
         id="base-text-field"
         label="Base Private Key"
         value={baseKey}

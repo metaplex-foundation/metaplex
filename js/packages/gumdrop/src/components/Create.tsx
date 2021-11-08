@@ -523,7 +523,6 @@ export const Create = (
       return (
         <React.Fragment>
           <TextField
-            style={{width: "60ch"}}
             id="config-text-field"
             label="Candy Config"
             value={candyConfig}
@@ -533,7 +532,6 @@ export const Create = (
             }}
           />
           <TextField
-            style={{width: "60ch"}}
             id="config-uuid-text-field"
             label="Candy UUID"
             value={candyUUID}
@@ -547,7 +545,6 @@ export const Create = (
     } else if (claimMethod === "transfer") {
       return (
         <TextField
-          style={{width: "60ch"}}
           id="mint-text-field"
           label="Mint"
           value={mint}
@@ -562,7 +559,6 @@ export const Create = (
       // wallet ATA
       return (
         <TextField
-          style={{width: "60ch"}}
           id="master-mint-text-field"
           label="Master Mint"
           value={masterMint}
@@ -580,7 +576,6 @@ export const Create = (
       return (
         <React.Fragment>
           <TextField
-            style={{width: "60ch"}}
             id="comm-access-key-id-field"
             label={`${commMethod} Access Key Id`}
             value={awsAccessKeyId}
@@ -590,7 +585,6 @@ export const Create = (
             }}
           />
           <TextField
-            style={{width: "60ch"}}
             id="comm-secret-access-key-field"
             label={`${commMethod} Secret Access Key`}
             value={awsSecretKey}
@@ -600,7 +594,6 @@ export const Create = (
             }}
           />
           <TextField
-            style={{width: "60ch"}}
             id="comm-source-field"
             label={`${commMethod} Source`}
             value={commSource}
@@ -623,7 +616,6 @@ export const Create = (
         <Stack
           direction="row"
           style={{
-            width: "60ch",
             height: "15ch",
           }}
           sx={{

@@ -917,7 +917,6 @@ export const Claim = (
   const verifyOTPC = (onClick) => (
     <React.Fragment>
       <TextField
-        style={{width: "60ch"}}
         id="otp-text-field"
         label="OTP"
         value={OTPStr}
@@ -961,7 +960,6 @@ export const Claim = (
       return (
         <React.Fragment>
           <TextField
-            style={{width: "60ch"}}
             id="config-text-field"
             label="Candy Config"
             value={candyConfig}
@@ -969,7 +967,6 @@ export const Claim = (
             disabled={!editable}
           />
           <TextField
-            style={{width: "60ch"}}
             id="config-uuid-text-field"
             label="Candy UUID"
             value={candyUUID}
@@ -982,7 +979,6 @@ export const Claim = (
       return (
         <React.Fragment>
           <TextField
-            style={{width: "60ch"}}
             id="token-acc-text-field"
             label="Source Token Account"
             value={tokenAcc}
@@ -995,7 +991,6 @@ export const Claim = (
       return (
         <React.Fragment>
           <TextField
-            style={{width: "60ch"}}
             id="master-mint-text-field"
             label="Master Mint"
             value={masterMint}
@@ -1003,7 +998,6 @@ export const Claim = (
             disabled={!editable}
           />
           <TextField
-            style={{width: "60ch"}}
             id="edition-text-field"
             label="Edition"
             value={editionStr}
@@ -1018,7 +1012,6 @@ export const Claim = (
   const populateClaimC = (onClick) => (
     <React.Fragment>
       <TextField
-        style={{width: "60ch"}}
         id="distributor-text-field"
         label="Distributor"
         value={distributor}
@@ -1048,7 +1041,6 @@ export const Claim = (
       </FormControl>
       {claimMethod !== "" && claimData(claimMethod)}
       {claimMethod !== "edition" && <TextField
-        style={{width: "60ch"}}
         id="amount-text-field"
         label="Amount"
         value={amountStr}
@@ -1056,7 +1048,6 @@ export const Claim = (
         disabled={!editable}
       />}
       <TextField
-        style={{width: "60ch"}}
         id="handle-text-field"
         label="Handle"
         value={handle}
@@ -1064,7 +1055,6 @@ export const Claim = (
         disabled={!editable}
       />
       <TextField
-        style={{width: "60ch"}}
         id="index-text-field"
         label="Index"
         value={indexStr}
@@ -1072,7 +1062,6 @@ export const Claim = (
         disabled={!editable}
       />
       {params.pin !== "NA" && <TextField
-        style={{width: "60ch"}}
         id="pin-text-field"
         label="Pin"
         value={pinStr}
@@ -1080,7 +1069,6 @@ export const Claim = (
         disabled={!editable}
       />}
       <TextField
-        style={{width: "60ch"}}
         id="proof-text-field"
         label="Proof"
         multiline
