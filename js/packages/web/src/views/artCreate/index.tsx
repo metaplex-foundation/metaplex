@@ -11,6 +11,7 @@ import { Button, Col, Row, Space, Steps } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { mintNFT } from '../../actions';
+import { useAnalytics } from '../../components/Analytics';
 import useWindowDimensions from '../../utils/layout';
 import { CategoryStep } from './categoryStep';
 import { Congrats } from './congrats';
@@ -56,6 +57,8 @@ export const ArtCreateView = () => {
       category: MetadataCategory.Image,
     },
   });
+
+  const { track } = useAnalytics()
 
   const gotoStep = useCallback(
     (_step: number) => {
@@ -105,6 +108,18 @@ export const ArtCreateView = () => {
       );
 
       if (_nft) setNft(_nft);
+
+      try {
+        // const mintPriceSol = (await getSolCostForMint(files, connection, attributes))
+        track('nft_created', {
+          category: 'creation',
+          label: metadata.properties.category,
+          // sol_value: mintPriceSol.
+        })
+      } catch (error) {
+        console.error(error)
+      }
+
     } catch (e) {
       if (typeof e === 'object' && e !== null && 'message' in e) {
         setAlertMessage(e.message);

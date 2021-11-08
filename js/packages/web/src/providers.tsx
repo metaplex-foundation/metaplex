@@ -11,6 +11,7 @@ import { AppLayout } from './components/Layout';
 import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
 import { Storefront } from '@oyster/common';
+import { AnalyticsProvider } from './components/Analytics';
 
 interface ProvidersProps {
   storefront: Storefront;
@@ -30,7 +31,9 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
               <MetaProvider>
                 <LoaderProvider>
                   <ConfettiProvider>
-                    <AppLayout storefront={storefront}>{children}</AppLayout>
+                    <AnalyticsProvider>
+                      <AppLayout storefront={storefront}>{children}</AppLayout>
+                    </AnalyticsProvider>
                   </ConfettiProvider>
                 </LoaderProvider>
               </MetaProvider>

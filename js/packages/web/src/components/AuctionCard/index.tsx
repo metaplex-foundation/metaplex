@@ -51,7 +51,7 @@ import {
 } from '../../actions/sendRedeemBid';
 import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
-import { useMeta } from '../../contexts';
+import { useMeta, useSolPrice } from '../../contexts';
 import {
   AuctionView,
   AuctionViewState,
@@ -59,6 +59,7 @@ import {
   useUserBalance,
 } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
+import { useAnalytics } from '../Analytics';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import { Confetti } from '../Confetti';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
@@ -228,6 +229,7 @@ export const AuctionCard = ({
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
+  const { track } = useAnalytics()
 
   const { accountByMint } = useUserAccounts();
 
@@ -350,6 +352,11 @@ export const AuctionCard = ({
           );
           setLastBid({ amount });
           bidTxid = txid;
+          track('instant_sale_canceled', {
+            category: 'auction',
+            label: 'canceled',
+            sol_value: value,
+          })
         } catch (e) {
           console.error('sendPlaceBid', e);
           return;
@@ -649,6 +656,11 @@ export const AuctionCard = ({
                 // setShowBidModal(false);
                 setShowBidPlaced(true);
                 setLoading(false);
+                track('bid_submitted', {
+                  category: 'auction',
+                  label: '',
+                  sol_value: value,
+                })
               }
             }}
           >

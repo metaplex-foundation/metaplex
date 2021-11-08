@@ -9,6 +9,8 @@ import { useInfiniteScrollAuctions } from '../../hooks';
 import { useStore } from '@oyster/common';
 import { useAuctionManagersToCache } from '../../hooks';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useAnalytics } from '../../components/Analytics';
+import { useSolPrice } from '../../contexts';
 
 export enum LiveAuctionViewState {
   All = '0',
@@ -28,8 +30,10 @@ export const AuctionListView = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
-  const { ownerAddress } = useStore();
+  const { ownerAddress, storefront } = useStore();
   const wallet = useWallet();
+  const { track } = useAnalytics()
+  const solPrice = useSolPrice()
   const { auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
   const isStoreOwner = ownerAddress === wallet.publicKey?.toBase58();
@@ -76,7 +80,7 @@ export const AuctionListView = () => {
         {auctions.map((m, idx) => {
           const id = m.auction.pubkey;
           return (
-            <Link to={`/auction/${id}`} key={idx}>
+            <Link to={`/auction/${id}`} key={idx} >
               <AuctionRenderCard key={id} auctionView={m} />
             </Link>
           );
