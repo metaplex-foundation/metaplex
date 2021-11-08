@@ -2,9 +2,12 @@ import React from "react";
 import {
   Box,
   Button,
+  Divider,
   Drawer,
   Link,
   List,
+  ListItem,
+  ListItemText,
   ListItemButton,
   Stack,
 } from "@mui/material";
@@ -17,6 +20,7 @@ export const Header = ({ narrow }) => {
   const navs = [
     {
       href: "#/",
+      innerNarrow: "About",
       inner: <HomeIcon />,
     },
     {
@@ -69,10 +73,21 @@ export const Header = ({ narrow }) => {
                 onKeyDown={toggleDrawer(false)}
               >
                 <List>
+                  <ListItem>
+                    <ListItemText
+                      primary="Gumdrop"
+                      primaryTypographyProps={{
+                        fontSize: "1.2rem",
+                        fontWeight: 'medium',
+                        letterSpacing: 0,
+                      }}
+                    />
+                  </ListItem>
+                  <Divider />
                   {navs.map((nav, idx) => {
                     return (
                       <ListItemButton component="a" href={nav.href} key={idx}>
-                        {nav.inner}
+                        {nav.innerNarrow || nav.inner}
                       </ListItemButton >
                     );
                   })}
@@ -95,7 +110,7 @@ export const Header = ({ narrow }) => {
             {navs.map((nav, idx) => {
               return (
                 <Link href={nav.href} key={idx} underline="none">
-                  <Button variant="outlined">
+                  <Button variant="outlined" style={{minWidth:0}}>
                     {nav.inner}
                   </Button>
                 </Link>

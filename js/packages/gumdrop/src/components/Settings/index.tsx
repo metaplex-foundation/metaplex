@@ -8,10 +8,13 @@ import {
   Box,
   Button,
   Collapse,
+  Divider,
   Drawer,
   FormControl,
   Link,
   List,
+  ListItem,
+  ListItemText,
   ListItemButton,
   MenuItem,
   Select,
@@ -50,6 +53,7 @@ export const Settings = ({ narrow }) => {
           });
         }
       },
+      innerNarrow: "Copy Address",
       inner: () => (
         <React.Fragment>
           <CopyOutlined />
@@ -126,10 +130,24 @@ export const Settings = ({ narrow }) => {
   );
 
   if (narrow) {
+    const listHead = (
+      <ListItem>
+        <ListItemText
+          primary="Wallet"
+          primaryTypographyProps={{
+            fontSize: "1.2rem",
+            fontWeight: 'medium',
+            letterSpacing: 0,
+          }}
+        />
+      </ListItem>
+    );
     return (
       <React.Fragment>
         {!publicKey && drawerC(
           <List>
+            {listHead}
+            <Divider />
             <ListItemButton
               onClick={() => setEnvCollapseOpen(!envCollapseOpen)}
               className={hackySkipSet}
@@ -159,10 +177,12 @@ export const Settings = ({ narrow }) => {
         )}
         {publicKey && drawerC(
           <List>
+            {listHead}
+            <Divider />
             {connectedActions.map((a, idx) => {
               return (
                 <ListItemButton onClick={a.click}>
-                  {a.inner()}
+                  {a.innerNarrow || a.inner()}
                 </ListItemButton>
               );
             })}
