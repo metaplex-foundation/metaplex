@@ -1,66 +1,200 @@
-import { useCallback } from "react";
+import React from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { ENDPOINTS, useColorMode, useConnectionConfig } from "../../contexts";
 import { notify, shortenAddress } from "../../utils";
 import { CopyOutlined } from "@ant-design/icons";
 import { ModalEnum, useModal, useWalletModal } from "../../contexts";
 import {
+  Box,
   Button,
+  Collapse,
+  Drawer,
   FormControl,
   Link,
-  NativeSelect,
+  List,
+  ListItemButton,
+  MenuItem,
+  Select,
   Stack,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import IconButton from "@mui/material/IconButton";
+
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 
-export const Settings = ({
-  additionalSettings,
-}: {
-  additionalSettings?: JSX.Element;
-}) => {
-  const { connected, disconnect, publicKey } = useWallet();
+export const Settings = ({ narrow }) => {
+  const { disconnect, publicKey } = useWallet();
   const { setEndpoint, env, endpoint } = useConnectionConfig();
   const { setVisible } = useWalletModal();
-  const open = useCallback(() => setVisible(true), [setVisible]);
+  const open = React.useCallback(() => setVisible(true), [setVisible]);
   const { setModal } = useModal();
   const theme = useTheme();
   const colorModeCtx = useColorMode();
 
-  const handleConnect = useCallback(() => {
+  const handleConnect = React.useCallback(() => {
     setModal(ModalEnum.WALLET);
     setVisible(true);
   }, [setModal, setVisible]);
 
-  return (
-    <>
+  const connectedActions = [
+    {
+      click: async () => {
+        if (publicKey) {
+          await navigator.clipboard.writeText(publicKey.toBase58());
+          notify({
+            message: "Wallet update",
+            description: "Address copied to clipboard",
+          });
+        }
+      },
+      inner: () => (
+        <React.Fragment>
+          <CopyOutlined />
+          {publicKey && shortenAddress(publicKey.toBase58())}
+        </React.Fragment>
+      ),
+    },
+    {
+      click: open,
+      inner: () => "Change\u00A0Wallet",
+    },
+    {
+      click: () => disconnect().catch(),
+      inner: () => `Disconnect\u00A0(${env})`,
+      expandedExtra: { // these are interepreted as props. TODO: specific types
+        color: "error" as any,
+        variant: "contained" as any,
+      }
+    },
+  ];
+
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [envCollapseOpen, setEnvCollapseOpen] = React.useState(false);
+
+  const hackySkipSet = "hackySkipSet";
+  const toggleDrawer = (open) => (event) => {
+    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
+      return;
+    }
+
+    if (event.target.classList.contains(hackySkipSet)) {
+      return;
+    }
+
+    setDrawerOpen(open);
+  };
+
+  const drawerC = (inner) => {
+    return (
+      <React.Fragment>
+        <Button onClick={toggleDrawer(true)}>
+          <AccountBalanceWalletIcon />
+        </Button>
+        <Drawer
+          anchor="right"
+          open={drawerOpen}
+          onClose={toggleDrawer(false)}
+        >
+          <Box
+            sx={{ width: 250 }}
+            role="presentation"
+            onClick={toggleDrawer(false)}
+            onKeyDown={toggleDrawer(false)}
+          >
+            {inner}
+          </Box>
+        </Drawer>
+      </React.Fragment>
+    );
+  };
+
+  const themeSwitch = (
+    <Button
+      sx={{ ml: 1 }}
+      onClick={colorModeCtx.toggleColorMode}
+      color="inherit"
+    >
+      {theme.palette.mode === "dark" ? (
+        <Brightness7Icon />
+      ) : (
+        <Brightness4Icon />
+      )}
+    </Button>
+  );
+
+  if (narrow) {
+    return (
+      <React.Fragment>
+        {!publicKey && drawerC(
+          <List>
+            <ListItemButton
+              onClick={() => setEnvCollapseOpen(!envCollapseOpen)}
+              className={hackySkipSet}
+            >
+              Change Network
+              {envCollapseOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+            <Collapse in={envCollapseOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {ENDPOINTS.map(p => (
+                  <ListItemButton
+                    selected={endpoint === p.endpoint}
+                    onClick={() => setEndpoint(p.endpoint)}
+                    key={p.name}
+                    sx={{ pl: 4 }}
+                    className={hackySkipSet}
+                  >
+                    {p.name}
+                  </ListItemButton>
+                ))}
+              </List>
+            </Collapse>
+            <ListItemButton onClick={handleConnect}>
+              Connect
+            </ListItemButton>
+          </List>
+        )}
+        {publicKey && drawerC(
+          <List>
+            {connectedActions.map((a, idx) => {
+              return (
+                <ListItemButton onClick={a.click}>
+                  {a.inner()}
+                </ListItemButton>
+              );
+            })}
+          </List>
+        )}
+        {themeSwitch}
+      </React.Fragment>
+    );
+  } else {
+    return (
       <Stack
         direction="row"
         spacing={2}
         sx={{
           display: "flex",
-          height: "62px",
           justifyContent: "flex-end",
           alignItems: "center",
           marginRight: "36px",
         }}
       >
-        {!connected && (
-          <>
-            <FormControl style={{minWidth: "10ch"}}>
-              <NativeSelect
-                style={{ marginBottom: 5 }}
-                onChange={(e) => {
-                  setEndpoint(e.target.value);
-                }}
+        {!publicKey && (
+          <React.Fragment>
+            <FormControl variant="standard" style={{minWidth: "10ch"}}>
+              <Select
+                id="connected-env-select"
+                onChange={(e) => { setEndpoint(e.target.value); }}
                 value={endpoint}
               >
                 {ENDPOINTS.map(({ name, endpoint }) => (
-                  <option key={name} value={endpoint}>{name}</option>
+                  <MenuItem key={name} value={endpoint}>{name}</MenuItem>
                 ))}
-              </NativeSelect>
+              </Select>
             </FormControl>
             <Link underline="none">
               <Button
@@ -70,55 +204,22 @@ export const Settings = ({
                 Connect
               </Button>
             </Link>
-          </>
+          </React.Fragment>
         )}
-        {connected && (
-          <>
-            {publicKey && (
+        {publicKey && connectedActions.map((a, idx) => {
+            return (
               <Button
                 variant="outlined"
-                onClick={async () => {
-                  if (publicKey) {
-                    await navigator.clipboard.writeText(publicKey.toBase58());
-                    notify({
-                      message: "Wallet update",
-                      description: "Address copied to clipboard",
-                    });
-                  }
-                }}
+                onClick={a.click}
+                {...a.expandedExtra}
               >
-                <CopyOutlined />
-                {shortenAddress(publicKey.toBase58())}
+                {a.inner()}
               </Button>
-            )}
-            <Button
-              variant="outlined"
-              onClick={open}
-            >
-              Change{"\u00A0"}Wallet
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => disconnect().catch()}
-            >
-              Disconnect{"\u00A0"}({env})
-            </Button>
-          </>
-        )}
-        <IconButton
-          sx={{ ml: 1 }}
-          onClick={colorModeCtx.toggleColorMode}
-          color="inherit"
-        >
-          {theme.palette.mode === "dark" ? (
-            <Brightness7Icon />
-          ) : (
-            <Brightness4Icon />
-          )}
-        </IconButton>
-        {additionalSettings}
+            );
+          })
+        }
+        {themeSwitch}
       </Stack>
-    </>
-  );
+    );
+  }
 };

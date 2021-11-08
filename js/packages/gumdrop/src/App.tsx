@@ -18,7 +18,7 @@ import "./App.css";
 import {
   useColorMode,
 } from "./contexts";
-import Header from "./components/Header/Header";
+import { Header } from "./components/Header/Header";
 import { Claim } from "./components/Claim";
 import { Close } from "./components/Close";
 import { Create } from "./components/Create";
@@ -224,11 +224,13 @@ function App() {
     [colorModeCtx.mode]
   );
 
+  const { width } = useWindowDimensions();
+
   return (
     <div className="App" style={{ backgroundColor: "transparent" }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Header />
+        <Header narrow={width < 670}/>
         <Box
           maxWidth="60ch"
           width="calc(100% - 60px)"
