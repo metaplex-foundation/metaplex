@@ -47,7 +47,7 @@ const csvStringToArray = (strData) => {
   const objPattern = new RegExp(("(\\,|\\r?\\n|\\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^\\,\\r\\n]*))"),"gi");
   let arrMatches : RegExpExecArray | null = null;
   let arrData : Array<Array<string>> = [[]];
-  while (arrMatches = objPattern.exec(strData)){
+  while (!!(arrMatches = objPattern.exec(strData))) {
     if (arrMatches[1].length && arrMatches[1] !== ",")
       arrData.push([]);
     arrData[arrData.length - 1].push(
