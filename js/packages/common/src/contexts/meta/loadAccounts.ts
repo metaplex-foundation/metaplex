@@ -319,18 +319,27 @@ export const pullAuctionSubaccounts = async (
     }).then(forEach(processVaultData)),
 
     // bid redemptions
-    ...WHITELISTED_AUCTION_MANAGER.map(() =>
-      getProgramAccounts(connection, METAPLEX_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 9,
-              bytes: cache.auctionManager,
-            },
+    getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 10,
+            bytes: cache.auctionManager,
           },
-        ],
-      }).then(forEach(processMetaplexAccounts)),
-    ),
+        },
+      ],
+    }).then(forEach(processMetaplexAccounts)),
+    // bdis where you arent winner
+    getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 2,
+            bytes: cache.auctionManager,
+          },
+        },
+      ],
+    }).then(forEach(processMetaplexAccounts)),
     // safety deposit configs
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [

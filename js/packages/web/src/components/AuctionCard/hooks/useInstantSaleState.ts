@@ -14,19 +14,24 @@ export const useInstantSaleState = (
 ): ActionButtonContentProps => {
   const wallet = useWallet();
 
-  const {
-    isInstantSale,
-    auctionManager,
-    auction,
-    myBidderPot,
-    myBidderMetadata,
-  } = auctionView;
+  const { isInstantSale, auctionManager, auction, myBidRedemption } =
+    auctionView;
 
+  const items = auctionView.items;
+  let isAlreadyBought: boolean = false;
+
+  for (const item of items) {
+    for (const subItem of item) {
+      const bidRedeemed = myBidRedemption?.info.getBidRedeemed(
+        subItem.safetyDeposit.info.order,
+      );
+      isAlreadyBought = bidRedeemed ? bidRedeemed : false;
+      if (isAlreadyBought) break;
+    }
+  }
+  const canClaimPurchasedItem = isAlreadyBought;
   const isOwner = auctionManager.authority === wallet?.publicKey?.toBase58();
   const isAuctionEnded = auction.info.endedAt;
-  const isBidCanceled = !!myBidderMetadata?.info.cancelled;
-  const canClaimPurchasedItem = !!(myBidderPot && !isBidCanceled);
-  const isAlreadyBought = !!(myBidderPot && isBidCanceled);
   const canClaimItem = !!(isOwner && isAuctionEnded);
   const canEndInstantSale = isOwner && !isAuctionEnded;
 

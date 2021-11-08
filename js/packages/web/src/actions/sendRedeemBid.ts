@@ -786,7 +786,7 @@ export async function setupRedeemParticipationInstructions(
         mintingSigners,
       );
     } else {
-      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
+      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection);
     }
 
     instructions.push(mintingInstructions);
@@ -983,7 +983,11 @@ async function deprecatedSetupRedeemParticipationInstructions(
           winningPrizeSigner,
         );
       } else {
-        receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
+        receivingSolAccountOrAta = await findAta(
+          auctionView,
+          wallet,
+          connection,
+        );
       }
 
       const transferAuthority = approve(
