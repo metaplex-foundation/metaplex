@@ -28,8 +28,11 @@ jobs:
   # -----------------
   test-token-vault:
     runs-on: ubuntu-latest
+    env:
+      cache_id: test-token-vault-program 
 
     steps:
+      # Setup Deps
       - uses: actions/checkout@v2
       - uses: ./.github/actions/install-linux-build-deps
       - uses: ./.github/actions/install-solana
@@ -39,7 +42,20 @@ jobs:
         with: 
           toolchain: ${{ env.RUST_TOOLCHAIN }}
 
+      # Restore Cache from previous build/test
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./rust/target
+          key: ${{ env.cache_id }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUSTC_HASH }}
+
+      # Run test
       - name: test-token-vault-program
+        id: run_test
         working-directory: ./rust/token-vault/program
         run: |
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
@@ -50,8 +66,11 @@ jobs:
   # -----------------
   test-token-metadata:
     runs-on: ubuntu-latest
+    env:
+      cache_id: test-token-metadata-program 
 
     steps:
+      # Setup Deps
       - uses: actions/checkout@v2
       - uses: ./.github/actions/install-linux-build-deps
       - uses: ./.github/actions/install-solana
@@ -61,8 +80,25 @@ jobs:
         with: 
           toolchain: ${{ env.RUST_TOOLCHAIN }}
 
+      # Restore Cache from previous build/test
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./rust/target
+          key: ${{ env.cache_id }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUSTC_HASH }}
+
+      # Build deps
+      - uses: ./.github/actions/build-token-vault
+
+      # Run test 
       - name: test-token-metadata-program
+        id: run_test
         working-directory: ./rust/token-metadata/program
         run: |
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf
+
