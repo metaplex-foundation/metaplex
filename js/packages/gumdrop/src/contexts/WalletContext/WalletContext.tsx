@@ -173,9 +173,8 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       getSolflareWallet(),
       getTorusWallet({
         options: {
-          // @FIXME: this should be changed for Default, and by each Default storefront
           clientId:
-            "BOM5Cl7PXgE9Ylq1Z1tqzhpydY0RVr8k90QQ85N7AKI5QGSrr9iDC-3rvmy0K_hF0JfpLMiXoDhta68JwcxS1LQ",
+            "BEB_D44HovHuXH0Ace97QVqSu1ahCKndjpGhzhVcMy_9XmDTbHyqTbzQTufcyaN0kFwtlVbfPzJwpJXg94gWJqE",
         },
       }),
       getLedgerWallet(),
