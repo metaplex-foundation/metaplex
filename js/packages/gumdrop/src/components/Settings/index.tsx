@@ -181,7 +181,7 @@ export const Settings = ({ narrow }) => {
             <Divider />
             {connectedActions.map((a, idx) => {
               return (
-                <ListItemButton onClick={a.click}>
+                <ListItemButton onClick={a.click} key={idx}>
                   {a.innerNarrow || a.inner()}
                 </ListItemButton>
               );
@@ -229,6 +229,7 @@ export const Settings = ({ narrow }) => {
         {publicKey && connectedActions.map((a, idx) => {
             return (
               <Button
+                key={idx}
                 variant="outlined"
                 onClick={a.click}
                 {...a.expandedExtra}

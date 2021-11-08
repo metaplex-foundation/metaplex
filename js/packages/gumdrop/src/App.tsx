@@ -170,7 +170,7 @@ const About = (
       textAlign="left"
       spacing={2}
     >
-      {steps.map(s => s.inner)}
+      {steps.map((s, idx) => <div key={idx}>{s.inner}</div>)}
     </Stack>
   );
 };
