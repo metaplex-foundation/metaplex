@@ -26,4 +26,5 @@ export const getEmptyMetaState = (): MetaState => ({
   bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
   auctionCaches: {},
   storeIndexer: [],
+  packs: {},
 });

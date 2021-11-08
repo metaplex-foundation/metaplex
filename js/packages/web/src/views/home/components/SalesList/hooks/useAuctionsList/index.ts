@@ -1,14 +1,10 @@
 import { useMemo } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 
-import { useAuctions, AuctionView } from '../../../../hooks';
+import { useAuctions, AuctionView } from '../../../../../../hooks';
 
-import { LiveAuctionViewState } from '../../auctionList';
-import {
-  getFilterFunction,
-  resaleAuctionsFilter,
-  sortAuctionsByDate,
-} from './utils';
+import { LiveAuctionViewState } from '../..';
+import { getFilterFunction, resaleAuctionsFilter } from './utils';
 
 export const useAuctionsList = (
   activeKey: LiveAuctionViewState,
@@ -19,9 +15,7 @@ export const useAuctionsList = (
   const filteredAuctions = useMemo(() => {
     const filterFn = getFilterFunction(activeKey);
 
-    return sortAuctionsByDate(auctions).filter(auction =>
-      filterFn(auction, publicKey),
-    );
+    return auctions.filter(auction => filterFn(auction, publicKey));
   }, [activeKey, auctions, publicKey]);
 
   const hasResaleAuctions = useMemo(() => {
