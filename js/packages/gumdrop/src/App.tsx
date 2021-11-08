@@ -224,21 +224,20 @@ function App() {
     [colorModeCtx.mode]
   );
 
-  const { height } = useWindowDimensions();
-
   return (
     <div className="App" style={{ backgroundColor: "transparent" }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Header />
         <Box
-          width="60ch"
+          maxWidth="60ch"
+          width="calc(100% - 60px)"
           style={{
             marginLeft: "auto",
             marginRight: "auto",
           }}
         >
-          <Box height="60px" />
+          <Box height="40px" />
           <HashRouter>
             <Switch>
               <Route path="/create" component={Create} />

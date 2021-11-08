@@ -17,7 +17,6 @@ export const Header: React.FC = () => {
         bgcolor: "action.disabledBackground",
         overflow: "auto",
       }}
-      minWidth="60ch"
     >
       <Stack
         direction="row"
