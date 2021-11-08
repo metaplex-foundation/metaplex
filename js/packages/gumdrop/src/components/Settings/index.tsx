@@ -53,7 +53,9 @@ export const Settings = ({ narrow }) => {
           });
         }
       },
-      innerNarrow: "Copy Address",
+      innerNarrow: () => (
+        `Copy Address (${publicKey && shortenAddress(publicKey.toBase58())})`
+      ),
       inner: () => (
         <React.Fragment>
           <CopyOutlined />
@@ -182,7 +184,7 @@ export const Settings = ({ narrow }) => {
             {connectedActions.map((a, idx) => {
               return (
                 <ListItemButton onClick={a.click} key={idx}>
-                  {a.innerNarrow || a.inner()}
+                  {(a.innerNarrow && a.innerNarrow()) || a.inner()}
                 </ListItemButton>
               );
             })}
