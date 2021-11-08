@@ -1,7 +1,9 @@
 import React from "react";
 
 import {
+  Box,
   Button,
+  CircularProgress,
   FormControl,
   InputLabel,
   Link as HyperLink,
@@ -121,6 +123,19 @@ export const Close = () => {
     }
   };
 
+  const [loading, setLoading] = React.useState(false);
+  const loadingProgress = () => (
+    <CircularProgress
+      size={24}
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginTop: '-12px',
+        marginLeft: '-12px',
+      }}
+    />
+  );
   return (
     <Stack spacing={2}>
       <TextField
@@ -148,18 +163,23 @@ export const Close = () => {
         </Select>
       </FormControl>
       {claimMethod !== "" && claimData(claimMethod)}
+      <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || !baseKey}
+        disabled={!wallet.connected || !baseKey || loading}
         variant="contained"
+        style={{ width: "100%" }}
         onClick={(e) => {
+          setLoading(true);
           const wrap = async () => {
             try {
               await submit(e);
+              setLoading(false);
             } catch (err) {
               notify({
                 message: "Close failed",
                 description: `${err}`,
               });
+              setLoading(false);
             }
           };
           wrap();
@@ -167,6 +187,8 @@ export const Close = () => {
       >
         Close Gumdrop
       </Button>
+      {loading && loadingProgress()}
+      </Box>
     </Stack>
   );
 };
