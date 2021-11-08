@@ -1,14 +1,15 @@
 import React from "react";
 import {
+  Link,
+} from "react-router-dom";
+import {
   Box,
   Button,
   Divider,
   Drawer,
-  Link,
   List,
   ListItem,
   ListItemText,
-  ListItemButton,
   Stack,
 } from "@mui/material";
 import HomeIcon from '@mui/icons-material/Home';
@@ -19,20 +20,20 @@ import { Settings } from "../Settings";
 export const Header = ({ narrow }) => {
   const navs = [
     {
-      href: "#/",
+      href: `/gumdrop/`,
       innerNarrow: "About",
       inner: <HomeIcon />,
     },
     {
-      href: "#/create",
+      href: `/gumdrop/create`,
       inner: "Create",
     },
     {
-      href: "#/claim",
+      href: `/gumdrop/claim`,
       inner: "Claim",
     },
     {
-      href: "#/close",
+      href: `/gumdrop/close`,
       inner: "Close",
     },
   ];
@@ -86,9 +87,11 @@ export const Header = ({ narrow }) => {
                   <Divider />
                   {navs.map((nav, idx) => {
                     return (
-                      <ListItemButton component="a" href={nav.href} key={idx}>
-                        {nav.innerNarrow || nav.inner}
-                      </ListItemButton >
+                      <ListItem key={idx}>
+                        <Link to={nav.href}>
+                          {nav.innerNarrow || nav.inner}
+                        </Link>
+                      </ListItem>
                     );
                   })}
                 </List>
@@ -109,7 +112,7 @@ export const Header = ({ narrow }) => {
           >
             {navs.map((nav, idx) => {
               return (
-                <Link href={nav.href} key={idx} underline="none">
+                <Link to={nav.href} key={idx}>
                   <Button variant="outlined" style={{minWidth:0}}>
                     {nav.inner}
                   </Button>

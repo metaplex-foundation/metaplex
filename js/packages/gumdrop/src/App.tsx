@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  HashRouter,
+  BrowserRouter,
   Link,
   Route,
   Switch,
@@ -84,7 +84,7 @@ const About = (
 
   const create= (
     <Stack spacing={1}>
-      <Link to="/create">
+      <Link to={`/gumdrop/create`}>
         CREATION
       </Link>
 
@@ -126,7 +126,7 @@ const About = (
 
   const claim = (
     <Stack spacing={1}>
-      <Link to="/claim">
+      <Link to={`/gumdrop/claim`}>
         CLAIMS
       </Link>
 
@@ -141,7 +141,7 @@ const About = (
 
   const close = (
     <Stack spacing={1}>
-      <Link to="/close">
+      <Link to={`/gumdrop/close`}>
         CLOSING
       </Link>
 
@@ -229,27 +229,27 @@ function App() {
   return (
     <div className="App" style={{ backgroundColor: "transparent" }}>
       <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Header narrow={width < 670}/>
-        <Box
-          maxWidth="60ch"
-          width="calc(100% - 60px)"
-          style={{
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
-          <Box height="40px" />
-          <HashRouter>
+        <BrowserRouter>
+          <CssBaseline />
+          <Header narrow={width < 670}/>
+          <Box
+            maxWidth="60ch"
+            width="calc(100% - 60px)"
+            style={{
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
+            <Box height="40px" />
             <Switch>
-              <Route path="/create" component={Create} />
-              <Route path="/claim" component={Claim} />
-              <Route path="/close" component={Close} />
-              <Route path="/" component={About} />
+              <Route path="/gumdrop/create" component={Create} />
+              <Route path="/gumdrop/claim" component={Claim} />
+              <Route path="/gumdrop/close" component={Close} />
+              <Route path="/gumdrop/" component={About} />
             </Switch>
-          </HashRouter>
-          <Box height="80px" />
-        </Box>
+            <Box height="80px" />
+          </Box>
+        </BrowserRouter>
       </ThemeProvider>
     </div>
   );

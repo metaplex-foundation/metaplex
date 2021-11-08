@@ -444,7 +444,7 @@ export const buildGumdrop = async (
     }
     const query = params.join("&");
 
-    claimant.url = `${host}#/claim?${query}`;
+    claimant.url = `${host}/claim?${query}`;
   }
 
   // initial merkle-distributor state
