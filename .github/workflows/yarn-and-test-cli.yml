@@ -1,14 +1,13 @@
-name: Pull Request (CLI)
+name: Yarn Install and Test JS
 
 on:
-  pull_request:
-    paths:
-      - js/packages/cli/*
   push:
-    branches:
-      - master
-    paths:
-      - js/packages/cli/*
+    branches: [master,thlorenz/chore/ci-token-metadata-action]
+#   paths:
+#     - js/*
+# pull_request:
+#   paths:
+#     - js/*
 
 jobs:
   unit_tests:

@@ -1,9 +1,13 @@
-name: Lint
+name: Lint JavaScript
 
 on:
-  pull_request:
   push:
-    branches: [master]
+    branches: [master,thlorenz/chore/ci-token-metadata-action]
+#   paths:
+#     - js/*
+# pull_request:
+#   paths:
+#     - js/*
 
 jobs:
   eslint:
