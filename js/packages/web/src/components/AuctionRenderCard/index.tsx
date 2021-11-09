@@ -23,7 +23,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
 
   const card = (
     <Card hoverable bordered={false}>
-      <Space direction="vertical">
+      <Space direction="vertical" className="metaplex-fullwidth">
         <Space direction="horizontal">
           <MetaAvatar creators={[creators[0]]} />
           <span>

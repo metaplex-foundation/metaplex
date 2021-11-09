@@ -11,11 +11,11 @@ export const ViewOn = (props: ViewOnProps) => {
   const art = props.art ?? useArt(props.id);
 
   return (
-    <>
+    <div>
       <h6>View on</h6>
       <Space direction="horizontal">
         <Button onClick={() => window.open(art.uri || '', '_blank')}>
-          Arweave
+          Metadata
         </Button>
         <Button
           onClick={() =>
@@ -30,6 +30,6 @@ export const ViewOn = (props: ViewOnProps) => {
           Transaction
         </Button>
       </Space>
-    </>
+    </div>
   );
 };

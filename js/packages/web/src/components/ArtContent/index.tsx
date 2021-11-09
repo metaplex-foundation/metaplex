@@ -20,6 +20,7 @@ const MeshArtContent = ({
     files && files.length > 0 && typeof files[0] === 'string'
       ? files[0]
       : animationUrl;
+   
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
@@ -178,7 +179,7 @@ export const ArtContent = ({
   const id = pubkeyToString(pubkey);
 
   const { ref, data } = useExtendedArt(id);
-
+  
   if (pubkey && data) {
     uri = data.image;
     animationURL = data.animation_url;

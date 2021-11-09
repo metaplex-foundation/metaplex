@@ -6,12 +6,31 @@
 }
 .app-section {
   &--loading {
+    margin: @margin-lg 0 0 0;
     display: flex;
     justify-content: center;
   }
 }
 
 // Global utility classes
+
+.metaplex {
+  &-spacing {
+    &-bottom {
+      &-md {
+        margin-bottom: @margin-md;
+      }
+      &-lg {
+        margin-bottom: @margin-lg;
+      }
+    }
+  }
+  &-align {
+    &-center {
+      text-align: center;
+    }
+  }
+}
 
 .metaplex-fullwidth {
   // Leverage CSS specificity
