@@ -128,7 +128,7 @@ programCommand('create')
   .option(
     '--host <string>',
     'Website to claim gumdrop',
-    "https://lwus.github.io/gumdrop/"
+    "https://lwus.github.io/gumdrop"
   )
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
