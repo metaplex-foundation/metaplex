@@ -535,6 +535,7 @@ export const closeGumdrop = async (
   walletKey : PublicKey,
   base : Keypair,
   claimMethod : string,
+  transferMint : string,
   candyConfig : string,
   candyUuid : string,
   masterMint : string,
@@ -555,6 +556,22 @@ export const closeGumdrop = async (
   );
 
   let extraKeys;
+  const instructions = Array<TransactionInstruction>();
+
+  if (claimMethod === "transfer") {
+    const mint = await getMintInfo(connection, transferMint);
+    const source = await getCreatorTokenAccount(
+      walletKey, connection, mint.key, 0
+    );
+    // distributor is about to be closed anyway so this is redundant but...
+    instructions.push(Token.createRevokeInstruction(
+      TOKEN_PROGRAM_ID,
+      source,
+      walletKey,
+      [],
+    ));
+  }
+
   if (claimMethod === "candy") {
     const configKey = await getCandyConfig(connection, candyConfig);
     const [candyMachineKey, ] = await getCandyMachineAddress(
@@ -568,7 +585,6 @@ export const closeGumdrop = async (
     extraKeys = [];
   }
 
-  const instructions = Array<TransactionInstruction>();
   if (claimMethod === "edition") {
     let masterMintKey: PublicKey;
     try {

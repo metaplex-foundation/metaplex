@@ -40,6 +40,7 @@ export const Close = () => {
 
   const [baseKey, setBaseKey] = React.useState("");
   const [claimMethod, setClaimMethod] = React.useState(localStorage.getItem("claimMethod") || "transfer");
+  const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
   const [candyConfig, setCandyConfig] = React.useState(localStorage.getItem("candyConfig") || "");
   const [candyUUID, setCandyUUID] = React.useState(localStorage.getItem("candyUUID") || "");
   const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
@@ -59,6 +60,7 @@ export const Close = () => {
       wallet.publicKey,
       base,
       claimMethod,
+      mint,
       candyConfig,
       candyUUID,
       masterMint,
@@ -108,7 +110,16 @@ export const Close = () => {
         </React.Fragment>
       );
     } else if (claimMethod === "transfer") {
-      return null;
+      return (
+        <React.Fragment>
+          <TextField
+            id="mint-text-field"
+            label="Mint"
+            value={mint}
+            onChange={(e) => setMint(e.target.value)}
+          />
+        </React.Fragment>
+      );
     } else if (claimMethod === "edition") {
       return (
         <React.Fragment>

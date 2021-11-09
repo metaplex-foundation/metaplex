@@ -346,6 +346,10 @@ programCommand('close')
     'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition'
   )
   .option(
+    '--transfer-mint <mint>',
+    'transfer: public key of mint'
+  )
+  .option(
     '--candy-config <config>',
     'candy: public key of the candy machine config'
   )
@@ -373,6 +377,9 @@ programCommand('close')
 
     switch (options.claimIntegration) {
       case "transfer": {
+        if (!options.transferMint) {
+          throw new Error("No transfer-mint provided. Used to check we're not accidentally losing ownership of other accounts");
+        }
         break;
       }
       case "candy": {
@@ -398,6 +405,7 @@ programCommand('close')
       wallet.publicKey,
       base,
       options.claimIntegration,
+      options.transferMint,
       options.candyConfig,
       options.candyUuid,
       options.editionMint,
