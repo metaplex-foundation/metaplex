@@ -27,7 +27,7 @@ export const InfoStep = (props: {
         </p>
       </>
 
-      <Row justify="space-around" wrap={false}>
+      <Row justify="space-between" align="middle" wrap={false}>
         <Col span={6}>
           {props.attributes.image && (
             <ArtCard
@@ -40,10 +40,10 @@ export const InfoStep = (props: {
             />
           )}
         </Col>
-        <Col span={8}>
-          <Space direction="vertical">
+        <Col span={16}>
+          <Space className="metaplex-fullwidth" direction="vertical">
             <label>
-              <span>Title</span>
+              <h3>Title</h3>
               <Input
                 autoFocus
                 placeholder="Max 50 characters"
@@ -74,7 +74,7 @@ export const InfoStep = (props: {
           </label> */}
 
             <label>
-              <span>Description</span>
+              <h3>Description</h3>
               <Input.TextArea
                 placeholder="Max 500 characters"
                 value={props.attributes.description}
@@ -89,7 +89,7 @@ export const InfoStep = (props: {
             </label>
 
             <label>
-              <span>Maximum Supply</span>
+              <h3>Maximum Supply</h3>
               <InputNumber
                 className="metaplex-fullwidth"
                 placeholder="Quantity"
@@ -105,7 +105,7 @@ export const InfoStep = (props: {
               />
             </label>
             <label>
-              <span>Attributes</span>
+              <h3>Attributes</h3>
             </label>
             <Form name="dynamic_attributes" form={form} autoComplete="off">
               <Form.List name="attributes">

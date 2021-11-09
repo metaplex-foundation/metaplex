@@ -122,7 +122,7 @@ export const AppBar = (props: P) => {
 
   return (
     <>
-      <Row wrap={false}>
+      <Row wrap={false} align="middle">
         <Col flex="0 0 auto">
           <Link to="/" id="metaplex-header-logo">
             <img src={props.logo} />
@@ -134,7 +134,7 @@ export const AppBar = (props: P) => {
           </Menu>
         </Col>
         <Col flex="0 1 auto">
-          <Space align="center">
+          <Space className="metaplex-display-flex" align="center">
             {connected ? (
               <>
                 <CurrentUserBadge showAddress={true} buttonType="text" />
@@ -144,7 +144,7 @@ export const AppBar = (props: P) => {
             ) : (
               <>
                 <HowToBuyModal buttonType="text" />
-                <ConnectButton type="text" allowWalletChange />
+                <ConnectButton type="text" allowWalletChange={false} />
               </>
             )}
           </Space>

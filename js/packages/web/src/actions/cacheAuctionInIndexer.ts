@@ -99,7 +99,8 @@ async function propagateIndex(
   ) {
     const cacheLeavingThePage =
       currPage.info.auctionCaches[currPage.info.auctionCaches.length - 1];
-    const nextPage: ParsedAccount<StoreIndexer> = storeIndexer[currPage.info.page.toNumber() + 1];
+    const nextPage: ParsedAccount<StoreIndexer> =
+      storeIndexer[currPage.info.page.toNumber() + 1];
     if (nextPage) {
       lastPage = currPage;
       currPage = nextPage;

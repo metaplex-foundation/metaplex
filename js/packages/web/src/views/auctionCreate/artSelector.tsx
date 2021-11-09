@@ -1,4 +1,4 @@
-import { Button, Card, Col, Modal, Row } from 'antd';
+import { Button, Card, Modal, Space } from 'antd';
 import React, { ReactNode, useMemo, useState } from 'react';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
@@ -82,12 +82,8 @@ export const ArtSelector = ({
         width={1100}
         footer={null}
       >
-        <Row>
-          <Col> 
-            <h2>Select the NFT you want to sell</h2>
-          </Col>
-        </Row>
-        <Row>
+        <Space className="metaplex-space-align-stretch" direction="vertical">
+          <h2>Select the NFT you want to sell</h2>
           <MetaplexMasonry>
             {items.map(m => {
               const id = m.metadata.pubkey;
@@ -123,12 +119,12 @@ export const ArtSelector = ({
               );
             })}
           </MetaplexMasonry>
-        </Row>
-        <Row>
-          <Button type="primary" size="large" onClick={confirm}>
-            Confirm
-          </Button>
-        </Row>
+          {allowMultiple && selectedItems.size > 0 && (
+            <Button type="primary" size="large" onClick={confirm}>
+              Confirm
+            </Button>
+          )}
+        </Space>
       </Modal>
     </>
   );

@@ -1,5 +1,4 @@
-import { CheckOutlined } from '@ant-design/icons';
-import { LoadingOutlined } from '@ant-design/icons';
+import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
   AuctionState,
   BidderMetadata,
@@ -18,17 +17,7 @@ import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import { MintInfo } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import {
-  Button,
-  Card,
-  Carousel,
-  Col,
-  List,
-  Row,
-  Skeleton,
-  Space,
-  Spin,
-} from 'antd';
+import { Button, Carousel, Col, List, Row, Skeleton, Space, Spin } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format } from 'timeago.js';
@@ -135,7 +124,10 @@ export const AuctionView = () => {
             <List grid={{ column: 4 }}>
               {attributes.map((attribute, index) => (
                 <List.Item key={`${attribute.value}-${index}`}>
-                  <List.Item.Meta title={attribute.trait_type} description={attribute.value} />
+                  <List.Item.Meta
+                    title={attribute.trait_type}
+                    description={attribute.value}
+                  />
                 </List.Item>
               ))}
             </List>

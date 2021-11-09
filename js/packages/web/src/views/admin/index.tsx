@@ -494,7 +494,7 @@ function InnerAdminView({
                 loading={cachingAuctions}
                 onClick={async () => {
                   setCachingAuctions(true);
-                  
+
                   await cacheAllAuctions(
                     wallet,
                     connection,

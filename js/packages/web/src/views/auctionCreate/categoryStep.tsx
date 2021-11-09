@@ -44,7 +44,7 @@ export const CategoryStep = (props: {
               <Button
                 key={cat}
                 className="metaplex-button-jumbo metaplex-fullwidth"
-                type="primary"
+                type="ghost"
                 size="large"
                 onClick={() => props.confirm(cat)}
               >

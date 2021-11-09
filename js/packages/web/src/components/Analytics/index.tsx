@@ -11,7 +11,6 @@ interface AnalyticsUserProperties {
   // user dimensions
   user_id: string; // google reserved
   pubkey: string; // same as user_id, but for use in custom reports
-
 }
 interface CustomEventDimensions {
   // event dimensions
@@ -31,14 +30,14 @@ const AnalyticsContext = React.createContext<{
 } | null>(null);
 
 // @ts-ignore
-const gtag = window.gtag
+const gtag = window.gtag;
 
 export function AnalyticsProvider(props: { children: React.ReactNode }) {
   const { publicKey } = useWallet();
   const { storefront } = useStore();
   const { endpoint } = useConnectionConfig();
   const location = useLocation();
-  const solPrice = useSolPrice()
+  const solPrice = useSolPrice();
 
   // user pubkey / id
   const pubkey = publicKey?.toBase58() || '';
@@ -49,7 +48,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
     setUserProperties({
       user_id: pubkey,
       pubkey: pubkey,
-    })
+    });
 
     // initial config
     configureAnalytics({
@@ -59,7 +58,6 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       store_title: storefront.meta.title,
       storefront_pubkey: storefront.pubkey,
     });
-
   }, [pubkey, endpointName]);
 
   useEffect(() => {
@@ -87,14 +85,14 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       page_path: path, // React router provides the # route as a regular path
     });
   }
-  
+
   function track(
     action: string,
     attributes?: {
       category?: string;
       label?: string;
       value?: number;
-      sol_value?: number
+      sol_value?: number;
       [key: string]: string | number | undefined | any[];
     } & Partial<CustomEventDimensions>,
   ) {
@@ -102,12 +100,14 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
     gtag('event', action, {
       event_category: attributes?.category,
       event_label: attributes?.label,
-      ...attributes?.sol_value && solPrice ? {
-        value: attributes.sol_value * solPrice, //Google Analytics likes this one in USD :)
-        sol_value: attributes.sol_value
-      } : {
-        value: attributes?.value,
-      },
+      ...(attributes?.sol_value && solPrice
+        ? {
+            value: attributes.sol_value * solPrice, //Google Analytics likes this one in USD :)
+            sol_value: attributes.sol_value,
+          }
+        : {
+            value: attributes?.value,
+          }),
       ...attributes,
     });
   }
@@ -132,4 +132,3 @@ export function useAnalytics() {
   }
   return context;
 }
-

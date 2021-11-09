@@ -23,7 +23,7 @@ import React, {
 import { Link } from 'react-router-dom';
 import { useMeta, useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
-import CogSvg from '../svgs/cog'
+import CogSvg from '../svgs/cog';
 
 const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
   const { publicKey } = useWallet();
@@ -178,8 +178,7 @@ export const CurrentUserBadge = (props: {
           />
         }
       >
-        {/* display: block fixes a strange layout quirk */}
-        <Button type={props.buttonType} style={{ display: 'block' }}>
+        <Button className="metaplex-button-appbar" type={props.buttonType}>
           <Space direction="horizontal">
             {props.showBalance && (
               <span>
@@ -228,7 +227,7 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
         </Space>
       }
     >
-      <Button type={buttonType}>
+      <Button className="metaplex-button-appbar" type={buttonType}>
         <CogSvg />
       </Button>
     </Popover>

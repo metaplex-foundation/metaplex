@@ -58,7 +58,7 @@ export const ArtCreateView = () => {
     },
   });
 
-  const { track } = useAnalytics()
+  const { track } = useAnalytics();
 
   const gotoStep = useCallback(
     (_step: number) => {
@@ -115,11 +115,10 @@ export const ArtCreateView = () => {
           category: 'creation',
           label: metadata.properties.category,
           // sol_value: mintPriceSol.
-        })
+        });
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
-
     } catch (e) {
       if (typeof e === 'object' && e !== null && 'message' in e) {
         setAlertMessage(e.message);

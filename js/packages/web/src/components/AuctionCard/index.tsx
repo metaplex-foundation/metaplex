@@ -3,6 +3,7 @@ import {
   AuctionDataExtended,
   AuctionState,
   BidderMetadata,
+  BidRedemptionTicket,
   BidStateType,
   formatAmount,
   formatTokenAmount,
@@ -12,6 +13,7 @@ import {
   loadMultipleAccounts,
   MAX_EDITION_LEN,
   MAX_METADATA_LEN,
+  MAX_PRIZE_TRACKING_TICKET_SIZE,
   MetaplexModal,
   MetaplexOverlay,
   ParsedAccount,
@@ -22,8 +24,6 @@ import {
   useUserAccounts,
   useWalletModal,
   VaultState,
-  BidRedemptionTicket,
-  MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
 } from '@oyster/common';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
@@ -52,7 +52,7 @@ import {
 } from '../../actions/sendRedeemBid';
 import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
-import { useMeta, useSolPrice } from '../../contexts';
+import { useMeta } from '../../contexts';
 import {
   AuctionView,
   AuctionViewState,
@@ -230,7 +230,7 @@ export const AuctionCard = ({
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
-  const { track } = useAnalytics()
+  const { track } = useAnalytics();
 
   const { accountByMint } = useUserAccounts();
 
@@ -288,13 +288,13 @@ export const AuctionCard = ({
     tickSize &&
     (isUpcoming || bids.length === 0
       ? fromLamports(
-        participationOnly ? participationFixedPrice : priceFloor,
-        mintInfo,
-      )
+          participationOnly ? participationFixedPrice : priceFloor,
+          mintInfo,
+        )
       : isStarted && bids.length > 0
-        ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
-        : 9999999) +
-    tickSize.toNumber() / LAMPORTS_PER_SOL;
+      ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
+      : 9999999) +
+      tickSize.toNumber() / LAMPORTS_PER_SOL;
 
   const invalidBid =
     tickSizeInvalid ||
@@ -357,7 +357,7 @@ export const AuctionCard = ({
             category: 'auction',
             label: 'canceled',
             sol_value: value,
-          })
+          });
         } catch (e) {
           console.error('sendPlaceBid', e);
           return;
@@ -528,16 +528,17 @@ export const AuctionCard = ({
       }}
     >
       {loading ||
-        auctionView.items.find(i => i.find(it => !it.metadata)) ||
-        !myPayingAccount ? (
+      auctionView.items.find(i => i.find(it => !it.metadata)) ||
+      !myPayingAccount ? (
         <Spin indicator={<LineOutlined />} />
       ) : eligibleForAnything ? (
         `Redeem bid`
       ) : (
-        `${wallet?.publicKey &&
+        `${
+          wallet?.publicKey &&
           auctionView.auctionManager.authority === wallet.publicKey.toBase58()
-          ? 'Reclaim Items'
-          : 'Refund bid'
+            ? 'Reclaim Items'
+            : 'Refund bid'
         }`
       )}
     </Button>
@@ -609,8 +610,8 @@ export const AuctionCard = ({
       {!isAuctionManagerAuthorityNotWalletOwner
         ? 'Claim Item'
         : auctionView.myBidderPot
-          ? 'Claim Purchase'
-          : 'Buy Now'}
+        ? 'Claim Purchase'
+        : 'Buy Now'}
     </Button>
   );
 
@@ -664,7 +665,7 @@ export const AuctionCard = ({
                   category: 'auction',
                   // label: '',
                   sol_value: value,
-                })
+                });
               }
             }}
           >
@@ -738,10 +739,9 @@ export const AuctionCard = ({
             !auctionView.isInstantSale &&
             placeBidUI}
           {showDefaultNonEndedAction &&
-            (showStartAuctionBtn ? (
-              startAuctionBtn
-            ) : auctionView.isInstantSale && instantSaleBtn
-            )}
+            (showStartAuctionBtn
+              ? startAuctionBtn
+              : auctionView.isInstantSale && instantSaleBtn)}
           {!hideDefaultAction && !wallet.connected && (
             <Button
               className="metaplex-fullwidth"
@@ -779,40 +779,66 @@ export const AuctionCard = ({
         </Space>
       </Card>
 
-      <MetaplexOverlay visible={showBidPlaced} >
+      <MetaplexOverlay visible={showBidPlaced}>
         <Confetti />
-        <h1>Nice bid!</h1>
-        <p>
-          Your bid of ◎ {formatTokenAmount(lastBid?.amount, mintInfo)} was
-          successful
-        </p>
-        <Button type="primary" onClick={() => setShowBidPlaced(false)}>Got it</Button>
+        <Space
+          className="metaplex-fullwidth"
+          direction="vertical"
+          align="center"
+        >
+          <div>
+            <h1>Nice bid!</h1>
+            <p>
+              Your bid of ◎ {formatTokenAmount(lastBid?.amount, mintInfo)} was
+              successful
+            </p>
+          </div>
+          <Button type="primary" onClick={() => setShowBidPlaced(false)}>
+            Got it
+          </Button>
+        </Space>
       </MetaplexOverlay>
 
       <MetaplexOverlay visible={showEndingBidModal}>
         <Confetti />
-        <h1>Congratulations</h1>
-        <p>
-          Your sale has been ended please view your NFTs in{' '}
-          <Link to="/artworks">My Items</Link>.
-        </p>
-        <Button
-          onClick={() => setShowEndingBidModal(false)}
-          type="primary"
+
+        <Space
+          className="metaplex-fullwidth"
+          direction="vertical"
+          align="center"
         >
-          Got it
-        </Button>
+          <div>
+            <h1>Congratulations</h1>
+            <p>
+              Your sale has been ended please view your NFTs in{' '}
+              <Link to="/artworks">My Items</Link>.
+            </p>
+          </div>
+          <Button onClick={() => setShowEndingBidModal(false)} type="primary">
+            Got it
+          </Button>
+        </Space>
       </MetaplexOverlay>
 
       <MetaplexOverlay visible={showRedeemedBidModal}>
         <Confetti />
-        <h1>Congratulations</h1>
-        <p>
-          Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
-          redeemed please view your NFTs in <Link to="/artworks">My Items</Link>
-          .
-        </p>
-        <Button type="primary" onClick={() => setShowRedeemedBidModal(false)}>Got it</Button>
+        <Space
+          className="metaplex-fullwidth"
+          direction="vertical"
+          align="center"
+        >
+          <div>
+            <h1>Congratulations</h1>
+            <p>
+              Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
+              redeemed, you can view your NFTs in{' '}
+              <Link to="/artworks">My Items</Link>.
+            </p>
+          </div>
+          <Button type="primary" onClick={() => setShowRedeemedBidModal(false)}>
+            Got it
+          </Button>
+        </Space>
       </MetaplexOverlay>
 
       <MetaplexModal
@@ -828,6 +854,6 @@ export const AuctionCard = ({
           to redeem their bids for them right now.
         </h3>
       </MetaplexModal>
-    </div >
+    </div>
   );
 };

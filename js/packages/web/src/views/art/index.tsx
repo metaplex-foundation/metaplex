@@ -48,7 +48,7 @@ export const ArtView = () => {
         whitelistedCreatorsByCreator,
         id,
       );
-      
+
       patchState(artState);
     })();
   }, [connection]);
