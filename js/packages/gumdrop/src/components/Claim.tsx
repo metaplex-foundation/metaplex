@@ -810,11 +810,13 @@ export const Claim = (
 
       console.log("AWS OTP response data:", data);
 
-      let succeeded;
+      let succeeded, toCheck;
       if (discordGuild) {
         succeeded = !!data.id;
+        toCheck = "discord";
       } else {
         succeeded = !!data.MessageId;
+        toCheck = "email";
       }
 
       if (!succeeded) {
@@ -823,7 +825,7 @@ export const Claim = (
 
       notify({
         message: "OTP sent",
-        description: `Please check ${handle} for a OTP`,
+        description: `Please check your ${toCheck} (${handle}) for an OTP`,
       });
     }
 
