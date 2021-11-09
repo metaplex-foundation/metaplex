@@ -289,6 +289,11 @@ programCommand('create')
 
     const base = Keypair.generate();
 
+    let extraParams : Array<string> = [];
+    if (options.distributionMethod === "discord") {
+      extraParams.push(`guild=${options.discordGuild}`);
+    }
+
     const instructions = await buildGumdrop(
       connection,
       wallet.publicKey,
@@ -299,9 +304,7 @@ programCommand('create')
       temporalSigner,
       claimants,
       claimInfo,
-      [
-        `guild=${options.discordGuild}`,
-      ]
+      extraParams,
     );
 
     const basePath = logPath(options.env, `${base.publicKey.toBase58()}.json`);
