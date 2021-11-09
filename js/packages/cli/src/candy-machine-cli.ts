@@ -712,6 +712,29 @@ programCommand('mint_one_token')
     log.info('mint_one_token finished', tx);
   });
 
+programCommand('mint_tokens')
+  .option('-n, --number <number>', 'Number of tokens to mint', '1')
+  .action(async (directory, cmd) => {
+    const {keypair, env, cacheName, number, rpcUrl} = cmd.opts();
+
+    const parsedNumber = parseInt(number);
+
+    const cacheContent = loadCache(cacheName, env);
+    const configAddress = new PublicKey(cacheContent.program.config);
+    for (let i = 0; i < parsedNumber; i++) {
+      await mint(
+        keypair,
+        env,
+        configAddress,
+        cacheContent.program.uuid,
+        rpcUrl,
+      );
+      log.info(`token ${i} minted`);
+    }
+
+    log.info(`minted ${parsedNumber} tokens`)
+  });
+
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .option('-m, --metadata <string>', 'base58 metadata account id')

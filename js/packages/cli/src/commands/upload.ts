@@ -1,4 +1,4 @@
-import { EXTENSION_PNG } from '../helpers/constants';
+import { EXTENSION_JSON, EXTENSION_PNG } from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -70,20 +70,23 @@ export async function upload(
     ? new PublicKey(cacheContent.program.config)
     : undefined;
 
+  const tick = SIZE / 100; //print every one percent
+  let lastPrinted = 0;
   for (let i = 0; i < SIZE; i++) {
     const image = images[i];
     const imageName = path.basename(image);
     const index = imageName.replace(EXTENSION_PNG, '');
 
-    if (i % 50 === 0) {
-      log.info(`Processing file: ${i}`);
-    } else {
       log.debug(`Processing file: ${i}`);
-    }
 
     let link = cacheContent?.items?.[index]?.link;
+    let imageLink = cacheContent?.items?.[index]?.imageLink;
     if (!link || !cacheContent.program.uuid) {
-      const manifestPath = image.replace(EXTENSION_PNG, '.json');
+      if (i >= lastPrinted + tick || i === 0) {
+        lastPrinted = i;
+        log.info(`Processing file: ${i}, ${imageName}`);
+      }
+      const manifestPath = image.replace(EXTENSION_PNG, EXTENSION_JSON);
       const manifestContent = fs
         .readFileSync(manifestPath)
         .toString()
@@ -130,7 +133,7 @@ export async function upload(
       if (!link) {
         try {
           if (storage === 'arweave') {
-            link = await arweaveUpload(
+            [link, imageLink] = await arweaveUpload(
               walletKeyPair,
               anchorProgram,
               env,
@@ -140,15 +143,16 @@ export async function upload(
               index,
             );
           } else if (storage === 'ipfs') {
-            link = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
+            [link, imageLink] = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
           } else if (storage === 'aws') {
-            link = await awsUpload(awsS3Bucket, image, manifestBuffer);
+            [link, imageLink] = await awsUpload(awsS3Bucket, image, manifestBuffer);
           }
 
-          if (link) {
+          if (link && imageLink) {
             log.debug('setting cache for ', index);
             cacheContent.items[index] = {
               link,
+              imageLink,
               name: manifest.name,
               onChain: false,
             };
@@ -160,6 +164,8 @@ export async function upload(
           log.error(`Error uploading file ${index}`, er);
         }
       }
+    } else {
+      log.debug(`file ${index} already has a link`);
     }
   }
 
