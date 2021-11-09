@@ -4,6 +4,7 @@ import {
   ParsedAccount,
   PrizeTrackingTicket,
   sendTransactions,
+  SequenceType,
   TokenAccount,
 } from '@oyster/common';
 import { WalletContextState } from '@solana/wallet-adapter-react';
@@ -62,5 +63,12 @@ export async function endSale({
   const instructions = [endAuctionInstructions, ...claimInstructions];
   const signers = [[], ...claimSigners];
 
-  return sendTransactions(connection, wallet, instructions, signers);
+  return sendTransactions(
+    connection,
+    wallet,
+    instructions,
+    signers,
+    SequenceType.Sequential,
+    'finalized',
+  );
 }
