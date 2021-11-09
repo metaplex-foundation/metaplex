@@ -14,7 +14,7 @@ use vipers::{assert_owner};
 
 pub mod merkle_proof;
 
-declare_id!("561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG");
+declare_id!("gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a");
 
 fn get_or_create_claim_count<'a>(
     distributor     : &Account<'a, MerkleDistributor>,

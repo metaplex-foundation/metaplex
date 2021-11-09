@@ -20,7 +20,7 @@ Resources:
             Method: ANY
       Environment:
         Variables:
-          MA_DISTRIBUTOR_ID: 561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG
+          MA_DISTRIBUTOR_ID: gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a
           MA_OTP_TABLE_NAME: otp-table
           MA_OTP_X: '60000'
       Layers:
