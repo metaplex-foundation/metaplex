@@ -14,11 +14,12 @@ export const Congrats = (props: {
 
   const newTweetURL = () => {
     const params = {
-      text: "I've created a new NFT on my @Holaplex store, check it out!",
-      url: `${window.location.origin}/#/artworks/${props.nft?.metadataAccount.toString()}`,
-      hashtags: 'NFT,Crypto,Metaplex',
-      // via: "Metaplex",
-      related: 'Metaplex,Solana',
+      text: "I created a new NFT artwork, check it out!",
+      url: `${
+        window.location.origin
+      }/#/artworks/${props.nft?.metadataAccount.toString()}`,
+      hashtags: 'NFT,Crypto,Metaplex,Holaplex',
+      related: 'Metaplex,Solana,Holaplex',
     };
     const queryParams = new URLSearchParams(params).toString();
     return `https://twitter.com/intent/tweet?${queryParams}`;
@@ -52,7 +53,7 @@ export const Congrats = (props: {
           size="large"
           type="primary"
           onClick={() =>
-            history.push(`/art/${props.nft?.metadataAccount.toString()}`)
+            history.push(`/artworks/${props.nft?.metadataAccount.toString()}`)
           }
         >
           <span>See it in your collection</span>

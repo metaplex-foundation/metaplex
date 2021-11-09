@@ -115,15 +115,14 @@ export const AuctionView = () => {
 
   return (
     <Row justify="center" ref={ref} gutter={[48, 0]}>
-      <Col span={24} md={10}>
-        <div>
-          <Carousel
-            autoplay={false}
-            afterChange={index => setCurrentIndex(index)}
-          >
-            {items}
-          </Carousel>
-        </div>
+      <Col span={24} md={6} lg={8}>
+        <Carousel
+          className="metaplex-spacing-bottom-md"
+          autoplay={false}
+          afterChange={index => setCurrentIndex(index)}
+        >
+          {items}
+        </Carousel>
         <h6>ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}</h6>
         <p>
           {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
@@ -136,24 +135,18 @@ export const AuctionView = () => {
             <List grid={{ column: 4 }}>
               {attributes.map((attribute, index) => (
                 <List.Item key={`${attribute.value}-${index}`}>
-                  <Card title={attribute.trait_type}>{attribute.value}</Card>
+                  <List.Item.Meta title={attribute.trait_type} description={attribute.value} />
                 </List.Item>
               ))}
             </List>
           </div>
         )}
-        {/* {auctionData[id] && (
-            <>
-              <h6>About this Auction</h6>
-              <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
-            </>
-          )} */}
       </Col>
 
-      <Col span={24} md={14}>
+      <Col span={24} md={{ offset: 0, span: 16 }} lg={{ offset: 2, span: 12 }}>
         <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
-        <Row gutter={[44, 0]}>
-          <Col span={12} md={16}>
+        <Row className="metaplex-spacing-bottom-lg">
+          <Col span={12}>
             <Space direction="horizontal" align="start">
               <div>
                 <h6>CREATED BY</h6>
@@ -187,8 +180,10 @@ export const AuctionView = () => {
               </div>
             </Space>
           </Col>
-          <Col span={12} md={8}>
-            <ViewOn art={art} />
+          <Col span={12}>
+            <Row justify="end">
+              <ViewOn art={art} />
+            </Row>
           </Col>
         </Row>
 
