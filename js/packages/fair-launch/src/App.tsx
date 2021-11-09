@@ -1,10 +1,10 @@
 import './App.css';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Home from './Home';
 
 import * as anchor from '@project-serum/anchor';
-import { clusterApiUrl } from '@solana/web3.js';
+import { clusterApiUrl, Connection } from '@solana/web3.js';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
   getPhantomWallet,
@@ -20,6 +20,7 @@ import {
 import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
 import { ThemeProvider, createTheme } from '@material-ui/core';
 import { ConfettiProvider } from './confetti';
+import { getOAuthToken } from './oauth';
 
 const theme = createTheme({
   palette: {
@@ -38,14 +39,38 @@ const fairLaunchId = new anchor.web3.PublicKey(
 const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
 
 const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST!;
-const connection = new anchor.web3.Connection(rpcHost);
+
+// const connection = new anchor.web3.Connection(rpcHost);
 
 const startDateSeed = parseInt(process.env.REACT_APP_CANDY_START_DATE!, 10);
 
 const txTimeout = 30000; // milliseconds (confirm this works for your project)
 
+const OAuthConf = {
+  client_id: 'moshimoshi',
+  redirect_uri: 'http://localhost:8080',
+  auth_url: 'https://auth-fra1.rpcpool.com:8443/oauth2/auth',
+  token_url: 'https://auth-fra1.rpcpool.com:8443/oauth2/token',
+}
+
 const App = () => {
   const endpoint = useMemo(() => clusterApiUrl(network), []);
+
+  const [ connection, setConnection ] = useState<Connection>(new anchor.web3.Connection(rpcHost))
+
+  useEffect(() => {
+    (async () => {
+      const accessToken = await getOAuthToken(
+        OAuthConf.client_id,
+        OAuthConf.redirect_uri,
+        OAuthConf.auth_url,
+        OAuthConf.token_url,
+      );
+
+      setConnection(new anchor.web3.Connection(rpcHost, { httpHeaders: { 'Authorization': `Bearer ${accessToken}`}}));
+    })()
+  }, [])
+
 
   const wallets = useMemo(
     () => [getPhantomWallet(), getSolflareWallet(), getSolletWallet()],
