@@ -1,4 +1,4 @@
-import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import {
   getAuctionCache,
   loadAccounts,
@@ -9,7 +9,6 @@ import {
   pullPages,
   SafetyDepositBox,
   sendTransactions,
-  sendTransactionWithRetry,
   SequenceType,
   WalletSigner,
 } from '@oyster/common';
