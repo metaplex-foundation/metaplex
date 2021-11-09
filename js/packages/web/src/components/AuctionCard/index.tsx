@@ -64,6 +64,7 @@ import { useAnalytics } from '../Analytics';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import { Confetti } from '../Confetti';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
+import { endSale } from './utils/endSale';
 
 const { Text } = Typography;
 
@@ -314,6 +315,38 @@ export const AuctionCard = ({
     }
   }, [wallet.connected]);
 
+  const endInstantSale = async () => {
+    setLoading(true);
+
+    try {
+      try {
+        // End the instant sale
+        await endSale({
+          auctionView,
+          connection,
+          accountByMint,
+          bids,
+          bidRedemptions,
+          prizeTrackingTickets,
+          wallet,
+        });
+      } catch (e) {
+        console.error('endAuction', e);
+        // TODO: communicate the error to the user
+        return;
+      }
+
+      track('instant_sale_canceled', {
+        category: 'auction',
+        label: 'canceled',
+      });
+
+      setShowEndingBidModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const instantSale = async () => {
     setLoading(true);
 
@@ -353,9 +386,9 @@ export const AuctionCard = ({
           );
           setLastBid({ amount });
           bidTxid = txid;
-          track('instant_sale_canceled', {
+          track('instant_sale_bid_submitted', {
             category: 'auction',
-            label: 'canceled',
+            label: 'instant_sale',
             sol_value: value,
           });
         } catch (e) {
@@ -557,6 +590,12 @@ export const AuctionCard = ({
     showDefaultNonEndedAction &&
     (showStartAuctionBtn || !auctionView.isInstantSale);
 
+  // If this is an instant sale and the user can end it
+  const canEndInstantSale =
+    auctionView.isInstantSale &&
+    !isAuctionManagerAuthorityNotWalletOwner &&
+    !auctionView.auction.info.ended();
+
   // Start the auction
   const startAuctionBtn = (
     <Button
@@ -605,10 +644,12 @@ export const AuctionCard = ({
       size="large"
       block
       loading={loading}
-      onClick={instantSale}
+      onClick={canEndInstantSale ? endInstantSale : instantSale}
     >
       {!isAuctionManagerAuthorityNotWalletOwner
-        ? 'Claim Item'
+        ? canEndInstantSale
+          ? 'End Sale & Claim Item'
+          : 'Claim Item'
         : auctionView.myBidderPot
         ? 'Claim Purchase'
         : 'Buy Now'}
