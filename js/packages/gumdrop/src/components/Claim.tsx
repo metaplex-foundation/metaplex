@@ -646,6 +646,8 @@ export const Claim = (
   const [pinStr, setPin] = React.useState(params.pin as string || "");
   const [proofStr, setProof] = React.useState(params.proof as string || "");
 
+  const discordGuild = params.guild;
+
   const allFieldsPopulated =
     distributor.length > 0
     && ( claimMethod === "transfer" ? tokenAcc.length > 0
@@ -778,14 +780,18 @@ export const Claim = (
     const txnNeedsTemporalSigner =
         transaction.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
     if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
+      const otpQuery : { [key: string] : any } = {
+        method: "send",
+        transaction: bs58.encode(transaction.serializeMessage()),
+        seeds: pdaSeeds,
+      };
+      if (discordGuild) {
+        otpQuery.discordGuild = discordGuild;
+      }
       const params = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          method: "send",
-          transaction: bs58.encode(transaction.serializeMessage()),
-          seeds: pdaSeeds,
-        }),
+        body: JSON.stringify(otpQuery),
       };
 
       const response = await fetch(lambdaAPIEndpoint, params);
@@ -804,7 +810,14 @@ export const Claim = (
 
       console.log("AWS OTP response data:", data);
 
-      if (!data.MessageId) {
+      let succeeded;
+      if (discordGuild) {
+        succeeded = !!data.id;
+      } else {
+        succeeded = !!data.MessageId;
+      }
+
+      if (!succeeded) {
         throw new Error(`Failed to send AWS OTP`);
       }
 

@@ -364,6 +364,7 @@ export const buildGumdrop = async (
   temporalSigner : PublicKey,
   claimants : Claimants,
   claimInfo  : ClaimInfo,
+  extraParams : Array<string> = [],
 ) : Promise<Array<TransactionInstruction>> => {
 
   const leafs : Array<Buffer> = [];
@@ -427,6 +428,7 @@ export const buildGumdrop = async (
       `amount=${claimant.amount}`,
       `index=${idx}`,
       `proof=${proof.map(b => bs58.encode(b))}`,
+      ...extraParams,
     ];
     if (needsPin) {
       params.push(`pin=${claimant.pin.toNumber()}`);

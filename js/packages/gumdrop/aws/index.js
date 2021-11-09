@@ -3,6 +3,7 @@ const { Keypair, Message, PublicKey, Transaction } = require("@solana/web3.js");
 const BN = require("bn.js");
 const bs58 = require("bs58");
 const nacl = require("tweetnacl");
+const discord = require("discord.js");
 
 const MERKLE_DISTRIBUTOR_ID = new PublicKey(process.env.MA_DISTRIBUTOR_ID);
 const CLAIM_INSTR = Buffer.from(sha256.digest("global:claim")).slice(0, 8);
@@ -15,7 +16,6 @@ const OTP_TABLE_NAME = process.env.MA_OTP_TABLE_NAME;
 
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: 'us-east-2' });
-const ses = new AWS.SES({ region: "us-east-2" });
 
 // time in MS (normally Date.now())
 const OTP_X = Number(process.env.MA_OTP_X);
@@ -130,21 +130,36 @@ const sendOTP = async (event) => {
   // should actually help in this case?
   await logDB(handle, time, serializedBuffer);
 
-  const params = {
-    Destination: {
-      ToAddresses: [handle],
-    },
-    Message: {
-      Body: {
-        Text: { Data: `Your gumdrop OTP is ${String(otp).padStart(8, "0")}` },
+  const otpMessage = `Your gumdrop OTP is ${String(otp).padStart(8, "0")}`;
+  if (event.discordGuild) {
+    const client = new discord.Client();
+    await client.login(process.env.DISCORD_BOT_TOKEN);
+
+    const guild = await client.guilds.fetch(event.discordGuild);
+
+    const user = await guild.members.fetch(handle);
+    if (!user) {
+      throw new Error(`Could not find discord user ${handle}`);
+    }
+    return await user.send(otpMessage);
+  } else {
+    const params = {
+      Destination: {
+        ToAddresses: [handle],
       },
+      Message: {
+        Body: {
+          Text: { Data: otpMessage },
+        },
 
-      Subject: { Data: "Gumdrop OTP" },
-    },
-    Source: "santa@aws.metaplex.com",
-  };
+        Subject: { Data: "Gumdrop OTP" },
+      },
+      Source: "santa@aws.metaplex.com",
+    };
 
-  return ses.sendEmail(params).promise();
+    const ses = new AWS.SES({ region: "us-east-2" });
+    return ses.sendEmail(params).promise();
+  }
 };
 
 const verifyOTP = async (event) => {

@@ -298,7 +298,10 @@ programCommand('create')
       base.publicKey,
       temporalSigner,
       claimants,
-      claimInfo
+      claimInfo,
+      [
+        `guild=${options.discordGuild}`,
+      ]
     );
 
     const basePath = logPath(options.env, `${base.publicKey.toBase58()}.json`);
