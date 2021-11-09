@@ -21,7 +21,7 @@ import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
-import BellSvg from '../svgs/bell'
+import BellSvg from '../svgs/bell';
 
 interface NotificationCard {
   id: string;
@@ -259,7 +259,7 @@ export function Notifications({
 
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
-      <Button type={buttonType}>
+      <Button className="metaplex-button-appbar" type={buttonType}>
         <BellSvg />
       </Button>
     </Popover>

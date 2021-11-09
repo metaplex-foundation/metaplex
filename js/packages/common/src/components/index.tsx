@@ -1,3 +1,4 @@
+export { ArrowButton } from './ArrowButton';
 export { ExplorerLink } from './ExplorerLink/index';
 export { ConnectButton } from './ConnectButton/index';
 export { Identicon } from './Identicon/index';

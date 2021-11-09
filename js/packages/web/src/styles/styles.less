@@ -40,6 +40,17 @@
   }
 }
 
+.metaplex-display-block {
+  display: block;
+}
+
+.metaplex-display-flex {
+  &,
+  &.ant-space {
+    display: flex;
+  }
+}
+
 .metaplex-square-w,
 .metaplex-square-h {
   aspect-ratio: 1 / 1;
@@ -71,6 +82,13 @@
   &.metaplex-fullwidth {
     width: 100%;
   }
+}
+
+// Hack class to fix weird layout quirks with the toolbar buttons
+// Chiefly because we're doing things we shouldn't with Ant buttons
+.ant-btn.metaplex-button-appbar {
+  display: block;
+  line-height: 0;
 }
 
 :root,

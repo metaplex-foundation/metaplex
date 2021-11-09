@@ -96,10 +96,26 @@ function AppWrapper({ storefront }: AppProps) {
           </>
         )}
         <title>{storefront.meta.title}</title>
-        <meta name="description" content={storefront.meta.description} key="description" />
-        <meta property="og:title" content={storefront.meta.title} key="og:title" />
-        <meta property="og:description" content={storefront.meta.description} key="og:description" />
-        <meta property="og:image" content={storefront.theme.logo} key="og:image" />
+        <meta
+          name="description"
+          content={storefront.meta.description}
+          key="description"
+        />
+        <meta
+          property="og:title"
+          content={storefront.meta.title}
+          key="og:title"
+        />
+        <meta
+          property="og:description"
+          content={storefront.meta.description}
+          key="og:description"
+        />
+        <meta
+          property="og:image"
+          content={storefront.theme.logo}
+          key="og:image"
+        />
         <meta property="og:type" content="website" key="og:type" />
       </Head>
       {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}

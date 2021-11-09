@@ -135,16 +135,18 @@ export const RoyaltiesStep = (props: {
         </p>
       </div>
       <label>
-        <span>Royalty Percentage</span>
+        <h3>Royalty Percentage</h3>
         <p>
           This is how much of each secondary sale will be paid out to the
           creators.
         </p>
-        <InputNumber
+        <InputNumber<number>
           autoFocus
           min={0}
           max={100}
-          placeholder="Between 0 and 100"
+          formatter={v => `${v}%`}
+          value={10}
+          parser={v => parseInt(v?.replace('%', '') ?? '0')}
           onChange={(val: number) => {
             props.setAttributes({
               ...props.attributes,
@@ -156,7 +158,7 @@ export const RoyaltiesStep = (props: {
       {[...fixedCreators, ...creators].length > 0 && (
         <div>
           <label>
-            <span>Creators Split</span>
+            <h3>Creators Split</h3>
             <p>
               This is how much of the proceeds from the initial sale and any
               royalties will be split out amongst the creators.

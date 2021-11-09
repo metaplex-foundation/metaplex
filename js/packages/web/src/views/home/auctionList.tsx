@@ -1,16 +1,16 @@
+import { LoadingOutlined } from '@ant-design/icons';
+import { useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Alert, Button, Spin } from 'antd';
 import React from 'react';
+import useInfiniteScroll from 'react-infinite-scroll-hook';
 import { Link } from 'react-router-dom';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
-import useInfiniteScroll from 'react-infinite-scroll-hook';
-import { LoadingOutlined } from '@ant-design/icons';
-import { useInfiniteScrollAuctions } from '../../hooks';
-import { useStore } from '@oyster/common';
-import { useAuctionManagersToCache } from '../../hooks';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
-import { useAnalytics } from '../../components/Analytics';
-import { useSolPrice } from '../../contexts';
+import {
+  useAuctionManagersToCache,
+  useInfiniteScrollAuctions,
+} from '../../hooks';
 
 export enum LiveAuctionViewState {
   All = '0',
@@ -30,10 +30,8 @@ export const AuctionListView = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
-  const { ownerAddress, storefront } = useStore();
+  const { ownerAddress } = useStore();
   const wallet = useWallet();
-  const { track } = useAnalytics()
-  const solPrice = useSolPrice()
   const { auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
   const isStoreOwner = ownerAddress === wallet.publicKey?.toBase58();
@@ -80,7 +78,7 @@ export const AuctionListView = () => {
         {auctions.map((m, idx) => {
           const id = m.auction.pubkey;
           return (
-            <Link to={`/auction/${id}`} key={idx} >
+            <Link to={`/auction/${id}`} key={idx}>
               <AuctionRenderCard key={id} auctionView={m} />
             </Link>
           );

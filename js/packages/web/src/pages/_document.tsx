@@ -7,7 +7,8 @@ import Document, {
 } from 'next/document';
 import React from 'react';
 
-const GOOGLE_ANALYTICS_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
+const GOOGLE_ANALYTICS_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
 
 export default class MetaplexDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -32,7 +33,7 @@ export default class MetaplexDocument extends Document {
             integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA=="
             crossOrigin="anonymous"
           />
-           {GOOGLE_ANALYTICS_ID && (
+          {GOOGLE_ANALYTICS_ID && (
             <>
               <script
                 async
