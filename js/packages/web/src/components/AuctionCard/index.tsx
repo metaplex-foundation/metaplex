@@ -736,7 +736,7 @@ export const AuctionCard = ({
           direction="vertical"
         >
           <Row gutter={8} align="middle">
-            <Col flex="1 0 auto">
+            <Col span={12}>
               <AuctionNumbers
                 auctionView={auctionView}
                 showAsRow={true}
@@ -744,11 +744,8 @@ export const AuctionCard = ({
                 displaySOL={true}
               />
             </Col>
-            {showRedeemReclaimRefundBtn && (
-              <Col flex="0 0 auto">{redeemReclaimRefundBtn}</Col>
-            )}
             {showPlaceBidUI ? (
-              <Col flex="1 0 auto">
+              <Col span={12}>
                 <AmountLabel
                   title="in your wallet"
                   displaySOL={true}
@@ -794,6 +791,8 @@ export const AuctionCard = ({
               {auctionView.isInstantSale ? 'purchase' : 'place bid'}
             </Button>
           )}
+
+          {showRedeemReclaimRefundBtn && redeemReclaimRefundBtn}
 
           {action}
 

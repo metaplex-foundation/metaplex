@@ -6,8 +6,28 @@
 
 .ant-statistic-title,
 .ant-typography.ant-typography-secondary,
-.ant-select-single.ant-select-open .ant-select-selection-item {
+.ant-select-single.ant-select-open .ant-select-selection-item,
+.ant-menu-dark .ant-menu-item:hover > span > a {
   color: @theme-color-text-faint;
+}
+
+.ant-menu-dark.ant-menu-horizontal > .ant-menu-item {
+  border-color: @theme-color-base;
+}
+
+.ant-menu.ant-menu-dark .ant-menu-item-selected,
+.ant-menu-dark.ant-menu-horizontal > .ant-menu-item:hover {
+  background: @theme-color-base;
+  border-bottom: 4px solid @theme-color-accent;
+  color: @theme-color-text;
+}
+
+.ant-menu-submenu-title .anticon {
+  color: @theme-color-text;
+}
+
+.ant-menu-dark .ant-menu-item-selected > a, .ant-menu-dark .ant-menu-item-selected > span > a, .ant-menu-dark .ant-menu-item-selected > a:hover, .ant-menu-dark .ant-menu-item-selected > span > a:hover {
+  color: @theme-color-text;
 }
 
 .ant-btn-primary[disabled],
