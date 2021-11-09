@@ -4,7 +4,11 @@ import * as path from 'path';
 import { program } from 'commander';
 import log from 'loglevel';
 
-import { SESv2Client, CreateContactListCommand } from "@aws-sdk/client-sesv2"
+import {
+  SESv2Client,
+  CreateContactListCommand,
+  GetContactCommand,
+} from "@aws-sdk/client-sesv2"
 import * as anchor from '@project-serum/anchor';
 import * as discord from "discord.js"
 import {
@@ -468,6 +472,39 @@ programCommand('create_contact_list')
       log.error(err);
     }
     log.info(`Created contact list ${message.ContactListName}`);
+  });
+
+programCommand('get_contact')
+  .argument('<email>', 'email address to query')
+  .option(
+    '--aws-ses-access-key-id <string>',
+    'Access Key Id'
+  )
+  .option(
+    '--aws-ses-secret-access-key <string>',
+    'Secret Access Key'
+  )
+  .addHelpText('before', 'A thin wrapper mimicking `aws sesv2 get-contact`')
+  .action(async (email, options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    const client = new SESv2Client({
+      region: "us-east-2",
+      credentials: {
+        accessKeyId: options.awsSesAccessKeyId,
+        secretAccessKey: options.awsSesSecretAccessKey,
+      },
+    });
+
+    try {
+      const response = await client.send(new GetContactCommand({
+        ContactListName: "Gumdrop",
+        EmailAddress: email,
+      }));
+      console.log(response);
+    } catch (err) {
+      log.error(err);
+    }
   });
 
 function programCommand(name: string) {
