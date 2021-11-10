@@ -300,7 +300,7 @@ export const validateEditionClaims = async (
     if (c.edition <= 0) {
       throw new Error(`Claimant ${idx} assigned invalid edition ${c.edition}`);
     }
-    if (c.edition > maxSupply) {
+    if (maxSupply !== null && c.edition > maxSupply) {
       throw new Error(`Claimant ${idx} assigned edition ${c.edition} which is beyond the max supply`);
     }
     if (c.edition in editions) {
