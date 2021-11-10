@@ -760,8 +760,8 @@ export const AuctionCard = ({
               </Col>
             ) : (
               <>
-                <Col flex="0 0 auto">
-                  <HowAuctionsWorkModal buttonSize="large" />
+                <Col flex="1 0 auto">
+                  <HowAuctionsWorkModal buttonBlock buttonSize="large" />
                 </Col>
                 {showStartOrPlaceBidBtns && (
                   <Col flex="0 0 auto">

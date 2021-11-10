@@ -5,7 +5,7 @@ import {
   useMeta,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Col, Divider, List, Row, Skeleton, Space, Tag } from 'antd';
+import { Button, Col, Divider, List, Row, Skeleton, Space, Tag, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
@@ -15,6 +15,7 @@ import { MetaAvatar } from '../../components/MetaAvatar';
 import { ViewOn } from '../../components/ViewOn';
 import { useArt, useExtendedArt } from '../../hooks';
 import { ArtType } from '../../types';
+
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
@@ -199,15 +200,17 @@ export const ArtView = () => {
             <Divider />
             <br />
             <div>Attributes</div>
-            <List size="large" grid={{ column: 4 }}>
-              {attributes.map(attribute => (
-                <List.Item key={attribute.display_type}>
-                  <List.Item.Meta
-                    title={attribute.trait_type}
-                    description={attribute.value}
-                  />
-                </List.Item>
-              ))}
+
+            <List>
+              {attributes.map((attribute, i) => {
+                return (
+                  <List.Item key={i}>
+                    <List.Item.Meta
+                      title={<Typography.Text type="secondary"> {attribute.trait_type} </Typography.Text>}
+                      description={<Typography.Text> {attribute.value} </Typography.Text>} />
+                  </List.Item>
+                );
+              })}
             </List>
           </>
         )}

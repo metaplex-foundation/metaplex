@@ -6,6 +6,7 @@ import { InstructionsModal } from '../InstructionsModal';
 export const HowAuctionsWorkModal = (props: {
   buttonSize?: ButtonProps['size'];
   buttonType?: ButtonProps['type'];
+  buttonBlock?: boolean;
 }) => {
   return (
     <InstructionsModal
