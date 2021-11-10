@@ -6,12 +6,10 @@ export async function getOAuthToken(
     auth_url: string,
     token_url: string,
 ) {
-    console.log("Getting OAuth Token");
     const urlParams = new URLSearchParams(window.location.search);
     const code: string | null = urlParams.get('code');
 
     if (!!code) {
-        console.log("Handling Redirect");
         await handleRedirect(client_id, redirect_url, token_url);
         
         window.location.search = "";
@@ -37,7 +35,6 @@ async function loginWithRedirect(
     auth_url: string
 ) {
     const stateIn = encode(createRandomString());
-    //const nonceIn = encode(createRandomString());
     const code_verifier = createRandomString();
     const code_challengeBuffer = await sha256(code_verifier);
     const code_challenge = bufferToBase64UrlEncoded(code_challengeBuffer);
@@ -62,7 +59,7 @@ async function handleRedirect(
 ) {
 
     const storage = JSON.parse(window.sessionStorage.getItem('rpc.oauth')!);
-    const state = storage.state;
+    //const state = storage.state;
     const code_verifier = storage.code_verifier;
 
     const urlParams = new URLSearchParams(window.location.search);

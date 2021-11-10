@@ -32,26 +32,17 @@ const candyMachineId = process.env.REACT_APP_CANDY_MACHINE_ID
   ? new anchor.web3.PublicKey(process.env.REACT_APP_CANDY_MACHINE_ID)
   : undefined;
 
-const fairLaunchId = new anchor.web3.PublicKey(
-  process.env.REACT_APP_FAIR_LAUNCH_ID!,
-);
+const fairLaunchId = process.env.REACT_APP_FAIR_LAUNCH_ID 
+  ? new anchor.web3.PublicKey(process.env.REACT_APP_FAIR_LAUNCH_ID) 
+  : undefined;
 
 const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
 
 const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST!;
 
-// const connection = new anchor.web3.Connection(rpcHost);
-
 const startDateSeed = parseInt(process.env.REACT_APP_CANDY_START_DATE!, 10);
 
 const txTimeout = 30000; // milliseconds (confirm this works for your project)
-
-const OAuthConf = {
-  client_id: 'moshimoshi',
-  redirect_uri: 'http://localhost:8080',
-  auth_url: 'https://auth-fra1.rpcpool.com:8443/oauth2/auth',
-  token_url: 'https://auth-fra1.rpcpool.com:8443/oauth2/token',
-}
 
 const App = () => {
   const endpoint = useMemo(() => clusterApiUrl(network), []);
@@ -59,12 +50,17 @@ const App = () => {
   const [ connection, setConnection ] = useState<Connection>(new anchor.web3.Connection(rpcHost))
 
   useEffect(() => {
+    if (!process.env.REACT_APP_RPC_OAUTH_ENABLED) {
+      console.log('OAuth for RPC disabled');
+      return;
+    }
+
     (async () => {
       const accessToken = await getOAuthToken(
-        OAuthConf.client_id,
-        OAuthConf.redirect_uri,
-        OAuthConf.auth_url,
-        OAuthConf.token_url,
+        process.env.REACT_APP_RPC_OAUTH_CLIENT_ID!,
+        process.env.REACT_APP_RPC_OAUTH_REDIRECT_URL!,
+        process.env.REACT_APP_RPC_OAUTH_AUTH_URL!,
+        process.env.REACT_APP_RPC_OAUTH_TOKEN_URL!,
       );
 
       setConnection(new anchor.web3.Connection(rpcHost, { httpHeaders: { 'Authorization': `Bearer ${accessToken}`}}));
@@ -83,7 +79,7 @@ const App = () => {
         <WalletProvider wallets={wallets} autoConnect>
           <WalletDialogProvider>
             <ConfettiProvider>
-              <Home
+            <Home
                 candyMachineId={candyMachineId}
                 fairLaunchId={fairLaunchId}
                 connection={connection}

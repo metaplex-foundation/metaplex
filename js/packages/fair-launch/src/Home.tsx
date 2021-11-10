@@ -45,6 +45,7 @@ import {
 
 import { formatNumber, getAtaForMint, toDate } from './utils';
 import Countdown from 'react-countdown';
+import OnlyCandy from './CandyMacnineOnly';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -175,7 +176,7 @@ function getPhase(
     return Phase.Phase1;
   } else if (phaseTwoEnd && curr <= phaseTwoEnd) {
     return Phase.Phase2;
-  } else if (!fairLaunch?.state.phaseThreeStarted) {
+  } else if (fairLaunch && !fairLaunch?.state.phaseThreeStarted) {
     return Phase.Lottery;
   } else if (
     fairLaunch?.state.phaseThreeStarted &&
@@ -192,7 +193,7 @@ function getPhase(
 
 export interface HomeProps {
   candyMachineId?: anchor.web3.PublicKey;
-  fairLaunchId: anchor.web3.PublicKey;
+  fairLaunchId?: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   startDate: number;
   txTimeout: number;
@@ -336,7 +337,7 @@ const Home = (props: HomeProps) => {
 
   useEffect(() => {
     (async () => {
-      if (!anchorWallet) {
+      if (!anchorWallet || !props.fairLaunchId) {
         return;
       }
 
@@ -825,6 +826,16 @@ const Home = (props: HomeProps) => {
                   </>
                 )}
 
+                { !props.fairLaunchId && !!props.candyMachineId
+                  ? <OnlyCandy
+                  candyMachineId={props.candyMachineId} 
+                  connection={props.connection} 
+                  startDate={props.startDate} 
+                  txTimeout={props.txTimeout}
+                />
+                  : null
+                }
+
                 {phase === Phase.Phase4 && (
                   <>
                     {(!fairLaunch ||
@@ -878,7 +889,7 @@ const Home = (props: HomeProps) => {
               justifyContent="space-between"
               color="textSecondary"
             >
-              <Link
+              { !!fairLaunch ? <Link
                 component="button"
                 variant="body2"
                 color="textSecondary"
@@ -888,7 +899,7 @@ const Home = (props: HomeProps) => {
                 }}
               >
                 How this raffle works
-              </Link>
+              </Link> : undefined }
               {fairLaunch?.ticket.data && (
                 <Link
                   component="button"
