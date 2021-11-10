@@ -286,19 +286,16 @@ export const AuctionCard = ({
     auctionView.auctionManager.numWinners.toNumber() === 0;
 
   const minBid =
-    tickSize &&
     (isUpcoming || bids.length === 0
       ? fromLamports(
           participationOnly ? participationFixedPrice : priceFloor,
           mintInfo,
         )
-      : isStarted && bids.length > 0
-      ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
-      : 9999999) +
-      tickSize.toNumber() / LAMPORTS_PER_SOL;
-
+      : isStarted && bids.length > 0 ? parseFloat(formatTokenAmount(bids[0].info.lastBid.toNumber(), mintInfo)) : 9999999) + (tickSize ? (tickSize.toNumber() / LAMPORTS_PER_SOL) : 0);
+  const notEnoughFundsToBid = value && (value > balance.balance);
   const invalidBid =
     tickSizeInvalid ||
+    notEnoughFundsToBid ||
     gapBidInvalid ||
     !myPayingAccount ||
     value === undefined ||
@@ -802,6 +799,11 @@ export const AuctionCard = ({
               again.
             </Text>
           )}
+          {notEnoughFundsToBid && (
+            <Text type="danger">
+              You do not have enough funds to fulfill the bid.
+            </Text>
+          )}
           {tickSizeInvalid && tickSize && (
             <Text type="danger">
               Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
@@ -814,7 +816,7 @@ export const AuctionCard = ({
             </Text>
           )}
           {!loading && value !== undefined && showPlaceBidUI && invalidBid && (
-            <Text type="danger">Invalid amount</Text>
+            <Text type="danger">Invalid amount.</Text>
           )}
         </Space>
       </Card>

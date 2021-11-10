@@ -1,18 +1,19 @@
 import React from 'react';
-import { Space, Button } from 'antd';
+import { Space, Button, Typography } from 'antd';
 import { useArt } from '../../hooks';
 import { useConnectionConfig } from '@oyster/common';
 import { Art } from '../../types';
 
 type ViewOnProps = { id: string; art?: undefined } | { art: Art };
+const { Text } = Typography;
 
 export const ViewOn = (props: ViewOnProps) => {
   const { env } = useConnectionConfig();
   const art = props.art ?? useArt(props.id);
 
   return (
-    <div>
-      <h6>View on</h6>
+    <Space direction="vertical" size="small">
+      <Text>View on</Text>
       <Space direction="horizontal">
         <Button onClick={() => window.open(art.uri || '', '_blank')}>
           Metadata
@@ -30,6 +31,6 @@ export const ViewOn = (props: ViewOnProps) => {
           Transaction
         </Button>
       </Space>
-    </div>
+    </Space>
   );
 };

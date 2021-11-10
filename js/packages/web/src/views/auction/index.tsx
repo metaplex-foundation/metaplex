@@ -17,7 +17,7 @@ import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import { MintInfo } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Button, Carousel, Col, List, Row, Skeleton, Space, Spin } from 'antd';
+import { Button, Carousel, Col, List, Row, Skeleton, Space, Spin, Typography } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format } from 'timeago.js';
@@ -37,6 +37,8 @@ import {
 } from '../../hooks';
 import { ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
+
+const { Text } = Typography;
 
 export const AuctionItem = ({
   item,
@@ -104,7 +106,7 @@ export const AuctionView = () => {
 
   return (
     <Row justify="center" ref={ref} gutter={[48, 0]}>
-      <Col span={24} md={6} lg={8}>
+      <Col span={24} md={{ span: 20 }} lg={9}>
         <Carousel
           className="metaplex-spacing-bottom-md"
           autoplay={false}
@@ -112,15 +114,17 @@ export const AuctionView = () => {
         >
           {items}
         </Carousel>
-        <h6>ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}</h6>
-        <p>
-          {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-          {description ||
-            (winnerCount !== undefined && <div>No description provided.</div>)}
-        </p>
+        <Space direction="vertical" size="small">
+          <Text>ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}</Text>
+          <p>
+            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
+            {description ||
+              (winnerCount !== undefined && <div>No description provided.</div>)}
+          </p>
+        </Space>
         {attributes && (
           <div>
-            <h6>Attributes</h6>
+            <Text>Attributes</Text>
             <List grid={{ column: 4 }}>
               {attributes.map((attribute, index) => (
                 <List.Item key={`${attribute.value}-${index}`}>
@@ -135,23 +139,21 @@ export const AuctionView = () => {
         )}
       </Col>
 
-      <Col span={24} md={{ offset: 0, span: 16 }} lg={{ offset: 2, span: 12 }}>
+      <Col span={24} lg={{ offset: 1, span: 13 }}>
         <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
         <Row className="metaplex-spacing-bottom-lg">
           <Col span={12}>
             <Space direction="horizontal" align="start">
-              <div>
-                <h6>CREATED BY</h6>
-                <span>{<MetaAvatar creators={creators} />}</span>
-              </div>
-              <div>
-                <h6>Edition</h6>
-                <span>
-                  {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
-                </span>
-              </div>
-              <div>
-                <h6>Winners</h6>
+              <Space direction="vertical" size="small">
+                <Text>CREATED BY</Text>
+                <MetaAvatar creators={creators} />
+              </Space>
+              <Space direction="vertical" size="small">
+                <Text>Edition</Text>
+                {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
+              </Space>
+              <Space direction="vertical" size="small">
+                <Text>Winners</Text>
                 <span>
                   {winnerCount === undefined ? (
                     <Skeleton paragraph={{ rows: 0 }} />
@@ -159,17 +161,15 @@ export const AuctionView = () => {
                     winnerCount
                   )}
                 </span>
-              </div>
-              <div>
-                <h6>NFTS</h6>
-                <span>
-                  {nftCount === undefined ? (
-                    <Skeleton paragraph={{ rows: 0 }} />
-                  ) : (
-                    nftCount
-                  )}
-                </span>
-              </div>
+              </Space>
+              <Space direction="vertical" size="small">
+                <Text>NFTS</Text>
+                {nftCount === undefined ? (
+                  <Skeleton paragraph={{ rows: 0 }} />
+                ) : (
+                  nftCount
+                )}
+              </Space>
             </Space>
           </Col>
           <Col span={12}>
@@ -318,7 +318,7 @@ export const AuctionBids = ({
 
   return (
     <Space direction="vertical" className="metaplex-fullwidth">
-      <h6>Bid History</h6>
+      <Text>Bid History</Text>
       <div>{bidLines.slice(0, 10)}</div>
       {bids.length > 10 && (
         <Button onClick={() => setShowHistoryModal(true)}>

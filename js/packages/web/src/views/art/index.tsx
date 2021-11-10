@@ -16,6 +16,7 @@ import { ViewOn } from '../../components/ViewOn';
 import { useArt, useExtendedArt } from '../../hooks';
 import { ArtType } from '../../types';
 
+const { Text } = Typography;
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
@@ -95,7 +96,7 @@ export const ArtView = () => {
           <h1>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
           <Row>
             <Col span={6}>
-              <h6>Royalties</h6>
+              <Text>Royalties</Text>
               <div>
                 {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
               </div>
@@ -139,12 +140,12 @@ export const ArtView = () => {
             })}
           </Space>
           <div>
-            <h6>Edition</h6>
+            <Text>Edition</Text>
             <div>{badge}</div>
           </div>
           {art.type === ArtType.Master && (
             <div>
-              <h6>Max Supply</h6>
+              <Text>Max Supply</Text>
               <div>{maxSupply}</div>
             </div>
           )}
@@ -206,8 +207,8 @@ export const ArtView = () => {
                 return (
                   <List.Item key={i}>
                     <List.Item.Meta
-                      title={<Typography.Text type="secondary"> {attribute.trait_type} </Typography.Text>}
-                      description={<Typography.Text> {attribute.value} </Typography.Text>} />
+                      title={<Text type="secondary"> {attribute.trait_type} </Text>}
+                      description={<Text> {attribute.value} </Text>} />
                   </List.Item>
                 );
               })}

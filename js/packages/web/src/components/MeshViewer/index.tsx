@@ -14,6 +14,7 @@ export function MeshViewer(props: MeshViewerProps) {
       auto-rotate
       rotation-per-second="40deg"
       camera-controls
+      class="metaplex-3d-viewer"
     />
   );
 }
