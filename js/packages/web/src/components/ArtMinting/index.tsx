@@ -46,7 +46,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
       0) > 0;
   const isMasterEditionV1 = artMintTokenAccount
     ? decodeMasterEdition(artMintTokenAccount.account.data).key ===
-      MetadataKey.MasterEditionV1
+    MetadataKey.MasterEditionV1
     : false;
   const renderMintEdition =
     isArtMasterEdition &&
@@ -161,39 +161,43 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
             onOk={mint}
             onCancel={() => setShowMintModal(false)}
           >
-            <Form.Item
-              label={<h3>Mint to</h3>}
-              labelAlign="left"
-              colon={false}
-              validateStatus={mintingDestinationErr ? 'error' : 'success'}
-              help={mintingDestinationErr}
+            <Form
+              layout="vertical"
             >
-              <Input
-                placeholder="Address to mint edition to"
-                value={mintingDestination}
-                onChange={e => {
-                  setMintingDestination(e.target.value);
-                }}
-              />
-            </Form.Item>
+              <Form.Item
+                label={<h3>Mint to</h3>}
+                labelAlign="left"
+                colon={false}
+                validateStatus={mintingDestinationErr ? 'error' : 'success'}
+                help={mintingDestinationErr}
+              >
+                <Input
+                  placeholder="Address to mint edition to"
+                  value={mintingDestination}
+                  onChange={e => {
+                    setMintingDestination(e.target.value);
+                  }}
+                />
+              </Form.Item>
 
-            <Form.Item
-              label={<h3>Number of editions to mint</h3>}
-              labelAlign="left"
-              colon={false}
-            >
-              <InputNumber
-                type="number"
-                placeholder="1"
-                min={1}
-                max={maxEditionsToMint}
-                value={editions}
-                precision={0}
-                onChange={debouncedEditionsChangeHandler}
-              />
-            </Form.Item>
+              <Form.Item
+                label={<h3>Number of editions to mint</h3>}
+                labelAlign="left"
+                colon={false}
+              >
+                <InputNumber
+                  type="number"
+                  placeholder="1"
+                  min={1}
+                  max={maxEditionsToMint}
+                  value={editions}
+                  precision={0}
+                  onChange={debouncedEditionsChangeHandler}
+                />
+              </Form.Item>
 
-            <div>Total cost: {`◎${totalCost}`}</div>
+              <div>Total cost: {`◎${totalCost}`}</div>
+            </Form>
           </Modal>
 
           <MetaplexOverlay visible={showCongrats}>

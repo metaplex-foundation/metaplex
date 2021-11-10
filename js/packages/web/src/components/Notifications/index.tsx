@@ -27,7 +27,7 @@ interface NotificationCard {
   id: string;
   title: string;
   description: string | JSX.Element;
-  action: () => Promise<boolean>;
+  action?: () => Promise<boolean>;
   dismiss?: () => Promise<boolean>;
 }
 
@@ -198,10 +198,7 @@ export function Notifications({
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.name ||
-            m.pubkey}{' '}
-          wants you to approve that you helped create their art{' '}
-          <Link to={`/artworks/${m.pubkey}`}>here.</Link>
+          A whitelisted creator wants you to approve a collaboration. See artwork <Link to={`/artworks/${m.pubkey}`}>here</Link>.
         </span>
       ),
       action: async () => {
@@ -216,46 +213,44 @@ export function Notifications({
     });
   });
 
-  const content = notifications.length ? (
-    <div>
-      <List
-        itemLayout="vertical"
-        size="small"
-        dataSource={notifications.slice(0, 10)}
-        renderItem={(item: NotificationCard) => (
-          <List.Item
-            extra={
-              <>
+  const activeNotifications = notifications.length > 0 ? notifications.slice(0, 10) : [{ title: "No Notifcations", description: "You have no notifications that need attending." }] as NotificationCard[];
+
+  const content = (
+    <List
+      itemLayout="vertical"
+      size="small"
+      className="metaplex-notifications"
+      dataSource={activeNotifications}
+      renderItem={(item: NotificationCard) => (
+        <List.Item
+          extra={
+            <>
+              {item.action && (
                 <RunAction
                   id={item.id}
                   action={item.action}
                   icon={<PlayCircleOutlined />}
                 />
-                {item.dismiss && (
-                  <RunAction
-                    id={item.id}
-                    action={item.dismiss}
-                    icon={<PlayCircleOutlined />}
-                  />
-                )}
-              </>
-            }
-          >
-            <List.Item.Meta
-              title={<span>{item.title}</span>}
-              description={
-                <span>
-                  <i>{item.description}</i>
-                </span>
-              }
-            />
-          </List.Item>
-        )}
-      />
-    </div>
-  ) : (
-    <span>No notifications</span>
+              )}
+              {item.dismiss && (
+                <RunAction
+                  id={item.id}
+                  action={item.dismiss}
+                  icon={<PlayCircleOutlined />}
+                />
+              )}
+            </>
+          }
+        >
+          <List.Item.Meta
+            title={item.title}
+            description={item.description}
+          />
+        </List.Item>
+      )}
+    />
   );
+
 
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
