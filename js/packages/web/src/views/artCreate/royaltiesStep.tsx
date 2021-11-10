@@ -145,7 +145,6 @@ export const RoyaltiesStep = (props: {
           min={0}
           max={100}
           formatter={v => `${v}%`}
-          value={10}
           parser={v => parseInt(v?.replace('%', '') ?? '0')}
           onChange={(val: number) => {
             props.setAttributes({
