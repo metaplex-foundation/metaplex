@@ -23,7 +23,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { notify } from "../../utils";
+import { notify } from "@oyster/common";
 import { DefaultModal } from "../../components";
 
 import "./wallet.less";

@@ -1,4 +1,4 @@
-import { useLocalStorageState } from "../utils/utils";
+import { useLocalStorageState } from "@oyster/common";
 import {
   Keypair,
   Commitment,

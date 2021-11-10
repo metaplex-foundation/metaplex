@@ -31,6 +31,10 @@ import {
 import {
   MintInfo,
 } from "@solana/spl-token";
+import {
+  notify,
+  shortenAddress,
+} from "@oyster/common";
 import BN from 'bn.js';
 
 import {
@@ -40,9 +44,7 @@ import {
 import {
   GUMDROP_DISTRIBUTOR_ID,
   GUMDROP_TEMPORAL_SIGNER,
-  notify,
-  shortenAddress,
-} from "../utils";
+} from "../utils/ids";
 import {
   ClaimantInfo,
   Claimants,

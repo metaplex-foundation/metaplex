@@ -37,6 +37,11 @@ import {
   Token,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+import {
+  notify,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  TOKEN_METADATA_PROGRAM_ID,
+} from "@oyster/common";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
@@ -48,15 +53,14 @@ import {
   CANDY_MACHINE_ID,
   GUMDROP_DISTRIBUTOR_ID,
   GUMDROP_TEMPORAL_SIGNER,
-  TOKEN_METADATA_PROGRAM_ID,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+} from "../utils/ids";
+import {
   getCandyMachine,
   getCandyMachineAddress,
   getEdition,
   getEditionMarkerPda,
   getMetadata,
-  notify,
-} from "../utils";
+} from "../utils/accounts";
 import { MerkleTree } from "../utils/merkleTree";
 import {
   explorerLinkFor,

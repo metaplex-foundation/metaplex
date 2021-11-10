@@ -5,13 +5,15 @@ import {
   MintInfo,
   MintLayout,
 } from "@solana/spl-token";
+import {
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  TOKEN_METADATA_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@oyster/common";
 import BN from 'bn.js';
 
 import {
   CANDY_MACHINE_ID,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  TOKEN_METADATA_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
 } from "./ids";
 
 export const getMintInfo = async (

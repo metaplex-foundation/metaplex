@@ -8,11 +8,9 @@ import { useConnection } from './ConnectionContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { AccountLayout, MintInfo, MintLayout, u64 } from '@solana/spl-token';
+import { EventEmitter, programIds, chunks, StringPublicKey, WRAPPED_SOL_MINT } from '@oyster/common';
+
 import { TokenAccount } from '../models';
-import { chunks } from '../utils/utils';
-import { EventEmitter } from '../utils/eventEmitter';
-import { StringPublicKey, WRAPPED_SOL_MINT } from '../utils/ids';
-import { programIds } from '../utils/programIds';
 
 const AccountsContext = React.createContext<any>(null);
 

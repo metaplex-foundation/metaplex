@@ -8,6 +8,10 @@ import {
 import {
   Token,
 } from "@solana/spl-token";
+import {
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@oyster/common";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
@@ -24,8 +28,6 @@ import {
 import {
   CANDY_MACHINE_ID,
   GUMDROP_DISTRIBUTOR_ID,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
 } from "./ids";
 import {
   MerkleTree,

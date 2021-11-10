@@ -19,14 +19,14 @@ import {
 import {
   Keypair,
 } from "@solana/web3.js";
+import {
+  notify,
+} from "@oyster/common";
 
 import {
   useConnection,
   Connection,
 } from "../contexts";
-import {
-  notify,
-} from "../utils";
 import {
   closeGumdrop,
 } from "../utils/claimant";
