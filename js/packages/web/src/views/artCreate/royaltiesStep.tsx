@@ -93,6 +93,7 @@ export const RoyaltiesStep = (props: {
   const [totalRoyaltyShares, setTotalRoyaltiesShare] = useState<number>(0);
   const [showCreatorsModal, setShowCreatorsModal] = useState<boolean>(false);
   const [isShowErrors, setIsShowErrors] = useState<boolean>(false);
+  const [sellerFeeBasisPoints, setSellerFeeBasisPoints] = useState<number>(1000);
 
   useEffect(() => {
     if (publicKey) {
@@ -124,6 +125,12 @@ export const RoyaltiesStep = (props: {
 
     setTotalRoyaltiesShare(total);
   }, [royalties]);
+  useEffect(() => {
+    props.setAttributes({
+      ...props.attributes,
+      seller_fee_basis_points: sellerFeeBasisPoints
+    })
+  }, [sellerFeeBasisPoints]);
 
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
@@ -145,13 +152,9 @@ export const RoyaltiesStep = (props: {
           min={0}
           max={100}
           formatter={v => `${v}%`}
+          defaultValue={10}
           parser={v => parseInt(v?.replace('%', '') ?? '0')}
-          onChange={(val: number) => {
-            props.setAttributes({
-              ...props.attributes,
-              seller_fee_basis_points: val * 100,
-            });
-          }}
+          onChange={(val: number) => setSellerFeeBasisPoints(val * 100)}
         />
       </label>
       {[...fixedCreators, ...creators].length > 0 && (
