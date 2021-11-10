@@ -188,6 +188,7 @@ export const distributeAwsSes = async (
   return responses;
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export const distributeManual = async (
   auth : AuthKeys,
   source : string,
@@ -205,6 +206,7 @@ export const distributeWallet = async (
 ) => {
   return Array<Response>();
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const urlAndHandleFor = (claimants : Array<ClaimantInfo>) => {
   return claimants.map(info => {

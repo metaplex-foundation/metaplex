@@ -18,7 +18,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 
 import { Settings } from "../Settings";
 
-export const Header = ({ narrow }) => {
+export const Header = ({ narrow } : { narrow : boolean }) => {
   const navs = [
     {
       href: `/gumdrop/`,

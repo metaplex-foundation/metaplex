@@ -23,6 +23,7 @@ import {
 import {
   MintInfo,
   Token,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
@@ -56,7 +57,6 @@ import {
   GUMDROP_TEMPORAL_SIGNER,
   GUMDROP_DISTRIBUTOR_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
 } from "./utils/ids";
 import {
   MerkleTree,

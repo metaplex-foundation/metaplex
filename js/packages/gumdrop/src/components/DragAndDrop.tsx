@@ -3,7 +3,12 @@ import {
   useColorMode,
 } from "../contexts/ColorModeContext";
 
-export const DragAndDrop = (props) => {
+export const DragAndDrop = (
+  props : {
+    handleDrop : (files : FileList) => void,
+    children : React.ReactNode,
+  },
+) => {
   const dropRef = React.useRef<HTMLDivElement>(null);
   const [dragCounter, setDragCounter] = React.useState(0);
   const [dragging, setDragging] = React.useState(false);

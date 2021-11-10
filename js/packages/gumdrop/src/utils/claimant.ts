@@ -48,8 +48,8 @@ export type ClaimantInfo = {
 const csvStringToArray = (strData) => {
   const objPattern = new RegExp(("(\\,|\\r?\\n|\\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^\\,\\r\\n]*))"),"gi");
   let arrMatches : RegExpExecArray | null = null;
-  let arrData : Array<Array<string>> = [[]];
-  while (!!(arrMatches = objPattern.exec(strData))) {
+  const arrData : Array<Array<string>> = [[]];
+  while ((arrMatches = objPattern.exec(strData))) {
     if (arrMatches[1].length && arrMatches[1] !== ",")
       arrData.push([]);
     arrData[arrData.length - 1].push(
@@ -231,12 +231,12 @@ const getIndexAndMask = (edition: BN) => {
 };
 
 const editionTaken = (marker : Array<number>, edition : BN) : boolean => {
-  let m = getIndexAndMask(edition);
+  const m = getIndexAndMask(edition);
   return (marker[m.index] & m.mask) !== 0;
 }
 
 const setEditionTaken = (marker : Array<number>, edition : BN) => {
-  let m = getIndexAndMask(edition);
+  const m = getIndexAndMask(edition);
   marker[m.index] = marker[m.index] | m.mask;
 }
 
@@ -345,9 +345,9 @@ export const chunk = (
   arr : Buffer,
   len : number,
 ) : Array<Buffer> => {
-  let chunks : Array<Buffer> = [],
-      i = 0,
-      n = arr.length;
+  const chunks : Array<Buffer> = [];
+  const n = arr.length;
+  let i = 0;
 
   while (i < n) {
     chunks.push(arr.slice(i, i += len));

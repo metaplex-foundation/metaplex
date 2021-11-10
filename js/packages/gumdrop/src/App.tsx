@@ -25,11 +25,7 @@ import { Create } from "./components/Create";
 
 const WHITESPACE = "\u00A0";
 
-type AboutProps = {};
-
-const About = (
-  props : AboutProps,
-) => {
+const About = () => {
   const summary = (
     <Stack spacing={1}>
       <div>
@@ -45,7 +41,7 @@ const About = (
         href="https://docs.solana.com/implemented-proposals/rent"
         underline="none"
       >
-        "fixed at the genesis"
+        &quot;fixed at the genesis&quot;
       </HyperLink>
       . With the large increase in SOLUSD since genesis, rent costs when
       creating accounts for thousands of users have duly skyrocketed.
@@ -53,7 +49,7 @@ const About = (
 
       <div>
       Simultaneously, NFT projects often have a presale to early project
-      followers and contributors. However, the candy-machine doesn't have the
+      followers and contributors. However, the candy-machine doesn&apos;t have the
       ability to grant early minting to a whitelisted subset of wallets while
       also using the same asset configuration for open launch.
       </div>

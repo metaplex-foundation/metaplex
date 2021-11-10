@@ -60,7 +60,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   tokenMap: new Map<string, TokenInfo>(),
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+export function ConnectionProvider({ children = undefined } : { children : React.ReactNode }) {
   const [endpoint, setEndpoint] = useLocalStorageState(
     "connectionEndpoint",
     ENDPOINTS[0].endpoint

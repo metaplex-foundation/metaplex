@@ -39,8 +39,6 @@ import {
 } from "@solana/spl-token";
 import {
   notify,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  TOKEN_METADATA_PROGRAM_ID,
 } from "@oyster/common";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
@@ -53,6 +51,8 @@ import {
   CANDY_MACHINE_ID,
   GUMDROP_DISTRIBUTOR_ID,
   GUMDROP_TEMPORAL_SIGNER,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  TOKEN_METADATA_PROGRAM_ID,
 } from "../utils/ids";
 import {
   getCandyMachine,
@@ -282,6 +282,7 @@ const buildCandyClaim = async (
   const claimCountAccount = await connection.getAccountInfo(claimCount);
   let nftsAlreadyMinted = 0;
   if (claimCountAccount === null) {
+    // nothing claimed yet
   } else {
     // TODO: subtract already minted?...
     const claimAccountInfo = coder.accounts.decode(
@@ -494,7 +495,7 @@ const buildEditionClaim = async (
   // atm the contract has a special case for when the temporal key is defaulted
   // (aka always passes temporal check)
   // TODO: more flexible
-  let temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
+  const temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
       ? walletKey : distributorInfo.temporal;
 
   const claimCountAccount = await connection.getAccountInfo(claimCount);
@@ -632,7 +633,7 @@ export const Claim = (
       query = stored;
   }
 
-  let params = queryString.parse(query);
+  const params = queryString.parse(query);
   const [distributor, setDistributor] = React.useState(params.distributor as string || "");
   const [claimMethod, setClaimMethod] = React.useState(
         params.tokenAcc ? "transfer"
@@ -762,7 +763,7 @@ export const Claim = (
       throw new Error(`Internal error: PDA generated when distributing to wallet directly`);
     }
 
-    let transaction = new Transaction({
+    const transaction = new Transaction({
       feePayer: wallet.publicKey,
       recentBlockhash: (await connection.getRecentBlockhash("singleGossip")).blockhash,
     });
@@ -1106,7 +1107,7 @@ export const Claim = (
       />
       <Button
         color="info"
-        onClick={(e) => setEditable(!editable)}
+        onClick={() => setEditable(!editable)}
       >
         {!editable ? "Edit Claim" : "Stop Editing"}
       </Button>
@@ -1181,7 +1182,7 @@ export const Claim = (
   const stepper = (
     <React.Fragment>
       <Stepper activeStep={stepToUse}>
-        {steps.map((s, index) => {
+        {steps.map(s => {
           return (
             <Step key={s.name}>
               <StepLabel>{s.name}</StepLabel>

@@ -119,7 +119,7 @@ export const cache = {
 
     const address = id.toBase58();
 
-    let account = genericCache.get(address);
+    const account = genericCache.get(address);
     if (account) {
       return account;
     }
@@ -224,7 +224,7 @@ export const cache = {
     }
 
     const address = id.toBase58();
-    let mint = mintCache.get(address);
+    const mint = mintCache.get(address);
     if (mint) {
       return mint;
     }
@@ -384,7 +384,7 @@ const precacheUserTokenAccounts = async (
   });
 };
 
-export function AccountsProvider({ children = null as any }) {
+export function AccountsProvider({ children = undefined } : { children : React.ReactNode }) {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
@@ -411,8 +411,8 @@ export function AccountsProvider({ children = null as any }) {
     const subs: number[] = [];
     cache.emitter.onCache(args => {
       if (args.isNew && args.isActive) {
-        let id = args.id;
-        let deserialize = args.parser;
+        const id = args.id;
+        const deserialize = args.parser;
         connection.onAccountChange(new PublicKey(id), info => {
           cache.add(id, info, deserialize);
         });

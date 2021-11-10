@@ -4,7 +4,7 @@ import { Modal } from "antd";
 import "./index.css";
 
 export const DefaultModal = (props: any) => {
-  const { children, closeIcon, bodyStyle, width, style, ...rest } = props;
+  const { children, bodyStyle, width, ...rest } = props;
 
   return (
     <Modal

@@ -28,7 +28,7 @@ import Brightness7Icon from "@mui/icons-material/Brightness7";
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 
-export const Settings = ({ narrow }) => {
+export const Settings = ({ narrow } : { narrow : boolean }) => {
   const { disconnect, publicKey } = useWallet();
   const { setEndpoint, env, endpoint } = useConnectionConfig();
   const { setVisible } = useWalletModal();
@@ -56,12 +56,14 @@ export const Settings = ({ narrow }) => {
       innerNarrow: () => (
         `Copy Address (${publicKey && shortenAddress(publicKey.toBase58())})`
       ),
-      inner: () => (
-        <React.Fragment>
-          <CopyOutlined />
-          {publicKey && shortenAddress(publicKey.toBase58())}
-        </React.Fragment>
-      ),
+      inner: function ConnectedWalletCopyC() {
+        return (
+          <React.Fragment>
+            <CopyOutlined />
+            {publicKey && shortenAddress(publicKey.toBase58())}
+          </React.Fragment>
+        );
+      },
     },
     {
       click: open,

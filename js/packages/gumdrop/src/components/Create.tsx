@@ -180,7 +180,8 @@ const hyperLinkData = (data) => {
 
 const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) => {
   const limit = 1000;
-  return ({ show, onSubmit, onDismiss }) => {
+  // eslint-disable-next-line react/prop-types
+  return function ClaimPreviewC({ show, onSubmit, onDismiss }) {
     return (
       <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
         <h2
@@ -273,11 +274,7 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
   }
 };
 
-export type CreateProps = {};
-
-export const Create = (
-  props : CreateProps,
-) => {
+export const Create = () => {
   const connection = useConnection();
   const wallet = useWallet();
 
@@ -441,8 +438,7 @@ export const Create = (
     const shouldSend = await reactModal(
       shouldSendRender(claimants, needsPin, claimMethod, claimInfo, base)
     ) as boolean | undefined;
-    if (shouldSend === true) {
-    } else {
+    if (shouldSend !== true) {
       // dismissed. don't use exceptions for control flow?
       throw new Error("Claim distribution preview not approved");
     }
@@ -475,11 +471,11 @@ export const Create = (
     await distributeClaims(claimants, dropInfo);
   };
 
-  const handleFiles = (files) => {
-    if (files.length !== 1) {
+  const handleFiles = (files : FileList | null) => {
+    if (files === null || files.length !== 1) {
       notify({
         message: "File upload failed",
-        description: `Received ${files.length} files`,
+        description: `Received ${files?.length} files`,
       });
       return;
     }
