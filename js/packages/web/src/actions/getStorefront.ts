@@ -58,6 +58,7 @@ export const getStorefront = async (
       pubkey: values['solana:pubkey'],
       theme: {
         logo: maybeCDN(values['holaplex:theme:logo:url']),
+        banner: maybeCDN(values['holaplex:theme:banner:url']),
         stylesheet: maybeCDN(`${ARWEAVE_URL}/${transaction.id}`),
         color: {
           background: values['holaplex:theme:color:background'],

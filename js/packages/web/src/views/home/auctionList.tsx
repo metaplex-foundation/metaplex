@@ -11,6 +11,7 @@ import { useAuctionManagersToCache } from '../../hooks';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { useAnalytics } from '../../components/Analytics';
 import { useSolPrice } from '../../contexts';
+import { Banner } from '../../components/Banner';
 
 export enum LiveAuctionViewState {
   All = '0',
@@ -76,6 +77,9 @@ export const AuctionListView = () => {
           }
         />
       )}
+      { storefront.theme.banner && 
+        <Banner src={storefront.theme.banner} headingText={''} subHeadingText={''} />
+      }
       <MetaplexMasonry>
         {auctions.map((m, idx) => {
           const id = m.auction.pubkey;
