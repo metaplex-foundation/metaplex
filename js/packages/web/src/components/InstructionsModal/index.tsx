@@ -67,6 +67,7 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         {buttonText}
       </Button>
       <Modal
+        width={1000}
         className="metaplex-instructions-modal"
         title={modalTitle}
         visible={isModalVisible}
