@@ -73,7 +73,7 @@ export const UploadStep = (props: {
   };
 
   return (
-    <Space direction="vertical">
+    <Space direction="vertical" className="metaplex-fullwidth">
       <h2>Now, let&apos;s upload your creation</h2>
       <p>
         Your file will be uploaded to the decentralized web via IPFS. Depending
