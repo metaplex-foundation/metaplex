@@ -6,8 +6,7 @@
 
 .ant-statistic-title,
 .ant-typography.ant-typography-secondary,
-.ant-select-single.ant-select-open .ant-select-selection-item,
-.ant-menu-dark .ant-menu-item:hover > span > a {
+.ant-select-single.ant-select-open .ant-select-selection-item {
   color: @theme-color-text-faint;
 }
 
@@ -26,7 +25,11 @@
   color: @theme-color-text;
 }
 
-.ant-menu-dark .ant-menu-item-selected > a, .ant-menu-dark .ant-menu-item-selected > span > a, .ant-menu-dark .ant-menu-item-selected > a:hover, .ant-menu-dark .ant-menu-item-selected > span > a:hover {
+.ant-menu-dark .ant-menu-item-selected > a,
+.ant-menu-dark .ant-menu-item-selected > span > a,
+.ant-menu-dark .ant-menu-item-selected > a:hover,
+.ant-menu-dark .ant-menu-item-selected > span > a:hover,
+.ant-menu-dark .ant-menu-item:hover > span > a {
   color: @theme-color-text;
 }
 
@@ -88,4 +91,44 @@
 .ant-progress-circle-trail {
   stroke: @theme-color-text;
   opacity: 0.1;
+}
+
+.ant-notification-notice {
+  &-close {
+    &:hover {
+      & when (@theme = dark) {
+        color: @theme-color-text-accent;
+      }
+      & when not (@theme = dark) {
+        color: @theme-color-text-accent;
+      }
+    }
+  }
+}
+
+.@{notification-prefix-cls} {
+  &-notice {
+    &-close {
+      &:hover {
+        & when (@theme = dark) {
+          color: @theme-color-text-faint;
+        }
+        & when not (@theme = dark) {
+          color: @theme-color-text-faint;
+        }
+      }
+    }
+  }
+}
+
+.ant-list-item-meta-description {
+  color: @theme-color-text;
+}
+
+.ant-list-split .ant-list-item {
+  border-bottom: 1px solid @theme-color-base-faint;
+}
+
+.ant-modal-footer {
+  border-top: 1px solid @theme-color-base-faint;
 }

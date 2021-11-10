@@ -1,4 +1,4 @@
-import { LineOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import {
   AuctionDataExtended,
   AuctionState,
@@ -563,7 +563,7 @@ export const AuctionCard = ({
       {loading ||
       auctionView.items.find(i => i.find(it => !it.metadata)) ||
       !myPayingAccount ? (
-        <Spin indicator={<LineOutlined />} />
+        <Spin indicator={<LoadingOutlined />} />
       ) : eligibleForAnything ? (
         `Redeem bid`
       ) : (
