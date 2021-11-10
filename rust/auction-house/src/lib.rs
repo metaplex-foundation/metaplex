@@ -1091,33 +1091,75 @@ pub mod auction_house {
         assert_metadata_valid(metadata, token_account)?;
 
         let ts_info = buyer_trade_state.to_account_info();
+        let token_account_key = token_account.key();
+
         if ts_info.data_is_empty() {
-            let token_account_key = token_account.key();
-            let wallet_key = wallet.key();
             let ts_seeds = [
                 PREFIX.as_bytes(),
-                wallet_key.as_ref(),
-                auction_house_key.as_ref(),
-                token_account_key.as_ref(),
-                auction_house.treasury_mint.as_ref(),
-                token_account.mint.as_ref(),
+                wallet_key.as_ref(),                  // 32 bytes
+                auction_house_key.as_ref(),           // 32 bytes
+                token_account_key.as_ref(),           // 32 bytes
+                auction_house.treasury_mint.as_ref(), // 32 bytes
+                token_account.mint.as_ref(),          // 32 bytes
                 &buyer_price.to_le_bytes(),
                 &token_size.to_le_bytes(),
-                &[trade_state_bump],
+                &[trade_state_bump], // 1 byte
             ];
+
+            let size: usize = 1 + 32 + 32 + 32 + 32 + 32
+                & buyer_price.to_be_bytes().len() + token_size.to_be_bytes().len();
+
             create_or_allocate_account_raw(
                 *ctx.program_id,
                 &ts_info,
                 &rent.to_account_info(),
                 &system_program,
                 &fee_payer,
-                TRADE_STATE_SIZE,
+                size,
                 fee_seeds,
                 &ts_seeds,
             )?;
         }
+
+        let mut data_index = 0;
         let data = &mut ts_info.data.borrow_mut();
-        data[0] = trade_state_bump;
+        data[data_index] = trade_state_bump;
+        data_index += 1;
+
+        for item in wallet_key.to_bytes().iter() {
+            data[data_index] = *item;
+            data_index += 1;
+        }
+
+        for item in auction_house_key.to_bytes().iter() {
+            data[data_index] = *item;
+            data_index += 1;
+        }
+
+        for item in token_account_key.to_bytes().iter() {
+            data[data_index] = *item;
+            data_index += 1;
+        }
+
+        for item in auction_house.treasury_mint.to_bytes().iter() {
+            data[data_index] = *item;
+            data_index += 1;
+        }
+
+        for item in token_account.mint.to_bytes().iter() {
+            data[data_index] = *item;
+            data_index += 1;
+        }
+
+        for item in buyer_price.to_le_bytes().iter() {
+            data[data_index] = *item;
+            data_index += 1;
+        }
+
+        for item in token_size.to_le_bytes().iter() {
+            data[data_index] = *item;
+            data_index += 1;
+        }
 
         Ok(())
     }
@@ -1345,13 +1387,12 @@ pub const AUCTION_HOUSE_SIZE: usize = 8 + //key
 32 + //treasury mint
 32 + //authority
 32 + // creator
-1 + // bump
-1 + // treasury_bump
-1 + // fee_payer_bump
+8 + // bump
+8 + // treasury_bump
+8 + // fee_payer_bump
 2 + // seller fee basis points
 1 + // requires sign off
-1 + // can change sale price
-221; //padding
+200; //padding
 
 #[account]
 pub struct AuctionHouse {
