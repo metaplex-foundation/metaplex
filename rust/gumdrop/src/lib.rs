@@ -8,9 +8,8 @@ use solana_program::{
     sysvar::{self},
     system_instruction::self,
 };
-use spl_token_metadata::{self};
+use metaplex_token_metadata::{self};
 use std::io::Write;
-use vipers::{assert_owner};
 
 pub mod merkle_proof;
 
@@ -229,7 +228,10 @@ pub mod merkle_distributor {
         proof: Vec<[u8; 32]>,
     ) -> ProgramResult {
         let claim_status = &mut ctx.accounts.claim_status;
-        assert_owner!(claim_status.to_account_info(), ID);
+        require!(
+            *claim_status.to_account_info().owner == ID,
+            OwnerMismatch
+        );
         require!(
             // This check is redudant, we should not be able to initialize a claim status account at the same key.
             !claim_status.is_claimed && claim_status.claimed_at == 0,
@@ -314,7 +316,10 @@ pub mod merkle_distributor {
             index,
             claimant_secret,
         )?;
-        assert_owner!(claim_count.to_account_info(), ID);
+        require!(
+            *claim_count.to_account_info().owner == ID,
+            OwnerMismatch
+        );
 
         // TODO: this is a bit weird but we verify elsewhere that the candy_machine_config is
         // actually a config thing and not a mint
@@ -346,8 +351,8 @@ pub mod merkle_distributor {
             let rent = &Rent::get()?;
             let mut candy_machine_data: &[u8] = &ctx.accounts.candy_machine.try_borrow_data()?;
             required_lamports = CandyMachine::try_deserialize(&mut candy_machine_data)?.data.price
-                + rent.minimum_balance(spl_token_metadata::state::MAX_METADATA_LEN)
-                + rent.minimum_balance(spl_token_metadata::state::MAX_MASTER_EDITION_LEN);
+                + rent.minimum_balance(metaplex_token_metadata::state::MAX_METADATA_LEN)
+                + rent.minimum_balance(metaplex_token_metadata::state::MAX_MASTER_EDITION_LEN);
         }
         msg!(
             "Transferring {} lamports to distributor wallet for candy machine mint",
@@ -444,7 +449,10 @@ pub mod merkle_distributor {
             index,
             claimant_secret,
         )?;
-        assert_owner!(claim_count.to_account_info(), ID);
+        require!(
+            *claim_count.to_account_info().owner == ID,
+            OwnerMismatch
+        );
 
         // TODO: master_edition or something else? should we has the edition here also?
         let node = solana_program::keccak::hashv(&[
@@ -493,7 +501,7 @@ pub mod merkle_distributor {
         ];
 
         invoke_signed(
-            &spl_token_metadata::instruction::mint_new_edition_from_master_edition_via_token(
+            &metaplex_token_metadata::instruction::mint_new_edition_from_master_edition_via_token(
                 *ctx.accounts.token_metadata_program.key,
                 *ctx.accounts.metadata_new_metadata.key,
                 *ctx.accounts.metadata_new_edition.key,
@@ -735,7 +743,7 @@ pub struct ClaimCandy<'info> {
     pub token_program: Program<'info, Token>,
 
     /// SPL [TokenMetadata] program.
-    // #[account(address = spl_token_metadata::id())]
+    // #[account(address = metaplex_token_metadata::id())]
     pub token_metadata_program: AccountInfo<'info>,
 
     /// SPL [CandyMachine] program.
@@ -826,7 +834,7 @@ pub struct ClaimEdition<'info> {
     pub token_program: Program<'info, Token>,
 
     /// SPL [TokenMetadata] program.
-    // #[account(address = spl_token_metadata::id())]
+    // #[account(address = metaplex_token_metadata::id())]
     pub token_metadata_program: AccountInfo<'info>,
 
     rent: Sysvar<'info, Rent>,

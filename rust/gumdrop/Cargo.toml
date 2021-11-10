@@ -25,7 +25,6 @@ solana-program = "1.7.11"
 spl-associated-token-account = { version = "1.0.3", features = [
     "no-entrypoint"
 ] }
-spl-token-metadata = { version = "0.0.1", features = [
+metaplex-token-metadata = { path = "../token-metadata/program", features = [
     "no-entrypoint"
 ] }
-vipers = "1.2.1"
