@@ -42,7 +42,7 @@ const MeshArtContent = ({
   return <MeshViewer url={renderURL} className={className} style={style} />;
 };
 
-const CachedImageContent = ({
+export const CachedImageContent = ({
   uri,
   className,
   preview,

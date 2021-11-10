@@ -1,6 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
 export const CANDY_MACHINE = 'candy_machine';
 export const AUCTION_HOUSE = 'auction_house';
+export const TOKEN_ENTANGLER = 'token_entangler';
+export const ESCROW = 'escrow';
+export const A = 'A';
+export const B = 'B';
 export const FEE_PAYER = 'fee_payer';
 export const TREASURY = 'treasury';
 export const MAX_NAME_LENGTH = 32;
@@ -27,6 +31,9 @@ export const FAIR_LAUNCH_PROGRAM_ID = new PublicKey(
 );
 export const AUCTION_HOUSE_PROGRAM_ID = new PublicKey(
   'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk',
+);
+export const TOKEN_ENTANGLEMENT_PROGRAM_ID = new PublicKey(
+  'qntmGodpGkrM42mN68VCZHXnKqDCT8rdY23wFcXCLPd',
 );
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',

@@ -14,14 +14,21 @@ incremented for features.
 ### Features
 
 - Added Token Entangler smart contract and CLI
+- Add update authority command for candy machine
+- Implemented NFT Packs Creation and Viewing Flow
+- Display items redeemed when running Candy Machine Show command
+- Ability to create auctions with any SPL-token mint by @JuanRdBO
+- Condenses Instant Sale to be one buy button not by then claim.
 
 ### Fixes
 
-- N/A
+- Fixes #840 - Claim button visible after claim.
+- Improve Candy Machine CLI `create_generative_art` command performance. (@0xCryptoSheik in #899)
+- Fixes an issue with Instant Sale when the auction is an english auction. By and claim buttons were broken.
 
 ### Breaking
 
-- N/A
+- Remove undocumented graphql package
 
 ## [1.0.0] - 2021-10-30
 

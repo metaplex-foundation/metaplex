@@ -11,6 +11,7 @@ import {
 import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { useAuctionCountdown } from '../../hooks/useAuctionCountdown';
+import { useTokenList } from '../../contexts/tokenList';
 
 export const AuctionCountdown = (props: {
   auctionView: AuctionView;
@@ -34,7 +35,7 @@ export const AuctionNumbers = (props: {
   auctionView: AuctionView;
   hideCountdown?: boolean;
   showAsRow?: boolean;
-  displaySOL?: boolean;
+  displaySymbol?: boolean;
 }) => {
   const { auctionView } = props;
   const state = useAuctionCountdown(auctionView);
@@ -52,6 +53,7 @@ export const AuctionNumbers = (props: {
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
   const isStarted = auctionView.state === AuctionViewState.Live;
 
+  const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == auctionView.auction.info.tokenMint)[0]
   const ended = isEnded(state);
 
   return (
@@ -60,9 +62,10 @@ export const AuctionNumbers = (props: {
         <>
           {(isUpcoming || bids.length === 0 || auctionView.isInstantSale) && (
             <AmountLabel
-              displaySOL={props.displaySOL}
+              displaySymbol={tokenInfo?.symbol || "CUSTOM"}
               style={{ marginBottom: props.showAsRow ? 0 : 10 }}
               title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
+              tokenInfo = {tokenInfo}
               amount={fromLamports(
                 participationOnly ? participationFixedPrice : priceFloor,
                 mintInfo,
@@ -71,12 +74,13 @@ export const AuctionNumbers = (props: {
           )}
           {!auctionView.isInstantSale && isStarted && bids.length > 0 && (
             <AmountLabel
-              displaySOL={props.displaySOL}
+            displaySymbol={tokenInfo?.symbol || "CUSTOM"}
               style={{ marginBottom: props.showAsRow ? 0 : 10 }}
               containerStyle={{
                 flexDirection: props.showAsRow ? ' row' : 'column',
               }}
               title="Highest bid"
+              tokenInfo = {tokenInfo}
               amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
             />
           )}

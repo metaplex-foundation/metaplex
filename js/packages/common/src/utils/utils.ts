@@ -220,6 +220,10 @@ const abbreviateNumber = (number: number, precision: number) => {
     const scale = Math.pow(10, tier * 3);
     scaled = number / scale;
   }
+  // Added this to remove unneeded decimals when abbreviating number
+  precision = Number.isInteger(scaled) ? 0 : precision;
+
+  //console.log("Number", scaled, precision)
 
   return scaled.toFixed(precision) + suffix;
 };
