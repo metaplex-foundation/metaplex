@@ -15,8 +15,9 @@ import {
   CandyMachineAccount,
   awaitTransactionSignatureConfirmation,
   getCandyMachineState,
-  mintOneToken,
   shortenAddress,
+  mintOneTokenExiled,
+  awaitTransactionSignatureConfirmationExiled,
 } from "./candy-machine";
 import { toDate } from "./utils";
 
@@ -100,20 +101,23 @@ const OnlyCandy = (props: OnlyCandyProps) => {
     try {
       setIsMinting(true);
       if (wallet && candyMachine?.program) {
-        const mintTxId = await mintOneToken(
+        const mintTxId = await mintOneTokenExiled(
           candyMachine,
-        //   props.config,
           wallet.publicKey,
-        //   props.treasury
+          props.connection
         );
 
-        const status = await awaitTransactionSignatureConfirmation(
+        console.log(mintTxId);
+
+        const status = await awaitTransactionSignatureConfirmationExiled(
           mintTxId,
           props.txTimeout,
           props.connection,
           "singleGossip",
           false
         );
+
+        console.log(status)
 
         if (!status?.err) {
           setAlertState({

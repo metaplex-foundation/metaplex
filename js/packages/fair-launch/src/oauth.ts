@@ -18,14 +18,10 @@ export async function getOAuthToken(
     const tokenObjectRaw = window.sessionStorage.getItem('rpc.oauth.token') as any;
 
     if (!tokenObjectRaw || JSON.parse(tokenObjectRaw).expires < Date.now()) {
-        console.log("Getting new token");
-        return loginWithRedirect(client_id, redirect_url, auth_url);
+       return loginWithRedirect(client_id, redirect_url, auth_url);
     }
 
     const tokenObject = JSON.parse(tokenObjectRaw);
-
-    console.log("Token Found", tokenObject, tokenObject.accessToken);
-
     return tokenObject.accessToken;
 }
 
