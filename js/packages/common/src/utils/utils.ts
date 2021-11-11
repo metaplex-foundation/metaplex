@@ -240,7 +240,7 @@ export function formatTokenAmount(
   rate: number = 1.0,
   prefix = '',
   suffix = '',
-  precision = 2,
+  precision = 3,
   abbr = false,
 ): string {
   if (!account) {
