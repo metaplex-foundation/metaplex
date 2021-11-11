@@ -12,18 +12,11 @@ import {
   StringPublicKey,
   WalletSigner,
   toPublicKey,
-  createAssociatedTokenAccountInstruction,
-  programIds,
   pubkeyToString,
   WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
-import {
-  TransactionInstruction,
-  Keypair,
-  Connection,
-  PublicKey,
-} from '@solana/web3.js';
+import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
 import { AuctionView } from '../hooks';
 import {
   BidRedemptionTicket,
@@ -145,7 +138,7 @@ export async function setupCancelBid(
         cancelSigners,
       );
     } else {
-      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
+      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection);
     }
 
     await cancelBid(
