@@ -69,7 +69,7 @@ function AppWrapper({ storefront }: AppProps) {
     setHasStylesheet(true);
 
     return cleanup;
-  }, []);
+  }, [storefront.theme]);
 
   useEffect(() => {
     const onHasLogo = () => {
