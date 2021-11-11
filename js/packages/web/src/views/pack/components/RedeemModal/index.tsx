@@ -144,7 +144,13 @@ const RedeemModal = ({
                 {metadataByPackCard &&
                   Object.values(metadataByPackCard)?.map(
                     item =>
-                      item && <RedeemCard key={item.pubkey} item={item} />,
+                      item && (
+                        <RedeemCard
+                          key={item.pubkey}
+                          item={item}
+                          probability={item.probability}
+                        />
+                      ),
                   )}
               </div>
 

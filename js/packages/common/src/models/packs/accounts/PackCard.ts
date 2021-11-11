@@ -1,5 +1,4 @@
 import { Connection } from '@solana/web3.js';
-import BN from 'bn.js';
 import { deserializeUnchecked } from 'borsh';
 
 import { PackKey, MAX_PACK_CARD_SIZE } from '..';
@@ -12,7 +11,7 @@ export class PackCard {
   master: StringPublicKey;
   metadata: StringPublicKey;
   tokenAccount: StringPublicKey;
-  maxSupply: BN;
+  maxSupply: number;
   weight: number;
 
   constructor(args: {
@@ -21,7 +20,7 @@ export class PackCard {
     master: StringPublicKey;
     metadata: StringPublicKey;
     tokenAccount: StringPublicKey;
-    maxSupply: BN;
+    maxSupply: number;
     weight: number;
   }) {
     this.key = PackKey.PackSet;

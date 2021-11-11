@@ -5,9 +5,13 @@ import { ArtContent } from '../../../../../../components/ArtContent';
 
 interface IPropsRedeemCard {
   item: ParsedAccount<Metadata>;
+  probability: string;
 }
 
-const RedeemCard = ({ item: { info, pubkey } }: IPropsRedeemCard) => (
+const RedeemCard = ({
+  item: { info, pubkey },
+  probability,
+}: IPropsRedeemCard) => (
   <div className="modal-redeem__card">
     <div className="info">
       <div className="modal-redeem__image">
@@ -17,9 +21,9 @@ const RedeemCard = ({ item: { info, pubkey } }: IPropsRedeemCard) => (
         <p className="info__title">{info.data.name}</p>
       </div>
     </div>
-    {/* <div className="modal-redeem__percentage">
-      <p>{`${percentage}% chance`}</p>
-    </div> */}
+    <div className="modal-redeem__percentage">
+      <p>{`${probability}% chance`}</p>
+    </div>
   </div>
 );
 
