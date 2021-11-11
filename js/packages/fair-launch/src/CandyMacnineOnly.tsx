@@ -13,7 +13,6 @@ import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 
 import {
   CandyMachineAccount,
-  awaitTransactionSignatureConfirmation,
   getCandyMachineState,
   shortenAddress,
   mintOneTokenExiled,
