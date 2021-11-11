@@ -22,9 +22,6 @@ export const Banner = ({
         {actionComponent}
       </div>
       {children}
-      <div id="metaplex-banner-powered-by">
-        POWERED BY <b>METAPLEX</b>
-      </div>
     </div>
   );
 };

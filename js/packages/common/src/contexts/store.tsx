@@ -17,6 +17,7 @@ export interface StorefrontMeta {
 
 export interface StorefrontTheme {
   logo?: string;
+  banner?: string;
   stylesheet: string;
   color: {
     primary: string;
