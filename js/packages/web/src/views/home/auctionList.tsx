@@ -47,7 +47,7 @@ export const AuctionListView = () => {
       {showCacheAuctionsAlert && (
         <Alert
           message="Attention Store Owner"
-          className="app-alert-banner"
+          className="app-alert-banner metaplex-spacing-bottom-lg"
           description={
             <p>
               Make your storefront faster by enabling listing caches.{' '}
@@ -60,7 +60,7 @@ export const AuctionListView = () => {
               >
                 video
               </a>{' '}
-              for more details and a walkthrough. On November 3rd storefronts
+              for more details and a walkthrough. On November 17rd storefronts
               will start reading from the cache for listings. All new listing
               are generating a cache account.
             </p>
