@@ -76,6 +76,7 @@ export const InfoStep = (props: {
             <label>
               <h3>Description</h3>
               <Input.TextArea
+                size="large"
                 placeholder="Max 500 characters"
                 value={props.attributes.description}
                 onChange={info =>

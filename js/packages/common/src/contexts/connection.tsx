@@ -473,7 +473,7 @@ export const sendTransactionWithRetry = async (
   includesFeePayer: boolean = false,
   block?: BlockhashAndFeeCalculator,
   beforeSend?: () => void,
-) => {
+):Promise<{ txid: string, slot: number }> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   let transaction = new Transaction();

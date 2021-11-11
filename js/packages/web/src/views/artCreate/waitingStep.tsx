@@ -27,7 +27,6 @@ export const WaitingStep = (props: {
 
   return (
     <Space className="metaplex-fullwidth" direction="vertical" align="center">
-      <Spin size="large" />
       <Card>
         <Steps direction="vertical" current={props.step}>
           <Step
