@@ -1,86 +1,64 @@
-import React, { Ref, useCallback, useEffect, useState } from 'react';
-import { Image } from 'antd';
-import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
-import { MeshViewer } from '../MeshViewer';
-import { ThreeDots } from '../MyLoader';
-import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
+import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
+import { Image } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useCachedImage, useExtendedArt } from '../../hooks';
 import { getLast } from '../../utils/utils';
+import { MeshViewer } from '../MeshViewer';
 
 const MeshArtContent = ({
   uri,
   animationUrl,
-  className,
-  style,
   files,
 }: {
   uri?: string;
   animationUrl?: string;
-  className?: string;
-  style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
 }) => {
   const renderURL =
     files && files.length > 0 && typeof files[0] === 'string'
       ? files[0]
       : animationUrl;
+
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
-    return (
-      <CachedImageContent
-        uri={uri}
-        className={className}
-        preview={false}
-        style={{ width: 300, ...style }}
-      />
-    );
+    return <CachedImageContent uri={uri} preview={false} />;
   }
 
-  return <MeshViewer url={renderURL} className={className} style={style} />;
+  return <MeshViewer url={renderURL} />;
 };
 
 const CachedImageContent = ({
   uri,
-  className,
   preview,
-  style,
 }: {
   uri?: string;
-  className?: string;
   preview?: boolean;
-  style?: React.CSSProperties;
 }) => {
-  const [loaded, setLoaded] = useState<boolean>(false);
+  const [, /* loaded */ setLoaded] = useState<boolean>(false);
   const { cachedBlob } = useCachedImage(uri || '');
 
   return (
-      <Image
-        src={cachedBlob}
-        preview={preview}
-        wrapperClassName={className}
-        loading="lazy"
-        wrapperStyle={{ ...style }}
-        onLoad={e => {
-          setLoaded(true);
-        }}
-        width="100%"
-        placeholder={<ThreeDots />}
-      />
+    <Image
+      wrapperClassName="metaplex-image-content"
+      src={cachedBlob}
+      preview={preview}
+      loading="lazy"
+      onLoad={() => {
+        setLoaded(true);
+      }}
+    />
   );
 };
 
 const VideoArtContent = ({
-  className,
-  style,
   files,
   uri,
   animationURL,
   active,
 }: {
-  className?: string;
-  style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
   uri?: string;
   animationURL?: string;
@@ -113,95 +91,72 @@ const VideoArtContent = ({
   const content =
     likelyVideo &&
     likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
-      <div className={`${className} square`}>
-        <Stream
-          streamRef={(e: any) => playerRef(e)}
-          src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
-          loop={true}
-          height={600}
-          width={600}
-          controls={false}
-          videoDimensions={{
-            videoHeight: 700,
-            videoWidth: 400,
-          }}
-          autoplay={true}
-          muted={true}
-        />
-      </div>
+      <Stream
+        streamRef={(e: any) => playerRef(e)}
+        src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
+        loop={true}
+        controls={false}
+        autoplay={true}
+        muted={true}
+      />
     ) : (
       <video
-        className={className}
+        className="metaplex-video-content"
         playsInline={true}
         autoPlay={true}
         muted={true}
         controls={true}
         controlsList="nodownload"
-        style={style}
         loop={true}
         poster={uri}
       >
-        {likelyVideo && (
-          <source src={likelyVideo} type="video/mp4" style={style} />
+        {likelyVideo && <source src={likelyVideo} type="video/mp4" />}
+        {animationURL && <source src={animationURL} type="video/mp4" />}
+        {(files?.filter(f => typeof f !== 'string') as MetadataFile[]).map(
+          (f: MetadataFile, i) => (
+            <source key={i} src={f.uri} type={f.type} />
+          ),
         )}
-        {animationURL && (
-          <source src={animationURL} type="video/mp4" style={style} />
-        )}
-        {files
-          ?.filter(f => typeof f !== 'string')
-          .map((f: any) => (
-            <source src={f.uri} type={f.type} style={style} />
-          ))}
       </video>
     );
 
-  return content;
+  return <div className="metaplex-video-content">{content}</div>;
 };
 
 const HTMLContent = ({
   uri,
   animationUrl,
-  className,
   preview,
-  style,
   files,
   artView,
 }: {
   uri?: string;
   animationUrl?: string;
-  className?: string;
   preview?: boolean;
-  style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
-  if (!artView){
-    return <CachedImageContent
-        uri={uri}
-        className={className}
-        preview={preview}
-        style={style}
-      />
+  if (!artView) {
+    return <CachedImageContent uri={uri} preview={preview} />;
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
       ? files[0]
       : animationUrl;
   return (
-    <iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+    <iframe
+      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
       sandbox="allow-scripts"
       frameBorder="0"
       src={htmlURL}
-      className={className}
-      style={style}></iframe>);
+    ></iframe>
+  );
 };
-
 
 export const ArtContent = ({
   category,
-  className,
   preview,
-  style,
+  card,
   active,
   allowMeshRender,
   pubkey,
@@ -211,12 +166,8 @@ export const ArtContent = ({
   artView,
 }: {
   category?: MetadataCategory;
-  className?: string;
   preview?: boolean;
-  style?: React.CSSProperties;
-  width?: number;
-  height?: number;
-  ref?: Ref<HTMLDivElement>;
+  card?: boolean;
   active?: boolean;
   allowMeshRender?: boolean;
   pubkey?: PublicKey | string;
@@ -252,50 +203,33 @@ export const ArtContent = ({
       animationUrlExt === 'gltf')
   ) {
     return (
-      <MeshArtContent
-        uri={uri}
-        animationUrl={animationURL}
-        className={className}
-        style={style}
-        files={files}
-      />
+      <MeshArtContent uri={uri} animationUrl={animationURL} files={files} />
     );
   }
 
   const content =
-    (category === 'video' || category === 'audio') ? (
+    category === 'video' || category === 'audio' ? (
       <VideoArtContent
-        className={className}
-        style={style}
         files={files}
         uri={uri}
         animationURL={animationURL}
         active={active}
       />
-    ) : (category === 'html' || animationUrlExt === 'html') ? (
+    ) : category === 'html' || animationUrlExt === 'html' ? (
       <HTMLContent
         uri={uri}
         animationUrl={animationURL}
-        className={className}
         preview={preview}
-        style={style}
         files={files}
         artView={artView}
       />
     ) : (
-      <CachedImageContent
-        uri={uri}
-        className={className}
-        preview={preview}
-        style={style}
-      />
+      <CachedImageContent uri={uri} preview={preview} />
     );
 
   return (
-    <span
-      ref={ref as any}
-    >
+    <div className={`metaplex-art-content-${card ? 'card' : 'full'}`} ref={ref}>
       {content}
-    </span>
+    </div>
   );
 };

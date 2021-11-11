@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { ArtCard } from '../../components/ArtCard';
-import { Spin, PageHeader, Button, Row, Col } from 'antd';
-import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
-import { useUserArts } from '../../hooks';
-import { useMeta } from '../../contexts';
-import { loadMetadataForUsers, useUserAccounts, useConnection } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { LoadingOutlined } from '@ant-design/icons';
+import {
+  loadMetadataForUsers,
+  useConnection,
+  useUserAccounts,
+} from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Button, Col, Row, Spin } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArtCard } from '../../components/ArtCard';
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useMeta } from '../../contexts';
+import { useUserArts } from '../../hooks';
 
 export const ArtworksView = () => {
   const ownedMetadata = useUserArts();
@@ -16,29 +20,27 @@ export const ArtworksView = () => {
   const connection = useConnection();
   const wallet = useWallet();
   const { userAccounts } = useUserAccounts();
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
 
   useEffect(() => {
     (async () => {
       setLoadingArt(true);
-      const metadataState = await loadMetadataForUsers(connection, userAccounts, whitelistedCreatorsByCreator);      // const completeMetaState = await loadMetaDataAndEditionsForCreators(connection, whitelistedCreatorsByCreator);
+      const metadataState = await loadMetadataForUsers(
+        connection,
+        userAccounts,
+        whitelistedCreatorsByCreator,
+      );
 
       patchState(metadataState);
       setLoadingArt(false);
-    })()
-  }, [connection, wallet.connected, userAccounts])
+    })();
+  }, [connection, wallet.connected, userAccounts]);
 
   if (loadingArt) {
     return (
       <div className="app-section--loading">
         <Spin indicator={<LoadingOutlined />} />
       </div>
-    )
+    );
   }
 
   return (
@@ -46,17 +48,13 @@ export const ArtworksView = () => {
       <Row justify="space-between" align="middle">
         <h2>Owned Artwork</h2>
         <Link to="/auction/create/0">
-          <Button type="primary">Sell</Button>
+          <Button size="large" type="primary">Sell NFT</Button>
         </Link>
       </Row>
       <Row>
         <Col span={24}>
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
-            {ownedMetadata.map((m, idx) => {
+          <MetaplexMasonry>
+            {ownedMetadata.map(m => {
               const id = m.metadata.pubkey;
               return (
                 <Link to={`/artworks/${id}`} key={id}>
@@ -64,13 +62,11 @@ export const ArtworksView = () => {
                     key={id}
                     pubkey={m.metadata.pubkey}
                     preview={false}
-                    height={250}
-                    width={250}
                   />
                 </Link>
               );
             })}
-          </Masonry>
+          </MetaplexMasonry>
         </Col>
       </Row>
     </>

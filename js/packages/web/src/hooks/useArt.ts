@@ -173,7 +173,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   const { metadata } = useMeta();
 
   const [data, setData] = useState<IMetadataExtension>();
-  const { ref, inView } = useInView();
+  const { ref, inView } = useInView({ root: null, rootMargin: '-50px 0px' });
   const localStorage = useLocalStorage();
 
   const key = pubkeyToString(id);
@@ -210,17 +210,12 @@ export const useExtendedArt = (id?: StringPublicKey) => {
           } else {
             // TODO: BL handle concurrent calls to avoid double query
             fetch(uri)
-              .then(async _ => {
+              .then(response => response.json())
+              .then(json => {
                 try {
-                  const data = await _.json();
-                  try {
-                    localStorage.setItem(uri, JSON.stringify(data));
-                  } catch {
-                    // ignore
-                  }
-                  setData(processJson(data));
-                } catch {
-                  return undefined;
+                  localStorage.setItem(uri, JSON.stringify(json));
+                } finally {
+                  setData(processJson(json));
                 }
               })
               .catch(() => {
@@ -232,7 +227,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
         }
       }
     }
-  }, [inView, id, data, setData, account]);
+  }, [inView, id, account]);
 
   return { ref, data };
 };

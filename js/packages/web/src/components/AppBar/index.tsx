@@ -1,181 +1,155 @@
-import React, { useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useStore, Wallet } from '@oyster/common';
+import { ConnectButton, useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { Col, Menu, Row, Space } from 'antd';
+import React, { ReactNode, useMemo } from 'react';
+import { Link, matchPath, useLocation } from 'react-router-dom';
+import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
+import { HowToBuyModal } from '../HowToBuyModal';
 import { Notifications } from '../Notifications';
-import useWindowDimensions from '../../utils/layout';
-import { MenuOutlined } from '@ant-design/icons';
-import { useMeta } from '../../contexts';
+type P = {
+  logo: string;
+};
 
-const UserActions = () => {
-  const { publicKey, connected } = useWallet();
-  const { whitelistedCreatorsByCreator, store } = useMeta();
-  const pubkey = publicKey?.toBase58() || '';
+export const AppBar = (props: P) => {
+  const { connected, publicKey } = useWallet();
+  const location = useLocation();
+  const locationPath = location.pathname.toLowerCase();
+  const { ownerAddress } = useStore();
 
-  const canCreate = useMemo(() => {
-    return (
-      store?.info?.public ||
-      whitelistedCreatorsByCreator[pubkey]?.info?.activated
-    );
-  }, [pubkey, whitelistedCreatorsByCreator, store]);
+  // Array of menu item descriptions
+  const menuInfo: {
+    /** The React iterator key prop for this item */
+    key: string;
+    /** The content of this item */
+    title: ReactNode;
+    /**
+     * The link target for this item.
+     *
+     * Any routes matching this link (and, if `exact` is false, any child
+     * routes) will cause the menu item to appear highlighted.
+     */
+    link: string;
+    /** Whether child routes should match against the value of `link` */
+    exact: boolean;
+    /**
+     * Zero or more alternate routes to check against for highlighting this
+     * item.
+     *
+     * The item will never link to these routes, but they will be queried for
+     * highlighting similar to the `link` property.
+     */
+    alt: {
+      /**
+       * An alternate route path or prefix to match against.
+       *
+       * See the `link` property for more info.
+       */
+      path: string;
+      /** Whether child routes should match against the value of `path` */
+      exact: boolean;
+    }[];
+  }[] = useMemo(() => {
+    let menu = [
+      {
+        key: 'listings',
+        title: 'Listings',
+        link: '/',
+        exact: true,
+        alt: [{ path: '/auction', exact: false }],
+      },
+      {
+        key: 'artists',
+        title: 'Artists',
+        link: `/artists/${ownerAddress}`,
+        exact: true,
+        alt: [
+          { path: '/artists', exact: false },
+          { path: '/artworks', exact: false },
+        ],
+      },
+    ];
+
+    if (connected) {
+      menu = [
+        ...menu,
+        {
+          key: 'owned',
+          title: 'Owned',
+          link: '/owned',
+          exact: true,
+          alt: [],
+        },
+      ];
+    }
+
+    if (publicKey?.toBase58() === ownerAddress) {
+      menu = [
+        ...menu,
+        {
+          key: 'admin',
+          title: 'Admin',
+          link: '/admin',
+          exact: true,
+          alt: [],
+        },
+      ];
+    }
+
+    return menu;
+  }, [connected]);
+
+  const menuItems = useMemo(
+    () =>
+      menuInfo.map(({ key, link, title }) => (
+        <Menu.Item key={key}>
+          <Link to={link}>{title}</Link>
+        </Menu.Item>
+      )),
+    [menuInfo],
+  );
+
+  const activeItems = useMemo(
+    () =>
+      menuInfo
+        .filter(({ link, alt, exact }) =>
+          [{ path: link, exact }, ...alt].find(({ path, exact }) =>
+            matchPath(locationPath, { path, exact }),
+          ),
+        )
+        .map(({ key }) => key),
+    [locationPath, menuInfo],
+  );
 
   return (
     <>
-      {store && (
-        <>
-          {/* <Link to={`#`}>
-            <Button>Bids</Button>
-          </Link> */}
-          {canCreate ? (
-            <Link to={`/artworks/new`}>
-              <Button>Create</Button>
-            </Link>
-          ) : null}
-        </>
-      )}
-    </>
-  );
-};
-
-const DefaultActions = ({ 
-  vertical = false,
-  isStoreOwner,
-  pathname,
-  connected,
-  ownerAddress
-}: { vertical?: boolean, isStoreOwner: boolean, pathname: string, connected: boolean, ownerAddress?: string }) => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: vertical ? 'column' : 'row',
-      }}
-    >
-      <Link to="/">
-        <Button type={pathname === "/" || pathname.includes('auction') ? "primary" : undefined}>Listings</Button>
-      </Link>
-      <Link
-        to={`/artists/${ownerAddress}`}
-      >
-        <Button
-          type={pathname.includes('artists') ? "primary" : undefined}
-        >Artists</Button>
-      </Link>
-      {connected && (
-        <Link
-          to="/owned">
-          <Button
-            type={pathname === "/owned" ? "primary" : undefined}
-          >
-            Owned
-          </Button>
-        </Link>
-      )}
-      {isStoreOwner && (
-        <Link to="/admin">
-          <Button
-            type={pathname === "/admin" ? "primary" : undefined}
-          >Admin</Button>
-        </Link>
-      )}
-    </div>
-  );
-};
-
-const MetaplexMenu = ({ connected }: { connected: boolean }) => {
-  const { width } = useWindowDimensions();
-  const { ownerAddress } = useStore()
-  const wallet = useWallet();
-  const isStoreOwner = ownerAddress == wallet.publicKey?.toBase58();
-  const { pathname } = useLocation();
-
-  if (width < 768)
-    return (
-      <>
-        <Dropdown
-          arrow
-          placement="bottomLeft"
-          trigger={['click']}
-          overlay={
-            <Menu activeKey="admin">
-              <Menu.Item>
-                <Link
-                  type={pathname === "/" ? "primary" : undefined}
-                  to={`/`}
-                >
-                  <Button>Listings</Button>
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <Link
-                  type={pathname.includes('artists') ? "primary" : undefined}
-                  to={`/artists/${ownerAddress}`}
-                >
-                  <Button>Creators</Button>
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <Link
-                  type={pathname === "/owned" ? "primary" : undefined}
-                  to="/owned"
-                >
-                  <Button>
-                    Owned
-                  </Button>
-                </Link>
-              </Menu.Item>
-              {isStoreOwner && (
-                <Menu.Item
-                  key="admin"
-                >
-                  <Link
-                    to="/admin"
-                  >
-                    <Button >Admin</Button>
-                  </Link>
-                </Menu.Item>
-              )}
-            </Menu>
-          }
-        >
-          <MenuOutlined style={{ fontSize: '1.4rem' }} />
-        </Dropdown>
-      </>
-    );
-
-  return (
-    <DefaultActions
-      isStoreOwner={isStoreOwner}
-      pathname={pathname}
-      connected={connected}
-      ownerAddress={ownerAddress}
-    />
-  );
-};
-
-export const AppBar = () => {
-  const { connected } = useWallet();
-
-  return (
-    <>
-      <div className="app-left app-bar-box">
-        <Notifications />
-        <div className="divider" />
-        <MetaplexMenu connected={connected} />
-      </div>
-      {connected ? (
-        <div className="app-right app-bar-box">
-          <UserActions />
-          <CurrentUserBadge
-            showBalance={false}
-            showAddress={false}
-            iconSize={24}
-          />
-        </div>
-      ) : (
-        <ConnectButton type="primary" allowWalletChange />
-      )}
+      <Row wrap={false} align="middle">
+        <Col flex="0 0 auto">
+          <Link to="/" id="metaplex-header-logo">
+            <img src={props.logo} />
+          </Link>
+        </Col>
+        <Col flex="1 0 0" style={{ overflow: 'hidden' }}>
+          <Menu theme="dark" mode="horizontal" selectedKeys={activeItems}>
+            {menuItems}
+          </Menu>
+        </Col>
+        <Col flex="0 1 auto">
+          <Space className="metaplex-display-flex" align="center">
+            {connected ? (
+              <>
+                <CurrentUserBadge showAddress={true} buttonType="text" />
+                <Notifications buttonType="text" />
+                <Cog buttonType="text" />
+              </>
+            ) : (
+              <>
+                <HowToBuyModal buttonType="text" />
+                <ConnectButton type="text" allowWalletChange={false} />
+              </>
+            )}
+          </Space>
+        </Col>
+      </Row>
     </>
   );
 };

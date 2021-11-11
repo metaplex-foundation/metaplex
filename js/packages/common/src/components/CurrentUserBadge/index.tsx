@@ -18,31 +18,8 @@ export const CurrentUserBadge = (props: {
     return null;
   }
 
-  const iconStyle: React.CSSProperties = props.showAddress
-    ? {
-        marginLeft: '0.5rem',
-        display: 'flex',
-        width: props.iconSize || 20,
-        borderRadius: 50,
-      }
-    : {
-        display: 'flex',
-        width: props.iconSize || 20,
-        paddingLeft: 0,
-        borderRadius: 50,
-      };
-
-  const baseWalletKey: React.CSSProperties = {
-    height: props.iconSize,
-    cursor: 'pointer',
-    userSelect: 'none',
-  };
-  const walletKeyStyle: React.CSSProperties = props.showAddress
-    ? baseWalletKey
-    : { ...baseWalletKey, paddingLeft: 0 };
-
   return (
-    <div className="wallet-wrapper">
+    <div>
       {props.showBalance && (
         <span>
           {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
@@ -55,9 +32,9 @@ export const CurrentUserBadge = (props: {
         content={<Settings />}
         trigger="click"
       >
-        <div className="wallet-key" style={walletKeyStyle}>
-          <span style={{ marginRight: '0.5rem' }}>{wallet.name}</span>
-          <img src={wallet.icon} style={iconStyle} />
+        <div>
+          <span>{wallet.name}</span>
+          <img src={wallet.icon} />
         </div>
       </Popover>
     </div>

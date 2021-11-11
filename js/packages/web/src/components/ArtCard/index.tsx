@@ -1,11 +1,10 @@
-import React from 'react';
-import { Card, CardProps, Button, Badge } from 'antd';
 import { MetadataCategory, StringPublicKey } from '@oyster/common';
-import { ArtContent } from './../ArtContent';
+import { Badge, Button, Card, CardProps, Space, Tag } from 'antd';
+import React from 'react';
 import { useArt } from '../../hooks';
-import { PublicKey } from '@solana/web3.js';
 import { Artist, ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
+import { ArtContent } from './../ArtContent';
 
 const { Meta } = Card;
 
@@ -23,33 +22,26 @@ export interface ArtCardProps extends CardProps {
   creators?: Artist[];
   preview?: boolean;
   small?: boolean;
+  hoverable?: boolean;
   close?: () => void;
-
-  height?: number;
-  width?: number;
 }
 
-export const ArtCard = (props: ArtCardProps) => {
-  let {
-    className,
-    small,
-    category,
-    image,
-    animationURL,
-    name,
-    preview,
-    creators,
-    description,
-    close,
-    pubkey,
-    height,
-    width,
-    ...rest
-  } = props;
+export const ArtCard = ({
+  category,
+  image,
+  animationURL,
+  name: nameProp,
+  preview,
+  creators: creatorsProp,
+  hoverable = true,
+  close,
+  pubkey,
+  ...rest
+}: ArtCardProps) => {
   const art = useArt(pubkey);
-  creators = art?.creators || creators || [];
-  name = art?.title || name || ' ';
-  
+  const creators = art?.creators || creatorsProp || [];
+  const name = art?.title || nameProp || ' ';
+
   let badge = '';
   if (art.type === ArtType.NFT) {
     badge = 'Unique';
@@ -61,13 +53,12 @@ export const ArtCard = (props: ArtCardProps) => {
 
   const card = (
     <Card
-      hoverable={true}
-      className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
+      hoverable={hoverable}
       cover={
         <>
           {close && (
             <Button
-              className="card-close-button"
+              className="metaplex-square-w"
               shape="circle"
               onClick={e => {
                 e.stopPropagation();
@@ -84,8 +75,7 @@ export const ArtCard = (props: ArtCardProps) => {
             animationURL={animationURL}
             category={category}
             preview={preview}
-            height={height}
-            width={width}
+            card
           />
         </>
       }
@@ -94,21 +84,21 @@ export const ArtCard = (props: ArtCardProps) => {
       <Meta
         title={`${name}`}
         description={
-          <>
+          <Space direction="horizontal">
             <MetaAvatar creators={creators} size={32} />
             {/* {art.type === ArtType.Master && (
               <>
                 <br />
                 {!endAuctionAt && (
-                  <span style={{ padding: '24px' }}>
+                  <span>
                     {(art.maxSupply || 0) - (art.supply || 0)}/
                     {art.maxSupply || 0} prints remaining
                   </span>
                 )}
               </>
             )} */}
-            <div className="edition-badge">{badge}</div>
-          </>
+            {badge && <Tag>{badge}</Tag>}
+          </Space>
         }
       />
     </Card>

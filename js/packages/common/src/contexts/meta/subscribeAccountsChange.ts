@@ -1,18 +1,9 @@
 import { Connection } from '@solana/web3.js';
-import { Dispatch, SetStateAction } from 'react';
 import { getEmptyMetaState } from '.';
-import { WhitelistedCreator, ParsedAccount } from '../..';
-import {
-  AUCTION_ID,
-  METADATA_PROGRAM_ID,
-  METAPLEX_ID,
-  toPublicKey,
-  VAULT_ID,
-} from '../../utils';
-import { makeSetter, initMetadata } from './loadAccounts';
+import { AUCTION_ID, METAPLEX_ID, toPublicKey, VAULT_ID } from '../../utils';
+import { makeSetter } from './loadAccounts';
 import { onChangeAccount } from './onChangeAccount';
 import { processAuctions } from './processAuctions';
-import { processMetaData } from './processMetaData';
 import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processVaultData } from './processVaultData';
 import { MetaState, UpdateStateValueFunc } from './types';

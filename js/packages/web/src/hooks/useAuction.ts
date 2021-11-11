@@ -1,7 +1,11 @@
-import { Loading3QuartersOutlined } from '@ant-design/icons';
-import { StringPublicKey, loadAuction, useConnection, loadMetadataAndEditionsBySafetyDepositBoxes, loadPrizeTrackingTickets } from '@oyster/common';
+import {
+  StringPublicKey,
+  loadAuction,
+  useConnection,
+  loadMetadataAndEditionsBySafetyDepositBoxes,
+  loadPrizeTrackingTickets,
+} from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { merge } from 'lodash';
 import { useEffect, useState } from 'react';
 import {
   AuctionView,
@@ -14,7 +18,7 @@ export const useAuction = (id: StringPublicKey) => {
   const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
   const connection = useConnection();
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true);
 
   const [existingAuctionView, setAuctionView] = useState<
     AuctionView | undefined
@@ -43,7 +47,7 @@ export const useAuction = (id: StringPublicKey) => {
 
   useEffect(() => {
     if (isLoading) {
-      return
+      return;
     }
 
     setLoading(true);
@@ -54,15 +58,19 @@ export const useAuction = (id: StringPublicKey) => {
       const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(
         connection,
         auctionState.safetyDepositBoxesByVaultAndIndex,
-        whitelistedCreatorsByCreator
+        whitelistedCreatorsByCreator,
       );
 
-      const prizeTrackingTicketState = await loadPrizeTrackingTickets(connection, auctionManager, metadataState.metadata);
+      const prizeTrackingTicketState = await loadPrizeTrackingTickets(
+        connection,
+        auctionManager,
+        metadataState.metadata,
+      );
 
       patchState(prizeTrackingTicketState, auctionState, metadataState);
       setLoading(false);
-    })()
-  }, [isLoading])
+    })();
+  }, [isLoading]);
 
   useEffect(() => {
     (async () => {
@@ -92,7 +100,7 @@ export const useAuction = (id: StringPublicKey) => {
 
         if (auctionView) setAuctionView(auctionView);
       }
-    })()
+    })();
   }, [
     auctions,
     walletPubkey,

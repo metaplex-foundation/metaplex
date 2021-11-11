@@ -1,14 +1,26 @@
-import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import React, {
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import confetti from 'canvas-confetti';
 
 export interface ConfettiContextState {
   dropConfetti: () => void;
 }
 
-const ConfettiContext = React.createContext<ConfettiContextState | null>(null);
+const ConfettiContext = React.createContext<ConfettiContextState>({
+  dropConfetti: () => {},
+});
 
-export const ConfettiProvider = ({ children = null as any }) => {
-  const canvasRef = useRef<HTMLCanvasElement>();
+export const ConfettiProvider = ({
+  children = null,
+}: {
+  children: ReactNode;
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const confettiRef = useRef<confetti.CreateTypes>();
 
   const dropConfetti = useMemo(
@@ -41,18 +53,9 @@ export const ConfettiProvider = ({ children = null as any }) => {
     }
   }, []);
 
-  const canvasStyle: React.CSSProperties = {
-    width: '100vw',
-    height: '100vh',
-    position: 'absolute',
-    zIndex: 1,
-    top: 0,
-    left: 0,
-  };
-
   return (
     <ConfettiContext.Provider value={{ dropConfetti }}>
-      <canvas ref={canvasRef as any} style={canvasStyle} />
+      <canvas ref={canvasRef} id="metaplex-confetti" />
       {children}
     </ConfettiContext.Provider>
   );
@@ -70,5 +73,5 @@ export const Confetti = () => {
 
 export const useConfetti = () => {
   const context = useContext(ConfettiContext);
-  return context as ConfettiContextState;
+  return context;
 };

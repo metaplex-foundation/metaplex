@@ -63,7 +63,7 @@ export enum MetaplexKey {
   BidRedemptionTicketV2 = 11,
   AuctionWinnerTokenTypeTrackerV1 = 12,
   StoreIndexerV1 = 13,
-  AuctionCacheV1 = 14
+  AuctionCacheV1 = 14,
 }
 export class PrizeTrackingTicket {
   key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
@@ -595,6 +595,7 @@ export class WhitelistedCreator {
   name?: string;
   image?: string;
   description?: string;
+  background?: string;
 
   constructor(args: { address: string; activated: boolean }) {
     this.address = args.address;

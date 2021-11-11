@@ -1,7 +1,11 @@
 import React from 'react';
 import { Input } from 'antd';
 
-export class NumericInput extends React.Component<any, any> {
+export class NumericInput extends React.Component<{
+  value: string;
+  onBlur: () => void;
+  onChange: (val: string) => void;
+}> {
   onChange = (e: any) => {
     const { value } = e.target;
     const reg = /^-?\d*(\.\d*)?$/;

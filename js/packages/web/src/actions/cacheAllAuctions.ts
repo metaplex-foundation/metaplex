@@ -1,4 +1,5 @@
 import { Connection } from '@solana/web3.js';
+import { findIndex } from 'lodash';
 import {
   AuctionManagerV1,
   AuctionManagerV2,
@@ -12,33 +13,51 @@ import {
   WalletSigner,
   AuctionCache,
   loadSafeteyDepositBoxesForVaults,
-  loadStoreIndexers
+  loadStoreIndexers,
 } from '@oyster/common';
 import { cacheAuctionIndexer } from './cacheAuctionIndexer';
 import { buildListWhileNonZero } from '../hooks';
 
 // This command caches an auction at position 0, page 0, and moves everything up
-export async function  cacheAllAuctions(
+export async function cacheAllAuctions(
   wallet: WalletSigner,
   connection: Connection,
   auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
   auctionCaches: Record<string, ParsedAccount<AuctionCache>>,
   storeIndexer: ParsedAccount<StoreIndexer>[],
-):Promise<void> {
-  const vaultPubKeys = auctionManagers.map(auctionManager => auctionManager.info.vault);
-  const { safetyDepositBoxesByVaultAndIndex } = await loadSafeteyDepositBoxesForVaults(connection, vaultPubKeys)
+): Promise<void> {
+  const vaultPubKeys = auctionManagers.map(
+    auctionManager => auctionManager.info.vault,
+  );
+  const { safetyDepositBoxesByVaultAndIndex } =
+    await loadSafeteyDepositBoxesForVaults(connection, vaultPubKeys);
   let storeIndex = [...storeIndexer];
   for (const auctionManager of auctionManagers) {
-    const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
-      safetyDepositBoxesByVaultAndIndex,
-      auctionManager.info.vault,
-      );
-      
     if (auctionManager.info.key !== MetaplexKey.AuctionManagerV2) {
       return;
     }
+    const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
+      safetyDepositBoxesByVaultAndIndex,
+      auctionManager.info.vault,
+    );
 
-    const auctionCachePubkey = await getAuctionCache(auctionManager.info.auction);
+    const auctionCachePubkey = await getAuctionCache(
+      auctionManager.info.auction,
+    );
+    const auctionCache = auctionCaches[auctionCachePubkey];
+    const cacheExists = !!auctionCache;
+    const activeIndex = storeIndex[0];
+    const offset = findIndex(activeIndex.info.auctionCaches, pubkey => {
+      const cache = auctionCaches[pubkey];
+
+      if (!cacheExists) {
+        return true;
+      }
+
+      return (
+        auctionCache.info.timestamp.toNumber() > cache.info.timestamp.toNumber()
+      );
+    });
 
     const { instructions, signers } = await cacheAuctionIndexer(
       wallet,
@@ -47,7 +66,8 @@ export async function  cacheAllAuctions(
       auctionManager.pubkey,
       boxes.map(a => a.info.tokenMint),
       storeIndex,
-      !!auctionCaches[auctionCachePubkey],
+      offset,
+      cacheExists,
     );
 
     await sendTransactions(
@@ -60,7 +80,7 @@ export async function  cacheAllAuctions(
     );
 
     const { storeIndexer } = await loadStoreIndexers(connection);
-    
+
     storeIndex = storeIndexer;
   }
 }

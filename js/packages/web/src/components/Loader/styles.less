@@ -1,0 +1,39 @@
+#metaplex-loading {
+  transition-property: opacity, visibility;
+  transition-duration: 0.5s;
+  transition-timing-function: ease-in, step-end;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: @loading-background;
+  backdrop-filter: @loading-filter;
+  z-index: 9999;
+  visibility: hidden;
+  opacity: 0;
+  // Set this without transition to make the page interactable faster
+  pointer-events: none;
+
+  &.loading {
+    transition-timing-function: ease-out, step-start;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+
+#metaplex-loading-icon {
+  height: 2em;
+  max-width: 2em;
+  margin-bottom: 0.5em;
+}
+
+#metaplex-loading-text {
+  text-transform: uppercase;
+  margin-bottom: 0.5em;
+}

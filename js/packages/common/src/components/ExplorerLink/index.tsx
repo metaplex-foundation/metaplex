@@ -7,7 +7,6 @@ export const ExplorerLink = (props: {
   address: string | PublicKey;
   type: string;
   code?: boolean;
-  style?: React.CSSProperties;
   length?: number;
 }) => {
   const { type, code } = props;
@@ -26,13 +25,12 @@ export const ExplorerLink = (props: {
   return (
     <a
       href={`https://explorer.solana.com/${type}/${address}`}
-      // eslint-disable-next-line react/jsx-no-target-blank
       target="_blank"
+      rel="noopener noreferrer"
       title={address}
-      style={props.style}
     >
       {code ? (
-        <Typography.Text style={props.style} code>
+        <Typography.Text code>
           {shortenAddress(address, length)}
         </Typography.Text>
       ) : (

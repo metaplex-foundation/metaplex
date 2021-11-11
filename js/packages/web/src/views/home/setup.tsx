@@ -5,12 +5,12 @@ import {
   WhitelistedCreator,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { Button, Card, Row, Col } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { saveAdmin } from '../../actions/saveAdmin';
-import { useMeta } from '../../contexts';
 import { SetupVariables } from '../../components/SetupVariables';
+import { useMeta } from '../../contexts';
 
 export const SetupView = () => {
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
@@ -63,48 +63,55 @@ export const SetupView = () => {
   };
 
   return (
-    <>
-      {!wallet.connected && (
-        <p>
-          <Button type="primary" className="app-btn" onClick={connect}>
-            Connect
-          </Button>{' '}
-          to configure store.
-        </p>
-      )}
-      {wallet.connected && !store && (
-        <>
-          <p>Store is not initialized yet</p>
-          <p>There must be some ◎ SOL in the wallet before initialization.</p>
-          <p>
-            After initialization, you will be able to manage the list of
-            creators
-          </p>
+    <Row justify="center">
+      <Col xs={24} md={18} lg={14}>
+        <Card>
+          <Row justify="center">
+            <Col>
+              {!wallet.connected && (
+                <p>
+                  <Button type="primary" onClick={connect}>
+                    Connect
+                  </Button>{' '}
+                  to configure store.
+                </p>
+              )}
+              {wallet.connected && !store && (
+                <>
+                  <p>Store is not initialized yet</p>
+                  <p>There must be some ◎ SOL in the wallet before initialization.</p>
+                  <p>
+                    After initialization, you will be able to manage the list of
+                    creators
+                  </p>
 
-          <p>
-            <Button
-              className="app-btn"
-              type="primary"
-              loading={isInitalizingStore}
-              onClick={initializeStore}
-            >
-              Init Store
-            </Button>
-          </p>
-        </>
-      )}
-      {wallet.connected && store && (
-        <>
-          <p>
-            To finish initialization please copy config below into{' '}
-            <b>packages/web/.env</b> and restart yarn or redeploy
-          </p>
-          <SetupVariables
-            storeAddress={storeAddress}
-            storeOwnerAddress={wallet.publicKey?.toBase58()}
-          />
-        </>
-      )}
-    </>
+                  <p>
+                    <Button
+                      type="primary"
+                      loading={isInitalizingStore}
+                      onClick={initializeStore}
+                    >
+                      Init Store
+                    </Button>
+                  </p>
+                </>
+              )}
+              {wallet.connected && store && (
+                <>
+                  <p>
+                    To finish initialization please copy config below into{' '}
+                    <b>packages/web/.env</b> and restart yarn or redeploy
+                  </p>
+                  <SetupVariables
+                    storeAddress={storeAddress}
+                    storeOwnerAddress={wallet.publicKey?.toBase58()}
+                  />
+                </>
+              )}
+            </Col>
+          </Row>
+        </Card>
+      </Col>
+    </Row>
   );
 };

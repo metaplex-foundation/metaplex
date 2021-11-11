@@ -1,0 +1,105 @@
+// Overrides and antd cleanup
+
+.ant-tabs.ant-tabs-top {
+  // NOTE: hack override to fix a subtle bug with the display of masonry tab views
+  overflow: visible;
+}
+.app-section {
+  &--loading {
+    margin: @margin-lg 0 0 0;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+// Global utility classes
+
+.metaplex {
+  &-spacing {
+    &-bottom {
+      &-md {
+        margin-bottom: @margin-md;
+      }
+      &-lg {
+        margin-bottom: @margin-lg;
+      }
+    }
+  }
+  &-align {
+    &-center {
+      text-align: center;
+    }
+  }
+}
+
+.metaplex-fullwidth {
+  // Leverage CSS specificity
+  &,
+  &.metaplex-masonry {
+    width: 100%;
+  }
+}
+
+.metaplex-display-block {
+  display: block;
+}
+
+.metaplex-display-flex {
+  &,
+  &.ant-space {
+    display: flex;
+  }
+}
+
+.metaplex-square-w,
+.metaplex-square-h {
+  aspect-ratio: 1 / 1;
+}
+
+.metaplex-square-w,
+.metaplex-auto-width {
+  width: auto;
+}
+
+.metaplex-square-h,
+.metaplex-auto-height {
+  height: auto;
+}
+
+.ant-space.metaplex-space-justify-end {
+  justify-content: flex-end;
+}
+
+.ant-space.metaplex-space-align-stretch {
+  align-items: stretch;
+}
+
+.ant-btn-lg.metaplex-button-jumbo {
+  width: auto;
+  height: auto;
+  white-space: normal;
+
+  &.metaplex-fullwidth {
+    width: 100%;
+  }
+}
+
+.ant-btn.metaplex-button-appbar {
+  display: block;
+  line-height: 0;
+}
+
+:root,
+html,
+body {
+  font-family: @theme-family-text;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: @theme-family-title;
+}

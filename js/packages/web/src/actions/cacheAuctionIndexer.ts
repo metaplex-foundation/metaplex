@@ -20,6 +20,7 @@ export async function cacheAuctionIndexer(
   auctionManager: StringPublicKey,
   tokenMints: StringPublicKey[],
   storeIndexer: ParsedAccount<StoreIndexer>[],
+  offset: number,
   skipCache?: boolean,
 ): Promise<{
   instructions: TransactionInstruction[][];
@@ -42,10 +43,11 @@ export async function cacheAuctionIndexer(
     tokenMints,
   );
 
-  let above =
-    storeIndexer.length == 0
+  const above =
+    storeIndexer.length === 0
       ? undefined
-      : storeIndexer[0].info.auctionCaches[0];
+      : storeIndexer[0].info.auctionCaches[offset];
+  const below = storeIndexer[0].info.auctionCaches[offset - 1];
 
   const storeIndexKey = await getStoreIndexer(0);
   await setStoreIndex(
@@ -53,9 +55,9 @@ export async function cacheAuctionIndexer(
     auctionCache,
     payer,
     new BN(0),
-    new BN(0),
+    new BN(offset),
     instructions,
-    undefined,
+    below,
     above,
   );
 
@@ -85,27 +87,29 @@ async function propagateIndex(
 
   const payer = wallet.publicKey.toBase58();
 
-  let currSignerBatch: Array<Keypair[]> = [];
-  let currInstrBatch: Array<TransactionInstruction[]> = [];
+  const currSignerBatch: Array<Keypair[]> = [];
+  const currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let indexSigners: Keypair[] = [];
   let indexInstructions: TransactionInstruction[] = [];
 
-  let currPage: ParsedAccount<StoreIndexer> | null = storeIndexer[0];
-  let lastPage: ParsedAccount<StoreIndexer> | null = null;
+  let currPage: ParsedAccount<StoreIndexer> | undefined = storeIndexer[0];
+  let lastPage: ParsedAccount<StoreIndexer> | undefined = undefined;
   while (
     currPage &&
     currPage.info.auctionCaches.length == MAX_INDEXED_ELEMENTS
   ) {
     const cacheLeavingThePage =
       currPage.info.auctionCaches[currPage.info.auctionCaches.length - 1];
-    const nextPage = storeIndexer[currPage.info.page.toNumber() + 1];
+    const nextPage: ParsedAccount<StoreIndexer> | undefined =
+      storeIndexer[currPage.info.page.toNumber() + 1];
+
     if (nextPage) {
       lastPage = currPage;
       currPage = nextPage;
     } else {
       lastPage = currPage;
-      currPage = null;
+      currPage = undefined;
     }
 
     const storeIndexKey = currPage
@@ -163,8 +167,8 @@ async function createAuctionCache(
 
   const payer = wallet.publicKey.toBase58();
 
-  let currSignerBatch: Array<Keypair[]> = [];
-  let currInstrBatch: Array<TransactionInstruction[]> = [];
+  const currSignerBatch: Array<Keypair[]> = [];
+  const currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let cacheSigners: Keypair[] = [];
   let cacheInstructions: TransactionInstruction[] = [];

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { ReactNode, useContext, useEffect, useState } from 'react';
 
 export const COINGECKO_POOL_INTERVAL = 1000 * 60; // 60 sec
 export const COINGECKO_API = 'https://api.coingecko.com/api/v3/';
@@ -13,9 +13,14 @@ export const solToUSD = async (): Promise<number> => {
   return resp.solana.usd;
 };
 
-const CoingeckoContext =
-  React.createContext<CoingeckoContextState | null>(null);
-export function CoingeckoProvider({ children = null as any }) {
+const CoingeckoContext = React.createContext<CoingeckoContextState | null>(
+  null,
+);
+export function CoingeckoProvider({
+  children = null,
+}: {
+  children: ReactNode;
+}) {
   const [solPrice, setSolPrice] = useState<number>(0);
 
   useEffect(() => {
@@ -47,11 +52,9 @@ export function CoingeckoProvider({ children = null as any }) {
 
 export const useCoingecko = () => {
   const context = useContext(CoingeckoContext);
-  return context as CoingeckoContextState;
+  return context;
 };
 
-export const useSolPrice = () => {
-  const { solPrice } = useCoingecko();
-
-  return solPrice;
+export const useSolPrice = (): number | undefined => {
+  return useCoingecko()?.solPrice ?? undefined;
 };

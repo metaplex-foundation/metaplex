@@ -160,7 +160,6 @@ export const useInfiniteScrollAuctions = () => {
     auctionManagersByAuction,
     auctions,
     auctionCachesByAuctionManager,
-    store,
     whitelistedCreatorsByCreator,
     patchState,
     ...metaState

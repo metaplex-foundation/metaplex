@@ -1,18 +1,23 @@
-import { Button, Dropdown, Menu } from 'antd';
-import { ButtonProps } from 'antd/lib/button';
-import React, { useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { Button, ButtonProps, Popover, PopoverProps, Space } from 'antd';
+import React, { useCallback } from 'react';
 import { useWalletModal } from '../../contexts';
 
 export interface ConnectButtonProps
   extends ButtonProps,
     React.RefAttributes<HTMLElement> {
+  popoverPlacement?: PopoverProps['placement'];
   allowWalletChange?: boolean;
 }
 
-export const ConnectButton = (props: ConnectButtonProps) => {
-  const { onClick, children, disabled, allowWalletChange, ...rest } = props;
-
+export const ConnectButton = ({
+  onClick,
+  children,
+  disabled,
+  allowWalletChange,
+  popoverPlacement,
+  ...rest
+}: ConnectButtonProps) => {
   const { wallet, connect, connected } = useWallet();
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
@@ -26,23 +31,32 @@ export const ConnectButton = (props: ConnectButtonProps) => {
 
   if (!wallet || !allowWalletChange) {
     return (
-      <Button {...rest} onClick={handleClick} disabled={connected && disabled}>
-        {connected ? props.children : 'Connect'}
+      <Button
+        {...rest}
+        onClick={e => {
+          onClick && onClick(e);
+          handleClick();
+        }}
+        disabled={connected && disabled}
+      >
+        {connected ? children : 'Connect Wallet'}
       </Button>
     );
   }
 
   return (
-    <Dropdown.Button
-      onClick={handleClick}
-      disabled={connected && disabled}
-      overlay={
-        <Menu>
-          <Menu.Item onClick={open}>Change Wallet</Menu.Item>
-        </Menu>
+    <Popover
+      trigger="click"
+      placement={popoverPlacement}
+      content={
+        <Space direction="vertical">
+          <Button onClick={open}>Change wallet</Button>
+        </Space>
       }
     >
-      Connect
-    </Dropdown.Button>
+      <Button {...rest} onClick={handleClick} disabled={connected && disabled}>
+        Connect
+      </Button>
+    </Popover>
   );
 };

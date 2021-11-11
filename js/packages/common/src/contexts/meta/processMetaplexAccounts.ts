@@ -27,6 +27,7 @@ import { ProcessAccountsFunc } from './types';
 import { METAPLEX_ID, programIds, pubkeyToString } from '../../utils';
 import { ParsedAccount } from '../accounts';
 import { cache } from '../accounts';
+import names from '../../config/userNames.json';
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
@@ -105,7 +106,11 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 
       if (parsedAccount.info.store === STORE_ID?.toBase58()) {
         setter('auctionCaches', pubkey, parsedAccount);
-        setter('auctionCachesByAuctionManager', parsedAccount.info.auctionManager, parsedAccount);
+        setter(
+          'auctionCachesByAuctionManager',
+          parsedAccount.info.auctionManager,
+          parsedAccount,
+        );
       }
     }
 
@@ -172,6 +177,11 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
           parsedAccount.info.address,
           pubkey,
         );
+        const nameInfo = (names as any)[parsedAccount.info.address];
+
+        if (nameInfo) {
+          parsedAccount.info = { ...parsedAccount.info, ...nameInfo };
+        }
         if (isWhitelistedCreator) {
           setter(
             'whitelistedCreatorsByCreator',
@@ -219,6 +229,6 @@ const isWhitelistedCreatorV1Account = (account: AccountInfo<Buffer>) =>
 
 const isAuctionCacheV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionCacheV1;
-  
+
 const isStoreIndexerV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.StoreIndexerV1;

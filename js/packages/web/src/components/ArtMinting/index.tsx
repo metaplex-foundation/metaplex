@@ -46,7 +46,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
       0) > 0;
   const isMasterEditionV1 = artMintTokenAccount
     ? decodeMasterEdition(artMintTokenAccount.account.data).key ===
-      MetadataKey.MasterEditionV1
+    MetadataKey.MasterEditionV1
     : false;
   const renderMintEdition =
     isArtMasterEdition &&
@@ -144,8 +144,6 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
           <Button
             type="primary"
             size="large"
-            className="action-btn"
-            style={{ marginTop: 20 }}
             onClick={() => setShowMintModal(true)}
           >
             Mint
@@ -163,69 +161,49 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
             onOk={mint}
             onCancel={() => setShowMintModal(false)}
           >
-            <Form.Item
-              style={{
-                width: '100%',
-                flexDirection: 'column',
-                paddingTop: 30,
-                marginBottom: 4,
-              }}
-              label={<h3>Mint to</h3>}
-              labelAlign="left"
-              colon={false}
-              validateStatus={mintingDestinationErr ? 'error' : 'success'}
-              help={mintingDestinationErr}
+            <Form
+              layout="vertical"
             >
-              <Input
-                placeholder="Address to mint edition to"
-                value={mintingDestination}
-                onChange={e => {
-                  setMintingDestination(e.target.value);
-                }}
-              />
-            </Form.Item>
+              <Form.Item
+                label={<h3>Mint to</h3>}
+                labelAlign="left"
+                colon={false}
+                validateStatus={mintingDestinationErr ? 'error' : 'success'}
+                help={mintingDestinationErr}
+              >
+                <Input
+                  placeholder="Address to mint edition to"
+                  value={mintingDestination}
+                  onChange={e => {
+                    setMintingDestination(e.target.value);
+                  }}
+                />
+              </Form.Item>
 
-            <Form.Item
-              style={{
-                width: '100%',
-                flexDirection: 'column',
-                paddingTop: 30,
-              }}
-              label={<h3>Number of editions to mint</h3>}
-              labelAlign="left"
-              colon={false}
-            >
-              <InputNumber
-                type="number"
-                placeholder="1"
-                style={{ width: '100%' }}
-                min={1}
-                max={maxEditionsToMint}
-                value={editions}
-                precision={0}
-                onChange={debouncedEditionsChangeHandler}
-              />
-            </Form.Item>
+              <Form.Item
+                label={<h3>Number of editions to mint</h3>}
+                labelAlign="left"
+                colon={false}
+              >
+                <InputNumber
+                  type="number"
+                  placeholder="1"
+                  min={1}
+                  max={maxEditionsToMint}
+                  value={editions}
+                  precision={0}
+                  onChange={debouncedEditionsChangeHandler}
+                />
+              </Form.Item>
 
-            <div>Total cost: {`◎${totalCost}`}</div>
+              <div>Total cost: {`◎${totalCost}`}</div>
+            </Form>
           </Modal>
 
           <MetaplexOverlay visible={showCongrats}>
             <Confetti />
-            <h1
-              style={{
-                marginBottom: 20,
-              }}
-            >
-              Congratulations
-            </h1>
-            <p
-              style={{
-                color: 'white',
-                textAlign: 'center',
-                fontSize: '2rem',
-              }}
-            >
+            <h1>Congratulations</h1>
+            <p>
               New editions have been minted please view your NFTs in{' '}
               <Link to="/artworks">My Items</Link>.
             </p>
@@ -234,7 +212,6 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
                 await onMint();
                 setShowCongrats(false);
               }}
-              className="overlay-btn"
             >
               Got it
             </Button>

@@ -1,25 +1,25 @@
 import { shortenAddress } from '@oyster/common';
 import { Select, Spin } from 'antd';
-import { SelectProps } from 'antd/es/select';
+import { SelectProps, SelectValue } from 'antd/es/select';
 import debounce from 'lodash/debounce';
 import React, { useMemo, useRef, useState } from 'react';
 import { useMeta } from '../../contexts';
 
-export interface DebounceSelectProps<ValueType = any>
+type SelectOptionsType = SelectProps<unknown>['options'];
+
+export interface DebounceSelectProps<ValueType = unknown>
   extends Omit<SelectProps<ValueType>, 'options' | 'children'> {
-  fetchOptions: (search: string) => Promise<ValueType[]>;
+  fetchOptions: (search: string) => Promise<SelectOptionsType>;
   debounceTimeout?: number;
 }
 
-function DebounceSelect<
-  ValueType extends {
-    key?: string;
-    label: React.ReactNode;
-    value: string | number;
-  } = any,
->({ fetchOptions, debounceTimeout = 800, ...props }: DebounceSelectProps) {
+function DebounceSelect<ValueType extends SelectValue = SelectValue>({
+  fetchOptions,
+  debounceTimeout = 800,
+  ...props
+}: DebounceSelectProps<ValueType>) {
   const [fetching, setFetching] = useState(false);
-  const [options, setOptions] = useState<ValueType[]>([]);
+  const [options, setOptions] = useState<SelectOptionsType>([]);
   const fetchRef = useRef(0);
 
   const debounceFetcher = useMemo(() => {
@@ -62,18 +62,21 @@ export interface UserValue {
   value: string;
 }
 
-export const UserSearch = (props: { setCreators: Function }) => {
+export const UserSearch = (props: {
+  className?: string;
+  setCreators: (users: UserValue[]) => void;
+}) => {
   const { whitelistedCreatorsByCreator } = useMeta();
   const [value, setValue] = React.useState<UserValue[]>([]);
 
   return (
-    <DebounceSelect
-      className="user-selector"
+    <DebounceSelect<UserValue[]>
+      className={props.className}
       mode="multiple"
       size="large"
       value={value}
       placeholder="Select creator"
-      fetchOptions={async (search: string) => {
+      fetchOptions={async () => {
         const items = Object.values(whitelistedCreatorsByCreator)
           .filter(c => c.info.activated)
           .map(a => ({
@@ -87,7 +90,6 @@ export const UserSearch = (props: { setCreators: Function }) => {
         props.setCreators(newValue);
         setValue(newValue);
       }}
-      style={{ width: '100%' }}
     />
   );
 };

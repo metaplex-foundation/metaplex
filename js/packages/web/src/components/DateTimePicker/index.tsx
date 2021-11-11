@@ -19,7 +19,6 @@ export const DateTimePicker = (props: IDateTimePicker) => {
   return (
     <>
       <DatePicker
-        className="field-date"
         size="large"
         value={momentObj}
         onChange={value => {
@@ -35,7 +34,6 @@ export const DateTimePicker = (props: IDateTimePicker) => {
         {...datePickerProps}
       />
       <TimePicker
-        className="field-date"
         size="large"
         value={momentObj}
         onChange={value => {

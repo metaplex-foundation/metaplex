@@ -1,21 +1,29 @@
-import React, { useMemo, useState } from 'react';
-import { Row, Button, Modal, ButtonProps } from 'antd';
-import { ArtCard } from './../../components/ArtCard';
-import { useUserArts } from '../../hooks';
-import Masonry from 'react-masonry-css';
+import { Button, Card, Modal, Space } from 'antd';
+import React, { ReactNode, useMemo, useState } from 'react';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useUserArts } from '../../hooks';
+import { ArtCard } from './../../components/ArtCard';
 
-export interface ArtSelectorProps extends ButtonProps {
+export interface ArtSelectorProps {
+  className?: string;
+  children?: ReactNode;
   selected: SafetyDepositDraft[];
   setSelected: (selected: SafetyDepositDraft[]) => void;
   allowMultiple: boolean;
   filter?: (i: SafetyDepositDraft) => boolean;
 }
 
-export const ArtSelector = (props: ArtSelectorProps) => {
-  const { selected, setSelected, allowMultiple, ...rest } = props;
+export const ArtSelector = ({
+  className,
+  children,
+  selected,
+  setSelected,
+  allowMultiple,
+  filter,
+}: ArtSelectorProps) => {
   let items = useUserArts();
-  if (props.filter) items = items.filter(props.filter);
+  if (filter) items = items.filter(filter);
   const selectedItems = useMemo<Set<string>>(
     () => new Set(selected.map(item => item.metadata.pubkey)),
     [selected],
@@ -41,22 +49,11 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     close();
   };
 
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
-
   return (
     <>
-      <Masonry
-        breakpointCols={breakpointColumnsObj}
-        className="my-masonry-grid"
-        columnClassName="my-masonry-grid_column"
-      >
+      <MetaplexMasonry className={className}>
         {selected.map(m => {
-          let key = m?.metadata.pubkey || '';
+          const key = m?.metadata.pubkey || '';
 
           return (
             <ArtCard
@@ -72,15 +69,11 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           );
         })}
         {(allowMultiple || selectedItems.size === 0) && (
-          <div
-            className="ant-card ant-card-bordered ant-card-hoverable art-card"
-            style={{ width: 200, height: 300, display: 'flex' }}
-            onClick={open}
-          >
-            <span className="text-center">Add an NFT</span>
-          </div>
+          <Card hoverable onClick={open}>
+            {children ?? 'Add an NFT'}
+          </Card>
         )}
-      </Masonry>
+      </MetaplexMasonry>
 
       <Modal
         visible={visible}
@@ -89,21 +82,9 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         width={1100}
         footer={null}
       >
-        <Row className="call-to-action" style={{ marginBottom: 0 }}>
+        <Space className="metaplex-space-align-stretch" direction="vertical">
           <h2>Select the NFT you want to sell</h2>
-          <p style={{ fontSize: '1.2rem' }}>
-            Select the NFT that you want to sell copy/copies of.
-          </p>
-        </Row>
-        <Row
-          className="content-action"
-          style={{ overflowY: 'auto', height: '50vh' }}
-        >
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
+          <MetaplexMasonry>
             {items.map(m => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
@@ -118,7 +99,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   ? new Set(list.filter(item => item !== id))
                   : new Set([...list, id]);
 
-                let selected = items.filter(item =>
+                const selected = items.filter(item =>
                   newSet.has(item.metadata.pubkey),
                 );
                 setSelected(selected);
@@ -134,22 +115,16 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   pubkey={m.metadata.pubkey}
                   preview={false}
                   onClick={onSelect}
-                  className={isSelected ? 'selected-card' : 'not-selected-card'}
                 />
               );
             })}
-          </Masonry>
-        </Row>
-        <Row>
-          <Button
-            type="primary"
-            size="large"
-            onClick={confirm}
-            className="action-btn"
-          >
-            Confirm
-          </Button>
-        </Row>
+          </MetaplexMasonry>
+          {allowMultiple && selectedItems.size > 0 && (
+            <Button type="primary" size="large" onClick={confirm}>
+              Confirm
+            </Button>
+          )}
+        </Space>
       </Modal>
     </>
   );

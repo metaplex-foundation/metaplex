@@ -44,7 +44,7 @@ export function useUserBalance(
   );
 
   useEffect(() => {
-    setBalanceInUSD(balance * solPrice);
+    if (solPrice !== undefined) setBalanceInUSD(balance * solPrice);
   }, [balance, solPrice, mint, setBalanceInUSD]);
 
   return {

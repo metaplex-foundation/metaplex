@@ -1,5 +1,6 @@
-import { HashRouter, Route, Switch } from 'react-router-dom';
 import { Storefront } from '@oyster/common';
+import React from 'react';
+import { HashRouter, Route, Switch } from 'react-router-dom';
 import { Providers } from './providers';
 import {
   ArtCreateView,
@@ -9,6 +10,7 @@ import {
   AuctionCreateView,
   AuctionView,
   HomeView,
+  StaticPageView,
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
@@ -20,7 +22,7 @@ interface RoutesProps {
 export function Routes({ storefront }: RoutesProps) {
   return (
     <>
-      <HashRouter basename={'/'}>
+      <HashRouter basename="/">
         <Providers storefront={storefront}>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
@@ -29,11 +31,7 @@ export function Routes({ storefront }: RoutesProps) {
               path="/artworks/new/:step_param?"
               component={() => <ArtCreateView />}
             />
-            <Route
-              exact
-              path="/owned"
-              component={() => <ArtworksView />}
-            />
+            <Route exact path="/owned" component={() => <ArtworksView />} />
             <Route exact path="/artworks/:id" component={() => <ArtView />} />
             <Route path="/artists/:id" component={() => <ArtistView />} />
             <Route
@@ -51,6 +49,7 @@ export function Routes({ storefront }: RoutesProps) {
               path="/auction/:id/billing"
               component={() => <BillingView />}
             />
+            <Route path="/about" component={() => <StaticPageView />} />
             <Route path="/" component={() => <HomeView />} />
           </Switch>
         </Providers>

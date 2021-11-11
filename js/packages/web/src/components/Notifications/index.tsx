@@ -10,29 +10,24 @@ import {
   StringPublicKey,
   toPublicKey,
   useConnection,
-  useUserAccounts,
-  VaultState,
   WalletSigner,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Badge, Popover, List } from 'antd';
+import { Badge, Button, ButtonProps, List, Popover } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
-import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { unwindVault } from '../../actions/unwindVault';
-import { settle } from '../../actions/settle';
-import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
+import BellSvg from '../svgs/bell';
 
 interface NotificationCard {
   id: string;
   title: string;
   description: string | JSX.Element;
-  action: () => Promise<boolean>;
+  action?: () => Promise<boolean>;
   dismiss?: () => Promise<boolean>;
 }
 
@@ -74,15 +69,11 @@ function RunAction({
   let component;
   switch (state) {
     case RunActionState.NotRunning:
-      component = (
-        <span className="hover-button" onClick={run}>
-          {icon}
-        </span>
-      );
+      component = <span onClick={run}>{icon}</span>;
       break;
     case RunActionState.Failed:
       component = (
-        <span className="hover-button" onClick={run}>
+        <span onClick={run}>
           <SyncOutlined />
         </span>
       );
@@ -136,7 +127,9 @@ export function useCollapseWrappedSol({
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     }
     setTimeout(fn, 60000);
   };
@@ -168,12 +161,12 @@ export function useCollapseWrappedSol({
   }
 }
 
-export function Notifications() {
-  const {
-    metadata,
-    whitelistedCreatorsByCreator,
-    store,
-  } = useMeta();
+export function Notifications({
+  buttonType,
+}: {
+  buttonType?: ButtonProps['type'];
+}) {
+  const { metadata, whitelistedCreatorsByCreator, store } = useMeta();
 
   const connection = useConnection();
   const wallet = useWallet();
@@ -198,17 +191,14 @@ export function Notifications() {
       }),
     [metadata, whitelistedCreatorsByCreator, walletPubkey],
   );
-  
+
   metaNeedsApproving.forEach(m => {
     notifications.push({
       id: m.pubkey,
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.name ||
-            m.pubkey}{' '}
-          wants you to approve that you helped create their art{' '}
-          <Link to={`/artworks/${m.pubkey}`}>here.</Link>
+          A whitelisted creator wants you to approve a collaboration. See artwork <Link to={`/artworks/${m.pubkey}`}>here</Link>.
         </span>
       ),
       action: async () => {
@@ -223,63 +213,53 @@ export function Notifications() {
     });
   });
 
-  const content = notifications.length ? (
-    <div style={{ width: '300px' }}>
-      <List
-        itemLayout="vertical"
-        size="small"
-        dataSource={notifications.slice(0, 10)}
-        renderItem={(item: NotificationCard) => (
-          <List.Item
-            extra={
-              <>
+  const activeNotifications = notifications.length > 0 ? notifications.slice(0, 10) : [{ title: "No Notifcations", description: "You have no notifications that need attending." }] as NotificationCard[];
+
+  const content = (
+    <List
+      itemLayout="vertical"
+      size="small"
+      className="metaplex-notifications"
+      dataSource={activeNotifications}
+      renderItem={(item: NotificationCard) => (
+        <List.Item
+          extra={
+            <>
+              {item.action && (
                 <RunAction
                   id={item.id}
                   action={item.action}
                   icon={<PlayCircleOutlined />}
                 />
-                {item.dismiss && (
-                  <RunAction
-                    id={item.id}
-                    action={item.dismiss}
-                    icon={<PlayCircleOutlined />}
-                  />
-                )}
-              </>
-            }
-          >
-            <List.Item.Meta
-              title={<span>{item.title}</span>}
-              description={
-                <span>
-                  <i>{item.description}</i>
-                </span>
-              }
-            />
-          </List.Item>
-        )}
-      />
-    </div>
-  ) : (
-    <span>No notifications</span>
+              )}
+              {item.dismiss && (
+                <RunAction
+                  id={item.id}
+                  action={item.dismiss}
+                  icon={<PlayCircleOutlined />}
+                />
+              )}
+            </>
+          }
+        >
+          <List.Item.Meta
+            title={item.title}
+            description={item.description}
+          />
+        </List.Item>
+      )}
+    />
   );
 
+
   const justContent = (
-    <Popover
-      className="noty-popover"
-      placement="bottomLeft"
-      content={content}
-      trigger="click"
-    >
-      <h1 className="title"/>
+    <Popover placement="bottomRight" content={content} trigger="click">
+      <Button className="metaplex-button-appbar" type={buttonType}>
+        <BellSvg />
+      </Button>
     </Popover>
   );
 
   if (notifications.length === 0) return justContent;
-  else
-    return (
-      <Badge count={notifications.length} style={{ backgroundColor: 'white' }}>
-        {justContent}
-      </Badge>
-    );
+  else return <Badge count={notifications.length}>{justContent}</Badge>;
 }

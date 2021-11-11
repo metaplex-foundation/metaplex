@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://metaplex.com">
-    <img alt="Metaplex" src="https://metaplex.com/meta.svg" width="250" />
+   <img alt="Metaplex" src="https://metaplex.com/static/logos/metaplex.svg" width="250" />
   </a>
 </p>
 
@@ -20,7 +20,7 @@ https://docs.metaplex.com/
 
 ## Installing
 
-Clone the repo, and run `yarn start` to deploy.
+Make sure lerna is installed (`yarn global add lerna`).
 
 ```bash
 $ git clone https://github.com/metaplex-foundation/metaplex.git
@@ -28,7 +28,8 @@ $ cd metaplex
 $ cd js
 $ yarn install
 $ yarn bootstrap
-$ yarn start
+$ yarn build
+$ SUBDOMAIN='store-subdomain' yarn start
 ```
 
 Navigate to `http://localhost:3000/` to explore the deployed application.
