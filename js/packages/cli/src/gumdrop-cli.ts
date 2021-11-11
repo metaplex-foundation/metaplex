@@ -8,27 +8,19 @@ import {
   SESv2Client,
   CreateContactListCommand,
   GetContactCommand,
-} from "@aws-sdk/client-sesv2"
+} from '@aws-sdk/client-sesv2';
 import * as anchor from '@project-serum/anchor';
-import * as discord from "discord.js"
+import * as discord from 'discord.js';
 import {
   Commitment,
   Connection as RPCConnection,
   Keypair,
   PublicKey,
-  SystemProgram,
   Transaction,
   TransactionInstruction,
-} from "@solana/web3.js";
-import {
-  MintInfo,
-  Token,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { sha256 } from "js-sha256";
+} from '@solana/web3.js';
 import BN from 'bn.js';
-import * as bs58 from "bs58";
-import * as crypto from "crypto";
+import * as crypto from 'crypto';
 
 import {
   ClaimantInfo,
@@ -40,7 +32,7 @@ import {
   validateTransferClaims,
   validateCandyClaims,
   validateEditionClaims,
-} from "./helpers/gumdrop/claimant";
+} from './helpers/gumdrop/claimant';
 import {
   AuthKeys,
   DropInfo,
@@ -51,22 +43,16 @@ import {
   distributeWallet,
   formatDropMessage,
   urlAndHandleFor,
-} from "./helpers/gumdrop/communication";
+} from './helpers/gumdrop/communication';
 import {
   GUMDROP_TEMPORAL_SIGNER,
   GUMDROP_DISTRIBUTOR_ID,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-} from "./helpers/constants";
-import {
-  MerkleTree,
-} from "./helpers/gumdrop/merkleTree";
-import {
-  sendSignedTransaction,
-} from "./helpers/transactions";
+} from './helpers/constants';
+import { sendSignedTransaction } from './helpers/transactions';
 
 program.version('0.0.1');
 
-const LOG_PATH= "./.log";
+const LOG_PATH = './.log';
 
 if (!fs.existsSync(LOG_PATH)) {
   fs.mkdirSync(LOG_PATH);
@@ -77,62 +63,42 @@ log.setLevel(log.levels.INFO);
 programCommand('create')
   .option(
     '--claim-integration <method>',
-    'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition'
+    'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
   )
-  .option(
-    '--transfer-mint <mint>',
-    'transfer: public key of mint'
-  )
+  .option('--transfer-mint <mint>', 'transfer: public key of mint')
   .option(
     '--candy-config <config>',
-    'candy: public key of the candy machine config'
+    'candy: public key of the candy machine config',
   )
   .option(
     '--candy-uuid <uuid>',
-    'candy: uuid used to construct the candy machine'
+    'candy: uuid used to construct the candy machine',
   )
-  .option(
-    '--edition-mint <mint>',
-    'edition: mint of the master edition'
-  )
+  .option('--edition-mint <mint>', 'edition: mint of the master edition')
   .option(
     '--distribution-method <method>',
     // TODO: more explanation
-    'Off-chain distribution of claims. Either `aws-email`, `aws-sms`, `discord`, `manual`, or `wallets`'
+    'Off-chain distribution of claims. Either `aws-email`, `aws-sms`, `discord`, `manual`, or `wallets`',
   )
-  .option(
-    '--aws-ses-access-key-id <string>',
-    'Access Key Id'
-  )
-  .option(
-    '--aws-ses-secret-access-key <string>',
-    'Secret Access Key'
-  )
-  .option(
-    '--discord-token <string>',
-    'Discord bot token'
-  )
-  .option(
-    '--discord-guild <string>',
-    'Discord guild with members'
-  )
+  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
+  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .option('--discord-token <string>', 'Discord bot token')
+  .option('--discord-guild <string>', 'Discord guild with members')
   .option(
     '--otp-auth <auth>',
-    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint or `none` to skip OTP'
+    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint or `none` to skip OTP',
   )
-  .option(
-    '--distribution-list <path>',
-    'List of users to build gumdrop from.'
-  )
+  .option('--distribution-list <path>', 'List of users to build gumdrop from.')
   .option(
     '--resend-only',
-    'Distribute list with off-chain method only. Assumes a validator and urls already exist'
+    'Distribute list with off-chain method only. Assumes a validator and urls already exist',
   )
   .option(
     '--host <string>',
     'Website to claim gumdrop',
-    "https://lwus.github.io/gumdrop"
+    'https://lwus.github.io/gumdrop',
   )
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
 
@@ -142,27 +108,30 @@ programCommand('create')
       options.rpcUrl || anchor.web3.clusterApiUrl(options.env),
     );
 
-    const getTemporalSigner = (auth) => {
-      switch (auth){
-        case "default" : return GUMDROP_TEMPORAL_SIGNER;
-        case "none"    : return PublicKey.default;
-        default        : throw new Error(`Unknown OTP authorization type ${auth}`)
+    const getTemporalSigner = auth => {
+      switch (auth) {
+        case 'default':
+          return GUMDROP_TEMPORAL_SIGNER;
+        case 'none':
+          return PublicKey.default;
+        default:
+          throw new Error(`Unknown OTP authorization type ${auth}`);
       }
     };
 
     if (!options.host) {
-      throw new Error("No host website specified");
+      throw new Error('No host website specified');
     }
 
     let temporalSigner;
     switch (options.distributionMethod) {
-      case "wallets":
+      case 'wallets':
         temporalSigner = GUMDROP_DISTRIBUTOR_ID;
         break;
-      case "manual":
-      case "aws-email":
-      case "aws-sms":
-      case "discord":
+      case 'manual':
+      case 'aws-email':
+      case 'aws-sms':
+      case 'discord':
         temporalSigner = getTemporalSigner(options.otpAuth);
         break;
       default:
@@ -172,7 +141,6 @@ programCommand('create')
     }
     console.log(`temporal signer: ${temporalSigner.toBase58()}`);
 
-
     let claimantsStr;
     try {
       claimantsStr = fs.readFileSync(options.distributionList).toString();
@@ -180,7 +148,11 @@ programCommand('create')
       throw new Error(`Could not read distribution list ${err}`);
     }
 
-    const claimants = parseClaimants(claimantsStr, options.distributionList, options.distributionMethod);
+    const claimants = parseClaimants(
+      claimantsStr,
+      options.distributionList,
+      options.distributionMethod,
+    );
     if (claimants.length === 0) {
       throw new Error(`No claimants provided`);
     }
@@ -190,56 +162,61 @@ programCommand('create')
       options.claimIntegration,
       options.transferMint,
       options.candyConfig,
-      options.editionMint
+      options.editionMint,
     );
 
-    const distribute = (claimants : Claimants) => {
+    const distribute = (claimants: Claimants) => {
       switch (options.distributionMethod) {
-        case "wallets":
-          return distributeWallet({}, "", claimants, dropInfo);
-        case "manual":
-          return distributeManual({}, "", claimants, dropInfo);
-        case "aws-email":
+        case 'wallets':
+          return distributeWallet({}, '', claimants, dropInfo);
+        case 'manual':
+          return distributeManual({}, '', claimants, dropInfo);
+        case 'aws-email':
           return distributeAwsSes(
             {
               accessKeyId: options.awsSesAccessKeyId,
               secretAccessKey: options.awsSesSecretAccessKey,
             },
-            "santa@aws.metaplex.com",
+            'santa@aws.metaplex.com',
             claimants,
-            dropInfo
+            dropInfo,
           );
-        case "aws-sms":
+        case 'aws-sms':
           return distributeAwsSns(
             {
               accessKeyId: options.awsSesAccessKeyId,
               secretAccessKey: options.awsSesSecretAccessKey,
             },
-            "",
+            '',
             claimants,
-            dropInfo
+            dropInfo,
           );
-        case "discord":
+        case 'discord':
           return distributeDiscord(
             {
               botToken: options.discordToken,
               guild: options.discordGuild,
             },
-            "",
+            '',
             claimants,
-            dropInfo
+            dropInfo,
           );
       }
-    }
+    };
     await distribute([]); // check that auth is correct...
 
     if (options.resendOnly) {
-      if (claimants.some(c => typeof c.url !== "string")) {
-        throw new Error("Specified resend only but not all claimants have a 'url'");
+      if (claimants.some(c => typeof c.url !== 'string')) {
+        throw new Error(
+          "Specified resend only but not all claimants have a 'url'",
+        );
       }
       const responses = await distribute(claimants);
       // TODO: old path.1?
-      const respPath = logPath(options.env, `resp-${Keypair.generate().publicKey.toBase58()}.json`);
+      const respPath = logPath(
+        options.env,
+        `resp-${Keypair.generate().publicKey.toBase58()}.json`,
+      );
       console.log(`writing responses to ${respPath}`);
       fs.writeFileSync(respPath, JSON.stringify(responses));
       return;
@@ -247,7 +224,7 @@ programCommand('create')
 
     let claimInfo;
     switch (options.claimIntegration) {
-      case "transfer": {
+      case 'transfer': {
         claimInfo = await validateTransferClaims(
           connection,
           wallet.publicKey,
@@ -256,7 +233,7 @@ programCommand('create')
         );
         break;
       }
-      case "candy": {
+      case 'candy': {
         claimInfo = await validateCandyClaims(
           connection,
           wallet.publicKey,
@@ -266,7 +243,7 @@ programCommand('create')
         );
         break;
       }
-      case "edition": {
+      case 'edition': {
         claimInfo = await validateEditionClaims(
           connection,
           wallet.publicKey,
@@ -283,24 +260,25 @@ programCommand('create')
 
     claimants.forEach(c => {
       c.pin = new BN(randomBytes());
-      c.seed = options.claimIntegration === "transfer" ? claimInfo.mint.key
-             : options.claimIntegration === "candy"    ? claimInfo.config
-             : /* === edition */            claimInfo.masterMint.key;
+      c.seed =
+        options.claimIntegration === 'transfer'
+          ? claimInfo.mint.key
+          : options.claimIntegration === 'candy'
+          ? claimInfo.config
+          : /* === edition */ claimInfo.masterMint.key;
     });
-
-
 
     const base = Keypair.generate();
 
-    let extraParams : Array<string> = [];
-    if (options.distributionMethod === "discord") {
+    const extraParams: Array<string> = [];
+    if (options.distributionMethod === 'discord') {
       extraParams.push(`guild=${options.discordGuild}`);
     }
 
     const instructions = await buildGumdrop(
       connection,
       wallet.publicKey,
-      options.distributionMethod !== "wallets",
+      options.distributionMethod !== 'wallets',
       options.claimIntegration,
       options.host,
       base.publicKey,
@@ -314,7 +292,10 @@ programCommand('create')
     console.log(`writing base to ${basePath}`);
     fs.writeFileSync(basePath, JSON.stringify([...base.secretKey]));
 
-    const urlPath = logPath(options.env, `urls-${base.publicKey.toBase58()}.json`);
+    const urlPath = logPath(
+      options.env,
+      `urls-${base.publicKey.toBase58()}.json`,
+    );
     console.log(`writing claims to ${urlPath}`);
     fs.writeFileSync(urlPath, JSON.stringify(urlAndHandleFor(claimants)));
 
@@ -322,52 +303,46 @@ programCommand('create')
       connection,
       wallet,
       instructions,
-      [base]
+      [base],
     );
 
     console.log(createResult);
-    if (typeof createResult === "string") {
+    if (typeof createResult === 'string') {
       throw new Error(createResult);
     } else {
       console.log(
         'gumdrop creation succeeded',
-        `https://explorer.solana.com/tx/${createResult.txid}?cluster=${options.env}`
+        `https://explorer.solana.com/tx/${createResult.txid}?cluster=${options.env}`,
       );
     }
 
-    console.log("distributing claim URLs");
+    console.log('distributing claim URLs');
     const responses = await distribute(claimants);
-    const respPath = logPath(options.env, `resp-${base.publicKey.toBase58()}.json`);
+    const respPath = logPath(
+      options.env,
+      `resp-${base.publicKey.toBase58()}.json`,
+    );
     console.log(`writing responses to ${respPath}`);
     fs.writeFileSync(respPath, JSON.stringify(responses));
   });
 
-
 programCommand('close')
   .option(
     '--claim-integration <method>',
-    'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition'
+    'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
   )
-  .option(
-    '--transfer-mint <mint>',
-    'transfer: public key of mint'
-  )
+  .option('--transfer-mint <mint>', 'transfer: public key of mint')
   .option(
     '--candy-config <config>',
-    'candy: public key of the candy machine config'
+    'candy: public key of the candy machine config',
   )
   .option(
     '--candy-uuid <uuid>',
-    'candy: uuid used to construct the candy machine'
+    'candy: uuid used to construct the candy machine',
   )
-  .option(
-    '--edition-mint <mint>',
-    'edition: mint of the master edition'
-  )
-  .option(
-    '--base <path>',
-    'gumdrop authority generated on create'
-  )
+  .option('--edition-mint <mint>', 'edition: mint of the master edition')
+  .option('--base <path>', 'gumdrop authority generated on create')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
 
@@ -379,21 +354,27 @@ programCommand('close')
     );
 
     switch (options.claimIntegration) {
-      case "transfer": {
+      case 'transfer': {
         if (!options.transferMint) {
-          throw new Error("No transfer-mint provided. Used to check we're not accidentally losing ownership of other accounts");
+          throw new Error(
+            "No transfer-mint provided. Used to check we're not accidentally losing ownership of other accounts",
+          );
         }
         break;
       }
-      case "candy": {
+      case 'candy': {
         if (!options.candyConfig || !options.candyUuid) {
-          throw new Error("No candy-config or candy-uuid provided. Needed to transfer back candy-machine authority");
+          throw new Error(
+            'No candy-config or candy-uuid provided. Needed to transfer back candy-machine authority',
+          );
         }
         break;
       }
-      case "edition": {
+      case 'edition': {
         if (!options.editionMint) {
-          throw new Error("No master-mint provided. Needed to transfer back master");
+          throw new Error(
+            'No master-mint provided. Needed to transfer back master',
+          );
         }
         break;
       }
@@ -418,31 +399,29 @@ programCommand('close')
       connection,
       wallet,
       instructions,
-      [base]
+      [base],
     );
 
     console.log(closeResult);
-    if (typeof closeResult === "string") {
+    if (typeof closeResult === 'string') {
       throw new Error(closeResult);
     } else {
       console.log(
         'gumdrop close succeeded',
-        `https://explorer.solana.com/tx/${closeResult.txid}?cluster=${options.env}`
+        `https://explorer.solana.com/tx/${closeResult.txid}?cluster=${options.env}`,
       );
     }
   });
 
 programCommand('create_contact_list')
   .option('--cli-input-json <filename>')
-  .option(
-    '--aws-ses-access-key-id <string>',
-    'Access Key Id'
+  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
+  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .addHelpText(
+    'before',
+    'A thin wrapper mimicking `aws sesv2 create-contact-list`',
   )
-  .option(
-    '--aws-ses-secret-access-key <string>',
-    'Secret Access Key'
-  )
-  .addHelpText('before', 'A thin wrapper mimicking `aws sesv2 create-contact-list`')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
 
@@ -454,7 +433,7 @@ programCommand('create_contact_list')
     }
 
     const client = new SESv2Client({
-      region: "us-east-2",
+      region: 'us-east-2',
       credentials: {
         accessKeyId: options.awsSesAccessKeyId,
         secretAccessKey: options.awsSesSecretAccessKey,
@@ -465,7 +444,7 @@ programCommand('create_contact_list')
       const response = await client.send(new CreateContactListCommand(message));
       log.debug(response);
       if (response.$metadata.httpStatusCode !== 200) {
-      //   throw new Error(`AWS SES ssemed to fail to send email: ${response[0].reject_reason}`);
+        //   throw new Error(`AWS SES ssemed to fail to send email: ${response[0].reject_reason}`);
       }
     } catch (err) {
       log.error(err);
@@ -475,20 +454,15 @@ programCommand('create_contact_list')
 
 programCommand('get_contact')
   .argument('<email>', 'email address to query')
-  .option(
-    '--aws-ses-access-key-id <string>',
-    'Access Key Id'
-  )
-  .option(
-    '--aws-ses-secret-access-key <string>',
-    'Secret Access Key'
-  )
+  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
+  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
   .addHelpText('before', 'A thin wrapper mimicking `aws sesv2 get-contact`')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (email, options, cmd) => {
     log.info(`Parsed options:`, options);
 
     const client = new SESv2Client({
-      region: "us-east-2",
+      region: 'us-east-2',
       credentials: {
         accessKeyId: options.awsSesAccessKeyId,
         secretAccessKey: options.awsSesSecretAccessKey,
@@ -496,10 +470,12 @@ programCommand('get_contact')
     });
 
     try {
-      const response = await client.send(new GetContactCommand({
-        ContactListName: "Gumdrop",
-        EmailAddress: email,
-      }));
+      const response = await client.send(
+        new GetContactCommand({
+          ContactListName: 'Gumdrop',
+          EmailAddress: email,
+        }),
+      );
       console.log(response);
     } catch (err) {
       log.error(err);
@@ -519,12 +495,9 @@ function programCommand(name: string) {
       `Solana wallet location`,
       '--keypair not provided',
     )
-    .option(
-      '-r, --rpc-url <string>',
-      'Custom rpc url',
-    )
-    .option('-l, --log-level <string>', 'log level', setLogLevel)
-};
+    .option('-r, --rpc-url <string>', 'Custom rpc url')
+    .option('-l, --log-level <string>', 'log level', setLogLevel);
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setLogLevel(value, prev) {
@@ -535,7 +508,7 @@ function setLogLevel(value, prev) {
   log.setLevel(value);
 }
 
-function loadWalletKey(keypair) : Keypair {
+function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');
   }
@@ -546,16 +519,12 @@ function loadWalletKey(keypair) : Keypair {
   return loaded;
 }
 
-function logPath(
-  env: string,
-  logName: string,
-  cPath: string = LOG_PATH,
-) {
+function logPath(env: string, logName: string, cPath: string = LOG_PATH) {
   return path.join(cPath, `${env}-${logName}`);
 }
 
 // NB: assumes no overflow
-function randomBytes() : Uint8Array {
+function randomBytes(): Uint8Array {
   // TODO: some predictable seed? sha256?
   return crypto.randomBytes(4);
 }
@@ -565,19 +534,18 @@ async function sendTransactionWithRetry(
   wallet: Keypair,
   instructions: Array<TransactionInstruction>,
   signers: Array<Keypair>,
-  commitment: Commitment = "singleGossip",
-) : Promise<string| { txid: string; slot: number }> {
-
-  let transaction = new Transaction();
-  instructions.forEach((instruction) => transaction.add(instruction));
+  commitment: Commitment = 'singleGossip',
+): Promise<string | { txid: string; slot: number }> {
+  const transaction = new Transaction();
+  instructions.forEach(instruction => transaction.add(instruction));
   transaction.recentBlockhash = (
-    (await connection.getRecentBlockhash(commitment))
+    await connection.getRecentBlockhash(commitment)
   ).blockhash;
 
   transaction.setSigners(
     // fee payed by the wallet owner
     wallet.publicKey,
-    ...signers.map((s) => s.publicKey)
+    ...signers.map(s => s.publicKey),
   );
 
   if (signers.length > 0) {
@@ -589,19 +557,19 @@ async function sendTransactionWithRetry(
     connection,
     signedTransaction: transaction,
   });
-};
+}
 
 async function distributeDiscord(
-  auth : AuthKeys,
-  source : string,
-  claimants : Claimants,
-  drop : DropInfo,
+  auth: AuthKeys,
+  source: string,
+  claimants: Claimants,
+  drop: DropInfo,
 ) {
   if (!auth.botToken || !auth.guild) {
-    throw new Error("Discord auth keys not supplied");
+    throw new Error('Discord auth keys not supplied');
   }
   if (claimants.length === 0) return [];
-  log.debug("Discord auth", auth);
+  log.debug('Discord auth', auth);
 
   const client = new discord.Client();
   await client.login(auth.botToken);
@@ -612,16 +580,13 @@ async function distributeDiscord(
     user: claimants.map(c => c.handle),
   });
 
-  const single = async (
-    info : ClaimantInfo,
-    drop : DropInfo,
-  ) => {
+  const single = async (info: ClaimantInfo, drop: DropInfo) => {
     const user = members.get(info.handle);
     if (user === undefined) {
       return {
-        status: "error",
+        status: 'error',
         handle: info.handle,
-        error: "notfound",
+        error: 'notfound',
       };
     }
     const formatted = formatDropMessage(info, drop, false);
@@ -629,13 +594,13 @@ async function distributeDiscord(
     // canonoical way to check if message succeeded?
     if (response.id) {
       return {
-        status: "success",
+        status: 'success',
         handle: info.handle,
         messageId: response.id,
       };
     } else {
       return {
-        status: "error",
+        status: 'error',
         handle: info.handle,
         error: response, // TODO
       };
@@ -649,6 +614,5 @@ async function distributeDiscord(
   client.destroy();
   return responses;
 }
-
 
 program.parse(process.argv);

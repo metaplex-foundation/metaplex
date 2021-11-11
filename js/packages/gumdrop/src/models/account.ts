@@ -5,7 +5,11 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 
-import { AccountInfo as TokenAccountInfo, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  AccountInfo as TokenAccountInfo,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 const BufferLayout = require('buffer-layout');
 
 export interface TokenAccount {
@@ -61,7 +65,6 @@ export function approve(
   const tokenProgram = TOKEN_PROGRAM_ID;
 
   const transferAuthority = existingTransferAuthority || Keypair.generate();
-  const delegateKey = delegate ?? transferAuthority.publicKey;
 
   instructions.push(
     Token.createApproveInstruction(
