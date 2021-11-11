@@ -119,9 +119,9 @@ const contrastRatio = (a: Lab, b: Lab) => {
   return (l1 + 0.05) / (l2 + 0.05);
 };
 
-const LIGHTNESS_C1 = Object.freeze(new Vector2(0, 0.25));
+const LIGHTNESS_C1 = Object.freeze(new Vector2(0, 0.4));
 const LIGHTNESS_C2 = Object.freeze(new Vector2(1, 0.95));
-const LIGHTNESS_AMT = 0.04;
+const LIGHTNESS_AMT = 0.045;
 
 const tweakLightness = (clr: Lab, by: (lPrime: number) => number) =>
   where(
