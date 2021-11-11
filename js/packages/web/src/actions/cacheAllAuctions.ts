@@ -47,17 +47,18 @@ export async function cacheAllAuctions(
     const auctionCache = auctionCaches[auctionCachePubkey];
     const cacheExists = !!auctionCache;
     const activeIndex = storeIndex[0];
-    const offset = findIndex(activeIndex.info.auctionCaches, pubkey => {
-      const cache = auctionCaches[pubkey];
+    let offset = 0;
 
-      if (!cacheExists) {
-        return true;
-      }
+    if (activeIndex && cacheExists) {
+      offset = findIndex(activeIndex.info.auctionCaches, pubkey => {
+        const cache = auctionCaches[pubkey];
 
-      return (
-        auctionCache.info.timestamp.toNumber() > cache.info.timestamp.toNumber()
-      );
-    });
+        return (
+          auctionCache.info.timestamp.toNumber() >
+          cache.info.timestamp.toNumber()
+        );
+      });
+    }
 
     const { instructions, signers } = await cacheAuctionIndexer(
       wallet,
