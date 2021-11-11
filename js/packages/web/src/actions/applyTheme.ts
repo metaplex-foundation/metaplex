@@ -1,6 +1,6 @@
 import { StorefrontTheme } from '@oyster/common';
-import { Color, Vector3 } from 'three';
-const { cbrt } = Math;
+import { Color, Vector2, Vector3 } from 'three';
+const { abs, cbrt } = Math;
 
 const where = <T extends { clone: () => T }>(t: T, by: (t: T) => void) => {
   const ret = t.clone();
@@ -10,8 +10,32 @@ const where = <T extends { clone: () => T }>(t: T, by: (t: T) => void) => {
 
 // Linear interpolation between a and b by t.
 const lerp = (a: number, b: number, t: number) => a + t * (b - a);
+const rlerp = (a: number, b: number, x: number) => (x - a) / (b - a);
 const lerpVec = <T extends Vector3>(a: T, b: T, t: number): T =>
-  a.clone().addScaledVector(b.clone().sub(a), t);
+  a.clone().lerp(b, t);
+
+// Bézier and inverse Bézier
+const bezier = (c1: number, c2: number, t: number) => {
+  const d1 = c1 * 3;
+  const d2 = c2 * 3;
+  return t * (d1 + t * (d2 - (d1 + d1) + t * (d1 + 1 - d2)));
+};
+const rbezier = (c1: number, c2: number, x: number) => {
+  let t = 0;
+  let s = 1;
+  for (let i = 0; i < 30; ++i) {
+    const e = bezier(c1, c2, t) - x;
+    if (abs(e) < 1e-5) break;
+    if (e > 0) t -= s;
+    else t += s;
+    s *= 0.5;
+  }
+  return t;
+};
+const bezier2 = (c1: Vector2, c2: Vector2, x: number) =>
+  bezier(c1.y, c2.y, rbezier(c1.x, c2.x, x));
+const rbezier2 = (c1: Vector2, c2: Vector2, y: number) =>
+  bezier(c1.x, c2.x, rbezier(c1.y, c2.y, y));
 
 class Lab extends Vector3 {
   get l(): number {
@@ -74,6 +98,8 @@ const BLACK = Object.freeze(new Color('black'));
 const WHITE = Object.freeze(new Color('white'));
 const BLACK_LAB = Object.freeze(oklab(BLACK));
 const WHITE_LAB = Object.freeze(oklab(WHITE));
+const BLACK_L = BLACK_LAB.l;
+const WHITE_L = WHITE_LAB.l;
 
 // https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
 const relativeLuma = (lab: Lab) => {
@@ -93,17 +119,46 @@ const contrastRatio = (a: Lab, b: Lab) => {
   return (l1 + 0.05) / (l2 + 0.05);
 };
 
+const LIGHTNESS_C1 = Object.freeze(new Vector2(0, 0.25));
+const LIGHTNESS_C2 = Object.freeze(new Vector2(1, 0.95));
+const LIGHTNESS_AMT = 0.04;
+
+const tweakLightness = (clr: Lab, by: (lPrime: number) => number) =>
+  where(
+    clr,
+    c =>
+      (c.l = lerp(
+        BLACK_L,
+        WHITE_L,
+        bezier2(
+          LIGHTNESS_C1,
+          LIGHTNESS_C2,
+          by(
+            rbezier2(LIGHTNESS_C1, LIGHTNESS_C2, rlerp(BLACK_L, WHITE_L, c.l)),
+          ),
+        ),
+      )),
+  );
+
 /** Whether dark text or light text would work better against a background by the WCAG standard */
 const isLight = (clr: Lab) =>
   contrastRatio(BLACK_LAB, clr) > contrastRatio(WHITE_LAB, clr);
 
+/** Generate a lighter color */
+const lighter = (clr: Lab, by: number) =>
+  tweakLightness(clr, l => (l = lerp(l, 1, by * LIGHTNESS_AMT)));
+
+/** Generate a darker color */
+const darker = (clr: Lab, by: number) =>
+  tweakLightness(clr, l => (l = lerp(l, 0, by * LIGHTNESS_AMT)));
+
 /** Generate a color further from the given background color */
 const bolder = (clr: Lab, by: number) =>
-  where(clr, c => (c.l = lerp(c.l, isLight(c) ? 0 : 1, by)));
+  isLight(clr) ? darker(clr, by) : lighter(clr, by);
 
 /** Generate a color closer to the given background color */
 const fainter = (clr: Lab, by: number) =>
-  where(clr, c => (c.l = lerp(c.l, isLight(c) ? 1 : 0, by)));
+  isLight(clr) ? lighter(clr, by) : darker(clr, by);
 
 /** Generate a suitable text color from an intended background color */
 const textColor = (clr: Lab) =>
@@ -130,12 +185,12 @@ const applyThemeColors = (
   const baseLab = Object.freeze(oklab(base));
   const accentLab = Object.freeze(oklab(accent));
 
-  const baseBoldLab = bolder(baseLab, 0.1);
-  const baseFaintLab = fainter(baseLab, 0.1);
-  const borderLab = bolder(baseLab, 0.2);
+  const baseBoldLab = bolder(baseLab, 1);
+  const baseFaintLab = fainter(baseLab, 1);
+  const borderLab = bolder(baseLab, 2);
 
-  const accentBoldLab = bolder(accentLab, 0.1);
-  const accentFaintLab = fainter(accentLab, 0.1);
+  const accentBoldLab = bolder(accentLab, 1);
+  const accentFaintLab = fainter(accentLab, 1);
 
   const textLab = textColor(baseBoldLab);
   const textFaintLab = lerpVec(textLab, baseLab, 0.4);
