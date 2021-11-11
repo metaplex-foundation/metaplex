@@ -79,7 +79,6 @@ pub mod nft_candy_machine {
             })?;
 
             if let Some(secondary_mint) = candy_machine.secondary_token_mint {
-                msg!("{:?}", secondary_mint);
                 let secondary_token_account_info = &ctx.remaining_accounts[2];
                 let transfer_authority_info = &ctx.remaining_accounts[1];
                 let secondary_token_account: spl_token::state::Account =
