@@ -470,7 +470,7 @@ function InnerAdminView({
             Activate your storefront listing caches by pressing &ldquo;build
             cache&rdquo;. This will reduce page load times for your listings.
             Your storefront will start looking up listing using the cache on
-            November 3rd. To preview the speed improvement visit the Holaplex{' '}
+            November 17th. To preview the speed improvement visit the Holaplex{' '}
             <a
               rel="noopener noreferrer"
               target="_blank"

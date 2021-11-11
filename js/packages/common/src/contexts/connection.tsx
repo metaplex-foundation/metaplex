@@ -603,7 +603,7 @@ export async function sendSignedTransaction({
   return { txid, slot };
 }
 
-async function simulateTransaction(
+export async function simulateTransaction(
   connection: Connection,
   transaction: Transaction,
   commitment: Commitment,

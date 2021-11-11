@@ -43,11 +43,13 @@ export async function cacheAuctionIndexer(
     tokenMints,
   );
 
-  const above =
-    storeIndexer.length === 0
-      ? undefined
-      : storeIndexer[0].info.auctionCaches[offset];
-  const below = storeIndexer[0].info.auctionCaches[offset - 1];
+  let above = undefined;
+  let below = undefined;
+
+  if (storeIndexer.length > 0) {
+    above = storeIndexer[0].info.auctionCaches[offset];
+    below = below = storeIndexer[0].info.auctionCaches[offset - 1];
+  }
 
   const storeIndexKey = await getStoreIndexer(0);
   await setStoreIndex(
