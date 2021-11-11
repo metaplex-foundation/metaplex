@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 
 export const CANDY_MACHINE_ID = new PublicKey(
-  'packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu',
+  'cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ',
 );
 
 export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(

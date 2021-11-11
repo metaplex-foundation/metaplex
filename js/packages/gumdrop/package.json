@@ -71,7 +71,6 @@
     "react-tradingview-embed": "^2.2.6",
     "redux-observable": "^2.0.0",
     "rxjs": "^7.3.0",
-    "ts-node": "^10.4.0",
     "typescript": "4.1.3",
     "use-wallet": "^0.8.1",
     "web-vitals": "^1.0.1"
