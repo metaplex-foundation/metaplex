@@ -40,7 +40,7 @@ import {
   validateTransferClaims,
   validateCandyClaims,
   validateEditionClaims,
-} from "./utils/claimant";
+} from "./helpers/gumdrop/claimant";
 import {
   AuthKeys,
   DropInfo,
@@ -51,19 +51,18 @@ import {
   distributeWallet,
   formatDropMessage,
   urlAndHandleFor,
-} from "./utils/communication";
+} from "./helpers/gumdrop/communication";
 import {
-  CANDY_MACHINE_ID,
   GUMDROP_TEMPORAL_SIGNER,
   GUMDROP_DISTRIBUTOR_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-} from "./utils/ids";
+} from "./helpers/constants";
 import {
   MerkleTree,
-} from "./utils/merkleTree";
+} from "./helpers/gumdrop/merkleTree";
 import {
   sendSignedTransaction,
-} from "./utils/transactions";
+} from "./helpers/transactions";
 
 program.version('0.0.1');
 
