@@ -1,5 +1,5 @@
 {
-  "name": "react-template",
+  "name": "gumdrop",
   "version": "0.1.0",
   "private": true,
   "homepage": "https://lwus.github.io/gumdrop/",
@@ -18,6 +18,7 @@
     "@mailchimp/mailchimp_transactional": "^1.0.46",
     "@mui/icons-material": "^5.0.1",
     "@mui/material": "^5.0.2",
+    "@oyster/common": "0.0.2",
     "@progress/kendo-react-common": "^4.9.0",
     "@progress/kendo-react-grid": "^4.9.0",
     "@progress/kendo-react-inputs": "^4.9.0",

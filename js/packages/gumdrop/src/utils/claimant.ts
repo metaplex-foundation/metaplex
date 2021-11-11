@@ -1,4 +1,5 @@
 import {
+  AccountMeta,
   Connection as RPCConnection,
   Keypair,
   PublicKey,
@@ -45,7 +46,7 @@ export type ClaimantInfo = {
   secret : PublicKey,
 };
 
-const csvStringToArray = (strData) => {
+const csvStringToArray = (strData : any) => {
   const objPattern = new RegExp(("(\\,|\\r?\\n|\\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^\\,\\r\\n]*))"),"gi");
   let arrMatches : RegExpExecArray | null = null;
   const arrData : Array<Array<string>> = [[]];
@@ -74,13 +75,13 @@ export const parseClaimants = (
     case ".csv": {
       const arr = csvStringToArray(input);
       // TODO: more robust
-      let search;
+      let search : string;
       if (method === "aws-sms") {
         search = "phone number";
       } else if (method === "aws-email") {
         search = "email";
       } else {
-        throw new Error(`Cannot parse csv for ${search}`);
+        throw new Error(`Cannot parse csv for ${method}`);
       }
       const foundIdx = arr[0].findIndex(s => s.includes(search));
       if (foundIdx === -1)
@@ -102,7 +103,7 @@ export const parseClaimants = (
     }
     case ".json": {
       const json = JSON.parse(input);
-      return json.map(obj => {
+      return json.map((obj : any) => {
         return {
           handle : obj.handle,
           amount : obj.amount,
@@ -557,7 +558,7 @@ export const closeGumdrop = async (
     GUMDROP_DISTRIBUTOR_ID
   );
 
-  let extraKeys;
+  let extraKeys : Array<AccountMeta>;
   const instructions = Array<TransactionInstruction>();
 
   if (claimMethod === "transfer") {

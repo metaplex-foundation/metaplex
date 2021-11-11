@@ -1,10 +1,10 @@
-{
+
   "compilerOptions": {
-    "target": "es2019",
+    "target": "es2020",
     "lib": [
       "dom",
       "dom.iterable",
-      "es2019"
+      "es2020"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -13,7 +13,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
     "noImplicitAny": false,
     "resolveJsonModule": true,
