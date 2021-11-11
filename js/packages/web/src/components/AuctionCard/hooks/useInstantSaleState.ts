@@ -27,6 +27,7 @@ export const useInstantSaleState = (
   const items = auctionView.items;
   let isAlreadyBought: boolean = false;
   const isBidCanceled = !!myBidderMetadata?.info.cancelled;
+  let canClaimPurchasedItem: boolean = false;
   if (auctionView.auction.info.bidState.type == BidStateType.EnglishAuction) {
     for (const item of items) {
       for (const subItem of item) {
@@ -37,10 +38,12 @@ export const useInstantSaleState = (
         if (isAlreadyBought) break;
       }
     }
+    canClaimPurchasedItem =
+      !!(myBidderPot && !isBidCanceled) && !isAlreadyBought;
   } else {
     isAlreadyBought = !!(myBidderPot && isBidCanceled);
+    canClaimPurchasedItem = !!(myBidderPot && !isBidCanceled);
   }
-  const canClaimPurchasedItem = !!(myBidderPot && !isBidCanceled);
 
   const isOwner = auctionManager.authority === wallet?.publicKey?.toBase58();
   const isAuctionEnded = auction.info.endedAt;
