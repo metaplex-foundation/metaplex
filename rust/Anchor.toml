@@ -2,15 +2,34 @@
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
+
+[programs.localnet]
+nft_candy_machine = "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
 
 [programs.mainnet]
 nft_candy_machine = "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
 fair_launch = "faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j"
 
 [scripts]
-test = "ts-mocha -p ./tsconfig.json -t 1000000 test/*.ts"
+test = "yarn test"
 
 [workspace]
 members = ["nft-candy-machine"]
+
+[test.validator]
+ledger = "test-three"
+url = "https://api.mainnet-beta.solana.com"
+warp_slot = "1"
+slots_per_epoch = "33"
+faucet_port = 9000
+
+[[test.clone]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+
+[[test.clone]]
+address = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+
+[[test.clone]]
+address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"

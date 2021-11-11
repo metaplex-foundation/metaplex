@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 
 import assert from "assert";
 
-import { AccountLayout, MintLayout, Token } from "@solana/spl-token";
+import { MintLayout, Token } from "@solana/spl-token";
 import {
   PublicKey,
   SystemProgram,
@@ -10,6 +10,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { CandyMachine, Config } from "./nft-candy-machine-types";
+
 const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
@@ -136,13 +137,14 @@ describe("nft-candy-machine", function () {
   );
 
   const connection = new anchor.web3.Connection(
-    "https://api.devnet.solana.com/",
+    "http://127.0.0.1:8899",
     "recent"
   );
 
   // Address of the deployed program.
   const programId = new anchor.web3.PublicKey(
-    "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
+    "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
+    // "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
   );
 
   const walletWrapper = new anchor.Wallet(myWallet);
@@ -919,6 +921,541 @@ describe("nft-candy-machine", function () {
         payingToken
       );
       assert.equal(payingTokenBalance.value.uiAmount, 0);
+    });
+  });
+
+  describe.only("secondary_token", function () {
+    beforeEach(async function () {
+      const config = await anchor.web3.Keypair.generate();
+      this.config = config;
+      const txInstr = await createConfig(this, true, 5);
+      const linesInstr = await addConfigLines(this, 5);
+      this.tokenMint = anchor.web3.Keypair.generate();
+      this.secondaryTokenMint = anchor.web3.Keypair.generate();
+      this.candyMachineUuid = anchor.web3.Keypair.generate()
+        .publicKey.toBase58()
+        .slice(0, 6);
+      const [candyMachine, bump] = await getCandyMachine(
+        this.config.publicKey,
+        this.candyMachineUuid
+      );
+      this.walletToken = await getTokenWallet(
+        myWallet.publicKey,
+        this.tokenMint.publicKey
+      );
+      this.secondaryWalletToken = await getTokenWallet(
+        myWallet.publicKey,
+        this.secondaryTokenMint.publicKey
+      );
+
+      // Pulling these instructions out since they bloat the below transaction
+      const instructions = [
+        anchor.web3.SystemProgram.createAccount({
+          fromPubkey: myWallet.publicKey,
+          newAccountPubkey: this.tokenMint.publicKey,
+          space: MintLayout.span,
+          lamports: await provider.connection.getMinimumBalanceForRentExemption(
+            MintLayout.span
+          ),
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitMintInstruction(
+          TOKEN_PROGRAM_ID,
+          this.tokenMint.publicKey,
+          0,
+          myWallet.publicKey,
+          myWallet.publicKey
+        ),
+        createAssociatedTokenAccountInstruction(
+          this.walletToken,
+          myWallet.publicKey,
+          myWallet.publicKey,
+          this.tokenMint.publicKey
+        ),
+
+        anchor.web3.SystemProgram.createAccount({
+          fromPubkey: myWallet.publicKey,
+          newAccountPubkey: this.secondaryTokenMint.publicKey,
+          space: MintLayout.span,
+          lamports: await provider.connection.getMinimumBalanceForRentExemption(
+            MintLayout.span
+          ),
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitMintInstruction(
+          TOKEN_PROGRAM_ID,
+          this.secondaryTokenMint.publicKey,
+          0,
+          myWallet.publicKey,
+          myWallet.publicKey
+        ),
+        createAssociatedTokenAccountInstruction(
+          this.secondaryWalletToken,
+          myWallet.publicKey,
+          myWallet.publicKey,
+          this.secondaryTokenMint.publicKey
+        ),
+      ];
+
+      const tx = new anchor.web3.Transaction();
+      tx.add(...instructions);
+      await provider.send(tx, [
+        myWallet,
+        this.tokenMint,
+        this.secondaryTokenMint,
+      ]);
+
+      try {
+        const tx = await program.rpc.initializeCandyMachine(
+          bump,
+          {
+            uuid: this.candyMachineUuid,
+            price: new anchor.BN(1),
+            secondaryPrice: new anchor.BN(2),
+            itemsAvailable: new anchor.BN(5),
+            goLiveDate: null,
+          },
+          {
+            accounts: {
+              candyMachine,
+              wallet: this.walletToken,
+              secondaryWallet: this.secondaryWalletToken,
+              config: this.config.publicKey,
+              authority: this.authority.publicKey,
+              payer: myWallet.publicKey,
+              systemProgram: anchor.web3.SystemProgram.programId,
+              rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            },
+            remainingAccounts: [
+              {
+                pubkey: this.tokenMint.publicKey,
+                isWritable: false,
+                isSigner: true,
+              },
+              {
+                pubkey: this.secondaryTokenMint.publicKey,
+                isWritable: false,
+                isSigner: true,
+              },
+            ],
+            signers: [
+              myWallet,
+              this.tokenMint,
+              this.secondaryTokenMint,
+              this.authority,
+              this.config,
+            ],
+            instructions: [
+              anchor.web3.SystemProgram.createAccount({
+                fromPubkey: myWallet.publicKey,
+                newAccountPubkey: config.publicKey,
+                space: configArrayStart + 4 + 5 * configLineSize + 4 + 1,
+                lamports:
+                  await provider.connection.getMinimumBalanceForRentExemption(
+                    configArrayStart + 4 + 5 * configLineSize + 4 + 1
+                  ),
+                programId: programId,
+              }),
+              anchor.web3.SystemProgram.transfer({
+                fromPubkey: myWallet.publicKey,
+                toPubkey: this.authority.publicKey,
+                lamports: 5,
+              }),
+              txInstr,
+              ...linesInstr,
+            ],
+          }
+        );
+      } catch (e) {
+        console.log(e);
+        throw e;
+      }
+    });
+
+    it("Is initialized!", async function () {
+      // Add your test here.
+      const [candyMachine, bump] = await getCandyMachine(
+        this.config.publicKey,
+        this.candyMachineUuid
+      );
+
+      const machine: CandyMachine = await program.account.candyMachine.fetch(
+        candyMachine
+      );
+
+      assert.equal(machine.data.uuid, this.candyMachineUuid);
+      assert.ok(machine.wallet.equals(this.walletToken));
+      assert.ok(machine.config.equals(this.config.publicKey));
+      assert.ok(machine.authority.equals(this.authority.publicKey));
+      assert.equal(machine.data.price.toNumber(), new anchor.BN(1).toNumber());
+      assert.equal(
+        machine.data.secondaryPrice.toNumber(),
+        new anchor.BN(2).toNumber()
+      );
+      assert.equal(machine.bump, bump);
+
+      assert.equal(
+        machine.data.itemsAvailable.toNumber(),
+        new anchor.BN(5).toNumber()
+      );
+      assert.ok(machine.tokenMint.equals(this.tokenMint.publicKey));
+    });
+
+    it("mints without goLive date", async function () {
+      const walletTokens = await connection.getTokenAccountBalance(
+        this.walletToken
+      );
+      const mint = anchor.web3.Keypair.generate();
+      const token = await getTokenWallet(
+        this.authority.publicKey,
+        mint.publicKey
+      );
+      const transferAuthority = anchor.web3.Keypair.generate();
+      const payingToken = await getTokenWallet(
+        this.authority.publicKey,
+        this.tokenMint.publicKey
+      );
+      const secondaryPayingToken = await getTokenWallet(
+        this.authority.publicKey,
+        this.secondaryTokenMint.publicKey
+      );
+
+      const metadata = await getMetadata(mint.publicKey);
+      const masterEdition = await getMasterEdition(mint.publicKey);
+      const [candyMachine, _] = await getCandyMachine(
+        this.config.publicKey,
+        this.candyMachineUuid
+      );
+
+      // Separating these out because the setup would happen beforehand anyway.
+      const instructions = [
+        createAssociatedTokenAccountInstruction(
+          payingToken,
+          myWallet.publicKey,
+          this.authority.publicKey,
+          this.tokenMint.publicKey
+        ),
+        Token.createMintToInstruction(
+          TOKEN_PROGRAM_ID,
+          this.tokenMint.publicKey,
+          payingToken,
+          myWallet.publicKey,
+          [],
+          1
+        ),
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          payingToken,
+          transferAuthority.publicKey,
+          this.authority.publicKey,
+          [],
+          1
+        ),
+
+        createAssociatedTokenAccountInstruction(
+          secondaryPayingToken,
+          myWallet.publicKey,
+          this.authority.publicKey,
+          this.secondaryTokenMint.publicKey
+        ),
+        Token.createMintToInstruction(
+          TOKEN_PROGRAM_ID,
+          this.secondaryTokenMint.publicKey,
+          secondaryPayingToken,
+          myWallet.publicKey,
+          [],
+          2
+        ),
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          secondaryPayingToken,
+          transferAuthority.publicKey,
+          this.authority.publicKey,
+          [],
+          2
+        ),
+      ];
+      const tx = new anchor.web3.Transaction();
+      tx.add(...instructions);
+      await provider.send(tx, [myWallet, this.authority]);
+
+      try {
+        const tx = await program.rpc.mintNft({
+          accounts: {
+            config: this.config.publicKey,
+            candyMachine: candyMachine,
+            payer: this.authority.publicKey,
+            wallet: this.walletToken,
+            secondaryWallet: this.secondaryWalletToken,
+            mint: mint.publicKey,
+            metadata,
+            masterEdition,
+            mintAuthority: this.authority.publicKey,
+            updateAuthority: this.authority.publicKey,
+            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+          },
+          remainingAccounts: [
+            {
+              pubkey: payingToken,
+              isWritable: true,
+              isSigner: false,
+            },
+            {
+              pubkey: transferAuthority.publicKey,
+              isWritable: false,
+              isSigner: true,
+            },
+            {
+              pubkey: secondaryPayingToken,
+              isWritable: true,
+              isSigner: false,
+            },
+          ],
+          signers: [mint, this.authority, myWallet, transferAuthority],
+          instructions: [
+            // Give authority enough to pay off the cost of the nft!
+            // it'll be funnneled right back
+            anchor.web3.SystemProgram.transfer({
+              fromPubkey: myWallet.publicKey,
+              toPubkey: this.authority.publicKey,
+              lamports: 10000000, // add minting fees in there
+            }),
+            anchor.web3.SystemProgram.createAccount({
+              fromPubkey: myWallet.publicKey,
+              newAccountPubkey: mint.publicKey,
+              space: MintLayout.span,
+              lamports:
+                await provider.connection.getMinimumBalanceForRentExemption(
+                  MintLayout.span
+                ),
+              programId: TOKEN_PROGRAM_ID,
+            }),
+            Token.createInitMintInstruction(
+              TOKEN_PROGRAM_ID,
+              mint.publicKey,
+              0,
+              this.authority.publicKey,
+              this.authority.publicKey
+            ),
+            createAssociatedTokenAccountInstruction(
+              token,
+              myWallet.publicKey,
+              this.authority.publicKey,
+              mint.publicKey
+            ),
+            Token.createMintToInstruction(
+              TOKEN_PROGRAM_ID,
+              mint.publicKey,
+              token,
+              this.authority.publicKey,
+              [],
+              1
+            ),
+          ],
+        });
+      } catch (e) {
+        console.log(e);
+        throw e;
+      }
+
+      const metadataAccount = await connection.getAccountInfo(metadata);
+      assert.ok(metadataAccount.data.length > 0);
+
+      const masterEditionAccount = await connection.getAccountInfo(
+        masterEdition
+      );
+      assert.ok(masterEditionAccount.data.length > 0);
+
+      const newWalletTokens = await connection.getTokenAccountBalance(
+        this.walletToken
+      );
+
+      assert.ok(
+        newWalletTokens.value.uiAmount - walletTokens.value.uiAmount == 1
+      );
+      const payingTokenBalance = await connection.getTokenAccountBalance(
+        payingToken
+      );
+      assert.equal(payingTokenBalance.value.uiAmount, 0);
+      const secondaryPayingTokenBalance =
+        await connection.getTokenAccountBalance(secondaryPayingToken);
+      assert.equal(secondaryPayingTokenBalance.value.uiAmount, 0);
+    });
+
+    it("fails to mint without second token", async function () {
+      const walletTokens = await connection.getTokenAccountBalance(
+        this.walletToken
+      );
+      const mint = anchor.web3.Keypair.generate();
+      const token = await getTokenWallet(
+        this.authority.publicKey,
+        mint.publicKey
+      );
+      const transferAuthority = anchor.web3.Keypair.generate();
+      const payingToken = await getTokenWallet(
+        this.authority.publicKey,
+        this.tokenMint.publicKey
+      );
+      const secondaryPayingToken = await getTokenWallet(
+        this.authority.publicKey,
+        this.secondaryTokenMint.publicKey
+      );
+
+      const metadata = await getMetadata(mint.publicKey);
+      const masterEdition = await getMasterEdition(mint.publicKey);
+      const [candyMachine, _] = await getCandyMachine(
+        this.config.publicKey,
+        this.candyMachineUuid
+      );
+
+      // Separating these out because the setup would happen beforehand anyway.
+      const instructions = [
+        createAssociatedTokenAccountInstruction(
+          payingToken,
+          myWallet.publicKey,
+          this.authority.publicKey,
+          this.tokenMint.publicKey
+        ),
+        Token.createMintToInstruction(
+          TOKEN_PROGRAM_ID,
+          this.tokenMint.publicKey,
+          payingToken,
+          myWallet.publicKey,
+          [],
+          1
+        ),
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          payingToken,
+          transferAuthority.publicKey,
+          this.authority.publicKey,
+          [],
+          1
+        ),
+
+        createAssociatedTokenAccountInstruction(
+          secondaryPayingToken,
+          myWallet.publicKey,
+          this.authority.publicKey,
+          this.secondaryTokenMint.publicKey
+        ),
+        Token.createMintToInstruction(
+          TOKEN_PROGRAM_ID,
+          this.secondaryTokenMint.publicKey,
+          secondaryPayingToken,
+          myWallet.publicKey,
+          [],
+          1
+        ),
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          secondaryPayingToken,
+          transferAuthority.publicKey,
+          this.authority.publicKey,
+          [],
+          1
+        ),
+      ];
+      const tx = new anchor.web3.Transaction();
+      tx.add(...instructions);
+      await provider.send(tx, [myWallet, this.authority]);
+
+      try {
+        const tx = await program.rpc.mintNft({
+          accounts: {
+            config: this.config.publicKey,
+            candyMachine: candyMachine,
+            payer: this.authority.publicKey,
+            wallet: this.walletToken,
+            secondaryWallet: this.secondaryWalletToken,
+            mint: mint.publicKey,
+            metadata,
+            masterEdition,
+            mintAuthority: this.authority.publicKey,
+            updateAuthority: this.authority.publicKey,
+            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+          },
+          remainingAccounts: [
+            {
+              pubkey: payingToken,
+              isWritable: true,
+              isSigner: false,
+            },
+            {
+              pubkey: transferAuthority.publicKey,
+              isWritable: false,
+              isSigner: true,
+            },
+            {
+              pubkey: secondaryPayingToken,
+              isWritable: true,
+              isSigner: false,
+            },
+          ],
+          signers: [mint, this.authority, myWallet, transferAuthority],
+          instructions: [
+            // Give authority enough to pay off the cost of the nft!
+            // it'll be funnneled right back
+            anchor.web3.SystemProgram.transfer({
+              fromPubkey: myWallet.publicKey,
+              toPubkey: this.authority.publicKey,
+              lamports: 10000000, // add minting fees in there
+            }),
+            anchor.web3.SystemProgram.createAccount({
+              fromPubkey: myWallet.publicKey,
+              newAccountPubkey: mint.publicKey,
+              space: MintLayout.span,
+              lamports:
+                await provider.connection.getMinimumBalanceForRentExemption(
+                  MintLayout.span
+                ),
+              programId: TOKEN_PROGRAM_ID,
+            }),
+            Token.createInitMintInstruction(
+              TOKEN_PROGRAM_ID,
+              mint.publicKey,
+              0,
+              this.authority.publicKey,
+              this.authority.publicKey
+            ),
+            createAssociatedTokenAccountInstruction(
+              token,
+              myWallet.publicKey,
+              this.authority.publicKey,
+              mint.publicKey
+            ),
+            Token.createMintToInstruction(
+              TOKEN_PROGRAM_ID,
+              mint.publicKey,
+              token,
+              this.authority.publicKey,
+              [],
+              1
+            ),
+          ],
+        });
+      } catch (e) {
+        assert.match(
+          e.toString(),
+          new RegExp("Not enough tokens to pay for this minting")
+        );
+      }
+
+      const payingTokenBalance = await connection.getTokenAccountBalance(
+        payingToken
+      );
+      assert.equal(payingTokenBalance.value.uiAmount, 1);
+      const secondaryPayingTokenBalance =
+        await connection.getTokenAccountBalance(secondaryPayingToken);
+      assert.equal(secondaryPayingTokenBalance.value.uiAmount, 1);
     });
   });
 });
