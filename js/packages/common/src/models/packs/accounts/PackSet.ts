@@ -20,6 +20,7 @@ export class PackSet {
   name: string;
   packCards: number;
   packVouchers: number;
+  totalWeight?: BN;
   totalEditions?: BN;
   mutable: boolean;
   packState: PackSetState;
@@ -37,6 +38,7 @@ export class PackSet {
     name: Uint8Array;
     packCards: number;
     packVouchers: number;
+    totalWeight?: BN;
     totalEditions?: BN;
     mutable: number;
     packState: PackSetState;
@@ -53,6 +55,7 @@ export class PackSet {
     this.name = new TextDecoder().decode(args.name).replace(/\0/g, '');
     this.packCards = args.packCards;
     this.packVouchers = args.packVouchers;
+    this.totalWeight = args.totalWeight;
     this.totalEditions = args.totalEditions;
     this.mutable = !!args.mutable;
     this.packState = args.packState;
