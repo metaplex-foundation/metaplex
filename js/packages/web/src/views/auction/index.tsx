@@ -11,10 +11,12 @@ import {
   toPublicKey,
   useConnection,
   useMint,
+  useStore,
 } from '@oyster/common';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import { MintInfo } from '@solana/spl-token';
+import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { Button, Carousel, Col, List, Row, Skeleton, Space, Spin, Typography } from 'antd';
@@ -58,6 +60,7 @@ export const AuctionView = () => {
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
   const creators = useCreators(auction);
+  const wallet = useWallet();
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
@@ -103,7 +106,7 @@ export const AuctionView = () => {
       />
     );
   });
-
+  
   return (
     <Row justify="center" ref={ref} gutter={[48, 0]}>
       <Col span={24} md={{ span: 20 }} lg={9}>
@@ -140,7 +143,16 @@ export const AuctionView = () => {
       </Col>
 
       <Col span={24} lg={{ offset: 1, span: 13 }}>
-        <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
+        <Row justify="space-between">
+          <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
+          {wallet.publicKey?.toBase58() === auction?.auctionManager.authority && (
+            <Link to={`/auction/${id}/billing`}>
+              <Button type="ghost">
+                Billing
+              </Button>
+            </Link>
+          )}
+        </Row>
         <Row className="metaplex-spacing-bottom-lg">
           <Col span={12}>
             <Space direction="horizontal" align="start">
