@@ -11,7 +11,7 @@ export const WaitingStep = (props: {
     const func = async () => {
       const inte = setInterval(
         () => setProgress(prog => Math.min(prog + 1, 99)),
-        600,
+        120,
       );
       await props.createAuction();
       clearInterval(inte);
@@ -24,7 +24,7 @@ export const WaitingStep = (props: {
     <div className="auction-progress-indicator">
       <Progress type="circle" percent={progress} />
       <div>Your creation is being listed with Metaplex...</div>
-      <div>This can take up to 30 seconds.</div>
+      <div>This can take up to 90 seconds.</div>
     </div>
   );
 };
