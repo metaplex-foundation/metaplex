@@ -136,9 +136,7 @@ const sendOTP = async (event) => {
       const client = new discord.Client();
       await client.login(process.env.DISCORD_BOT_TOKEN);
 
-      const guild = await client.guilds.fetch(event.discordGuild);
-
-      const user = await guild.members.fetch(handle);
+      const user = await client.users.fetch(handle);
       if (!user) {
         throw new Error(`Could not find discord user ${handle}`);
       }

@@ -83,7 +83,6 @@ programCommand('create')
   .option('--aws-ses-access-key-id <string>', 'Access Key Id')
   .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
   .option('--discord-token <string>', 'Discord bot token')
-  .option('--discord-guild <string>', 'Discord guild with members')
   .option(
     '--otp-auth <auth>',
     'Off-chain OTP from claim. Either `default` for AWS OTP endpoint or `none` to skip OTP',
@@ -195,7 +194,6 @@ programCommand('create')
           return distributeDiscord(
             {
               botToken: options.discordToken,
-              guild: options.discordGuild,
             },
             '',
             claimants,
@@ -269,12 +267,6 @@ programCommand('create')
 
     const base = Keypair.generate();
 
-    const extraParams: Array<string> = [];
-    // TODO: fix discord
-    // if (options.distributionMethod === 'discord') {
-    //   extraParams.push(`guild=${options.discordGuild}`);
-    // }
-
     const instructions = await buildGumdrop(
       connection,
       wallet.publicKey,
@@ -285,7 +277,6 @@ programCommand('create')
       temporalSigner,
       claimants,
       claimInfo,
-      extraParams,
     );
 
     const logDir = path.join(LOG_PATH, options.env, base.publicKey.toBase58());
@@ -558,7 +549,7 @@ async function distributeDiscord(
   claimants: Claimants,
   drop: DropInfo,
 ) {
-  if (!auth.botToken || !auth.guild) {
+  if (!auth.botToken) {
     throw new Error('Discord auth keys not supplied');
   }
   if (claimants.length === 0) return [];
@@ -567,14 +558,13 @@ async function distributeDiscord(
   const client = new discord.Client();
   await client.login(auth.botToken);
 
-  const guild = await client.guilds.fetch(auth.guild);
-
-  const members = await guild.members.fetch({
-    user: claimants.map(c => c.handle),
-  });
+  const members = {};
+  for (const c of claimants) {
+    members[c.handle] = await client.users.fetch(c.handle);
+  }
 
   const single = async (info: ClaimantInfo, drop: DropInfo) => {
-    const user = members.get(info.handle);
+    const user = members[info.handle];
     if (user === undefined) {
       return {
         status: 'error',
