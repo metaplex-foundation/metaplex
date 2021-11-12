@@ -2,7 +2,7 @@
   "name": "gumdrop",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://lwus.github.io/gumdrop/",
+  "homepage": "https://lwus.github.io/metaplex/",
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.38.0",
     "@aws-sdk/client-sesv2": "^3.38.0",

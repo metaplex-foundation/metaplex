@@ -80,7 +80,7 @@ const About = () => {
 
   const create= (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/create`}>
+      <Link to={`${process.env.REACT_APP_WEB_HOME}/create`}>
         CREATION
       </Link>
 
@@ -122,7 +122,7 @@ const About = () => {
 
   const claim = (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/claim`}>
+      <Link to={`${process.env.REACT_APP_WEB_HOME}/claim`}>
         CLAIMS
       </Link>
 
@@ -137,7 +137,7 @@ const About = () => {
 
   const close = (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/close`}>
+      <Link to={`${process.env.REACT_APP_WEB_HOME}/close`}>
         CLOSING
       </Link>
 
@@ -238,10 +238,10 @@ function App() {
           >
             <Box height="40px" />
             <Switch>
-              <Route path="/gumdrop/create" component={Create} />
-              <Route path="/gumdrop/claim" component={Claim} />
-              <Route path="/gumdrop/close" component={Close} />
-              <Route path="/gumdrop/" component={About} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/create`} component={Create} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/claim`} component={Claim} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/close`} component={Close} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/`} component={About} />
             </Switch>
             <Box height="80px" />
           </Box>

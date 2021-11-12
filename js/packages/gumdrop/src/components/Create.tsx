@@ -427,7 +427,7 @@ export const Create = () => {
       wallet.publicKey,
       commMethod,
       claimMethod,
-      `${window.location.origin}/gumdrop`,
+      `${window.location.origin}${process.env.REACT_APP_WEB_HOME}`,
       base.publicKey,
       temporalSigner,
       claimants,

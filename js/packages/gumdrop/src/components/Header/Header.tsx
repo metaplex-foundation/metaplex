@@ -21,20 +21,20 @@ import { Settings } from "../Settings";
 export const Header = ({ narrow } : { narrow : boolean }) => {
   const navs = [
     {
-      href: `/gumdrop/`,
+      href: `${process.env.REACT_APP_WEB_HOME}/`,
       innerNarrow: "About",
       inner: <HomeIcon />,
     },
     {
-      href: `/gumdrop/create`,
+      href: `${process.env.REACT_APP_WEB_HOME}/create`,
       inner: "Create",
     },
     {
-      href: `/gumdrop/claim`,
+      href: `${process.env.REACT_APP_WEB_HOME}/claim`,
       inner: "Claim",
     },
     {
-      href: `/gumdrop/close`,
+      href: `${process.env.REACT_APP_WEB_HOME}/close`,
       inner: "Close",
     },
   ];
