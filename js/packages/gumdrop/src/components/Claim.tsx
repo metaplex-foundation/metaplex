@@ -650,8 +650,7 @@ export const Claim = (
   const [indexStr, setIndex] = React.useState(params.index as string || "");
   const [pinStr, setPin] = React.useState(params.pin as string || "");
   const [proofStr, setProof] = React.useState(params.proof as string || "");
-
-  const discordGuild = params.guild;
+  const [commMethod, setCommMethod] = React.useState(params.method || "");
 
   const allFieldsPopulated =
     distributor.length > 0
@@ -789,10 +788,10 @@ export const Claim = (
         method: "send",
         transaction: bs58.encode(transaction.serializeMessage()),
         seeds: pdaSeeds,
+        comm: commMethod,
       };
-      if (discordGuild) {
-        otpQuery.discordGuild = discordGuild;
-      }
+      // TODO: fix discord
+      // otpQuery.discordGuild = discordGuild;
       const params = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -816,12 +815,22 @@ export const Claim = (
       console.log("AWS OTP response data:", data);
 
       let succeeded, toCheck;
-      if (discordGuild) {
-        succeeded = !!data.id;
-        toCheck = "discord";
-      } else {
-        succeeded = !!data.MessageId;
-        toCheck = "email";
+      switch (commMethod) {
+        case "discord": {
+          succeeded = !!data.id;
+          toCheck = "discord";
+          break;
+        }
+        case 'aws-email': {
+          succeeded = !!data.MessageId;
+          toCheck = "email";
+          break;
+        }
+        case 'aws-sms': {
+          succeeded = !!data.MessageId;
+          toCheck = "SMS";
+          break;
+        }
       }
 
       if (!succeeded) {
@@ -1076,6 +1085,39 @@ export const Claim = (
         onChange={(e) => setAmount(e.target.value)}
         disabled={!editable}
       />}
+      <FormControl fullWidth>
+        <InputLabel
+          id="comm-method-label"
+          disabled={!editable}
+        >
+          Distribution Method
+        </InputLabel>
+        <Select
+          labelId="comm-method-label"
+          id="comm-method-select"
+          value={commMethod}
+          label="Distribution Method"
+          onChange={(e) => {
+            if (e.target.value === "discord") {
+              notify({
+                message: "Discord distribution unavailable",
+                description: "Please use the CLI for this. Discord does not support browser-connection requests",
+              });
+              return;
+            }
+            localStorage.setItem("commMethod", e.target.value);
+            setCommMethod(e.target.value);
+          }}
+          style={{textAlign: "left"}}
+          disabled={!editable}
+        >
+          <MenuItem value={"aws-email"}>AWS Email</MenuItem>
+          <MenuItem value={"aws-sms"}>AWS SMS</MenuItem>
+          <MenuItem value={"discord"}>Discord</MenuItem>
+          <MenuItem value={"wallets"}>Wallets</MenuItem>
+          <MenuItem value={"manual"}>Manual</MenuItem>
+        </Select>
+      </FormControl>
       <TextField
         id="handle-text-field"
         label="Handle"

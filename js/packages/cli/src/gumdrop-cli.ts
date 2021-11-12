@@ -270,14 +270,15 @@ programCommand('create')
     const base = Keypair.generate();
 
     const extraParams: Array<string> = [];
-    if (options.distributionMethod === 'discord') {
-      extraParams.push(`guild=${options.discordGuild}`);
-    }
+    // TODO: fix discord
+    // if (options.distributionMethod === 'discord') {
+    //   extraParams.push(`guild=${options.discordGuild}`);
+    // }
 
     const instructions = await buildGumdrop(
       connection,
       wallet.publicKey,
-      options.distributionMethod !== 'wallets',
+      options.distributionMethod,
       options.claimIntegration,
       options.host,
       base.publicKey,
