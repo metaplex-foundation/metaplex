@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Divider, Modal, Card } from 'antd';
 import { MetaAvatarDetailed } from '../MetaAvatar';
 
@@ -12,11 +12,13 @@ const stubs = {
 }
 
 export const RedeemItemModal = () => {
+  const [open, setOpen] = useState(true) // remove after
   return (
     <Modal
-      visible={true}
+      visible={open}
       footer={null}
       width={1200}
+      onCancel={() => setOpen(false)}
       bodyStyle={{
         borderRadius: 12
       }}
