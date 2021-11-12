@@ -10,7 +10,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 import { useUserArts } from '../../hooks';
 
-import { InfoFormState, PackState } from './interface';
+import { PackState } from './interface';
 import { INITIAL_PACK_STATE } from './data';
 import { CreatePackSteps } from './types';
 import { packItemsFilter, vouchersFilter } from './utils';
@@ -20,7 +20,6 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import SelectItemsStep from './components/SelectItemsStep';
 import AdjustQuantitiesStep from './components/AdjustQuantitiesStep';
-import DesignAndInfoStep from './components/DesignAndInfoStep';
 import ReviewAndMintStep from './components/ReviewAndMintStep';
 import { sendCreatePack } from './transactions/createPack';
 import SuccessModal from './components/SuccessModal';
@@ -38,7 +37,7 @@ export const PackCreateView = (): ReactElement => {
   const { accountByMint } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
-  const [designForm] = Form.useForm<InfoFormState>();
+  // const [designForm] = Form.useForm<InfoFormState>();
 
   const {
     selectedItems,
@@ -195,9 +194,9 @@ export const PackCreateView = (): ReactElement => {
           />
         )} */}
 
-        {step === CreatePackSteps.DesignAndInfo && (
+        {/*{step === CreatePackSteps.DesignAndInfo && (
           <DesignAndInfoStep form={designForm} setPackState={setPackState} />
-        )}
+        )}*/}
 
         {step === CreatePackSteps.ReviewAndMint && (
           <ReviewAndMintStep
@@ -214,7 +213,7 @@ export const PackCreateView = (): ReactElement => {
       <SuccessModal
         shouldShow={shouldShowSuccessModal}
         hide={handleFinish}
-      ></SuccessModal>
+      />
     </div>
   );
 };
