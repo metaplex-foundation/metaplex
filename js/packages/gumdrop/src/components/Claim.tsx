@@ -650,7 +650,7 @@ export const Claim = (
   const [indexStr, setIndex] = React.useState(params.index as string || "");
   const [pinStr, setPin] = React.useState(params.pin as string || "");
   const [proofStr, setProof] = React.useState(params.proof as string || "");
-  const [commMethod, setCommMethod] = React.useState(params.method || "");
+  const [commMethod, setCommMethod] = React.useState(params.method || "aws-email");
 
   const allFieldsPopulated =
     distributor.length > 0
@@ -790,8 +790,6 @@ export const Claim = (
         seeds: pdaSeeds,
         comm: commMethod,
       };
-      // TODO: fix discord
-      // otpQuery.discordGuild = discordGuild;
       const params = {
         method: "POST",
         headers: { "Content-Type": "application/json" },

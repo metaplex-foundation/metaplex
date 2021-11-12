@@ -151,7 +151,8 @@ const sendOTP = async (event) => {
       const sns = new AWS.SNS({ region: "us-east-1" });
       return sns.publish(params).promise();
     }
-    case "aws-email": {
+    case "aws-email":
+    default: {
       const params = {
         Destination: {
           ToAddresses: [handle],
