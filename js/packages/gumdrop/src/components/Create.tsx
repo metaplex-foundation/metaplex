@@ -295,9 +295,9 @@ export const Create = () => {
   const [otpAuth, setOtpAuth] = React.useState(localStorage.getItem("otpAuth") || "default");
   const [commMethod, setCommMethod] = React.useState(localStorage.getItem("commMethod") || "");
   const [commAuth, setCommAuth] = React.useState<AuthKeys>({});
-  const [commSource, setCommSource] = React.useState(localStorage.getItem("commSource") || "");
   const [awsAccessKeyId, setAwsAccessKeyId] = React.useState("");
   const [awsSecretKey, setAwsSecretKey] = React.useState("");
+  const commSource = 'santa@aws.metaplex.com';
 
   const explorerUrlFor = (key : PublicKey) => {
     return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(connection)}`;
@@ -588,15 +588,6 @@ export const Create = () => {
             onChange={(e) => {
               setCommAuth(prev => ({...prev, secretAccessKey: e.target.value}));
               setAwsSecretKey(e.target.value)
-            }}
-          />
-          <TextField
-            id="comm-source-field"
-            label={`${commMethod} Source`}
-            value={commSource}
-            onChange={(e) => {
-              localStorage.setItem("commSource", e.target.value);
-              setCommSource(e.target.value)
             }}
           />
         </React.Fragment>
