@@ -212,11 +212,10 @@ programCommand('create')
         );
       }
       const responses = await distribute(claimants);
-      // TODO: old path.1?
-      const respPath = logPath(
-        options.env,
-        `resp-${Keypair.generate().publicKey.toBase58()}.json`,
+      const respDir = fs.mkdtempSync(
+        path.join(path.dirname(options.distributionList), 're-'),
       );
+      const respPath = path.join(respDir, 'resp.json');
       console.log(`writing responses to ${respPath}`);
       fs.writeFileSync(respPath, JSON.stringify(responses));
       return;
@@ -288,14 +287,14 @@ programCommand('create')
       extraParams,
     );
 
-    const basePath = logPath(options.env, `${base.publicKey.toBase58()}.json`);
-    console.log(`writing base to ${basePath}`);
-    fs.writeFileSync(basePath, JSON.stringify([...base.secretKey]));
+    const logDir = path.join(LOG_PATH, options.env, base.publicKey.toBase58());
+    fs.mkdirSync(logDir, { recursive: true });
 
-    const urlPath = logPath(
-      options.env,
-      `urls-${base.publicKey.toBase58()}.json`,
-    );
+    const keyPath = path.join(logDir, 'id.json');
+    console.log(`writing base to ${keyPath}`);
+    fs.writeFileSync(keyPath, JSON.stringify([...base.secretKey]));
+
+    const urlPath = path.join(logDir, 'urls.json');
     console.log(`writing claims to ${urlPath}`);
     fs.writeFileSync(urlPath, JSON.stringify(urlAndHandleFor(claimants)));
 
@@ -318,10 +317,7 @@ programCommand('create')
 
     console.log('distributing claim URLs');
     const responses = await distribute(claimants);
-    const respPath = logPath(
-      options.env,
-      `resp-${base.publicKey.toBase58()}.json`,
-    );
+    const respPath = path.join(logDir, 'resp.json');
     console.log(`writing responses to ${respPath}`);
     fs.writeFileSync(respPath, JSON.stringify(responses));
   });
@@ -517,10 +513,6 @@ function loadWalletKey(keypair): Keypair {
   );
   log.info(`wallet public key: ${loaded.publicKey}`);
   return loaded;
-}
-
-function logPath(env: string, logName: string, cPath: string = LOG_PATH) {
-  return path.join(cPath, `${env}-${logName}`);
 }
 
 // NB: assumes no overflow
