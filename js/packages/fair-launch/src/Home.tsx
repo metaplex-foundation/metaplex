@@ -424,6 +424,7 @@ const Home = (props: HomeProps) => {
     props.candyMachineId,
     props.connection,
     props.fairLaunchId,
+    contributed,
   ]);
 
   const min = formatNumber.asNumber(fairLaunch?.state.data.priceRangeStart);
