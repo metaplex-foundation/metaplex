@@ -69,7 +69,7 @@ export const PackCreateView = (): ReactElement => {
   );
 
   const selectedVoucherId = Object.keys(selectedVouchers)[0];
-  const { data } = useExtendedArt(selectedVoucherId);
+  const { ref, data } = useExtendedArt(selectedVoucherId);
 
   useEffect(() => {
     if (!data) return;
@@ -160,7 +160,7 @@ export const PackCreateView = (): ReactElement => {
   }, []);
 
   return (
-    <div className="pack-create-wrapper">
+    <div className="pack-create-wrapper" ref={ref}>
       <Sidebar
         step={step}
         setStep={goToNextStep}

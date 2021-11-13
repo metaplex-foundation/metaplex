@@ -15,6 +15,7 @@ import {
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
+import useWindowDimensions from '../utils/layout';
 
 export const metadataToArt = (
   info: Metadata | undefined,
@@ -172,7 +173,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   const { metadata } = useMeta();
 
   const [data, setData] = useState<IMetadataExtension>();
-  // const { width } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const { ref, inView } = useInView({ root: null, rootMargin: '-100px 0px' });
   const localStorage = useLocalStorage();
 
@@ -184,8 +185,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   );
 
   useEffect(() => {
-    // if ((inView || width < 768) && id && !data) {
-    if (id && !data) {
+    if ((inView || width < 768) && id && !data) {
       const USE_CDN = false;
       const routeCDN = (uri: string) => {
         let result = uri;
