@@ -1,5 +1,10 @@
-import React, {ReactElement, useCallback, useEffect, useMemo, useState} from 'react';
-import { Form } from 'antd';
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   PackDistributionType,
   useConnection,
@@ -8,7 +13,7 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
-import {useExtendedArt, useUserArts} from '../../hooks';
+import { useExtendedArt, useUserArts } from '../../hooks';
 
 import { PackState } from './interface';
 import { INITIAL_PACK_STATE } from './data';
@@ -77,8 +82,8 @@ export const PackCreateView = (): ReactElement => {
     setPackState({
       uri: data.image,
       name: data.name,
-      description: data.description
-    })
+      description: data.description,
+    });
   }, [data]);
 
   const handleSelectItem = useCallback(
@@ -223,10 +228,7 @@ export const PackCreateView = (): ReactElement => {
         )}
       </div>
 
-      <SuccessModal
-        shouldShow={shouldShowSuccessModal}
-        hide={handleFinish}
-      />
+      <SuccessModal shouldShow={shouldShowSuccessModal} hide={handleFinish} />
     </div>
   );
 };
