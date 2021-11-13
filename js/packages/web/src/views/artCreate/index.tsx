@@ -34,7 +34,7 @@ import {
   StringPublicKey,
   WRAPPED_SOL_MINT,
   getAssetCostToStore,
-  LAMPORT_MULTIPLIER
+  LAMPORT_MULTIPLIER,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -1129,7 +1129,13 @@ const LaunchStep = (props: {
             suffix="%"
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} tokenInfo={useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString())} />
+            <AmountLabel
+              title="Cost to Create"
+              amount={cost.toFixed(5)}
+              tokenInfo={useTokenList().tokenMap.get(
+                WRAPPED_SOL_MINT.toString(),
+              )}
+            />
           ) : (
             <Spin />
           )}

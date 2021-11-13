@@ -214,7 +214,7 @@ export const CurrentUserBadge = (props: {
   }
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
-  const solMintInfo = useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString())
+  const solMintInfo = useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString());
   const iconStyle: React.CSSProperties = {
     display: 'flex',
     width: props.iconSize,
@@ -228,7 +228,7 @@ export const CurrentUserBadge = (props: {
   }
 
   let image = <Identicon address={publicKey?.toBase58()} style={iconStyle} />;
-  
+
   if (unknownWallet.image) {
     image = <img src={unknownWallet.image} style={iconStyle} />;
   }
@@ -265,7 +265,9 @@ export const CurrentUserBadge = (props: {
                     marginBottom: 10,
                   }}
                 >
-                  <TokenCircle iconFile={solMintInfo? solMintInfo.logoURI:""}/>
+                  <TokenCircle
+                    iconFile={solMintInfo ? solMintInfo.logoURI : ''}
+                  />
                   &nbsp;
                   <span
                     style={{

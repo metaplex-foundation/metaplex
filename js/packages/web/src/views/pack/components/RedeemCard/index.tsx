@@ -1,4 +1,4 @@
-import React  from 'react';
+import React from 'react';
 
 interface IPropsRedeemCard {
   card: IRedeemCard;
@@ -11,11 +11,13 @@ interface IRedeemCard {
   src: string;
 }
 
-const RedeemCard = ({ card: { name, desc, src, percentage } }: IPropsRedeemCard) => (
+const RedeemCard = ({
+  card: { name, desc, src, percentage },
+}: IPropsRedeemCard) => (
   <div className="modal-redeem__card">
     <div className="info">
       <div className="modal-redeem__image">
-        <img src={src} alt={name}/>
+        <img src={src} alt={name} />
       </div>
       <div className="info__text">
         <p className="info__title">{name}</p>
@@ -26,6 +28,6 @@ const RedeemCard = ({ card: { name, desc, src, percentage } }: IPropsRedeemCard)
       <p>{`${percentage}% chance`}</p>
     </div>
   </div>
-)
+);
 
 export default RedeemCard;

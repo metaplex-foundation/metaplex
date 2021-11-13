@@ -42,10 +42,9 @@ const useStyles = makeStyles((theme: Theme) =>
     item: {
       fontWeight: 'bold',
       fontSize: 18,
-    }
+    },
   }),
 );
-
 
 interface PhaseCountdownProps {
   date: Date | undefined;
@@ -74,20 +73,28 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
 }) => {
   const classes = useStyles();
 
-  const [isFixed, setIsFixed] = useState(start && end && date ? start.getTime() - Date.now() < 0 : false);
+  const [isFixed, setIsFixed] = useState(
+    start && end && date ? start.getTime() - Date.now() < 0 : false,
+  );
 
-  const renderCountdown = ({ days, hours, minutes, seconds, completed }: CountdownRender) => {
-    hours += days * 24
+  const renderCountdown = ({
+    days,
+    hours,
+    minutes,
+    seconds,
+    completed,
+  }: CountdownRender) => {
+    hours += days * 24;
     if (completed) {
-      return status ? <span className={classes.done}  >{status}</span> : null;
+      return status ? <span className={classes.done}>{status}</span> : null;
     } else {
       return (
-        <div className={classes.root} style={style} >
-          {isFixed && <Paper elevation={0}>
-            <span className={classes.item}>
-              +
-            </span>
-          </Paper>}
+        <div className={classes.root} style={style}>
+          {isFixed && (
+            <Paper elevation={0}>
+              <span className={classes.item}>+</span>
+            </Paper>
+          )}
           <Paper elevation={0}>
             <span className={classes.item}>
               {hours < 10 ? `0${hours}` : hours}
@@ -107,9 +114,9 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
             <span>secs</span>
           </Paper>
         </div>
-      )
+      );
     }
-  }
+  };
 
   if (date && start && end) {
     if (isFixed) {
@@ -118,7 +125,7 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
         now={() => end.getTime()}
         onComplete={() => setIsFixed(false)}
         renderer={renderCountdown}
-      />
+      />;
     }
   }
 
@@ -129,8 +136,8 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
         onComplete={onComplete}
         renderer={renderCountdown}
       />
-    )
+    );
   } else {
-    return null
+    return null;
   }
-}
+};

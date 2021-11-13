@@ -64,7 +64,6 @@ export function createAssociatedTokenAccountInstruction(
   });
 }
 
-
 export function createMetadataInstruction(
   metadataAccount: PublicKey,
   mint: PublicKey,
@@ -126,7 +125,6 @@ export function createMasterEditionInstruction(
   updateAuthority: PublicKey,
   txnData: Buffer,
 ) {
-  
   const keys = [
     {
       pubkey: editionAccount,

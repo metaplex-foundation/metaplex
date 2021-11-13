@@ -27,7 +27,8 @@ import {
   useConnection,
   useConnectionConfig,
   useMint,
-  useMeta, BidStateType,
+  useMeta,
+  BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo, Token } from '@solana/spl-token';
@@ -39,7 +40,6 @@ import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
 import { AmountLabel } from '../../components/AmountLabel';
 import { ClickToCopy } from '../../components/ClickToCopy';
 import { useTokenList } from '../../contexts/tokenList';
-
 
 export const AuctionItem = ({
   item,
@@ -104,12 +104,15 @@ export const AuctionView = () => {
   }
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
-  const isOpen = auction?.auction.info.bidState.type === BidStateType.OpenEdition;
+  const isOpen =
+    auction?.auction.info.bidState.type === BidStateType.OpenEdition;
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
   const attributes = data?.attributes;
 
-  const tokenInfo = useTokenList()?.mainnetTokens.filter(m=>m.address == auction?.auction.info.tokenMint)[0]
+  const tokenInfo = useTokenList()?.mainnetTokens.filter(
+    m => m.address == auction?.auction.info.tokenMint,
+  )[0];
 
   const items = [
     ...(auction?.items
@@ -170,8 +173,10 @@ export const AuctionView = () => {
               <span>
                 {winnerCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
+                ) : isOpen ? (
+                  'Unlimited'
                 ) : (
-                  isOpen ?  "Unlimited" : winnerCount
+                  winnerCount
                 )}
               </span>
             </div>
@@ -180,8 +185,10 @@ export const AuctionView = () => {
               <span>
                 {nftCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
+                ) : isOpen ? (
+                  'Open'
                 ) : (
-                  isOpen ?  "Open" : nftCount
+                  nftCount
                 )}
               </span>
             </div>
@@ -328,8 +335,10 @@ export const AuctionView = () => {
                   <span>
                     {winnerCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
+                    ) : isOpen ? (
+                      'Unlimited'
                     ) : (
-                      isOpen ? "Unlimited" : winnerCount
+                      winnerCount
                     )}
                   </span>
                 </div>
@@ -338,8 +347,10 @@ export const AuctionView = () => {
                   <span>
                     {nftCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
+                    ) : isOpen ? (
+                      'Open'
                     ) : (
-                      isOpen ? "Open" : nftCount
+                      nftCount
                     )}
                   </span>
                 </div>
@@ -349,11 +360,17 @@ export const AuctionView = () => {
                     {nftCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
                     ) : (
-                      `${tokenInfo?.name||"Custom Token"} ($${tokenInfo?.symbol|| "CUSTOM"})`
+                      `${tokenInfo?.name || 'Custom Token'} ($${
+                        tokenInfo?.symbol || 'CUSTOM'
+                      })`
                     )}
                     <ClickToCopy
                       className="copy-pubkey"
-                      copyText={tokenInfo? tokenInfo?.address: auction?.auction.info.tokenMint || ""}
+                      copyText={
+                        tokenInfo
+                          ? tokenInfo?.address
+                          : auction?.auction.info.tokenMint || ''
+                      }
                     />
                   </span>
                 </div>
@@ -414,7 +431,9 @@ const BidLine = (props: {
   const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
   const isme = publicKey?.toBase58() === bidder;
-  const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == mintKey)[0]
+  const tokenInfo = useTokenList().mainnetTokens.filter(
+    m => m.address == mintKey,
+  )[0];
 
   // Get Twitter Handle from address
   const connection = useConnection();
@@ -477,7 +496,7 @@ const BidLine = (props: {
                     flexDirection: 'row',
                     alignItems: 'center',
                   }}
-                  displaySymbol={tokenInfo?.symbol || "CUSTOM"}
+                  displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
                   iconSize={24}
                   amount={formatTokenAmount(bid.info.lastBid, mint)}
                 />
@@ -521,7 +540,7 @@ const BidLine = (props: {
                   flexDirection: 'row',
                   alignItems: 'center',
                 }}
-                displaySymbol={tokenInfo?.symbol || "CUSTOM"}
+                displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
                 tokenInfo={tokenInfo}
                 iconSize={24}
                 amount={formatTokenAmount(bid.info.lastBid, mint)}
@@ -609,7 +628,7 @@ export const AuctionBids = ({
           mint={mint}
           isCancelled={isCancelled}
           isActive={!bid.info.cancelled}
-          mintKey={auctionView?.auction.info.tokenMint||""}
+          mintKey={auctionView?.auction.info.tokenMint || ''}
         />
       );
 
