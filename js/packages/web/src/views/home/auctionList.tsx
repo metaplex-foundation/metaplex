@@ -11,8 +11,6 @@ import {
   useAuctionManagersToCache,
   useInfiniteScrollAuctions,
 } from '../../hooks';
-import { useAnalytics } from '../../components/Analytics';
-import { useSolPrice } from '../../contexts';
 import { Banner } from '../../components/Banner';
 
 export enum LiveAuctionViewState {
@@ -33,7 +31,7 @@ export const AuctionListView = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
-  const { ownerAddress } = useStore();
+  const { ownerAddress, storefront } = useStore();
   const wallet = useWallet();
   const { auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
