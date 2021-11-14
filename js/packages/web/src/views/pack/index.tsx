@@ -14,10 +14,8 @@ export const PackView = () => {
   const { packId, editionId }: { packId: string; editionId?: string } =
     useParams();
   const { packs } = useMeta();
-  const { isLoading, mockBlocks, packMetadata } = usePackState(
-    packId,
-    editionId,
-  );
+  const { isLoading, mockBlocks, packMetadata, handleStatusFetch } =
+    usePackState(packId, editionId);
 
   const pack = packs[packId];
   const isUserPackPage = !!editionId;
@@ -29,6 +27,11 @@ export const PackView = () => {
 
     setOpenModal(true);
   }, [setOpenModal]);
+
+  const handleCloseModal = useCallback(async () => {
+    setOpenModal(false);
+    await handleStatusFetch();
+  }, [setOpenModal, handleStatusFetch]);
 
   return (
     <div className="pack-view">
@@ -55,10 +58,7 @@ export const PackView = () => {
         </Col>
       </Row>
 
-      <RedeemModal
-        isModalVisible={openModal}
-        onClose={() => setOpenModal(false)}
-      />
+      <RedeemModal isModalVisible={openModal} onClose={handleCloseModal} />
     </div>
   );
 };

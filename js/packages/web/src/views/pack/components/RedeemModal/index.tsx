@@ -84,7 +84,7 @@ const RedeemModal = ({
     const packCardEdition = masterEditions[packCardMetadata.info.masterEdition];
     const packCardEditionIndex = packCardEdition.info.supply.toNumber() + 1;
 
-    const newMint = await sendClaimPack({
+    await sendClaimPack({
       connection,
       wallet,
       index: packCardToRedeemIndex,
@@ -96,15 +96,8 @@ const RedeemModal = ({
       edition: new BN(packCardEditionIndex),
     });
 
-    const newMetadataPubkey = await getMetadata(newMint);
-    const newMetadata = await getMetadataByPubkey(
-      connection,
-      newMetadataPubkey,
-    );
-
-    console.log(newMetadata);
-
     setModalState(openState.Found);
+
     setTimeout(() => handleClose(), CLOSE_TIMEOUT);
   };
 

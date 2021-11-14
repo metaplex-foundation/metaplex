@@ -9,6 +9,7 @@ import { CardLoader } from '../../components/MyLoader';
 import { ArtworkViewState } from './types';
 import { useItems } from './hooks/useItems';
 import ItemCard from './components/ItemCard';
+import { useUserAccounts } from '@oyster/common';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -22,10 +23,16 @@ const breakpointColumnsObj = {
 
 export const ArtworksView = () => {
   const { connected } = useWallet();
-  const { isLoading, pullAllMetadata, storeIndexer } = useMeta();
+  const { isLoading, pullAllMetadata, storeIndexer, pullItemsPage } = useMeta();
+  const { userAccounts } = useUserAccounts();
+
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
 
   const userItems = useItems({ activeKey });
+
+  useEffect(() => {
+    pullItemsPage(userAccounts);
+  }, []);
 
   useEffect(() => {
     if (connected) {
