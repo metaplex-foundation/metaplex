@@ -297,6 +297,13 @@ export const pullPacks = async (
     ({ info }) => info.metadata,
   );
   await pullMetadataByKeys(connection, state, metadataKeys);
+
+  await pullEditions(
+    connection,
+    updateTemp,
+    state,
+    metadataKeys.map(m => state.metadataByMetadata[m]),
+  );
 };
 
 export const pullAuctionSubaccounts = async (
