@@ -293,8 +293,8 @@ export const AuctionCard = ({
           mintInfo,
         )
       : isStarted && bids.length > 0 ? parseFloat(formatTokenAmount(bids[0].info.lastBid.toNumber(), mintInfo)) : 9999999) + (tickSize && hasBids ? (tickSize.toNumber() / LAMPORTS_PER_SOL) : 0);
-  const biddingPower = balance.balance + (auctionView.myBidderMetadata ? auctionView.myBidderMetadata.info.lastBid.toNumber() : 0);
-
+  const biddingPower = balance.balance + (auctionView.myBidderMetadata ? (auctionView.myBidderMetadata.info.lastBid.toNumber() / LAMPORTS_PER_SOL) : 0);
+  
   const notEnoughFundsToBid = value && (value > biddingPower);
   const invalidBid =
     tickSizeInvalid ||
@@ -804,7 +804,7 @@ export const AuctionCard = ({
           )}
           {notEnoughFundsToBid && (
             <Text type="danger">
-              You do not have enough funds to fulfill the bid. Your current bidding power is ${biddingPower}.
+              You do not have enough funds to fulfill the bid. Your current bidding power is {biddingPower} SOL.
             </Text>
           )}
           {tickSizeInvalid && tickSize && (
