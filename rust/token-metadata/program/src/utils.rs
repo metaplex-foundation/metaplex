@@ -592,7 +592,7 @@ pub fn mint_limited_edition<'a>(
         },
         master_metadata.data,
         true,
-        false,
+        master_metadata.is_mutable,
     )?;
     let edition_authority_seeds = &[
         PREFIX.as_bytes(),
