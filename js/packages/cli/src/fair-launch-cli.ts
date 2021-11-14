@@ -2164,6 +2164,13 @@ program
     }
 
     cursor = startC;
+    const myAta = (
+      await getAtaForMint(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
     try {
       // do 1 at a time so if blow up happens, you can restart at exploded cursor.
       // less efficient but better guarantees on not over-sending.
@@ -2190,13 +2197,7 @@ program
             sendInstr.push(
               Token.createTransferInstruction(
                 TOKEN_PROGRAM_ID,
-                (
-                  await getAtaForMint(
-                    //@ts-ignore
-                    fairLaunchObj.tokenMint,
-                    walletKeyPair.publicKey,
-                  )
-                )[0],
+                myAta,
                 existingAta,
                 walletKeyPair.publicKey,
                 [],
@@ -2880,6 +2881,8 @@ program
       );
     }
 
+    //@ts-ignore
+    console.log('UUID', fairLaunchObj.data.uuid);
     //@ts-ignore
     console.log('Token Mint', fairLaunchObj.tokenMint.toBase58());
     //@ts-ignore

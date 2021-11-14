@@ -4,6 +4,27 @@
   "description": "",
   "creators": [],
   "collection": {},
+  "premadeCustoms": [
+    {
+      "background": "blue.png",
+      "eyes": "egg-eyes.png",
+      "face": "cyan-face.png",
+      "mouth": "block-mouth.png"
+    },
+    {
+      "background": "red.png",
+      "eyes": "egg-eyes.png",
+      "face": "cyan-face.png",
+      "mouth": "block-mouth.png"
+    }
+  ],
+  "dnp": {
+    "background": {
+      "blue.png": {
+        "eyes": ["egg-eyes.png", "heart-eyes.png"]
+      }
+    }
+  },
   "breakdown": {
     "background": {
       "blue.png": 0.04,
@@ -28,7 +49,13 @@
       "star-eyes.png": 0.56
     },
     "face": {
-      "cyan-face.png": 0.07,
+      "cyan-face.png": {
+        "baseValue": 0.07,
+        "background": {
+          "blue.png": 0.9,
+          "brown.png": 0.1
+        }
+      },
       "dark-green-face.png": 0.04,
       "flesh-face.png": 0.03,
       "gold-face.png": 0.11,
