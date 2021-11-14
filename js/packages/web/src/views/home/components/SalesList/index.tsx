@@ -10,7 +10,7 @@ import { HowToBuyModal } from '../../../../components/HowToBuyModal';
 
 import { useSales } from './hooks/useSales';
 import SaleCard from './components/SaleCard';
-import { RedeemItemModal } from "../../../../components/RedeemItemModal";
+import { RedeemItemModal } from '../../../../components/RedeemItemModal';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -44,7 +44,7 @@ export const SalesListView = () => {
         actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
         useBannerBg
       />
-      <RedeemItemModal />
+      {/* <RedeemItemModal /> */}
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 32 }}>

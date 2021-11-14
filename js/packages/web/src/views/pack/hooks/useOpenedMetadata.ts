@@ -26,7 +26,7 @@ export const useOpenedMetadata = (
 
         return acc;
       }, []),
-    [ownedMetadata.length > 0, packCards],
+    [ownedMetadata.length, packCards],
   );
 
   return metadata;

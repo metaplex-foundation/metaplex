@@ -17,6 +17,8 @@ import {
   pullPage,
   pullPayoutTickets,
   pullStoreMetadata,
+  pullMetadataByKeys,
+  pullPacks,
 } from '.';
 import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 
@@ -119,6 +121,33 @@ export function MetaProvider({ children = null as any }) {
     setState(nextState);
     await updateMints(nextState.metadataByMint);
     return nextState;
+  }
+
+  // This works, maybe use it on a pack page?
+  async function pullItemsPage(
+    userTokenAccounts: TokenAccount[],
+  ): Promise<void> {
+    if (isLoading) {
+      return;
+    }
+
+    if (!storeAddress && isReady) {
+      return setIsLoading(false);
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+
+    const packsState = await pullPacks(connection, state);
+
+    const nextState = await pullYourMetadata(
+      connection,
+      userTokenAccounts,
+      packsState,
+    );
+
+    await updateMints(nextState.metadataByMint);
+
+    setState(nextState);
   }
 
   async function pullAllSiteData() {
@@ -289,23 +318,16 @@ export function MetaProvider({ children = null as any }) {
       console.log('no update is running, updating.');
       update(undefined, undefined, userAccounts);
     }
-  }, [
-    connection,
-    setState,
-    updateMints,
-    storeAddress,
-    isReady,
-    page,
-    userAccounts.length > 0,
-  ]);
+  }, [connection, storeAddress, isReady, page, userAccounts]);
 
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
+  // ToDo: Check what's going on with Websockets, currently it doesn't work well :(
+  // useEffect(() => {
+  //   if (isLoading) {
+  //     return;
+  //   }
 
-    return subscribeAccountsChange(connection, () => state, setState);
-  }, [connection, setState, isLoading, state]);
+  //   return subscribeAccountsChange(connection, () => state, setState);
+  // }, [connection, setState, isLoading, state]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators
@@ -346,6 +368,7 @@ export function MetaProvider({ children = null as any }) {
         pullBillingPage,
         // @ts-ignore
         pullAllSiteData,
+        pullItemsPage,
         isLoading,
       }}
     >

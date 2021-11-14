@@ -218,6 +218,7 @@ export const pullYourMetadata = async (
   await postProcessMetadata(tempCache);
 
   console.log('-------->User metadata processing complete.');
+
   return tempCache;
 };
 
@@ -247,7 +248,7 @@ export const pullPayoutTickets = async (
 export const pullPacks = async (
   connection: Connection,
   state: MetaState,
-): Promise<void> => {
+): Promise<MetaState> => {
   const updateTemp = makeSetter(state);
   const forEach =
     (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
@@ -294,14 +295,16 @@ export const pullPacks = async (
   const metadataKeys = Object.values(state.packCards).map(
     ({ info }) => info.metadata,
   );
-  await pullMetadataByKeys(connection, state, metadataKeys);
+  const newState = await pullMetadataByKeys(connection, state, metadataKeys);
 
   await pullEditions(
     connection,
     updateTemp,
-    state,
-    metadataKeys.map(m => state.metadataByMetadata[m]),
+    newState,
+    metadataKeys.map(m => newState.metadataByMetadata[m]),
   );
+
+  return newState;
 };
 
 export const pullAuctionSubaccounts = async (
@@ -893,7 +896,7 @@ export const loadAccounts = async (connection: Connection) => {
     loadVaults(),
     loadAuctions(),
     loadMetaplex(),
-    loadPacks(),
+    loadPacks().then(() => {}),
   ];
 
   await Promise.all(loading);
@@ -1036,7 +1039,7 @@ export const pullMetadataByKeys = async (
   connection: Connection,
   state: MetaState,
   metadataKeys: StringPublicKey[],
-): Promise<void[]> => {
+): Promise<MetaState> => {
   const updateState = makeSetter(state);
 
   let setOf100MetadataEditionKeys: string[] = [];
@@ -1069,7 +1072,8 @@ export const pullMetadataByKeys = async (
     loadBatch();
   }
 
-  return Promise.all(metadataPromises);
+  await Promise.all(metadataPromises);
+  return state;
 };
 
 export const makeSetter =
@@ -1138,8 +1142,10 @@ export const metadataByMintUpdater = async (
     if (masterEditionKey) {
       state.metadataByMasterEdition[masterEditionKey] = metadata;
     }
+    if (!state.metadata.some(({ pubkey }) => metadata.pubkey === pubkey)) {
+      state.metadata.push(metadata);
+    }
     state.metadataByMint[key] = metadata;
-    if (!state.metadataByMint[key]) state.metadata.push(metadata);
   } else {
     delete state.metadataByMint[key];
   }
