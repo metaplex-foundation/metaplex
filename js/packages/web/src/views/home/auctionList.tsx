@@ -11,6 +11,7 @@ import {
   useAuctionManagersToCache,
   useInfiniteScrollAuctions,
 } from '../../hooks';
+import { Banner } from '../../components/Banner';
 
 export enum LiveAuctionViewState {
   All = '0',
@@ -30,7 +31,7 @@ export const AuctionListView = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
-  const { ownerAddress } = useStore();
+  const { ownerAddress, storefront } = useStore();
   const wallet = useWallet();
   const { auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
@@ -74,6 +75,9 @@ export const AuctionListView = () => {
           }
         />
       )}
+      { storefront.theme.banner && 
+        <Banner src={storefront.theme.banner} headingText={''} subHeadingText={''} />
+      }
       <MetaplexMasonry>
         {auctions.map((m, idx) => {
           const id = m.auction.pubkey;
