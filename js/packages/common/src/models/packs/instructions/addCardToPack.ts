@@ -31,7 +31,7 @@ export async function addCardToPack({
   mint,
   tokenAccount,
   toAccount,
-}: Params): Promise<TransactionInstruction[]> {
+}: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
 
   const value = new AddCardToPackArgs({
