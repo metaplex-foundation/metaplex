@@ -891,14 +891,12 @@ export const loadAccounts = async (connection: Connection) => {
     pullMetadataByCreators(connection, state, updateState);
   const loadEditions = () =>
     pullEditions(connection, updateState, state, state.metadata);
-  const loadPacks = () => pullPacks(connection, state);
 
   const loading = [
     loadCreators().then(loadMetadata).then(loadEditions),
     loadVaults(),
     loadAuctions(),
     loadMetaplex(),
-    loadPacks().then(() => {}),
   ];
 
   const done = timeStart('loadAccounts#Promise.all');
