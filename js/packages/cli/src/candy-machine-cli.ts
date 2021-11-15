@@ -36,6 +36,7 @@ import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
+import { randomize } from './commands/randomize';
 
 program.version('0.0.2');
 
@@ -44,6 +45,71 @@ if (!fs.existsSync(CACHE_PATH)) {
 }
 
 log.setLevel(log.levels.INFO);
+
+programCommand('randomize')
+  .argument(
+    '<directory>',
+    'Directory containing images named from 0-n',
+    val => {
+      return fs.readdirSync(`${val}`).map(file => path.join(val, file));
+    },
+  )
+
+  .action(async (files: string[], options, cmd) => {
+    const {
+      number,
+    } = cmd.opts();
+
+    const pngFileCount = files.filter(it => {
+      return it.endsWith(EXTENSION_PNG);
+    }).length;
+    const jsonFileCount = files.filter(it => {
+      return it.endsWith(EXTENSION_JSON);
+    }).length;
+
+    const parsedNumber = parseInt(number);
+    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
+
+    if (pngFileCount !== jsonFileCount) {
+      throw new Error(
+        `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
+    }
+
+    if (elemCount < pngFileCount) {
+      throw new Error(
+        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+      );
+    }
+
+    log.info(`Beginning randomize for ${elemCount} (png+json) pairs`);
+
+    const startMs = Date.now();
+    log.info('started at: ' + startMs.toString());
+    let warn = false;
+    for (;;) {
+      const successful = await randomize(
+        files,
+        elemCount,
+      );
+
+      if (successful) {
+        warn = false;
+        break;
+      } else {
+        warn = true;
+        log.warn('randomize was not successful, rerunning');
+      }
+    }
+    const endMs = Date.now();
+    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
+    log.info(
+      `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
+    );
+    if (warn) {
+      log.info('not all files have been randomized, rerun this step.');
+    }
+  });
 
 programCommand('upload')
   .argument(
