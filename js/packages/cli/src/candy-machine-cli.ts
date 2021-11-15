@@ -56,9 +56,7 @@ programCommand('randomize')
   )
 
   .action(async (files: string[], options, cmd) => {
-    const {
-      number,
-    } = cmd.opts();
+    const { number } = cmd.opts();
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -88,10 +86,7 @@ programCommand('randomize')
     log.info('started at: ' + startMs.toString());
     let warn = false;
     for (;;) {
-      const successful = await randomize(
-        files,
-        elemCount,
-      );
+      const successful = await randomize(files);
 
       if (successful) {
         warn = false;
