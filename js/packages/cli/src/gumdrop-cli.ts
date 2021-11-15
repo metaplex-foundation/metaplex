@@ -85,7 +85,7 @@ programCommand('create')
   .option('--discord-token <string>', 'Discord bot token')
   .option(
     '--otp-auth <auth>',
-    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint or `none` to skip OTP',
+    'Off-chain OTP from claim. Either `enable` for AWS OTP endpoint or `disable` to skip OTP',
   )
   .option('--distribution-list <path>', 'List of users to build gumdrop from.')
   .option(
@@ -109,9 +109,9 @@ programCommand('create')
 
     const getTemporalSigner = auth => {
       switch (auth) {
-        case 'default':
+        case 'enable':
           return GUMDROP_TEMPORAL_SIGNER;
-        case 'none':
+        case 'disable':
           return PublicKey.default;
         default:
           throw new Error(`Unknown OTP authorization type ${auth}`);
