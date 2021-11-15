@@ -1,5 +1,10 @@
-import React, { ReactElement, useCallback, useMemo, useState } from 'react';
-import { Form } from 'antd';
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   PackDistributionType,
   useConnection,
@@ -8,9 +13,9 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
-import { useUserArts } from '../../hooks';
+import { useExtendedArt, useUserArts } from '../../hooks';
 
-import { InfoFormState, PackState } from './interface';
+import { PackState } from './interface';
 import { INITIAL_PACK_STATE } from './data';
 import { CreatePackSteps } from './types';
 import { packItemsFilter, vouchersFilter } from './utils';
@@ -20,7 +25,6 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import SelectItemsStep from './components/SelectItemsStep';
 import AdjustQuantitiesStep from './components/AdjustQuantitiesStep';
-import DesignAndInfoStep from './components/DesignAndInfoStep';
 import ReviewAndMintStep from './components/ReviewAndMintStep';
 import { sendCreatePack } from './transactions/createPack';
 import SuccessModal from './components/SuccessModal';
@@ -38,7 +42,7 @@ export const PackCreateView = (): ReactElement => {
   const { accountByMint } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
-  const [designForm] = Form.useForm<InfoFormState>();
+  // const [designForm] = Form.useForm<InfoFormState>();
 
   const {
     selectedItems,
@@ -68,6 +72,19 @@ export const PackCreateView = (): ReactElement => {
     },
     [attributes, setAttributes],
   );
+
+  const selectedVoucherId = Object.keys(selectedVouchers)[0];
+  const { ref, data } = useExtendedArt(selectedVoucherId);
+
+  useEffect(() => {
+    if (!data) return;
+
+    setPackState({
+      uri: data.image,
+      name: data.name,
+      description: data.description,
+    });
+  }, [data]);
 
   const handleSelectItem = useCallback(
     (item: SafetyDepositDraft): void => {
@@ -148,7 +165,7 @@ export const PackCreateView = (): ReactElement => {
   }, []);
 
   return (
-    <div className="pack-create-wrapper">
+    <div className="pack-create-wrapper" ref={ref}>
       <Sidebar
         step={step}
         setStep={goToNextStep}
@@ -195,9 +212,9 @@ export const PackCreateView = (): ReactElement => {
           />
         )} */}
 
-        {step === CreatePackSteps.DesignAndInfo && (
+        {/*{step === CreatePackSteps.DesignAndInfo && (
           <DesignAndInfoStep form={designForm} setPackState={setPackState} />
-        )}
+        )}*/}
 
         {step === CreatePackSteps.ReviewAndMint && (
           <ReviewAndMintStep
@@ -211,10 +228,7 @@ export const PackCreateView = (): ReactElement => {
         )}
       </div>
 
-      <SuccessModal
-        shouldShow={shouldShowSuccessModal}
-        hide={handleFinish}
-      ></SuccessModal>
+      <SuccessModal shouldShow={shouldShowSuccessModal} hide={handleFinish} />
     </div>
   );
 };
