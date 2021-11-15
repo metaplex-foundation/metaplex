@@ -1,14 +1,12 @@
-use {
-    crate::{
-        instruction::{CreateMasterEditionArgs, MetadataInstruction},
-        state::Reservation,
-    },
-    borsh::{BorshDeserialize, BorshSerialize},
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
-        sysvar,
-    },
+use crate::{
+    instruction::{CreateMasterEditionArgs, MetadataInstruction},
+    state::Reservation,
+};
+use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::{
+    instruction::{AccountMeta, Instruction},
+    pubkey::Pubkey,
+    sysvar,
 };
 
 #[repr(C)]

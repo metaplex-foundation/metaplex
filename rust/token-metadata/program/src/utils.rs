@@ -1,34 +1,32 @@
-use {
-    arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs},
-    borsh::{BorshDeserialize, BorshSerialize},
-    crate::{
-        error::MetadataError,
-        state::{
-            get_reservation_list, Data, EditionMarker, Key, MasterEditionV1, Metadata, EDITION,
-            EDITION_MARKER_BIT_SIZE, MAX_CREATOR_LIMIT, MAX_EDITION_LEN, MAX_EDITION_MARKER_SIZE,
-            MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH,
-            MAX_URI_LENGTH, PREFIX,
-        },
+use crate::{
+    error::MetadataError,
+    state::{
+        get_reservation_list, Data, EditionMarker, Key, MasterEditionV1, Metadata, EDITION,
+        EDITION_MARKER_BIT_SIZE, MAX_CREATOR_LIMIT, MAX_EDITION_LEN, MAX_EDITION_MARKER_SIZE,
+        MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH,
+        MAX_URI_LENGTH, PREFIX,
     },
-    solana_program::{
-        account_info::AccountInfo,
-        borsh::try_from_slice_unchecked,
-        entrypoint::ProgramResult,
-        msg,
-        program::{invoke, invoke_signed},
-        program_error::ProgramError,
-        program_option::COption,
-        program_pack::{IsInitialized, Pack},
-        pubkey::Pubkey,
-        system_instruction,
-        sysvar::{rent::Rent, Sysvar},
-    },
-    spl_token::{
-        instruction::{set_authority, AuthorityType},
-        state::{Account, Mint},
-    },
-    std::convert::TryInto,
 };
+use arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs};
+use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::{
+    account_info::AccountInfo,
+    borsh::try_from_slice_unchecked,
+    entrypoint::ProgramResult,
+    msg,
+    program::{invoke, invoke_signed},
+    program_error::ProgramError,
+    program_option::COption,
+    program_pack::{IsInitialized, Pack},
+    pubkey::Pubkey,
+    system_instruction,
+    sysvar::{rent::Rent, Sysvar},
+};
+use spl_token::{
+    instruction::{set_authority, AuthorityType},
+    state::{Account, Mint},
+};
+use std::convert::TryInto;
 
 pub fn assert_data_valid(
     data: &Data,
@@ -823,19 +821,21 @@ pub fn process_create_metadata_accounts_logic(
     let existing_mint_authority = get_mint_authority(mint_info)?;
     // IMPORTANT NOTE
     // This allows the Metaplex Foundation to Create but not update metadata for SPL tokens that have not populated their metadata.
-    assert_mint_authority_matches_mint(&existing_mint_authority, mint_authority_info).or_else(|e| {
-        // Allow seeding by the authority seed populator
-        if mint_authority_info.key == &SEED_AUTHORITY && mint_authority_info.is_signer {
-            // When metadata is seeded, the mint authority should be able to change it
-            if let COption::Some(auth) = existing_mint_authority {
-                update_authority_key = auth;
-                is_mutable = true;
+    assert_mint_authority_matches_mint(&existing_mint_authority, mint_authority_info).or_else(
+        |e| {
+            // Allow seeding by the authority seed populator
+            if mint_authority_info.key == &SEED_AUTHORITY && mint_authority_info.is_signer {
+                // When metadata is seeded, the mint authority should be able to change it
+                if let COption::Some(auth) = existing_mint_authority {
+                    update_authority_key = auth;
+                    is_mutable = true;
+                }
+                Ok(())
+            } else {
+                Err(e)
             }
-            Ok(())
-        } else {
-            Err(e)
-        }
-    })?;
+        },
+    )?;
     assert_owned_by(mint_info, &spl_token::id())?;
 
     let metadata_seeds = &[
@@ -898,26 +898,24 @@ pub fn process_create_metadata_accounts_logic(
     Ok(())
 }
 
+/// Strings need to be appended with `\0`s in order to have a deterministic length.
+/// This supports the `memcmp` filter  on get program account calls.
+/// NOTE: it is assumed that the metadata fields are never larger than the respective MAX_LENGTH
 pub fn puff_out_data_fields(metadata: &mut Metadata) {
-    let mut array_of_zeroes = vec![];
-    while array_of_zeroes.len() < MAX_NAME_LENGTH - metadata.data.name.len() {
-        array_of_zeroes.push(0u8);
-    }
-    metadata.data.name =
-        metadata.data.name.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+    metadata.data.name = puffed_out_string(&metadata.data.name, MAX_NAME_LENGTH);
+    metadata.data.symbol = puffed_out_string(&metadata.data.symbol, MAX_SYMBOL_LENGTH);
+    metadata.data.uri = puffed_out_string(&metadata.data.uri, MAX_URI_LENGTH);
+}
 
+/// Pads the string to the desired size with `0u8`s.
+/// NOTE: it is assumed that the string's size is never larger than the given size.
+pub fn puffed_out_string(s: &String, size: usize) -> String {
     let mut array_of_zeroes = vec![];
-    while array_of_zeroes.len() < MAX_SYMBOL_LENGTH - metadata.data.symbol.len() {
+    let puff_amount = size - s.len();
+    while array_of_zeroes.len() < puff_amount {
         array_of_zeroes.push(0u8);
     }
-    metadata.data.symbol =
-        metadata.data.symbol.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
-
-    let mut array_of_zeroes = vec![];
-    while array_of_zeroes.len() < MAX_URI_LENGTH - metadata.data.uri.len() {
-        array_of_zeroes.push(0u8);
-    }
-    metadata.data.uri = metadata.data.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+    s.clone() + std::str::from_utf8(&array_of_zeroes).unwrap()
 }
 
 pub struct MintNewEditionFromMasterEditionViaTokenLogicArgs<'a> {
