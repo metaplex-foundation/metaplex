@@ -25,6 +25,7 @@ import {
   createAuctionManager,
   SafetyDepositDraft,
 } from '../../actions/createAuctionManager';
+import { useAnalytics } from '../../components/Analytics';
 import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { QUOTE_MINT } from './../../constants';
@@ -479,6 +480,20 @@ export const AuctionCreateView = () => {
       QUOTE_MINT.toBase58(),
       storeIndexer,
     );
+
+    try {
+      const { track } = useAnalytics();
+      track('new_listing', {
+        category: 'creation',
+        label: isInstantSale ? 'instant sale' : 'auction',
+        sol_value: isInstantSale
+          ? auctionSettings.instantSalePrice?.toNumber()
+          : auctionSettings.priceFloor.minPrice?.toNumber(),
+      });
+    } catch (error) {
+      console.error('failed tracking new_listing');
+    }
+
     setAuctionObj(_auctionObj);
   };
 
