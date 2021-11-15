@@ -80,8 +80,8 @@ programCommand('create')
     // TODO: more explanation
     'Off-chain distribution of claims. Either `aws-email`, `aws-sms`, `discord`, `manual`, or `wallets`',
   )
-  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
-  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .option('--aws-access-key-id <string>', 'Access Key Id')
+  .option('--aws-secret-access-key <string>', 'Secret Access Key')
   .option('--discord-token <string>', 'Discord bot token')
   .option(
     '--otp-auth <auth>',
@@ -173,8 +173,8 @@ programCommand('create')
         case 'aws-email':
           return distributeAwsSes(
             {
-              accessKeyId: options.awsSesAccessKeyId,
-              secretAccessKey: options.awsSesSecretAccessKey,
+              accessKeyId: options.awsAccessKeyId,
+              secretAccessKey: options.awsSecretAccessKey,
             },
             'santa@aws.metaplex.com',
             claimants,
@@ -183,8 +183,8 @@ programCommand('create')
         case 'aws-sms':
           return distributeAwsSns(
             {
-              accessKeyId: options.awsSesAccessKeyId,
-              secretAccessKey: options.awsSesSecretAccessKey,
+              accessKeyId: options.awsAccessKeyId,
+              secretAccessKey: options.awsSecretAccessKey,
             },
             '',
             claimants,
@@ -403,8 +403,8 @@ programCommand('close')
 
 programCommand('create_contact_list')
   .option('--cli-input-json <filename>')
-  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
-  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .option('--aws-access-key-id <string>', 'Access Key Id')
+  .option('--aws-secret-access-key <string>', 'Secret Access Key')
   .addHelpText(
     'before',
     'A thin wrapper mimicking `aws sesv2 create-contact-list`',
@@ -423,8 +423,8 @@ programCommand('create_contact_list')
     const client = new SESv2Client({
       region: 'us-east-2',
       credentials: {
-        accessKeyId: options.awsSesAccessKeyId,
-        secretAccessKey: options.awsSesSecretAccessKey,
+        accessKeyId: options.awsAccessKeyId,
+        secretAccessKey: options.awsSecretAccessKey,
       },
     });
 
@@ -442,8 +442,8 @@ programCommand('create_contact_list')
 
 programCommand('get_contact')
   .argument('<email>', 'email address to query')
-  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
-  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .option('--aws-access-key-id <string>', 'Access Key Id')
+  .option('--aws-secret-access-key <string>', 'Secret Access Key')
   .addHelpText('before', 'A thin wrapper mimicking `aws sesv2 get-contact`')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (email, options, cmd) => {
@@ -452,8 +452,8 @@ programCommand('get_contact')
     const client = new SESv2Client({
       region: 'us-east-2',
       credentials: {
-        accessKeyId: options.awsSesAccessKeyId,
-        secretAccessKey: options.awsSesSecretAccessKey,
+        accessKeyId: options.awsAccessKeyId,
+        secretAccessKey: options.awsSecretAccessKey,
       },
     });
 
