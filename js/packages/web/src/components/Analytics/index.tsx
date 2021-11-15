@@ -93,7 +93,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       label?: string;
       value?: number;
       sol_value?: number;
-      [key: string]: string | number | undefined | any[];
+      [key: string]: string | number | undefined;
     } & Partial<CustomEventDimensions>,
   ) {
     if (!gtag) return;
