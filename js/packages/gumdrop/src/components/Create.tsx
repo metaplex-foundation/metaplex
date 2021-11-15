@@ -60,6 +60,7 @@ import {
   DropInfo,
   Response as DResponse,
   distributeAwsSes,
+  distributeAwsSns,
   distributeManual,
   distributeWallet,
   urlAndHandleFor,
@@ -88,11 +89,13 @@ const distribute = (
   claimants : Claimants,
   drop : DropInfo,
 ) => {
-  if (method === "AWS SES") {
+  if (method === "aws-email") {
     return distributeAwsSes(auth, source, claimants, drop);
-  } else if (method === "Manual") {
+  } else if (method === "aws-sms") {
+    return distributeAwsSns(auth, source, claimants, drop);
+  } else if (method === "manual") {
     return distributeManual(auth, source, claimants, drop);
-  } else if (method === "Wallets") {
+  } else if (method === "wallets") {
     return distributeWallet(auth, source, claimants, drop);
   } else {
     throw new Error(`Unrecognized claim distribution method ${method}`);
