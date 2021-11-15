@@ -27,10 +27,11 @@ import {
   useConnection,
   useConnectionConfig,
   useMint,
-  useMeta, BidStateType,
+  useMeta,
+  BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { MintInfo } from '@solana/spl-token';
+import { MintInfo, Token } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
@@ -38,6 +39,7 @@ import { ArtType } from '../../types';
 import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
 import { AmountLabel } from '../../components/AmountLabel';
 import { ClickToCopy } from '../../components/ClickToCopy';
+import { useTokenList } from '../../contexts/tokenList';
 
 export const AuctionItem = ({
   item,
@@ -81,7 +83,7 @@ export const AuctionItem = ({
 export const AuctionView = () => {
   const { width } = useWindowDimensions();
   const { id } = useParams<{ id: string }>();
-  const { env } = useConnectionConfig();
+  const { endpoint } = useConnectionConfig();
   const auction = useAuction(id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
@@ -91,6 +93,7 @@ export const AuctionView = () => {
   useEffect(() => {
     pullAuctionPage(id);
   }, []);
+
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
@@ -101,10 +104,15 @@ export const AuctionView = () => {
   }
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
-  const isOpen = auction?.auction.info.bidState.type === BidStateType.OpenEdition;
+  const isOpen =
+    auction?.auction.info.bidState.type === BidStateType.OpenEdition;
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
   const attributes = data?.attributes;
+
+  const tokenInfo = useTokenList()?.mainnetTokens.filter(
+    m => m.address == auction?.auction.info.tokenMint,
+  )[0];
 
   const items = [
     ...(auction?.items
@@ -165,8 +173,10 @@ export const AuctionView = () => {
               <span>
                 {winnerCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
+                ) : isOpen ? (
+                  'Unlimited'
                 ) : (
-                  isOpen ?  "Unlimited" : winnerCount
+                  winnerCount
                 )}
               </span>
             </div>
@@ -175,8 +185,10 @@ export const AuctionView = () => {
               <span>
                 {nftCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
+                ) : isOpen ? (
+                  'Open'
                 ) : (
-                  isOpen ?  "Open" : nftCount
+                  nftCount
                 )}
               </span>
             </div>
@@ -238,14 +250,17 @@ export const AuctionView = () => {
               </Button>
               <Button
                 className="tag"
-                onClick={() =>
-                  window.open(
-                    `https://explorer.solana.com/account/${art?.mint || ''}${
-                      env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
-                    }`,
-                    '_blank',
-                  )
-                }
+                onClick={() => {
+                  const cluster = endpoint.name;
+                  const explorerURL = new URL(
+                    `account/${art?.mint || ''}`,
+                    'https://explorer.solana.com',
+                  );
+                  if (!cluster.includes('mainnet')) {
+                    explorerURL.searchParams.set('cluster', cluster);
+                  }
+                  window.open(explorerURL.href, '_blank');
+                }}
               >
                 Solana
               </Button>
@@ -323,8 +338,10 @@ export const AuctionView = () => {
                   <span>
                     {winnerCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
+                    ) : isOpen ? (
+                      'Unlimited'
                     ) : (
-                      isOpen ? "Unlimited" : winnerCount
+                      winnerCount
                     )}
                   </span>
                 </div>
@@ -333,17 +350,39 @@ export const AuctionView = () => {
                   <span>
                     {nftCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
+                    ) : isOpen ? (
+                      'Open'
                     ) : (
-                      isOpen ? "Open" : nftCount
+                      nftCount
                     )}
+                  </span>
+                </div>
+                <div className={'info-component'}>
+                  <h6 className={'info-title'}>CURRENCY</h6>
+                  <span>
+                    {nftCount === undefined ? (
+                      <Skeleton paragraph={{ rows: 0 }} />
+                    ) : (
+                      `${tokenInfo?.name || 'Custom Token'} ($${
+                        tokenInfo?.symbol || 'CUSTOM'
+                      })`
+                    )}
+                    <ClickToCopy
+                      className="copy-pubkey"
+                      copyText={
+                        tokenInfo
+                          ? tokenInfo?.address
+                          : auction?.auction.info.tokenMint || ''
+                      }
+                    />
                   </span>
                 </div>
               </div>
             </Col>
             <Col span={12} md={8} className="view-on-container">
-              <div className={'info-view-container'}>
-                <div className={'info-view'}>
-                  <h6 className={'info-title'}>View on</h6>
+              <div className="info-view-container">
+                <div className="info-view">
+                  <h6 className="info-title">View on</h6>
                   <div style={{ display: 'flex' }}>
                     <Button
                       className="tag"
@@ -353,16 +392,17 @@ export const AuctionView = () => {
                     </Button>
                     <Button
                       className="tag"
-                      onClick={() =>
-                        window.open(
-                          `https://explorer.solana.com/account/${
-                            art?.mint || ''
-                          }${
-                            env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
-                          }`,
-                          '_blank',
-                        )
-                      }
+                      onClick={() => {
+                        const cluster = endpoint.name;
+                        const explorerURL = new URL(
+                          `account/${art?.mint || ''}`,
+                          'https://explorer.solana.com',
+                        );
+                        if (!cluster.includes('mainnet')) {
+                          explorerURL.searchParams.set('cluster', cluster);
+                        }
+                        window.open(explorerURL.href, '_blank');
+                      }}
                     >
                       Solana
                     </Button>
@@ -389,11 +429,15 @@ const BidLine = (props: {
   mint?: MintInfo;
   isCancelled?: boolean;
   isActive?: boolean;
+  mintKey: string;
 }) => {
-  const { bid, index, mint, isCancelled, isActive } = props;
+  const { bid, index, mint, isCancelled, isActive, mintKey } = props;
   const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
   const isme = publicKey?.toBase58() === bidder;
+  const tokenInfo = useTokenList().mainnetTokens.filter(
+    m => m.address == mintKey,
+  )[0];
 
   // Get Twitter Handle from address
   const connection = useConnection();
@@ -456,7 +500,7 @@ const BidLine = (props: {
                     flexDirection: 'row',
                     alignItems: 'center',
                   }}
-                  displaySOL={true}
+                  displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
                   iconSize={24}
                   amount={formatTokenAmount(bid.info.lastBid, mint)}
                 />
@@ -500,7 +544,8 @@ const BidLine = (props: {
                   flexDirection: 'row',
                   alignItems: 'center',
                 }}
-                displaySOL={true}
+                displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
+                tokenInfo={tokenInfo}
                 iconSize={24}
                 amount={formatTokenAmount(bid.info.lastBid, mint)}
               />
@@ -587,6 +632,7 @@ export const AuctionBids = ({
           mint={mint}
           isCancelled={isCancelled}
           isActive={!bid.info.cancelled}
+          mintKey={auctionView?.auction.info.tokenMint || ''}
         />
       );
 

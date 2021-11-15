@@ -209,19 +209,28 @@ h1 {
   font-weight: 600;
   font-size: 2rem;
 }
-.ant-btn:hover{
+.ant-btn:hover {
   background-color: transparent !important;
 }
-.ant-steps-item-process>.ant-steps-item-container>.ant-steps-item-content>.ant-steps-item-title {
-  color: hsla(0,0%,100%,.85);
+.ant-steps-item-process
+  > .ant-steps-item-container
+  > .ant-steps-item-content
+  > .ant-steps-item-title {
+  color: hsla(0, 0%, 100%, 0.85);
 }
-.ant-steps-item-wait>.ant-steps-item-container>.ant-steps-item-content>.ant-steps-item-title {
-  color: hsla(0,0%,100%,.45);
+.ant-steps-item-wait
+  > .ant-steps-item-container
+  > .ant-steps-item-content
+  > .ant-steps-item-title {
+  color: hsla(0, 0%, 100%, 0.45);
 }
-.ant-steps-item-wait .ant-steps-item-icon>.ant-steps-icon .ant-steps-icon-dot {
-  background: hsla(0,0%,100%,.3);
+.ant-steps-item-wait
+  .ant-steps-item-icon
+  > .ant-steps-icon
+  .ant-steps-icon-dot {
+  background: hsla(0, 0%, 100%, 0.3);
 }
-.ant-card{
+.ant-card {
   background: #141414;
 }
 .ant-card-bordered {
@@ -249,21 +258,30 @@ h1 {
     border-radius: 8px;
     width: fit-content;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       background: transparent !important;
       border-color: @metaplex-primary-color !important;
       color: @metaplex-primary-color !important;
     }
+
+    &:disabled,
+    &:disabled &:hover {
+      color: rgba(255, 255, 255, 0.5) !important;
+      background: #1e1e1e !important;
+      border: none;
+    }
   }
 
   &.black-btn {
-    color: #FFFFFF;
+    color: #ffffff;
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     width: fit-content;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       background: transparent;
       border-color: rgba(255, 255, 255, 0.05);
       color: #ffffff;
@@ -275,7 +293,7 @@ model-viewer {
   --poster-color: transparent;
 }
 
-.creator-base-page{
+.creator-base-page {
   @media (max-width: @screen-sm-min) {
     padding: 15px;
   }

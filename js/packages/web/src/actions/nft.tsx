@@ -4,7 +4,7 @@ import {
   createMetadata,
   programIds,
   notify,
-  ENV,
+  ENDPOINT_NAME,
   updateMetadata,
   createMasterEdition,
   sendTransactionWithRetry,
@@ -74,7 +74,7 @@ const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
 export const mintNFT = async (
   connection: Connection,
   wallet: WalletSigner | undefined,
-  env: ENV,
+  endpoint: ENDPOINT_NAME,
   files: File[],
   metadata: {
     name: string;
@@ -225,7 +225,7 @@ export const mintNFT = async (
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
   data.append('transaction', txid);
-  data.append('env', env);
+  data.append('env', endpoint);
 
   const tags = realFiles.reduce(
     (acc: Record<string, Array<{ name: string; value: string }>>, f) => {

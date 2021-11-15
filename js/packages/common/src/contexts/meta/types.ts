@@ -24,6 +24,7 @@ import {
   StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
+import { PackSet } from '../../models/packs/accounts/PackSet';
 import { PublicKeyStringAndAccount, StringPublicKey } from '../../utils';
 import { ParsedAccount } from '../accounts/types';
 
@@ -78,6 +79,7 @@ export interface MetaState {
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
   auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
   storeIndexer: ParsedAccount<StoreIndexer>[];
+  packs: Record<string, ParsedAccount<PackSet>>;
 }
 
 export interface MetaContextState extends MetaState {

@@ -1315,6 +1315,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gumdrop"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "metaplex-token-metadata 0.0.1",
+ "solana-program",
+ "spl-associated-token-account",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1847,7 +1858,6 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "arrayref",
  "metaplex-token-metadata 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "spl-associated-token-account",
  "spl-token",
@@ -2016,6 +2026,7 @@ name = "nft-candy-machine"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "arrayref",
  "metaplex-token-metadata 0.0.1",
  "spl-token",

@@ -3,13 +3,12 @@ use {
     anchor_lang::{
         prelude::*,
         solana_program::{
-            program::invoke_signed,
+            program::{invoke, invoke_signed},
             program_pack::{IsInitialized, Pack},
             system_instruction,
         },
     },
-    anchor_spl::token::{Mint, Token},
-    arrayref::array_ref,
+    anchor_spl::token::Token,
     metaplex_token_metadata::state::Metadata,
     spl_associated_token_account::get_associated_token_address,
     spl_token::{instruction::initialize_account2, state::Account},
@@ -138,12 +137,14 @@ pub fn create_program_token_account_if_not_present<'a>(
     system_program: &Program<'a, System>,
     fee_payer: &AccountInfo<'a>,
     token_program: &Program<'a, Token>,
-    treasury_mint: &anchor_lang::Account<'a, Mint>,
+    mint: &UncheckedAccount<'a>,
     owner: &AccountInfo<'a>,
     rent: &Sysvar<'a, Rent>,
     signer_seeds: &[&[u8]],
     fee_seeds: &[&[u8]],
 ) -> ProgramResult {
+    assert_owned_by(mint, &token_program.key())?;
+
     if program_account.data_is_empty() {
         create_or_allocate_account_raw(
             *token_program.key,
@@ -160,13 +161,13 @@ pub fn create_program_token_account_if_not_present<'a>(
             &initialize_account2(
                 &token_program.key,
                 &program_account.key(),
-                &treasury_mint.key(),
+                &mint.key(),
                 &owner.key(),
             )
             .unwrap(),
             &[
                 token_program.to_account_info(),
-                treasury_mint.to_account_info(),
+                mint.to_account_info(),
                 program_account.to_account_info(),
                 rent.to_account_info(),
                 owner.clone(),
@@ -190,34 +191,20 @@ pub fn pay_creator_fees<'a>(
     token_program: &AccountInfo<'a>,
     system_program: &AccountInfo<'a>,
     rent: &AccountInfo<'a>,
-    signer_seeds: &[&[u8]],
-    fee_payer_seeds: &[&[u8]],
     size: u64,
     is_native: bool,
-) -> Result<u64, ProgramError> {
+) -> ProgramResult {
     let metadata = Metadata::from_account_info(metadata_info)?;
-    let fees = metadata.data.seller_fee_basis_points;
-    let total_fee = (fees as u128)
-        .checked_mul(size as u128)
-        .ok_or(ErrorCode::NumericalOverflow)?
-        .checked_div(10000)
-        .ok_or(ErrorCode::NumericalOverflow)? as u64;
-    let mut remaining_fee = total_fee;
-    let remaining_size = size
-        .checked_sub(total_fee)
-        .ok_or(ErrorCode::NumericalOverflow)?;
+    let total_fee = size as u128;
     match metadata.data.creators {
         Some(creators) => {
             for creator in creators {
                 let pct = creator.share as u128;
                 let creator_fee = pct
-                    .checked_mul(total_fee as u128)
+                    .checked_mul(total_fee)
                     .ok_or(ErrorCode::NumericalOverflow)?
                     .checked_div(100)
                     .ok_or(ErrorCode::NumericalOverflow)? as u64;
-                remaining_fee = remaining_fee
-                    .checked_sub(creator_fee)
-                    .ok_or(ErrorCode::NumericalOverflow)?;
                 let current_creator_info = next_account_info(remaining_accounts)?;
                 assert_keys_equal(creator.address, *current_creator_info.key)?;
                 if !is_native {
@@ -232,7 +219,7 @@ pub fn pay_creator_fees<'a>(
                             token_program.to_account_info(),
                             system_program.to_account_info(),
                             rent.to_account_info(),
-                            fee_payer_seeds,
+                            &[],
                         )?;
                     }
                     assert_is_ata(
@@ -241,7 +228,7 @@ pub fn pay_creator_fees<'a>(
                         &treasury_mint.key(),
                     )?;
                     if creator_fee > 0 {
-                        invoke_signed(
+                        invoke(
                             &spl_token::instruction::transfer(
                                 token_program.key,
                                 &payment_account.key,
@@ -256,11 +243,10 @@ pub fn pay_creator_fees<'a>(
                                 token_program.clone(),
                                 payment_account_owner.clone(),
                             ],
-                            &[signer_seeds],
                         )?;
                     }
                 } else if creator_fee > 0 {
-                    invoke_signed(
+                    invoke(
                         &system_instruction::transfer(
                             &payment_account.key,
                             current_creator_info.key,
@@ -271,7 +257,6 @@ pub fn pay_creator_fees<'a>(
                             current_creator_info.clone(),
                             system_program.clone(),
                         ],
-                        &[signer_seeds],
                     )?;
                 }
             }
@@ -280,35 +265,7 @@ pub fn pay_creator_fees<'a>(
             msg!("No creators found in metadata");
         }
     }
-    // Any dust is returned to the party posting the NFT
-    Ok(remaining_size
-        .checked_add(remaining_fee)
-        .ok_or(ErrorCode::NumericalOverflow)?)
-}
-
-/// Cheap method to just grab mint Pubkey from token account, instead of deserializing entire thing
-pub fn get_mint_from_token_account(
-    token_account_info: &AccountInfo,
-) -> Result<Pubkey, ProgramError> {
-    // TokeAccount layout:   mint(32), owner(32), ...
-    let data = token_account_info.try_borrow_data()?;
-    let mint_data = array_ref![data, 0, 32];
-    Ok(Pubkey::new_from_array(*mint_data))
-}
-
-/// Cheap method to just grab delegate Pubkey from token account, instead of deserializing entire thing
-pub fn get_delegate_from_token_account(
-    token_account_info: &AccountInfo,
-) -> Result<Option<Pubkey>, ProgramError> {
-    // TokeAccount layout:   mint(32), owner(32), ...
-    let data = token_account_info.try_borrow_data()?;
-    let key_data = array_ref![data, 76, 32];
-    let coption_data = u32::from_le_bytes(*array_ref![data, 72, 4]);
-    if coption_data == 0 {
-        Ok(None)
-    } else {
-        Ok(Some(Pubkey::new_from_array(*key_data)))
-    }
+    Ok(())
 }
 
 /// Create account almost from scratch, lifted from

@@ -459,6 +459,8 @@ programCommand('show')
       log.info('price: ', machine.data.price.toNumber());
       //@ts-ignore
       log.info('itemsAvailable: ', machine.data.itemsAvailable.toNumber());
+      //@ts-ignore
+      log.info('itemsRedeemed: ', machine.itemsRedeemed.toNumber());
       log.info(
         'goLiveDate: ',
         //@ts-ignore
@@ -638,7 +640,8 @@ programCommand('update_candy_machine')
   )
   .option('--new-authority <Pubkey>', 'New Authority. Base58-encoded')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, rpcUrl, price, newAuthority, cacheName } = cmd.opts();
+    const { keypair, env, date, rpcUrl, price, newAuthority, cacheName } =
+      cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = date ? parseDate(date) : null;
@@ -673,15 +676,12 @@ programCommand('update_candy_machine')
     }
 
     if (newAuthorityKey) {
-      const tx = await anchorProgram.rpc.updateAuthority(
-        newAuthorityKey,
-        {
-          accounts: {
-            candyMachine,
-            authority: walletKeyPair.publicKey,
-          },
+      const tx = await anchorProgram.rpc.updateAuthority(newAuthorityKey, {
+        accounts: {
+          candyMachine,
+          authority: walletKeyPair.publicKey,
         },
-      );
+      });
 
       cacheContent.authority = newAuthorityKey.toBase58();
       log.info(` - updated authority: ${newAuthorityKey.toBase58()}`);
@@ -701,7 +701,13 @@ programCommand('mint_one_token')
 
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
-    const tx = await mint(keypair, env, configAddress, rpcUrl);
+    const tx = await mint(
+      keypair,
+      env,
+      configAddress,
+      cacheContent.program.uuid,
+      rpcUrl,
+    );
 
     log.info('mint_one_token finished', tx);
   });
