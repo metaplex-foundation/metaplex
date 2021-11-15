@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { queryExtendedMetadata } from './queryExtendedMetadata';
-import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
@@ -17,7 +16,6 @@ import {
   pullPage,
   pullPayoutTickets,
   pullStoreMetadata,
-  pullMetadataByKeys,
   pullPacks,
 } from '.';
 import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
@@ -330,15 +328,6 @@ export function MetaProvider({ children = null as any }) {
       update(undefined, undefined, userAccounts);
     }
   }, [connection, storeAddress, isReady, page, userAccounts]);
-
-  // ToDo: Check what's going on with Websockets, currently it doesn't work well :(
-  // useEffect(() => {
-  //   if (isLoading) {
-  //     return;
-  //   }
-
-  //   return subscribeAccountsChange(connection, () => state, setState);
-  // }, [connection, setState, isLoading, state]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators
