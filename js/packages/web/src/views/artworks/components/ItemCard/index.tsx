@@ -12,16 +12,17 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
   if (isPack(item)) {
     const {
       pubkey,
-      info: { uri, name, authority, allowedAmountToRedeem },
+      info: { authority, allowedAmountToRedeem },
       edition,
       cardsRedeemed,
+      voucherMatadata,
     } = item;
 
     return (
       <Link to={`/pack/${pubkey}/${edition}`}>
         <PackCard
-          name={name}
-          posterUri={uri}
+          name={voucherMatadata.info.data.name}
+          voucherMetadata={voucherMatadata.pubkey}
           authority={authority}
           cardsRedeemed={cardsRedeemed}
           allowedAmountToRedeem={allowedAmountToRedeem}

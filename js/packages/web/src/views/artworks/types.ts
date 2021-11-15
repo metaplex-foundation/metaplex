@@ -15,6 +15,7 @@ export type ExtendedPack = ParsedAccount<PackSet> & {
   voucher: StringPublicKey;
   edition: StringPublicKey;
   cardsRedeemed?: number;
+  voucherMatadata: ParsedAccount<Metadata>;
 };
 export type ExtendedPackByKey = Record<string, ExtendedPack>;
 export type ProvingProcessByKey = Record<string, ParsedAccount<ProvingProcess>>;

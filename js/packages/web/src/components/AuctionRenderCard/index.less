@@ -124,7 +124,7 @@
     display: block;
   }
   .card-art-info {
-    background: rgba(255, 255, 255, 0.05);
+    background: @grey-60;
     border-radius: 0 0 12px 12px;
     padding: 16px;
     width: 100%;
@@ -133,6 +133,15 @@
       &--pack {
         display: flex;
         justify-content: space-between;
+
+        & + .art-content-wrapper {
+          background-color: @grey-60;
+          border-radius: 12px;
+          width: 270px;
+          height: 270px;
+          padding: 18px;
+          overflow: hidden;
+        }
       }
       .artist-name {
         font-size: 14px;

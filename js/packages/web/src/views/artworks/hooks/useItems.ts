@@ -1,8 +1,8 @@
-import { useMeta } from '@oyster/common';
+import { Metadata, ParsedAccount, useMeta } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 import { useCreatorArts, useUserArts } from '../../../hooks';
-import { ArtworkViewState, Item } from '../types';
+import { ArtworkViewState, ExtendedPackByKey, Item } from '../types';
 
 import { useUserPacksByEdition } from './useUserPacksByEdition';
 
@@ -18,12 +18,27 @@ export const useItems = ({
   const userPacks = useUserPacksByEdition();
 
   if (activeKey === ArtworkViewState.Owned) {
-    return [...Object.values(userPacks), ...ownedMetadata.map(m => m.metadata)];
+    return mergeMetadataWithPacks(
+      ownedMetadata.map(m => m.metadata),
+      userPacks,
+    );
   }
 
   if (activeKey === ArtworkViewState.Created) {
     return createdMetadata;
   }
 
-  return [...Object.values(userPacks), ...metadata];
+  return mergeMetadataWithPacks(metadata, userPacks);
 };
+
+function mergeMetadataWithPacks(
+  matadata: ParsedAccount<Metadata>[],
+  userPacks: ExtendedPackByKey,
+): Item[] {
+  return matadata.map(m => {
+    if (m.info.edition && userPacks[m.info.edition]) {
+      return { ...userPacks[m.info.edition], voucherMatadata: m };
+    }
+    return m;
+  });
+}

@@ -3,11 +3,11 @@ import { Card } from 'antd';
 import { useMeta } from '@oyster/common';
 
 import { MetaAvatar } from '../MetaAvatar';
-import { CachedImageContent } from '../ArtContent';
+import { ArtContent } from '../ArtContent';
 import { getCreator } from './utils';
 
 interface Props {
-  posterUri: string;
+  voucherMetadata: string;
   name: string;
   authority: string;
   cardsRedeemed?: number;
@@ -16,7 +16,7 @@ interface Props {
 }
 
 const PackCard = ({
-  posterUri,
+  voucherMetadata,
   name,
   authority,
   cardsRedeemed,
@@ -50,13 +50,7 @@ const PackCard = ({
           </div>
         </div>
         <div className="art-content-wrapper">
-          {posterUri && (
-            <CachedImageContent
-              uri={posterUri}
-              className="auction-image no-events"
-              preview={false}
-            />
-          )}
+          <ArtContent pubkey={voucherMetadata} preview={false} />
         </div>
         <div className="art-name">{name}</div>
         <div className="art-auction-info">
