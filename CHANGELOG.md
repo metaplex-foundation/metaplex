@@ -63,6 +63,7 @@ incremented for features.
 - Remove unneeded code from Packs creation admin
 - Fix issue where ata is not detected during ticket punching in FLP
 - Fix issue where random shuffled array is not using in image generation
+- Fix NFT Packs creation transaction failing when adding multiple items
 
 ### Breaking
 

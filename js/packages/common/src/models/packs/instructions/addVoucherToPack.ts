@@ -30,7 +30,7 @@ export async function addVoucherToPack({
   authority,
   mint,
   tokenAccount,
-}: Params): Promise<TransactionInstruction[]> {
+}: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
 
   const value = new AddVoucherToPackArgs();
@@ -121,11 +121,9 @@ export async function addVoucherToPack({
     },
   ];
 
-  return [
-    new TransactionInstruction({
-      keys,
-      programId: toPublicKey(PROGRAM_IDS.pack_create),
-      data,
-    }),
-  ];
+  return new TransactionInstruction({
+    keys,
+    programId: toPublicKey(PROGRAM_IDS.pack_create),
+    data,
+  });
 }
