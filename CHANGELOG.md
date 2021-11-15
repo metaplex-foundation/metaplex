@@ -31,6 +31,7 @@ incremented for features.
 - Fix #830 - secondary sale flagging
 - Fixes AUCTION_SIZE const
 - Fixes #930
+- Fixes Token Metadata Test Harness and lints rust code. 
 
 ### Breaking
 
