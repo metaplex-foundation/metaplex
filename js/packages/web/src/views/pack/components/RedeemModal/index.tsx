@@ -4,13 +4,7 @@ import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { BN } from 'bn.js';
-import {
-  getMetadata,
-  getMetadataByPubkey,
-  useConnection,
-  useMeta,
-  useUserAccounts,
-} from '@oyster/common';
+import { useConnection, useMeta, useUserAccounts } from '@oyster/common';
 
 import RedeemCard from './components/RedeemCard';
 import { useMetadataByPackCard } from './hooks/useMetadataByPackCard';
