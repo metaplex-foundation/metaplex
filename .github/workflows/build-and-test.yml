@@ -2,7 +2,7 @@ name: Build and Test Rust Programs
 
 on:
   push:
-    branches: [master,thlorenz/chore/ci-token-metadata-action]
+    branches: [master]
     paths:
       - rust/*
   pull_request:

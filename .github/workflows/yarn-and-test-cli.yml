@@ -2,12 +2,13 @@ name: Yarn Install and Test JS
 
 on:
   push:
-    branches: [master,thlorenz/chore/ci-token-metadata-action]
-#   paths:
-#     - js/*
-# pull_request:
-#   paths:
-#     - js/*
+    branches: [master]
+    paths:
+      - js/*
+  pull_request:
+    branches: [master]
+    paths:
+      - js/*
 
 jobs:
   unit_tests:
