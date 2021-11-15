@@ -1,14 +1,12 @@
-use {
-    crate::{
-        deprecated_instruction::{MintPrintingTokensViaTokenArgs, SetReservationListArgs},
-        state::{Creator, Data, EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
-    },
-    borsh::{BorshDeserialize, BorshSerialize},
-    solana_program::{
-        instruction::{AccountMeta, Instruction},
-        pubkey::Pubkey,
-        sysvar,
-    },
+use crate::{
+    deprecated_instruction::{MintPrintingTokensViaTokenArgs, SetReservationListArgs},
+    state::{Creator, Data, EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
+};
+use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::{
+    instruction::{AccountMeta, Instruction},
+    pubkey::Pubkey,
+    sysvar,
 };
 
 #[repr(C)]

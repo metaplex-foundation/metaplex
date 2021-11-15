@@ -43,8 +43,7 @@ export const useValidation = ({
   attributes: PackState;
   step: CreatePackSteps;
 }): boolean => {
-  const { selectedItems, selectedVouchers, name, description, uri } =
-    attributes;
+  const { selectedItems, selectedVouchers } = attributes;
 
   switch (step) {
     case CreatePackSteps.SelectItems:
@@ -53,8 +52,8 @@ export const useValidation = ({
       return Object.values(selectedVouchers).length > 0;
     case CreatePackSteps.AdjustQuantities:
       return isValidQuantities(attributes);
-    case CreatePackSteps.DesignAndInfo:
-      return !!(name && description && uri);
+    // case CreatePackSteps.DesignAndInfo:
+    //   return !!(name && description && uri);
     default:
       return true;
   }
