@@ -1,0 +1,23 @@
+{
+  "name": "metaplex-tests",
+  "version": "0.0.0",
+  "description": "Integration test for the Metaplex framework.",
+  "main": "index.js",
+  "repository": "git@github.com:metaplex-foundation/metaplex.git",
+  "author": "Thorsten Lorenz <thlorenz@gmx.de>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "cypress": "cypress run",
+    "cypress:headed": "cypress run --headed",
+    "cypress:open": "cypress open"
+  },
+  "devDependencies": {
+    "cypress": "^9.0.0",
+    "spok": "^1.4.1",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "phan-wallet-mock": "^0.0.3"
+  }
+}
