@@ -354,7 +354,15 @@ export function MetaProvider({ children = null as any }) {
       console.log('no update is running, updating.');
       update(undefined, undefined, userAccounts);
     }
-  }, [connection, storeAddress, isReady, page, userAccounts]);
+  }, [
+    connection,
+    setState,
+    updateMints,
+    storeAddress,
+    isReady,
+    page,
+    userAccounts.length > 0,
+  ]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators
