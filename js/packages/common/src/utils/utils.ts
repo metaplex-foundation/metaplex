@@ -16,11 +16,15 @@ export const formatPriceNumber = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 8,
 });
 
-export function useLocalStorageState(key: string, defaultState?: string) {
+export function useLocalStorageState<T>(
+  key: string,
+  defaultState?: T,
+): [T, (key: string) => void] {
   const localStorage = useLocalStorage();
   const [state, setState] = useState(() => {
-    // NOTE: Not sure if this is ok
+    console.debug('Querying local storage', key);
     const storedState = localStorage.getItem(key);
+    console.debug('Retrieved local storage', storedState);
     if (storedState) {
       return JSON.parse(storedState);
     }
