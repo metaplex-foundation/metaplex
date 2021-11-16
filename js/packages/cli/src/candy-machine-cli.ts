@@ -32,7 +32,7 @@ import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
-import { signAllMetadataFromCandyMachine } from './commands/signAll';
+import { getAccountsByCreatorAddress, signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
@@ -778,6 +778,22 @@ programCommand('sign_all')
       batchSizeParsed,
       daemon,
     );
+  });
+
+programCommand('get_all_mint_addresses')
+  .action(async (directory, cmd) => {
+    const { env, cacheName, keypair} = cmd.opts();
+
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+
+    const accountsByCreatorAddress = await getAccountsByCreatorAddress(cacheContent.candyMachineAddress, anchorProgram.provider.connection);
+    const addresses = accountsByCreatorAddress.map(it => {
+      return new PublicKey(it[0].mint).toBase58()
+    });
+
+    console.log(JSON.stringify(addresses, null, 2))
   });
 
 programCommand('generate_art_configurations')
