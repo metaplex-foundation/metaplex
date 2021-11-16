@@ -1702,6 +1702,9 @@ async function punchTicket({
     )
   )[0];
 
+  const exists =
+    anchorProgram.provider.connection.getAccountInfo(buyerTokenAccount);
+
   await anchorProgram.rpc.punchTicket({
     accounts: {
       fairLaunchTicket,
@@ -1717,15 +1720,17 @@ async function punchTicket({
       commitment: 'single',
     },
     //__private: { logAccounts: true },
-    instructions: [
-      createAssociatedTokenAccountInstruction(
-        buyerTokenAccount,
-        payer.publicKey,
-        puncher,
-        //@ts-ignore
-        fairLaunchObj.tokenMint,
-      ),
-    ],
+    instructions: !exists
+      ? [
+          createAssociatedTokenAccountInstruction(
+            buyerTokenAccount,
+            payer.publicKey,
+            puncher,
+            //@ts-ignore
+            fairLaunchObj.tokenMint,
+          ),
+        ]
+      : undefined,
   });
 
   return buyerTokenAccount;
@@ -2013,6 +2018,251 @@ program
     });
 
     console.log(`Added ${amountNumber} tokens to ${tokenAccount.toBase58()}`);
+  });
+
+program
+  .command('send_flp_tokens')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-l, --file <string>', 'file containing \n delimited wallets')
+  .option('-sc, --startCursor <string>', 'start cursor (incl)')
+  .option('-ec, --endCursor <string>', 'end cursor (excl)')
+
+  .option(
+    '-ut, --upper-tolerance <string>',
+    'if a wallet has more than tolerance tokens going to it(>), skip the wallet (assuming a secondary)',
+  )
+  .option(
+    '-lt, --lower-tolerance <string>',
+    'if a wallet has less than tolerance tokens going to it(<)',
+  )
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+
+  .action(async (_, cmd) => {
+    const {
+      env,
+      keypair,
+      fairLaunch,
+      file,
+      upperTolerance,
+      lowerTolerance,
+      startCursor,
+      endCursor,
+      rpcUrl,
+    } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const upTol = parseInt(upperTolerance);
+    const lowTol = parseInt(lowerTolerance);
+    const startC = startCursor ? parseInt(startCursor) : 0;
+
+    const anchorProgram = await loadFairLaunchProgram(
+      walletKeyPair,
+      env,
+      rpcUrl,
+    );
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+
+    const array = fs.readFileSync(file).toString().split('\n');
+    const endC = endCursor ? parseInt(endCursor) : array.length;
+    const byCount = {};
+    // use entire array for counts, despite cursor settings.
+    for (let i = 0; i < array.length; i++) {
+      if (byCount[array[i]] === undefined) {
+        byCount[array[i]] = 0;
+      }
+      byCount[array[i]]++;
+    }
+
+    const currSignerBatch: Array<anchor.web3.Keypair[]> = [];
+    const currInstrBatch: Array<anchor.web3.TransactionInstruction[]> = [];
+
+    let sendSigners: anchor.web3.Keypair[] = [];
+    let sendInstr: anchor.web3.TransactionInstruction[] = [];
+
+    const ataSignerBatch: Array<anchor.web3.Keypair[]> = [];
+    const ataInstrBatch: Array<anchor.web3.TransactionInstruction[]> = [];
+
+    let ataSigners: anchor.web3.Keypair[] = [];
+    let ataInstr: anchor.web3.TransactionInstruction[] = [];
+
+    const txnSize = 10;
+    let cursor = startC;
+
+    const lookup = {};
+    try {
+      for (; cursor < Math.min(array.length, endC); cursor++) {
+        const currKey = array[cursor];
+        const currCount = byCount[currKey];
+        if (currKey.length > 2) {
+          if (currCount < lowTol || currCount > upTol) {
+            console.log(
+              'Skipped',
+              currKey,
+              'due to having',
+              currCount,
+              'allocations.',
+            );
+          } else {
+            const existingAta = (
+              await getAtaForMint(
+                fairLaunchObj.tokenMint,
+                new anchor.web3.PublicKey(currKey),
+              )
+            )[0];
+            let exists = lookup[existingAta.toBase58()];
+            if (!exists) {
+              exists =
+                !!(await anchorProgram.provider.connection.getAccountInfo(
+                  existingAta,
+                ));
+            }
+            if (!exists) {
+              ataInstr.push(
+                createAssociatedTokenAccountInstruction(
+                  existingAta,
+                  walletKeyPair.publicKey,
+                  new anchor.web3.PublicKey(currKey),
+                  //@ts-ignore
+                  fairLaunchObj.tokenMint,
+                ),
+              );
+
+              lookup[existingAta.toBase58()] = true;
+            }
+          }
+        }
+        if (ataInstr.length === txnSize) {
+          ataSignerBatch.push(ataSigners);
+          ataInstrBatch.push(ataInstr);
+          ataSigners = [];
+          ataInstr = [];
+        }
+      }
+
+      if (ataInstr.length < txnSize && ataInstr.length > 0) {
+        ataSignerBatch.push(ataSigners);
+        ataInstrBatch.push(ataInstr);
+      }
+    } catch (e) {
+      console.log('Failed on cursor', cursor);
+      throw e;
+    }
+
+    cursor = startC;
+    const myAta = (
+      await getAtaForMint(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+    try {
+      // do 1 at a time so if blow up happens, you can restart at exploded cursor.
+      // less efficient but better guarantees on not over-sending.
+      for (; cursor < Math.min(array.length, endC); cursor++) {
+        const currKey = array[cursor];
+        const currCount = byCount[currKey];
+        if (currKey.length > 2) {
+          if (currCount < lowTol || currCount > upTol) {
+            console.log(
+              'Skipped',
+              currKey,
+              'due to having',
+              currCount,
+              'allocations.',
+            );
+          } else {
+            const existingAta = (
+              await getAtaForMint(
+                fairLaunchObj.tokenMint,
+                new anchor.web3.PublicKey(currKey),
+              )
+            )[0];
+
+            sendInstr.push(
+              Token.createTransferInstruction(
+                TOKEN_PROGRAM_ID,
+                myAta,
+                existingAta,
+                walletKeyPair.publicKey,
+                [],
+                1,
+              ),
+            );
+          }
+        }
+
+        if (sendInstr.length === txnSize) {
+          currSignerBatch.push(sendSigners);
+          currInstrBatch.push(sendInstr);
+          sendSigners = [];
+          sendInstr = [];
+        }
+      }
+
+      if (sendInstr.length < txnSize && sendInstr.length > 0) {
+        currSignerBatch.push(sendSigners);
+        currInstrBatch.push(sendInstr);
+      }
+    } catch (e) {
+      console.log('Failed on cursor', cursor);
+      throw e;
+    }
+
+    let txnCursor = startC;
+    try {
+      for (let i = 0; i < ataInstrBatch.length; i++) {
+        const instructionBatch = ataInstrBatch[i];
+        const signerBatch = ataSignerBatch[i];
+        await sendTransactionWithRetryWithKeypair(
+          anchorProgram.provider.connection,
+          walletKeyPair,
+          instructionBatch,
+          signerBatch,
+          'single',
+        );
+        txnCursor += txnSize;
+      }
+    } catch (e) {
+      console.log('ATA account creation Failed on cursor', txnCursor);
+      throw e;
+    }
+    // Give time for last confirmation
+    await sleep(10000);
+    txnCursor = startC;
+    try {
+      for (let i = 0; i < currInstrBatch.length; i++) {
+        const instructionBatch = currInstrBatch[i];
+        const signerBatch = currSignerBatch[i];
+        await sendTransactionWithRetryWithKeypair(
+          anchorProgram.provider.connection,
+          walletKeyPair,
+          instructionBatch,
+          signerBatch,
+          'single',
+        );
+        txnCursor += txnSize;
+      }
+    } catch (e) {
+      console.log('Failed on cursor', txnCursor);
+      throw e;
+    }
   });
 
 program
@@ -2632,6 +2882,8 @@ program
       );
     }
 
+    //@ts-ignore
+    console.log('UUID', fairLaunchObj.data.uuid);
     //@ts-ignore
     console.log('Token Mint', fairLaunchObj.tokenMint.toBase58());
     //@ts-ignore
