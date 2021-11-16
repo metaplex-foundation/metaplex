@@ -762,7 +762,7 @@ programCommand('withdraw')
       const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy), configs[cg].account.lamports );
       log.info('Good awaiting, young padawan! ' + c.toString() + ' refunds complete! ', tx)
     }
-    log.info('withdrawn. Now you rich again.');
+    log.info('withdrawn. Now you rich again. Mind you I removes the mandatory 1.38% to dev so in exchange all y\'all follow for not financial advice alpha eh? @STACCart.');
     
     if (parseFloat(charityPercent) > 0){
 
