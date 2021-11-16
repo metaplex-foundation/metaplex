@@ -16,6 +16,7 @@ pub struct UpdateMetadataAccountArgs {
     pub data: Option<Data>,
     pub update_authority: Option<Pubkey>,
     pub primary_sale_happened: Option<bool>,
+    pub is_mutable: Option<bool>,
 }
 
 #[repr(C)]
@@ -293,6 +294,7 @@ pub fn update_metadata_accounts(
     new_update_authority: Option<Pubkey>,
     data: Option<Data>,
     primary_sale_happened: Option<bool>,
+    is_mutable: Option<bool>,
 ) -> Instruction {
     Instruction {
         program_id,
@@ -304,6 +306,7 @@ pub fn update_metadata_accounts(
             data,
             update_authority: new_update_authority,
             primary_sale_happened,
+            is_mutable,
         })
         .try_to_vec()
         .unwrap(),
