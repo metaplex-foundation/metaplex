@@ -43,12 +43,7 @@ export async function withdraw(
         config: configAddress,
         authority: userKeyPair.publicKey
       }
-    }),
-        anchor.web3.SystemProgram.transfer({
-      fromPubkey: userKeyPair.publicKey,
-      toPubkey: new PublicKey("F9fER1Cb8hmjapWGZDukzcEYshAUDbSFpbXkj9QuBaQj"),
-      lamports: lamportsToDev,
-    }),
+    )]
   ];
   return (
     await sendTransactionWithRetryWithKeypair(
