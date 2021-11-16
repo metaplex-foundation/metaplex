@@ -748,7 +748,7 @@ programCommand('withdraw')
     const configOrCommitment = 'confirmed'
     
     const configs = await getProgramAccounts(anchorProgram.provider.connection, CANDY_MACHINE_PROGRAM_ID.toBase58(), configOrCommitment)
-    console.log(configs)
+    log.debug(configs)
     let t = 0;
     let c = 0;
     for (var cg in configs){
