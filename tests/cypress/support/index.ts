@@ -19,6 +19,7 @@ import './routes'
 
 import { Keypair } from '@solana/web3.js'
 import { initWalletMockProvider, PhantomWalletMock } from 'phan-wallet-mock'
+import debug from 'debug'
 
 Cypress.on('window:before:load', (win) => {
   initWalletMockProvider(win)

@@ -10,10 +10,13 @@
   "scripts": {
     "cypress": "cypress run",
     "cypress:headed": "cypress run --headed",
-    "cypress:open": "cypress open"
+    "cypress:open": "cypress open",
+    "cypress:open-dev": "LAUNCH_DEVTOOLS=1 cypress open"
   },
   "devDependencies": {
+    "@types/debug": "^4.1.7",
     "cypress": "^9.0.0",
+    "debug": "^4.3.2",
     "spok": "^1.4.1",
     "typescript": "^4.4.4"
   },

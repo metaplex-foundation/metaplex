@@ -11,10 +11,25 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 const plugin: Cypress.PluginConfig = (
-  _on: Cypress.PluginEvents,
+  on: Cypress.PluginEvents,
   _config: Cypress.PluginConfigOptions
 ) => {
-  // `on` is used to hook into various events Cypress emits
-  // `config` is the resolved Cypress config
+  on('before:browser:launch', (browser, launchOptions) => {
+    // auto open devtools
+    if (process.env.LAUNCH_DEVTOOLS != null) {
+      if (browser.family === 'chromium' && browser.name !== 'electron') {
+        launchOptions.args.push('--auto-open-devtools-for-tabs')
+      }
+
+      if (browser.family === 'firefox') {
+        launchOptions.args.push('-devtools')
+      }
+
+      if (browser.name === 'electron') {
+        launchOptions.preferences.devTools = true
+      }
+    }
+    return launchOptions
+  })
 }
 export default plugin
