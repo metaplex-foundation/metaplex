@@ -1,5 +1,10 @@
 use crate::*;
 use borsh::BorshSerialize;
+use metaplex_token_metadata::{
+    id,
+    instruction::{self, MetadataInstruction, MintNewEditionFromMasterEditionViaTokenArgs},
+    state::{EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
+};
 use solana_program::{
     borsh::try_from_slice_unchecked,
     instruction::{AccountMeta, Instruction},
@@ -9,11 +14,6 @@ use solana_program_test::*;
 use solana_sdk::{
     pubkey::Pubkey, signature::Signer, signer::keypair::Keypair, transaction::Transaction,
     transport,
-};
-use metaplex_token_metadata::{
-    id,
-    instruction::{self, MetadataInstruction, MintNewEditionFromMasterEditionViaTokenArgs},
-    state::{EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
 };
 
 #[derive(Debug)]
@@ -98,7 +98,8 @@ impl EditionMarker {
             metaplex_token_vault_id.as_ref(),
             vault_pubkey.as_ref(),
         ];
-        let (_authority, _) = Pubkey::find_program_address(vault_mint_seeds, &metaplex_token_vault_id);
+        let (_authority, _) =
+            Pubkey::find_program_address(vault_mint_seeds, &metaplex_token_vault_id);
 
         create_mint(context, &self.mint, &context.payer.pubkey(), None).await?;
         create_token_account(

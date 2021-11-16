@@ -593,6 +593,7 @@ describe("nft-candy-machine", function () {
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
             clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
           },
+          __options: { skipPreflight: true },
           signers: [mint, this.authority, myWallet],
           instructions: [
             // Give authority enough to pay off the cost of the nft!

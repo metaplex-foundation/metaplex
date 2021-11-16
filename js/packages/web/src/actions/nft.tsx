@@ -4,7 +4,7 @@ import {
   createMetadata,
   programIds,
   notify,
-  ENV,
+  ENDPOINT_NAME,
   updateMetadata,
   createMasterEdition,
   sendTransactionWithRetry,
@@ -15,6 +15,8 @@ import {
   toPublicKey,
   WalletSigner,
   Attribute,
+  getAssetCostToStore,
+  ARWEAVE_UPLOAD_ENDPOINT
 } from '@oyster/common';
 import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
@@ -25,7 +27,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import crypto from 'crypto';
-import { getAssetCostToStore } from '../utils/assets';
+
 import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
 
@@ -44,7 +46,7 @@ interface IArweaveResult {
 
 const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
   const resp = await fetch(
-    'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+    ARWEAVE_UPLOAD_ENDPOINT,
     {
       method: 'POST',
       // @ts-ignore
@@ -72,7 +74,7 @@ const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
 export const mintNFT = async (
   connection: Connection,
   wallet: WalletSigner | undefined,
-  env: ENV,
+  endpoint: ENDPOINT_NAME,
   files: File[],
   metadata: {
     name: string;
@@ -223,7 +225,7 @@ export const mintNFT = async (
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
   data.append('transaction', txid);
-  data.append('env', env);
+  data.append('env', endpoint);
 
   const tags = realFiles.reduce(
     (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
@@ -356,8 +358,7 @@ export const prepPayForFilesTxn = async (
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
-        lamports: 2300000, // 0.0023 SOL per file (paid to arweave)
-        // await getAssetCostToStore(files),
+        lamports: await getAssetCostToStore(files),
       }),
     );
 
