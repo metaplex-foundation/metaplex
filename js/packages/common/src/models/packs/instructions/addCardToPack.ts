@@ -12,7 +12,11 @@ import { getEdition, getMetadata } from '../../..';
 import { StringPublicKey, programIds, toPublicKey } from '../../../utils';
 import { AddCardToPackArgs, PACKS_SCHEMA } from '../../../actions/packs';
 import { AddCardToPackParams } from '../interface';
-import { findPackCardProgramAddress, getProgramAuthority } from '../find';
+import {
+  findPackCardProgramAddress,
+  findPackConfigProgramAddress,
+  getProgramAuthority,
+} from '../find';
 
 interface Params extends AddCardToPackParams {
   packSetKey: PublicKey;
@@ -49,6 +53,7 @@ export async function addCardToPack({
   const masterEdition = await getEdition(mint);
   const programAuthority = await getProgramAuthority();
   const packCard = await findPackCardProgramAddress(packSetKey, index);
+  const packConfig = await findPackConfigProgramAddress(packSetKey);
   const { pubkey: sourceKey } = tokenAccount;
 
   const data = Buffer.from(serialize(PACKS_SCHEMA, value));
@@ -56,6 +61,12 @@ export async function addCardToPack({
     // pack_set
     {
       pubkey: toPublicKey(packSetKey),
+      isSigner: false,
+      isWritable: true,
+    },
+    // pack_config
+    {
+      pubkey: toPublicKey(packConfig),
       isSigner: false,
       isWritable: true,
     },

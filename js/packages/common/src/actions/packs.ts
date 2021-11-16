@@ -69,6 +69,12 @@ export class RequestCardToRedeemArgs {
   }
 }
 
+export class CleanUpArgs {
+  instruction = 13;
+
+  constructor() {}
+}
+
 export const PACKS_SCHEMA = new Map<any, any>([
   [
     InitPackSetArgs,
@@ -128,6 +134,13 @@ export const PACKS_SCHEMA = new Map<any, any>([
         ['instruction', 'u8'],
         ['index', 'u32'],
       ],
+    },
+  ],
+  [
+    CleanUpArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
     },
   ],
 ]);

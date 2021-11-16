@@ -1,6 +1,6 @@
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { requestCardToRedeem } from '@oyster/common/dist/lib/models/packs/instructions/requestCardToRedeem';
+import { cleanUp, requestCardToRedeem } from '@oyster/common';
 import { sendTransactions, SequenceType, toPublicKey } from '@oyster/common';
 
 import { RequestCardParams } from './interface';
@@ -19,6 +19,8 @@ export const generateRequestCardInstructions = async ({
 }> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
+  const cleanUpInstruction = await cleanUp(toPublicKey(packSetKey));
+
   const claimPackInstruction = await requestCardToRedeem({
     index,
     packSetKey: toPublicKey(packSetKey),
@@ -30,8 +32,8 @@ export const generateRequestCardInstructions = async ({
   });
 
   return {
-    instructions: [[claimPackInstruction]],
-    signers: [[]],
+    instructions: [[cleanUpInstruction], [claimPackInstruction]],
+    signers: [[], []],
   };
 };
 

@@ -10,7 +10,10 @@ import { serialize } from 'borsh';
 import { programIds, toPublicKey, StringPublicKey } from '../../../utils';
 import { PACKS_SCHEMA, RequestCardToRedeemArgs } from '../../..';
 import { RequestCardToRedeemParams } from '..';
-import { findProvingProcessProgramAddress } from '../find';
+import {
+  findPackConfigProgramAddress,
+  findProvingProcessProgramAddress,
+} from '../find';
 
 interface Params extends RequestCardToRedeemParams {
   packSetKey: PublicKey;
@@ -45,6 +48,7 @@ export async function requestCardToRedeem({
     packSetKey,
     toPublicKey(editionMint),
   );
+  const packConfig = await findPackConfigProgramAddress(packSetKey);
 
   const data = Buffer.from(serialize(PACKS_SCHEMA, value));
   const keys = [
@@ -53,6 +57,12 @@ export async function requestCardToRedeem({
       pubkey: toPublicKey(packSetKey),
       isSigner: false,
       isWritable: false,
+    },
+    // pack_config
+    {
+      pubkey: toPublicKey(packConfig),
+      isSigner: false,
+      isWritable: true,
     },
     // store
     {

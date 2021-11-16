@@ -1,6 +1,6 @@
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { claimPack } from '@oyster/common/dist/lib/models/packs/instructions/claimPack';
+import { claimPack } from '@oyster/common';
 
 import { RedeemPackParams } from './interface';
 import { getNewMint } from './getNewMint';

@@ -10,6 +10,7 @@ export const PACKS_PREFIX = 'packs';
 export const CARD_PREFIX = 'card';
 export const VOUCHER_PREFIX = 'voucher';
 export const PROVING_PROCESS_PREFIX = 'proving';
+export const CONFIG_PREFIX = 'config';
 
 export async function getProgramAuthority(): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
@@ -38,6 +39,19 @@ export async function findProvingProcessProgramAddress(
         packSetKey.toBuffer(),
         voucherMint.toBuffer(),
       ],
+      toPublicKey(PROGRAM_IDS.pack_create),
+    )
+  )[0];
+}
+
+export async function findPackConfigProgramAddress(
+  packSetKey: PublicKey,
+): Promise<StringPublicKey> {
+  const PROGRAM_IDS = programIds();
+
+  return (
+    await findProgramAddress(
+      [Buffer.from(CONFIG_PREFIX), packSetKey.toBuffer()],
       toPublicKey(PROGRAM_IDS.pack_create),
     )
   )[0];
