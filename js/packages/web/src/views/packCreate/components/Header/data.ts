@@ -14,9 +14,9 @@ export const HEADER_CONTENT: Record<CreatePackSteps, HeaderContentRecord> = {
   // [CreatePackSteps.SalesSettings]: {
   //   title: 'Pricing & Expiration ',
   // },
-  [CreatePackSteps.DesignAndInfo]: {
-    title: 'Design your pack',
-  },
+  // [CreatePackSteps.DesignAndInfo]: {
+  //   title: 'Design your pack',
+  // },
   [CreatePackSteps.ReviewAndMint]: {
     title: 'Review and mint your pack',
   },
