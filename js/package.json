@@ -50,7 +50,6 @@
   },
   "dependencies": {
     "@metaplex/arweave-cost": "^1.0.4",
-    "@project-serum/anchor": "0.14.0",
     "cross-env": "^7.0.3",
     "next": "^11.0.1",
     "react": "^17.0.2",
