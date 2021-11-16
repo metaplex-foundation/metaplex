@@ -1161,9 +1161,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await adjustTicket({
       amountNumber,
@@ -1703,6 +1702,9 @@ async function punchTicket({
     )
   )[0];
 
+  const exists =
+    anchorProgram.provider.connection.getAccountInfo(buyerTokenAccount);
+
   await anchorProgram.rpc.punchTicket({
     accounts: {
       fairLaunchTicket,
@@ -1718,15 +1720,17 @@ async function punchTicket({
       commitment: 'single',
     },
     //__private: { logAccounts: true },
-    instructions: [
-      createAssociatedTokenAccountInstruction(
-        buyerTokenAccount,
-        payer.publicKey,
-        puncher,
-        //@ts-ignore
-        fairLaunchObj.tokenMint,
-      ),
-    ],
+    instructions: !exists
+      ? [
+          createAssociatedTokenAccountInstruction(
+            buyerTokenAccount,
+            payer.publicKey,
+            puncher,
+            //@ts-ignore
+            fairLaunchObj.tokenMint,
+          ),
+        ]
+      : undefined,
   });
 
   return buyerTokenAccount;
@@ -1763,9 +1767,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -1941,9 +1944,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {
@@ -1983,9 +1985,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const tokenAccount = ( //@ts-ignore
-      await getAtaForMint(fairLaunchObj.tokenMint, walletKeyPair.publicKey)
-    )[0];
+    const tokenAccount = //@ts-ignore
+    (await getAtaForMint(fairLaunchObj.tokenMint, walletKeyPair.publicKey))[0];
 
     const exists = await anchorProgram.provider.connection.getAccountInfo(
       tokenAccount,

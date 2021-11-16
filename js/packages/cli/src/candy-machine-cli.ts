@@ -242,7 +242,12 @@ programCommand('verify')
               cacheItem.onChain = false;
               allGood = false;
             } else {
-              const json = await fetch(cacheItem.link);
+              let json;
+              try {
+                json = await fetch(cacheItem.link);
+              } catch (e) {
+                json = { status: 404 };
+              }
               if (
                 json.status == 200 ||
                 json.status == 204 ||
@@ -251,7 +256,12 @@ programCommand('verify')
                 const body = await json.text();
                 const parsed = JSON.parse(body);
                 if (parsed.image) {
-                  const check = await fetch(parsed.image);
+                  let check;
+                  try {
+                    check = await fetch(parsed.image);
+                  } catch (e) {
+                    check = { status: 404 };
+                  }
                   if (
                     check.status == 200 ||
                     check.status == 204 ||
