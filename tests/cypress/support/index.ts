@@ -17,9 +17,7 @@
 import './commands'
 import './routes'
 
-import { Keypair } from '@solana/web3.js'
-import { initWalletMockProvider, PhantomWalletMock } from 'phan-wallet-mock'
-import debug from 'debug'
+import { initWalletMockProvider } from 'phan-wallet-mock'
 
 Cypress.on('window:before:load', (win) => {
   initWalletMockProvider(win)
@@ -27,6 +25,4 @@ Cypress.on('window:before:load', (win) => {
 
 before(() => {})
 
-beforeEach(() => {
-  // Cypress commands you would like to run before every single Cypress test.
-})
+beforeEach(() => {})
