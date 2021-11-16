@@ -21,6 +21,7 @@ incremented for features.
 - Condenses Instant Sale to be one buy button not by then claim.
 - Add send_flp_tokens command to the Fair Launch CLI to mass airdrop FLP presale tokens.
 - Add DNP, premade customs, and customized probabilities by type to generative art function in candy machine cli
+- Cleanup and adding more CI testing.
 
 ### Fixes
 
