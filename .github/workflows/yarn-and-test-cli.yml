@@ -1,14 +1,14 @@
-name: Pull Request (CLI)
+name: Yarn Install and Test JS
 
 on:
-  pull_request:
-    paths:
-      - js/packages/cli/*
   push:
-    branches:
-      - master
+    branches: [master]
     paths:
-      - js/packages/cli/*
+      - 'js/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'js/**'
 
 jobs:
   unit_tests:
