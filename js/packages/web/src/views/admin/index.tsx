@@ -73,7 +73,8 @@ export const AdminView = () => {
           to admin store.
         </p>
       ) : !storeAddress || isLoading ? (
-        <Spin />
+        <></>
+        // <Spin />
       ) : store && wallet ? (
         <>
           <InnerAdminView
