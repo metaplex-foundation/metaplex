@@ -31,12 +31,7 @@ export async function withdraw(
   const anchorProgram = await loadCandyProgram(userKeyPair, env);
   const signers = [userKeyPair];
 
-    const lamportsToDev =
-          new anchor.BN(lamports)
-      .div(new anchor.BN(100))
-      .mul(new anchor.BN(1.38))
-
-      .toNumber();
+    
   const instructions = [
     await anchorProgram.instruction.withdrawFunds({
       accounts: {
