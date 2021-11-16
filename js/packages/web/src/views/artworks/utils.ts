@@ -1,4 +1,4 @@
-import { ExtendedPack, Item } from './types';
+import { ExtendedPackWithMetadata, Item } from './types';
 
-export const isPack = (item: Item): item is ExtendedPack =>
-  (item as ExtendedPack).info.distributionType !== undefined;
+export const isPack = (item: Item): item is ExtendedPackWithMetadata =>
+  (item as ExtendedPackWithMetadata).info.distributionType !== undefined;

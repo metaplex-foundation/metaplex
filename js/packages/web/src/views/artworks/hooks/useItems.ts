@@ -32,12 +32,12 @@ export const useItems = ({
 };
 
 function mergeMetadataWithPacks(
-  matadata: ParsedAccount<Metadata>[],
+  metadata: ParsedAccount<Metadata>[],
   userPacks: ExtendedPackByKey,
 ): Item[] {
-  return matadata.map(m => {
+  return metadata.map(m => {
     if (m.info.edition && userPacks[m.info.edition]) {
-      return { ...userPacks[m.info.edition], voucherMatadata: m };
+      return { ...userPacks[m.info.edition], voucherMetadata: m };
     }
     return m;
   });

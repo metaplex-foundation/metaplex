@@ -1,5 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
+import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
 import Masonry from 'react-masonry-css';
 
@@ -8,9 +9,8 @@ import { CardLoader } from '../../../../components/MyLoader';
 import { Banner } from '../../../../components/Banner';
 import { HowToBuyModal } from '../../../../components/HowToBuyModal';
 
-import { useSales } from './hooks/useSales';
-import SaleCard from './components/SaleCard';
-import { RedeemItemModal } from '../../../../components/RedeemItemModal';
+import { useAuctionsList } from './hooks/useAuctionsList';
+import { AuctionRenderCard } from '../../../../components/AuctionRenderCard';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -33,7 +33,7 @@ export const SalesListView = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
   const { connected } = useWallet();
-  const { sales, hasResaleAuctions } = useSales(activeKey);
+  const { auctions, hasResaleAuctions } = useAuctionsList(activeKey);
 
   return (
     <>
@@ -85,7 +85,14 @@ export const SalesListView = () => {
                 {isLoading &&
                   [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
                 {!isLoading &&
-                  sales.map((sale, idx) => <SaleCard sale={sale} key={idx} />)}
+                  auctions.map(auction => (
+                    <Link
+                      key={auction.auction.pubkey}
+                      to={`/auction/${auction.auction.pubkey}`}
+                    >
+                      <AuctionRenderCard auctionView={auction} />
+                    </Link>
+                  ))}
               </Masonry>
             </Row>
           </Col>

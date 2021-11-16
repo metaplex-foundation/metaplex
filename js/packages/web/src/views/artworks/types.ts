@@ -15,12 +15,14 @@ export type ExtendedPack = ParsedAccount<PackSet> & {
   voucher: StringPublicKey;
   edition: StringPublicKey;
   cardsRedeemed?: number;
-  voucherMatadata: ParsedAccount<Metadata>;
+};
+export type ExtendedPackWithMetadata = ExtendedPack & {
+  voucherMetadata: ParsedAccount<Metadata>;
 };
 export type ExtendedPackByKey = Record<string, ExtendedPack>;
 export type ProvingProcessByKey = Record<string, ParsedAccount<ProvingProcess>>;
 
-export type Item = ParsedAccount<Metadata> | ExtendedPack;
+export type Item = ParsedAccount<Metadata> | ExtendedPackWithMetadata;
 
 export enum ArtworkViewState {
   Metaplex = '0',
