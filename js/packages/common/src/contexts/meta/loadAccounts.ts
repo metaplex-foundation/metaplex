@@ -47,7 +47,10 @@ import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
-import { getPackSets } from '../../models/packs/accounts/PackSet';
+import {
+  getPackSetByPubkey,
+  getPackSets,
+} from '../../models/packs/accounts/PackSet';
 import { processPackSets } from './processPackSets';
 import { timeStart } from '../../utils';
 import { getVouchersByPackSet } from '../../models/packs/accounts/PackVoucher';
@@ -267,8 +270,8 @@ export const pullPacks = async (
   }
 
   // Fetch packs' cards
-  const fetchCardsPromises = Object.keys(state.packs).map(packSet =>
-    getCardsByPackSet({ connection, packSet }),
+  const fetchCardsPromises = Object.keys(state.packs).map(packSetKey =>
+    getCardsByPackSet({ connection, packSetKey }),
   );
   await Promise.all(fetchCardsPromises).then(cards =>
     cards.forEach(forEach(processPackCards)),
@@ -307,6 +310,47 @@ export const pullPacks = async (
   );
 
   return newState;
+};
+
+export const pullPack = async ({
+  connection,
+  state,
+  packSetKey,
+}: {
+  connection: Connection;
+  state: MetaState;
+  packSetKey: StringPublicKey;
+}): Promise<MetaState> => {
+  const updateTemp = makeSetter(state);
+
+  const packSet = await getPackSetByPubkey(connection, packSetKey);
+  processPackSets(packSet, updateTemp);
+
+  const packCards = await getCardsByPackSet({
+    connection,
+    packSetKey,
+  });
+  packCards.forEach(card => processPackCards(card, updateTemp));
+
+  const provingProcess = await getProvingProcessByPackSet({
+    connection,
+    packSetKey,
+  });
+  provingProcess.forEach(process => processProvingProcess(process, updateTemp));
+
+  const metadataKeys = Object.values(state.packCardsByPackSet[packSetKey]).map(
+    ({ info }) => info.metadata,
+  );
+  const newState = await pullMetadataByKeys(connection, state, metadataKeys);
+
+  await pullEditions(
+    connection,
+    updateTemp,
+    newState,
+    metadataKeys.map(m => newState.metadataByMetadata[m]),
+  );
+
+  return state;
 };
 
 export const pullAuctionSubaccounts = async (

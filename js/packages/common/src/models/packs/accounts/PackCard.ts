@@ -57,10 +57,10 @@ export const decodePackCard = (buffer: Buffer) => {
 
 export const getCardsByPackSet = ({
   connection,
-  packSet,
+  packSetKey,
 }: {
   connection: Connection;
-  packSet: StringPublicKey;
+  packSetKey: StringPublicKey;
 }): Promise<AccountAndPubkey[]> =>
   getProgramAccounts(connection, PACK_CREATE_ID.toString(), {
     filters: [
@@ -70,7 +70,7 @@ export const getCardsByPackSet = ({
       {
         memcmp: {
           offset: 1,
-          bytes: packSet,
+          bytes: packSetKey,
         },
       },
     ],

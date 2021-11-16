@@ -106,6 +106,10 @@ export interface MetaContextState extends MetaState {
   pullAllSiteData: () => void;
   pullAllMetadata: () => void;
   pullItemsPage: (userTokenAccounts: TokenAccount[]) => Promise<void>;
+  pullPackPage: (
+    userTokenAccounts: TokenAccount[],
+    packSetKey: StringPublicKey,
+  ) => Promise<void>;
 }
 
 export type AccountAndPubkey = {

@@ -122,3 +122,18 @@ export const getPackSets = ({
     ],
   });
 };
+
+export const getPackSetByPubkey = async (
+  connection: Connection,
+  pubkey: StringPublicKey,
+): Promise<AccountAndPubkey> => {
+  const info = await connection.getAccountInfo(new PublicKey(pubkey));
+  if (!info) {
+    throw new Error(`Unable to find account: ${pubkey}`);
+  }
+
+  return {
+    pubkey,
+    account: info,
+  };
+};

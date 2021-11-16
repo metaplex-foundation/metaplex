@@ -77,27 +77,6 @@ export const getProvingProcessByPackSet = ({
     ],
   });
 
-export const getProvingProcessByVoucherMint = ({
-  connection,
-  voucherMint,
-}: {
-  connection: Connection;
-  voucherMint: StringPublicKey;
-}): Promise<AccountAndPubkey[]> =>
-  getProgramAccounts(connection, PACK_CREATE_ID.toString(), {
-    filters: [
-      {
-        dataSize: MAX_PACK_PROVING_PROCESS_SIZE,
-      },
-      {
-        memcmp: {
-          offset: 1,
-          bytes: toPublicKey(voucherMint).toBase58(),
-        },
-      },
-    ],
-  });
-
 export const getProvingProcessByPubkey = async (
   connection: Connection,
   pubkey: StringPublicKey,
