@@ -20,9 +20,9 @@ export const useCreators = (auction?: AuctionView) => {
         )
           .filter(creator => creator.verified)
           .reduce((agg, item) => {
-            agg.add([item.address, item.share]);
+            agg[item.address] = [item.address, item.share];
             return agg;
-          }, new Set<[string, number]>())
+          }, {})
           .values(),
       ].map(creatorArray => {
         const [creator, share] = creatorArray;
