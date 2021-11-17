@@ -313,10 +313,10 @@ programCommand('verify')
                           parsed.image,
                           'has zero length, failing',
                         );
+                        problems.push(`Item: ${key} - Zero length response from image link: ${parsed.image}`);
                         cacheItem.link = null;
                         cacheItem.onChain = false;
                         allGood = false;
-                        problems.push(`Item: ${key} - Zero length response from image link: ${parsed.image}`);
                       } else {
                         cacheItem.onChain = true;
                         log.info('Name', cacheItem.name, 'with json', cacheItem.link, '-> img', parsed.image, 'checked out');
@@ -327,12 +327,13 @@ programCommand('verify')
                         cacheItem.name,
                         'with',
                         parsed.image,
-                        'never got uploaded to arweave, failing',
+                        '"Not found" Response, likely from arweave, this could mean the file was not uploaded, or just not available yet.',
                       );
-                      cacheItem.link = null;
+                      // Commenting this out so that slow arweave propagation does not lose links 
+                      // cacheItem.link = null;
                       cacheItem.onChain = false;
                       allGood = false;
-                      problems.push(`Item: ${key} - Not found response from image link: ${parsed.image}`);
+                      problems.push(`Item: ${key} - "Not Found" response from image link: ${parsed.image}, this could mean the file was not uploaded, or just not available yet.`);
                     }
                   } else {
                     log.info(
@@ -343,10 +344,10 @@ programCommand('verify')
                       'returned non-200 from uploader',
                       check.status,
                     );
+                    problems.push(`Item: ${key} - Invalid response from image link: ${parsed.image}`);
                     cacheItem.link = null;
                     cacheItem.onChain = false;
                     allGood = false;
-                    problems.push(`Item: ${key} - Invalid response from image link: ${parsed.image}`);
                   }
                 } else {
                   log.info(
@@ -356,23 +357,40 @@ programCommand('verify')
                     cacheItem.link,
                     'lacked image in json, failing',
                   );
+                  problems.push(`Item: ${key} - Image not found in json at: ${cacheItem.link}`);
                   cacheItem.link = null;
                   cacheItem.onChain = false;
                   allGood = false;
-                  problems.push(`Item: ${key} - Image not found in json at: ${cacheItem.link}`);
                 }
               } else {
-                log.info(
-                  'Name',
-                  cacheItem.name,
-                  'with',
-                  cacheItem.link,
-                  'returned no json from link',
-                );
-                cacheItem.link = null;
-                cacheItem.onChain = false;
-                allGood = false;
-                problems.push(`Item: ${key} - Invalid response from json link: ${cacheItem.link}`);
+                if(json.statusText == "Not Found"){
+                  // Likely Arweave propagation delay.
+                  log.info(
+                    'Name',
+                    cacheItem.name,
+                    'with',
+                    cacheItem.link,
+                    '"Not found" Response, likely from arweave, this could mean the file was not uploaded, or just not available yet.',
+                  );
+                  cacheItem.onChain = false;
+                  allGood = false;
+                  problems.push(`Item: ${key} - "Not Found" response from json link: ${cacheItem.link}, this could mean the file was not uploaded, or just not available yet.`);
+                }else{
+                  log.info(
+                    'Name',
+                    cacheItem.name,
+                    'with',
+                    cacheItem.link,
+                    'Invalid Response from json link: ${cacheItem.link}',
+                    'Respone',
+                    json
+                  );
+                  // Commenting this out so that slow arweave propagation does not lose links 
+                  // cacheItem.link = null;
+                  cacheItem.onChain = false;
+                  allGood = false;
+                  problems.push(`Item: ${key} - Invalid response from json link: ${cacheItem.link}`);
+                }
               }
             }
           }
@@ -382,8 +400,11 @@ programCommand('verify')
 
     if (!allGood) {
       saveCache(cacheName, env, cacheContent);
-      log.info("\n\n### Problem Details ###")
-      log.info(problems, "\n#######################\n\nRunning upload again will resolve most issues.\n\n");
+      log.info("\n\n### Problem Details ###");
+      log.info(problems, "\n#######################\n");
+      log.info("If the only issues are arweave 'Not Found' and uploading succeeded then you may just need to wait several minutes and run verify again.");
+      log.info("You can go to one of the failing links in your browser and check for it to be available there before re-running.\n");
+      log.info("Running upload again will resolve most other issues.\n\n");
       throw new Error(
         `Not all NFTs checked out. View problem details above.`,
       );
