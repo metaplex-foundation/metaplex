@@ -39,7 +39,7 @@ incremented for features.
 - Parallelize with batchSize command the candy machine CLI uploader
 - Add ability for a candy machine owner to update existing candies using an old and new cache file
 - Adds a minumum auction funds modal to prevent people from making bad auctions
-- Implement NFT Packs Redeeming
+- Implement NFT Packs Redeem
 
 ### Fixes
 
