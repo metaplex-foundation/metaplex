@@ -19,7 +19,7 @@ export const generateRandomSet = (breakdown, exclusions) => {
     if (!skip[attr]) {
       const randomSelection = weighted.select(breakdown[attr]);
       tmp[attr] = randomSelection;
-      if (tmp[attr] !== 'NOTHING' && !!exclusions) {
+      if (tmp[attr] !== 'NOTHING' && !!exclusions && attr in exclusions) {
         exclusions[attr].forEach(e => {
           skip[e] = true;
         });
