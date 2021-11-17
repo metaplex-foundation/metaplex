@@ -216,13 +216,14 @@ programCommand('verify')
     let allGood = true;
 
     const keys = Object.keys(cacheContent.items);
+    let problems = Array<String>();
+
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 500).map(
         async allIndexesInSlice => {
           for (let i = 0; i < allIndexesInSlice.length; i++) {
             const key = keys[allIndexesInSlice[i]];
             log.debug('Looking at key ', allIndexesInSlice[i]);
-
             const thisSlice = config.data.slice(
               CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * allIndexesInSlice[i],
               CONFIG_ARRAY_START +
@@ -232,6 +233,12 @@ programCommand('verify')
             const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
             const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
             const cacheItem = cacheContent.items[key];
+            if (cacheItem.link === null) {
+              cacheItem.onChain = false;
+              allGood = false;
+              problems.push(`Item: ${key} - Invalid null json link`);
+              continue;
+            }
             if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
               //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
               // log.info(
@@ -239,14 +246,32 @@ programCommand('verify')
               //   `and (${cacheItem.link}). marking to rerun for image`,
               //   key,
               // );
+              if (!name.match(cacheItem.name)) {
+                problems.push(`Item: ${key} - Cached name: "${cacheItem.name}" doesn't match on-chain value: "${name}"`);
+              }
+              if (!uri.match(cacheItem.link)) {
+                problems.push(`Item: ${key} - Cached link: "${cacheItem.link}" doesn't match on-chain value: "${uri.replace(/\x00/g, "")}"`);
+              }
               cacheItem.onChain = false;
               allGood = false;
             } else {
               let json;
-              try {
-                json = await fetch(cacheItem.link);
-              } catch (e) {
-                json = { status: 404 };
+              while (json === undefined) {
+                try {
+                  json = await fetch(cacheItem.link);
+                } catch (error) {
+                  log.info(error.type, "Error while fetching", cacheItem.link);
+                  log.info("Error Number:", error.errno, "Code:", error.code);
+                  await new Promise(f => setTimeout(f, 1000));
+                  if(error.code == "ETIMEDOUT" || error.code == "ECONNRESET"){
+                    log.info("Sleeping for 3 seconds and trying again");
+                    await new Promise(f => setTimeout(f, 3000));
+                  }else{
+                    problems.push(`Item: ${key} - Json link: "${cacheItem.link}" responded with error: "${error.code}"`);
+                    allGood = false;
+                    break;
+                  }
+                }
               }
               if (
                 json.status == 200 ||
@@ -257,10 +282,21 @@ programCommand('verify')
                 const parsed = JSON.parse(body);
                 if (parsed.image) {
                   let check;
-                  try {
-                    check = await fetch(parsed.image);
-                  } catch (e) {
-                    check = { status: 404 };
+                  while (check === undefined) {
+                    try {
+                      check = await fetch(parsed.image);
+                    } catch (error) {
+                      log.info(error.type, "Error while fetching", parsed.image);
+                      log.info("Error Number:", error.errno, "Code:", error.code);
+                      if(error.code == "ETIMEDOUT" || error.code == "ECONNRESET"){
+                        log.info("Sleeping for 3 seconds and trying again");
+                        await new Promise(f => setTimeout(f, 3000));
+                      }else{
+                        problems.push(`Item: ${key} - Img link: "${parsed.image}" responded with error: "${error.code}"`);
+                        allGood = false;
+                        break;
+                      }
+                    }
                   }
                   if (
                     check.status == 200 ||
@@ -272,65 +308,71 @@ programCommand('verify')
                       if (text.length == 0) {
                         log.info(
                           'Name',
-                          name,
+                          cacheItem.name,
                           'with',
-                          uri,
+                          parsed.image,
                           'has zero length, failing',
                         );
                         cacheItem.link = null;
                         cacheItem.onChain = false;
                         allGood = false;
+                        problems.push(`Item: ${key} - Zero length response from image link: ${parsed.image}`);
                       } else {
-                        log.info('Name', name, 'with', uri, 'checked out');
+                        cacheItem.onChain = true;
+                        log.info('Name', cacheItem.name, 'with json', cacheItem.link, '-> img', parsed.image, 'checked out');
                       }
                     } else {
                       log.info(
                         'Name',
-                        name,
+                        cacheItem.name,
                         'with',
-                        uri,
+                        parsed.image,
                         'never got uploaded to arweave, failing',
                       );
                       cacheItem.link = null;
                       cacheItem.onChain = false;
                       allGood = false;
+                      problems.push(`Item: ${key} - Not found response from image link: ${parsed.image}`);
                     }
                   } else {
                     log.info(
                       'Name',
-                      name,
+                      cacheItem.name,
                       'with',
-                      uri,
+                      parsed.image,
                       'returned non-200 from uploader',
                       check.status,
                     );
                     cacheItem.link = null;
                     cacheItem.onChain = false;
                     allGood = false;
+                    problems.push(`Item: ${key} - Invalid response from image link: ${parsed.image}`);
                   }
                 } else {
                   log.info(
                     'Name',
-                    name,
+                    cacheItem.name,
                     'with',
-                    uri,
+                    cacheItem.link,
                     'lacked image in json, failing',
                   );
                   cacheItem.link = null;
                   cacheItem.onChain = false;
                   allGood = false;
+                  problems.push(`Item: ${key} - Image not found in json at: ${cacheItem.link}`);
                 }
               } else {
                 log.info(
                   'Name',
-                  name,
+                  cacheItem.name,
                   'with',
-                  uri,
+                  cacheItem.link,
                   'returned no json from link',
                 );
                 cacheItem.link = null;
                 cacheItem.onChain = false;
                 allGood = false;
+                problems.push(`Item: ${key} - Invalid response from json link: ${cacheItem.link}`);
               }
             }
           }
@@ -340,9 +382,10 @@ programCommand('verify')
 
     if (!allGood) {
       saveCache(cacheName, env, cacheContent);
-
+      log.info("\n\n### Problem Details ###")
+      log.info(problems, "\n#######################\n\nRunning upload again will resolve most issues.\n\n");
       throw new Error(
-        `not all NFTs checked out. check out logs above for details`,
+        `Not all NFTs checked out. View problem details above.`,
       );
     }
 
@@ -357,7 +400,7 @@ programCommand('verify')
     );
 
     log.info(
-      `uploaded (${lineCount.toNumber()}) out of (${
+      `Verified (${lineCount.toNumber()}) out of (${
         configData.data.maxNumberOfLines
       })`,
     );
