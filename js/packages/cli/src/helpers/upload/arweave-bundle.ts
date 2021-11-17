@@ -124,18 +124,20 @@ async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
       return acc + size;
     }, Promise.resolve(0));
 
-    total += filePairSize;
-
     if (total + filePairSize >= BUNDLE_SIZE_BYTE_LIMIT) {
       if (range === 0) {
         throw new Error(
           `Image + Manifest filepair (${key}) too big (${sizeMB(
             filePairSize,
-          )}) for arBundles size limit of ${sizeMB(BUNDLE_SIZE_BYTE_LIMIT)}.`,
+          )}MB) for arBundles size limit of ${sizeMB(
+            BUNDLE_SIZE_BYTE_LIMIT,
+          )}MB.`,
         );
       }
       break;
     }
+
+    total += filePairSize;
     range += 1;
   }
   return { range, size: total };
