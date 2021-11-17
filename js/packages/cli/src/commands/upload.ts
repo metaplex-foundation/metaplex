@@ -13,7 +13,7 @@ import {
   loadWalletKey,
 } from '../helpers/accounts';
 import { loadCache, saveCache } from '../helpers/cache';
-import { EXTENSION_PNG, EXTENSION_JSON } from '../helpers/constants';
+import { EXTENSION_PNG } from '../helpers/constants';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
@@ -347,10 +347,18 @@ export async function upload({
         try {
           switch (storage) {
             case StorageType.Ipfs:
-              [link, imageLink] = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
+              [link, imageLink] = await ipfsUpload(
+                ipfsCredentials,
+                image,
+                manifestBuffer,
+              );
               break;
             case StorageType.Aws:
-              [link, imageLink] = await awsUpload(awsS3Bucket, image, manifestBuffer);
+              [link, imageLink] = await awsUpload(
+                awsS3Bucket,
+                image,
+                manifestBuffer,
+              );
               break;
             case StorageType.Arweave:
             default:
