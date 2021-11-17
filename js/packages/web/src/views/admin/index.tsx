@@ -51,39 +51,28 @@ export const AdminView = () => {
   );
   const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
-  useEffect(() => {
-    if (
-      !store &&
-      !storeAddress &&
-      wallet.publicKey &&
-      !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
-    ) {
-      setStoreForOwner(wallet.publicKey.toBase58());
-    }
-  }, [store, storeAddress, wallet.publicKey]);
-  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
-
-  return (
-    <>
-      {!wallet.connected ? (
+  const PageContent = useCallback(() => {
+    if (isLoading) return null
+    if (!wallet.connected) {
+      return (
         <p>
           <Button type="primary" className="app-btn" onClick={connect}>
             Connect
           </Button>{' '}
           to admin store.
         </p>
-      ) : !storeAddress || isLoading ? (
-        <></>
-        // <Spin />
-      ) : store && wallet ? (
+      )
+    }
+    if (store && wallet) {
+      return (
         <>
-          <InnerAdminView
-            store={store}
-            whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
-            connection={connection}
-            wallet={wallet}
-            connected={wallet.connected}
-          />
+         <InnerAdminView
+          store={store}
+          whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
+          connection={connection}
+          wallet={wallet}
+          connected={wallet.connected}
+         />
           {!isConfigured && (
             <>
               <Divider />
@@ -99,14 +88,32 @@ export const AdminView = () => {
             </>
           )}
         </>
-      ) : (
+      )
+    } else {
+      return (
         <>
           <p>Store is not initialized</p>
           <Link to={`/`}>Go to initialize</Link>
         </>
-      )}
-    </>
-  );
+      )
+    }
+  }, [wallet, isConfigured, store, isLoading])
+
+  useEffect(() => {
+    if (
+      !store &&
+      !storeAddress &&
+      wallet.publicKey &&
+      !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
+    ) {
+      setStoreForOwner(wallet.publicKey.toBase58());
+    }
+  }, [store, storeAddress, wallet.publicKey]);
+  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
+
+  return (
+      <PageContent />
+  )
 };
 
 function ArtistModal({
