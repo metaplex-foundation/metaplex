@@ -36,7 +36,7 @@ import { getAccountsByCreatorAddress, signAllMetadataFromCandyMachine } from './
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
-import { withdraw } from './commands/withdraw;
+import { withdraw } from './commands/withdraw';
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
