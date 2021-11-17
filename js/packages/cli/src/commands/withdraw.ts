@@ -39,7 +39,7 @@ export async function withdraw(
         authority: userKeyPair.publicKey
       }
     )]
-  ];
+ 
   return (
     await sendTransactionWithRetryWithKeypair(
       anchorProgram.provider.connection,
@@ -49,4 +49,4 @@ export async function withdraw(
     )
   ).txid;
 }
-0
+
