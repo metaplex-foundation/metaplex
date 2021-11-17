@@ -39,6 +39,7 @@ incremented for features.
 - Fixes Token Metadata Test Harness and lints rust code. 
 - When a token account already exists, punchTicket should not blow up in punch_and_refund_all_outstanding.
 - Fix for punch ticket showing up as a button if you have an FLP presale token but didn't win. You should see Withdrawal.
+- Fix lint issues preventing CI from passing
 
 ### Breaking
 
