@@ -44,7 +44,7 @@ type UploadGeneratorResult = Omit<ProcessedBundleFilePairs, 'dataItems'>;
 // lower the risk for having to re-upload filepairs if the matching manifests
 // upload fail on voluminous collections.
 // Change at your own risk.
-const BUNDLE_SIZE_LIMIT = 200 * 1000 * 1000;
+const BUNDLE_SIZE_BYTE_LIMIT = 200 * 1000 * 1000;
 
 /**
  * Tags to include with every individual transaction.
@@ -126,12 +126,12 @@ async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
 
     total += filePairSize;
 
-    if (total + filePairSize >= BUNDLE_SIZE_LIMIT) {
+    if (total + filePairSize >= BUNDLE_SIZE_BYTE_LIMIT) {
       if (range === 0) {
         throw new Error(
           `Image + Manifest filepair (${key}) too big (${sizeMB(
             filePairSize,
-          )}) for arBundles size limit of ${sizeMB(BUNDLE_SIZE_LIMIT)}.`,
+          )}) for arBundles size limit of ${sizeMB(BUNDLE_SIZE_BYTE_LIMIT)}.`,
         );
       }
       break;
