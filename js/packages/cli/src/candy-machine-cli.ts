@@ -78,7 +78,7 @@ programCommand('upload')
     '(existing) AWS S3 Bucket name (required if using aws)',
   )
   .option(
-    '-jwk, --jwk <string>',
+    '--arweave-jwk <string>',
     'Path to Arweave wallet file (required if using Arweave Native)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
@@ -103,9 +103,9 @@ programCommand('upload')
       jwk,
     } = cmd.opts();
 
-    if (storage === StorageType.ArweaveNative && !jwk) {
+    if (storage === StorageType.ArweaveBundle && !jwk) {
       throw new Error(
-        'Path to Arweave JWK wallet file must be provided when using arweave-native',
+        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-native',
       );
     }
 
@@ -335,8 +335,8 @@ programCommand('verify')
             const thisSlice = config.data.slice(
               CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * allIndexesInSlice[i],
               CONFIG_ARRAY_START +
-              4 +
-              CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
+                4 +
+                CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
             );
             const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
             const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
@@ -466,12 +466,14 @@ programCommand('verify')
     );
 
     log.info(
-      `uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines
+      `uploaded (${lineCount.toNumber()}) out of (${
+        configData.data.maxNumberOfLines
       })`,
     );
     if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
       throw new Error(
-        `predefined number of NFTs (${configData.data.maxNumberOfLines
+        `predefined number of NFTs (${
+          configData.data.maxNumberOfLines
         }) is smaller than the uploaded one (${lineCount.toNumber()})`,
       );
     } else {
@@ -583,7 +585,7 @@ programCommand('show')
         //@ts-ignore
         machine.data.goLiveDate
           ? //@ts-ignore
-          new Date(machine.data.goLiveDate * 1000)
+            new Date(machine.data.goLiveDate * 1000)
           : 'N/A',
       );
     } catch (e) {
