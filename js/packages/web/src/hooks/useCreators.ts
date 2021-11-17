@@ -20,10 +20,10 @@ export const useCreators = (auction?: AuctionView) => {
         )
           .filter(creator => creator.verified)
           .reduce((agg, item) => {
-            agg[item.address] = [item.address, item.share];
+            agg.set(item.address, item.share);
             return agg;
-          }, {})
-          .values(),
+          }, new Map<string, number>())
+          .entries(),
       ].map(creatorArray => {
         const [creator, share] = creatorArray;
         const knownCreator = whitelistedCreatorsByCreator[creator];
