@@ -307,7 +307,7 @@ export async function upload({
     // which pays the reward for all bundled data.
     // https://github.com/Bundlr-Network/arbundles
     // Each bundle consists of one or multiple asset filepair (PNG + JSON).
-    if (storage === StorageType.ArweaveNative) {
+    if (storage === StorageType.ArweaveBundle) {
       // Initialize the Arweave Bundle Upload Generator.
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
       const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(

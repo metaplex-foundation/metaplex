@@ -1,5 +1,5 @@
 export enum StorageType {
-  ArweaveNative = 'arweave-native',
+  ArweaveBundle = 'arweave-bundle',
   Arweave = 'arweave',
   Ipfs = 'ipfs',
   Aws = 'aws',
