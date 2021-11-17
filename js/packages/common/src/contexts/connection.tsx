@@ -38,7 +38,8 @@ interface BlockhashAndFeeCalculator {
 }
 
 export type ENV =
-  | 'mainnet-beta'
+  | 'mainnet-beta (Staging - Zubra)'
+  | 'mainnet-beta (Staging)'
   | 'mainnet-beta (Solana)'
   | 'mainnet-beta (Serum)'
   | 'testnet'
@@ -48,8 +49,13 @@ export type ENV =
 
 export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
   {
-    name: 'mainnet-beta',
-    endpoint: 'https://holaplex.rpcpool.com/',
+    name: 'mainnet-beta (Staging)',
+    endpoint: 'https://stage.mainnet.rpcpool.com/4715f6087c8269548f2edb003a5e',
+    ChainId: ChainId.MainnetBeta,
+  },
+  {
+    name: 'mainnet-beta (Staging - Zubra)',
+    endpoint: 'https://stage.mainnet.rpcpool.com/4715f6087c8269548f2edb003a5e/zcache',
     ChainId: ChainId.MainnetBeta,
   },
   {

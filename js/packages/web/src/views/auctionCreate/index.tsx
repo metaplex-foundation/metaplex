@@ -10,6 +10,13 @@ import {
   useMint,
   WinnerLimit,
   WinnerLimitType,
+  subscribeProgramChanges,
+  METAPLEX_ID,
+  processMetaplexAccounts,
+  AUCTION_ID,
+  processAuctions,
+  VAULT_ID,
+  processVaultData,
 } from '@oyster/common';
 import {
   AmountRange,
@@ -120,13 +127,14 @@ export interface AuctionState {
 export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
-  const { whitelistedCreatorsByCreator, storeIndexer } = useMeta();
+  const { whitelistedCreatorsByCreator, storeIndexer, patchState } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
+  const [instructionStep, setInstructionStep] = useState(0);
 
-  const [step, setStep] = useState<number>(0);
+  const [step, setStep] = useState<number>(1);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [auctionObj, setAuctionObj] = useState<
     | {
@@ -151,6 +159,25 @@ export const AuctionCreateView = () => {
     items: [],
     tiers: [],
   });
+
+  useEffect(() => {
+    return subscribeProgramChanges(
+      connection,
+      patchState,
+      {
+        programId: METAPLEX_ID,
+        processAccount: processMetaplexAccounts,
+      },
+      {
+        programId: AUCTION_ID,
+        processAccount: processAuctions,
+      },
+      {
+        programId: VAULT_ID,
+        processAccount: processVaultData
+      }
+    );
+  }, [connection]);
 
   useEffect(() => {
     if (step_param) setStep(parseInt(step_param));
@@ -473,6 +500,7 @@ export const AuctionCreateView = () => {
     const _auctionObj = await createAuctionManager(
       connection,
       wallet,
+      setInstructionStep,
       whitelistedCreatorsByCreator,
       auctionSettings,
       safetyDepositDrafts,
@@ -579,7 +607,7 @@ export const AuctionCreateView = () => {
   );
 
   const waitStep = (
-    <WaitingStep createAuction={createAuction} confirm={() => gotoNextStep()} />
+    <WaitingStep step={instructionStep} createAuction={createAuction} confirm={() => gotoNextStep()} />
   );
 
   const congratsStep = (

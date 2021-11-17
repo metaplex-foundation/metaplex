@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Card, Spin, Steps, Space } from 'antd';
+import { Card, Steps, Space } from 'antd';
 import React, { useEffect } from 'react';
 
 const { Step } = Steps;

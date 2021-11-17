@@ -59,6 +59,7 @@ import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
 import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV2';
 import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2';
 import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
+import { SetStateAction, Dispatch } from 'react';
 
 interface normalPattern {
   instructions: TransactionInstruction[];
@@ -104,6 +105,7 @@ export interface SafetyDepositDraft {
 export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
+  progressCallback: Dispatch<SetStateAction<number>>,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -349,6 +351,9 @@ export async function createAuctionManager(
       filteredSigners,
       SequenceType.StopOnFailure,
       'confirmed',
+      (_, index) => {
+        progressCallback(index);
+      },
     );
   }
 

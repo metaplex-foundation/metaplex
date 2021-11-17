@@ -1,30 +1,71 @@
-import { Progress } from 'antd';
+import { Space, Card, Steps } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { LoadingOutlined } from '@ant-design/icons';
+
+const { Step } = Steps;
 
 export const WaitingStep = (props: {
   createAuction: () => Promise<void>;
   confirm: () => void;
+  step: number;
 }) => {
-  const [progress, setProgress] = useState<number>(0);
+  const setIconForStep = (currentStep: number, componentStep: number) => {
+    if (currentStep === componentStep) {
+      return <LoadingOutlined />;
+    }
+    return null;
+  };
 
   useEffect(() => {
     const func = async () => {
-      const inte = setInterval(
-        () => setProgress(prog => Math.min(prog + 1, 99)),
-        1200,
-      );
       await props.createAuction();
-      clearInterval(inte);
       props.confirm();
     };
     func();
   }, []);
 
   return (
-    <div className="auction-progress-indicator">
-      <Progress type="circle" percent={progress} />
-      <div>Your creation is being listed with Metaplex...</div>
-      <div>This can take up to 90 seconds.</div>
-    </div>
+    <Space className="metaplex-fullwidth" direction="vertical" align="center">
+      <Card>
+        <Steps direction="vertical" current={props.step}>
+          <Step
+            title="Creating the Vault"
+            icon={setIconForStep(props.step, 0)}
+          />
+          <Step
+            title="Adding NFT to the Vault"
+            icon={setIconForStep(props.step, 1)}
+          />
+          <Step
+            title="Closing the Vault"
+            icon={setIconForStep(props.step, 2)}
+          />
+          <Step
+            title="Initializing the Listing"
+            icon={setIconForStep(props.step, 3)}
+          />
+          <Step
+            title="Creating the Auctioneer"
+            icon={setIconForStep(props.step, 4)}
+          />
+          <Step
+            title="Giving Authority to the Auctioneer"
+            icon={setIconForStep(props.step, 5)}
+          />
+          <Step
+            title="Validating the Safety Deposit Boxes"
+            icon={setIconForStep(props.step, 6)}
+          />
+          <Step
+            title="Starting the Listing"
+            icon={setIconForStep(props.step, 7)}
+          />
+          <Step
+            title="Caching the Listing"
+            icon={setIconForStep(props.step, 8)}
+          />
+        </Steps>
+      </Card>
+    </Space>
   );
 };

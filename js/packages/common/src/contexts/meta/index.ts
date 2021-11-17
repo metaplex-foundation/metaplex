@@ -2,7 +2,7 @@ export * from './meta';
 export * from './isMetadataPartOfStore';
 export * from './loadAccounts';
 export * from './onChangeAccount';
-export * from './subscribeAccountsChange';
+export * from './subscribeProgramChanges';
 export * from './processAuctions';
 export * from './processMetaData';
 export * from './processMetaplexAccounts';
