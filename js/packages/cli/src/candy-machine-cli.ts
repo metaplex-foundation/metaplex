@@ -36,7 +36,7 @@ import { getAccountsByCreatorAddress, signAllMetadataFromCandyMachine } from './
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
-
+import { withdraw } from './commands/withdraw;
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -44,6 +44,64 @@ if (!fs.existsSync(CACHE_PATH)) {
 }
 
 log.setLevel(log.levels.INFO);
+export async function getProgramAccounts(
+  connection: anchor.web3.Connection,
+  programId: StringPublicKey,
+  configOrCommitment?: any,
+): Promise<Array<AccountAndPubkey>> {
+  const extra: any = {};
+  let commitment;
+  //let encoding;
+
+  if (configOrCommitment) {
+    if (typeof configOrCommitment === 'string') {
+      commitment = configOrCommitment;
+    } else {
+      commitment = configOrCommitment.commitment;
+      //encoding = configOrCommitment.encoding;
+
+      if (configOrCommitment.dataSlice) {
+        extra.dataSlice = configOrCommitment.dataSlice;
+      }
+
+      if (configOrCommitment.filters) {
+        extra.filters = configOrCommitment.filters;
+      }
+    }
+  }
+
+  const args = connection._buildArgs([programId], commitment, 'base64', extra);
+  const unsafeRes = await (connection as any)._rpcRequest(
+    'getProgramAccounts',
+    args,
+  );
+
+  return unsafeResAccounts(unsafeRes.result);
+}
+
+function unsafeAccount(account: anchor.web3.AccountInfo<[string, string]>) {
+  return {
+    // TODO: possible delay parsing could be added here
+    data: Buffer.from(account.data[0], 'base64'),
+    executable: account.executable,
+    lamports: account.lamports,
+    // TODO: maybe we can do it in lazy way? or just use string
+    owner: account.owner,
+  } as anchor.web3.AccountInfo<Buffer>;
+}
+
+function unsafeResAccounts(
+  data: Array<{
+    account: anchor.web3.AccountInfo<[string, string]>;
+    pubkey: string;
+  }>,
+) {
+  return data.map(item => ({
+    account: unsafeAccount(item.account),
+    pubkey: item.pubkey,
+  }));
+}
+
 
 programCommand('upload')
   .argument(
