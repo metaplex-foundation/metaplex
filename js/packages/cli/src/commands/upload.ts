@@ -259,7 +259,7 @@ type UploadParams = {
   rpcUrl: string;
   ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
-  jwk: string;
+  arweaveJwk: string;
 };
 export async function upload({
   files,
@@ -273,7 +273,7 @@ export async function upload({
   rpcUrl,
   ipfsCredentials,
   awsS3Bucket,
-  jwk,
+  arweaveJwk,
 }: UploadParams): Promise<void> {
   // Read the content of the Cache file into the Cache object, initialize it
   // otherwise.
@@ -313,7 +313,7 @@ export async function upload({
       const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(
         dirname,
         dedupedAssetKeys,
-        JSON.parse((await readFile(jwk)).toString()),
+        JSON.parse((await readFile(arweaveJwk)).toString()),
       );
 
       let result = arweaveBundleUploadGenerator.next();

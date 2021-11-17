@@ -79,7 +79,7 @@ programCommand('upload')
   )
   .option(
     '--arweave-jwk <string>',
-    'Path to Arweave wallet file (required if using Arweave Native)',
+    'Path to Arweave wallet file (required if using Arweave Bundles (--storage arweave-bundle)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .option('--no-mutable', 'Metadata will not be editable')
@@ -100,12 +100,12 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
-      jwk,
+      arweaveJwk,
     } = cmd.opts();
 
-    if (storage === StorageType.ArweaveBundle && !jwk) {
+    if (storage === StorageType.ArweaveBundle && !arweaveJwk) {
       throw new Error(
-        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-native',
+        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundle',
       );
     }
 
@@ -174,7 +174,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
-        jwk,
+        arweaveJwk,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
