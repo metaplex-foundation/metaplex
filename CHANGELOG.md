@@ -25,6 +25,7 @@ incremented for features.
 - mint tokens. useful for testing devnet and pre-minting on mainnet
 - updated cache structure, now also includes the image URL
 - In Jares first useful contribution we see Jares second rust thing, refunding some millions $ back in unused candy configs to the authorities. Check 'withdraw' in the candy-machine-cli :)
+
 ### Fixes
 
 - Fixes #840 - Claim button visible after claim.
