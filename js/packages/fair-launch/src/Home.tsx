@@ -369,10 +369,10 @@ const Home = (props: HomeProps) => {
           console.log('Problem getting fair launch token balance');
           console.log(e);
         }
-        if (contributed == 0) {
+        if (contributed === 0) {
           const phase = getPhase(state, undefined);
 
-          if (phase == Phase.Phase1) {
+          if (phase === Phase.Phase1) {
             const ticks =
               (state.state.data.priceRangeEnd.toNumber() -
                 state.state.data.priceRangeStart.toNumber()) /
@@ -432,7 +432,7 @@ const Home = (props: HomeProps) => {
       label: `${min} SOL`,
     },
     // TODO:L
-    ...(phase == Phase.Phase1
+    ...(phase === Phase.Phase1
       ? []
       : [
           {
@@ -1198,7 +1198,7 @@ const Home = (props: HomeProps) => {
                   style={{ fontWeight: 'bold' }}
                 >
                   ◎{' '}
-                  {phase == Phase.Phase0 || phase == Phase.Phase1
+                  {phase === Phase.Phase0 || phase === Phase.Phase1
                     ? '???'
                     : formatNumber.format(median)}
                 </Typography>
