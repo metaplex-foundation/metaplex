@@ -99,12 +99,13 @@ type FilePair = {
 };
 
 /**
- * An object holding the *next* index at which file pairs
- * can be included in a bundle, as well as the total size in bytes of assets
- * to be included in said bundle.
+ * Object used to extract the file pairs to be included in the next bundle, from
+ * the current list of filePairs being processed.
+ * - the number of file pairs to be included in the next bundle.
+ * - the total size in bytes of assets to be included in said bundle.
  */
 type BundleRange = {
-  range: number;
+  count: number;
   size: number;
 };
 
@@ -116,7 +117,7 @@ type BundleRange = {
  */
 async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
   let total = 0;
-  let range = 0;
+  let count = 0;
   for (const { key, image, manifest } of filePairs) {
     const filePairSize = await [image, manifest].reduce(async (accP, file) => {
       const acc = await accP;
@@ -125,7 +126,7 @@ async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
     }, Promise.resolve(0));
 
     if (total + filePairSize >= BUNDLE_SIZE_BYTE_LIMIT) {
-      if (range === 0) {
+      if (count === 0) {
         throw new Error(
           `Image + Manifest filepair (${key}) too big (${sizeMB(
             filePairSize,
@@ -138,9 +139,9 @@ async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
     }
 
     total += filePairSize;
-    range += 1;
+    count += 1;
   }
-  return { range, size: total };
+  return { count, size: total };
 }
 
 const imageTags = [...BASE_TAGS, contentTypeTags['png']];
@@ -217,13 +218,13 @@ export function* makeArweaveBundleUploadGenerator(
   // of file pairs we can include in the next bundle.
   while (filePairs.length) {
     const result = getBundleRange(filePairs).then(async function processBundle({
-      range,
+      count,
       size,
     }) {
       log.info(
-        `Computed Bundle range, including ${range} file pair(s) totaling ${size} bytes.`,
+        `Computed Bundle range, including ${count} file pair(s) totaling ${size} bytes.`,
       );
-      const bundleFilePairs = filePairs.splice(0, range);
+      const bundleFilePairs = filePairs.splice(0, count);
 
       const { cacheKeys, dataItems, manifestLinks, updatedManifests } =
         await bundleFilePairs.reduce<Promise<ProcessedBundleFilePairs>>(
