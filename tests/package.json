@@ -14,12 +14,15 @@
     "cypress:open-dev": "LAUNCH_DEVTOOLS=1 cypress open",
     "app:start": "(cd ../js/packages/web && yarn start)",
     "setup:programs": "./setup/build-programs.sh",
-    "setup:validator": "DEBUG='mp:setup:(error|info|debug)' ./setup/init-test-validator"
+    "setup:validator": "DEBUG='mp:setup:(error|info|debug)' esr ./setup/src/init-test-validator.ts",
+    "setup:validator:trace": "DEBUG='mp:setup:(error|info|debug|trace)' esr ./setup/src/init-test-validator.ts"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "cypress": "^9.0.0",
     "debug": "^4.3.2",
+    "esbuild": "^0.13.14",
+    "esbuild-runner": "^2.2.1",
     "spok": "^1.4.1",
     "supports-color": "^9.1.0",
     "typescript": "^4.4.4"

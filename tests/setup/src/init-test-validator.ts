@@ -1,32 +1,35 @@
-#!/usr/bin/env node
+import { execSync as exec, spawn } from "child_process";
+import { strict as assert } from "assert";
+import { prepareConfig } from "./prepare-config";
+import { logError, logInfo, logDebug, logTrace } from "./utils";
+import path from "path";
 
-const { execSync: exec, spawn } = require("child_process");
-const { strict: assert } = require("assert");
-const { prepareConfig } = require("./lib/prepare-config");
-const { logError, logInfo, logDebug, logTrace } = require("./lib/utils");
+import { tmpdir } from "os";
+const ledgerDir = path.join(tmpdir(), "metaplex-tests-ledger");
 
-const path = require("path");
-const tmpdir = require("os").tmpdir();
-const ledgerDir = path.join(tmpdir, "metaplex-tests-ledger");
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const projectRoot = path.resolve(__dirname, "..", "..");
+const projectRoot = path.resolve(__dirname, "..", "..", "..");
 const rustDir = path.join(projectRoot, "rust");
 const localDeployDir = path.join(rustDir, "target", "deploy");
-const solanaConfigPath = path.join(__dirname, "config", "solana-validator.yml");
-const addressLabelsPath = require.resolve("./config/address-labels.yml");
+const solanaConfigPath = path.join(
+  __dirname,
+  "..",
+  "config",
+  "solana-validator.yml"
+);
+const addressLabelsPath = require.resolve("../config/address-labels.yml");
 
 const TEST_CREATOR = "2noq8fVotDZm55ZRb7upVgKSXC5E4RH2hEHcRtNpPjGM";
 const STORE_OWNER = "A15Y2eoMNGeX4516TYTaaMErwabCrf9AB9mrzFohdQJz";
 const CREATOR_ALICE = "GaVtHDjxYeAThQjgrLPJ88sKCm9P9KC9ixJppzCVzZJ";
 const CREATOR_BOB = "4xa5SRzvEBr5z1rd9WNNXjRx1oDfkNob1coy1hUk4kyy";
 
-function localDeployPath(programName) {
+function localDeployPath(programName: string) {
   return path.join(localDeployDir, `${programName}.so`);
 }
 
-const programs = {
+const programs: Record<string, string> = {
   metadata: localDeployPath("metaplex_token_metadata"),
   vault: localDeployPath("metaplex_token_vault"),
   auction: localDeployPath("metaplex_auction"),
@@ -133,7 +136,7 @@ async function main() {
   logDebug(
     `Obtain private key via: cat ${path.relative(
       process.cwd(),
-      require.resolve("./keypairs/store-owner-keypair.json")
+      require.resolve("../keypairs/store-owner-keypair.json")
     )}`
   );
 
@@ -149,7 +152,7 @@ main()
   .catch((err) => {
     logError(err);
     if (err.stderr != null) {
-      logErrorr(err.stderr.toString());
+      logError(err.stderr.toString());
     }
     process.exit(1);
   });
