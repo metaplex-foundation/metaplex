@@ -93,7 +93,7 @@ async function findAndSignMetadata(
   );
 }
 
-async function getAccountsByCreatorAddress(creatorAddress, connection) {
+export async function getAccountsByCreatorAddress(creatorAddress, connection) {
   const metadataAccounts = await getProgramAccounts(
     connection,
     TOKEN_METADATA_PROGRAM_ID.toBase58(),
