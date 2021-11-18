@@ -320,12 +320,12 @@ export async function upload({
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
       while (!result.done) {
-        const { cacheKeys, manifestLinks, updatedManifests } =
+        const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
           await result.value;
         updateCacheAfterUpload(
           cache,
           cacheKeys,
-          manifestLinks,
+          arweavePathManifestLinks,
           updatedManifests,
         );
         saveCache(cacheName, env, cache);

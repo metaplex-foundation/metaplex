@@ -11,6 +11,26 @@ import log from 'loglevel';
 import { EXTENSION_PNG } from '../constants';
 
 /**
+ * The Arweave Path Manifest object for a given asset file pair.
+ * https://github.com/ArweaveTeam/arweave/blob/master/doc/path-manifest-schema.md
+ */
+type ArweavePathManifest = {
+  manifest: 'arweave/paths';
+  version: '0.1.0';
+  paths: {
+    'image.png': {
+      id: string; // arweave transaction id
+    };
+    'metadata.json': {
+      id: string; // arweave transaction id
+    };
+  };
+  index: {
+    path: 'metadata.json';
+  };
+};
+
+/**
  * The Manifest object for a given asset.
  * This object holds the contents of the asset's JSON file.
  * Represented here in its minimal form.
@@ -29,7 +49,7 @@ type Manifest = {
 type ProcessedBundleFilePairs = {
   cacheKeys: string[];
   dataItems: DataItem[];
-  manifestLinks: string[];
+  arweavePathManifestLinks: string[];
   updatedManifests: Manifest[];
 };
 
@@ -58,6 +78,10 @@ const CONTENT_TYPES = {
 const contentTypeTags = {
   png: { name: 'Content-Type', value: CONTENT_TYPES['png'] },
   json: { name: 'Content-Type', value: 'application/json' },
+  'arweave-manifest': {
+    name: 'Content-Type',
+    value: 'application/x.arweave-manifest+json',
+  },
 };
 
 /**
@@ -163,8 +187,60 @@ const manifestTags = [...BASE_TAGS, contentTypeTags['json']];
  * Retrieve a DataItem which will hold the asset's manifest binary data
  * & represent an individual Arweave transaction which can be signed & bundled.
  */
-function getManifestDataItem(signer: ArweaveSigner, manifest): DataItem {
+function getManifestDataItem(
+  signer: ArweaveSigner,
+  manifest: Manifest,
+): DataItem {
   return createData(JSON.stringify(manifest), signer, { tags: manifestTags });
+}
+
+const arweavePathManifestTags = [
+  ...BASE_TAGS,
+  contentTypeTags['arweave-manifest'],
+];
+/**
+ * Retrieve a DataItem which will hold the Arweave Path Manifest binary data
+ * & represent an individual Arweave transaction which can be signed & bundled.
+ */
+function getArweavePathManifestDataItem(
+  signer: ArweaveSigner,
+  arweavePathManifest: ArweavePathManifest,
+): DataItem {
+  return createData(JSON.stringify(arweavePathManifest), signer, {
+    tags: arweavePathManifestTags,
+  });
+}
+
+/**
+ * Create the Arweave Path Manifest from the asset image / manifest
+ * pair txIds, helps Arweave Gateways find the files.
+ * Instructs arweave gateways to serve metadata.json by default
+ * when accessing the transaction.
+ * See:
+ * - https://github.com/ArweaveTeam/arweave/blob/master/doc/path-manifest-schema.md
+ * - https://github.com/metaplex-foundation/metaplex/pull/859#pullrequestreview-805914075
+ */
+function createArweavePathManifest(
+  imageTxId: string,
+  manifestTxId: string,
+): ArweavePathManifest {
+  const arweavePathManifest: ArweavePathManifest = {
+    manifest: 'arweave/paths',
+    version: '0.1.0',
+    paths: {
+      'image.png': {
+        id: imageTxId,
+      },
+      'metadata.json': {
+        id: manifestTxId,
+      },
+    },
+    index: {
+      path: 'metadata.json',
+    },
+  };
+
+  return arweavePathManifest;
 }
 
 /**
@@ -210,7 +286,7 @@ export function* makeArweaveBundleUploadGenerator(
   // & uploading bundles for initialization.
   yield Promise.resolve({
     cacheKeys: [],
-    manifestLinks: [],
+    arweavePathManifestLinks: [],
     updatedManifests: [],
   });
 
@@ -226,49 +302,65 @@ export function* makeArweaveBundleUploadGenerator(
       );
       const bundleFilePairs = filePairs.splice(0, count);
 
-      const { cacheKeys, dataItems, manifestLinks, updatedManifests } =
-        await bundleFilePairs.reduce<Promise<ProcessedBundleFilePairs>>(
-          // Process a bundle file pair (image + manifest).
-          // - retrieve image data, put it in a DataItem
-          // - sign the image DataItem and build the image link from the txId.
-          // - retrieve & update the asset manifest w/ the image link
-          // - put the manifest in a DataItem
-          // - sign the manifest DataItem and build the manifest link form the txId.
-          // - fill the results accumulator
-          async function processBundleFilePair(accP, filePair) {
-            const acc = await accP;
-            log.debug('Processing File Pair', filePair.key);
+      const {
+        cacheKeys,
+        dataItems,
+        arweavePathManifestLinks,
+        updatedManifests,
+      } = await bundleFilePairs.reduce<Promise<ProcessedBundleFilePairs>>(
+        // Process a bundle file pair (image + manifest).
+        // - retrieve image data, put it in a DataItem
+        // - sign the image DataItem and build the image link from the txId.
+        // - retrieve & update the asset manifest w/ the image link
+        // - put the manifest in a DataItem
+        // - sign the manifest DataItem and build the manifest link form the txId.
+        // - create the Arweave Path Manifest w/ both asset image + manifest txIds pair.
+        // - fill the results accumulator
+        async function processBundleFilePair(accP, filePair) {
+          const acc = await accP;
+          log.debug('Processing File Pair', filePair.key);
 
-            const imageDataItem = await getImageDataItem(
-              signer,
-              filePair.image,
-            );
-            await imageDataItem.sign(signer);
-            const imageLink = `https://arweave.net/${imageDataItem.id}`;
+          const imageDataItem = await getImageDataItem(signer, filePair.image);
+          await imageDataItem.sign(signer);
+          const imageLink = `https://arweave.net/${imageDataItem.id}`;
 
-            const manifest = await getUpdatedManifest(
-              filePair.manifest,
-              imageLink,
-            );
-            const manifestDataItem = getManifestDataItem(signer, manifest);
-            await manifestDataItem.sign(signer);
-            const manifestLink = `https://arweave.net/${manifestDataItem.id}`;
+          const manifest = await getUpdatedManifest(
+            filePair.manifest,
+            imageLink,
+          );
+          const manifestDataItem = getManifestDataItem(signer, manifest);
+          await manifestDataItem.sign(signer);
 
-            acc.cacheKeys.push(filePair.key);
-            acc.dataItems.push(imageDataItem, manifestDataItem);
-            acc.manifestLinks.push(manifestLink);
-            acc.updatedManifests.push(manifest);
+          const arweavePathManifest = createArweavePathManifest(
+            manifestDataItem.id,
+            imageDataItem.id,
+          );
+          const arweavePathManifestDataItem = getArweavePathManifestDataItem(
+            signer,
+            arweavePathManifest,
+          );
+          await arweavePathManifestDataItem.sign(signer);
+          const arweavePathManifestLink = `https://arweave.net/${manifestDataItem.id}`;
 
-            log.info('Processed File Pair', filePair.key);
-            return acc;
-          },
-          Promise.resolve({
-            cacheKeys: [],
-            dataItems: [],
-            manifestLinks: [],
-            updatedManifests: [],
-          }),
-        );
+          acc.cacheKeys.push(filePair.key);
+          acc.dataItems.push(
+            imageDataItem,
+            manifestDataItem,
+            arweavePathManifestDataItem,
+          );
+          acc.arweavePathManifestLinks.push(arweavePathManifestLink);
+          acc.updatedManifests.push(manifest);
+
+          log.info('Processed File Pair', filePair.key);
+          return acc;
+        },
+        Promise.resolve({
+          cacheKeys: [],
+          dataItems: [],
+          arweavePathManifestLinks: [],
+          updatedManifests: [],
+        }),
+      );
 
       log.debug('Bundling...');
       const bundle = await bundleAndSignData(dataItems, signer);
@@ -282,9 +374,9 @@ export function* makeArweaveBundleUploadGenerator(
       await arweave.transactions.sign(tx, jwk);
       log.info('Uploading bundle...');
       await arweave.transactions.post(tx);
-      log.info('Bundle uploaded!');
+      log.info('Bundle uploaded!', tx.id);
 
-      return { cacheKeys, manifestLinks, updatedManifests };
+      return { cacheKeys, arweavePathManifestLinks, updatedManifests };
     });
     yield result;
   }
