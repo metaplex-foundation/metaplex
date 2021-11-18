@@ -247,7 +247,7 @@ programCommand('verify')
               //   key,
               // );
               if (!name.match(cacheItem.name)) {
-                problems.push(`Item: ${key} - Cached name: "${cacheItem.name}" doesn't match on-chain value: "${name}"`);
+                problems.push(`Item: ${key} - Cached name: "${cacheItem.name}" doesn't match on-chain value: "${name.replace(/\x00/g, "")}"`);
               }
               if (!uri.match(cacheItem.link)) {
                 problems.push(`Item: ${key} - Cached link: "${cacheItem.link}" doesn't match on-chain value: "${uri.replace(/\x00/g, "")}"`);
