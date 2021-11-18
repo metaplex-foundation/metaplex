@@ -12,13 +12,14 @@ import {
   parsePrice,
 } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
+  CANDY_MACHINE_PROGRAM_ID
 } from './helpers/constants';
 import {
   getCandyMachineAddress,
@@ -42,7 +43,12 @@ program.version('0.0.2');
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
+type StringPublicKey = string;
 
+export type AccountAndPubkey = {
+  pubkey: string;
+  account: anchor.web3.AccountInfo<Buffer>;
+};
 log.setLevel(log.levels.INFO);
 export async function getProgramAccounts(
   connection: anchor.web3.Connection,
@@ -212,7 +218,7 @@ programCommand('upload')
         awsS3Bucket,
       );
 
-      if (successful) {  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
+      if (successful) {
 
         warn = false;
         break;
@@ -234,8 +240,7 @@ programCommand('upload')
 programCommand('withdraw')
   .option('-ch, --charityAddy <string>', 'Which charity?', 'DFF5wJR1puxPMKrPUxFvEZ5Qh6vNbbUhQzSQZ8o1q26q')
   .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
- .option('-dp, --devPercent <string>', 'Which percent to support the open source dev?', '0')
-  .option(
+  .option('-dp, --devPercent <string>', 'Which percent to support the open source dev?', '0')
 
   .option(
     '-r, --rpc-url <string>',
@@ -262,7 +267,7 @@ programCommand('withdraw')
     log.info('And now, magik....')
     log.info('Withdrawing ' + configs.length.toString() + ' times. Patience...')
     for (var cg in configs){
-      const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy), configs[cg].account.lamports, devPercent, charityPercent );
+      const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy), configs[cg].account.lamports, parseFloat(devPercent), parseFloat(charityPercent) );
       log.info('Good awaiting, young padawan! ' + c.toString() + ' refunds complete! ', tx)
     }
     log.info('withdrawn. Now you rich again. Mind you I removed the mandatory 1.38% to dev so in exchange all y\'all follow for not financial advice alpha eh? @STACCart.');
