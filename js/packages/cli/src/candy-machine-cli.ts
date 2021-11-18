@@ -236,7 +236,7 @@ programCommand('verify')
             if (cacheItem.link === null) {
               cacheItem.onChain = false;
               allGood = false;
-              problems.push(`Item: ${key} - Invalid null json link`);
+              problems.push(`Item: ${key} - Invalid null json link in cache. On-Chain value: ${uri.replace(/\x00/g, "")}`);
               continue;
             }
             if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
