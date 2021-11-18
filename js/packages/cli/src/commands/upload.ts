@@ -335,13 +335,21 @@ export async function upload({
       log.info('Upload done.');
     } else {
       // For other storage methods, we upload the files individually.
+      walletKeyPair = loadWalletKey(keypair);
+      anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+
+      const tick = dedupedAssetKeys.length / 100; // print every one percent
+      let lastPrinted = 0;
+
       for (let i = 0; i < dedupedAssetKeys.length; i++) {
         const assetKey = dedupedAssetKeys[i];
         const image = path.join(dirname, `${assetKey}${EXTENSION_PNG}`);
         const manifest = getAssetManifest(dirname, assetKey);
         const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
-        log.debug(`Processing asset: ${assetKey}`);
+        if (i >= lastPrinted + tick || i === 0) {
+          lastPrinted = i;
+          log.info(`Processing asset: ${assetKey}`);
+        }
 
         let link, imageLink;
         try {
@@ -362,12 +370,6 @@ export async function upload({
               break;
             case StorageType.Arweave:
             default:
-              walletKeyPair = loadWalletKey(keypair);
-              anchorProgram = await loadCandyProgram(
-                walletKeyPair,
-                env,
-                rpcUrl,
-              );
               [link, imageLink] = await arweaveUpload(
                 walletKeyPair,
                 anchorProgram,
@@ -402,8 +404,9 @@ export async function upload({
     symbol,
   } = getAssetManifest(dirname, '0');
 
-  walletKeyPair = loadWalletKey(keypair);
-  anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+  walletKeyPair = walletKeyPair || loadWalletKey(keypair);
+  anchorProgram =
+    anchorProgram || (await loadCandyProgram(walletKeyPair, env, rpcUrl));
 
   const config = cache.program.config
     ? new PublicKey(cache.program.config)
