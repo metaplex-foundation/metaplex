@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Row, Col } from 'antd';
 
 import Card from './components/Card';
@@ -13,13 +13,18 @@ export const PackView = () => {
   const [openModal, setOpenModal] = useState(false);
   const { packId, editionId }: { packId: string; editionId?: string } =
     useParams();
-  const { packs } = useMeta();
+  const { packs, metadata } = useMeta();
   const { isLoading, mockBlocks, packMetadata, handleFetch } = usePackState(
     packId,
     editionId,
   );
 
   const pack = packs[packId];
+  const metaInfo = useMemo(
+    () => metadata.find(meta => meta?.info?.edition === editionId),
+    [metadata, editionId]
+  );
+
   const isUserPackPage = !!editionId;
 
   const handleCardClick = useCallback(() => {
@@ -61,7 +66,7 @@ export const PackView = () => {
           </div>
         </Col>
         <Col md={8}>
-          <PackSidebar pack={pack} />
+          <PackSidebar pack={pack} id={metaInfo?.pubkey} />
         </Col>
       </Row>
 

@@ -307,6 +307,10 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export function royalty(value: number | undefined): string {
+  return `${((value || 0) / 100).toFixed(2)}%`;
+}
+
 // -----------------
 // Benchmarking/Performance
 // -----------------
