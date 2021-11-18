@@ -11,7 +11,10 @@
     "cypress": "cypress run",
     "cypress:headed": "cypress run --headed",
     "cypress:open": "cypress open",
-    "cypress:open-dev": "LAUNCH_DEVTOOLS=1 cypress open"
+    "cypress:open-dev": "LAUNCH_DEVTOOLS=1 cypress open",
+    "app:start": "(cd ../js/packages/web && yarn start)",
+    "setup:programs": "./setup/build-programs.sh",
+    "setup:validator": "./setup/init-test-validator"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
