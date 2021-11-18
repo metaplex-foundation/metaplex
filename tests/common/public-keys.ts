@@ -12,11 +12,11 @@ export const PUBLIC_KEYS= {
   "acc:creator_bob"     :  "4xa5SRzvEBr5z1rd9WNNXjRx1oDfkNob1coy1hUk4kyy",
 } as const;
 
-export type TestKeys = keyof typeof PUBLIC_KEYS;
-export type TestPublicKeys = typeof PUBLIC_KEYS[TestKeys];
+export type TestKey = keyof typeof PUBLIC_KEYS;
+export type TestPublicKey = typeof PUBLIC_KEYS[TestKey];
 
 // prettier-ignore
-export const LABELS: Record<TestKeys, string> = {
+export const LABELS: Record<TestKey, string> = {
   "prog:token_metadata" : "Metaplex Token Metadata",
   "prog:token_vault"    : "Metaplex Token Vault",
   "prog:auction"        : "Metaplex Auction",
@@ -28,3 +28,14 @@ export const LABELS: Record<TestKeys, string> = {
   "acc:creator_alice"   : "Creator Alice",
   "acc:creator_bob"     : "Creator Bob",
 };
+
+export const PUBKEY_TO_LABEL = Object.entries(LABELS).reduce(
+  (acc: Record<TestPublicKey, string>, entry) => {
+    const key: TestKey = entry[0] as TestKey;
+    const label = entry[1];
+    const pubkey = PUBLIC_KEYS[key];
+    acc[pubkey] = label;
+    return acc;
+  },
+  {} as Record<TestPublicKey, string>
+);

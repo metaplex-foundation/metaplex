@@ -1,26 +1,26 @@
 import fs from "fs";
-import { execSync as exec } from "child_process";
 import path from "path";
+import { PUBKEY_TO_LABEL, TestPublicKey } from "../../common/public-keys";
 
 const keypairPath = require.resolve("../keypairs/test-creator-keypair.json");
 const configPath = path.join(__dirname, "..", "config", "solana-validator.yml");
-const addressLabelsPath = path.join(
-  __dirname,
-  "..",
-  "config",
-  "address-labels.yml"
-);
+const labels = Object.entries(PUBKEY_TO_LABEL)
+  .map(([pubkey, label]: [pubkey: TestPublicKey, label: string]) => {
+    return `${pubkey}: ${label}`;
+  })
+  .join("\n  ");
 
 const config = `---
 json_rpc_url: "http://localhost:8899"
 websocket_url: ""
 keypair_path: ${keypairPath}
+address_labels:
+  ${labels}
 commitment: confirmed
 `;
 
 export function prepareConfig() {
   fs.writeFileSync(configPath, config, "utf8");
-  exec(
-    `solana config -C ${configPath} import-address-labels ${addressLabelsPath}`
-  );
 }
+
+prepareConfig();

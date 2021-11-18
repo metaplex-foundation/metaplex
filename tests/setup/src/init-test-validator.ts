@@ -18,7 +18,6 @@ const solanaConfigPath = path.join(
   "config",
   "solana-validator.yml"
 );
-const addressLabelsPath = require.resolve("../config/address-labels.yml");
 
 const TEST_CREATOR = "2noq8fVotDZm55ZRb7upVgKSXC5E4RH2hEHcRtNpPjGM";
 const STORE_OWNER = "A15Y2eoMNGeX4516TYTaaMErwabCrf9AB9mrzFohdQJz";
@@ -75,11 +74,6 @@ async function main() {
   );
 
   await sleep(2000);
-
-  logDebug("Importing address labels");
-  exec(
-    `solana -C ${solanaConfigPath} config import-address-labels ${addressLabelsPath}`
-  );
 
   // -----------------
   // Test Creator
