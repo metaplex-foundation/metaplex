@@ -22,8 +22,15 @@ incremented for features.
 - Add send_flp_tokens command to the Fair Launch CLI to mass airdrop FLP presale tokens.
 - Add DNP, premade customs, and customized probabilities by type to generative art function in candy machine cli
 - Cleanup and adding more CI testing.
-- mint tokens. useful for testing devnet and pre-minting on mainnet
-- updated cache structure, now also includes the image URL
+- new CLI operation: `mint_tokens`
+  - works the same as `mint_one_token`, but mints N tokens (has `--number` argument)
+  - can be useful for testing devnet and pre-minting on mainnet
+- new CLI operation: `get_all_mint_addresses`
+  - prints out all mint addresses to console (might be worth saving the output to a file)
+  - can be useful to integrate with marketplaces, which require all mint addresses (like Digital Eyes) or other batch operations
+- updated CLI cache structure
+  - It now includes image URLs next to metadata URLs
+  - can be useful to integrate with rarity tools (like RarityMon, RaritySniper, etc)
 
 ### Fixes
 
@@ -36,7 +43,7 @@ incremented for features.
 - Fix #830 - secondary sale flagging
 - Fixes AUCTION_SIZE const
 - Fixes #930
-- Fixes Token Metadata Test Harness and lints rust code. 
+- Fixes Token Metadata Test Harness and lints rust code.
 - When a token account already exists, punchTicket should not blow up in punch_and_refund_all_outstanding.
 - Fix for punch ticket showing up as a button if you have an FLP presale token but didn't win. You should see Withdrawal.
 - Fix lint issues preventing CI from passing
