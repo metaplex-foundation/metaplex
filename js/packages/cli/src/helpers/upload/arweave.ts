@@ -73,7 +73,7 @@ export async function arweaveUpload(
     manifestBuffer.length,
     estimatedManifestSize,
   ]);
-  console.log(`lamport cost to store ${image}: ${storageCost}`);
+  log.debug(`lamport cost to store ${image}: ${storageCost}`);
 
   const instructions = [
     anchor.web3.SystemProgram.transfer({
@@ -106,11 +106,14 @@ export async function arweaveUpload(
   const metadataFile = result.messages?.find(
     m => m.filename === 'manifest.json',
   );
-
+  const imageFile = result.messages?.find(
+    m => m.filename === 'image.png',
+  );
   if (metadataFile?.transactionId) {
     const link = `https://arweave.net/${metadataFile.transactionId}`;
+    const imageLink = `https://arweave.net/${imageFile.transactionId}?ext=png`;
     log.debug(`File uploaded: ${link}`);
-    return link;
+    return [link, imageLink];
   } else {
     // @todo improve
     throw new Error(`No transaction ID for upload: ${index}`);

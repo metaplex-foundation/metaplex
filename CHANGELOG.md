@@ -19,6 +19,11 @@ incremented for features.
 - Display items redeemed when running Candy Machine Show command
 - Ability to create auctions with any SPL-token mint by @JuanRdBO
 - Condenses Instant Sale to be one buy button not by then claim.
+- Add send_flp_tokens command to the Fair Launch CLI to mass airdrop FLP presale tokens.
+- Add DNP, premade customs, and customized probabilities by type to generative art function in candy machine cli
+- Cleanup and adding more CI testing.
+- mint tokens. useful for testing devnet and pre-minting on mainnet
+- updated cache structure, now also includes the image URL
 
 ### Fixes
 
@@ -32,6 +37,9 @@ incremented for features.
 - Fixes AUCTION_SIZE const
 - Fixes #930
 - Fixes Token Metadata Test Harness and lints rust code. 
+- When a token account already exists, punchTicket should not blow up in punch_and_refund_all_outstanding.
+- Fix for punch ticket showing up as a button if you have an FLP presale token but didn't win. You should see Withdrawal.
+- Fix lint issues preventing CI from passing
 
 ### Breaking
 

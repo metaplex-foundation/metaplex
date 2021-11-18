@@ -42,9 +42,11 @@ export const assertValidBreakdown = breakdown => {
     throw new Error('Breakdown not within 1% of 100! It is: ' + total);
   }
 };
+
 export const generateRandomSet = (breakdown, dnp) => {
   let valid = true;
   let tmp = {};
+
   do {
     valid = true;
     const keys = shuffle(Object.keys(breakdown));
@@ -67,6 +69,7 @@ export const generateRandomSet = (breakdown, dnp) => {
 
     keys.forEach(attr => {
       let breakdownToUse = breakdown[attr];
+
       keys.forEach(otherAttr => {
         if (
           tmp[otherAttr] &&
@@ -74,6 +77,7 @@ export const generateRandomSet = (breakdown, dnp) => {
           breakdown[otherAttr][tmp[otherAttr]][attr]
         ) {
           breakdownToUse = breakdown[otherAttr][tmp[otherAttr]][attr];
+
           console.log(
             'Because this item got attr',
             tmp[otherAttr],
