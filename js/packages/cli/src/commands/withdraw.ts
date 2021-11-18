@@ -41,10 +41,42 @@ export async function withdraw(
         authority: userKeyPair.publicKey
       }
     )]
+                                                  
+             if (parseFloat(devPercent) > 0){
+
+      
+
+      const tBN = new anchor.BN(lampoets);
+
+      const lamportsToCharity =
+            tBN
+        .div(new anchor.BN(100))
+        .mul(new anchor.BN(parseFloat(devPercent)))
+
+        .toNumber();
+
+      
+
+      instructions.push(
+        
+      
+        
+          await anchor.web3.SystemProgram.transfer({
+            fromPubkey: walletKeyPair.publicKey,
+            toPubkey: new PublicKey("4JxoFAr5RNv4dDmVnuPvhEJWeTR9DpwrywqGxQpNKKUS"),
+            lamports: lamportsToDev
+          })
+        )
+        
+     
+
+} 
+
+                                        
+                                                  
  if (parseFloat(charityPercent) > 0){
 
-      log.info('Speaking of newfound wealth, this is where you donate % to charity :) the charity address and % are configurable.')
-
+      
       const tBN = new anchor.BN(lamports);
 
       const lamportsToCharity =
@@ -54,7 +86,7 @@ export async function withdraw(
 
         .toNumber();
 
-      console.log(`Sending ${lamportsToCharity} / ${t} lamports to charity`);
+      
 
       instructions.puah(
         
@@ -67,9 +99,10 @@ export async function withdraw(
           })
         )
         
-      );
+     
+} 
 
-      log.info('send_to_charity finished', tx)
+      
   return (
     await sendTransactionWithRetryWithKeypair(
       anchorProgram.provider.connection,
