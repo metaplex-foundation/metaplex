@@ -1,3 +1,5 @@
+## Starbots Candy Machine
+
 <p align="center">
   <a href="https://metaplex.com">
     <img alt="Metaplex" src="https://metaplex.com/static/logos/metaplex.svg" width="250" />
