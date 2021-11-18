@@ -51,7 +51,7 @@ export const generateRandomSet = (breakdown, dnp) => {
     valid = true;
     const keys = shuffle(Object.keys(breakdown));
     keys.forEach(attr => {
-      let breakdownToUse = breakdown[attr];
+      const breakdownToUse = breakdown[attr];
 
       const formatted = Object.keys(breakdownToUse).reduce((f, key) => {
         if (breakdownToUse[key]['baseValue']) {

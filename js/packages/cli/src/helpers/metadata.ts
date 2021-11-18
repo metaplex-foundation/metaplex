@@ -1,6 +1,6 @@
 import fs from 'fs';
 import log from 'loglevel';
-import _, { random } from 'lodash';
+import _ from 'lodash';
 import {
   generateRandomSet,
   getMetadata,
