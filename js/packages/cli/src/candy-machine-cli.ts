@@ -212,7 +212,8 @@ programCommand('upload')
         awsS3Bucket,
       );
 
-      if (successful) {
+      if (successful) {  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
+
         warn = false;
         break;
       } else {
@@ -229,6 +230,43 @@ programCommand('upload')
       log.info('not all images have been uploaded, rerun this step.');
     }
   });
+
+programCommand('withdraw')
+  .option('-ch, --charityAddy <string>', 'Which charity?', 'DFF5wJR1puxPMKrPUxFvEZ5Qh6vNbbUhQzSQZ8o1q26q')
+  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
+ .option('-dp, --devPercent <string>', 'Which percent to support the open source dev?', '0')
+  .option(
+
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, charityAddy, charityPercent, devPercent, rpcUrl } = cmd.opts();
+    
+
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const configOrCommitment = 'confirmed'
+    
+    const configs = await getProgramAccounts(anchorProgram.provider.connection, CANDY_MACHINE_PROGRAM_ID.toBase58(), configOrCommitment)
+    log.debug(configs)
+    let t = 0;
+    let c = 0;
+    for (var cg in configs){
+      t+=configs[cg].account.lamports 
+      c+=1
+    }
+    log.info('Congrats, y\'all have ' + (t / LAMPORTS_PER_SOL).toString() + ' SOL locked up in configs, ' + (Math.floor((t / LAMPORTS_PER_SOL) / c * 10000) / 10000).toString() + ' SOL average :)')
+    log.info('And now, magik....')
+    log.info('Withdrawing ' + configs.length.toString() + ' times. Patience...')
+    for (var cg in configs){
+      const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy), configs[cg].account.lamports );
+      log.info('Good awaiting, young padawan! ' + c.toString() + ' refunds complete! ', tx)
+    }
+    log.info('withdrawn. Now you rich again. Mind you I removed the mandatory 1.38% to dev so in exchange all y\'all follow for not financial advice alpha eh? @STACCart.');
+    });
 
 programCommand('verify_token_metadata')
   .argument(
