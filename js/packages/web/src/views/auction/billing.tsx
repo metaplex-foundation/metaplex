@@ -25,16 +25,21 @@ import {
   toPublicKey,
   WalletSigner,
   loadPayoutTickets,
-} from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useMeta } from '../../contexts';
-import {
   getBidderKeys,
   getPayoutTicket,
   NonWinningConstraint,
   PayoutTicket,
   WinningConstraint,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+  METAPLEX_ID,
+  processMetaplexAccounts,
+  AUCTION_ID,
+  processAuctions,
+  VAULT_ID,
+  processVaultData,
+  subscribeProgramChanges
+} from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useMeta } from '../../contexts';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
@@ -59,6 +64,17 @@ export const BillingView = () => {
       setLoadingBilling(false);
     })();
   }, [loadingBilling]);
+
+  useEffect(() => {
+    return subscribeProgramChanges(
+      connection,
+      patchState,
+      {
+        programId: METAPLEX_ID,
+        processAccount: processMetaplexAccounts,
+      },
+    );
+  }, [connection]);
 
   return loading ||
     loadingBilling ||

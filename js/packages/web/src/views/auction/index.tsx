@@ -15,6 +15,10 @@ import {
   subscribeProgramChanges,
   AUCTION_ID,
   processAuctions,
+  METAPLEX_ID,
+  processMetaplexAccounts,
+  VAULT_ID,
+  processVaultData,
 } from '@oyster/common';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
@@ -88,6 +92,14 @@ export const AuctionView = () => {
       {
         programId: AUCTION_ID,
         processAccount: processAuctions,
+      },
+      {
+        programId: METAPLEX_ID,
+        processAccount: processMetaplexAccounts,
+      },
+      {
+        programId: VAULT_ID,
+        processAccount: processVaultData,
       },
     );
   }, [connection]);

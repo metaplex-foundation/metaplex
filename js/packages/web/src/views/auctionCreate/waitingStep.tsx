@@ -1,4 +1,4 @@
-import { Card, Row, Col, Progress, Typography } from 'antd';
+import { Card, Row, Col, Space, Progress, Typography } from 'antd';
 import React, { useEffect } from 'react';
 
 const { Title } = Typography;
@@ -31,11 +31,12 @@ export const WaitingStep = (props: {
       <Col xs={22} md={16} lg={12}>
         <Card
         >
+            <Space direction="vertical" size="large" className="metaplex-fullwidth">
           <Row justify="center">
             <Progress
               status={status}
               type="circle"
-              width={160}
+              width={140}
               percent={props.percent}
             />
           </Row>
@@ -47,6 +48,7 @@ export const WaitingStep = (props: {
             }
             description={description}
           />
+          </Space>
         </Card>
       </Col>
     </Row>
