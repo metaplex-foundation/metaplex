@@ -264,7 +264,7 @@ programCommand('verify')
                   log.info("Error Number:", error.errno, "Code:", error.code);
                   await new Promise(f => setTimeout(f, 1000));
                   if(error.code == "ETIMEDOUT" || error.code == "ECONNRESET" || error.code == "ENOTFOUND"){
-                    log.info("Sleeping for 3 seconds and trying again");
+                    log.info("Sleeping for 3 seconds and trying again.\nThis issue is likely temporary, but if you see nothing but these, there is probably a bigger issue.");
                     await new Promise(f => setTimeout(f, 3000));
                   }else{
                     problems.push(`Item: ${key} - Json link: "${cacheItem.link}" responded with error: "${error.code}"`);
