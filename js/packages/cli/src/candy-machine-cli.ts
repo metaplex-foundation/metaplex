@@ -253,8 +253,15 @@ programCommand('withdraw')
     const walletKeyPair = loadWalletKey(keypair);
 
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
-    const configOrCommitment = 'confirmed'
-    
+    const configOrCommitment = {commitment: 'confirmed', 
+    filters: [
+              {
+                  "memcmp": {
+                    "offset": 8,
+                    "bytes": walletKeyPair.publicKey.toBase58()
+                  }
+              }
+             ]}
     const configs = await getProgramAccounts(anchorProgram.provider.connection, CANDY_MACHINE_PROGRAM_ID.toBase58(), configOrCommitment)
     log.debug(configs)
     let t = 0;
