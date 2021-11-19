@@ -1,5 +1,8 @@
 import { PhantomWalletMock, WindowWithPhanWalletMock } from "phan-wallet-mock";
-import { connectAndFundWallet, logWalletBalance } from "../utils";
+import { connectAndFundWallet } from "../utils";
+
+import spok from "spok";
+const t = spok.adapters.chaiExpect(expect);
 
 function routeForStoreOwner(key: string) {
   return `/#/?network=localhost&store=${key}`;
@@ -30,8 +33,21 @@ describe.only("initializing store and adding creator", () => {
 
     cy.contains("Add Creator", { timeout: 20000 });
     cy.contains("Submit");
-    cy.contains(storeOwner).then(() => {
-      // Check transaction
-    });
+    cy.contains(storeOwner)
+      .then(async () =>
+        console.log(
+          `Init Store Transaction: ${await wallet.lastConfirmedTransactionString()}`
+        )
+      )
+      .then(() => wallet.lastConfirmedTransactionSummary())
+      .then((tx) =>
+        spok(t, tx, {
+          $topic: "Init Store Transaction",
+          blockTime: spok.gtz,
+          err: spok.notDefined,
+          fee: 5000,
+          slot: spok.gtz,
+        })
+      );
   });
 });
