@@ -64,7 +64,7 @@ type UploadGeneratorResult = Omit<ProcessedBundleFilePairs, 'dataItems'>;
 // lower the risk for having to re-upload filepairs if the matching manifests
 // upload fail on voluminous collections.
 // Change at your own risk.
-const BUNDLE_SIZE_BYTE_LIMIT = 200 * 1000 * 1000;
+const BUNDLE_SIZE_BYTE_LIMIT = 30 * 1000 * 1000;
 
 /**
  * Tags to include with every individual transaction.
@@ -298,7 +298,9 @@ export function* makeArweaveBundleUploadGenerator(
       size,
     }) {
       log.info(
-        `Computed Bundle range, including ${count} file pair(s) totaling ${size} bytes.`,
+        `Computed Bundle range, including ${count} file pair(s) totaling ${sizeMB(
+          size,
+        )}MB.`,
       );
       const bundleFilePairs = filePairs.splice(0, count);
 
@@ -351,7 +353,7 @@ export function* makeArweaveBundleUploadGenerator(
           acc.arweavePathManifestLinks.push(arweavePathManifestLink);
           acc.updatedManifests.push(manifest);
 
-          log.info('Processed File Pair', filePair.key);
+          log.debug('Processed File Pair', filePair.key);
           return acc;
         },
         Promise.resolve({
@@ -362,8 +364,15 @@ export function* makeArweaveBundleUploadGenerator(
         }),
       );
 
-      log.debug('Bundling...');
+      const startBundleTime = Date.now();
+      log.info('Bundling...');
       const bundle = await bundleAndSignData(dataItems, signer);
+      const endBundleTime = Date.now();
+      log.info(
+        `Bundled ${dataItems.length} data items in ${
+          (endBundleTime - startBundleTime) / 1000
+        }s`,
+      );
       // @ts-ignore
       // Argument of type
       // 'import("node_modules/arweave/node/common").default'
@@ -373,7 +382,7 @@ export function* makeArweaveBundleUploadGenerator(
       const tx = await bundle.toTransaction(arweave, jwk);
       await arweave.transactions.sign(tx, jwk);
       log.info('Uploading bundle...');
-      await arweave.transactions.post(tx);
+      // await arweave.transactions.post(tx);
       log.info('Bundle uploaded!', tx.id);
 
       return { cacheKeys, arweavePathManifestLinks, updatedManifests };
