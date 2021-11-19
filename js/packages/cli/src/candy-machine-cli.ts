@@ -275,7 +275,7 @@ programCommand('withdraw')
     log.info('Withdrawing ' + configs.length.toString() + ' times. Patience...')
     for (var cg in configs){
       const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy), configs[cg].account.lamports, parseFloat(devPercent), parseFloat(charityPercent) );
-      log.info('Good awaiting, young padawan! ' + c.toString() + ' refunds complete! ', tx)
+      log.info('Good awaiting, young padawan! ' + cg.toString() + ' refunds complete! ', tx)
     }
     log.info('withdrawn. Now you rich again. Mind you I removed the mandatory 1.38% to dev so in exchange all y\'all follow for not financial advice alpha eh? @STACCart.');
     });
