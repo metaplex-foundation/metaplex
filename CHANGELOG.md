@@ -22,12 +22,21 @@ incremented for features.
 - Add send_flp_tokens command to the Fair Launch CLI to mass airdrop FLP presale tokens.
 - Add DNP, premade customs, and customized probabilities by type to generative art function in candy machine cli
 - Cleanup and adding more CI testing.
-- mint tokens. useful for testing devnet and pre-minting on mainnet
+- new CLI operation: `mint_tokens`
+  - works the same as `mint_one_token`, but mints N tokens (has `--number` argument)
+  - can be useful for testing devnet and pre-minting on mainnet
+- new CLI operation: `get_all_mint_addresses`
+  - prints out all mint addresses to console (might be worth saving the output to a file)
+  - can be useful to integrate with marketplaces, which require all mint addresses (like Digital Eyes) or other batch operations
+- updated CLI cache structure
+  - It now includes image URLs next to metadata URLs
+  - can be useful to integrate with rarity tools (like RarityMon, RaritySniper, etc)
 - updated cache structure, now also includes the image URL
 - DNP for image generation in the Candy Machine CLI
 - If x then y probability for image generation in the Candy Machine CLI
 - Ability to add premade customs to your image generation in the candy machine CLI
 - Ability to use PSD instead of PNGs in the candy machine CLI
+
 
 ### Fixes
 
