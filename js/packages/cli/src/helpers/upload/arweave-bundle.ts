@@ -334,8 +334,8 @@ export function* makeArweaveBundleUploadGenerator(
           await manifestDataItem.sign(signer);
 
           const arweavePathManifest = createArweavePathManifest(
-            manifestDataItem.id,
             imageDataItem.id,
+            manifestDataItem.id,
           );
           const arweavePathManifestDataItem = getArweavePathManifestDataItem(
             signer,
@@ -382,7 +382,7 @@ export function* makeArweaveBundleUploadGenerator(
       const tx = await bundle.toTransaction(arweave, jwk);
       await arweave.transactions.sign(tx, jwk);
       log.info('Uploading bundle...');
-      // await arweave.transactions.post(tx);
+      await arweave.transactions.post(tx);
       log.info('Bundle uploaded!', tx.id);
 
       return { cacheKeys, arweavePathManifestLinks, updatedManifests };
