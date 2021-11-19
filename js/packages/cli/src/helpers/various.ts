@@ -32,6 +32,17 @@ export function shuffle(array) {
   return array;
 }
 
+export const assertValidBreakdown = breakdown => {
+  const total = Object.values(breakdown).reduce(
+    (sum: number, el: number) => (sum += el),
+    0,
+  );
+  if (total > 101 || total < 99) {
+    console.log(breakdown);
+    throw new Error('Breakdown not within 1% of 100! It is: ' + total);
+  }
+};
+
 export const generateRandomSet = (breakdown, dnp) => {
   let valid = true;
   let tmp = {};
@@ -40,22 +51,7 @@ export const generateRandomSet = (breakdown, dnp) => {
     valid = true;
     const keys = shuffle(Object.keys(breakdown));
     keys.forEach(attr => {
-      let breakdownToUse = breakdown[attr];
-      keys.forEach(otherAttr => {
-        if (
-          tmp[otherAttr] &&
-          typeof breakdown[otherAttr][tmp[otherAttr]] != 'number' &&
-          breakdown[otherAttr][tmp[otherAttr]][attr]
-        ) {
-          console.log(
-            'Because this item got attr',
-            tmp[otherAttr],
-            'we are using different probabilites for',
-            attr,
-          );
-          breakdownToUse = breakdown[otherAttr][tmp[otherAttr]][attr];
-        }
-      });
+      const breakdownToUse = breakdown[attr];
 
       const formatted = Object.keys(breakdownToUse).reduce((f, key) => {
         if (breakdownToUse[key]['baseValue']) {
@@ -66,9 +62,34 @@ export const generateRandomSet = (breakdown, dnp) => {
         return f;
       }, {});
 
+      assertValidBreakdown(formatted);
       const randomSelection = weighted.select(formatted);
-
       tmp[attr] = randomSelection;
+    });
+
+    keys.forEach(attr => {
+      let breakdownToUse = breakdown[attr];
+
+      keys.forEach(otherAttr => {
+        if (
+          tmp[otherAttr] &&
+          typeof breakdown[otherAttr][tmp[otherAttr]] != 'number' &&
+          breakdown[otherAttr][tmp[otherAttr]][attr]
+        ) {
+          breakdownToUse = breakdown[otherAttr][tmp[otherAttr]][attr];
+
+          console.log(
+            'Because this item got attr',
+            tmp[otherAttr],
+            'we are using different probabilites for',
+            attr,
+          );
+
+          assertValidBreakdown(breakdownToUse);
+          const randomSelection = weighted.select(breakdownToUse);
+          tmp[attr] = randomSelection;
+        }
+      });
     });
 
     Object.keys(tmp).forEach(attr1 => {
@@ -224,6 +245,7 @@ export const getMetadata = (
       value: path.parse(attrs[prop]).name,
     });
   }
+
   return {
     name: `${name}${index + 1}`,
     symbol,

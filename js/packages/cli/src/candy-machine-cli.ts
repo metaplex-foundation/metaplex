@@ -837,8 +837,12 @@ programCommand('create_generative_art')
     'Location of the traits configuration file',
     './traits-configuration.json',
   )
+  .option(
+    '-o, --output-location <string>',
+    'If you wish to do image generation elsewhere, skip it and dump randomized sets to file',
+  )
   .action(async (directory, cmd) => {
-    const { numberOfImages, configLocation } = cmd.opts();
+    const { numberOfImages, configLocation, outputLocation } = cmd.opts();
 
     log.info('Loaded configuration file');
 
@@ -851,9 +855,14 @@ programCommand('create_generative_art')
     log.info('JSON files have been created within the assets directory');
 
     // 2. piecemeal generate the images
-    await createGenerativeArt(configLocation, randomSets);
+    if (!outputLocation) {
+      await createGenerativeArt(configLocation, randomSets);
+      log.info('Images have been created successfully!');
+    } else {
+      fs.writeFileSync(outputLocation, JSON.stringify(randomSets));
 
-    log.info('Images have been created successfully!');
+      log.info('Traits written!');
+    }
   });
 
 function programCommand(name: string) {

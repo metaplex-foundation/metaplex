@@ -31,6 +31,12 @@ incremented for features.
 - updated CLI cache structure
   - It now includes image URLs next to metadata URLs
   - can be useful to integrate with rarity tools (like RarityMon, RaritySniper, etc)
+- updated cache structure, now also includes the image URL
+- DNP for image generation in the Candy Machine CLI
+- If x then y probability for image generation in the Candy Machine CLI
+- Ability to add premade customs to your image generation in the candy machine CLI
+- Ability to use PSD instead of PNGs in the candy machine CLI
+
 
 ### Fixes
 
