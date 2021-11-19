@@ -237,18 +237,20 @@ programCommand('withdraw')
       );
       for (const cg of configs) {
         try {
-          const tx = await withdraw(
-            anchorProgram,
-            walletKeyPair,
-            env,
-            new PublicKey(cg.pubkey),
-            cg.account.lamports,
-            charityPub,
-            cpf,
-          );
-          log.info(
-            `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
-          );
+          if (cg.account.lamports > 0) {
+            const tx = await withdraw(
+              anchorProgram,
+              walletKeyPair,
+              env,
+              new PublicKey(cg.pubkey),
+              cg.account.lamports,
+              charityPub,
+              cpf,
+            );
+            log.info(
+              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+            );
+          }
         } catch (e) {
           log.error(
             `Withdraw has failed for config account ${cg.pubkey} Error: ${e.message}`,
