@@ -488,3 +488,16 @@ export async function getTokenAmount(
   }
   return amount;
 }
+
+export const getBalance = async (
+  account: anchor.web3.PublicKey,
+  env: string,
+  customRpcUrl?: string
+): Promise<number> => {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+  const connection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+  return await connection.getBalance(account)
+}
