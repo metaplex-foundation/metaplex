@@ -1,5 +1,5 @@
 import { PhantomWalletMock, WindowWithPhanWalletMock } from "phan-wallet-mock";
-import { connectAndFundWallet } from "../utils";
+import { connectAndFundWallet } from "../../utils";
 
 import spok from "spok";
 const t = spok.adapters.chaiExpect(expect);
@@ -14,7 +14,7 @@ function routeForLocalhost(path: string = "/") {
 
 let wallet: PhantomWalletMock;
 let storeOwner: string;
-before(() => {
+beforeEach(() => {
   cy.visit(routeForLocalhost())
     .window()
     .then((win: WindowWithPhanWalletMock) => {
@@ -27,7 +27,7 @@ before(() => {
     .window();
 });
 
-describe.only("initializing store and adding creator", () => {
+describe("initializing store and adding creator", () => {
   it("eventually reaches the admin page when clicking init", () => {
     cy.get("button").contains("Init Store").click();
 
