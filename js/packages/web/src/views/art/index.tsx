@@ -68,8 +68,6 @@ export const ArtView = () => {
     </div>
   );
 
-  console.log(art.creators);
-
   const unverified = (
     <>
       {tag}
