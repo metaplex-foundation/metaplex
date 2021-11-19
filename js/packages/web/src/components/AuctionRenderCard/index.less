@@ -100,10 +100,12 @@
     &__main {
       font-size: 16px;
       line-height: 20px;
-      color: @white;
+      color: @accent-color !important;
       margin: 0;
+      white-space: nowrap;
     }
   }
+
   .ant-avatar.ant-avatar-circle,
   h4 {
     margin-right: 8px;
@@ -123,29 +125,56 @@
   .ant-image {
     display: block;
   }
+
   .card-art-info {
-    background: @grey-60;
+    background: @grey-100;
     border-radius: 0 0 12px 12px;
-    padding: 16px;
     width: 100%;
+
+    .pack-gray-wrapper {
+      padding: 16px;
+      border-radius: 12px;
+      background: @grey-60;
+      height: 371px;
+    }
+
     .card-artist-info {
       margin-bottom: 16px;
+
       &--pack {
         display: flex;
         justify-content: space-between;
+        align-items: center;
+
+        .pack-creator-info {
+          display: flex;
+          align-items: center;
+          width: 60%;
+        }
+
+        .pack-creator-name {
+          font-family: Inter, sans-serif;
+          font-size: 14px;
+          line-height: 14px;
+          width: calc(100% - 42px);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
 
         & + .art-content-wrapper {
-          background-color: @grey-60;
-          border-radius: 12px;
+          border-radius: 8px;
           width: 270px;
-          height: 270px;
-          padding: 18px;
+          max-height: 270px;
+          height: fit-content;
           overflow: hidden;
         }
       }
+
       .artist-name {
         font-size: 14px;
       }
+
       &__subtitle {
         display: flex;
         align-items: center;
@@ -163,6 +192,7 @@
         }
       }
     }
+
     .art-name {
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -172,10 +202,62 @@
       line-height: 24px;
       font-weight: 600;
     }
+
     .art-auction-info {
+      padding: 16px 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-top: 32px;
+
+      span {
+        font-family: Inter, sans-serif;
+        font-style: normal;
+        font-weight: bold;
+        color: @accent-color !important;
+        opacity: 1;
+      }
+
+      &__left-side {
+        display: flex;
+        align-items: center;
+        width: calc(100% - 100px);
+
+        & > img {
+          margin-right: 8px;
+        }
+
+        & > span {
+          font-size: 16px;
+          line-height: 24px;
+          width: calc(100% - 28px);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      &__right-side {
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        color: @accent-color !important;
+        border: 1px solid @accent-color;
+        box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
+        border-radius: 8px;
+
+        & > img {
+          margin-right: 10px;
+        }
+
+        & > span {
+          font-size: 14px;
+          line-height: 14px;
+        }
+      }
     }
   }
+
   .card-bid-info {
     padding: 16px;
     min-height: 78px;
