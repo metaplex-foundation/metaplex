@@ -269,7 +269,7 @@ programCommand('verify')
                   }else{
                     problems.push(`Item: ${key} - Json link: "${cacheItem.link}" responded with error: "${error.code}"`);
                     allGood = false;
-                    break;
+                    continue;
                   }
                 }
               }
@@ -294,7 +294,7 @@ programCommand('verify')
                       }else{
                         problems.push(`Item: ${key} - Img link: "${parsed.image}" responded with error: "${error.code}"`);
                         allGood = false;
-                        break;
+                        continue;
                       }
                     }
                   }
