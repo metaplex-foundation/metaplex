@@ -185,7 +185,7 @@ export const sendTransactions = async (
       })
       .catch(reason => {
         // @ts-ignore
-        failCallback(signedTxns[i], i);
+        failCallback(reason, i);
         if (sequenceType === SequenceType.StopOnFailure) {
           breakEarlyObject.breakEarly = true;
           breakEarlyObject.i = i;

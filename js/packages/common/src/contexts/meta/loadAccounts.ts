@@ -1155,6 +1155,7 @@ export const initMetadata = async (
     await metadata.info.init();
     setter('metadataByMint', metadata.info.mint, metadata);
     setter('metadata', '', metadata);
+    setter('metadataByMetadata', metadata.pubkey, metadata);
     const masterEditionKey = metadata.info?.masterEdition;
     if (masterEditionKey) {
       setter('metadataByMasterEdition', masterEditionKey, metadata);

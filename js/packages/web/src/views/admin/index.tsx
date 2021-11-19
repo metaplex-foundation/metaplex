@@ -31,6 +31,9 @@ import {
   loadAuctionManagers,
   loadAuctionsForAuctionManagers,
   loadVaultsAndContentForAuthority,
+  METAPLEX_ID,
+  processMetaplexAccounts,
+  subscribeProgramChanges,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -70,6 +73,17 @@ export const AdminView = () => {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
+
+  useEffect(() => {
+    return subscribeProgramChanges(
+      connection,
+      patchState,
+      {
+        programId: METAPLEX_ID,
+        processAccount: processMetaplexAccounts,
+      },
+    );
+  }, [connection]);
 
   useEffect(() => {
     if (isLoading) {

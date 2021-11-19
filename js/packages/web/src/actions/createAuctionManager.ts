@@ -106,6 +106,7 @@ export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
   progressCallback: Dispatch<SetStateAction<number>>,
+  failureCallback: Dispatch<SetStateAction<string | undefined>>,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -334,6 +335,7 @@ export async function createAuctionManager(
   });
 
   const filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
+  let rejection: string | undefined;
 
   if (instructions.length === 1) {
     await sendTransactionWithRetry(
@@ -352,9 +354,20 @@ export async function createAuctionManager(
       SequenceType.StopOnFailure,
       'confirmed',
       (_, index) => {
-        progressCallback(index);
+        const step = index + 1;
+        const total = instructions.length;
+
+        progressCallback(Math.round((step / total) * 100));
+      },
+      (reason: any) => {
+        rejection = reason;
+        return false;
       },
     );
+  }
+
+  if (rejection) {
+    throw new Error(rejection);
   }
 
   return { vault, auction, auctionManager };

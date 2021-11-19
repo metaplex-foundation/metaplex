@@ -362,9 +362,8 @@ export const sendTransactions = async (
         console.log(`Instructions set ${i} succeeded. Transaction Id ${txid}`);
         successCallback(txid, i);
       })
-      .catch(() => {
-        // @ts-ignore
-        failCallback(signedTxns[i], i);
+      .catch((e) => {
+        failCallback(e.message, i);
         console.log(`Instructions set ${i} failed.`);
         if (sequenceType === SequenceType.StopOnFailure) {
           breakEarlyObject.breakEarly = true;

@@ -18,6 +18,7 @@ import {
   VAULT_ID,
   processVaultData,
 } from '@oyster/common';
+import Bugsnag from '@bugsnag/browser';
 import {
   AmountRange,
   WinningConfigType,
@@ -130,10 +131,11 @@ export const AuctionCreateView = () => {
   const { whitelistedCreatorsByCreator, storeIndexer, patchState } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
+  const { track } = useAnalytics();
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
-  const [instructionStep, setInstructionStep] = useState(0);
-
+  const [percentComplete, setPercentComplete] = useState(0);
+  const [rejection, setRejection] = useState<string>()
   const [step, setStep] = useState<number>(1);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [auctionObj, setAuctionObj] = useState<
@@ -191,6 +193,8 @@ export const AuctionCreateView = () => {
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
+    let auctionInfo: { vault: string, auction: string, auctionManager: string } | undefined;
+
     if (
       attributes.category === AuctionCategory.InstantSale &&
       attributes.instantSaleType === InstantSaleType.Open
@@ -496,18 +500,25 @@ export const AuctionCreateView = () => {
     const participationSafetyDepositDraft = isOpenEdition
       ? attributes.items[0]
       : attributes.participationNFT;
-
-    const _auctionObj = await createAuctionManager(
-      connection,
-      wallet,
-      setInstructionStep,
-      whitelistedCreatorsByCreator,
-      auctionSettings,
-      safetyDepositDrafts,
-      participationSafetyDepositDraft,
-      QUOTE_MINT.toBase58(),
-      storeIndexer,
-    );
+    
+    try {
+      auctionInfo = await createAuctionManager(
+        connection,
+        wallet,
+        setPercentComplete,
+        setRejection,
+        whitelistedCreatorsByCreator,
+        auctionSettings,
+        safetyDepositDrafts,
+        participationSafetyDepositDraft,
+        QUOTE_MINT.toBase58(),
+        storeIndexer,
+      );
+    } catch (e: any) {
+      setRejection(e.message);
+      Bugsnag.notify(e);
+      return;  
+    }
 
     try {
       const { track } = useAnalytics();
@@ -522,7 +533,8 @@ export const AuctionCreateView = () => {
       console.error('failed tracking new_listing');
     }
 
-    setAuctionObj(_auctionObj);
+    setAuctionObj(auctionInfo);
+    gotoNextStep();
   };
 
   const categoryStep = (
@@ -607,7 +619,11 @@ export const AuctionCreateView = () => {
   );
 
   const waitStep = (
-    <WaitingStep step={instructionStep} createAuction={createAuction} confirm={() => gotoNextStep()} />
+    <WaitingStep
+      percent={percentComplete}
+      rejection={rejection}
+      createAuction={createAuction}
+    />
   );
 
   const congratsStep = (
