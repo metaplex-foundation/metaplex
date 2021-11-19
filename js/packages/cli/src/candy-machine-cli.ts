@@ -21,6 +21,7 @@ import {
   EXTENSION_PNG,
 } from './helpers/constants';
 import {
+  getBalance,
   getCandyMachineAddress,
   loadCandyProgram,
   loadWalletKey,
@@ -513,7 +514,7 @@ programCommand('create_candy_machine')
   )
   .option(
     '-s, --sol-treasury-account <string>',
-    'SOL account that receives mint payments.',
+    'SOL account that receives mint payments. Should have minimum 0.1 sol balance',
   )
   .option(
     '-r, --rpc-url <string>',
@@ -589,7 +590,12 @@ programCommand('create_candy_machine')
     }
 
     if (solTreasuryAccount) {
-      wallet = new PublicKey(solTreasuryAccount);
+      const treasuryAccount = new PublicKey(solTreasuryAccount);
+      const treasuryBalance = await getBalance(treasuryAccount, env, rpcUrl);
+      if (treasuryBalance === 0) {
+        throw new Error(`Cannot use treasury account with 0 balance!`);
+      }
+      wallet = treasuryAccount
     }
 
     const config = new PublicKey(cacheContent.program.config);
