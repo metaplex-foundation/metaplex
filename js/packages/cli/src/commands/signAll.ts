@@ -14,7 +14,8 @@ import {
   MAX_URI_LENGTH,
   TOKEN_METADATA_PROGRAM_ID,
 } from '../helpers/constants';
-import { AccountAndPubkey, Metadata, METADATA_SCHEMA } from '../types';
+import { Metadata, METADATA_SCHEMA } from '../types';
+import { AccountAndPubkey } from '../helpers/accounts';
 import { signMetadataInstruction } from './sign';
 import log from 'loglevel';
 import { sleep } from '../helpers/various';
@@ -93,7 +94,7 @@ async function findAndSignMetadata(
   );
 }
 
-async function getAccountsByCreatorAddress(creatorAddress, connection) {
+export async function getAccountsByCreatorAddress(creatorAddress, connection) {
   const metadataAccounts = await getProgramAccounts(
     connection,
     TOKEN_METADATA_PROGRAM_ID.toBase58(),

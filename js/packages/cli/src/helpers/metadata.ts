@@ -50,27 +50,6 @@ export async function createMetadataFiles(
 
     if (!_.some(randomizedSets, randomizedSet)) {
       randomizedSets.push(randomizedSet);
-
-      const metadata = getMetadata(
-        name,
-        symbol,
-        numberOfFilesCreated,
-        creators,
-        description,
-        seller_fee_basis_points,
-        randomizedSet,
-        collection,
-      );
-
-      try {
-        await writeFile(
-          `${ASSETS_DIRECTORY}/${numberOfFilesCreated}.json`,
-          JSON.stringify(metadata),
-        );
-      } catch (err) {
-        log.error(`${numberOfFilesCreated} failed to get created`, err);
-      }
-
       numberOfFilesCreated += 1;
     }
   }
@@ -81,7 +60,7 @@ export async function createMetadataFiles(
     const metadata = getMetadata(
       name,
       symbol,
-      numberOfFilesCreated,
+      i,
       creators,
       description,
       seller_fee_basis_points,
