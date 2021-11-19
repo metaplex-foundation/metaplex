@@ -424,6 +424,21 @@ pub mod nft_candy_machine {
 
         Ok(())
     }
+
+    pub fn withdraw_funds<'info>(ctx: Context<WithdrawFunds<'info>>) -> ProgramResult {
+        let authority = &ctx.accounts.authority;
+        let pay = &ctx.accounts.config.to_account_info();
+        let snapshot: u64 = pay.lamports();
+
+        **pay.lamports.borrow_mut() = 0;
+
+        **authority.lamports.borrow_mut() = authority
+            .lamports()
+            .checked_add(snapshot)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -463,7 +478,13 @@ pub struct AddConfigLines<'info> {
     #[account(signer)]
     authority: AccountInfo<'info>,
 }
-
+#[derive(Accounts)]
+pub struct WithdrawFunds<'info> {
+    #[account(mut, has_one = authority)]
+    config: Account<'info, Config>,
+    #[account(signer, address = config.authority)]
+    authority: AccountInfo<'info>,
+}
 #[derive(Accounts)]
 pub struct MintNFT<'info> {
     config: Account<'info, Config>,
