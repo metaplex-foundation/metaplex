@@ -49,7 +49,7 @@ async function main() {
   try {
     exec("pkill solana-test-validator");
     logInfo("Killed currently running solana-test-validator");
-    await sleep(2000);
+    await sleep(1000);
   } catch (err) {}
 
   const args = ["-C", solanaConfigPath, "-r", "--ledger", ledgerDir];
