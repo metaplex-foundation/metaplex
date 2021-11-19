@@ -13,7 +13,7 @@ function makeCreateImageWithCanvas(order, width, height) {
     return async function createImage(image) {
       const start = Date.now();
       const ID = parseInt(image.id, 10) - 1;
-      for (let cur of order) {
+      for (const cur of order) {
         const imageLocation = `${TRAITS_DIRECTORY}/${cur}/${image[cur]}`;
         const loadedImage = await loadImage(imageLocation);
         context.patternQuality = 'best';
