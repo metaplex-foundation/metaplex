@@ -263,7 +263,7 @@ programCommand('verify')
                   log.info(error.type, "Error while fetching", cacheItem.link);
                   log.info("Error Number:", error.errno, "Code:", error.code);
                   await new Promise(f => setTimeout(f, 1000));
-                  if(error.code == "ETIMEDOUT" || error.code == "ECONNRESET"){
+                  if(error.code == "ETIMEDOUT" || error.code == "ECONNRESET" || error.code == "ENOTFOUND"){
                     log.info("Sleeping for 3 seconds and trying again");
                     await new Promise(f => setTimeout(f, 3000));
                   }else{
@@ -288,8 +288,8 @@ programCommand('verify')
                     } catch (error) {
                       log.info(error.type, "Error while fetching", parsed.image);
                       log.info("Error Number:", error.errno, "Code:", error.code);
-                      if(error.code == "ETIMEDOUT" || error.code == "ECONNRESET"){
-                        log.info("Sleeping for 3 seconds and trying again");
+                      if(error.code == "ETIMEDOUT" || error.code == "ECONNRESET" || error.code == "ENOTFOUND"){
+                        log.info("Sleeping for 3 seconds and trying again.\nThis issue is likely temporary, but if you see nothing but these, there is probably a bigger issue.");
                         await new Promise(f => setTimeout(f, 3000));
                       }else{
                         problems.push(`Item: ${key} - Img link: "${parsed.image}" responded with error: "${error.code}"`);
