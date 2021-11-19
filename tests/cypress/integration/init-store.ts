@@ -1,28 +1,32 @@
-import { PhantomWalletMock, WindowWithPhanWalletMock } from 'phan-wallet-mock'
-import {
-  connectAndFundWallet,
-  forceDevNet,
-  forceLocalNet,
-  logWalletBalance,
-} from '../utils'
+import { PhantomWalletMock, WindowWithPhanWalletMock } from "phan-wallet-mock";
+import { connectAndFundWallet, logWalletBalance } from "../utils";
 
-const USE_DEVNET = false
-let wallet: PhantomWalletMock
+function routeForStoreOwner(key: string) {
+  return `/#/?network=localhost&store=${key}`;
+}
+
+function routeForLocalhost(path: string = "/") {
+  return `${path}#/?network=localhost`;
+}
+
+let wallet: PhantomWalletMock;
 before(() => {
-  cy.visit('/')
-  cy.window()
+  cy.visit(routeForLocalhost())
+    .window()
     .then((win: WindowWithPhanWalletMock) => {
-      wallet = win.solana
+      win.localStorage.clear();
+      wallet = win.solana;
     })
-    .then(() => (USE_DEVNET ? forceDevNet() : forceLocalNet()))
-    .then(() => connectAndFundWallet(wallet, 10))
-})
+    .then(() => connectAndFundWallet(wallet, 2222))
+    .then(() => cy.visit(routeForStoreOwner(wallet.publicKey.toBase58())))
+    .window();
+});
 
-describe.only('initialiazing store', () => {
-  it('clicks', () => {
-    cy.get('button')
-      .contains('Init Store')
+describe.only("initialiazing store", () => {
+  it("clicks", () => {
+    cy.get("button")
+      .contains("Init Store")
       .click()
-      .then(() => logWalletBalance(wallet))
-  })
-})
+      .then(() => logWalletBalance(wallet));
+  });
+});
