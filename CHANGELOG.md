@@ -45,6 +45,8 @@ incremented for features.
 - Fix for punch ticket showing up as a button if you have an FLP presale token but didn't win. You should see Withdrawal.
 - Fix lint issues preventing CI from passing
 - In Jares first useful contribution we see Jares second rust thing, refunding some millions $ back in unused candy configs to the authorities. Check 'withdraw' in the candy-machine-cli :)
+- Fix build issues preventing CI from passing
+- Remove unneeded code from Packs creation admin
 
 ### Breaking
 
