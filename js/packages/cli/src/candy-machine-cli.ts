@@ -19,12 +19,14 @@ import {
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
-  CANDY_MACHINE_PROGRAM_ID
+  CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
   getCandyMachineAddress,
+  getProgramAccounts,
   loadCandyProgram,
   loadWalletKey,
+  AccountAndPubkey,
 } from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
@@ -33,7 +35,10 @@ import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
-import { getAccountsByCreatorAddress, signAllMetadataFromCandyMachine } from './commands/signAll';
+import {
+  getAccountsByCreatorAddress,
+  signAllMetadataFromCandyMachine,
+} from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
@@ -43,72 +48,7 @@ program.version('0.0.2');
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
-type StringPublicKey = string;
-
-export type AccountAndPubkey = {
-  pubkey: string;
-  account: anchor.web3.AccountInfo<Buffer>;
-};
 log.setLevel(log.levels.INFO);
-export async function getProgramAccounts(
-  connection: anchor.web3.Connection,
-  programId: StringPublicKey,
-  configOrCommitment?: any,
-): Promise<Array<AccountAndPubkey>> {
-  const extra: any = {};
-  let commitment;
-  //let encoding;
-
-  if (configOrCommitment) {
-    if (typeof configOrCommitment === 'string') {
-      commitment = configOrCommitment;
-    } else {
-      commitment = configOrCommitment.commitment;
-      //encoding = configOrCommitment.encoding;
-
-      if (configOrCommitment.dataSlice) {
-        extra.dataSlice = configOrCommitment.dataSlice;
-      }
-
-      if (configOrCommitment.filters) {
-        extra.filters = configOrCommitment.filters;
-      }
-    }
-  }
-
-  const args = connection._buildArgs([programId], commitment, 'base64', extra);
-  const unsafeRes = await (connection as any)._rpcRequest(
-    'getProgramAccounts',
-    args,
-  );
-
-  return unsafeResAccounts(unsafeRes.result);
-}
-
-function unsafeAccount(account: anchor.web3.AccountInfo<[string, string]>) {
-  return {
-    // TODO: possible delay parsing could be added here
-    data: Buffer.from(account.data[0], 'base64'),
-    executable: account.executable,
-    lamports: account.lamports,
-    // TODO: maybe we can do it in lazy way? or just use string
-    owner: account.owner,
-  } as anchor.web3.AccountInfo<Buffer>;
-}
-
-function unsafeResAccounts(
-  data: Array<{
-    account: anchor.web3.AccountInfo<[string, string]>;
-    pubkey: string;
-  }>,
-) {
-  return data.map(item => ({
-    account: unsafeAccount(item.account),
-    pubkey: item.pubkey,
-  }));
-}
-
-
 programCommand('upload')
   .argument(
     '<directory>',
@@ -219,7 +159,6 @@ programCommand('upload')
       );
 
       if (successful) {
-
         warn = false;
         break;
       } else {
@@ -238,47 +177,96 @@ programCommand('upload')
   });
 
 programCommand('withdraw')
-  .option('-ch, --charityAddy <string>', 'Which charity?', 'DFF5wJR1puxPMKrPUxFvEZ5Qh6vNbbUhQzSQZ8o1q26q')
+  .option(
+    '-d ,--dry',
+    'Show Candy Machine withdraw amount without withdrawing.',
+  )
+  .option('-ch, --charity <string>', 'Which charity?', '')
   .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
-  .option('-dp, --devPercent <string>', 'Which percent to support the open source dev?', '0')
-
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, charityAddy, charityPercent, devPercent, rpcUrl } = cmd.opts();
-    
-
+    const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
+    if (charityPercent < 0 || charityPercent > 100) {
+      log.error('Charity percentage needs to be between 0 and 100');
+      return;
+    }
     const walletKeyPair = loadWalletKey(keypair);
-
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
-    const configOrCommitment = {commitment: 'confirmed', 
-    filters: [
-              {
-                  "memcmp": {
-                    "offset": 8,
-                    "bytes": walletKeyPair.publicKey.toBase58()
-                  }
-              }
-             ]}
-    const configs = await getProgramAccounts(anchorProgram.provider.connection, CANDY_MACHINE_PROGRAM_ID.toBase58(), configOrCommitment)
-    log.debug(configs)
+    const configOrCommitment = {
+      commitment: 'confirmed',
+      filters: [
+        {
+          memcmp: {
+            offset: 8,
+            bytes: walletKeyPair.publicKey.toBase58(),
+          },
+        },
+      ],
+    };
+    const configs: AccountAndPubkey[] = await getProgramAccounts(
+      anchorProgram.provider.connection,
+      CANDY_MACHINE_PROGRAM_ID.toBase58(),
+      configOrCommitment,
+    );
     let t = 0;
-    let c = 0;
-    for (var cg in configs){
-      t+=configs[cg].account.lamports 
-      c+=1
+    for (const cg in configs) {
+      t += configs[cg].account.lamports;
     }
-    log.info('Congrats, y\'all have ' + (t / LAMPORTS_PER_SOL).toString() + ' SOL locked up in configs, ' + (Math.floor((t / LAMPORTS_PER_SOL) / c * 10000) / 10000).toString() + ' SOL average :)')
-    log.info('And now, magik....')
-    log.info('Withdrawing ' + configs.length.toString() + ' times. Patience...')
-    for (var cg in configs){
-      const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy), configs[cg].account.lamports, parseFloat(devPercent), parseFloat(charityPercent) );
-      log.info('Good awaiting, young padawan! ' + cg.toString() + ' refunds complete! ', tx)
+    const totalValue = t / LAMPORTS_PER_SOL;
+    const cpf = parseFloat(charityPercent);
+    let charityPub;
+    log.info(
+      `Total Number of Candy Machine Config Accounts to drain ${configs.length}`,
+    );
+    log.info(`${totalValue} SOL locked up in configs`);
+    if (!!charity && charityPercent > 0) {
+      const donation = totalValue * (100 / charityPercent);
+      charityPub = new PublicKey(charity);
+      log.info(
+        `Of that ${totalValue} SOL, ${donation} will be donated to ${charity}. Thank you!`,
+      );
     }
-    log.info('withdrawn. Now you rich again. Mind you I removed the mandatory 1.38% to dev so in exchange all y\'all follow for not financial advice alpha eh? @STACCart.');
-    });
+
+    if (!dry) {
+      const errors = [];
+      log.info(
+        'WARNING: This command will drain ALL of the Candy Machine config accounts that are owned by your current KeyPair, this will break your Candy Machine if its still in use',
+      );
+      for (const cg of configs) {
+        try {
+          const tx = await withdraw(
+            anchorProgram,
+            walletKeyPair,
+            env,
+            new PublicKey(cg.pubkey),
+            cg.account.lamports,
+            charityPub,
+            cpf,
+          );
+          log.info(
+            `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+          );
+        } catch (e) {
+          log.error(
+            `Withdraw has failed for config account ${cg.pubkey} Error: ${e.message}`,
+          );
+          errors.push(e);
+        }
+      }
+      const successCount = configs.length - errors.length;
+      const richness =
+        successCount === configs.length ? 'rich again' : 'kinda rich';
+      log.info(
+        `Congratulations, ${successCount} config accounts have been successfully drained.`,
+      );
+      log.info(
+        `Now you ${richness}, please consider supporting Open Source developers.`,
+      );
+    }
+  });
 
 programCommand('verify_token_metadata')
   .argument(
@@ -833,7 +821,7 @@ programCommand('mint_one_token')
 programCommand('mint_tokens')
   .option('-n, --number <number>', 'Number of tokens to mint', '1')
   .action(async (directory, cmd) => {
-    const {keypair, env, cacheName, number, rpcUrl} = cmd.opts();
+    const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
 
     const parsedNumber = parseInt(number);
 
@@ -850,7 +838,7 @@ programCommand('mint_tokens')
       log.info(`token ${i} minted`);
     }
 
-    log.info(`minted ${parsedNumber} tokens`)
+    log.info(`minted ${parsedNumber} tokens`);
   });
 
 programCommand('sign')
@@ -898,21 +886,23 @@ programCommand('sign_all')
     );
   });
 
-programCommand('get_all_mint_addresses')
-  .action(async (directory, cmd) => {
-    const { env, cacheName, keypair} = cmd.opts();
+programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
+  const { env, cacheName, keypair } = cmd.opts();
 
-    const cacheContent = loadCache(cacheName, env);
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+  const cacheContent = loadCache(cacheName, env);
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
-    const accountsByCreatorAddress = await getAccountsByCreatorAddress(cacheContent.candyMachineAddress, anchorProgram.provider.connection);
-    const addresses = accountsByCreatorAddress.map(it => {
-      return new PublicKey(it[0].mint).toBase58()
-    });
-
-    console.log(JSON.stringify(addresses, null, 2))
+  const accountsByCreatorAddress = await getAccountsByCreatorAddress(
+    cacheContent.candyMachineAddress,
+    anchorProgram.provider.connection,
+  );
+  const addresses = accountsByCreatorAddress.map(it => {
+    return new PublicKey(it[0].mint).toBase58();
   });
+
+  console.log(JSON.stringify(addresses, null, 2));
+});
 
 programCommand('generate_art_configurations')
   .argument('<directory>', 'Directory containing traits named from 0-n', val =>

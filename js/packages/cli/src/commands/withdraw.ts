@@ -1,118 +1,42 @@
-import {
-    Keypair,
-    PublicKey,
-    SystemProgram
-} from '@solana/web3.js';
-import {
-    getCandyMachineAddress,
-    getMasterEdition,
-    getMetadata,
-    getTokenWallet,
-    loadCandyProgram,
-    loadWalletKey,
-    uuidFromConfigPubkey,
-    getConfig,
-} from '../helpers/accounts';
-import {
-    TOKEN_METADATA_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    CANDY_MACHINE_PROGRAM_ID,
-    CANDY_MACHINE,
-} from '../helpers/constants';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
-import {
-    MintLayout,
-    Token
-} from '@solana/spl-token';
-import {
-    createAssociatedTokenAccountInstruction
-} from '../helpers/instructions';
-import {
-    sendTransactionWithRetryWithKeypair
-} from '../helpers/transactions';
+import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
+import { Program } from '@project-serum/anchor';
 
 export async function withdraw(
-    keypair: string,
-    env: string,
-    configAddress: PublicKey,
-    charityAddress: PublicKey,
-    lamports: number,
-    devPercent: number,
-    charityPercent: number
-): Promise < string > {
-    const userKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(userKeyPair, env);
-    const signers = [userKeyPair];
-
-
-    let instructions = [
-        await anchorProgram.instruction.withdrawFunds({
-            accounts: {
-                config: configAddress,
-                authority: userKeyPair.publicKey
-            }
-        })
-    ]
-
-    if (devPercent > 0) {
-
-        const tBN = new anchor.BN(lamports);
-
-        const lamportsToDev =
-            tBN
-            .div(new anchor.BN(100))
-            .mul(new anchor.BN(devPercent))
-
-            .toNumber();
-
-
-
-        instructions.push(
-          await anchor.web3.SystemProgram.transfer({
-                fromPubkey: userKeyPair.publicKey,
-                toPubkey: new PublicKey("4JxoFAr5RNv4dDmVnuPvhEJWeTR9DpwrywqGxQpNKKUS"),
-                lamports: lamportsToDev
-            })
-        )
-
-
-
-    }
-
-
-
-    if (charityPercent > 0) {
-
-
-        const tBN = new anchor.BN(lamports);
-
-        const lamportsToCharity =
-            tBN
-            .div(new anchor.BN(100))
-            .mul(new anchor.BN(charityPercent))
-
-            .toNumber();
-
-
-
-        instructions.push(
-            await anchor.web3.SystemProgram.transfer({
-                fromPubkey: userKeyPair.publicKey,
-                toPubkey: new PublicKey(charityAddress),
-                lamports: lamportsToCharity
-            })
-        )
-
-
-    }
-
-
-    return (
-        await sendTransactionWithRetryWithKeypair(
-            anchorProgram.provider.connection,
-            userKeyPair,
-            instructions,
-            signers,
-        )
-    ).txid;
+  anchorProgram: Program,
+  keypair: Keypair,
+  env: string,
+  configAddress: PublicKey,
+  lamports: number,
+  charityAddress: PublicKey | undefined,
+  charityPercent: number,
+): Promise<string> {
+  const signers = [keypair];
+  const instructions = [
+    anchorProgram.instruction.withdrawFunds({
+      accounts: {
+        config: configAddress,
+        authority: keypair.publicKey,
+      },
+    }),
+  ];
+  if (!!charityAddress && charityPercent > 0) {
+    const cpf = 100 / charityPercent;
+    instructions.push(
+      anchor.web3.SystemProgram.transfer({
+        fromPubkey: keypair.publicKey,
+        toPubkey: new PublicKey(charityAddress),
+        lamports: Math.floor(lamports * cpf),
+      }),
+    );
+  }
+  return (
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      keypair,
+      instructions,
+      signers,
+    )
+  ).txid;
 }
