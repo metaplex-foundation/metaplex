@@ -11,7 +11,14 @@ import {
   toPublicKey,
   useConnection,
   useMint,
-  useStore,
+  useMeta,
+  subscribeProgramChanges,
+  AUCTION_ID,
+  processAuctions,
+  METAPLEX_ID,
+  processMetaplexAccounts,
+  VAULT_ID,
+  processVaultData,
 } from '@oyster/common';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
@@ -56,6 +63,8 @@ export const AuctionItem = ({
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
   const { loading, auction } = useAuction(id);
+  const connection = useConnection();
+  const { patchState } = useMeta();
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
@@ -75,6 +84,25 @@ export const AuctionView = () => {
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
   const attributes = data?.attributes;
+
+  useEffect(() => {
+    return subscribeProgramChanges(
+      connection,
+      patchState,
+      {
+        programId: AUCTION_ID,
+        processAccount: processAuctions,
+      },
+      {
+        programId: METAPLEX_ID,
+        processAccount: processMetaplexAccounts,
+      },
+      {
+        programId: VAULT_ID,
+        processAccount: processVaultData,
+      },
+    );
+  }, [connection]);
 
   if (loading) {
     return (

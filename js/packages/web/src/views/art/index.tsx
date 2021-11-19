@@ -3,6 +3,7 @@ import {
   shortenAddress,
   useConnection,
   useMeta,
+  loadMultipleAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, Col, Divider, List, Row, Skeleton, Space, Tag, Typography } from 'antd';
@@ -23,6 +24,7 @@ export const ArtView = () => {
   const wallet = useWallet();
   const { patchState, whitelistedCreatorsByCreator } = useMeta();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
+  const [validating, setValidating] = useState(false);
 
   const connection = useConnection();
   const art = useArt(id);
@@ -118,12 +120,31 @@ export const ArtView = () => {
                       {!creator.verified &&
                         (creator.address === pubkey ? (
                           <Button
+                            loading={validating}
                             onClick={async () => {
+                              setValidating(true);
+
                               try {
-                                await sendSignMetadata(connection, wallet, id);
+                                const txid = await sendSignMetadata(connection, wallet, id);
+
+                                const tx = await connection.getTransaction(txid, {
+                                  commitment: 'confirmed',
+                                });
+
+                                const keys = tx?.transaction.message.accountKeys || [];
+
+                                const patch = await loadMultipleAccounts(
+                                  connection,
+                                  keys.map(k => k.toBase58()),
+                                  'confirmed',
+                                );
+                                
+                                patchState(patch);
                               } catch (e) {
                                 console.error(e);
                                 return false;
+                              } finally {
+                                setValidating(false);
                               }
                               return true;
                             }}

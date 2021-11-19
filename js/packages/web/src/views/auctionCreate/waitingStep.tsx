@@ -1,30 +1,56 @@
-import { Progress } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Card, Row, Col, Space, Progress, Typography } from 'antd';
+import React, { useEffect } from 'react';
+
+const { Title } = Typography;
 
 export const WaitingStep = (props: {
   createAuction: () => Promise<void>;
-  confirm: () => void;
+  percent: number;
+  rejection?: string;
 }) => {
-  const [progress, setProgress] = useState<number>(0);
-
   useEffect(() => {
     const func = async () => {
-      const inte = setInterval(
-        () => setProgress(prog => Math.min(prog + 1, 99)),
-        1200,
-      );
       await props.createAuction();
-      clearInterval(inte);
-      props.confirm();
     };
     func();
   }, []);
 
+
+  let title = 'Listing NFT with Metaplex...';
+  let description = 'This may take a minute or two depending current network demand.';
+  let status: 'normal' | 'exception' = 'normal';
+
+  if (props.rejection) {
+    title = 'Issue Listing with Metaplex!';
+    description = props.rejection;
+    status = 'exception';
+  }
+
   return (
-    <div className="auction-progress-indicator">
-      <Progress type="circle" percent={progress} />
-      <div>Your creation is being listed with Metaplex...</div>
-      <div>This can take up to 90 seconds.</div>
-    </div>
+    <Row justify="center">
+      <Col xs={22} md={16} lg={12}>
+        <Card
+        >
+            <Space direction="vertical" size="large" className="metaplex-fullwidth">
+          <Row justify="center">
+            <Progress
+              status={status}
+              type="circle"
+              width={140}
+              percent={props.percent}
+            />
+          </Row>
+          <Card.Meta
+            title={
+              <Title level={5}>
+                {title}
+              </Title>
+            }
+            description={description}
+          />
+          </Space>
+        </Card>
+      </Col>
+    </Row>
   );
 };

@@ -11,7 +11,7 @@ export async function sendSignMetadata(
   connection: Connection,
   wallet: WalletSigner,
   metadata: StringPublicKey,
-) {
+): Promise<string> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const signers: Keypair[] = [];
@@ -19,11 +19,13 @@ export async function sendSignMetadata(
 
   await signMetadata(metadata, wallet.publicKey.toBase58(), instructions);
 
-  await sendTransactionWithRetry(
+  const { txid } = await sendTransactionWithRetry(
     connection,
     wallet,
     instructions,
     signers,
-    'single',
+    'confirmed',
   );
+
+  return txid;
 }

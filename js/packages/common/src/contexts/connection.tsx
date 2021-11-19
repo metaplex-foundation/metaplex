@@ -17,6 +17,7 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionSignature,
+  sendAndConfirmRawTransaction,
 } from '@solana/web3.js';
 import React, {
   ReactNode,
@@ -37,7 +38,8 @@ interface BlockhashAndFeeCalculator {
 }
 
 export type ENV =
-  | 'mainnet-beta'
+  | 'mainnet-beta (Triton)'
+  | 'mainnet-beta (Triton Staging)'
   | 'mainnet-beta (Solana)'
   | 'mainnet-beta (Serum)'
   | 'testnet'
@@ -47,8 +49,13 @@ export type ENV =
 
 export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
   {
-    name: 'mainnet-beta',
-    endpoint: 'https://holaplex.rpcpool.com/',
+    name: 'mainnet-beta (Triton)',
+    endpoint: 'https://holaplex.rpcpool.com',
+    ChainId: ChainId.MainnetBeta,
+  },
+  {
+    name: 'mainnet-beta (Triton Staging)',
+    endpoint: 'https://stage.mainnet.rpcpool.com/4715f6087c8269548f2edb003a5e',
     ChainId: ChainId.MainnetBeta,
   },
   {
@@ -74,6 +81,7 @@ export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
+const DEFAULT_CONNECTION_TIMEOUT = 300 * 1000;
 
 interface ConnectionConfig {
   connection: Connection;
@@ -86,8 +94,8 @@ interface ConnectionConfig {
 
 const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
-  setEndpoint: () => {},
-  connection: new Connection(DEFAULT, 'recent'),
+  setEndpoint: () => { },
+  connection: new Connection(DEFAULT, { commitment: 'recent', confirmTransactionInitialTimeout:  DEFAULT_CONNECTION_TIMEOUT }),
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
@@ -110,7 +118,7 @@ export function ConnectionProvider({
   const endpoint = queryEndpoint || savedEndpoint;
 
   const connection = useMemo(
-    () => new Connection(endpoint, 'recent'),
+    () => new Connection(endpoint, { commitment: 'recent', confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT }),
     [endpoint],
   );
 
@@ -126,7 +134,7 @@ export function ConnectionProvider({
         .excludeByTag('nft')
         .filterByChainId(
           ENDPOINTS.find(end => end.endpoint === endpoint)?.ChainId ||
-            ChainId.MainnetBeta,
+          ChainId.MainnetBeta,
         )
         .getList();
 
@@ -146,7 +154,7 @@ export function ConnectionProvider({
   useEffect(() => {
     const id = connection.onAccountChange(
       Keypair.generate().publicKey,
-      () => {},
+      () => { },
     );
     return () => {
       connection.removeAccountChangeListener(id);
@@ -296,7 +304,7 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = () => {},
+  successCallback: (txid: string, ind: number) => void = () => { },
   failCallback: (reason: string, ind: number) => boolean = () => false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<number> => {
@@ -351,11 +359,12 @@ export const sendTransactions = async (
 
     signedTxnPromise
       .then(({ txid }) => {
+        console.log(`Instructions set ${i} succeeded. Transaction Id ${txid}`);
         successCallback(txid, i);
       })
-      .catch(() => {
-        // @ts-ignore
-        failCallback(signedTxns[i], i);
+      .catch((e) => {
+        failCallback(e.message, i);
+        console.log(`Instructions set ${i} failed.`);
         if (sequenceType === SequenceType.StopOnFailure) {
           breakEarlyObject.breakEarly = true;
           breakEarlyObject.i = i;
@@ -473,7 +482,7 @@ export const sendTransactionWithRetry = async (
   includesFeePayer: boolean = false,
   block?: BlockhashAndFeeCalculator,
   beforeSend?: () => void,
-):Promise<{ txid: string, slot: number }> => {
+): Promise<{ txid: string, slot: number }> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   let transaction = new Transaction();
@@ -520,7 +529,6 @@ const DEFAULT_TIMEOUT = 30000;
 export async function sendSignedTransaction({
   signedTransaction,
   connection,
-  timeout = DEFAULT_TIMEOUT,
 }: {
   signedTransaction: Transaction;
   connection: Connection;
@@ -530,76 +538,23 @@ export async function sendSignedTransaction({
   timeout?: number;
 }): Promise<{ txid: string; slot: number }> {
   const rawTransaction = signedTransaction.serialize();
-  const startTime = getUnixTs();
   let slot = 0;
-  const txid: TransactionSignature = await connection.sendRawTransaction(
+
+  const txid = await sendAndConfirmRawTransaction(
+    connection,
     rawTransaction,
     {
       skipPreflight: true,
-    },
+      commitment: 'confirmed'
+    }
   );
 
-  console.log('Started awaiting confirmation for', txid);
+  const confirmation = await connection.getConfirmedTransaction(txid, 'confirmed');
 
-  let done = false;
-  (async () => {
-    while (!done && getUnixTs() - startTime < timeout) {
-      connection.sendRawTransaction(rawTransaction, {
-        skipPreflight: true,
-      });
-      await sleep(500);
-    }
-  })();
-  try {
-    const confirmation = await awaitTransactionSignatureConfirmation(
-      txid,
-      timeout,
-      connection,
-      'recent',
-      true,
-    );
-
-    if (!confirmation)
-      throw new Error('Timed out awaiting confirmation on transaction');
-
-    if (confirmation.err) {
-      console.error(confirmation.err);
-      throw new Error('Transaction failed: Custom instruction error');
-    }
-
-    slot = confirmation?.slot || 0;
-  } catch (err) {
-    console.error('Timeout Error caught', err);
-    if (typeof err === 'object' && err && 'timeout' in err) {
-      throw new Error('Timed out awaiting confirmation on transaction');
-    }
-    let simulateResult: SimulatedTransactionResponse | null = null;
-    try {
-      simulateResult = (
-        await simulateTransaction(connection, signedTransaction, 'single')
-      ).value;
-    } catch (e) {
-      console.error(e);
-    }
-    if (simulateResult && simulateResult.err) {
-      if (simulateResult.logs) {
-        for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
-          const line = simulateResult.logs[i];
-          if (line.startsWith('Program log: ')) {
-            throw new Error(
-              'Transaction failed: ' + line.slice('Program log: '.length),
-            );
-          }
-        }
-      }
-      throw new Error(JSON.stringify(simulateResult.err));
-    }
-    // throw new Error('Transaction failed');
-  } finally {
-    done = true;
+  if (confirmation) {
+    slot = confirmation.slot;
   }
 
-  console.log('Latency', txid, getUnixTs() - startTime);
   return { txid, slot };
 }
 

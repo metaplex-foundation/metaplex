@@ -2,7 +2,6 @@ import { merge, uniqWith } from 'lodash';
 import React, { ReactNode, useContext, useEffect, useState } from 'react';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
-import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { loadAccounts } from './loadAccounts';
 import { ParsedAccount } from '../accounts/types';
@@ -63,14 +62,6 @@ export function MetaProvider({ children = null }: { children: ReactNode }) {
       setIsLoading(false);
     })();
   }, [storeAddress, isReady, ownerAddress]);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    return subscribeAccountsChange(connection, patchState);
-  }, [isLoading]);
 
   return (
     <MetaContext.Provider

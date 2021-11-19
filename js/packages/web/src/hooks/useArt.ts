@@ -147,13 +147,14 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
 };
 
 export const useArt = (key?: StringPublicKey) => {
-  const { metadata, editions, masterEditions, whitelistedCreatorsByCreator } =
-    useMeta();
+  const {
+    metadataByMetadata,
+    editions,
+    masterEditions,
+    whitelistedCreatorsByCreator,
+  } = useMeta();
 
-  const account = useMemo(
-    () => metadata.find(a => a.pubkey === key),
-    [key, metadata],
-  );
+  const account = metadataByMetadata[key as string];
 
   const art = useMemo(
     () =>

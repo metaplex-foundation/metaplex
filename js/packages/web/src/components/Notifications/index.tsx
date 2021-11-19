@@ -213,7 +213,7 @@ export function Notifications({
     });
   });
 
-  const activeNotifications = notifications.length > 0 ? notifications.slice(0, 10) : [{ title: "No Notifcations", description: "You have no notifications that need attending." }] as NotificationCard[];
+  const activeNotifications = notifications.length > 0 ? notifications.slice(0, 10) : [{ title: "No Notifications", description: "You have no notifications that need attending." }] as NotificationCard[];
 
   const content = (
     <List

@@ -119,7 +119,7 @@ export const ArtCreateView = () => {
       } catch (error) {
         console.error(error);
       }
-    } catch (e) {
+    } catch (e: any) {
       if (typeof e === 'object' && e !== null && 'message' in e) {
         setAlertMessage(e.message);
       }

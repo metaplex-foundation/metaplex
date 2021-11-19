@@ -59,6 +59,7 @@ import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
 import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV2';
 import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2';
 import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
+import { SetStateAction, Dispatch } from 'react';
 
 interface normalPattern {
   instructions: TransactionInstruction[];
@@ -104,6 +105,8 @@ export interface SafetyDepositDraft {
 export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
+  progressCallback: Dispatch<SetStateAction<number>>,
+  failureCallback: Dispatch<SetStateAction<string | undefined>>,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -305,7 +308,7 @@ export async function createAuctionManager(
     ...lookup.cacheAuctionIndexer.signers,
   ];
   const toRemoveSigners: Record<number, boolean> = {};
-  let instructions: TransactionInstruction[][] = [
+  const instructions: TransactionInstruction[][] = [
     ...lookup.markItemsThatArentMineAsSold.instructions,
     lookup.externalPriceAccount.instructions,
     lookup.deprecatedBuildAndPopulateOneTimeAuthorizationAccount
@@ -331,53 +334,41 @@ export async function createAuctionManager(
     }
   });
 
-  let filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
+  const filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
+  let rejection: string | undefined;
 
-  let stopPoint = 0;
-  let tries = 0;
-  let lastInstructionsLength: number | null = null;
-  while (stopPoint < instructions.length && tries < 3) {
-    instructions = instructions.slice(stopPoint, instructions.length);
-    filteredSigners = filteredSigners.slice(stopPoint, filteredSigners.length);
-
-    if (instructions.length === lastInstructionsLength) tries = tries + 1;
-    else tries = 0;
-
-    try {
-      if (instructions.length === 1) {
-        await sendTransactionWithRetry(
-          connection,
-          wallet,
-          instructions[0],
-          filteredSigners[0],
-          'single',
-        );
-        stopPoint = 1;
-      } else {
-        stopPoint = await sendTransactions(
-          connection,
-          wallet,
-          instructions,
-          filteredSigners,
-          SequenceType.StopOnFailure,
-          'single',
-        );
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    console.log(
-      'Died on ',
-      stopPoint,
-      'retrying from instruction',
-      instructions[stopPoint],
-      'instructions length is',
-      instructions.length,
+  if (instructions.length === 1) {
+    await sendTransactionWithRetry(
+      connection,
+      wallet,
+      instructions[0],
+      filteredSigners[0],
+      'single',
     );
-    lastInstructionsLength = instructions.length;
+  } else {
+    await sendTransactions(
+      connection,
+      wallet,
+      instructions,
+      filteredSigners,
+      SequenceType.StopOnFailure,
+      'confirmed',
+      (_, index) => {
+        const step = index + 1;
+        const total = instructions.length;
+
+        progressCallback(Math.round((step / total) * 100));
+      },
+      (reason: any) => {
+        rejection = reason;
+        return false;
+      },
+    );
   }
 
-  if (stopPoint < instructions.length) throw new Error('Failed to create');
+  if (rejection) {
+    throw new Error(rejection);
+  }
 
   return { vault, auction, auctionManager };
 }

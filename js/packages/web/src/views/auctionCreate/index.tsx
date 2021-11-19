@@ -10,7 +10,15 @@ import {
   useMint,
   WinnerLimit,
   WinnerLimitType,
+  subscribeProgramChanges,
+  METAPLEX_ID,
+  processMetaplexAccounts,
+  AUCTION_ID,
+  processAuctions,
+  VAULT_ID,
+  processVaultData,
 } from '@oyster/common';
+import Bugsnag from '@bugsnag/browser';
 import {
   AmountRange,
   WinningConfigType,
@@ -120,13 +128,15 @@ export interface AuctionState {
 export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
-  const { whitelistedCreatorsByCreator, storeIndexer } = useMeta();
+  const { whitelistedCreatorsByCreator, storeIndexer, patchState } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
+  const { track } = useAnalytics();
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
-
-  const [step, setStep] = useState<number>(0);
+  const [percentComplete, setPercentComplete] = useState(0);
+  const [rejection, setRejection] = useState<string>()
+  const [step, setStep] = useState<number>(1);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [auctionObj, setAuctionObj] = useState<
     | {
@@ -153,6 +163,25 @@ export const AuctionCreateView = () => {
   });
 
   useEffect(() => {
+    return subscribeProgramChanges(
+      connection,
+      patchState,
+      {
+        programId: METAPLEX_ID,
+        processAccount: processMetaplexAccounts,
+      },
+      {
+        programId: AUCTION_ID,
+        processAccount: processAuctions,
+      },
+      {
+        programId: VAULT_ID,
+        processAccount: processVaultData
+      }
+    );
+  }, [connection]);
+
+  useEffect(() => {
     if (step_param) setStep(parseInt(step_param));
     else gotoNextStep(0);
   }, [step_param]);
@@ -164,6 +193,8 @@ export const AuctionCreateView = () => {
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
+    let auctionInfo: { vault: string, auction: string, auctionManager: string } | undefined;
+
     if (
       attributes.category === AuctionCategory.InstantSale &&
       attributes.instantSaleType === InstantSaleType.Open
@@ -469,17 +500,25 @@ export const AuctionCreateView = () => {
     const participationSafetyDepositDraft = isOpenEdition
       ? attributes.items[0]
       : attributes.participationNFT;
-
-    const _auctionObj = await createAuctionManager(
-      connection,
-      wallet,
-      whitelistedCreatorsByCreator,
-      auctionSettings,
-      safetyDepositDrafts,
-      participationSafetyDepositDraft,
-      QUOTE_MINT.toBase58(),
-      storeIndexer,
-    );
+    
+    try {
+      auctionInfo = await createAuctionManager(
+        connection,
+        wallet,
+        setPercentComplete,
+        setRejection,
+        whitelistedCreatorsByCreator,
+        auctionSettings,
+        safetyDepositDrafts,
+        participationSafetyDepositDraft,
+        QUOTE_MINT.toBase58(),
+        storeIndexer,
+      );
+    } catch (e: any) {
+      setRejection(e.message);
+      Bugsnag.notify(e);
+      return;  
+    }
 
     try {
       const { track } = useAnalytics();
@@ -494,7 +533,8 @@ export const AuctionCreateView = () => {
       console.error('failed tracking new_listing');
     }
 
-    setAuctionObj(_auctionObj);
+    setAuctionObj(auctionInfo);
+    gotoNextStep();
   };
 
   const categoryStep = (
@@ -579,7 +619,11 @@ export const AuctionCreateView = () => {
   );
 
   const waitStep = (
-    <WaitingStep createAuction={createAuction} confirm={() => gotoNextStep()} />
+    <WaitingStep
+      percent={percentComplete}
+      rejection={rejection}
+      createAuction={createAuction}
+    />
   );
 
   const congratsStep = (
