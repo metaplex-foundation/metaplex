@@ -106,6 +106,49 @@ function sizeMB(bytes: number): number {
 }
 
 /**
+ * Create the Arweave Path Manifest from the asset image / manifest
+ * pair txIds, helps Arweave Gateways find the files.
+ * Instructs arweave gateways to serve metadata.json by default
+ * when accessing the transaction.
+ * See:
+ * - https://github.com/ArweaveTeam/arweave/blob/master/doc/path-manifest-schema.md
+ * - https://github.com/metaplex-foundation/metaplex/pull/859#pullrequestreview-805914075
+ */
+function createArweavePathManifest(
+  imageTxId: string,
+  manifestTxId: string,
+): ArweavePathManifest {
+  const arweavePathManifest: ArweavePathManifest = {
+    manifest: 'arweave/paths',
+    version: '0.1.0',
+    paths: {
+      'image.png': {
+        id: imageTxId,
+      },
+      'metadata.json': {
+        id: manifestTxId,
+      },
+    },
+    index: {
+      path: 'metadata.json',
+    },
+  };
+
+  return arweavePathManifest;
+}
+
+// The size in bytes of a dummy Arweave Path Manifest.
+// Used to account for the size of a file pair manifest, in the computation
+// of a bundle range.
+const dummyAreaveManifestByteSize = (() => {
+  const dummyAreaveManifest = createArweavePathManifest(
+    'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
+    'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
+  );
+  return Buffer.byteLength(JSON.stringify(dummyAreaveManifest));
+})();
+
+/**
  * An asset file pair, consists of the following properties:
  * - key:       the asset filename & Cache objet key, without file extension.
  * - image:     the asset's image (PNG) full path.
@@ -147,7 +190,7 @@ async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
       const acc = await accP;
       const { size } = await stat(file);
       return acc + size;
-    }, Promise.resolve(0));
+    }, Promise.resolve(dummyAreaveManifestByteSize));
 
     if (total + filePairSize >= BUNDLE_SIZE_BYTE_LIMIT) {
       if (count === 0) {
@@ -209,38 +252,6 @@ function getArweavePathManifestDataItem(
   return createData(JSON.stringify(arweavePathManifest), signer, {
     tags: arweavePathManifestTags,
   });
-}
-
-/**
- * Create the Arweave Path Manifest from the asset image / manifest
- * pair txIds, helps Arweave Gateways find the files.
- * Instructs arweave gateways to serve metadata.json by default
- * when accessing the transaction.
- * See:
- * - https://github.com/ArweaveTeam/arweave/blob/master/doc/path-manifest-schema.md
- * - https://github.com/metaplex-foundation/metaplex/pull/859#pullrequestreview-805914075
- */
-function createArweavePathManifest(
-  imageTxId: string,
-  manifestTxId: string,
-): ArweavePathManifest {
-  const arweavePathManifest: ArweavePathManifest = {
-    manifest: 'arweave/paths',
-    version: '0.1.0',
-    paths: {
-      'image.png': {
-        id: imageTxId,
-      },
-      'metadata.json': {
-        id: manifestTxId,
-      },
-    },
-    index: {
-      path: 'metadata.json',
-    },
-  };
-
-  return arweavePathManifest;
 }
 
 /**
