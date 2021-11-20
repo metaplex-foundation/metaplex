@@ -42,8 +42,10 @@ export async function upload(
   if (!cacheContent.items) {
     cacheContent.items = {};
   } else {
-    existingInCache = Object.keys(cacheContent.items);
+    existingInCache = cacheContent.items;
   }
+
+  console.log(`EXISTING IN CACHE: ${existingInCache}`);
 
   const seen = {};
   const newFiles = [];
@@ -58,12 +60,11 @@ export async function upload(
       newFiles.push(f);
     }
   });
-  existingInCache.forEach(f => {
-	const imageExtension = path.extname(f);
-	const baseName = f.replace(imageExtension, '');
-    if (!seen[baseName]) {
-      seen[baseName] = true;
-      newFiles.push(f);
+  Object.keys(existingInCache).forEach(f => {
+	const extension = existingInCache[f].extension;
+    if (!seen[f]) {
+      seen[f] = true;
+      newFiles.push(f + extension);
     }
   });
 
@@ -184,6 +185,7 @@ export async function upload(
                     link,
                     imageLink,
                     name: manifest.name,
+					extension: imageExtension,
                     onChain: false,
                   };
                   cacheContent.authority = walletKeyPair.publicKey.toBase58();
@@ -201,7 +203,6 @@ export async function upload(
       },
     ),
   );
-  console.log(cacheContent)
   saveCache(cacheName, env, cacheContent);
 
   const keys = Object.keys(cacheContent.items);
@@ -209,7 +210,7 @@ export async function upload(
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 1000).map(
         async allIndexesInSlice => {
-			const sliceInterval = 10;
+          const sliceInterval = 10;
           for (
             let offset = 0;
             offset < allIndexesInSlice.length;
@@ -227,7 +228,6 @@ export async function upload(
                 `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
               );
               try {
-				//START OF ERROR AREA
                 await anchorProgram.rpc.addConfigLines(
                   ind,
                   indexes.map(i => ({
@@ -249,7 +249,6 @@ export async function upload(
                   };
                 });
                 saveCache(cacheName, env, cacheContent);
-				//END OF ERROR AREA
               } catch (e) {
                 log.error(
                   `saving config line ${ind}-${

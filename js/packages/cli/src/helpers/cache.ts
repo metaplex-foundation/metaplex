@@ -16,9 +16,11 @@ export function loadCache(
   cPath: string = CACHE_PATH,
 ) {
   const path = cachePath(env, cacheName, cPath);
-  return fs.existsSync(path)
+  const cacheContent = fs.existsSync(path)
     ? JSON.parse(fs.readFileSync(path).toString())
     : undefined;
+	// console.log(`LOADED CACHE CONTENT: ${JSON.stringify(cacheContent)}`);
+	return cacheContent;
 }
 
 export function saveCache(
@@ -29,6 +31,7 @@ export function saveCache(
 ) {
   cacheContent.env = env;
   cacheContent.cacheName = cacheName;
+//   console.log(`SAVING CACHE: ${JSON.stringify(cacheContent)}`);
   fs.writeFileSync(
     cachePath(env, cacheName, cPath),
     JSON.stringify(cacheContent),
