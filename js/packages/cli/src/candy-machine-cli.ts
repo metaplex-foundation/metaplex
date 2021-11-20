@@ -32,7 +32,10 @@ import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
-import { getAccountsByCreatorAddress, signAllMetadataFromCandyMachine } from './commands/signAll';
+import {
+  getAccountsByCreatorAddress,
+  signAllMetadataFromCandyMachine,
+} from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
@@ -54,6 +57,7 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
+  .option('-b, --batchSize <number>', 'Batch size - defaults to 1000')
   .option(
     '-s, --storage <string>',
     'Database to use for storage (arweave, ipfs, aws)',
@@ -90,6 +94,7 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      batchSize,
     } = cmd.opts();
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
@@ -152,6 +157,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
+        batchSize,
       );
 
       if (successful) {
@@ -725,7 +731,7 @@ programCommand('mint_one_token')
 programCommand('mint_tokens')
   .option('-n, --number <number>', 'Number of tokens to mint', '1')
   .action(async (directory, cmd) => {
-    const {keypair, env, cacheName, number, rpcUrl} = cmd.opts();
+    const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
 
     const parsedNumber = parseInt(number);
 
@@ -742,7 +748,7 @@ programCommand('mint_tokens')
       log.info(`token ${i} minted`);
     }
 
-    log.info(`minted ${parsedNumber} tokens`)
+    log.info(`minted ${parsedNumber} tokens`);
   });
 
 programCommand('sign')
@@ -790,21 +796,23 @@ programCommand('sign_all')
     );
   });
 
-programCommand('get_all_mint_addresses')
-  .action(async (directory, cmd) => {
-    const { env, cacheName, keypair} = cmd.opts();
+programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
+  const { env, cacheName, keypair } = cmd.opts();
 
-    const cacheContent = loadCache(cacheName, env);
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+  const cacheContent = loadCache(cacheName, env);
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
-    const accountsByCreatorAddress = await getAccountsByCreatorAddress(cacheContent.candyMachineAddress, anchorProgram.provider.connection);
-    const addresses = accountsByCreatorAddress.map(it => {
-      return new PublicKey(it[0].mint).toBase58()
-    });
-
-    console.log(JSON.stringify(addresses, null, 2))
+  const accountsByCreatorAddress = await getAccountsByCreatorAddress(
+    cacheContent.candyMachineAddress,
+    anchorProgram.provider.connection,
+  );
+  const addresses = accountsByCreatorAddress.map(it => {
+    return new PublicKey(it[0].mint).toBase58();
   });
+
+  console.log(JSON.stringify(addresses, null, 2));
+});
 
 programCommand('generate_art_configurations')
   .argument('<directory>', 'Directory containing traits named from 0-n', val =>
