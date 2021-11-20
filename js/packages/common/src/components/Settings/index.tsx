@@ -15,7 +15,7 @@ export const Settings = ({
   additionalSettings?: JSX.Element;
 }) => {
   const { connected, disconnect, publicKey } = useWallet();
-  const { endpoint, setEndpoint } = useConnectionConfig();
+  const { endpoint } = useConnectionConfig();
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
 

@@ -1,4 +1,9 @@
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import {
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  AccountInfo,
+} from '@solana/web3.js';
 import {
   CANDY_MACHINE,
   CANDY_MACHINE_PROGRAM_ID,
@@ -11,6 +16,11 @@ import {
   FEE_PAYER,
   TREASURY,
   WRAPPED_SOL_MINT,
+  TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  TOKEN_ENTANGLER,
+  ESCROW,
+  B,
+  A,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
@@ -18,6 +28,13 @@ import { createConfigAccount } from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
 import { AccountLayout, u64 } from '@solana/spl-token';
+
+export type AccountAndPubkey = {
+  pubkey: string;
+  account: AccountInfo<Buffer>;
+};
+
+export type StringPublicKey = string;
 
 // TODO: expose in spl package
 export const deserializeAccount = (data: Buffer) => {
@@ -387,6 +404,44 @@ export const getAuctionHouseTradeState = async (
   );
 };
 
+export const getTokenEntanglement = async (
+  mintA: anchor.web3.PublicKey,
+  mintB: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(TOKEN_ENTANGLER), mintA.toBuffer(), mintB.toBuffer()],
+    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  );
+};
+
+export const getTokenEntanglementEscrows = async (
+  mintA: anchor.web3.PublicKey,
+  mintB: anchor.web3.PublicKey,
+): Promise<[PublicKey, number, PublicKey, number]> => {
+  return [
+    ...(await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(A),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+    ...(await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(B),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+  ];
+};
+
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');
@@ -416,7 +471,6 @@ export async function loadCandyProgram(
     preflightCommitment: 'recent',
   });
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
-
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
   log.debug('program id from anchor', program.programId.toBase58());
   return program;
@@ -464,6 +518,30 @@ export async function loadAuctionHouseProgram(
   return new anchor.Program(idl, AUCTION_HOUSE_PROGRAM_ID, provider);
 }
 
+export async function loadTokenEntanglementProgream(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(
+    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    provider,
+  );
+
+  return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
+}
+
 export async function getTokenAmount(
   anchorProgram: anchor.Program,
   account: anchor.web3.PublicKey,
@@ -499,5 +577,63 @@ export const getBalance = async (
     //@ts-ignore
     customRpcUrl || web3.clusterApiUrl(env),
   );
-  return await connection.getBalance(account)
+  return await connection.getBalance(account);
+}
+
+export async function getProgramAccounts(
+  connection: anchor.web3.Connection,
+  programId: string,
+  configOrCommitment?: any,
+): Promise<AccountAndPubkey[]> {
+  const extra: any = {};
+  let commitment;
+  //let encoding;
+
+  if (configOrCommitment) {
+    if (typeof configOrCommitment === 'string') {
+      commitment = configOrCommitment;
+    } else {
+      commitment = configOrCommitment.commitment;
+      //encoding = configOrCommitment.encoding;
+
+      if (configOrCommitment.dataSlice) {
+        extra.dataSlice = configOrCommitment.dataSlice;
+      }
+
+      if (configOrCommitment.filters) {
+        extra.filters = configOrCommitment.filters;
+      }
+    }
+  }
+
+  const args = connection._buildArgs([programId], commitment, 'base64', extra);
+  const unsafeRes = await (connection as any)._rpcRequest(
+    'getProgramAccounts',
+    args,
+  );
+
+  return unsafeResAccounts(unsafeRes.result);
+}
+
+function unsafeAccount(account: anchor.web3.AccountInfo<[string, string]>) {
+  return {
+    // TODO: possible delay parsing could be added here
+    data: Buffer.from(account.data[0], 'base64'),
+    executable: account.executable,
+    lamports: account.lamports,
+    // TODO: maybe we can do it in lazy way? or just use string
+    owner: account.owner,
+  } as anchor.web3.AccountInfo<Buffer>;
+}
+
+function unsafeResAccounts(
+  data: Array<{
+    account: anchor.web3.AccountInfo<[string, string]>;
+    pubkey: string;
+  }>,
+) {
+  return data.map(item => ({
+    account: unsafeAccount(item.account),
+    pubkey: item.pubkey,
+  }));
 }

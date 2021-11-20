@@ -9,23 +9,23 @@ use {
     },
     anchor_spl::{
         associated_token::AssociatedToken,
-        token::{Mint, Token, TokenAccount},
+        token::{Token, TokenAccount},
     },
 };
 
-anchor_lang::declare_id!("hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk");
+anchor_lang::declare_id!("qntmGodpGkrM42mN68VCZHXnKqDCT8rdY23wFcXCLPd");
 
 const PREFIX: &str = "token_entangler";
 const ESCROW: &str = "escrow";
-const A: &str = "A";
-const B: &str = "B";
-#[program]
+const A_NAME: &str = "A";
+const B_NAME: &str = "B";
 pub mod token_entangler {
     use super::*;
 
     pub fn create_entangled_pair<'info>(
         ctx: Context<'_, '_, '_, 'info, CreateEntangledPair<'info>>,
         bump: u8,
+        _reverse_bump: u8,
         token_a_escrow_bump: u8,
         token_b_escrow_bump: u8,
         price: u64,
@@ -45,9 +45,14 @@ pub mod token_entangler {
         let token_b_escrow = &ctx.accounts.token_b_escrow;
         let token_b = &ctx.accounts.token_b;
         let entangled_pair = &mut ctx.accounts.entangled_pair;
+        let reverse_entangled_pair = &ctx.accounts.reverse_entangled_pair;
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
         let rent = &ctx.accounts.rent;
+
+        if !reverse_entangled_pair.data_is_empty() {
+            return Err(ErrorCode::EntangledPairExists.into());
+        }
 
         entangled_pair.bump = bump;
         entangled_pair.token_a_escrow_bump = token_a_escrow_bump;
@@ -73,7 +78,7 @@ pub mod token_entangler {
             &mint_a_key.as_ref(),
             &mint_b_key.as_ref(),
             ESCROW.as_bytes(),
-            A.as_bytes(),
+            A_NAME.as_bytes(),
             &[token_a_escrow_bump],
         ];
         let token_b_escrow_seeds = [
@@ -81,7 +86,7 @@ pub mod token_entangler {
             &mint_a_key.as_ref(),
             &mint_b_key.as_ref(),
             ESCROW.as_bytes(),
-            B.as_bytes(),
+            B_NAME.as_bytes(),
             &[token_b_escrow_bump],
         ];
 
@@ -184,35 +189,22 @@ pub mod token_entangler {
             &replacement_token_mint.key(),
         )?;
 
-        let token_a_escrow_seeds = [
+        let signer_seeds = [
             PREFIX.as_bytes(),
             &entangled_pair.mint_a.as_ref(),
             &entangled_pair.mint_b.as_ref(),
-            ESCROW.as_bytes(),
-            A.as_bytes(),
-            &[entangled_pair.token_a_escrow_bump],
-        ];
-        let token_b_escrow_seeds = [
-            PREFIX.as_bytes(),
-            &entangled_pair.mint_a.as_ref(),
-            &entangled_pair.mint_b.as_ref(),
-            ESCROW.as_bytes(),
-            B.as_bytes(),
-            &[entangled_pair.token_b_escrow_bump],
+            &[entangled_pair.bump],
         ];
 
         let swap_from_escrow;
         let swap_to_escrow;
-        let swap_to_seeds;
         if token.mint == entangled_pair.mint_a {
             swap_from_escrow = token_a_escrow;
             swap_to_escrow = token_b_escrow;
-            swap_to_seeds = token_b_escrow_seeds;
             assert_metadata_valid(token_metadata, None, &entangled_pair.mint_a)?;
         } else if token.mint == entangled_pair.mint_b {
             swap_from_escrow = token_b_escrow;
             swap_to_escrow = token_a_escrow;
-            swap_to_seeds = token_a_escrow_seeds;
             assert_metadata_valid(token_metadata, None, &entangled_pair.mint_b)?;
         } else {
             return Err(ErrorCode::InvalidMint.into());
@@ -256,7 +248,7 @@ pub mod token_entangler {
                 token_program.to_account_info(),
                 entangled_pair.to_account_info(),
             ],
-            &[&swap_to_seeds],
+            &[&signer_seeds],
         )?;
 
         let is_native = treasury_mint.key() == spl_token::native_mint::id();
@@ -273,8 +265,6 @@ pub mod token_entangler {
                 &token_program.to_account_info(),
                 &system_program.to_account_info(),
                 &rent.to_account_info(),
-                &[],
-                &[],
                 entangled_pair.price,
                 is_native,
             )?;
@@ -285,26 +275,31 @@ pub mod token_entangler {
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8, token_a_escrow_bump: u8, token_b_escrow_bump: u8)]
+#[instruction(bump: u8, reverse_bump: u8, token_a_escrow_bump: u8, token_b_escrow_bump: u8)]
 pub struct CreateEntangledPair<'info> {
-    treasury_mint: Account<'info, Mint>,
+    /// Set to unchecked to avoid stack size limits
+    treasury_mint: UncheckedAccount<'info>,
     payer: Signer<'info>,
     transfer_authority: Signer<'info>,
     authority: UncheckedAccount<'info>,
-    mint_a: Account<'info, Mint>,
+    /// Set to unchecked to avoid stack size limits
+    mint_a: UncheckedAccount<'info>,
     metadata_a: UncheckedAccount<'info>,
     edition_a: UncheckedAccount<'info>,
-    mint_b: Account<'info, Mint>,
+    /// Set to unchecked to avoid stack size limits
+    mint_b: UncheckedAccount<'info>,
     metadata_b: UncheckedAccount<'info>,
     edition_b: UncheckedAccount<'info>,
     #[account(mut)]
     token_b: Account<'info, TokenAccount>,
-    #[account(mut,seeds=[PREFIX.as_bytes(), mint_a.key().as_ref(), mint_b.key().as_ref(), ESCROW.as_bytes(), A.as_bytes()], bump=token_a_escrow_bump)]
+    #[account(mut,seeds=[PREFIX.as_bytes(), mint_a.key().as_ref(), mint_b.key().as_ref(), ESCROW.as_bytes(), A_NAME.as_bytes()], bump=token_a_escrow_bump)]
     token_a_escrow: UncheckedAccount<'info>,
-    #[account(mut,seeds=[PREFIX.as_bytes(), mint_a.key().as_ref(), mint_b.key().as_ref(), ESCROW.as_bytes(), B.as_bytes()], bump=token_b_escrow_bump)]
+    #[account(mut,seeds=[PREFIX.as_bytes(), mint_a.key().as_ref(), mint_b.key().as_ref(), ESCROW.as_bytes(), B_NAME.as_bytes()], bump=token_b_escrow_bump)]
     token_b_escrow: UncheckedAccount<'info>,
     #[account(init, seeds=[PREFIX.as_bytes(), mint_a.key().as_ref(), mint_b.key().as_ref()], bump=bump, space=ENTANGLED_PAIR_SIZE, payer=payer)]
     entangled_pair: Account<'info, EntangledPair>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), mint_b.key().as_ref(), mint_a.key().as_ref()], bump=reverse_bump)]
+    reverse_entangled_pair: UncheckedAccount<'info>,
     token_program: Program<'info, Token>,
     system_program: Program<'info, System>,
     rent: Sysvar<'info, Rent>,
@@ -320,7 +315,8 @@ pub struct UpdateEntangledPair<'info> {
 
 #[derive(Accounts)]
 pub struct Swap<'info> {
-    treasury_mint: Account<'info, Mint>,
+    /// Set to unchecked to avoid stack size limits
+    treasury_mint: UncheckedAccount<'info>,
     payer: Signer<'info>,
     #[account(mut)]
     payment_account: UncheckedAccount<'info>,
@@ -328,13 +324,14 @@ pub struct Swap<'info> {
     #[account(mut)]
     token: Account<'info, TokenAccount>,
     token_metadata: UncheckedAccount<'info>,
-    replacement_token_mint: Account<'info, Mint>,
+    /// Set to unchecked to avoid stack size limits
+    replacement_token_mint: UncheckedAccount<'info>,
     #[account(mut)]
     replacement_token: UncheckedAccount<'info>,
     transfer_authority: Signer<'info>,
-    #[account(mut,seeds=[PREFIX.as_bytes(), entangled_pair.mint_a.as_ref(), entangled_pair.mint_b.as_ref(), ESCROW.as_bytes(), A.as_bytes()], bump=entangled_pair.token_a_escrow_bump)]
+    #[account(mut,seeds=[PREFIX.as_bytes(), entangled_pair.mint_a.as_ref(), entangled_pair.mint_b.as_ref(), ESCROW.as_bytes(), A_NAME.as_bytes()], bump=entangled_pair.token_a_escrow_bump)]
     token_a_escrow: UncheckedAccount<'info>,
-    #[account(mut,seeds=[PREFIX.as_bytes(), entangled_pair.mint_a.as_ref(), entangled_pair.mint_b.as_ref(), ESCROW.as_bytes(), B.as_bytes()], bump=entangled_pair.token_b_escrow_bump)]
+    #[account(mut,seeds=[PREFIX.as_bytes(), entangled_pair.mint_a.as_ref(), entangled_pair.mint_b.as_ref(), ESCROW.as_bytes(), B_NAME.as_bytes()], bump=entangled_pair.token_b_escrow_bump)]
     token_b_escrow: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), entangled_pair.mint_a.as_ref(), entangled_pair.mint_b.as_ref()], bump=entangled_pair.bump, has_one=treasury_mint)]
     entangled_pair: Account<'info, EntangledPair>,
@@ -360,7 +357,6 @@ pub const ENTANGLED_PAIR_SIZE: usize = 8 +// key
 
 #[account]
 pub struct EntangledPair {
-    pub entangled_pair_treasury: Pubkey,
     pub treasury_mint: Pubkey,
     pub mint_a: Pubkey,
     pub mint_b: Pubkey,
@@ -403,4 +399,6 @@ pub enum ErrorCode {
     InvalidTokenAmount,
     #[msg("This token is not a valid mint for this entangled pair")]
     InvalidMint,
+    #[msg("This pair already exists as it's reverse")]
+    EntangledPairExists,
 }

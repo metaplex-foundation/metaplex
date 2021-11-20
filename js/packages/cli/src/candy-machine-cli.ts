@@ -12,19 +12,22 @@ import {
   parsePrice,
 } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
+  CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
   getBalance,
   getCandyMachineAddress,
+  getProgramAccounts,
   loadCandyProgram,
   loadWalletKey,
+  AccountAndPubkey,
 } from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
@@ -33,19 +36,20 @@ import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
-import { signAllMetadataFromCandyMachine } from './commands/signAll';
+import {
+  getAccountsByCreatorAddress,
+  signAllMetadataFromCandyMachine,
+} from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
-
+import { withdraw } from './commands/withdraw';
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
-
 log.setLevel(log.levels.INFO);
-
 programCommand('upload')
   .argument(
     '<directory>',
@@ -55,6 +59,7 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
+  .option('-b, --batchSize <number>', 'Batch size - defaults to 1000')
   .option(
     '-s, --storage <string>',
     'Database to use for storage (arweave, ipfs, aws)',
@@ -91,6 +96,7 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      batchSize,
     } = cmd.opts();
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
@@ -153,6 +159,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
+        batchSize,
       );
 
       if (successful) {
@@ -170,6 +177,100 @@ programCommand('upload')
     );
     if (warn) {
       log.info('not all images have been uploaded, rerun this step.');
+    }
+  });
+
+programCommand('withdraw')
+  .option(
+    '-d ,--dry',
+    'Show Candy Machine withdraw amount without withdrawing.',
+  )
+  .option('-ch, --charity <string>', 'Which charity?', '')
+  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
+    if (charityPercent < 0 || charityPercent > 100) {
+      log.error('Charity percentage needs to be between 0 and 100');
+      return;
+    }
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const configOrCommitment = {
+      commitment: 'confirmed',
+      filters: [
+        {
+          memcmp: {
+            offset: 8,
+            bytes: walletKeyPair.publicKey.toBase58(),
+          },
+        },
+      ],
+    };
+    const configs: AccountAndPubkey[] = await getProgramAccounts(
+      anchorProgram.provider.connection,
+      CANDY_MACHINE_PROGRAM_ID.toBase58(),
+      configOrCommitment,
+    );
+    let t = 0;
+    for (const cg in configs) {
+      t += configs[cg].account.lamports;
+    }
+    const totalValue = t / LAMPORTS_PER_SOL;
+    const cpf = parseFloat(charityPercent);
+    let charityPub;
+    log.info(
+      `Total Number of Candy Machine Config Accounts to drain ${configs.length}`,
+    );
+    log.info(`${totalValue} SOL locked up in configs`);
+    if (!!charity && charityPercent > 0) {
+      const donation = totalValue * (100 / charityPercent);
+      charityPub = new PublicKey(charity);
+      log.info(
+        `Of that ${totalValue} SOL, ${donation} will be donated to ${charity}. Thank you!`,
+      );
+    }
+
+    if (!dry) {
+      const errors = [];
+      log.info(
+        'WARNING: This command will drain ALL of the Candy Machine config accounts that are owned by your current KeyPair, this will break your Candy Machine if its still in use',
+      );
+      for (const cg of configs) {
+        try {
+          if (cg.account.lamports > 0) {
+            const tx = await withdraw(
+              anchorProgram,
+              walletKeyPair,
+              env,
+              new PublicKey(cg.pubkey),
+              cg.account.lamports,
+              charityPub,
+              cpf,
+            );
+            log.info(
+              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+            );
+          }
+        } catch (e) {
+          log.error(
+            `Withdraw has failed for config account ${cg.pubkey} Error: ${e.message}`,
+          );
+          errors.push(e);
+        }
+      }
+      const successCount = configs.length - errors.length;
+      const richness =
+        successCount === configs.length ? 'rich again' : 'kinda rich';
+      log.info(
+        `Congratulations, ${successCount} config accounts have been successfully drained.`,
+      );
+      log.info(
+        `Now you ${richness}, please consider supporting Open Source developers.`,
+      );
     }
   });
 
@@ -243,7 +344,12 @@ programCommand('verify')
               cacheItem.onChain = false;
               allGood = false;
             } else {
-              const json = await fetch(cacheItem.link);
+              let json;
+              try {
+                json = await fetch(cacheItem.link);
+              } catch (e) {
+                json = { status: 404 };
+              }
               if (
                 json.status == 200 ||
                 json.status == 204 ||
@@ -252,7 +358,12 @@ programCommand('verify')
                 const body = await json.text();
                 const parsed = JSON.parse(body);
                 if (parsed.image) {
-                  const check = await fetch(parsed.image);
+                  let check;
+                  try {
+                    check = await fetch(parsed.image);
+                  } catch (e) {
+                    check = { status: 404 };
+                  }
                   if (
                     check.status == 200 ||
                     check.status == 204 ||
@@ -460,6 +571,8 @@ programCommand('show')
       log.info('price: ', machine.data.price.toNumber());
       //@ts-ignore
       log.info('itemsAvailable: ', machine.data.itemsAvailable.toNumber());
+      //@ts-ignore
+      log.info('itemsRedeemed: ', machine.itemsRedeemed.toNumber());
       log.info(
         'goLiveDate: ',
         //@ts-ignore
@@ -642,37 +755,57 @@ programCommand('update_candy_machine')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
+  .option('--new-authority <Pubkey>', 'New Authority. Base58-encoded')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, rpcUrl, price, cacheName } = cmd.opts();
+    const { keypair, env, date, rpcUrl, price, newAuthority, cacheName } =
+      cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = date ? parseDate(date) : null;
     const lamports = price ? parsePrice(price) : null;
+    const newAuthorityKey = newAuthority ? new PublicKey(newAuthority) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
-    const tx = await anchorProgram.rpc.updateCandyMachine(
-      lamports ? new anchor.BN(lamports) : null,
-      secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
-      {
+
+    if (lamports || secondsSinceEpoch) {
+      const tx = await anchorProgram.rpc.updateCandyMachine(
+        lamports ? new anchor.BN(lamports) : null,
+        secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
+        {
+          accounts: {
+            candyMachine,
+            authority: walletKeyPair.publicKey,
+          },
+        },
+      );
+
+      cacheContent.startDate = secondsSinceEpoch;
+      if (date)
+        log.info(
+          ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
+        );
+      if (lamports)
+        log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
+      log.info('update_candy_machine finished', tx);
+    }
+
+    if (newAuthorityKey) {
+      const tx = await anchorProgram.rpc.updateAuthority(newAuthorityKey, {
         accounts: {
           candyMachine,
           authority: walletKeyPair.publicKey,
         },
-      },
-    );
+      });
 
-    cacheContent.startDate = secondsSinceEpoch;
+      cacheContent.authority = newAuthorityKey.toBase58();
+      log.info(` - updated authority: ${newAuthorityKey.toBase58()}`);
+      log.info('update_authority finished', tx);
+    }
+
     saveCache(cacheName, env, cacheContent);
-    if (date)
-      log.info(
-        ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
-      );
-    if (lamports)
-      log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
-    log.info('update_candy_machine finished', tx);
   });
 
 programCommand('mint_one_token')
@@ -685,9 +818,38 @@ programCommand('mint_one_token')
 
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
-    const tx = await mint(keypair, env, configAddress, rpcUrl);
+    const tx = await mint(
+      keypair,
+      env,
+      configAddress,
+      cacheContent.program.uuid,
+      rpcUrl,
+    );
 
     log.info('mint_one_token finished', tx);
+  });
+
+programCommand('mint_tokens')
+  .option('-n, --number <number>', 'Number of tokens to mint', '1')
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
+
+    const parsedNumber = parseInt(number);
+
+    const cacheContent = loadCache(cacheName, env);
+    const configAddress = new PublicKey(cacheContent.program.config);
+    for (let i = 0; i < parsedNumber; i++) {
+      await mint(
+        keypair,
+        env,
+        configAddress,
+        cacheContent.program.uuid,
+        rpcUrl,
+      );
+      log.info(`token ${i} minted`);
+    }
+
+    log.info(`minted ${parsedNumber} tokens`);
   });
 
 programCommand('sign')
@@ -735,6 +897,24 @@ programCommand('sign_all')
     );
   });
 
+programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
+  const { env, cacheName, keypair } = cmd.opts();
+
+  const cacheContent = loadCache(cacheName, env);
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+
+  const accountsByCreatorAddress = await getAccountsByCreatorAddress(
+    cacheContent.candyMachineAddress,
+    anchorProgram.provider.connection,
+  );
+  const addresses = accountsByCreatorAddress.map(it => {
+    return new PublicKey(it[0].mint).toBase58();
+  });
+
+  console.log(JSON.stringify(addresses, null, 2));
+});
+
 programCommand('generate_art_configurations')
   .argument('<directory>', 'Directory containing traits named from 0-n', val =>
     fs.readdirSync(`${val}`),
@@ -766,8 +946,12 @@ programCommand('create_generative_art')
     'Location of the traits configuration file',
     './traits-configuration.json',
   )
+  .option(
+    '-o, --output-location <string>',
+    'If you wish to do image generation elsewhere, skip it and dump randomized sets to file',
+  )
   .action(async (directory, cmd) => {
-    const { numberOfImages, configLocation } = cmd.opts();
+    const { numberOfImages, configLocation, outputLocation } = cmd.opts();
 
     log.info('Loaded configuration file');
 
@@ -780,9 +964,14 @@ programCommand('create_generative_art')
     log.info('JSON files have been created within the assets directory');
 
     // 2. piecemeal generate the images
-    await createGenerativeArt(configLocation, randomSets);
+    if (!outputLocation) {
+      await createGenerativeArt(configLocation, randomSets);
+      log.info('Images have been created successfully!');
+    } else {
+      fs.writeFileSync(outputLocation, JSON.stringify(randomSets));
 
-    log.info('Images have been created successfully!');
+      log.info('Traits written!');
+    }
   });
 
 function programCommand(name: string) {
