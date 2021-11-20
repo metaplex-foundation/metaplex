@@ -107,8 +107,6 @@ export async function arweaveUpload(
   const metadataFile = result.messages?.find(
     m => m.filename === 'manifest.json',
   );
-  // THIS MIGHT BE FUCKED
-  //MIGHT NEED TO BE HARDCODED TO BE PNG
   const imageFile = result.messages?.find(
     m => m.filename === `image${imageExtension}`,
   );
