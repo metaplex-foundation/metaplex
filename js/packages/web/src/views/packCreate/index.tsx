@@ -42,8 +42,6 @@ export const PackCreateView = (): ReactElement => {
   const { accountByMint } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
-  // const [designForm] = Form.useForm<InfoFormState>();
-
   const {
     selectedItems,
     selectedVouchers,
@@ -204,17 +202,6 @@ export const PackCreateView = (): ReactElement => {
             setPackState={setPackState}
           />
         )}
-
-        {/* {step === CreatePackSteps.SalesSettings && (
-          <SalesSettingsStep
-            redeemEndDate={redeemEndDate}
-            setPackState={setPackState}
-          />
-        )} */}
-
-        {/*{step === CreatePackSteps.DesignAndInfo && (
-          <DesignAndInfoStep form={designForm} setPackState={setPackState} />
-        )}*/}
 
         {step === CreatePackSteps.ReviewAndMint && (
           <ReviewAndMintStep
