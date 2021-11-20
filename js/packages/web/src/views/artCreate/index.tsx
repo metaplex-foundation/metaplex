@@ -23,7 +23,6 @@ import {
   MAX_METADATA_LEN,
   useConnection,
   IMetadataExtension,
-  Attribute,
   MetadataCategory,
   useConnectionConfig,
   Creator,
@@ -34,7 +33,7 @@ import {
   StringPublicKey,
   WRAPPED_SOL_MINT,
   getAssetCostToStore,
-  LAMPORT_MULTIPLIER
+  LAMPORT_MULTIPLIER,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -56,7 +55,7 @@ const { Text } = Typography;
 
 export const ArtCreateView = () => {
   const connection = useConnection();
-  const { env } = useConnectionConfig();
+  const { endpoint } = useConnectionConfig();
   const wallet = useWallet();
   const [alertMessage, setAlertMessage] = useState<string>();
   const { step_param }: { step_param: string } = useParams();
@@ -123,7 +122,7 @@ export const ArtCreateView = () => {
       const _nft = await mintNFT(
         connection,
         wallet,
-        env,
+        endpoint.name,
         files,
         metadata,
         setNFTcreateProgress,
@@ -1129,7 +1128,13 @@ const LaunchStep = (props: {
             suffix="%"
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} tokenInfo={useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString())} />
+            <AmountLabel
+              title="Cost to Create"
+              amount={cost.toFixed(5)}
+              tokenInfo={useTokenList().tokenMap.get(
+                WRAPPED_SOL_MINT.toString(),
+              )}
+            />
           ) : (
             <Spin />
           )}

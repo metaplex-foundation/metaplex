@@ -38,7 +38,6 @@ export const SetupVariables: FC<Variables> = ({
     >
       <div ref={ref}>
         {storeOwnerAddress && <p>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS={storeOwnerAddress}</p>}
-        {storeAddress && <p>REACT_APP_STORE_ADDRESS={storeAddress}</p>}
       </div>
     </Card>
   );

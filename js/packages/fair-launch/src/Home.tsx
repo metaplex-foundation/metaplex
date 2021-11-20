@@ -168,14 +168,17 @@ function getPhase(
   const phaseOneEnd = toDate(fairLaunch?.state.data.phaseOneEnd)?.getTime();
   const phaseTwoEnd = toDate(fairLaunch?.state.data.phaseTwoEnd)?.getTime();
   const candyMachineGoLive = toDate(candyMachine?.state.goLiveDate)?.getTime();
-
   if (phaseOne && curr < phaseOne) {
     return Phase.Phase0;
   } else if (phaseOneEnd && curr <= phaseOneEnd) {
     return Phase.Phase1;
   } else if (phaseTwoEnd && curr <= phaseTwoEnd) {
     return Phase.Phase2;
-  } else if (!fairLaunch?.state.phaseThreeStarted) {
+  } else if (
+    !fairLaunch?.state.phaseThreeStarted &&
+    phaseTwoEnd &&
+    curr > phaseTwoEnd
+  ) {
     return Phase.Lottery;
   } else if (
     fairLaunch?.state.phaseThreeStarted &&
@@ -186,7 +189,6 @@ function getPhase(
   } else if (fairLaunch?.state.phaseThreeStarted) {
     return Phase.Phase3;
   }
-
   return Phase.Unknown;
 }
 
@@ -204,11 +206,7 @@ const FAIR_LAUNCH_LOTTERY_SIZE =
   1 + // bump
   8; // size of bitmask ones
 
-const isWinner = (
-  fairLaunch: FairLaunchAccount | undefined,
-  fairLaunchBalance: number,
-): boolean => {
-  if (fairLaunchBalance > 0) return true;
+const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
   if (
     !fairLaunch?.lottery.data ||
     !fairLaunch?.lottery.data.length ||
@@ -272,10 +270,7 @@ const Home = (props: HomeProps) => {
     try {
       setIsMinting(true);
       if (wallet.connected && candyMachine?.program && wallet.publicKey) {
-        if (
-          fairLaunch?.ticket.data?.state.unpunched &&
-          isWinner(fairLaunch, fairLaunchBalance)
-        ) {
+        if (fairLaunch?.ticket.data?.state.unpunched && isWinner(fairLaunch)) {
           await onPunchTicket();
         }
 
@@ -374,11 +369,29 @@ const Home = (props: HomeProps) => {
           console.log('Problem getting fair launch token balance');
           console.log(e);
         }
-        setContributed(
-          (
-            state.state.currentMedian || state.state.data.priceRangeStart
-          ).toNumber() / LAMPORTS_PER_SOL,
-        );
+        if (contributed === 0) {
+          const phase = getPhase(state, undefined);
+
+          if (phase === Phase.Phase1) {
+            const ticks =
+              (state.state.data.priceRangeEnd.toNumber() -
+                state.state.data.priceRangeStart.toNumber()) /
+              state.state.data.tickSize.toNumber();
+            const randomTick = Math.round(Math.random() * ticks);
+
+            setContributed(
+              (state.state.data.priceRangeStart.toNumber() +
+                randomTick * state.state.data.tickSize.toNumber()) /
+                LAMPORTS_PER_SOL,
+            );
+          } else {
+            setContributed(
+              (
+                state.state.currentMedian || state.state.data.priceRangeStart
+              ).toNumber() / LAMPORTS_PER_SOL,
+            );
+          }
+        }
       } catch (e) {
         console.log('Problem getting fair launch state');
         console.log(e);
@@ -404,22 +417,29 @@ const Home = (props: HomeProps) => {
     props.candyMachineId,
     props.connection,
     props.fairLaunchId,
+    contributed,
   ]);
 
   const min = formatNumber.asNumber(fairLaunch?.state.data.priceRangeStart);
   const max = formatNumber.asNumber(fairLaunch?.state.data.priceRangeEnd);
   const step = formatNumber.asNumber(fairLaunch?.state.data.tickSize);
   const median = formatNumber.asNumber(fairLaunch?.state.currentMedian);
+  const phase = getPhase(fairLaunch, candyMachine);
+  console.log('Phase', phase);
   const marks = [
     {
       value: min || 0,
       label: `${min} SOL`,
     },
     // TODO:L
-    {
-      value: median || 0,
-      label: `${median}`,
-    },
+    ...(phase === Phase.Phase1
+      ? []
+      : [
+          {
+            value: median || 0,
+            label: `${median}`,
+          },
+        ]),
     // display user comitted value
     // {
     //   value: 37,
@@ -537,8 +557,6 @@ const Home = (props: HomeProps) => {
     }
   };
 
-  const phase = getPhase(fairLaunch, candyMachine);
-
   const candyMachinePredatesFairLaunch =
     candyMachine?.state.goLiveDate &&
     fairLaunch?.state.data.phaseTwoEnd &&
@@ -631,6 +649,14 @@ const Home = (props: HomeProps) => {
               />
             )}
 
+            {phase === Phase.Unknown && !candyMachine && (
+              <Header
+                phaseName={'Loading...'}
+                desc={'Waiting for you to connect your wallet.'}
+                date={undefined}
+              />
+            )}
+
             {phase === Phase.Phase4 && (
               <Header
                 phaseName={
@@ -705,7 +731,7 @@ const Home = (props: HomeProps) => {
                       </Alert>
                     </div>
                   )}
-                {[Phase.Phase1, Phase.Phase2].includes(phase) &&
+                {[Phase.Phase2].includes(phase) &&
                   fairLaunch.state.currentMedian &&
                   fairLaunch?.ticket?.data?.amount &&
                   !fairLaunch?.ticket?.data?.state.withdrawn &&
@@ -747,20 +773,32 @@ const Home = (props: HomeProps) => {
             {[Phase.Phase1, Phase.Phase2].includes(phase) && (
               <>
                 <Grid style={{ marginTop: 40, marginBottom: 20 }}>
-                  <ValueSlider
-                    min={min}
-                    marks={marks}
-                    max={max}
-                    step={step}
-                    value={contributed}
-                    onChange={(ev, val) => setContributed(val as any)}
-                    valueLabelDisplay="auto"
-                    style={{
-                      width: 'calc(100% - 40px)',
-                      marginLeft: 20,
-                      height: 30,
-                    }}
-                  />
+                  {contributed > 0 ? (
+                    <ValueSlider
+                      min={min}
+                      marks={marks}
+                      max={max}
+                      step={step}
+                      value={contributed}
+                      onChange={(ev, val) => setContributed(val as any)}
+                      valueLabelDisplay="auto"
+                      style={{
+                        width: 'calc(100% - 40px)',
+                        marginLeft: 20,
+                        height: 30,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <CircularProgress />
+                    </div>
+                  )}
                 </Grid>
               </>
             )}
@@ -797,7 +835,7 @@ const Home = (props: HomeProps) => {
 
                 {[Phase.Phase3].includes(phase) && (
                   <>
-                    {isWinner(fairLaunch, fairLaunchBalance) && (
+                    {isWinner(fairLaunch) && (
                       <MintButton
                         onClick={onPunchTicket}
                         variant="contained"
@@ -809,7 +847,7 @@ const Home = (props: HomeProps) => {
                       </MintButton>
                     )}
 
-                    {!isWinner(fairLaunch, fairLaunchBalance) && (
+                    {!isWinner(fairLaunch) && (
                       <MintButton
                         onClick={onRefundTicket}
                         variant="contained"
@@ -828,7 +866,8 @@ const Home = (props: HomeProps) => {
                 {phase === Phase.Phase4 && (
                   <>
                     {(!fairLaunch ||
-                      isWinner(fairLaunch, fairLaunchBalance)) && (
+                      isWinner(fairLaunch) ||
+                      fairLaunchBalance > 0) && (
                       <MintContainer>
                         <MintButton
                           disabled={
@@ -855,7 +894,7 @@ const Home = (props: HomeProps) => {
                       </MintContainer>
                     )}
 
-                    {!isWinner(fairLaunch, fairLaunchBalance) && (
+                    {!isWinner(fairLaunch) && (
                       <MintButton
                         onClick={onRefundTicket}
                         variant="contained"
@@ -899,7 +938,8 @@ const Home = (props: HomeProps) => {
                     if (
                       !fairLaunch ||
                       phase === Phase.Lottery ||
-                      isWinner(fairLaunch, fairLaunchBalance)
+                      isWinner(fairLaunch) ||
+                      fairLaunchBalance > 0
                     ) {
                       setRefundExplainerOpen(true);
                     } else {
@@ -1157,7 +1197,10 @@ const Home = (props: HomeProps) => {
                   color="textPrimary"
                   style={{ fontWeight: 'bold' }}
                 >
-                  ◎ {formatNumber.format(median)}
+                  ◎{' '}
+                  {phase === Phase.Phase0 || phase === Phase.Phase1
+                    ? '???'
+                    : formatNumber.format(median)}
                 </Typography>
               </Grid>
               <Grid container md={4} direction="column">

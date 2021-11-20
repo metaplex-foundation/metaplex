@@ -1,5 +1,5 @@
 import { BN } from '@project-serum/anchor';
-import { PublicKey, AccountInfo } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 export class Creator {
   address: PublicKey;
@@ -51,11 +51,6 @@ export class ConfigData {
     this.retainAuthority = args.retainAuthority;
   }
 }
-
-export type AccountAndPubkey = {
-  pubkey: string;
-  account: AccountInfo<Buffer>;
-};
 
 export enum MetadataKey {
   Uninitialized = 0,
