@@ -60,11 +60,13 @@ type ProcessedBundleFilePairs = {
 type UploadGeneratorResult = Omit<ProcessedBundleFilePairs, 'dataItems'>;
 
 // The limit for the cumulated size of filepairs to include in a single bundle.
-// arBundles has a limit of 250MB, we use our own limit way below that to
-// lower the risk for having to re-upload filepairs if the matching manifests
-// upload fail on voluminous collections.
+// arBundles has a limit of 250MB, we use our own limit way below that to:
+// - account for the bundling overhead (tags, headers, ...)
+// - lower the risk of having to re-upload voluminous filepairs
+// - lower the risk for OOM crashes of the Node.js process
+// - provide feedback to the user as the collection is bundles & uploaded progressively
 // Change at your own risk.
-const BUNDLE_SIZE_BYTE_LIMIT = 30 * 1000 * 1000;
+const BUNDLE_SIZE_BYTE_LIMIT = 50 * 1000 * 1000;
 
 /**
  * Tags to include with every individual transaction.
