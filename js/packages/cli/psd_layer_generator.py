@@ -19,7 +19,6 @@ from psd_tools.psd.image_resources import LayerGroupEnabledIDs
 ####~~~ END OF PACKAGE IMPORTS ~~~####
 
 
-#### GENERATIVE ART FUNCTIONS ####
 
 def showLayers(psd, layer, sub_layer=None):
     print("Setting layer to visible - " + str(layer), str(sub_layer))
@@ -37,24 +36,8 @@ def showLayers(psd, layer, sub_layer=None):
     return psd
 
 
-def hideLayers(psd,layer, sub_layer=None):
-    group_layer = next(filter(lambda x: x.name == layer, psd))
-    
-    if group_layer.is_group():
-        if sub_layer:
-            group_child_layer = next(filter(lambda x: x.name == sub_layer, group_layer))
-            group_child_layer.visible = False
-        else:
-            for layer in group_layer:
-                layer.visible = False
-    group_layer.visible = False
-
-    print("Setting layer to visible - " + str(layer), str(sub_layer))
-    return psd
-
-
 def saveImage(psd, individualImageNumber, outputFolder):
-    image = psd.compose(force = True)
+    image = psd.composite(force = True)
     nameForImage = str(individualImageNumber) + ".png"
     pathForImage = os.path.join(outputFolder, nameForImage)
     image.save(pathForImage)
@@ -62,17 +45,14 @@ def saveImage(psd, individualImageNumber, outputFolder):
 
 
 ##The main image creation step##
-def createImages (psd, traits_file, output_dir, effects_layer, offset):
+def createImages (photoshop_file, traits_file, output_dir, effects_layer, offset):
     f = open(traits_file)
  
     data = json.load(f)
     individual_image_number = offset
-
-    for val in data[0].items():
-        if val[0] != "id":
-            psd = hideLayers(psd, val[0], None)
-
     for data_set in data[offset:]:
+        psd = PSDImage.open(photoshop_file)
+
         print("Starting to create image number: " + str(individual_image_number))
    
         for val in data_set.items():
@@ -83,12 +63,6 @@ def createImages (psd, traits_file, output_dir, effects_layer, offset):
      
         saveImage(psd, individual_image_number, output_dir)
         
-        for val in data_set.items():
-            if val[0] != "id":
-                psd = hideLayers(psd, val[0], None)
-        if effects_layer:
-            psd = hideLayers(psd, effects_layer, None)
-      
         print("Finished creating image number: " + str(individual_image_number))
         print("-----------------------------------------------------")
         individual_image_number += 1
@@ -98,10 +72,9 @@ def createImages (psd, traits_file, output_dir, effects_layer, offset):
 
 #### THE MAIN PROGRAM ####
 def main(photoshop_file, output_dir, traits_file, effects_layer, offset):  
-    psd = PSDImage.open(photoshop_file)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    createImages (psd, traits_file, output_dir, effects_layer, offset)
+    createImages (photoshop_file, traits_file, output_dir, effects_layer, offset)
     return print('Program Completed')
 
 ####~~~ END THE MAIN PROGRAM ~~~####
