@@ -13,15 +13,13 @@ function makeCreateImageWithCanvas(order, width, height) {
     return async function createImage(image) {
       const start = Date.now();
       const ID = parseInt(image.id, 10) - 1;
-      await Promise.all(
-        order.map(async cur => {
-          const imageLocation = `${TRAITS_DIRECTORY}/${cur}/${image[cur]}`;
-          const loadedImage = await loadImage(imageLocation);
-          context.patternQuality = 'best';
-          context.quality = 'best';
-          context.drawImage(loadedImage, 0, 0, width, height);
-        }),
-      );
+      for (const cur of order) {
+        const imageLocation = `${TRAITS_DIRECTORY}/${cur}/${image[cur]}`;
+        const loadedImage = await loadImage(imageLocation);
+        context.patternQuality = 'best';
+        context.quality = 'best';
+        context.drawImage(loadedImage, 0, 0, width, height);
+      }
       const buffer = canvas.toBuffer('image/png');
       context.clearRect(0, 0, width, height);
       const optimizedImage = await imagemin.buffer(buffer, {
