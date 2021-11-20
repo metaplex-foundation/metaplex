@@ -64,8 +64,9 @@ export async function arweaveUpload(
   index,
 ) {
   const fsStat = await stat(image);
+  const imageExtension = path.extname(image);
   const estimatedManifestSize = estimateManifestSize([
-    'image.png',
+    `image${imageExtension}`,
     'metadata.json',
   ]);
   const storageCost = await fetchAssetCostToStore([
@@ -96,8 +97,8 @@ export async function arweaveUpload(
   data.append('transaction', tx['txid']);
   data.append('env', env);
   data.append('file[]', fs.createReadStream(image), {
-    filename: `image.png`,
-    contentType: 'image/png',
+    filename: `image${imageExtension}`,
+    contentType: `image/${imageExtension.replace('.', '')}`,
   });
   data.append('file[]', manifestBuffer, 'metadata.json');
 
@@ -106,12 +107,14 @@ export async function arweaveUpload(
   const metadataFile = result.messages?.find(
     m => m.filename === 'manifest.json',
   );
+  // THIS MIGHT BE FUCKED
+  //MIGHT NEED TO BE HARDCODED TO BE PNG
   const imageFile = result.messages?.find(
-    m => m.filename === 'image.png',
+    m => m.filename === `image${imageExtension}`,
   );
   if (metadataFile?.transactionId) {
     const link = `https://arweave.net/${metadataFile.transactionId}`;
-    const imageLink = `https://arweave.net/${imageFile.transactionId}?ext=png`;
+    const imageLink = `https://arweave.net/${imageFile.transactionId}?ext=${imageExtension.replace('.', '')}`;
     log.debug(`File uploaded: ${link}`);
     return [link, imageLink];
   } else {
