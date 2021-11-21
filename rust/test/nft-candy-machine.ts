@@ -297,6 +297,7 @@ describe("nft-candy-machine", function () {
             price: new anchor.BN(1000000000),
             itemsAvailable: new anchor.BN(10),
             goLiveDate: null,
+            secondaryPrice: null,
           },
           {
             accounts: {
@@ -688,6 +689,7 @@ describe("nft-candy-machine", function () {
             price: new anchor.BN(1),
             itemsAvailable: new anchor.BN(5),
             goLiveDate: null,
+            secondaryPrice: null,
           },
           {
             accounts: {
@@ -924,7 +926,7 @@ describe("nft-candy-machine", function () {
     });
   });
 
-  describe.only("secondary_token", function () {
+  describe("secondary_token", function () {
     beforeEach(async function () {
       const config = await anchor.web3.Keypair.generate();
       this.config = config;
@@ -1019,7 +1021,6 @@ describe("nft-candy-machine", function () {
             accounts: {
               candyMachine,
               wallet: this.walletToken,
-              secondaryWallet: this.secondaryWalletToken,
               config: this.config.publicKey,
               authority: this.authority.publicKey,
               payer: myWallet.publicKey,
@@ -1031,6 +1032,11 @@ describe("nft-candy-machine", function () {
                 pubkey: this.tokenMint.publicKey,
                 isWritable: false,
                 isSigner: true,
+              },
+              {
+                pubkey: this.secondaryWalletToken,
+                isWritable: false,
+                isSigner: false,
               },
               {
                 pubkey: this.secondaryTokenMint.publicKey,
@@ -1186,7 +1192,6 @@ describe("nft-candy-machine", function () {
             candyMachine: candyMachine,
             payer: this.authority.publicKey,
             wallet: this.walletToken,
-            secondaryWallet: this.secondaryWalletToken,
             mint: mint.publicKey,
             metadata,
             masterEdition,
@@ -1208,6 +1213,11 @@ describe("nft-candy-machine", function () {
               pubkey: transferAuthority.publicKey,
               isWritable: false,
               isSigner: true,
+            },
+            {
+              pubkey: this.secondaryWalletToken,
+              isWritable: true,
+              isSigner: false,
             },
             {
               pubkey: secondaryPayingToken,
@@ -1371,7 +1381,6 @@ describe("nft-candy-machine", function () {
             candyMachine: candyMachine,
             payer: this.authority.publicKey,
             wallet: this.walletToken,
-            secondaryWallet: this.secondaryWalletToken,
             mint: mint.publicKey,
             metadata,
             masterEdition,
@@ -1393,6 +1402,11 @@ describe("nft-candy-machine", function () {
               pubkey: transferAuthority.publicKey,
               isWritable: false,
               isSigner: true,
+            },
+            {
+              pubkey: this.secondaryWalletToken,
+              isWritable: true,
+              isSigner: false,
             },
             {
               pubkey: secondaryPayingToken,

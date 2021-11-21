@@ -79,12 +79,14 @@ pub mod nft_candy_machine {
             })?;
 
             if let Some(secondary_mint) = candy_machine.secondary_token_mint {
-                let secondary_token_account_info = &ctx.remaining_accounts[2];
+                let secondary_wallet = &ctx.remaining_accounts[2];
+                let secondary_token_account_info = &ctx.remaining_accounts[3];
                 let transfer_authority_info = &ctx.remaining_accounts[1];
                 let secondary_token_account: spl_token::state::Account =
                     assert_initialized(&secondary_token_account_info)?;
 
                 assert_owned_by(&secondary_token_account_info, &spl_token::id())?;
+                assert_owned_by(&secondary_wallet, &spl_token::id())?;
 
                 if secondary_token_account.mint != secondary_mint {
                     return Err(ErrorCode::MintMismatch.into());
@@ -98,8 +100,7 @@ pub mod nft_candy_machine {
 
                     spl_token_transfer(TokenTransferParams {
                         source: secondary_token_account_info.clone(),
-                        // This might be wrong
-                        destination: ctx.accounts.secondary_wallet.to_account_info(),
+                        destination: secondary_wallet.to_account_info(),
                         authority: transfer_authority_info.clone(),
                         authority_signer_seeds: &[],
                         token_program: ctx.accounts.token_program.to_account_info(),
@@ -429,14 +430,15 @@ pub mod nft_candy_machine {
 
             candy_machine.token_mint = Some(*token_mint_info.key);
 
-            if ctx.remaining_accounts.len() > 1 {
-                let secondary_token_mint_info = &ctx.remaining_accounts[1];
+            if ctx.remaining_accounts.len() > 2 {
+                let secondary_wallet = &ctx.remaining_accounts[1];
+                let secondary_token_mint_info = &ctx.remaining_accounts[2];
                 let _token_mint: Mint = assert_initialized(&secondary_token_mint_info)?;
                 let secondary_token_account: spl_token::state::Account =
-                    assert_initialized(&ctx.accounts.secondary_wallet)?;
+                    assert_initialized(&secondary_wallet)?;
 
                 assert_owned_by(&secondary_token_mint_info, &spl_token::id())?;
-                assert_owned_by(&ctx.accounts.secondary_wallet, &spl_token::id())?;
+                assert_owned_by(&secondary_wallet, &spl_token::id())?;
 
                 msg!("len: {:?}", secondary_token_account.mint);
                 msg!("len: {:?}", secondary_token_mint_info.key);
@@ -498,8 +500,6 @@ pub struct InitializeCandyMachine<'info> {
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(constraint= wallet.owner == &spl_token::id() || (wallet.data_is_empty() && wallet.lamports() > 0) )]
     wallet: AccountInfo<'info>,
-    #[account(constraint= wallet.owner == &spl_token::id() || (wallet.data_is_empty() && wallet.lamports() > 0) )]
-    secondary_wallet: AccountInfo<'info>,
     #[account(has_one=authority)]
     config: ProgramAccount<'info, Config>,
     #[account(signer, constraint= authority.data_is_empty() && authority.lamports() > 0)]
@@ -552,8 +552,6 @@ pub struct MintNFT<'info> {
     payer: Signer<'info>,
     #[account(mut)]
     wallet: UncheckedAccount<'info>,
-    #[account(mut)]
-    secondary_wallet: UncheckedAccount<'info>,
     // With the following accounts we aren't using anchor macros because they are CPI'd
     // through to token-metadata which will do all the validations we need on them.
     #[account(mut)]
