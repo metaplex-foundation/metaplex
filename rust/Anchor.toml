@@ -2,10 +2,13 @@
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [programs.localnet]
+nft_candy_machine = "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
+
+[programs.devnet]
 nft_candy_machine = "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
 
 [programs.mainnet]
@@ -20,7 +23,6 @@ test = "yarn test"
 members = ["nft-candy-machine"]
 
 [test.validator]
-ledger = "test-three"
 url = "https://api.mainnet-beta.solana.com"
 warp_slot = "1"
 slots_per_epoch = "33"
@@ -34,3 +36,19 @@ address = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 
 [[test.clone]]
 address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+
+[[test.clone]]
+address = "faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j"
+
+[[test.clone]]
+address = "hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk"
+
+[[test.clone]]
+address = "qntmGodpGkrM42mN68VCZHXnKqDCT8rdY23wFcXCLPd"
+
+# Program data for `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`
+[[test.clone]]
+address = "PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT"
+
+[[test.clone]]
+address = "EDshWM3jBy2YUszMiFLAFLx3WkbtqR9An7JZzvg22R1P"

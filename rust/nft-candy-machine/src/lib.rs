@@ -107,7 +107,6 @@ pub mod nft_candy_machine {
                         amount: secondary_price,
                     })?;
                 }
-                // Throw an error
             }
         } else {
             if ctx.accounts.payer.lamports() < candy_machine.data.price {
