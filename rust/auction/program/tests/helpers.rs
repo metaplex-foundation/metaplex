@@ -1,3 +1,10 @@
+use metaplex_auction::{
+    instruction,
+    processor::{
+        CancelBidArgs, ClaimBidArgs, CreateAuctionArgs, CreateAuctionArgsV2, EndAuctionArgs,
+        PlaceBidArgs, PriceFloor, StartAuctionArgs, WinnerLimit,
+    },
+};
 use solana_program::{hash::Hash, program_pack::Pack, pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{
@@ -5,13 +12,6 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
     transport::TransportError,
-};
-use metaplex_auction::{
-    instruction,
-    processor::{
-        CancelBidArgs, ClaimBidArgs, CreateAuctionArgs, CreateAuctionArgsV2, EndAuctionArgs,
-        PlaceBidArgs, PriceFloor, StartAuctionArgs, WinnerLimit,
-    },
 };
 
 fn string_to_array(value: &str) -> Result<[u8; 32], TransportError> {
@@ -172,7 +172,7 @@ pub async fn create_auction(
                     price_floor,
                     gap_tick_size_percentage,
                     tick_size,
-                    name: string_to_array(name)?,
+                    name: Some(string_to_array(name)?),
                     instant_sale_price,
                 },
             )],
@@ -365,6 +365,7 @@ pub async fn claim_bid(
             bidder.pubkey(),
             bidder_spl_account.pubkey(),
             *mint,
+            None,
             ClaimBidArgs {
                 resource: *resource,
             },

@@ -227,6 +227,7 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
+  const [purchaseFinished, setPurchaseFinished] = useState<boolean>(false);
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -406,7 +407,7 @@ export const AuctionCard = ({
       wallet.publicKey &&
       auctionView.auction.info.bidState.type == BidStateType.EnglishAuction
     ) {
-      let winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
+      const winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
         wallet.publicKey.toBase58(),
       );
       if (winnerIndex === null)
@@ -769,7 +770,7 @@ export const AuctionCard = ({
             <Spin />
           ) : (
             auctionView.isInstantSale &&
-            !isAlreadyBought && (
+            !isAlreadyBought && !purchaseFinished && (
               <Button
                 type="primary"
                 size="large"
