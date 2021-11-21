@@ -137,13 +137,15 @@ describe("nft-candy-machine", function () {
   );
 
   const connection = new anchor.web3.Connection(
-    "http://127.0.0.1:8899",
+    "https://api.devnet.solana.com/",
+    // "http://127.0.0.1:8899",
     "recent"
   );
 
   // Address of the deployed program.
   const programId = new anchor.web3.PublicKey(
-    "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
+    "H8Le4ajukMFML7TvJciaFxnpYyTjK2CMpZ2jSaSCYJny"
+    // "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
     // "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
   );
 

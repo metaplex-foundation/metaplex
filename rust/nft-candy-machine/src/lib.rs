@@ -17,7 +17,8 @@ use {
     spl_token::state::Mint,
     std::cell::Ref,
 };
-anchor_lang::declare_id!("DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1");
+anchor_lang::declare_id!("H8Le4ajukMFML7TvJciaFxnpYyTjK2CMpZ2jSaSCYJny");
+// anchor_lang::declare_id!("DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1");
 // anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
 
 const PREFIX: &str = "candy_machine";
@@ -250,11 +251,16 @@ pub mod nft_candy_machine {
         ctx: Context<UpdateCandyMachine>,
         price: Option<u64>,
         go_live_date: Option<i64>,
+        secondary_price: Option<u64>,
     ) -> ProgramResult {
         let candy_machine = &mut ctx.accounts.candy_machine;
 
         if let Some(p) = price {
             candy_machine.data.price = p;
+        }
+
+        if let Some(new_secondary_price) = secondary_price {
+            candy_machine.data.secondary_price = Some(new_secondary_price);
         }
 
         if let Some(go_l) = go_live_date {

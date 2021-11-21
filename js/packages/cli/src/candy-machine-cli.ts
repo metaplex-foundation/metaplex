@@ -477,13 +477,14 @@ programCommand('verify')
 
 programCommand('verify_price')
   .option('-p, --price <string>')
+  .option('-s, --secondary-price <string>')
   .option('--cache-path <string>')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName, rpcUrl, cachePath } = cmd.opts();
+    const { keypair, env, price, secondaryPrice, cacheName, rpcUrl, cachePath } = cmd.opts();
     const lamports = parsePrice(price);
 
     if (isNaN(lamports)) {
@@ -516,6 +517,15 @@ programCommand('verify_price')
 
     if (lamports != candyMachineLamports) {
       throw new Error(`Expected price and CandyMachine's price do not match!`);
+    }
+
+    if (secondaryPrice) {
+      const candyMachineSecondaryPrice = machine.data.secondaryPrice.toNumber();
+
+      log.info(`Candy machine secondary price is: ${candyMachineSecondaryPrice}`);
+      if (secondaryPrice != candyMachineSecondaryPrice) {
+        throw new Error(`Expected secondary price and CandyMachine's secondary price do not match!`);
+      }
     }
 
     log.info(`Good to go!`);
@@ -617,12 +627,25 @@ programCommand('create_candy_machine')
     '1',
   )
   .option(
+    '--secondary-price <string>',
+    'Price denominated in secondary-spl-token override',
+    '0',
+  )
+  .option(
     '-t, --spl-token <string>',
     'SPL token used to price NFT mint. To use SOL leave this empty.',
   )
   .option(
     '-a, --spl-token-account <string>',
     'SPL token account that receives mint payments. Only required if spl-token is specified.',
+  )
+  .option(
+    '--secondary-spl-token <string>',
+    'Additional SPL token used to price NFT mint. Requires `spl-token` to be specified.',
+  )
+  .option(
+    '--secondary-spl-token-account <string>',
+    'Secondary SPL token account that receives mint payments. Only required if --secondary-spl-token is specified.',
   )
   .option(
     '-s, --sol-treasury-account <string>',
@@ -637,9 +660,12 @@ programCommand('create_candy_machine')
       keypair,
       env,
       price,
+      secondaryPrice,
       cacheName,
       splToken,
       splTokenAccount,
+      secondarySplToken,
+      secondarySplTokenAccount,
       solTreasuryAccount,
       rpcUrl,
     } = cmd.opts();
@@ -699,6 +725,51 @@ programCommand('create_candy_machine')
         isWritable: false,
         isSigner: false,
       });
+
+      if (secondarySplToken) {
+        console.info('secondary!')
+        if (!secondarySplTokenAccount) {
+          throw new Error(
+            'If secondary-spl-token is set, secondary-spl-token-account must also be set',
+          );
+        }
+
+        const secondarySplTokenKey = new PublicKey(secondarySplToken);
+        const secondarySplTokenAccountKey = new PublicKey(secondarySplTokenAccount);
+
+        const secondaryToken = new Token(
+          anchorProgram.provider.connection,
+          secondarySplTokenKey,
+          TOKEN_PROGRAM_ID,
+          walletKeyPair,
+        );
+
+        const secondaryMintInfo = await secondaryToken.getMintInfo();
+        if (!secondaryMintInfo.isInitialized) {
+          throw new Error(`The specified secondary-spl-token is not initialized`);
+        }
+        const secondaryTokenAccount = await secondaryToken.getAccountInfo(secondarySplTokenAccountKey);
+        if (!secondaryTokenAccount.isInitialized) {
+          throw new Error(`The specified secondary-spl-token-account is not initialized`);
+        }
+        if (!secondaryTokenAccount.mint.equals(secondarySplTokenKey)) {
+          throw new Error(
+            `The secondary-spl-token-account's mint (${secondaryTokenAccount.mint.toString()}) does not match specified secondary-spl-token ${secondarySplTokenKey.toString()}`,
+          );
+        }
+
+        parsedPrice = parsePrice(price, 10 ** secondaryMintInfo.decimals);
+        remainingAccounts.push({
+          pubkey: secondarySplTokenAccountKey,
+          isWritable: false,
+          isSigner: false,
+        });
+        remainingAccounts.push({
+          pubkey: secondarySplTokenKey,
+          isWritable: false,
+          isSigner: false,
+        });
+      }
     }
 
     if (solTreasuryAccount) {
@@ -717,6 +788,7 @@ programCommand('create_candy_machine')
         price: new anchor.BN(parsedPrice),
         itemsAvailable: new anchor.BN(Object.keys(cacheContent.items).length),
         goLiveDate: null,
+        secondaryPrice: secondaryPrice ? new anchor.BN(secondaryPrice) : null,
       },
       {
         accounts: {
@@ -745,13 +817,14 @@ programCommand('update_candy_machine')
     'timestamp - eg "04 Dec 1995 00:12:00 GMT" or "now"',
   )
   .option('-p, --price <string>', 'SOL price')
+  .option('-s, --secondary-price <string>', 'secondary SPL token price')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
   .option('--new-authority <Pubkey>', 'New Authority. Base58-encoded')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, rpcUrl, price, newAuthority, cacheName } =
+    const { keypair, env, date, rpcUrl, price, secondaryPrice, newAuthority, cacheName } =
       cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
@@ -764,10 +837,11 @@ programCommand('update_candy_machine')
 
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
 
-    if (lamports || secondsSinceEpoch) {
+    if (lamports || secondaryPrice || secondsSinceEpoch) {
       const tx = await anchorProgram.rpc.updateCandyMachine(
         lamports ? new anchor.BN(lamports) : null,
         secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
+        secondaryPrice ? new anchor.BN(secondaryPrice) : null,
         {
           accounts: {
             candyMachine,
@@ -777,12 +851,21 @@ programCommand('update_candy_machine')
       );
 
       cacheContent.startDate = secondsSinceEpoch;
-      if (date)
+      if (date) {
         log.info(
           ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
         );
-      if (lamports)
+      }
+
+      if (lamports) {
         log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
+      }
+
+      if (secondaryPrice) {
+        log.info(` - updated secondary price: ${secondaryPrice}`);
+      }
+
+
       log.info('update_candy_machine finished', tx);
     }
 
@@ -986,7 +1069,7 @@ function programCommand(name: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function setLogLevel(value, prev) {
+function setLogLevel(value: any, prev: any) {
   if (value === undefined || value === null) {
     return;
   }
