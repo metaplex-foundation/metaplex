@@ -823,33 +823,14 @@ programCommand('mint_one_token')
     log.info('mint_one_token finished', tx);
   });
 
-programCommand('mint_tokens')
-  .option('-n, --number <number>', 'Number of tokens to mint', '1')
-  .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
-
-    const parsedNumber = parseInt(number);
-
-    const cacheContent = loadCache(cacheName, env);
-    const configAddress = new PublicKey(cacheContent.program.config);
-    for (let i = 0; i < parsedNumber; i++) {
-      await mint(
-        keypair,
-        env,
-        configAddress,
-        cacheContent.program.uuid,
-        rpcUrl,
-      );
-      log.info(`token ${i} minted`);
-    }
-
-    log.info(`minted ${parsedNumber} tokens`);
-  });
-
 programCommand('mint_multiple_tokens')
   .option('-n, --number <string>', 'Number of tokens')
-  .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, number } = cmd.opts();
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (_, cmd) => {
+    const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
 
     const NUMBER_OF_NFTS_TO_MINT = parseInt(number, 10);
     const cacheContent = loadCache(cacheName, env);
@@ -858,8 +839,14 @@ programCommand('mint_multiple_tokens')
     log.info(`Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...`);
 
     const mintToken = async index => {
-      const tx = await mint(keypair, env, configAddress);
-      log.info(`transaction ${index} complete`, tx);
+      const tx = await mint(
+        keypair,
+        env,
+        configAddress,
+        cacheContent.program.uuid,
+        rpcUrl,
+      );
+      log.info(`transaction ${index + 1} complete`, tx);
 
       if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
         log.info('minting another token...');
@@ -869,6 +856,7 @@ programCommand('mint_multiple_tokens')
 
     await mintToken(0);
 
+    log.info(`minted ${NUMBER_OF_NFTS_TO_MINT} tokens`);
     log.info('mint_multiple_tokens finished');
   });
 
