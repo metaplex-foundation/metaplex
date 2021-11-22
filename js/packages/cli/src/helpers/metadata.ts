@@ -64,7 +64,7 @@ export async function createMetadataFiles(
       creators,
       description,
       seller_fee_basis_points,
-      randomizedSets[i],
+      shuffled[i],
       collection,
     );
 
