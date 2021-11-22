@@ -618,6 +618,11 @@ const fetchNeedsTemporalSigner = async (
 
 export type ClaimProps = {};
 
+type ClaimTransactions = {
+  setup : Transaction | null,
+  claim : Transaction,
+};
+
 export const Claim = (
   props : RouteComponentProps<ClaimProps>,
 ) => {
@@ -668,7 +673,7 @@ export const Claim = (
   const [editable, setEditable] = React.useState(!allFieldsPopulated);
 
   // temporal verification
-  const [transaction, setTransaction] = React.useState<Transaction | null>(null);
+  const [transaction, setTransaction] = React.useState<ClaimTransactions | null>(null);
   const [OTPStr, setOTPStr] = React.useState("");
 
   // async computed
@@ -762,31 +767,52 @@ export const Claim = (
       throw new Error(`Internal error: PDA generated when distributing to wallet directly`);
     }
 
-    const transaction = new Transaction({
+    const signersOf = (instrs : Array<TransactionInstruction>) => {
+      const signers = new Set<PublicKey>();
+      for (const instr of instrs) {
+        for (const key of instr.keys)
+          if (key.isSigner)
+            signers.add(key.pubkey);
+      }
+      return signers;
+    };
+
+    const recentBlockhash = (await connection.getRecentBlockhash("singleGossip")).blockhash;
+    let setupTx : Transaction | null = null;
+    if (instructions.length > 1) {
+      setupTx = new Transaction({
+        feePayer: wallet.publicKey,
+        recentBlockhash,
+      });
+
+      const setupInstrs = instructions.slice(0, -1);
+      const setupSigners = signersOf(setupInstrs);
+      console.log(`Expecting the following setup signers: ${[...setupSigners].map(s => s.toBase58())}`);
+      setupTx.add(...setupInstrs);
+      setupTx.setSigners(...setupSigners);
+
+      if (extraSigners.length > 0) {
+        setupTx.partialSign(...extraSigners);
+      }
+    }
+
+    const claimTx = new Transaction({
       feePayer: wallet.publicKey,
-      recentBlockhash: (await connection.getRecentBlockhash("singleGossip")).blockhash,
+      recentBlockhash,
     });
 
-    const signers = new Set<PublicKey>();
-    for (const instr of instructions) {
-      transaction.add(instr);
-      for (const key of instr.keys)
-        if (key.isSigner)
-          signers.add(key.pubkey);
-    }
-    console.log(`Expecting the following signers: ${[...signers].map(s => s.toBase58())}`);
-    transaction.setSigners(...signers);
-
-    if (extraSigners.length > 0) {
-      transaction.partialSign(...extraSigners);
-    }
+    const claimInstrs = instructions.slice(-1);
+    const claimSigners = signersOf(claimInstrs);
+    console.log(`Expecting the following claim signers: ${[...claimSigners].map(s => s.toBase58())}`);
+    claimTx.add(...claimInstrs);
+    claimTx.setSigners(...claimSigners);
 
     const txnNeedsTemporalSigner =
-        transaction.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
+        claimTx.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
     if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       const otpQuery : { [key: string] : any } = {
         method: "send",
-        transaction: bs58.encode(transaction.serializeMessage()),
+        transaction: bs58.encode(claimTx.serializeMessage()),
         seeds: pdaSeeds,
         comm: commMethod,
       };
@@ -841,12 +867,15 @@ export const Claim = (
       });
     }
 
-    return transaction;
+    return {
+      setup: setupTx,
+      claim: claimTx,
+    };
   };
 
   const verifyOTP = async (
     e : React.SyntheticEvent,
-    transaction : Transaction | null,
+    transaction : ClaimTransactions | null,
   ) => {
     e.preventDefault();
 
@@ -859,7 +888,7 @@ export const Claim = (
     }
 
     const txnNeedsTemporalSigner =
-        transaction.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
+        transaction.claim.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
     if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       // TODO: distinguish between OTP failure and transaction-error. We can try
       // again on the former but not the latter
@@ -903,19 +932,37 @@ export const Claim = (
         throw new Error(`Could not decode transaction signature ${data.body}`);
       }
 
-      transaction.addSignature(GUMDROP_TEMPORAL_SIGNER, sig);
+      transaction.claim.addSignature(GUMDROP_TEMPORAL_SIGNER, sig);
     }
 
     let fullySigned;
     try {
-      fullySigned = await wallet.signTransaction(transaction);
+      fullySigned = await wallet.signAllTransactions(
+        transaction.setup === null
+        ? [transaction.claim]
+        : [transaction.setup, transaction.claim]
+      );
     } catch {
       throw new Error("Failed to sign transaction");
     }
 
+    const setupResult = await sendSignedTransaction({
+      connection,
+      signedTransaction: fullySigned[0],
+    });
+    console.log(setupResult);
+    notify({
+      message: "Claim setup succeeded",
+      description: (
+        <HyperLink href={explorerLinkFor(setupResult.txid, connection)}>
+          View transaction on explorer
+        </HyperLink>
+      ),
+    });
+
     const claimResult = await sendSignedTransaction({
       connection,
-      signedTransaction: fullySigned,
+      signedTransaction: fullySigned[1],
     });
 
     console.log(claimResult);
