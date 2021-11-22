@@ -20,6 +20,16 @@ pub struct UpdateMetadataAccountArgs {
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+/// Args for update call
+pub struct UpdateMetadataAccountArgsV2 {
+    pub data: Option<Data>,
+    pub update_authority: Option<Pubkey>,
+    pub primary_sale_happened: Option<bool>,
+    pub is_mutable: Option<bool>,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 /// Args for create call
 pub struct CreateMetadataAccountArgs {
     /// Note that unique metadatas are disabled for now.
@@ -58,6 +68,11 @@ pub enum MetadataInstruction {
     ///   0. `[writable]` Metadata account
     ///   1. `[signer]` Update authority key
     UpdateMetadataAccount(UpdateMetadataAccountArgs),
+
+    /// Update a Metadata with is_mutable as a parameter
+    ///   0. `[writable]` Metadata account
+    ///   1. `[signer]` Update authority key
+    UpdateMetadataAccountV2(UpdateMetadataAccountArgsV2),
 
     /// Register a Metadata as a Master Edition V1, which means Editions can be minted.
     /// Henceforth, no further tokens will be mintable from this primary mint. Will throw an error if more than one
@@ -304,6 +319,33 @@ pub fn update_metadata_accounts(
             data,
             update_authority: new_update_authority,
             primary_sale_happened,
+        })
+        .try_to_vec()
+        .unwrap(),
+    }
+}
+
+/// update metadata account v2 instruction
+pub fn update_metadata_accounts_v2(
+    program_id: Pubkey,
+    metadata_account: Pubkey,
+    update_authority: Pubkey,
+    new_update_authority: Option<Pubkey>,
+    data: Option<Data>,
+    primary_sale_happened: Option<bool>,
+    is_mutable: Option<bool>,
+) -> Instruction {
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(metadata_account, false),
+            AccountMeta::new_readonly(update_authority, true),
+        ],
+        data: MetadataInstruction::UpdateMetadataAccountV2(UpdateMetadataAccountArgsV2 {
+            data,
+            update_authority: new_update_authority,
+            primary_sale_happened,
+            is_mutable,
         })
         .try_to_vec()
         .unwrap(),
