@@ -70,3 +70,7 @@ export const useLocalSolanaTokenList = () => {
     fixture: "canned-responses/solana.tokenlist.json",
   });
 };
+
+export function routeForLocalhost(path: string = "/") {
+  return `${path}#/?network=localhost&hotreload=false`;
+}

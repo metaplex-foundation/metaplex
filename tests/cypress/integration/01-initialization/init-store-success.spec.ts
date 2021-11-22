@@ -1,15 +1,11 @@
 import { PhantomWalletMock, WindowWithPhanWalletMock } from "phan-wallet-mock";
-import { connectAndFundWallet } from "../../utils";
+import { connectAndFundWallet, routeForLocalhost } from "../../utils";
 
 import spok from "spok";
 const t = spok.adapters.chaiExpect(expect);
 
 function routeForStoreOwner(key: string) {
   return `/#/?network=localhost&store=${key}`;
-}
-
-function routeForLocalhost(path: string = "/") {
-  return `${path}#/?network=localhost`;
 }
 
 let wallet: PhantomWalletMock;

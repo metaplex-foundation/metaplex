@@ -1,8 +1,9 @@
 import { PhantomWalletMock, WindowWithPhanWalletMock } from "phan-wallet-mock";
+import { routeForLocalhost } from "../../utils";
 
 let wallet: PhantomWalletMock;
 beforeEach(() => {
-  cy.visit("/");
+  cy.visit(routeForLocalhost());
   cy.window().then((win: WindowWithPhanWalletMock) => {
     wallet = win.solana;
   });
