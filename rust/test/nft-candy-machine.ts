@@ -144,7 +144,7 @@ describe("nft-candy-machine", function () {
 
   // Address of the deployed program.
   const programId = new anchor.web3.PublicKey(
-    "H8Le4ajukMFML7TvJciaFxnpYyTjK2CMpZ2jSaSCYJny"
+    "3N1M7EpBgUhcTYwbRZkCmknAda4VRYGRV6UJXFmHbb9w"
     // "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
     // "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
   );
@@ -1080,7 +1080,7 @@ describe("nft-candy-machine", function () {
       }
     });
 
-    it("Is initialized!", async function () {
+    it.only("Is initialized!", async function () {
       // Add your test here.
       const [candyMachine, bump] = await getCandyMachine(
         this.config.publicKey,
@@ -1107,6 +1107,10 @@ describe("nft-candy-machine", function () {
         new anchor.BN(5).toNumber()
       );
       assert.ok(machine.tokenMint.equals(this.tokenMint.publicKey));
+      assert.ok(
+        machine.secondaryTokenMint.equals(this.secondaryTokenMint.publicKey)
+      );
+      assert.ok(machine.secondaryWallet.equals(this.secondaryWalletToken));
     });
 
     it("mints without goLive date", async function () {

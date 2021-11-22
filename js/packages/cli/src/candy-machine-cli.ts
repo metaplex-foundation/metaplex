@@ -727,7 +727,6 @@ programCommand('create_candy_machine')
       });
 
       if (secondarySplToken) {
-        console.info('secondary!')
         if (!secondarySplTokenAccount) {
           throw new Error(
             'If secondary-spl-token is set, secondary-spl-token-account must also be set',
