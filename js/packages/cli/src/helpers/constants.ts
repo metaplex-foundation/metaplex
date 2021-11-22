@@ -15,8 +15,7 @@ export const ARWEAVE_PAYMENT_WALLET = new PublicKey(
   '6FKvsq4ydWFci6nGq9ckbjYMtnmaqAoatz5c9XWjiDuS',
 );
 export const CANDY_MACHINE_PROGRAM_ID = new PublicKey(
-  '3N1M7EpBgUhcTYwbRZkCmknAda4VRYGRV6UJXFmHbb9w',
-  // 'DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1',
+  'H8Le4ajukMFML7TvJciaFxnpYyTjK2CMpZ2jSaSCYJny',
   // 'cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ',
 );
 export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(

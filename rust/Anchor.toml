@@ -9,7 +9,7 @@ wallet = "~/.config/solana/id.json"
 nft_candy_machine = "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
 
 [programs.devnet]
-nft_candy_machine = "3N1M7EpBgUhcTYwbRZkCmknAda4VRYGRV6UJXFmHbb9w"
+nft_candy_machine = "H8Le4ajukMFML7TvJciaFxnpYyTjK2CMpZ2jSaSCYJny"
 
 [programs.mainnet]
 nft_candy_machine = "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"

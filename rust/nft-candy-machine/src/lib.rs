@@ -17,8 +17,7 @@ use {
     spl_token::state::Mint,
     std::cell::Ref,
 };
-anchor_lang::declare_id!("3N1M7EpBgUhcTYwbRZkCmknAda4VRYGRV6UJXFmHbb9w");
-// anchor_lang::declare_id!("DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1");
+anchor_lang::declare_id!("H8Le4ajukMFML7TvJciaFxnpYyTjK2CMpZ2jSaSCYJny");
 // anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
 
 const PREFIX: &str = "candy_machine";

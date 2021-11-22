@@ -144,7 +144,7 @@ describe("nft-candy-machine", function () {
 
   // Address of the deployed program.
   const programId = new anchor.web3.PublicKey(
-    "3N1M7EpBgUhcTYwbRZkCmknAda4VRYGRV6UJXFmHbb9w"
+    "H8Le4ajukMFML7TvJciaFxnpYyTjK2CMpZ2jSaSCYJny"
     // "DCLR49QpGYzmwxoxKmBmL8Pwj8nXtPwkCfjwW6Q45zZ1"
     // "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
   );
@@ -507,12 +507,17 @@ describe("nft-candy-machine", function () {
           },
           signers: [mint, this.authority, myWallet],
           instructions: [
-            program.instruction.updateCandyMachine(null, new anchor.BN(500), {
-              accounts: {
-                candyMachine,
-                authority: this.authority.publicKey,
-              },
-            }),
+            program.instruction.updateCandyMachine(
+              null,
+              new anchor.BN(500),
+              null,
+              {
+                accounts: {
+                  candyMachine,
+                  authority: this.authority.publicKey,
+                },
+              }
+            ),
             anchor.web3.SystemProgram.createAccount({
               fromPubkey: myWallet.publicKey,
               newAccountPubkey: mint.publicKey,
@@ -1080,7 +1085,7 @@ describe("nft-candy-machine", function () {
       }
     });
 
-    it.only("Is initialized!", async function () {
+    it("Is initialized!", async function () {
       // Add your test here.
       const [candyMachine, bump] = await getCandyMachine(
         this.config.publicKey,
