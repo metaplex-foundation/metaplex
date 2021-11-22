@@ -86,7 +86,8 @@ pub mod nft_candy_machine {
                     assert_initialized(&secondary_token_account_info)?;
 
                 assert_owned_by(&secondary_token_account_info, &spl_token::id())?;
-                assert_owned_by(&secondary_wallet, &spl_token::id())?;
+                // Need to check that this destination wallet is owned by the program?
+                // assert_owned_by(&secondary_wallet, &spl_token::id())?;
 
                 if secondary_token_account.mint != secondary_mint {
                     return Err(ErrorCode::MintMismatch.into());
