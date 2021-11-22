@@ -304,10 +304,6 @@ pub enum MetadataError {
     // In the legacy system the reservation needs to be of size one for cpu limit reasons
     #[error("In the legacy system the reservation needs to be of size one for cpu limit reasons")]
     ReservationArrayShouldBeSizeOne,
-
-    /// Is Mutable can only be flipped to false
-    #[error("Is Mutable can only be flipped to false")]
-    IsMutableCanOnlyBeFlippedToFalse,
 }
 
 impl PrintProgramError for MetadataError {

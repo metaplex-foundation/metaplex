@@ -202,7 +202,6 @@ pub mod nft_candy_machine {
                 new_update_authority,
                 None,
                 Some(true),
-                None,
             ),
             &[
                 ctx.accounts.token_metadata_program.to_account_info(),

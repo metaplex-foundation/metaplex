@@ -59,7 +59,6 @@ pub fn process_instruction<'a>(
                 args.data,
                 args.update_authority,
                 args.primary_sale_happened,
-                args.is_mutable,
             )
         }
         MetadataInstruction::DeprecatedCreateMasterEdition(args) => {
@@ -175,7 +174,6 @@ pub fn process_update_metadata_accounts(
     optional_data: Option<Data>,
     update_authority: Option<Pubkey>,
     primary_sale_happened: Option<bool>,
-    is_mutable: Option<bool>,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -211,14 +209,6 @@ pub fn process_update_metadata_accounts(
             metadata.primary_sale_happened = val
         } else {
             return Err(MetadataError::PrimarySaleCanOnlyBeFlippedToTrue.into());
-        }
-    }
-
-    if let Some(val) = is_mutable {
-        if !val {
-            metadata.is_mutable = val
-        } else {
-            return Err(MetadataError::IsMutableCanOnlyBeFlippedToFalse.into());
         }
     }
 
