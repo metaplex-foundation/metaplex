@@ -1,3 +1,5 @@
+// NOTE: cargo test-bpf results in lots of incorrect dead code warnings inside these test/utils
+#![allow(dead_code)]
 mod assert;
 mod edition_marker;
 mod external_price;
