@@ -2,9 +2,6 @@ import { PhantomWalletMock } from "phan-wallet-mock";
 import debug from "debug";
 import { clusterApiUrl } from "@solana/web3.js";
 
-localStorage.debug = "mp-test:*";
-debug.log = console.log.bind(console);
-
 export const logInfo = debug("mp-test:info");
 export const logDebug = debug("mp-test:debug");
 

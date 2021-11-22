@@ -1,11 +1,8 @@
 import { execSync as exec, spawn } from "child_process";
 import { strict as assert } from "assert";
 import { prepareConfig } from "./prepare-config";
-import { logError, logInfo, logDebug, logTrace } from "./utils";
+import { logError, logInfo, logDebug, logTrace, ledgerDir } from "./utils";
 import path from "path";
-
-import { tmpdir } from "os";
-const ledgerDir = path.join(tmpdir(), "metaplex-tests-ledger");
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
