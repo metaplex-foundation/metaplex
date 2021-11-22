@@ -29,7 +29,9 @@ beforeEach(() => {
 
 describe("initializing store and adding creator", () => {
   it("eventually reaches the admin page when clicking init", () => {
-    cy.get("button").contains("Init Store").click();
+    cy.get("button")
+      .contains(/init.+store/i)
+      .click();
 
     cy.contains("Add Creator", { timeout: 20000 });
     cy.contains("Submit");
