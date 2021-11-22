@@ -110,11 +110,12 @@ export async function upload(
               log.info(`Processing file: ${i}, ${imageName}`);
             }
             const manifestPath = image.replace(imageExtension, EXTENSION_JSON);
+			const imageFileName = `image${imageExtension}`;
             const manifestContent = fs
               .readFileSync(manifestPath)
               .toString()
-              .replace(imageName, 'image.png')
-              .replace(imageName, 'image.png');
+              .replace(imageName, imageFileName)
+              .replace(imageName, imageFileName);
             const manifest = JSON.parse(manifestContent);
 
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));

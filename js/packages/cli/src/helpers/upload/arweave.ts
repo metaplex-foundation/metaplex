@@ -50,6 +50,7 @@ function estimateManifestSize(filenames: string[]) {
   };
 
   const data = Buffer.from(JSON.stringify(manifest), 'utf8');
+  console.log(`ARWEAVE MANIFEST: ${data}`);
   log.debug('Estimated manifest size:', data.length);
   return data.length;
 }
@@ -102,11 +103,23 @@ export async function arweaveUpload(
   });
   data.append('file[]', manifestBuffer, 'metadata.json');
 
+  console.log(data);
+  manifest["image"] = manifest["image"].replace('.png', imageExtension);
+  manifest["properties"]["files"] = {
+    uri: `image${imageExtension}`,
+	type: `image/${imageExtension.replace('.', '')}`
+  };
+  console.log(data["_streams"].DelayedStream);
+  console.log(manifest["properties"]["files"]);
+  console.log(manifest);
+  console.log(index);
   const result = await upload(data, manifest, index);
 
   const metadataFile = result.messages?.find(
     m => m.filename === 'manifest.json',
   );
+  // THIS MIGHT BE FUCKED
+  //MIGHT NEED TO BE HARDCODED TO BE PNG
   const imageFile = result.messages?.find(
     m => m.filename === `image${imageExtension}`,
   );
