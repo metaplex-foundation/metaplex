@@ -1,33 +1,30 @@
 import { PhantomWalletMock, WindowWithPhanWalletMock } from "phan-wallet-mock";
-import { connectAndFundWallet, routeForLocalhost } from "../../utils";
+import {
+  connectAndFundWallet,
+  routeForLocalhost,
+  routeForStoreOwner,
+} from "../../utils";
 
 import spok from "spok";
 const t = spok.adapters.chaiExpect(expect);
 
-function routeForStoreOwner(key: string) {
-  return `/#/?network=localhost&store=${key}`;
-}
+describe("initializing store", () => {
+  let wallet: PhantomWalletMock;
+  let storeOwner: string;
+  before(() => {
+    cy.visit(routeForLocalhost())
+      .window()
+      .then((win: WindowWithPhanWalletMock) => {
+        win.localStorage.clear();
+        wallet = win.solana;
+        storeOwner = wallet.publicKey.toBase58();
+      })
+      .then(() => connectAndFundWallet(wallet, 2222))
+      .then(() => cy.visit(routeForStoreOwner(storeOwner)));
+  });
 
-let wallet: PhantomWalletMock;
-let storeOwner: string;
-beforeEach(() => {
-  cy.visit(routeForLocalhost())
-    .window()
-    .then((win: WindowWithPhanWalletMock) => {
-      win.localStorage.clear();
-      wallet = win.solana;
-      storeOwner = wallet.publicKey.toBase58();
-    })
-    .then(() => connectAndFundWallet(wallet, 2222))
-    .then(() => cy.visit(routeForStoreOwner(storeOwner)))
-    .window();
-});
-
-describe("initializing store and adding creator", () => {
   it("eventually reaches the admin page when clicking init", () => {
-    cy.get("button")
-      .contains(/init.+store/i)
-      .click();
+    cy.contains(/init.*store/i).click();
 
     cy.contains("Add Creator", { timeout: 20000 });
     cy.contains("Submit");

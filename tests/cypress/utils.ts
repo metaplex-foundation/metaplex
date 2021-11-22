@@ -74,3 +74,7 @@ export const useLocalSolanaTokenList = () => {
 export function routeForLocalhost(path: string = "/") {
   return `${path}#/?network=localhost&hotreload=false`;
 }
+
+export function routeForStoreOwner(key: string) {
+  return `/#/?network=localhost&store=${key}&hotreload=false`;
+}
