@@ -1,7 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
 import { Layout, Row, Col, Tabs } from 'antd';
-import Masonry from 'react-masonry-css';
 
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
@@ -13,13 +12,6 @@ import { useUserAccounts } from '@oyster/common';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
-
-const breakpointColumnsObj = {
-  default: 4,
-  1100: 3,
-  700: 2,
-  500: 1,
-};
 
 export const ArtworksView = () => {
   const { connected } = useWallet();
@@ -43,15 +35,11 @@ export const ArtworksView = () => {
   }, [connected, setActiveKey]);
 
   const artworkGrid = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
-    >
+    <div className="artwork-grid">
       {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
       {!isLoading &&
-        userItems.map(item => <ItemCard item={item} key={item.pubkey} />)}
-    </Masonry>
+      userItems.map(item => <ItemCard item={item} key={item.pubkey} />)}
+    </div>
   );
 
   const refreshButton = connected && storeIndexer.length !== 0 && (
