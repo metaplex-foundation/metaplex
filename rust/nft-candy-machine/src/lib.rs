@@ -78,7 +78,10 @@ pub mod nft_candy_machine {
                 amount: candy_machine.data.price,
             })?;
 
-            if let Some(secondary_mint) = candy_machine.secondary_token_mint {
+            if let (Some(secondary_mint), Some(configured_secondary_wallet)) = (
+                candy_machine.secondary_token_mint,
+                candy_machine.secondary_wallet,
+            ) {
                 let secondary_wallet = &ctx.remaining_accounts[2];
                 let secondary_token_account_info = &ctx.remaining_accounts[3];
                 let transfer_authority_info = &ctx.remaining_accounts[1];
@@ -86,8 +89,7 @@ pub mod nft_candy_machine {
                     assert_initialized(&secondary_token_account_info)?;
 
                 assert_owned_by(&secondary_token_account_info, &spl_token::id())?;
-                // Need to check that this destination wallet is owned by the program?
-                // assert_owned_by(&secondary_wallet, &spl_token::id())?;
+                assert_eq!(secondary_wallet.key, &configured_secondary_wallet);
 
                 if secondary_token_account.mint != secondary_mint {
                     return Err(ErrorCode::MintMismatch.into());
