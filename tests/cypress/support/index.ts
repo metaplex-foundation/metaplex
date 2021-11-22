@@ -14,15 +14,19 @@
 // ***********************************************************
 
 // Import commands.js using ES2015 syntax:
-import './commands'
-import './routes'
+import "./commands";
+import "./routes";
 
-import { initWalletMockProvider } from 'phan-wallet-mock'
+import { initWalletMockProvider } from "phan-wallet-mock";
+import { useLocalCoingecko, useLocalSolanaTokenList } from "../utils";
 
-Cypress.on('window:before:load', (win) => {
-  initWalletMockProvider(win)
-})
+Cypress.on("window:before:load", (win) => {
+  initWalletMockProvider(win);
+});
 
-before(() => {})
+before(() => {
+  useLocalCoingecko();
+  useLocalSolanaTokenList();
+});
 
-beforeEach(() => {})
+beforeEach(() => {});
