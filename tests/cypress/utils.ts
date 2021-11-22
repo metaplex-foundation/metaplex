@@ -9,8 +9,10 @@ export const MAINNET_BETA = "https://api.metaplex.solana.com";
 export const LOCALNET = "http://localhost:8899";
 export const DEVNET = clusterApiUrl("devnet");
 
-export const COINGECKO_PRICE_URL =
-  "https://api.coingecko.com/api/v3/simple/price";
+const COINGECKO_PRICE_URL = "https://api.coingecko.com/api/v3/simple/price";
+
+const SOLANA_TOKEN_LIST_URL =
+  "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json";
 
 export const connectWallet = (wallet: PhantomWalletMock) =>
   cy
@@ -45,7 +47,9 @@ export const logWalletBalance = async (wallet: PhantomWalletMock) => {
 };
 
 export const useLocalCoingecko = () => {
-  console.log("WIP: intercepting");
+  console.log(
+    "🔗Intercepting requests to coingecko and returning canned results"
+  );
   return cy.intercept(`${COINGECKO_PRICE_URL}*`, (req) => {
     const ids = req.query.ids;
     let res = {};
@@ -55,5 +59,14 @@ export const useLocalCoingecko = () => {
       console.warn(`Requested unknown price ${req.query.ids}`);
     }
     req.reply(res);
+  });
+};
+
+export const useLocalSolanaTokenList = () => {
+  console.log(
+    "🔗Intercepting requests to solana token list and returning canned results"
+  );
+  return cy.intercept(`${SOLANA_TOKEN_LIST_URL}*`, {
+    fixture: "canned-responses/solana.tokenlist.json",
   });
 };
