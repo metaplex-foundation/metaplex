@@ -25,8 +25,6 @@ export const PackView = () => {
     [metadata, editionId]
   );
 
-  const isUserPackPage = !!editionId;
-
   const handleCloseModal = async () => {
     setOpenModal(false);
   };
@@ -51,7 +49,6 @@ export const PackView = () => {
                 <Card
                   key={i}
                   value={block}
-                  isHoverable={false}
                 />
               ))}
           </div>

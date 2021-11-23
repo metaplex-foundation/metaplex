@@ -35,10 +35,6 @@
     }
   }
 
-  &__block--hoverable:hover &__square {
-    transform: rotateY(180deg);
-  }
-
   &__square {
     position: relative;
     width: 100%;
@@ -58,20 +54,10 @@
       backface-visibility: hidden;
     }
 
-    &__front,
-    &__back {
+    &__front {
       background: #313131;
       cursor: default;
       border-radius: 12px;
-    }
-
-    &__back {
-      transform: rotateY(180deg);
-
-      span {
-        font-size: 24px;
-        color: @grey-30;
-      }
     }
   }
 
