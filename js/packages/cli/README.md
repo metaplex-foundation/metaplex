@@ -190,7 +190,9 @@ yarn run package:linuxb
 OR
 yarn run package:linux
 OR
-yarn run package:macos
+yarn run package:macos-x64
+OR
+yarn run package:macos-m1
 ```
 
 You can now either use `metaplex` OR the `ts-node cli` to execute the following commands.
