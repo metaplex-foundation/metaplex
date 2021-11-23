@@ -19,6 +19,7 @@ import {
   TOKEN_ENTANGLEMENT_PROGRAM_ID,
   TOKEN_ENTANGLER,
   ESCROW,
+  COLLECTOOOOOORS_PROGRAM_ID,
   B,
   A,
 } from './constants';
@@ -542,6 +543,31 @@ export async function loadTokenEntanglementProgream(
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
+export async function loadCollectoooooorsProgram(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(
+    COLLECTOOOOOORS_PROGRAM_ID,
+    provider,
+  );
+
+  return new anchor.Program(idl, COLLECTOOOOOORS_PROGRAM_ID, provider);
+}
+
 export async function getTokenAmount(
   anchorProgram: anchor.Program,
   account: anchor.web3.PublicKey,
@@ -570,7 +596,7 @@ export async function getTokenAmount(
 export const getBalance = async (
   account: anchor.web3.PublicKey,
   env: string,
-  customRpcUrl?: string
+  customRpcUrl?: string,
 ): Promise<number> => {
   if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
   const connection = new anchor.web3.Connection(
@@ -578,7 +604,7 @@ export const getBalance = async (
     customRpcUrl || web3.clusterApiUrl(env),
   );
   return await connection.getBalance(account);
-}
+};
 
 export async function getProgramAccounts(
   connection: anchor.web3.Connection,

@@ -593,6 +593,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "collectoooooors"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "metaplex-auction",
+ "metaplex-token-metadata 0.0.1",
+ "solana-program",
+ "spl-associated-token-account",
+]
+
+[[package]]
 name = "combine"
 version = "3.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
