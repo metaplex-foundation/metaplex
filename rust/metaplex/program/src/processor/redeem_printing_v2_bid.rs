@@ -96,7 +96,7 @@ pub fn mint_edition<'a>(
 }
 
 pub fn create_or_update_prize_tracking<'a>(
-    program_id: &'a Pubkey,
+    program_id: &Pubkey,
     auction_manager_info: &AccountInfo<'a>,
     prize_tracking_ticket_info: &AccountInfo<'a>,
     metadata_account_info: &AccountInfo<'a>,
@@ -166,9 +166,9 @@ pub fn create_or_update_prize_tracking<'a>(
     Ok(supply_snapshot)
 }
 
-pub fn process_redeem_printing_v2_bid<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_redeem_printing_v2_bid(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     edition_offset: u64,
     user_provided_win_index: u64,
 ) -> ProgramResult {

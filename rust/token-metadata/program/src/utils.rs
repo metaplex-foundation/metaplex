@@ -520,21 +520,21 @@ pub fn calculate_supply_change<'a>(
 
 #[allow(clippy::too_many_arguments)]
 pub fn mint_limited_edition<'a>(
-    program_id: &'a Pubkey,
+    program_id: &Pubkey,
     master_metadata: Metadata,
-    new_metadata_account_info: &'a AccountInfo<'a>,
-    new_edition_account_info: &'a AccountInfo<'a>,
-    master_edition_account_info: &'a AccountInfo<'a>,
-    mint_info: &'a AccountInfo<'a>,
-    mint_authority_info: &'a AccountInfo<'a>,
-    payer_account_info: &'a AccountInfo<'a>,
-    update_authority_info: &'a AccountInfo<'a>,
-    token_program_account_info: &'a AccountInfo<'a>,
-    system_account_info: &'a AccountInfo<'a>,
-    rent_info: &'a AccountInfo<'a>,
+    new_metadata_account_info: &AccountInfo<'a>,
+    new_edition_account_info: &AccountInfo<'a>,
+    master_edition_account_info: &AccountInfo<'a>,
+    mint_info: &AccountInfo<'a>,
+    mint_authority_info: &AccountInfo<'a>,
+    payer_account_info: &AccountInfo<'a>,
+    update_authority_info: &AccountInfo<'a>,
+    token_program_account_info: &AccountInfo<'a>,
+    system_account_info: &AccountInfo<'a>,
+    rent_info: &AccountInfo<'a>,
     // Only present with MasterEditionV1 calls, if present, use edition based off address in res list,
     // otherwise, pull off the top
-    reservation_list_info: Option<&'a AccountInfo<'a>>,
+    reservation_list_info: Option<&AccountInfo<'a>>,
     // Only present with MasterEditionV2 calls, if present, means
     // directing to a specific version, otherwise just pull off the top
     edition_override: Option<u64>,
@@ -779,14 +779,14 @@ pub fn try_from_slice_checked<T: BorshDeserialize>(
     Ok(result)
 }
 
-pub struct CreateMetadataAccountsLogicArgs<'a> {
-    pub metadata_account_info: &'a AccountInfo<'a>,
-    pub mint_info: &'a AccountInfo<'a>,
-    pub mint_authority_info: &'a AccountInfo<'a>,
-    pub payer_account_info: &'a AccountInfo<'a>,
-    pub update_authority_info: &'a AccountInfo<'a>,
-    pub system_account_info: &'a AccountInfo<'a>,
-    pub rent_info: &'a AccountInfo<'a>,
+pub struct CreateMetadataAccountsLogicArgs<'a, 'b> {
+    pub metadata_account_info: &'a AccountInfo<'b>,
+    pub mint_info: &'a AccountInfo<'b>,
+    pub mint_authority_info: &'a AccountInfo<'b>,
+    pub payer_account_info: &'a AccountInfo<'b>,
+    pub update_authority_info: &'a AccountInfo<'b>,
+    pub system_account_info: &'a AccountInfo<'b>,
+    pub rent_info: &'a AccountInfo<'b>,
 }
 
 // This equals the program address of the metadata program:
@@ -918,26 +918,26 @@ pub fn puffed_out_string(s: &String, size: usize) -> String {
     s.clone() + std::str::from_utf8(&array_of_zeroes).unwrap()
 }
 
-pub struct MintNewEditionFromMasterEditionViaTokenLogicArgs<'a> {
-    pub new_metadata_account_info: &'a AccountInfo<'a>,
-    pub new_edition_account_info: &'a AccountInfo<'a>,
-    pub master_edition_account_info: &'a AccountInfo<'a>,
-    pub mint_info: &'a AccountInfo<'a>,
-    pub edition_marker_info: &'a AccountInfo<'a>,
-    pub mint_authority_info: &'a AccountInfo<'a>,
-    pub payer_account_info: &'a AccountInfo<'a>,
-    pub owner_account_info: &'a AccountInfo<'a>,
-    pub token_account_info: &'a AccountInfo<'a>,
-    pub update_authority_info: &'a AccountInfo<'a>,
-    pub master_metadata_account_info: &'a AccountInfo<'a>,
-    pub token_program_account_info: &'a AccountInfo<'a>,
-    pub system_account_info: &'a AccountInfo<'a>,
-    pub rent_info: &'a AccountInfo<'a>,
+pub struct MintNewEditionFromMasterEditionViaTokenLogicArgs<'a, 'b> {
+    pub new_metadata_account_info: &'a AccountInfo<'b>,
+    pub new_edition_account_info: &'a AccountInfo<'b>,
+    pub master_edition_account_info: &'a AccountInfo<'b>,
+    pub mint_info: &'a AccountInfo<'b>,
+    pub edition_marker_info: &'a AccountInfo<'b>,
+    pub mint_authority_info: &'a AccountInfo<'b>,
+    pub payer_account_info: &'a AccountInfo<'b>,
+    pub owner_account_info: &'a AccountInfo<'b>,
+    pub token_account_info: &'a AccountInfo<'b>,
+    pub update_authority_info: &'a AccountInfo<'b>,
+    pub master_metadata_account_info: &'a AccountInfo<'b>,
+    pub token_program_account_info: &'a AccountInfo<'b>,
+    pub system_account_info: &'a AccountInfo<'b>,
+    pub rent_info: &'a AccountInfo<'b>,
 }
 
-pub fn process_mint_new_edition_from_master_edition_via_token_logic<'a>(
-    program_id: &'a Pubkey,
-    accounts: MintNewEditionFromMasterEditionViaTokenLogicArgs<'a>,
+pub fn process_mint_new_edition_from_master_edition_via_token_logic(
+    program_id: &Pubkey,
+    accounts: MintNewEditionFromMasterEditionViaTokenLogicArgs,
     edition: u64,
     ignore_owner_signer: bool,
 ) -> ProgramResult {

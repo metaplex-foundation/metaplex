@@ -122,9 +122,9 @@ pub fn reserve_list_if_needed<'a>(
 
     Ok(())
 }
-pub fn process_redeem_bid<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_redeem_bid(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     // If present, means an auctioneer is collecting this bid and we should disregard bidder metadata
     // and just collect the prize. Can only be set through an inner call with redeem_unused_winning_config_items.
     overwrite_win_index: Option<usize>,

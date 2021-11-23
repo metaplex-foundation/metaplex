@@ -22,20 +22,20 @@ use {
     metaplex_token_metadata::utils::get_supply_off_master_edition,
 };
 
-struct LegacyAccounts<'a> {
-    pub participation_printing_holding_account_info: &'a AccountInfo<'a>,
+struct LegacyAccounts<'a, 'b> {
+    pub participation_printing_holding_account_info: &'a AccountInfo<'b>,
 }
 
-struct V2Accounts<'a> {
-    pub prize_tracking_ticket_info: &'a AccountInfo<'a>,
-    pub new_metadata_account_info: &'a AccountInfo<'a>,
-    pub new_edition_account_info: &'a AccountInfo<'a>,
-    pub master_edition_account_info: &'a AccountInfo<'a>,
-    pub mint_info: &'a AccountInfo<'a>,
-    pub edition_marker_info: &'a AccountInfo<'a>,
-    pub mint_authority_info: &'a AccountInfo<'a>,
-    pub metadata_account_info: &'a AccountInfo<'a>,
-    pub auction_extended_info: &'a AccountInfo<'a>,
+struct V2Accounts<'a, 'b> {
+    pub prize_tracking_ticket_info: &'a AccountInfo<'b>,
+    pub new_metadata_account_info: &'a AccountInfo<'b>,
+    pub new_edition_account_info: &'a AccountInfo<'b>,
+    pub master_edition_account_info: &'a AccountInfo<'b>,
+    pub mint_info: &'a AccountInfo<'b>,
+    pub edition_marker_info: &'a AccountInfo<'b>,
+    pub mint_authority_info: &'a AccountInfo<'b>,
+    pub metadata_account_info: &'a AccountInfo<'b>,
+    pub auction_extended_info: &'a AccountInfo<'b>,
 }
 
 fn legacy_validation(
@@ -63,7 +63,7 @@ fn legacy_validation(
 
 #[allow(clippy::too_many_arguments)]
 fn v2_validation<'a>(
-    program_id: &'a Pubkey,
+    program_id: &Pubkey,
     auction_manager_info: &AccountInfo<'a>,
     store_info: &AccountInfo<'a>,
     vault_info: &AccountInfo<'a>,
@@ -76,7 +76,7 @@ fn v2_validation<'a>(
     destination_info: &AccountInfo<'a>,
     auction_info: &AccountInfo<'a>,
     config: &ParticipationConfigV2,
-    accounts: &V2Accounts<'a>,
+    accounts: &V2Accounts<'_, 'a>,
 ) -> ProgramResult {
     let extended = AuctionDataExtended::from_account_info(accounts.auction_extended_info)?;
     let store = Store::from_account_info(store_info)?;
@@ -144,7 +144,7 @@ fn v2_transfer<'a>(
     rent_info: &AccountInfo<'a>,
     auction_manager_bump: u8,
     me_supply: u64,
-    accounts: &V2Accounts<'a>,
+    accounts: &V2Accounts<'_, 'a>,
 ) -> ProgramResult {
     let actual_edition = me_supply
         .checked_add(1)
@@ -232,9 +232,9 @@ fn charge_for_participation<'a>(
 
 #[allow(clippy::unnecessary_cast)]
 #[allow(clippy::absurd_extreme_comparisons)]
-pub fn process_redeem_participation_bid<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_redeem_participation_bid(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     legacy: bool,
     user_provided_win_index: Option<u64>,
 ) -> ProgramResult {
@@ -263,7 +263,7 @@ pub fn process_redeem_participation_bid<'a>(
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let accept_payment_info = next_account_info(account_info_iter)?;
     let bidder_token_account_info = next_account_info(account_info_iter)?;
-    let auction_extended_info: Option<&AccountInfo>; 
+    let auction_extended_info: Option<&AccountInfo>;
 
     if legacy {
         legacy_accounts = Some(LegacyAccounts {

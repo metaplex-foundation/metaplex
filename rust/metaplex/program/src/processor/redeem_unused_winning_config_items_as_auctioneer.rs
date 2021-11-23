@@ -6,9 +6,9 @@ use {
     },
     solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey},
 };
-pub fn process_redeem_unused_winning_config_items_as_auctioneer<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_redeem_unused_winning_config_items_as_auctioneer(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     args: RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
 ) -> ProgramResult {
     // Be aware, we actually take this overwrite win index, pass it in, and do all sorts of checks with it

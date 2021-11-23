@@ -100,18 +100,18 @@ pub enum Key {
     StoreConfigV1,
 }
 
-pub struct CommonWinningIndexChecks<'a> {
-    pub safety_deposit_info: &'a AccountInfo<'a>,
+pub struct CommonWinningIndexChecks<'a, 'b> {
+    pub safety_deposit_info: &'a AccountInfo<'b>,
     pub winning_index: usize,
     pub auction_manager_v1_ignore_claim: bool,
-    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'b>>,
 }
 
-pub struct PrintingV2CalculationChecks<'a> {
-    pub safety_deposit_info: &'a AccountInfo<'a>,
+pub struct PrintingV2CalculationChecks<'a, 'b> {
+    pub safety_deposit_info: &'a AccountInfo<'b>,
     pub winning_index: usize,
     pub auction_manager_v1_ignore_claim: bool,
-    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'b>>,
     pub short_circuit_total: bool,
     pub edition_offset: u64,
     pub winners: usize,

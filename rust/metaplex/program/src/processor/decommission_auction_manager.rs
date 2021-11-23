@@ -43,9 +43,9 @@ fn set_vault_authority_to_auction_manager_authority<'a>(
     Ok(())
 }
 
-pub fn process_decommission_auction_manager<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_decommission_auction_manager(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 

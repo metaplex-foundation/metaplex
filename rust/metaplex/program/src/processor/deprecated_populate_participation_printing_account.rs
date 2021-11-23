@@ -68,9 +68,9 @@ fn mint_printing_tokens<'a: 'b, 'b>(
 
 #[allow(clippy::unnecessary_cast)]
 #[allow(clippy::absurd_extreme_comparisons)]
-pub fn process_deprecated_populate_participation_printing_account<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_deprecated_populate_participation_printing_account(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let safety_deposit_token_store_info = next_account_info(account_info_iter)?;

@@ -66,9 +66,9 @@ pub fn make_safety_deposit_validation<'a>(
     Ok(())
 }
 
-pub fn process_deprecated_validate_safety_deposit_box_v1<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_deprecated_validate_safety_deposit_box_v1(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let safety_deposit_validation_ticket_info = next_account_info(account_info_iter)?;

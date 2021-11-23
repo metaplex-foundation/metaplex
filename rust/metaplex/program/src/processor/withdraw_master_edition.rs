@@ -19,9 +19,9 @@ use {
     },
 };
 
-pub fn process_withdraw_master_edition<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_withdraw_master_edition(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 

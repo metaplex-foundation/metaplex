@@ -16,18 +16,18 @@ use {
     },
 };
 
-pub fn set_store_logic<'a>(
+pub fn set_store_logic<'a, 'b>(
     public: bool,
     program_id: &Pubkey,
-    auction_program_info: &'a AccountInfo<'a>,
-    token_vault_program_info: &'a AccountInfo<'a>,
-    rent_info: &'a AccountInfo<'a>,
-    system_info: &'a AccountInfo<'a>,
-    token_metadata_program_info: &'a AccountInfo<'a>,
-    token_program_info: &'a AccountInfo<'a>,
-    store_info: &'a AccountInfo<'a>,
-    admin_wallet_info: &'a AccountInfo<'a>,
-    payer_info: &'a AccountInfo<'a>,
+    auction_program_info: &'a AccountInfo<'b>,
+    token_vault_program_info: &'a AccountInfo<'b>,
+    rent_info: &'a AccountInfo<'b>,
+    system_info: &'a AccountInfo<'b>,
+    token_metadata_program_info: &'a AccountInfo<'b>,
+    token_program_info: &'a AccountInfo<'b>,
+    store_info: &'a AccountInfo<'b>,
+    admin_wallet_info: &'a AccountInfo<'b>,
+    payer_info: &'a AccountInfo<'b>,
 ) -> ProgramResult {
     assert_signer(payer_info)?;
     assert_signer(admin_wallet_info)?;
@@ -87,9 +87,9 @@ pub fn set_store_logic<'a>(
     Ok(())
 }
 
-pub fn process_set_store<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_set_store(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     public: bool,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
@@ -119,9 +119,9 @@ pub fn process_set_store<'a>(
     )
 }
 
-pub fn process_set_store_v2<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_set_store_v2(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     public: bool,
     settings_uri: Option<String>,
 ) -> ProgramResult {
@@ -167,7 +167,7 @@ pub fn process_set_store_v2<'a>(
             store_info.key.as_ref(),
         ],
     )?;
-    
+
     if store_config_info.data_is_empty() {
         create_or_allocate_account_raw(
             *program_id,

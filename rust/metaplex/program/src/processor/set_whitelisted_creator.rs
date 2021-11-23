@@ -13,9 +13,9 @@ use {
     },
 };
 
-pub fn process_set_whitelisted_creator<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_set_whitelisted_creator(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     activated: bool,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();

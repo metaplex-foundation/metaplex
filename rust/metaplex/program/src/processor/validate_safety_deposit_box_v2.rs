@@ -68,26 +68,26 @@ pub fn make_safety_deposit_config<'a>(
     Ok(())
 }
 
-pub struct CommonCheckArgs<'a, 'b> {
-    pub program_id: &'a Pubkey,
-    pub auction_manager_info: &'a AccountInfo<'a>,
-    pub metadata_info: &'a AccountInfo<'a>,
-    pub original_authority_lookup_info: &'a AccountInfo<'a>,
-    pub whitelisted_creator_info: &'a AccountInfo<'a>,
-    pub safety_deposit_info: &'a AccountInfo<'a>,
-    pub safety_deposit_token_store_info: &'a AccountInfo<'a>,
-    pub edition_info: &'a AccountInfo<'a>,
-    pub vault_info: &'a AccountInfo<'a>,
-    pub mint_info: &'a AccountInfo<'a>,
-    pub token_metadata_program_info: &'a AccountInfo<'a>,
-    pub auction_manager_store_info: &'a AccountInfo<'a>,
-    pub authority_info: &'a AccountInfo<'a>,
-    pub store: &'b Store,
-    pub auction_manager: &'b dyn AuctionManager,
-    pub metadata: &'b Metadata,
-    pub safety_deposit: &'b SafetyDepositBox,
-    pub vault: &'b Vault,
-    pub winning_config_type: &'b WinningConfigType,
+pub struct CommonCheckArgs<'p, 'a, 'b, 'c> {
+    pub program_id: &'p Pubkey,
+    pub auction_manager_info: &'a AccountInfo<'b>,
+    pub metadata_info: &'a AccountInfo<'b>,
+    pub original_authority_lookup_info: &'a AccountInfo<'b>,
+    pub whitelisted_creator_info: &'a AccountInfo<'b>,
+    pub safety_deposit_info: &'a AccountInfo<'b>,
+    pub safety_deposit_token_store_info: &'a AccountInfo<'b>,
+    pub edition_info: &'a AccountInfo<'b>,
+    pub vault_info: &'a AccountInfo<'b>,
+    pub mint_info: &'a AccountInfo<'b>,
+    pub token_metadata_program_info: &'a AccountInfo<'b>,
+    pub auction_manager_store_info: &'a AccountInfo<'b>,
+    pub authority_info: &'a AccountInfo<'b>,
+    pub store: &'c Store,
+    pub auction_manager: &'c dyn AuctionManager,
+    pub metadata: &'c Metadata,
+    pub safety_deposit: &'c SafetyDepositBox,
+    pub vault: &'c Vault,
+    pub winning_config_type: &'c WinningConfigType,
 }
 
 pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
@@ -184,23 +184,23 @@ pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
     Ok(())
 }
 
-pub struct SupplyLogicCheckArgs<'a, 'b> {
-    pub program_id: &'a Pubkey,
-    pub auction_manager_info: &'a AccountInfo<'a>,
-    pub metadata_info: &'a AccountInfo<'a>,
-    pub edition_info: &'a AccountInfo<'a>,
-    pub metadata_authority_info: &'a AccountInfo<'a>,
-    pub original_authority_lookup_info: &'a AccountInfo<'a>,
-    pub rent_info: &'a AccountInfo<'a>,
-    pub system_info: &'a AccountInfo<'a>,
-    pub payer_info: &'a AccountInfo<'a>,
-    pub token_metadata_program_info: &'a AccountInfo<'a>,
-    pub safety_deposit_token_store_info: &'a AccountInfo<'a>,
-    pub auction_manager: &'b dyn AuctionManager,
-    pub winning_config_type: &'b WinningConfigType,
-    pub metadata: &'b Metadata,
-    pub safety_deposit: &'b SafetyDepositBox,
-    pub store: &'b Store,
+pub struct SupplyLogicCheckArgs<'p, 'a, 'b, 'c> {
+    pub program_id: &'p Pubkey,
+    pub auction_manager_info: &'a AccountInfo<'b>,
+    pub metadata_info: &'a AccountInfo<'b>,
+    pub edition_info: &'a AccountInfo<'b>,
+    pub metadata_authority_info: &'a AccountInfo<'b>,
+    pub original_authority_lookup_info: &'a AccountInfo<'b>,
+    pub rent_info: &'a AccountInfo<'b>,
+    pub system_info: &'a AccountInfo<'b>,
+    pub payer_info: &'a AccountInfo<'b>,
+    pub token_metadata_program_info: &'a AccountInfo<'b>,
+    pub safety_deposit_token_store_info: &'a AccountInfo<'b>,
+    pub auction_manager: &'c dyn AuctionManager,
+    pub winning_config_type: &'c WinningConfigType,
+    pub metadata: &'c Metadata,
+    pub safety_deposit: &'c SafetyDepositBox,
+    pub store: &'c Store,
     pub total_amount_requested: u64,
 }
 
@@ -382,9 +382,9 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
     Ok(())
 }
 
-pub fn process_validate_safety_deposit_box_v2<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+pub fn process_validate_safety_deposit_box_v2(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     safety_deposit_config: SafetyDepositConfig,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
