@@ -64,6 +64,7 @@ import { useInstantSaleState } from './hooks/useInstantSaleState';
 import { useTokenList } from '../../contexts/tokenList';
 import { FundsIssueModal } from "../FundsIssueModal";
 import CongratulationsModal from '../Modals/CongratulationsModal';
+import { CLAIM_STATE, PURCHASE_STATE } from "@metaplex/cli/src/helpers/constants";
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -229,7 +230,6 @@ export const AuctionCard = ({
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
-  const purchaseFinished = false;
   const [isOpenCongratulations, setIsOpenCongratulations] = useState<string>('');
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
@@ -462,7 +462,7 @@ export const AuctionCard = ({
         bids,
       )
         await update();
-        setIsOpenCongratulations(canClaimPurchasedItem ? 'claim' : 'purchase');
+        setIsOpenCongratulations(canClaimPurchasedItem ? CLAIM_STATE : PURCHASE_STATE);
         if (canClaimPurchasedItem) setShowRedeemedBidModal(true);
     } catch (e) {
       console.error(e);
@@ -788,25 +788,17 @@ export const AuctionCard = ({
             <Spin />
           ) : (
             auctionView.isInstantSale &&
-            !isAlreadyBought && !purchaseFinished && (<>
-                <FundsIssueModal
-                  message={"Price"}
-                  minimumFunds={fromLamports(instantSalePrice?.toNumber(), mintInfo)}
-                  currentFunds={balance.balance}
-                  isModalVisible={showFundsIssueModal}
-                  onClose={() => setShowFundsIssueModal(false)}
-                />
-                <Button
-                  type="primary"
-                  size="large"
-                  className="ant-btn secondary-btn"
-                  disabled={loading}
-                  onClick={instantSaleAction}
-                  style={{ marginTop: 20, width: '100%' }}
-                >
-                  {actionButtonContent}
+            !isAlreadyBought && (
+              <Button
+                type="primary"
+                size="large"
+                className="ant-btn secondary-btn"
+                disabled={loading}
+                onClick={instantSaleAction}
+                style={{ marginTop: 20, width: '100%' }}
+              >
+                {actionButtonContent}
               </Button>
-              </>
             )
           ))}
         {!hideDefaultAction && !wallet.connected && (
@@ -946,7 +938,7 @@ export const AuctionCard = ({
         </h3>
       </MetaplexModal>
       <CongratulationsModal
-        isModalVisible={isOpenCongratulations === 'purchase'}
+        isModalVisible={isOpenCongratulations === PURCHASE_STATE}
         onClose={() => setIsOpenCongratulations('')}
         onClickOk={() => window.location.reload()}
         buttonText='Reload'
