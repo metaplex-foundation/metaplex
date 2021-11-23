@@ -51,7 +51,7 @@ export const PackView = () => {
                 <Card
                   key={i}
                   value={block}
-                  isHoverable={isUserPackPage}
+                  isHoverable={false}
                 />
               ))}
           </div>
