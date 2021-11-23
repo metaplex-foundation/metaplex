@@ -8,8 +8,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "cypress": "cypress run",
-    "cypress:headed": "cypress run --headed",
+    "cypress": "cypress run --browser chrome",
+    "cypress:headed": "cypress run --browser chrome --headed",
     "cypress:open": "cypress open",
     "cypress:open-dev": "LAUNCH_DEVTOOLS=1 cypress open",
     "app:start": "(cd ../js/packages/web && yarn start)",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
-    "cypress": "^9.0.0",
+    "cypress": "9.1.0",
     "debug": "^4.3.2",
     "esbuild": "^0.13.14",
     "esbuild-runner": "^2.2.1",
