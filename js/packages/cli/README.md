@@ -6,7 +6,8 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 1. Create a `traits` folder and create a list of directories for the traits (i.e. background, shirt, sunglasses). Look at the `example-traits` for guidance
 2. Run the following command to create a configuration file called `traits-configuration.json`:
-NOTE: The <directory> should be point to your traits folder you created in step 1
+   NOTE: The <directory> should be point to your traits folder you created in step 1
+
 ```
 metaplex generate_art_configurations <directory>
 ts-node cli generate_art_configurations <directory>
@@ -120,6 +121,9 @@ python psd_layer_generator.py -p ./traits.psd -o assets/ -t sets.json -e "FINISH
 
 Where sets is your output from the create generate command, and -e is an optional layer you toggle to true
 for every item. You may need this if you have extra finishing touches.
+
+Remember with PSDs, for each layer folder to have a dummy trait at the top, or else the top layers won't render. [UNDISCLOSED BUG IN PSD READER]
+Also with PSDs, make sure your default visible layer is at the bottom of the folder. Another bug.
 
 ## assets folder
 

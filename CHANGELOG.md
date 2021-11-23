@@ -37,7 +37,7 @@ incremented for features.
 - Ability to add premade customs to your image generation in the candy machine CLI
 - Ability to use PSD instead of PNGs in the candy machine CLI
 - Parallelize with batchSize command the candy machine CLI uploader
-
+- Add ability for a candy machine owner to update existing candies using an old and new cache file
 
 ### Fixes
 
@@ -57,6 +57,8 @@ incremented for features.
 - In Jares first useful contribution we see Jares second rust thing, refunding some millions $ back in unused candy configs to the authorities. Check 'withdraw' in the candy-machine-cli :)
 - Fix build issues preventing CI from passing
 - Remove unneeded code from Packs creation admin
+- Fix issue where ata is not detected during ticket punching in FLP
+- Fix issue where random shuffled array is not using in image generation
 
 ### Breaking
 

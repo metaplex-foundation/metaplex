@@ -237,12 +237,15 @@ export const getMetadata = (
   seller_fee_basis_points: number = 500,
   attrs,
   collection,
+  treatAttributesAsFileNames: boolean,
 ) => {
   const attributes = [];
   for (const prop in attrs) {
     attributes.push({
       trait_type: prop,
-      value: path.parse(attrs[prop]).name,
+      value: treatAttributesAsFileNames
+        ? path.parse(attrs[prop]).name
+        : attrs[prop],
     });
   }
 
