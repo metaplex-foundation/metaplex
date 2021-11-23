@@ -36,6 +36,7 @@ incremented for features.
 - If x then y probability for image generation in the Candy Machine CLI
 - Ability to add premade customs to your image generation in the candy machine CLI
 - Ability to use PSD instead of PNGs in the candy machine CLI
+- Parallelize with batchSize command the candy machine CLI uploader
 
 
 ### Fixes

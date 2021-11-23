@@ -6,7 +6,7 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 1. Create a `traits` folder and create a list of directories for the traits (i.e. background, shirt, sunglasses). Look at the `example-traits` for guidance
 2. Run the following command to create a configuration file called `traits-configuration.json`:
-
+NOTE: The <directory> should be point to your traits folder you created in step 1
 ```
 metaplex generate_art_configurations <directory>
 ts-node cli generate_art_configurations <directory>
@@ -228,6 +228,13 @@ ts-node cli update_candy_machine -k ~/.config/solana/id.json -d "20 Apr 2021 04:
 ```
 metaplex mint_one_token -k ~/.config/solana/id.json
 ts-node cli mint_one_token -k ~/.config/solana/id.json
+```
+
+6. Test mint multiple tokens 
+
+```
+metaplex mint_multiple_tokens -k ~/.config/solana/id.json -n 100
+ts-node cli mint_multiple_tokens -k ~/.config/solana/id.json -n 100
 ```
 
 6. Check if you received any tokens.
