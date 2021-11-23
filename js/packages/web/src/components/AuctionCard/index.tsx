@@ -64,7 +64,6 @@ import { useInstantSaleState } from './hooks/useInstantSaleState';
 import { useTokenList } from '../../contexts/tokenList';
 import { FundsIssueModal } from "../FundsIssueModal";
 import CongratulationsModal from '../Modals/CongratulationsModal';
-import { CLAIM_STATE, PURCHASE_STATE } from "@metaplex/cli/src/helpers/constants";
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -230,7 +229,7 @@ export const AuctionCard = ({
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
-  const [isOpenCongratulations, setIsOpenCongratulations] = useState<string>('');
+  const [isOpenCongratulations, setIsOpenCongratulations] = useState<boolean>(false);
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -462,8 +461,8 @@ export const AuctionCard = ({
         bids,
       );
       await update();
-      setIsOpenCongratulations(canClaimPurchasedItem ? CLAIM_STATE : PURCHASE_STATE);
       if (canClaimPurchasedItem) setShowRedeemedBidModal(true);
+      else setIsOpenCongratulations(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
@@ -938,8 +937,8 @@ export const AuctionCard = ({
         </h3>
       </MetaplexModal>
       <CongratulationsModal
-        isModalVisible={isOpenCongratulations === PURCHASE_STATE}
-        onClose={() => setIsOpenCongratulations('')}
+        isModalVisible={isOpenCongratulations}
+        onClose={() => setIsOpenCongratulations(false)}
         onClickOk={() => window.location.reload()}
         buttonText='Reload'
         content='Reload the page and click claim to receive your NFT. Then check your wallet to confirm it has arrived. It may take a few minutes to process.'
