@@ -22,6 +22,7 @@ import {
   CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
+  getBalance,
   getCandyMachineAddress,
   getProgramAccounts,
   loadCandyProgram,
@@ -58,6 +59,7 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
+  .option('-b, --batchSize <number>', 'Batch size - defaults to 1000')
   .option(
     '-s, --storage <string>',
     'Database to use for storage (arweave, ipfs, aws)',
@@ -94,6 +96,7 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      batchSize,
     } = cmd.opts();
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
@@ -156,6 +159,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
+        batchSize,
       );
 
       if (successful) {
@@ -237,18 +241,20 @@ programCommand('withdraw')
       );
       for (const cg of configs) {
         try {
-          const tx = await withdraw(
-            anchorProgram,
-            walletKeyPair,
-            env,
-            new PublicKey(cg.pubkey),
-            cg.account.lamports,
-            charityPub,
-            cpf,
-          );
-          log.info(
-            `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
-          );
+          if (cg.account.lamports > 0) {
+            const tx = await withdraw(
+              anchorProgram,
+              walletKeyPair,
+              env,
+              new PublicKey(cg.pubkey),
+              cg.account.lamports,
+              charityPub,
+              cpf,
+            );
+            log.info(
+              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+            );
+          }
         } catch (e) {
           log.error(
             `Withdraw has failed for config account ${cg.pubkey} Error: ${e.message}`,
@@ -621,7 +627,7 @@ programCommand('create_candy_machine')
   )
   .option(
     '-s, --sol-treasury-account <string>',
-    'SOL account that receives mint payments.',
+    'SOL account that receives mint payments. Should have minimum 0.1 sol balance',
   )
   .option(
     '-r, --rpc-url <string>',
@@ -697,7 +703,12 @@ programCommand('create_candy_machine')
     }
 
     if (solTreasuryAccount) {
-      wallet = new PublicKey(solTreasuryAccount);
+      const treasuryAccount = new PublicKey(solTreasuryAccount);
+      const treasuryBalance = await getBalance(treasuryAccount, env, rpcUrl);
+      if (treasuryBalance === 0) {
+        throw new Error(`Cannot use treasury account with 0 balance!`);
+      }
+      wallet = treasuryAccount
     }
 
     const config = new PublicKey(cacheContent.program.config);
@@ -818,27 +829,41 @@ programCommand('mint_one_token')
     log.info('mint_one_token finished', tx);
   });
 
-programCommand('mint_tokens')
-  .option('-n, --number <number>', 'Number of tokens to mint', '1')
-  .action(async (directory, cmd) => {
+programCommand('mint_multiple_tokens')
+  .option('-n, --number <string>', 'Number of tokens')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (_, cmd) => {
     const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
 
-    const parsedNumber = parseInt(number);
-
+    const NUMBER_OF_NFTS_TO_MINT = parseInt(number, 10);
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
-    for (let i = 0; i < parsedNumber; i++) {
-      await mint(
+
+    log.info(`Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...`);
+
+    const mintToken = async index => {
+      const tx = await mint(
         keypair,
         env,
         configAddress,
         cacheContent.program.uuid,
         rpcUrl,
       );
-      log.info(`token ${i} minted`);
-    }
+      log.info(`transaction ${index + 1} complete`, tx);
 
-    log.info(`minted ${parsedNumber} tokens`);
+      if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
+        log.info('minting another token...');
+        await mintToken(index + 1);
+      }
+    };
+
+    await mintToken(0);
+
+    log.info(`minted ${NUMBER_OF_NFTS_TO_MINT} tokens`);
+    log.info('mint_multiple_tokens finished');
   });
 
 programCommand('sign')
