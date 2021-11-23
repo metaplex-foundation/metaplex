@@ -37,6 +37,7 @@ incremented for features.
 - Ability to add premade customs to your image generation in the candy machine CLI
 - Ability to use PSD instead of PNGs in the candy machine CLI
 - Parallelize with batchSize command the candy machine CLI uploader
+- Enhanced verify with retries and problem reporting
 
 
 ### Fixes
