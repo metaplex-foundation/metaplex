@@ -8,7 +8,7 @@ const Card = ({
 }: {
   value: number;
   isHoverable?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }) => {
   const cardCls = classNames({
     'pack-view__block': true,

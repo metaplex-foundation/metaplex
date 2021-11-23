@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Row, Col } from 'antd';
 
 import Card from './components/Card';
@@ -27,14 +27,6 @@ export const PackView = () => {
 
   const isUserPackPage = !!editionId;
 
-  const handleCardClick = useCallback(() => {
-    if (!editionId) {
-      return;
-    }
-
-    setOpenModal(true);
-  }, [setOpenModal]);
-
   const handleCloseModal = async () => {
     setOpenModal(false);
   };
@@ -59,7 +51,6 @@ export const PackView = () => {
                 <Card
                   key={i}
                   value={block}
-                  onClick={handleCardClick}
                   isHoverable={isUserPackPage}
                 />
               ))}
