@@ -7,7 +7,6 @@ import {
   useUserAccounts,
   MetaplexModal,
   MetaplexOverlay,
-  formatAmount,
   formatTokenAmount,
   useMint,
   PriceFloorType,
@@ -64,6 +63,7 @@ import { endSale } from './utils/endSale';
 import { useInstantSaleState } from './hooks/useInstantSaleState';
 import { useTokenList } from '../../contexts/tokenList';
 import { FundsIssueModal } from "../FundsIssueModal";
+import CongratulationsModal from '../Modals/CongratulationsModal';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -228,8 +228,9 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
-  const [purchaseFinished, setPurchaseFinished] = useState<boolean>(false);
   const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
+  const purchaseFinished = false;
+  const [isOpenCongratulations, setIsOpenCongratulations] = useState<string>('');
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -459,9 +460,10 @@ export const AuctionCard = ({
         prizeTrackingTickets,
         bidRedemptions,
         bids,
-      );
-      await update();
-      setShowRedeemedBidModal(true);
+      )
+        await update();
+        setIsOpenCongratulations(canClaimPurchasedItem ? 'claim' : 'purchase');
+        if (canClaimPurchasedItem) setShowRedeemedBidModal(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
@@ -489,7 +491,7 @@ export const AuctionCard = ({
     (auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty);
 
-  const { canEndInstantSale, isAlreadyBought } =
+  const { canEndInstantSale, isAlreadyBought, canClaimPurchasedItem } =
     useInstantSaleState(auctionView);
 
   const actionButtonContent = useActionButtonContent(auctionView);
@@ -943,6 +945,13 @@ export const AuctionCard = ({
           to redeem their bids for them right now.
         </h3>
       </MetaplexModal>
+      <CongratulationsModal
+        isModalVisible={isOpenCongratulations === 'purchase'}
+        onClose={() => setIsOpenCongratulations('')}
+        onClickOk={() => window.location.reload()}
+        buttonText='Reload'
+        content='Reload the page and click claim to receive your NFT. Then check your wallet to confirm it has arrived. It may take a few minutes to process.'
+      />
     </div>
   );
 };
