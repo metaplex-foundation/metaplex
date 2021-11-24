@@ -1,11 +1,11 @@
 import fs from "fs";
 import path from "path";
-import { PUBKEY_TO_LABEL, TestPublicKey } from "../../common/public-keys";
+import { PUBKEY_TO_LABEL } from "../../common/public-keys";
 
 const keypairPath = require.resolve("../keypairs/test-creator-keypair.json");
 const configPath = path.join(__dirname, "..", "config", "solana-validator.yml");
 const labels = Object.entries(PUBKEY_TO_LABEL)
-  .map(([pubkey, label]: [pubkey: TestPublicKey, label: string]) => {
+  .map(([pubkey, label]: [pubkey: string, label: string]) => {
     return `${pubkey}: ${label}`;
   })
   .join("\n  ");
