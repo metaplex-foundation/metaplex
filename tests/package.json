@@ -30,6 +30,6 @@
   },
   "dependencies": {
     "@solana/web3.js": "^1.30.2",
-    "phan-wallet-mock": "^0.0.3"
+    "phan-wallet-mock": "^0.1.0"
   }
 }

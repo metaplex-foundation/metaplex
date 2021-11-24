@@ -1336,10 +1336,10 @@ performance-now@^2.1.0:
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"
   integrity sha1-Ywn04OX6kT7BxpMHrjZLSzd8nns=
 
-phan-wallet-mock@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/phan-wallet-mock/-/phan-wallet-mock-0.0.3.tgz#375066b545d56a01b46472e08eddba7dd7156c0e"
-  integrity sha512-l6eyMuEW8H9Yr0iYL2/Y3lnW5NroAJLfHCHH28rDceYKIGtWoZzNHfu3xhSc5+t4AG9BxqA46k4bkE7Jvggzkg==
+phan-wallet-mock@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/phan-wallet-mock/-/phan-wallet-mock-0.1.0.tgz#7f3392ad57cd464795e64865498677d30c222a15"
+  integrity sha512-nitF5I7hRoIFs2ozUwPt/2rYsQEzXBSoImcmOizHwhdZQgHVBqSghDDfCN2OvL3W4MXJ8atoAtzX/ljvifLAoA==
   dependencies:
     "@solana/wallet-adapter-base" "^0.7.0"
     "@solana/web3.js" "^1.30.2"
