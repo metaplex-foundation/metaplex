@@ -65,7 +65,6 @@ import { useInstantSaleState } from './hooks/useInstantSaleState';
 import { useTokenList } from '../../contexts/tokenList';
 import { FundsIssueModal } from "../FundsIssueModal";
 import CongratulationsModal from '../Modals/CongratulationsModal';
-import { SaleStage } from './types';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -233,47 +232,13 @@ export const AuctionCard = ({
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
-  const [isOpenCongratulations, setIsOpenCongratulations] = useState<number>(SaleStage.Hidden);
+  const [isOpenPurchase, setIsOpenPurchase] = useState<boolean>(false);
+  const [isOpenClaim, setIsOpenClaim] = useState<boolean>(false);
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
 
   const { accountByMint } = useUserAccounts();
-
-  const congratulationModalContent = useMemo(() => {
-    switch(isOpenCongratulations) {
-      case SaleStage.Purchase: return 'Reload the page and click claim to receive your NFT. Then check your wallet to confirm it has arrived. It may take a few minutes to process.';
-      case SaleStage.Claim: return `You have claimed your item from ${creators.map(item => ' ' + (item.name || shortenAddress(item.address || '')))}!`;
-    }
-  }, [isOpenCongratulations]);
-
-  const congratulationModalButton = useMemo(() => {
-    switch(isOpenCongratulations) {
-      case SaleStage.Purchase: return 'Reload';
-      case SaleStage.Claim: return 'Got it';
-    }
-  }, [isOpenCongratulations]);
-
-  const congratulationExtraButtonText = useMemo(() => {
-    switch(isOpenCongratulations) {
-      case SaleStage.Purchase: return null;
-      case SaleStage.Claim: return 'View My Items';
-    }
-  }, [isOpenCongratulations]);
-
-  const onClickOk = useCallback(() => {
-    switch (isOpenCongratulations) {
-      case SaleStage.Purchase: return window.location.reload();
-      case SaleStage.Claim: return null;
-    }
-  }, [isOpenCongratulations]);
-
-  const onClickExtraButton = useCallback(() => {
-    switch (isOpenCongratulations) {
-      case SaleStage.Purchase: return null;
-      case SaleStage.Claim: return history.push('/artworks')
-    }
-  }, [isOpenCongratulations])
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
@@ -500,7 +465,8 @@ export const AuctionCard = ({
         bids,
       );
       await update();
-      setIsOpenCongratulations(canClaimPurchasedItem ? SaleStage.Claim : SaleStage.Purchase);
+      if (canClaimPurchasedItem) setIsOpenClaim(true);
+      else setIsOpenPurchase(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
@@ -975,13 +941,19 @@ export const AuctionCard = ({
         </h3>
       </MetaplexModal>
       <CongratulationsModal
-        isModalVisible={!!isOpenCongratulations}
-        onClose={() => setIsOpenCongratulations(SaleStage.Hidden)}
-        onClickOk={onClickOk}
-        buttonText={congratulationModalButton}
-        content={congratulationModalContent}
-        extraButtonText={congratulationExtraButtonText}
-        onClickExtraButton={onClickExtraButton}
+        isModalVisible={isOpenPurchase}
+        onClose={() => setIsOpenPurchase(false)}
+        onClickOk={() => window.location.reload()}
+        buttonText='Reload'
+        content='Reload the page and click claim to receive your NFT. Then check your wallet to confirm it has arrived. It may take a few minutes to process.'
+      />
+      <CongratulationsModal
+        isModalVisible={isOpenClaim}
+        onClose={() => setIsOpenClaim(false)}
+        buttonText='Got it'
+        content={`You have claimed your item from ${creators.map(item => ' ' + (item.name || shortenAddress(item.address || '')))}!`}
+        extraButtonText='View My Items'
+        onClickExtraButton={() => history.push('/artworks')}
       />
     </div>
   );
