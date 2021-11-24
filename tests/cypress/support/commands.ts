@@ -23,18 +23,3 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
-
-import { PhantomWalletMock, WindowWithPhanWalletMock } from 'phan-wallet-mock'
-
-type KChain = keyof Cypress.Chainable
-// @ts-ignore
-const connectAndFundWallet: Cypress.Chainable[KChain] = async (
-  win: WindowWithPhanWalletMock,
-  sol = 1
-) => {
-  const wallet = win.solana
-  await wallet.connect()
-  await wallet.requestAirdrop(sol)
-}
-
-Cypress.Commands.add('connectAndFundWallet' as KChain, connectAndFundWallet)
