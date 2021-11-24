@@ -1,6 +1,6 @@
-import { PhantomWalletMock } from "phan-wallet-mock";
+import { PhantomWalletMock, WindowWithPhanWalletMock } from "phan-wallet-mock";
 import debug from "debug";
-import { clusterApiUrl } from "@solana/web3.js";
+import { clusterApiUrl, Keypair } from "@solana/web3.js";
 
 export const logInfo = debug("mp-test:info");
 export const logDebug = debug("mp-test:debug");
@@ -39,6 +39,26 @@ export const connectAndFundWallet = async (
         balance.toFixed(2)
       );
     });
+};
+
+export const ensureFundedStore = (sol = 1) => {
+  let wallet: PhantomWalletMock;
+  let storeOwner: string;
+  const connectWallet = cy
+    .visit(routeForLocalhost())
+    .window()
+    .then((win: WindowWithPhanWalletMock) => {
+      win.localStorage.clear();
+      wallet = win.solana;
+      storeOwner = wallet.publicKey.toBase58();
+      return wallet.connect();
+    })
+    .then(() => connectAndFundWallet(wallet, sol));
+
+  return connectWallet
+    .then(() => cy.contains(/init.*store/i).click())
+    .then(() => cy.contains(storeOwner, { timeout: 20000 }))
+    .then(() => ({ wallet, storeOwner }));
 };
 
 export const logWalletBalance = async (wallet: PhantomWalletMock) => {
