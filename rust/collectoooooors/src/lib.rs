@@ -12,14 +12,19 @@ use metaplex_token_metadata::{
         create_master_edition,
     },
     utils::{
-        create_or_allocate_account_raw,
         puffed_out_string,
     },
 };
 
 use solana_program::{
-    program::{invoke_signed},
+    program::{
+        invoke,
+        invoke_signed,
+    },
+    system_instruction,
 };
+
+use std::convert::TryInto;
 
 pub mod merkle_proof;
 
@@ -27,6 +32,56 @@ declare_id!("9R4RuSGk3raAVf6TJ7o1ixywcDW89p1MSo2ns9LEBXNK");
 
 pub const PREFIX: &[u8] = b"collectoooooors";
 pub const MAX_URI_LENGTH : usize = 200; // smaller?
+
+/// Create account or use existing space
+#[inline(always)]
+pub fn create_or_allocate_account_raw<'a>(
+    program_id: Pubkey,
+    new_account_info: &AccountInfo<'a>,
+    rent_sysvar_info: &AccountInfo<'a>,
+    system_program_info: &AccountInfo<'a>,
+    payer_info: &AccountInfo<'a>,
+    size: usize,
+    signer_seeds: &[&[u8]],
+) -> ProgramResult {
+    let rent = &Rent::from_account_info(rent_sysvar_info)?;
+    let required_lamports = rent
+        .minimum_balance(size)
+        .max(1)
+        .saturating_sub(new_account_info.lamports());
+
+    if required_lamports > 0 {
+        msg!("Transfer {} lamports to the new account", required_lamports);
+        invoke(
+            &system_instruction::transfer(&payer_info.key, new_account_info.key, required_lamports),
+            &[
+                payer_info.clone(),
+                new_account_info.clone(),
+                system_program_info.clone(),
+            ],
+        )?;
+    }
+
+    let accounts = &[new_account_info.clone(), system_program_info.clone()];
+
+    if new_account_info.data_len() != size {
+        msg!("Allocate space for the account");
+        invoke_signed(
+            &system_instruction::allocate(new_account_info.key, size.try_into().unwrap()),
+            accounts,
+            &[&signer_seeds],
+        )?;
+    }
+
+    msg!("Assign the account to the owning program");
+    invoke_signed(
+        &system_instruction::assign(new_account_info.key, &program_id),
+        accounts,
+        &[&signer_seeds],
+    )?;
+
+    Ok(())
+}
 
 #[program]
 pub mod collectoooooors {
@@ -55,6 +110,7 @@ pub mod collectoooooors {
         dish.authority = *ctx.accounts.payer.key;
         dish.recipe = ctx.accounts.recipe.key();
         dish.ingredients_added = 0;
+        dish.completed = false;
 
         Ok(())
     }
@@ -102,7 +158,7 @@ pub mod collectoooooors {
         );
 
         create_or_allocate_account_raw(
-            ID,
+            ctx.accounts.token_program.key(),
             &ctx.accounts.ingredient_store.to_account_info(),
             &ctx.accounts.rent.to_account_info(),
             &ctx.accounts.system_program.to_account_info(),
@@ -138,7 +194,9 @@ pub mod collectoooooors {
 
         let dish = &mut ctx.accounts.dish;
 
-        dish.ingredients_added += 1;
+        dish.ingredients_added = dish.ingredients_added
+            .checked_add(1)
+            .ok_or(ErrorCode::ArithmeticOverflow)?;
 
         Ok(())
     }
@@ -177,23 +235,36 @@ pub mod collectoooooors {
             ErrorCode::InvalidMintPDA,
         );
 
-        // we can't burn while we don't know if the dish can be completed...
         token::transfer(
             CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 token::Transfer {
                     from: ctx.accounts.ingredient_store.to_account_info(),
                     to: ctx.accounts.to.to_account_info(),
-                    authority: ctx.accounts.payer.to_account_info(),
+                    authority: ctx.accounts.ingredient_store.to_account_info(),
                 },
             )
             .with_signer(&[&ingredient_store_seeds]),
             1,
         )?;
 
+        token::close_account(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::CloseAccount {
+                    account: ctx.accounts.ingredient_store.to_account_info(),
+                    destination: ctx.accounts.payer.to_account_info(),
+                    authority: ctx.accounts.ingredient_store.to_account_info(),
+                },
+            )
+            .with_signer(&[&ingredient_store_seeds]),
+        )?;
+
         let dish = &mut ctx.accounts.dish;
 
-        dish.ingredients_added -= 1;
+        dish.ingredients_added = dish.ingredients_added
+            .checked_sub(1)
+            .ok_or(ErrorCode::ArithmeticOverflow)?;
 
         Ok(())
     }
@@ -322,7 +393,6 @@ pub struct StartDish<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(ingredient_bump: u8, ingredient_num: u64)]
 pub struct AddIngredient<'info> {
     pub recipe: Account<'info, Recipe>,
 
@@ -348,7 +418,6 @@ pub struct AddIngredient<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(ingredient_bump: u8, ingredient_num: u64)]
 pub struct RemoveIngredient<'info> {
     #[account(mut)]
     pub dish: Account<'info, Dish>,
@@ -451,5 +520,7 @@ pub enum ErrorCode {
     RecipeAlreadyCompleted,
     #[msg("Invalid Authority")]
     InvalidAuthority,
+    #[msg("Arithmetic Overflow")]
+    ArithmeticOverflow,
 }
 
