@@ -333,16 +333,16 @@ programCommand('verify')
                 4 +
                 CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
             );
-            const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
-            const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+            const name = fromUTF8Array([...thisSlice.slice(4, 36)]).replace(/\x00/g, "");
+            const uri = fromUTF8Array([...thisSlice.slice(40, 240)]).replace(/\x00/g, "");
             const cacheItem = cacheContent.items[key];
             if (cacheItem.link === null) {
               cacheItem.onChain = false;
               allGood = false;
-              problems.push(`Item: ${key} - Invalid null json link in cache. On-Chain value: ${uri.replace(/\x00/g, "")}`);
+              problems.push(`Item: ${key} - Invalid null json link in cache. On-Chain value: ${uri}`);
               continue;
             }
-            if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
+            if (name != cacheItem.name || uri != cacheItem.link) {
               //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
               // log.info(
               //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
@@ -350,10 +350,10 @@ programCommand('verify')
               //   key,
               // );
               if (!name.match(cacheItem.name)) {
-                problems.push(`Item: ${key} - Cached name: "${cacheItem.name}" doesn't match on-chain value: "${name.replace(/\x00/g, "")}"`);
+                problems.push(`Item: ${key} - Cached name: "${cacheItem.name}" doesn't match on-chain value: "${name}"`);
               }
               if (!uri.match(cacheItem.link)) {
-                problems.push(`Item: ${key} - Cached link: "${cacheItem.link}" doesn't match on-chain value: "${uri.replace(/\x00/g, "")}"`);
+                problems.push(`Item: ${key} - Cached link: "${cacheItem.link}" doesn't match on-chain value: "${uri}"`);
               }
               cacheItem.onChain = false;
               allGood = false;
