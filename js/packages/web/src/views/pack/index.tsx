@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import { Row, Col } from 'antd';
 
 import Card from './components/Card';
@@ -8,6 +8,7 @@ import { useMeta } from '@oyster/common';
 import { useParams } from 'react-router';
 import { usePackState } from './hooks/usePackState';
 import ArtCard from './components/ArtCard';
+import OpenPackButton from "./components/OpenPackButtom";
 
 export const PackView = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -25,9 +26,9 @@ export const PackView = () => {
     [metadata, editionId]
   );
 
-  const handleCloseModal = async () => {
-    setOpenModal(false);
-  };
+  const handleToggleModal = useCallback(async () => {
+    setOpenModal(!openModal);
+  }, [openModal]);
 
   useEffect(() => {
     if (!openModal) {
@@ -53,12 +54,13 @@ export const PackView = () => {
               ))}
           </div>
         </Col>
-        <Col md={8}>
+        <Col md={8} className="pack-view__sidebar-container">
           <PackSidebar pack={pack} id={metaInfo?.pubkey} />
+          <OpenPackButton onClick={handleToggleModal} />
         </Col>
       </Row>
 
-      <RedeemModal isModalVisible={openModal} onClose={handleCloseModal} />
+      <RedeemModal isModalVisible={openModal} onClose={handleToggleModal} />
     </div>
   );
 };

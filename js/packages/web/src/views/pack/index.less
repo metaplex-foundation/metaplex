@@ -1,6 +1,10 @@
 @scrollbar-color: #2c2c2c;
 
 .pack-view {
+  &__sidebar-container {
+    position: relative;
+  }
+
   &__list {
     display: flex;
     flex-flow: wrap;
@@ -207,6 +211,27 @@
       font-family: @fontFamilyGraphik;
       color: @black-100;
       padding: 0 20px;
+    }
+  }
+  .open-pack {
+    width: calc(33% - 48px);
+    max-width: 400px;
+    padding: 24px;
+    border-radius: 12px;
+    position: fixed;
+    bottom: 40px;
+    margin-left: 24px;
+    background-color: @grey-70;
+
+    & button {
+      background-color: @metaplex-primary-color !important;
+      color: @black-100;
+      width: 100%;
+      border-radius: 8px;
+    }
+    &__title {
+      margin-bottom: 20px;
+      color: @grey-20;
     }
   }
 }
