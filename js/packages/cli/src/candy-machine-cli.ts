@@ -10,6 +10,7 @@ import {
   fromUTF8Array,
   parseDate,
   parsePrice,
+  shuffle,
 } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -948,6 +949,46 @@ programCommand('update_existing_nfts_from_latest_cache_file')
       newCacheContent,
     );
   });
+
+// can then upload these
+programCommand('randomize_unminted_nfts_in_new_cache_file').action(
+  async (directory, cmd) => {
+    const { keypair, env, cacheName } = cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const candyAddress = cacheContent.candyMachineAddress;
+
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
+
+    const candyMachine = await anchorProgram.account.candyMachine.fetch(
+      candyAddress,
+    );
+
+    const itemsRedeemed = candyMachine.itemsRedeemed;
+    log.info('Randomizing one later than', itemsRedeemed.toNumber());
+    const keys = Object.keys(cacheContent.items).filter(
+      k => parseInt(k) > itemsRedeemed,
+    );
+    const shuffledKeys = shuffle(keys.slice());
+    const newItems = {};
+    for (let i = 0; i < keys.length; i++) {
+      newItems[keys[i].toString()] =
+        cacheContent.items[shuffledKeys[i].toString()];
+      log.debug('Setting ', keys[i], 'to ', shuffledKeys[i]);
+      newItems[keys[i].toString()].onChain = false;
+    }
+    fs.writeFileSync(
+      '.cache/' + env + '-' + cacheName + '-randomized',
+      JSON.stringify({
+        ...cacheContent,
+        items: { ...cacheContent.items, ...newItems },
+      }),
+    );
+  },
+);
 
 programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   const { env, cacheName, keypair } = cmd.opts();
