@@ -35,14 +35,7 @@ export function Routes() {
             {shouldEnableNftPacks && (
               <Route
                 exact
-                path="/pack/:packId/:editionId"
-                component={() => <PackView />}
-              />
-            )}
-            {shouldEnableNftPacks && (
-              <Route
-                exact
-                path="/pack/:packId"
+                path="/pack/:packKey/:voucherEditionKey"
                 component={() => <PackView />}
               />
             )}

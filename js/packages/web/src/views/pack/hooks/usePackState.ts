@@ -7,7 +7,7 @@ import { useOpenedMetadata } from './useOpenedMetadata';
 
 export const usePackState = (
   packKey: string,
-  voucherKey?: string,
+  voucherEditionKey: string,
 ): {
   packMetadata: SafetyDepositDraft[];
   mockBlocks: number[];
@@ -25,7 +25,7 @@ export const usePackState = (
   const openedMetadata = useOpenedMetadata(packCards);
 
   const pack = packs[packKey];
-  const voucher = userVouchers[voucherKey || ''];
+  const voucher = userVouchers[voucherEditionKey];
   const provingProcess = useMemo(
     () =>
       Object.values(provingProcesses).find(

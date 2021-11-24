@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Row, Col } from 'antd';
 
 import Card from './components/Card';
@@ -8,22 +8,24 @@ import { useMeta } from '@oyster/common';
 import { useParams } from 'react-router';
 import { usePackState } from './hooks/usePackState';
 import ArtCard from './components/ArtCard';
-import OpenPackButton from "./components/OpenPackButtom";
+import OpenPackButton from './components/OpenPackButtom';
 
 export const PackView = () => {
   const [openModal, setOpenModal] = useState(false);
-  const { packId, editionId }: { packId: string; editionId?: string } =
-    useParams();
+  const {
+    packKey,
+    voucherEditionKey,
+  }: { packKey: string; voucherEditionKey: string } = useParams();
   const { packs, metadata } = useMeta();
   const { isLoading, mockBlocks, packMetadata, handleFetch } = usePackState(
-    packId,
-    editionId,
+    packKey,
+    voucherEditionKey,
   );
 
-  const pack = packs[packId];
+  const pack = packs[packKey];
   const metaInfo = useMemo(
-    () => metadata.find(meta => meta?.info?.edition === editionId),
-    [metadata, editionId]
+    () => metadata.find(meta => meta?.info?.edition === voucherEditionKey),
+    [metadata, voucherEditionKey],
   );
 
   const handleToggleModal = useCallback(async () => {
@@ -46,12 +48,7 @@ export const PackView = () => {
                 <ArtCard key={metadata.pubkey} pubkey={metadata.pubkey} />
               ))}
             {!isLoading &&
-              mockBlocks.map((block, i) => (
-                <Card
-                  key={i}
-                  value={block}
-                />
-              ))}
+              mockBlocks.map((block, i) => <Card key={i} value={block} />)}
           </div>
         </Col>
         <Col md={8} className="pack-view__sidebar-container">
