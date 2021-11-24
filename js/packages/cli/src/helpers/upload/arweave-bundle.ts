@@ -66,7 +66,7 @@ type UploadGeneratorResult = Omit<ProcessedBundleFilePairs, 'dataItems'>;
 // - lower the risk for OOM crashes of the Node.js process
 // - provide feedback to the user as the collection is bundles & uploaded progressively
 // Change at your own risk.
-const BUNDLE_SIZE_BYTE_LIMIT = 50 * 1000 * 1000;
+const BUNDLE_SIZE_BYTE_LIMIT = 50 * 1024 * 1024;
 
 /**
  * Tags to include with every individual transaction.
@@ -103,8 +103,12 @@ function getArweave(): Arweave {
 /**
  * Simplistic helper to convert a bytes value to its MB counterpart.
  */
-function sizeMB(bytes: number): number {
-  return bytes / (1000 * 1000);
+function sizeMB(bytes: number): string {
+  const precision = 3;
+  const rounder = Math.pow(10, 3);
+  return (Math.round((bytes / (1024 * 1024)) * rounder) / rounder).toFixed(
+    precision,
+  );
 }
 
 /**
