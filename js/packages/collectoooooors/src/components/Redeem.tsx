@@ -1,6 +1,7 @@
 import React from "react";
 
 import {
+  Box,
   Button,
   CircularProgress,
   IconButton,
@@ -131,6 +132,10 @@ type RelevantMint = {
   ingredient: string,
 }
 
+type Ingredient = {
+  mint: PublicKey,
+};
+
 export const Redeem = () => {
   const connection = useConnection();
   const wallet = useWallet();
@@ -181,19 +186,57 @@ export const Redeem = () => {
   );
 
   const [relevantMints, setRelevantMints] = React.useState<Array<RelevantMint>>([]);
-  const [ingredientList, setIngredientList] = React.useState<Array<any> | null>(null);
-  const [ingredients, setIngredients] = React.useState<{ [key: string]: (PublicKey | null) }>({});
+  const [ingredientList, setIngredientList] = React.useState<Array<any>>([]);
+  const [ingredients, setIngredients] = React.useState<{ [key: string]: (Ingredient | null) }>({});
+  const [changeList, setChangeList] = React.useState<Array<any>>([]);
+
+  const updateOnChainIngredients = async (walletKey : PublicKey) => {
+    const recipeKey = new PublicKey(recipe);
+    const [dishKey, ] = await PublicKey.findProgramAddress(
+      [
+        COLLECTOOOOOORS_PREFIX,
+        recipeKey.toBuffer(),
+        walletKey.toBuffer(),
+      ],
+      COLLECTOOOOOORS_PROGRAM_ID,
+    );
+
+    const ingredients = {};
+    for (let idx = 0; idx < ingredientList.length; ++idx) {
+      const group = ingredientList[idx];
+      const ingredientNum = new BN(idx);
+      const [storeKey, ] = await PublicKey.findProgramAddress(
+        [
+          COLLECTOOOOOORS_PREFIX,
+          dishKey.toBuffer(),
+          Buffer.from(ingredientNum.toArray('le', 8)),
+        ],
+        COLLECTOOOOOORS_PROGRAM_ID,
+      );
+
+      const storeAccount = await connection.getAccountInfo(storeKey);
+      if (storeAccount !== null) {
+        const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
+        ingredients[group.ingredient] = {
+          mint: new PublicKey(currentStore.mint),
+        };
+      } else {
+        ingredients[group.ingredient] = null;
+      }
+    }
+
+    setIngredients(ingredients);
+  };
 
   // TODO: on page load also
-  const fetchRelevantMints = async (key : PublicKey) => {
-    console.log(key.toBase58());
+  const fetchRelevantMints = async (recipeKey : PublicKey) => {
     if (!anchorWallet || !program) {
       return;
     }
 
     let recipe;
     try {
-      recipe = await program.account.recipe.fetch(key);
+      recipe = await program.account.recipe.fetch(recipeKey);
     } catch (err) {
       console.log('Failed to find recipe');
       return;
@@ -202,11 +245,14 @@ export const Redeem = () => {
     const ingredientUrl = recipe.ingredients.replace(/\0/g, '');
     const ingredientList = await (await fetch(ingredientUrl)).json();
 
+    if (recipe.roots.length !== ingredientList.length) {
+      throw new Error(`Recipe has a different number of ingredient lists and merkle hashes. Bad configuration`);
+    }
+
+    // cache for later...
     setIngredientList(ingredientList);
-    setIngredients(ingredientList.reduce(
-      (a, group) => ({ ...a, [group.ingredient]: null }),
-      {},
-    ));
+
+    await updateOnChainIngredients(anchorWallet.publicKey);
 
     const mints = {};
     for (const group of ingredientList)
@@ -219,7 +265,12 @@ export const Redeem = () => {
       );
 
     const decoded = owned.value.map(v => AccountLayout.decode(v.account.data));
-    const relevant = decoded.filter(a => (new PublicKey(a.mint).toBase58()) in mints);
+    console.log(decoded);
+    const relevant = decoded.filter(a => {
+      const mintMatches = (new PublicKey(a.mint).toBase58()) in mints;
+      const hasToken = new BN(a.amount, 'le').toNumber() > 0;
+      return mintMatches && hasToken;
+    });
     console.log(relevant);
 
     const ret : Array<RelevantMint> = [];
@@ -263,13 +314,51 @@ export const Redeem = () => {
         throw new Error(`Ingredient ${r.ingredient} has already been added to this dish`);
       }
 
-      // TODO: check that PDA also doesn't exist
-      setIngredients({
-        ...ingredients,
-        [r.ingredient]: mint,
-      });
+      const match = changeList.find(c => c.ingredient === r.ingredient);
+      if (match !== null) {
+        const prev = match.mint.toBase58();
+        const next = r.mint.toBase58();
+        notify({
+          message: "Dish Changes",
+          description: `Replaced ingredient ${prev} with ${next}`,
+        });
+
+        match.mint = r.mint;
+      } else {
+        setChangeList(
+          [
+            ...changeList,
+            {
+              ingredient: r.ingredient,
+              mint: r.mint,
+            },
+          ]
+        );
+      }
     }
   };
+
+  // TODO: function to remove from dish PDA
+  // const walletATA = await getAssociatedTokenAccount(
+  //   anchorWallet.publicKey, currentMint, connection);
+  // setup.push(await program.instruction.removeIngredient(
+  //   storeBump,
+  //   ingredientNum,
+  //   {
+  //     accounts: {
+  //       dish: dishKey,
+  //       ingredientMint: currentMint,
+  //       ingredientStore: storeKey,
+  //       payer: anchorWallet.publicKey,
+  //       to: walletATA,
+  //       systemProgram: SystemProgram.programId,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       rent: SYSVAR_RENT_PUBKEY,
+  //     },
+  //     signers: [],
+  //     instructions: [],
+  //   }
+  // ));
 
   const removeIngredient = async (e : React.SyntheticEvent, mint: PublicKey) => {
     e.preventDefault();
@@ -278,15 +367,14 @@ export const Redeem = () => {
       if (!r.mint.equals(mint))
         continue;
 
-      if (!(r.ingredient in ingredients)) {
+      const newList = [...changeList];
+      const idx = newList.indexOf(c => c.ingredient === r.ingredient);
+      if (idx === -1) {
         throw new Error(`Ingredient ${r.ingredient} has not been added to this dish`);
       }
 
-      // TODO: remove from dish PDA also
-      setIngredients({
-        ...ingredients,
-        [r.ingredient]: null,
-      });
+      newList.splice(idx, 1);
+      setChangeList(newList);
     }
   };
 
@@ -297,7 +385,7 @@ export const Redeem = () => {
       return;
     }
 
-    if (!ingredientList) {
+    if (ingredientList.length === 0) {
       throw new Error(`No ingredient list`);
     }
 
@@ -334,7 +422,11 @@ export const Redeem = () => {
 
     for (let idx = 0; idx < ingredientList.length; ++idx) {
       const group = ingredientList[idx];
-      const newMint = ingredients[group.ingredient];
+      const newMint = changeList.find(c => c.ingredient === group.ingredient);
+
+      if (newMint === null) {
+        continue;
+      }
 
       const ingredientNum = new BN(idx);
       const [storeKey, storeBump] = await PublicKey.findProgramAddress(
@@ -350,51 +442,20 @@ export const Redeem = () => {
       if (storeAccount === null) {
         // nothing
       } else {
-        const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
-        const currentMint = new PublicKey(currentStore.mint);
-        if (newMint != null && currentMint.equals(newMint)) {
-          // already added this mint. don't need to do anything else
-          // TODO: fix up control flow
-          continue;
-        } else {
-          const walletATA = await getAssociatedTokenAccount(
-            anchorWallet.publicKey, currentMint, connection);
-          setup.push(await program.instruction.removeIngredient(
-            storeBump,
-            ingredientNum,
-            {
-              accounts: {
-                dish: dishKey,
-                ingredientMint: currentMint,
-                ingredientStore: storeKey,
-                payer: anchorWallet.publicKey,
-                to: walletATA,
-                systemProgram: SystemProgram.programId,
-                tokenProgram: TOKEN_PROGRAM_ID,
-                rent: SYSVAR_RENT_PUBKEY,
-              },
-              signers: [],
-              instructions: [],
-            }
-          ));
-        }
-      }
-
-      if (newMint === null) {
-        continue;
+        throw new Error(`Ingredient ${group.ingredient} has already been added to this dish`);
       }
 
       // TODO: cache?
       const mintsKeys = group.mints.map(m => new PublicKey(m));
-      const mintIdx = mintsKeys.findIndex(m => m.equals(newMint));
+      const mintIdx = mintsKeys.findIndex(m => m.equals(newMint.mint));
       if (mintIdx === -1) {
-        throw new Error(`Could not find mint matching ${newMint.toBase58()} in ingredient group ${group.ingredient}`);
+        throw new Error(`Could not find mint matching ${newMint.mint.toBase58()} in ingredient group ${group.ingredient}`);
       }
 
       const tree = new MerkleTree(mintsKeys.map(m => m.toBuffer()));
       const proof = tree.getProof(mintIdx);
       const walletATA = await getAssociatedTokenAccount(
-        anchorWallet.publicKey, newMint, connection);
+        anchorWallet.publicKey, newMint.mint, connection);
       setup.push(await program.instruction.addIngredient(
         storeBump,
         ingredientNum,
@@ -403,7 +464,7 @@ export const Redeem = () => {
           accounts: {
             recipe: recipeKey,
             dish: dishKey,
-            ingredientMint: newMint,
+            ingredientMint: newMint.mint,
             ingredientStore: storeKey,
             payer: anchorWallet.publicKey,
             from: walletATA,
@@ -445,6 +506,8 @@ export const Redeem = () => {
         ),
       });
     }
+
+    await updateOnChainIngredients(anchorWallet.publicKey);
   };
 
   const claim = async (e : React.SyntheticEvent) => {
@@ -559,6 +622,7 @@ export const Redeem = () => {
         rel="noreferrer"
         title={key.toBase58()}
         underline="none"
+        sx={{ fontFamily: 'Monospace' }}
       >
         {shorten ? shortenAddress(key.toBase58()) : key.toBase58()}
       </HyperLink>
@@ -585,6 +649,9 @@ export const Redeem = () => {
         id="recipe-field"
         label={`Recipe`}
         value={recipe}
+        inputProps={{
+          sx: { fontFamily: 'Monospace' }
+        }}
         onChange={e => {
           try {
             const key = new PublicKey(e.target.value);
@@ -610,7 +677,11 @@ export const Redeem = () => {
       />
       {loading && loadingProgress()}
       {Object.keys(ingredients).length > 0 && <Button
-        disabled={!anchorWallet || loading}
+        disabled={
+          !anchorWallet
+          || loading
+          || changeList.length === 0
+        }
         variant="contained"
         style={{ width: "100%" }}
         onClick={(e) => {
@@ -633,7 +704,11 @@ export const Redeem = () => {
         Submit Dish Changes
       </Button>}
       {Object.keys(ingredients).length > 0 && <Button
-        disabled={!anchorWallet || loading}
+        disabled={
+          !anchorWallet
+          || loading
+          || Object.values(ingredients).some(x => x === null)
+        }
         variant="contained"
         style={{ width: "100%" }}
         onClick={(e) => {
@@ -675,7 +750,14 @@ export const Redeem = () => {
                     {ingredient}
                   </TableCell>
                   <TableCell>
-                    {mint ? explorerLinkForAddress(mint, false) : null}
+                    {mint
+                      ? explorerLinkForAddress(mint.mint, false)
+                      : (
+                        <Box sx={{fontFamily: 'Monospace'}}>
+                          {'\u00A0'.repeat(60)}
+                        </Box>
+                      )
+                    }
                   </TableCell>
                 </TableRow>
               );
@@ -697,7 +779,7 @@ export const Redeem = () => {
                 actionIcon={
                   (() => {
                     // TODO: check that PDA also doesn't exist
-                    const inBatch = ingredients[r.ingredient]?.equals(r.mint);
+                    const inBatch = ingredients[r.ingredient]?.mint.equals(r.mint);
                     return (
                       <IconButton
                         onClick={e => {
