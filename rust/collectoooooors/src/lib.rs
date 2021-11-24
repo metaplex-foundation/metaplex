@@ -345,6 +345,55 @@ pub mod collectoooooors {
 
         Ok(())
     }
+
+    pub fn reclaim_master_edition(
+        ctx: Context<ReclaimMasterEdition>,
+        recipe_master_mint_bump: u8,
+    ) -> ProgramResult {
+        let recipe= &ctx.accounts.recipe;
+
+        require!(
+            recipe.authority
+            == ctx.accounts.payer.key(),
+            ErrorCode::InvalidAuthority,
+        );
+
+        let recipe_key = ctx.accounts.recipe.key();
+        let master_mint_key = ctx.accounts.master_mint.key();
+        let recipe_master_mint_seeds = [
+            PREFIX,
+            recipe_key.as_ref(),
+            master_mint_key.as_ref(),
+            &[recipe_master_mint_bump],
+        ];
+
+        token::transfer(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Transfer {
+                    from: ctx.accounts.from.to_account_info(),
+                    to: ctx.accounts.to.to_account_info(),
+                    authority: ctx.accounts.master_token_owner.to_account_info(),
+                },
+            )
+            .with_signer(&[&recipe_master_mint_seeds]),
+            ctx.accounts.from.amount,
+        )?;
+
+        token::close_account(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::CloseAccount {
+                    account: ctx.accounts.from.to_account_info(),
+                    destination: ctx.accounts.payer.to_account_info(),
+                    authority: ctx.accounts.master_token_owner.to_account_info(),
+                },
+            )
+            .with_signer(&[&recipe_master_mint_seeds]),
+        )?;
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -485,6 +534,29 @@ pub struct MakeDish<'info> {
     pub token_metadata_program: AccountInfo<'info>,
 
     pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct ReclaimMasterEdition<'info> {
+    pub recipe: Account<'info, Recipe>,
+
+    pub master_mint: AccountInfo<'info>,
+
+    // PDA of recipe and master mint
+    pub master_token_owner: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub from: Account<'info, token::TokenAccount>,
+
+    #[account(mut)]
+    pub to: Account<'info, token::TokenAccount>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+
+    pub token_program: Program<'info, token::Token>,
 }
 
 #[account]

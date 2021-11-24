@@ -15,6 +15,9 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
+import {
+  Token,
+} from '@solana/spl-token';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
 
@@ -29,7 +32,10 @@ import {
 } from './helpers/cache';
 import {
   ARWEAVE_PAYMENT_WALLET,
+  COLLECTOOOOOORS_PREFIX,
   COLLECTOOOOOORS_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   EXTENSION_PNG,
   MAX_URI_LENGTH,
 } from './helpers/constants';
@@ -152,6 +158,81 @@ programCommand('create_recipe')
     );
 
     log.info(createResult);
+  })
+
+programCommand('add_master_edition')
+  .option(
+    '--recipe <keypair>',
+    `Recipe to add master edition to`,
+  )
+  .option(
+    '--mint <keypair>',
+    `Mint of master edition to transfer`,
+  )
+  .action(async (options) => {
+    log.info(`Parsed options:`, options);
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadCollectoooooorsProgram(wallet, options.env);
+
+    const recipeKey = new PublicKey(options.recipe);
+    const mintKey = new PublicKey(options.mint);
+
+    // transfer master edition to recipe
+    const [recipeMintOwner, recipeMintBump] = await PublicKey.findProgramAddress(
+      [
+        COLLECTOOOOOORS_PREFIX,
+        recipeKey.toBuffer(),
+        mintKey.toBuffer(),
+      ],
+      COLLECTOOOOOORS_PROGRAM_ID
+    );
+
+    const [walletATA, ] = await PublicKey.findProgramAddress(
+      [
+        wallet.publicKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mintKey.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+
+    const [recipeATA, ] = await PublicKey.findProgramAddress(
+      [
+        recipeMintOwner.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mintKey.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+
+    const instructions : Array<TransactionInstruction> = [];
+    instructions.push(Token.createAssociatedTokenAccountInstruction(
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      mintKey,
+      recipeATA,
+      recipeMintOwner,
+      wallet.publicKey,
+    ));
+
+    instructions.push(Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      walletATA,
+      recipeATA,
+      wallet.publicKey,
+      [],
+      1
+    ));
+
+    const addResult = await sendTransactionWithRetry(
+      anchorProgram.provider.connection,
+      wallet,
+      instructions,
+      [],
+    );
+
+    log.info(addResult);
   })
 
 function programCommand(name: string) {

@@ -21,6 +21,8 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
 import {
+  Connection as RPCConnection,
+  Keypair,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
@@ -28,6 +30,8 @@ import {
 } from "@solana/web3.js";
 import {
   AccountLayout,
+  MintLayout,
+  Token,
 } from '@solana/spl-token'
 import * as anchor from '@project-serum/anchor';
 import {
@@ -35,12 +39,12 @@ import {
   notify,
   shortenAddress,
   useLocalStorageState,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@oyster/common';
 import {
   useWallet,
 } from '@solana/wallet-adapter-react';
-import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 
 import {
@@ -49,11 +53,14 @@ import {
 } from '../contexts';
 import {
   getAssociatedTokenAccount,
+  getEdition,
+  getEditionMarkerPda,
   getMetadata,
 } from '../utils/accounts';
 import {
   COLLECTOOOOOORS_PREFIX,
   COLLECTOOOOOORS_PROGRAM_ID,
+  TOKEN_METADATA_PROGRAM_ID,
 } from '../utils/ids';
 import {
   envFor,
@@ -62,6 +69,60 @@ import {
 import {
   MerkleTree,
 } from "../utils/merkleTree";
+
+const createMintAndAccount = async (
+  connection : RPCConnection,
+  walletKey : PublicKey,
+  mint : PublicKey,
+  setup : Array<TransactionInstruction>,
+) => {
+  const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+    [
+      walletKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+
+  setup.push(SystemProgram.createAccount({
+    fromPubkey: walletKey,
+    newAccountPubkey: mint,
+    space: MintLayout.span,
+    lamports:
+      await connection.getMinimumBalanceForRentExemption(
+        MintLayout.span,
+      ),
+    programId: TOKEN_PROGRAM_ID,
+  }));
+
+  setup.push(Token.createInitMintInstruction(
+    TOKEN_PROGRAM_ID,
+    mint,
+    0,
+    walletKey,
+    walletKey,
+  ));
+
+  setup.push(Token.createAssociatedTokenAccountInstruction(
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    walletTokenKey,
+    walletKey,
+    walletKey
+  ));
+
+  setup.push(Token.createMintToInstruction(
+    TOKEN_PROGRAM_ID,
+    mint,
+    walletTokenKey,
+    walletKey,
+    [],
+    1,
+  ));
+
+}
 
 type RelevantMint = {
   mint: PublicKey,
@@ -388,7 +449,7 @@ export const Redeem = () => {
     }
   };
 
-  const fixup = async (e : React.SyntheticEvent) => {
+  const claim = async (e : React.SyntheticEvent) => {
     e.preventDefault();
     if (!anchorWallet || !program) {
       throw new Error(`Wallet or program is not connected`);
@@ -405,37 +466,92 @@ export const Redeem = () => {
       COLLECTOOOOOORS_PROGRAM_ID,
     );
 
-    const instr = new TransactionInstruction({
-        programId: COLLECTOOOOOORS_PROGRAM_ID,
-        keys: [
-            { pubkey: dishKey, isSigner: false  , isWritable: true } ,
-        ],
-        data: Buffer.from([
-          ...Buffer.from(sha256.digest("global:fixup")).slice(0, 8),
-        ])
-    });
-    const fixupResult = await Connection.sendTransactionWithRetry(
-      program.provider.connection,
-      anchorWallet,
-      [instr],
-      [],
+    const masterMintKey = new PublicKey('2fLzRZkLj5ED5ZBCeyiUKuHuJ5MRT7fGLcbSQfbW1uEX');
+
+    const [recipeMintOwner, recipeMintBump] = await PublicKey.findProgramAddress(
+      [
+        COLLECTOOOOOORS_PREFIX,
+        recipeKey.toBuffer(),
+        masterMintKey.toBuffer(),
+      ],
+      COLLECTOOOOOORS_PROGRAM_ID
     );
 
-    console.log(fixupResult);
+    const [recipeATA, ] = await PublicKey.findProgramAddress(
+      [
+        recipeMintOwner.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        masterMintKey.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
 
-    if (typeof fixupResult === "string") {
-      throw new Error(fixupResult);
+    const newMint = Keypair.generate();
+    const newMetadataKey = await getMetadata(newMint.publicKey);
+    const masterMetadataKey = await getMetadata(masterMintKey);
+    const newEdition = await getEdition(newMint.publicKey);
+    const masterEdition = await getEdition(masterMintKey);
+
+    const setup : Array<TransactionInstruction> = [];
+    await createMintAndAccount(connection, anchorWallet.publicKey, newMint.publicKey, setup);
+
+    const edition = new BN(0);
+    const editionMarkKey = await getEditionMarkerPda(masterMintKey, edition);
+
+    setup.push(await program.instruction.makeDish(
+      recipeMintBump,
+      edition, // edition
+      {
+        accounts: {
+          recipe: recipeKey,
+          dish: dishKey,
+          payer: anchorWallet.publicKey,
+          metadataNewMetadata: newMetadataKey,
+          metadataNewEdition: newEdition,
+          metadataMasterEdition: masterEdition,
+          metadataNewMint: newMint.publicKey,
+          metadataEditionMarkPda: editionMarkKey,
+          metadataNewMintAuthority: anchorWallet.publicKey,
+          metadataMasterTokenOwner: recipeMintOwner,
+          metadataMasterTokenAccount: recipeATA,
+          metadataNewUpdateAuthority: anchorWallet.publicKey,
+          metadataMasterMetadata: masterMetadataKey,
+          metadataMasterMint: masterMintKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
+        instructions: [],
+      }
+    ));
+
+    console.log(setup);
+
+    const claimResult = await Connection.sendTransactionWithRetry(
+      program.provider.connection,
+      anchorWallet,
+      setup,
+      [newMint],
+    );
+
+    console.log(claimResult);
+
+    if (typeof claimResult === "string") {
+      throw new Error(claimResult);
     } else {
       notify({
-        message: "Fixup succeeded",
+        message: "Claim succeeded",
         description: (
-          <HyperLink href={explorerLinkFor(fixupResult.txid, connection)}>
+          <HyperLink href={explorerLinkFor(claimResult.txid, connection)}>
             View transaction on explorer
           </HyperLink>
         ),
       });
     }
   };
+
 
   const explorerLinkForAddress = (key : PublicKey, shorten: boolean = true) => {
     return (
@@ -526,11 +642,11 @@ export const Redeem = () => {
           setLoading(true);
           const wrap = async () => {
             try {
-              await fixup(e);
+              await claim(e);
               setLoading(false);
             } catch (err) {
               notify({
-                message: `Dish Changes failed`,
+                message: `Claim failed`,
                 description: `${err}`,
               });
               setLoading(false);
@@ -539,7 +655,7 @@ export const Redeem = () => {
           wrap();
         }}
       >
-        Fixup
+        Claim
       </Button>}
       {Object.keys(ingredients).length > 0 && <TableContainer>
         <Table>

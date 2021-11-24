@@ -47,6 +47,9 @@ export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(
 export const COLLECTOOOOOORS_PROGRAM_ID = new PublicKey(
   '9R4RuSGk3raAVf6TJ7o1ixywcDW89p1MSo2ns9LEBXNK',
 );
+export const COLLECTOOOOOORS_PREFIX = Buffer.from(
+  'collectoooooors'
+);
 
 export const CONFIG_ARRAY_START =
   32 + // authority
