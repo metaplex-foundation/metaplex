@@ -76,7 +76,7 @@ export async function updateMetadataFromCache(
         newCacheContent.items[i.toString()].link;
     }
   }
-  let toUpdate = metadataByCandyMachine.filter(
+  const toUpdate = metadataByCandyMachine.filter(
     m => !!differences[m[0].data.uri],
   );
   log.info('Found', toUpdate.length, 'uris to update');
