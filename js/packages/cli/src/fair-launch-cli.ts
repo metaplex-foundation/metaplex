@@ -1702,8 +1702,9 @@ async function punchTicket({
     )
   )[0];
 
-  const exists =
-    anchorProgram.provider.connection.getAccountInfo(buyerTokenAccount);
+  const exists = await anchorProgram.provider.connection.getAccountInfo(
+    buyerTokenAccount,
+  );
 
   await anchorProgram.rpc.punchTicket({
     accounts: {

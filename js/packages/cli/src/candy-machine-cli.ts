@@ -44,6 +44,7 @@ import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
 import { withdraw } from './commands/withdraw';
+import { updateFromCache } from './commands/updateFromCache';
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -911,6 +912,43 @@ programCommand('sign_all')
     );
   });
 
+programCommand('update_existing_nfts_from_latest_cache_file')
+  .option('-b, --batch-size <string>', 'Batch size', '2')
+  .option('-nc, --new-cache <string>', 'Path to new updated cache file')
+  .option('-d, --daemon', 'Run updating continuously', false)
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, rpcUrl, batchSize, daemon, newCache } =
+      cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const newCacheContent = loadCache(newCache, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const candyAddress = cacheContent.candyMachineAddress;
+
+    const batchSizeParsed = parseInt(batchSize);
+    if (!parseInt(batchSize)) {
+      throw new Error('Batch size needs to be an integer!');
+    }
+
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
+    log.debug('Batch Size: ', batchSizeParsed);
+    await updateFromCache(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      candyAddress,
+      batchSizeParsed,
+      daemon,
+      cacheContent,
+      newCacheContent,
+    );
+  });
+
 programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   const { env, cacheName, keypair } = cmd.opts();
 
@@ -964,8 +1002,17 @@ programCommand('create_generative_art')
     '-o, --output-location <string>',
     'If you wish to do image generation elsewhere, skip it and dump randomized sets to file',
   )
+  .option(
+    '-ta, --treat-attributes-as-file-names <string>',
+    'If your attributes are filenames, trim the .png off if set to true',
+  )
   .action(async (directory, cmd) => {
-    const { numberOfImages, configLocation, outputLocation } = cmd.opts();
+    const {
+      numberOfImages,
+      configLocation,
+      outputLocation,
+      treatAttributesAsFileNames,
+    } = cmd.opts();
 
     log.info('Loaded configuration file');
 
@@ -973,6 +1020,7 @@ programCommand('create_generative_art')
     const randomSets = await createMetadataFiles(
       numberOfImages,
       configLocation,
+      treatAttributesAsFileNames == 'true',
     );
 
     log.info('JSON files have been created within the assets directory');
