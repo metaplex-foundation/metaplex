@@ -12,5 +12,5 @@
     "noImplicitAny": true,
     "types": ["node"]
   },
-  "include": ["src/**/*", "common/**/*", "cypress/**/*"]
+  "include": ["setup/src/**/*", "common/**/*", "cypress/**/*"]
 }
