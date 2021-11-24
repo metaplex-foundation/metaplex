@@ -41,11 +41,10 @@ export const getMintInfo = async (
   };
 };
 
-export const getCreatorTokenAccount = async (
+export const getAssociatedTokenAccount = async (
   walletKey : PublicKey,
-  connection : Connection,
   mintKey : PublicKey,
-  totalClaim : number,
+  connection : Connection,
 ) => {
   const [creatorTokenKey, ] = await PublicKey.findProgramAddress(
     [
@@ -61,10 +60,6 @@ export const getCreatorTokenAccount = async (
   }
   if (creatorTokenAccount.data.length !== AccountLayout.span) {
     throw new Error(`Invalid token account size ${creatorTokenAccount.data.length}`);
-  }
-  const creatorTokenInfo = AccountLayout.decode(Buffer.from(creatorTokenAccount.data));
-  if (new BN(creatorTokenInfo.amount, 8, "le").toNumber() < totalClaim) {
-    throw new Error(`Creator token account does not have enough tokens`);
   }
   return creatorTokenKey;
 };
