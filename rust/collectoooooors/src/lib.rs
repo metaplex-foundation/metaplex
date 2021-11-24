@@ -48,6 +48,7 @@ pub mod collectoooooors {
 
     pub fn start_dish(
         ctx: Context<StartDish>,
+        _dish_bump: u8,
     ) -> ProgramResult {
         let dish = &mut ctx.accounts.dish;
 
@@ -192,7 +193,7 @@ pub mod collectoooooors {
 
         let dish = &mut ctx.accounts.dish;
 
-        dish.ingredients_added += 1;
+        dish.ingredients_added -= 1;
 
         Ok(())
     }
@@ -298,11 +299,18 @@ pub struct CreateRecipe<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(dish_bump: u8)]
 pub struct StartDish<'info> {
     pub recipe: Account<'info, Recipe>,
 
     #[account(
         init,
+        seeds = [
+            PREFIX,
+            recipe.key().to_bytes().as_ref(),
+            payer.key().to_bytes().as_ref()
+        ],
+        bump = dish_bump,
         payer = payer,
     )]
     pub dish: Account<'info, Dish>,
