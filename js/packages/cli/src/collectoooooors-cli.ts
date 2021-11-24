@@ -162,11 +162,11 @@ programCommand('create_recipe')
 
 programCommand('add_master_edition')
   .option(
-    '--recipe <keypair>',
+    '--recipe <pubkey>',
     `Recipe to add master edition to`,
   )
   .option(
-    '--mint <keypair>',
+    '--mint <pubkey>',
     `Mint of master edition to transfer`,
   )
   .action(async (options) => {
@@ -233,6 +233,80 @@ programCommand('add_master_edition')
     );
 
     log.info(addResult);
+  })
+
+programCommand('reclaim_master_edition')
+  .option(
+    '--recipe <pubkey>',
+    `Recipe to add master edition to`,
+  )
+  .option(
+    '--mint <pubkey>',
+    `Mint of master edition to transfer`,
+  )
+  .action(async (options) => {
+    log.info(`Parsed options:`, options);
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadCollectoooooorsProgram(wallet, options.env);
+
+    const recipeKey = new PublicKey(options.recipe);
+    const mintKey = new PublicKey(options.mint);
+
+    // transfer master edition to recipe
+    const [recipeMintOwner, recipeMintBump] = await PublicKey.findProgramAddress(
+      [
+        COLLECTOOOOOORS_PREFIX,
+        recipeKey.toBuffer(),
+        mintKey.toBuffer(),
+      ],
+      COLLECTOOOOOORS_PROGRAM_ID
+    );
+
+    const [walletATA, ] = await PublicKey.findProgramAddress(
+      [
+        wallet.publicKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mintKey.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+
+    const [recipeATA, ] = await PublicKey.findProgramAddress(
+      [
+        recipeMintOwner.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mintKey.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+
+    const instr = await anchorProgram.instruction.reclaimMasterEdition(
+      recipeMintBump,
+      {
+        accounts: {
+          recipe: recipeKey,
+          masterMint: mintKey,
+          masterTokenOwner: recipeMintOwner,
+          from: recipeATA,
+          to: walletATA,
+          payer: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+        signers: [],
+        instructions: [],
+      }
+    );
+
+    const reclaimResult = await sendTransactionWithRetry(
+      anchorProgram.provider.connection,
+      wallet,
+      [instr],
+      [],
+    );
+
+    log.info(reclaimResult);
   })
 
 function programCommand(name: string) {

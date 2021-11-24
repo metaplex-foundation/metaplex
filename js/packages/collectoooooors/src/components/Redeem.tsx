@@ -352,9 +352,7 @@ export const Redeem = () => {
       } else {
         const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
         const currentMint = new PublicKey(currentStore.mint);
-        if (newMint === null) {
-          // nothing to remove
-        } else if (currentMint.equals(newMint)) {
+        if (newMint != null && currentMint.equals(newMint)) {
           // already added this mint. don't need to do anything else
           // TODO: fix up control flow
           continue;
