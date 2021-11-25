@@ -125,15 +125,83 @@ const createMintAndAccount = async (
 
 }
 
-type RelevantMint = {
+type MintAndImage = {
   mint: PublicKey,
   name: string,
   image: string,
-  ingredient: string,
-}
+};
+
+type RelevantMint = MintAndImage & { ingredient : string };
 
 type Ingredient = {
   mint: PublicKey,
+};
+
+const fetchMintAndImage = async (
+  connection : RPCConnection,
+  mintKey : PublicKey
+) : Promise<MintAndImage | null> => {
+  const metadataKey = await getMetadata(mintKey);
+  const metadataAccount = await connection.getAccountInfo(metadataKey);
+  if (metadataAccount === null) {
+    notify({
+      message: 'Fetch mint failed',
+      description: `Could not fetch metadata for mint ${mintKey.toBase58()}`,
+    });
+    return null;
+  }
+  const metadata = decodeMetadata(metadataAccount.data);
+  const schema = await (await fetch(metadata.data.uri)).json();
+
+  console.log(schema);
+
+  return {
+    mint: mintKey,
+    name: metadata.data.name,
+    image: schema.image,
+  };
+};
+
+const getOnChainIngredients = async (
+  connection : RPCConnection,
+  recipeKey : PublicKey,
+  walletKey : PublicKey,
+  ingredientList : Array<any>,
+) => {
+  const [dishKey, ] = await PublicKey.findProgramAddress(
+    [
+      COLLECTOOOOOORS_PREFIX,
+      recipeKey.toBuffer(),
+      walletKey.toBuffer(),
+    ],
+    COLLECTOOOOOORS_PROGRAM_ID,
+  );
+
+  const ingredients = {};
+  for (let idx = 0; idx < ingredientList.length; ++idx) {
+    const group = ingredientList[idx];
+    const ingredientNum = new BN(idx);
+    const [storeKey, ] = await PublicKey.findProgramAddress(
+      [
+        COLLECTOOOOOORS_PREFIX,
+        dishKey.toBuffer(),
+        Buffer.from(ingredientNum.toArray('le', 8)),
+      ],
+      COLLECTOOOOOORS_PROGRAM_ID,
+    );
+
+    const storeAccount = await connection.getAccountInfo(storeKey);
+    if (storeAccount !== null) {
+      const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
+      ingredients[group.ingredient] = {
+        mint: new PublicKey(currentStore.mint),
+      };
+    } else {
+      ingredients[group.ingredient] = null;
+    }
+  }
+
+  return ingredients;
 };
 
 export const Redeem = () => {
@@ -185,48 +253,11 @@ export const Redeem = () => {
     "",
   );
 
+  const [recipeYields, setRecipeYields] = React.useState<Array<MintAndImage>>([]);
   const [relevantMints, setRelevantMints] = React.useState<Array<RelevantMint>>([]);
   const [ingredientList, setIngredientList] = React.useState<Array<any>>([]);
   const [ingredients, setIngredients] = React.useState<{ [key: string]: (Ingredient | null) }>({});
   const [changeList, setChangeList] = React.useState<Array<any>>([]);
-
-  const updateOnChainIngredients = async (walletKey : PublicKey) => {
-    const recipeKey = new PublicKey(recipe);
-    const [dishKey, ] = await PublicKey.findProgramAddress(
-      [
-        COLLECTOOOOOORS_PREFIX,
-        recipeKey.toBuffer(),
-        walletKey.toBuffer(),
-      ],
-      COLLECTOOOOOORS_PROGRAM_ID,
-    );
-
-    const ingredients = {};
-    for (let idx = 0; idx < ingredientList.length; ++idx) {
-      const group = ingredientList[idx];
-      const ingredientNum = new BN(idx);
-      const [storeKey, ] = await PublicKey.findProgramAddress(
-        [
-          COLLECTOOOOOORS_PREFIX,
-          dishKey.toBuffer(),
-          Buffer.from(ingredientNum.toArray('le', 8)),
-        ],
-        COLLECTOOOOOORS_PROGRAM_ID,
-      );
-
-      const storeAccount = await connection.getAccountInfo(storeKey);
-      if (storeAccount !== null) {
-        const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
-        ingredients[group.ingredient] = {
-          mint: new PublicKey(currentStore.mint),
-        };
-      } else {
-        ingredients[group.ingredient] = null;
-      }
-    }
-
-    setIngredients(ingredients);
-  };
 
   // TODO: on page load also
   const fetchRelevantMints = async (recipeKey : PublicKey) => {
@@ -252,7 +283,30 @@ export const Redeem = () => {
     // cache for later...
     setIngredientList(ingredientList);
 
-    await updateOnChainIngredients(anchorWallet.publicKey);
+    setIngredients(await getOnChainIngredients(
+          connection, recipeKey, anchorWallet.publicKey, ingredientList));
+
+    const [recipeMintOwner, ] = await PublicKey.findProgramAddress(
+      [
+        COLLECTOOOOOORS_PREFIX,
+        recipeKey.toBuffer(),
+      ],
+      COLLECTOOOOOORS_PROGRAM_ID
+    );
+
+    const yieldsAccounts = await connection.getTokenAccountsByOwner(
+        recipeMintOwner,
+        { programId: TOKEN_PROGRAM_ID },
+      );
+    const yieldsDecoded = yieldsAccounts.value.map(v => AccountLayout.decode(v.account.data));
+    const yieldImages : Array<MintAndImage> = [];
+    for (const r of yieldsDecoded) {
+      const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
+      if (res !== null) {
+        yieldImages.push(res);
+      }
+    }
+    setRecipeYields(yieldImages);
 
     const mints = {};
     for (const group of ingredientList)
@@ -271,36 +325,20 @@ export const Redeem = () => {
       const hasToken = new BN(a.amount, 'le').toNumber() > 0;
       return mintMatches && hasToken;
     });
-    console.log(relevant);
 
-    const ret : Array<RelevantMint> = [];
-
-    // TODO: get multiple accounts
+    // TODO: getMultipleAccounts
+    const relevantImages : Array<RelevantMint> = [];
     for (const r of relevant) {
-      const mintKey = new PublicKey(r.mint);
-      const metadataKey = await getMetadata(mintKey);
-      const metadataAccount = await connection.getAccountInfo(metadataKey);
-      if (metadataAccount === null) {
-        notify({
-          message: 'Fetch relevant mints failed',
-          description: `Could not fetch metadata for mint ${r.mint}`,
+      const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
+      if (res !== null) {
+        relevantImages.push({
+          ...res,
+          ingredient: mints[res.mint.toBase58()],
         });
-        continue;
       }
-      const metadata = decodeMetadata(metadataAccount.data);
-      const schema = await (await fetch(metadata.data.uri)).json();
-
-      console.log(schema);
-
-      ret.push({
-        mint: mintKey,
-        name: metadata.data.name,
-        image: schema.image,
-        ingredient: mints[mintKey.toBase58()],
-      });
     }
 
-    setRelevantMints(ret);
+    setRelevantMints(relevantImages);
   };
 
   const addIngredient = async (e : React.SyntheticEvent, mint: PublicKey) => {
@@ -507,7 +545,8 @@ export const Redeem = () => {
       });
     }
 
-    await updateOnChainIngredients(anchorWallet.publicKey);
+    setIngredients(await getOnChainIngredients(
+          connection, recipeKey, anchorWallet.publicKey, ingredientList));
   };
 
   const claim = async (e : React.SyntheticEvent) => {
@@ -533,7 +572,6 @@ export const Redeem = () => {
       [
         COLLECTOOOOOORS_PREFIX,
         recipeKey.toBuffer(),
-        masterMintKey.toBuffer(),
       ],
       COLLECTOOOOOORS_PROGRAM_ID
     );
@@ -766,6 +804,23 @@ export const Redeem = () => {
         </Table>
       </TableContainer>}
       <ImageList cols={2}>
+        {recipeYields.map((r, idx) => {
+          return (
+            <ImageListItem key={idx}>
+              <img
+                src={r.image}
+                alt={r.name}
+              />
+              <ImageListItemBar
+                title={`${r.name}`}
+                subtitle={explorerLinkForAddress(r.mint)}
+                // TODO: selection
+              />
+            </ImageListItem>
+          );
+        })}
+      </ImageList>
+      <ImageList cols={2}>
         {relevantMints.map((r, idx) => {
           return (
             <ImageListItem key={idx}>
@@ -806,7 +861,7 @@ export const Redeem = () => {
                     );
                   })()
                 }
-              / >
+              />
             </ImageListItem>
           );
         })}

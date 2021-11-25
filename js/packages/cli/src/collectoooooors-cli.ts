@@ -183,7 +183,6 @@ programCommand('add_master_edition')
       [
         COLLECTOOOOOORS_PREFIX,
         recipeKey.toBuffer(),
-        mintKey.toBuffer(),
       ],
       COLLECTOOOOOORS_PROGRAM_ID
     );
@@ -258,7 +257,6 @@ programCommand('reclaim_master_edition')
       [
         COLLECTOOOOOORS_PREFIX,
         recipeKey.toBuffer(),
-        mintKey.toBuffer(),
       ],
       COLLECTOOOOOORS_PROGRAM_ID
     );
