@@ -13,16 +13,13 @@ import {
   Step,
   StepLabel,
   Stepper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  List,
+  ListItem,
   TextField,
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
+import CancelIcon from '@mui/icons-material/Cancel';
+import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 
 import {
   Connection as RPCConnection,
@@ -52,6 +49,7 @@ import {
 import BN from 'bn.js';
 
 import {
+  useColorMode,
   useConnection,
   Connection,
 } from '../contexts';
@@ -73,6 +71,66 @@ import {
 import {
   MerkleTree,
 } from "../utils/merkleTree";
+
+export const HoverButton = (
+  props : {
+    handleClick : (e : React.SyntheticEvent) => void,
+    hoverDisplay : React.ReactNode,
+    children : React.ReactNode,
+    padding : number,
+  },
+) => {
+  const [hovering, setHovering] = React.useState(false);
+
+  const colorModeCtx = useColorMode();
+  const shade = colorModeCtx.mode === 'dark' ? "rgba(255,255,255,.2)" : "rgba(0, 0, 0,.2)";
+
+  return (
+    <Button
+      onMouseOver={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      onClick={props.handleClick}
+      variant="contained"
+      style={{
+        padding: props.padding,
+        textTransform: "none",
+        color: "white",
+        backgroundColor: shade,
+      }}
+    >
+      <Box sx={{ position: "relative" }}>
+        {props.children}
+        {hovering && (
+          <React.Fragment>
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                backgroundColor: "rgba(0, 0, 0, .75)",
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                margin: 'auto',
+                top: '50%',
+                transform: 'translateY(-50%)',
+              }}
+            >
+              {props.hoverDisplay}
+            </Box>
+          </React.Fragment>
+        )}
+      </Box>
+    </Button>
+  );
+};
+
 
 const createMintAndAccount = async (
   connection : RPCConnection,
@@ -360,79 +418,95 @@ export const Redeem = () => {
           connection, anchorWallet.publicKey, ingredientList));
   };
 
-  const addIngredient = async (e : React.SyntheticEvent, mint: PublicKey) => {
-    e.preventDefault();
+  const addIngredient = async (e : React.SyntheticEvent, ingredient: string, mint: PublicKey) => {
+    // TODO: less hacky. let the link click go through
+    if ((e.target as any).href !== undefined) {
+      return;
+    } else {
+      e.preventDefault();
+    }
 
-    for (const r of relevantMints) {
-      if (!r.mint.equals(mint))
-        continue;
+    if (ingredients[ingredient] !== null) {
+      throw new Error(`Ingredient ${ingredient} has already been added to this dish`);
+    }
 
-      if (ingredients[r.ingredient] !== null) {
-        throw new Error(`Ingredient ${r.ingredient} has already been added to this dish`);
+    const match = changeList.find(c => c.ingredient === ingredient);
+    if (match) {
+      if (match.mint.equals(mint)) return;
+      if (match.operation !== 'add') {
+        throw new Error(`Internal error: Cannot recover and add a mint`);
       }
+      const prev = match.mint.toBase58();
+      const next = mint.toBase58();
+      notify({
+        message: "Dish Changes",
+        description: `Replaced ingredient ${prev} with ${next}`,
+      });
 
-      const match = changeList.find(c => c.ingredient === r.ingredient);
-      if (match !== null) {
-        const prev = match.mint.toBase58();
-        const next = r.mint.toBase58();
-        notify({
-          message: "Dish Changes",
-          description: `Replaced ingredient ${prev} with ${next}`,
-        });
-
-        match.mint = r.mint;
-      } else {
-        setChangeList(
-          [
-            ...changeList,
-            {
-              ingredient: r.ingredient,
-              mint: r.mint,
-            },
-          ]
-        );
-      }
+      match.mint = mint;
+    } else {
+      setChangeList(
+        [
+          ...changeList,
+          {
+            ingredient: ingredient,
+            mint: mint,
+            operation: 'add',
+          },
+        ]
+      );
     }
   };
 
-  // TODO: function to remove from dish PDA
-  // const walletATA = await getAssociatedTokenAccount(
-  //   anchorWallet.publicKey, currentMint, connection);
-  // setup.push(await program.instruction.removeIngredient(
-  //   storeBump,
-  //   ingredientNum,
-  //   {
-  //     accounts: {
-  //       dish: dishKey,
-  //       ingredientMint: currentMint,
-  //       ingredientStore: storeKey,
-  //       payer: anchorWallet.publicKey,
-  //       to: walletATA,
-  //       systemProgram: SystemProgram.programId,
-  //       tokenProgram: TOKEN_PROGRAM_ID,
-  //       rent: SYSVAR_RENT_PUBKEY,
-  //     },
-  //     signers: [],
-  //     instructions: [],
-  //   }
-  // ));
-
-  const removeIngredient = async (e : React.SyntheticEvent, mint: PublicKey) => {
-    e.preventDefault();
-
-    for (const r of relevantMints) {
-      if (!r.mint.equals(mint))
-        continue;
-
-      const newList = [...changeList];
-      const idx = newList.indexOf(c => c.ingredient === r.ingredient);
-      if (idx === -1) {
-        throw new Error(`Ingredient ${r.ingredient} has not been added to this dish`);
-      }
-
-      newList.splice(idx, 1);
-      setChangeList(newList);
+  const recoverIngredient = async (e : React.SyntheticEvent, ingredient : string) => {
+    // TODO: less hacky. let the link click go through
+    if ((e.target as any).href !== undefined) {
+      return;
+    } else {
+      e.preventDefault();
     }
+
+    const mint = ingredients[ingredient];
+    if (mint === null) {
+      throw new Error(`Ingredient ${ingredient} is not part of this dish`);
+    }
+
+    const match = changeList.find(c => c.ingredient === ingredient);
+    if (match) {
+      if (match.mint !== mint.mint || match.operation !== 'recover') {
+        throw new Error(`Internal error: Cannot recover and add a mint`);
+      }
+      // already added
+    } else {
+      setChangeList(
+        [
+          ...changeList,
+          {
+            ingredient: ingredient,
+            mint: mint.mint,
+            operation: 'recover',
+          },
+        ]
+      );
+    }
+  };
+
+  const cancelChangeForIngredient = async (e : React.SyntheticEvent, ingredient: string) => {
+    // TODO: less hacky. let the link click go through
+    if ((e.target as any).href !== undefined) {
+      return;
+    } else {
+      e.preventDefault();
+    }
+
+    const newList = [...changeList];
+    const idx = newList.findIndex(c => c.ingredient === ingredient);
+    if (idx === -1) {
+      throw new Error(`Ingredient ${ingredient} is not part of the change-list`);
+    }
+
+    newList.splice(idx, 1);
+    setChangeList(newList);
   };
 
   const submitDishChanges = async (e : React.SyntheticEvent) => {
@@ -445,8 +519,6 @@ export const Redeem = () => {
     if (ingredientList.length === 0) {
       throw new Error(`No ingredient list`);
     }
-
-    console.log(ingredientList);
 
     const recipeKey = new PublicKey(recipe);
     const [dishKey, dishBump] = await PublicKey.findProgramAddress(
@@ -479,9 +551,9 @@ export const Redeem = () => {
 
     for (let idx = 0; idx < ingredientList.length; ++idx) {
       const group = ingredientList[idx];
-      const newMint = changeList.find(c => c.ingredient === group.ingredient);
+      const change = changeList.find(c => c.ingredient === group.ingredient);
 
-      if (newMint === null) {
+      if (!change) {
         continue;
       }
 
@@ -496,43 +568,72 @@ export const Redeem = () => {
       );
 
       const storeAccount = await connection.getAccountInfo(storeKey);
-      if (storeAccount === null) {
-        // nothing
-      } else {
-        throw new Error(`Ingredient ${group.ingredient} has already been added to this dish`);
-      }
-
-      // TODO: cache?
-      const mintsKeys = group.mints.map(m => new PublicKey(m));
-      const mintIdx = mintsKeys.findIndex(m => m.equals(newMint.mint));
-      if (mintIdx === -1) {
-        throw new Error(`Could not find mint matching ${newMint.mint.toBase58()} in ingredient group ${group.ingredient}`);
-      }
-
-      const tree = new MerkleTree(mintsKeys.map(m => m.toBuffer()));
-      const proof = tree.getProof(mintIdx);
       const walletATA = await getAssociatedTokenAccount(
-        anchorWallet.publicKey, newMint.mint, connection);
-      setup.push(await program.instruction.addIngredient(
-        storeBump,
-        ingredientNum,
-        proof,
-        {
-          accounts: {
-            recipe: recipeKey,
-            dish: dishKey,
-            ingredientMint: newMint.mint,
-            ingredientStore: storeKey,
-            payer: anchorWallet.publicKey,
-            from: walletATA,
-            systemProgram: SystemProgram.programId,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            rent: SYSVAR_RENT_PUBKEY,
-          },
-          signers: [],
-          instructions: [],
+        anchorWallet.publicKey, change.mint, connection);
+      if (change.operation === 'add') {
+        if (storeAccount === null) {
+          // nothing
+        } else {
+          throw new Error(`Ingredient ${group.ingredient} has already been added to this dish`);
         }
-      ));
+
+        // TODO: cache?
+        const mintsKeys = group.mints.map(m => new PublicKey(m));
+        const mintIdx = mintsKeys.findIndex(m => m.equals(change.mint));
+        if (mintIdx === -1) {
+          const changeMint = change.mint.toBase58();
+          throw new Error(`Could not find mint matching ${changeMint} in ingredient group ${group.ingredient}`);
+        }
+
+        const tree = new MerkleTree(mintsKeys.map(m => m.toBuffer()));
+        const proof = tree.getProof(mintIdx);
+
+        setup.push(await program.instruction.addIngredient(
+          storeBump,
+          ingredientNum,
+          proof,
+          {
+            accounts: {
+              recipe: recipeKey,
+              dish: dishKey,
+              ingredientMint: change.mint,
+              ingredientStore: storeKey,
+              payer: anchorWallet.publicKey,
+              from: walletATA,
+              systemProgram: SystemProgram.programId,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
+            signers: [],
+            instructions: [],
+          }
+        ));
+      } else if (change.operation === 'recover') {
+        if (storeAccount === null) {
+          throw new Error(`Ingredient ${group.ingredient} is not in this dish`);
+        }
+
+        setup.push(await program.instruction.removeIngredient(
+          storeBump,
+          ingredientNum,
+          {
+            accounts: {
+              dish: dishKey,
+              ingredientMint: change.mint,
+              ingredientStore: storeKey,
+              payer: anchorWallet.publicKey,
+              to: walletATA,
+              systemProgram: SystemProgram.programId,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
+            signers: [],
+            instructions: [],
+          }
+        ));
+      } else {
+        throw new Error(`Unknown change operation ${change.operation}`);
+      }
     }
 
     if (setup.length === 0) {
@@ -569,6 +670,8 @@ export const Redeem = () => {
 
     setRelevantMints(await getRelevantTokenAccounts(
           connection, anchorWallet.publicKey, ingredientList));
+
+    setChangeList([]);
   };
 
   const claim = async (e : React.SyntheticEvent) => {
@@ -707,47 +810,44 @@ export const Redeem = () => {
     return (
       <ImageList cols={2}>
         {relevantMints.map((r, idx) => {
+          const inBatch = changeList.find(c => c.mint === r.mint && c.operation === 'add');
           return (
-            <ImageListItem key={idx}>
-              <img
-                src={r.image}
-                alt={r.name}
-              />
-              <ImageListItemBar
-                title={`${r.name} (${r.ingredient})`}
-                subtitle={explorerLinkForAddress(r.mint)}
-                actionIcon={
-                  (() => {
-                    // TODO: check that PDA also doesn't exist
-                    const inBatch = ingredients[r.ingredient]?.mint.equals(r.mint);
-                    return (
-                      <IconButton
-                        onClick={e => {
-                          setLoading(true);
-                          const wrap = async () => {
-                            try {
-                              inBatch
-                                ? await removeIngredient(e, r.mint)
-                                : await addIngredient(e, r.mint);
-                              setLoading(false);
-                            } catch (err) {
-                              notify({
-                                message: `${inBatch ? 'Remove': 'Add'} ingredient failed`,
-                                description: `${err}`,
-                              });
-                              setLoading(false);
-                            }
-                          };
-                          wrap();
-                        }}
-                      >
-                        {inBatch ? <RemoveIcon /> : <AddIcon />}
-                      </IconButton>
-                    );
-                  })()
-                }
-              />
-            </ImageListItem>
+            <HoverButton
+              padding={inBatch ? 10 : 0}
+              key={idx}
+              handleClick={e => {
+                setLoading(true);
+                const wrap = async () => {
+                  try {
+                    inBatch
+                      ? await cancelChangeForIngredient(e, r.ingredient)
+                      : await addIngredient(e, r.ingredient, r.mint);
+                    setLoading(false);
+                  } catch (err) {
+                    notify({
+                      message: `${inBatch ? 'Cancel of Add': 'Add'} ingredient failed`,
+                      description: `${err}`,
+                    });
+                    setLoading(false);
+                  }
+                };
+                wrap();
+              }}
+              hoverDisplay={(
+                <React.Fragment>
+                  <div style={{ fontSize: "1.5rem" }}>{r.name}</div>
+                  <div>Ingredient: {r.ingredient}</div>
+                  <div>{explorerLinkForAddress(r.mint)}</div>
+                </React.Fragment>
+              )}
+            >
+              <ImageListItem>
+                <img
+                  src={r.image}
+                  alt={r.name}
+                />
+              </ImageListItem>
+            </HoverButton>
           );
         })}
       </ImageList>
@@ -756,41 +856,60 @@ export const Redeem = () => {
 
   const dishSelectionC = () => {
     return (
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Ingredient</TableCell>
-              <TableCell>Mint</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Object.keys(ingredients).map((ingredient, idx) => {
-              const mint = ingredients[ingredient];
-              return (
-                <TableRow
-                  key={idx}
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
+      <React.Fragment>
+        <List>
+          {Object.keys(ingredients).map((ingredient, idx) => {
+            const mint = ingredients[ingredient];
+            const inBatch = changeList.find(c => c.mint === mint?.mint && c.operation === 'recover');
+            return (
+              <ListItem key={idx}>
+                <Stack spacing={0}>
+                  <div>
                     {ingredient}
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
                     {mint
-                      ? explorerLinkForAddress(mint.mint, false)
+                      ? (
+                        <React.Fragment>
+                          {explorerLinkForAddress(mint.mint, false)}
+                          <IconButton
+                            style={{marginLeft: 6}}
+                            onClick={e => {
+                              setLoading(true);
+                              const wrap = async () => {
+                                try {
+                                  inBatch
+                                    ? await cancelChangeForIngredient(e, ingredient)
+                                    : await recoverIngredient(e, ingredient);
+                                  setLoading(false);
+                                } catch (err) {
+                                  notify({
+                                    message: `${inBatch ? 'Cancel of Recover': 'Recover'} ingredient failed`,
+                                    description: `${err}`,
+                                  });
+                                  setLoading(false);
+                                }
+                              };
+                              wrap();
+                            }}
+                          >
+                            {inBatch ? <CancelIcon /> : <RemoveCircleIcon />}
+                          </IconButton>
+                        </React.Fragment>
+                      )
                       : (
                         <Box sx={{fontFamily: 'Monospace'}}>
                           {'\u00A0'.repeat(60)}
                         </Box>
                       )
                     }
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  </div>
+                </Stack>
+              </ListItem>
+            );
+          })}
+        </List>
+      </React.Fragment>
     );
   };
 
@@ -851,10 +970,16 @@ export const Redeem = () => {
     );
   };
 
-  const recipeYieldsC = (canClaim : boolean) => {
+  const recipeYieldsC = (
+    params : {
+      cols: number,
+      canClaim?: boolean,
+      shortenAddress?: boolean,
+    }
+  ) => {
     // TODO: hover to claim and handle onClick?
     return (
-      <ImageList cols={2}>
+      <ImageList cols={params.cols}>
         {recipeYields.map((r, idx) => {
           return (
             <ImageListItem key={idx}>
@@ -864,10 +989,10 @@ export const Redeem = () => {
               />
               <ImageListItemBar
                 title={`${r.name}`}
-                subtitle={explorerLinkForAddress(r.mint)}
+                subtitle={explorerLinkForAddress(r.mint, params.shortenAddress)}
                 actionIcon={
                   (() => {
-                    if (!canClaim) return null;
+                    if (!params.canClaim) return null;
                     // TODO: check that PDA also doesn't exist
                     return (
                       <IconButton
@@ -939,7 +1064,7 @@ export const Redeem = () => {
     return (
       <React.Fragment>
         {recipeFieldC(false)}
-        {recipeYieldsC(false)}
+        {recipeYieldsC({cols: 3, shortenAddress: true})}
         <Box sx={{ position: "relative" }}>
         <Button
           disabled={!anchorWallet || loading}
@@ -990,7 +1115,7 @@ export const Redeem = () => {
     return (
       <React.Fragment>
         {recipeFieldC(true)}
-        {recipeYieldsC(true)}
+        {recipeYieldsC({cols: 1, canClaim: true, shortenAddress: false})}
       </React.Fragment>
     );
   };
