@@ -28,6 +28,7 @@ export async function getProgramAuthority(): Promise<StringPublicKey> {
 
 export async function findProvingProcessProgramAddress(
   packSetKey: PublicKey,
+  userWallet: PublicKey,
   voucherMint: PublicKey,
 ): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
@@ -37,6 +38,7 @@ export async function findProvingProcessProgramAddress(
       [
         Buffer.from(PROVING_PROCESS_PREFIX),
         packSetKey.toBuffer(),
+        userWallet.toBuffer(),
         voucherMint.toBuffer(),
       ],
       toPublicKey(PROGRAM_IDS.pack_create),

@@ -1,5 +1,4 @@
-import { ParsedAccount, useMeta, useUserAccounts } from '@oyster/common';
-import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
+import { useMeta, useUserAccounts } from '@oyster/common';
 import { useEffect, useMemo, useState } from 'react';
 import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
 import { useUserVouchersByEdition } from '../../artworks/hooks/useUserVouchersByEdition';
@@ -12,7 +11,6 @@ export const usePackState = (
   packMetadata: SafetyDepositDraft[];
   mockBlocks: number[];
   isLoading: boolean;
-  provingProcess?: ParsedAccount<ProvingProcess>;
   handleFetch: () => Promise<void>;
 } => {
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +59,6 @@ export const usePackState = (
   return {
     mockBlocks,
     packMetadata,
-    provingProcess,
     isLoading,
     handleFetch,
   };

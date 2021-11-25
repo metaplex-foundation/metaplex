@@ -21,7 +21,7 @@ interface Params extends RequestCardToRedeemParams {
   editionMint: StringPublicKey;
   packVoucher: StringPublicKey;
   tokenAccount: StringPublicKey;
-  wallet: StringPublicKey;
+  wallet: PublicKey;
 }
 
 export async function requestCardToRedeem({
@@ -46,6 +46,7 @@ export async function requestCardToRedeem({
 
   const provingProcess = await findProvingProcessProgramAddress(
     packSetKey,
+    wallet,
     toPublicKey(editionMint),
   );
   const packConfig = await findPackConfigProgramAddress(packSetKey);
@@ -80,7 +81,7 @@ export async function requestCardToRedeem({
     {
       pubkey: toPublicKey(editionMint),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     // pack_voucher
     {
@@ -96,14 +97,8 @@ export async function requestCardToRedeem({
     },
     // user_wallet
     {
-      pubkey: toPublicKey(wallet),
+      pubkey: wallet,
       isSigner: true,
-      isWritable: false,
-    },
-    // user_token_account
-    {
-      pubkey: toPublicKey(tokenAccount),
-      isSigner: false,
       isWritable: true,
     },
     // randomness_oracle
@@ -124,11 +119,23 @@ export async function requestCardToRedeem({
       isSigner: false,
       isWritable: false,
     },
+    // spl_token program
+    {
+      pubkey: programIds().token,
+      isSigner: false,
+      isWritable: false,
+    },
     // system_program
     {
       pubkey: SystemProgram.programId,
       isSigner: false,
       isWritable: false,
+    },
+    // user_token_account
+    {
+      pubkey: toPublicKey(tokenAccount),
+      isSigner: false,
+      isWritable: true,
     },
   ];
 

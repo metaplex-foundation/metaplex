@@ -26,7 +26,6 @@ interface Params {
   index: number;
   packSetKey: PublicKey;
   wallet: PublicKey;
-  voucherToken: StringPublicKey;
   voucherMint: StringPublicKey;
   userToken: StringPublicKey;
   newMint: StringPublicKey;
@@ -38,7 +37,6 @@ export async function claimPack({
   index,
   packSetKey,
   wallet,
-  voucherToken,
   voucherMint,
   userToken,
   newMint,
@@ -51,6 +49,7 @@ export async function claimPack({
 
   const provingProcess = await findProvingProcessProgramAddress(
     packSetKey,
+    wallet,
     toPublicKey(voucherMint),
   );
   const packCard = await findPackCardProgramAddress(packSetKey, index);
@@ -81,12 +80,6 @@ export async function claimPack({
       pubkey: wallet,
       isSigner: true,
       isWritable: true,
-    },
-    // user_voucher_token
-    {
-      pubkey: toPublicKey(voucherToken),
-      isSigner: false,
-      isWritable: false,
     },
     // program_authority
     {

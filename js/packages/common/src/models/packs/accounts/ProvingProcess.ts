@@ -12,22 +12,28 @@ import { getProgramAccounts } from '../../../contexts/meta/web3';
 
 export class ProvingProcess {
   key: PackKey = PackKey.ProvingProcess;
+  walletKey: StringPublicKey;
+  isExhausted: Boolean;
   voucherMint: StringPublicKey;
   packSet: StringPublicKey;
-  nextCardToRedeem: number;
+  cardsToRedeem: Map<number, number>;
   cardsRedeemed: number;
 
   constructor(args: {
     key: PackKey;
+    walletKey: StringPublicKey;
+    isExhausted: Boolean;
     voucherMint: StringPublicKey;
     packSet: StringPublicKey;
-    nextCardToRedeem: number;
+    cardsToRedeem: Map<number, number>;
     cardsRedeemed: number;
   }) {
     this.key = PackKey.PackSet;
+    this.walletKey = args.walletKey;
+    this.isExhausted = Boolean(args.isExhausted);
     this.voucherMint = args.voucherMint;
     this.packSet = args.packSet;
-    this.nextCardToRedeem = args.nextCardToRedeem;
+    this.cardsToRedeem = args.cardsToRedeem;
     this.cardsRedeemed = args.cardsRedeemed;
   }
 }
@@ -39,10 +45,12 @@ export const PACK_PROVING_PROCESS_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
+        ['walletKey', 'pubkeyAsString'],
+        ['isExhausted', 'u8'],
         ['voucherMint', 'pubkeyAsString'],
         ['packSet', 'pubkeyAsString'],
-        ['nextCardToRedeem', 'u32'],
         ['cardsRedeemed', 'u32'],
+        ['cardsToRedeem', 'map32'], //BTreeMap<u32, u32>
       ],
     },
   ],
@@ -56,12 +64,14 @@ export const decodePackProvingProcess = (buffer: Buffer) => {
   ) as ProvingProcess;
 };
 
-export const getProvingProcessByPackSet = ({
+export const getProvingProcessByPackSetAndWallet = ({
   connection,
   packSetKey,
+  walletKey,
 }: {
   connection: Connection;
   packSetKey: StringPublicKey;
+  walletKey: PublicKey;
 }): Promise<AccountAndPubkey[]> =>
   getProgramAccounts(connection, PACK_CREATE_ID.toString(), {
     filters: [
@@ -70,7 +80,13 @@ export const getProvingProcessByPackSet = ({
       },
       {
         memcmp: {
-          offset: 1 + 32,
+          offset: 1,
+          bytes: toPublicKey(walletKey).toBase58(),
+        },
+      },
+      {
+        memcmp: {
+          offset: 1 + 32 + 1 + 32,
           bytes: toPublicKey(packSetKey).toBase58(),
         },
       },

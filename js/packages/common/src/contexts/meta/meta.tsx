@@ -1,4 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+
 import { queryExtendedMetadata } from './queryExtendedMetadata';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
@@ -32,6 +34,7 @@ const MetaContext = React.createContext<MetaContextState>({
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
   const { isReady, storeAddress } = useStore();
+  const wallet = useWallet();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
   const [page, setPage] = useState(0);
@@ -137,7 +140,7 @@ export function MetaProvider({ children = null as any }) {
     }
 
     // ToDo: Add feature flag check
-    const packsState = await pullPacks(connection, state);
+    const packsState = await pullPacks(connection, state, wallet?.publicKey);
 
     const nextState = await pullYourMetadata(
       connection,
@@ -164,7 +167,12 @@ export function MetaProvider({ children = null as any }) {
       setIsLoading(true);
     }
 
-    const packState = await pullPack({ connection, state, packSetKey });
+    const packState = await pullPack({
+      connection,
+      state,
+      packSetKey,
+      walletKey: wallet?.publicKey,
+    });
 
     const nextState = await pullYourMetadata(
       connection,
@@ -216,7 +224,7 @@ export function MetaProvider({ children = null as any }) {
 
     const doneQuery = timeStart('MetaProvider#update#Query');
     const donePullPage = timeStart('MetaProvider#update#pullPage');
-    let nextState = await pullPage(connection, page, state);
+    let nextState = await pullPage(connection, page, state, wallet?.publicKey);
     donePullPage();
 
     if (nextState.storeIndexer.length) {

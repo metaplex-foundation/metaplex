@@ -57,7 +57,7 @@ import { getVouchersByPackSet } from '../../models/packs/accounts/PackVoucher';
 import { processPackVouchers } from './processPackVouchers';
 import { getCardsByPackSet } from '../../models/packs/accounts/PackCard';
 import { processPackCards } from './processPackCards';
-import { getProvingProcessByPackSet } from '../../models/packs/accounts/ProvingProcess';
+import { getProvingProcessByPackSetAndWallet } from '../../models/packs/accounts/ProvingProcess';
 import { processProvingProcess } from './processProvingProcess';
 const MULTIPLE_ACCOUNT_BATCH_SIZE = 100;
 
@@ -253,6 +253,7 @@ export const pullPayoutTickets = async (
 export const pullPacks = async (
   connection: Connection,
   state: MetaState,
+  walletKey?: PublicKey | null,
 ): Promise<MetaState> => {
   const updateTemp = makeSetter(state);
   const forEach =
@@ -289,13 +290,19 @@ export const pullPacks = async (
     vouchers.forEach(forEach(processPackVouchers)),
   );
 
-  // Fetch proving process
-  const fetchProvingProcessPromises = packKeys.map(packSetKey =>
-    getProvingProcessByPackSet({ connection, packSetKey }),
-  );
-  await Promise.all(fetchProvingProcessPromises).then(provingProcess =>
-    provingProcess.forEach(forEach(processProvingProcess)),
-  );
+  // Fetch proving process if user connected wallet
+  if (walletKey) {
+    const fetchProvingProcessPromises = packKeys.map(packSetKey =>
+      getProvingProcessByPackSetAndWallet({
+        connection,
+        packSetKey,
+        walletKey,
+      }),
+    );
+    await Promise.all(fetchProvingProcessPromises).then(provingProcess =>
+      provingProcess.forEach(forEach(processProvingProcess)),
+    );
+  }
 
   const metadataKeys = Object.values(state.packCards).map(
     ({ info }) => info.metadata,
@@ -316,10 +323,12 @@ export const pullPack = async ({
   connection,
   state,
   packSetKey,
+  walletKey,
 }: {
   connection: Connection;
   state: MetaState;
   packSetKey: StringPublicKey;
+  walletKey: PublicKey | null;
 }): Promise<MetaState> => {
   const updateTemp = makeSetter(state);
 
@@ -332,11 +341,16 @@ export const pullPack = async ({
   });
   packCards.forEach(card => processPackCards(card, updateTemp));
 
-  const provingProcess = await getProvingProcessByPackSet({
-    connection,
-    packSetKey,
-  });
-  provingProcess.forEach(process => processProvingProcess(process, updateTemp));
+  if (walletKey) {
+    const provingProcess = await getProvingProcessByPackSetAndWallet({
+      connection,
+      packSetKey,
+      walletKey,
+    });
+    provingProcess.forEach(process =>
+      processProvingProcess(process, updateTemp),
+    );
+  }
 
   const metadataKeys = Object.values(state.packCardsByPackSet[packSetKey]).map(
     ({ info }) => info.metadata,
@@ -514,6 +528,7 @@ export const pullPage = async (
   connection: Connection,
   page: number,
   tempCache: MetaState,
+  walletKey?: PublicKey | null,
 ) => {
   const updateTemp = makeSetter(tempCache);
   const forEach =
@@ -659,7 +674,7 @@ export const pullPage = async (
       }
     }
 
-    await pullPacks(connection, tempCache);
+    await pullPacks(connection, tempCache, walletKey);
 
     if (page == 0) {
       console.log('-------->Page 0, pulling creators and store');

@@ -3,14 +3,12 @@ import { Col, Modal, Row, Space, Spin } from 'antd';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { BN } from 'bn.js';
 import { useConnection, useMeta, useUserAccounts } from '@oyster/common';
 
 import RedeemCard from './components/RedeemCard';
 import { useMetadataByPackCard } from './hooks/useMetadataByPackCard';
 import { useUserVouchersByEdition } from '../../../artworks/hooks/useUserVouchersByEdition';
-import { sendClaimPack } from './transactions/claimPack';
-import { requestCard } from './utils/requestCard';
+import { requestCards } from './transactions/requestCards';
 
 interface RedeemModalProps {
   isModalVisible: boolean;
@@ -29,7 +27,7 @@ const RedeemModal = ({
   isModalVisible,
   onClose,
 }: RedeemModalProps): ReactElement => {
-  const { packs, packCards, masterEditions } = useMeta();
+  const { packs } = useMeta();
   const { packId, editionId }: { packId: string; editionId: string } =
     useParams();
   const wallet = useWallet();
@@ -45,7 +43,7 @@ const RedeemModal = ({
 
   const handleClaim = async () => {
     setModalState(openState.Finding);
-    if (!wallet.publicKey || !wallet || !userVouchers[editionId]) {
+    if (!wallet?.publicKey || !userVouchers[editionId]) {
       setModalState(openState.Ready);
       return;
     }
@@ -58,37 +56,55 @@ const RedeemModal = ({
       return;
     }
 
-    const { packCardToRedeem, packCardToRedeemIndex } = await requestCard({
+    const cardsLeftToOpen = pack.info.allowedAmountToRedeem;
+
+    await requestCards({
       userVouchers,
       pack,
       editionId,
       connection,
       wallet,
+      cardsLeftToOpen,
       tokenAccount: voucherTokenAccount.pubkey,
     });
 
-    const packCardMetadata = metadataByPackCard[packCardToRedeem];
-    const userToken = packCards[packCardToRedeem]?.info?.tokenAccount;
+    // Have some waiting time
+    // const pp = await findProvingProcessProgramAddress(
+    //   toPublicKey(pack.pubkey),
+    //   wallet.publicKey,
+    //   toPublicKey(editionMint),
+    // );
 
-    if (!packCardMetadata?.info?.masterEdition || !userToken) {
-      setModalState(openState.Ready);
-      return;
-    }
+    // const p = await getProvingProcessByPubkey(
+    //   connection,
+    //   'BNgWzSzJh5XVSJsizMT6DFCH8khyH2LoFQ6WwTa7j3Xi',
+    // );
 
-    const packCardEdition = masterEditions[packCardMetadata.info.masterEdition];
-    const packCardEditionIndex = packCardEdition.info.supply.toNumber() + 1;
+    // console.log(p);
 
-    await sendClaimPack({
-      connection,
-      wallet,
-      index: packCardToRedeemIndex,
-      packSetKey: pack.pubkey,
-      voucherToken: voucherTokenAccount.pubkey,
-      userToken,
-      voucherMint: editionMint,
-      metadataMint: packCardMetadata.info.mint,
-      edition: new BN(packCardEditionIndex),
-    });
+    // console.log(pp);
+
+    // const packCardMetadata = metadataByPackCard[packCardToRedeem];
+    // const userToken = packCards[packCardToRedeem]?.info?.tokenAccount;
+
+    // if (!packCardMetadata?.info?.masterEdition || !userToken) {
+    //   setModalState(openState.Ready);
+    //   return;
+    // }
+
+    // const packCardEdition = masterEditions[packCardMetadata.info.masterEdition];
+    // const packCardEditionIndex = packCardEdition.info.supply.toNumber() + 1;
+
+    // await sendClaimPack({
+    //   connection,
+    //   wallet,
+    //   index: packCardToRedeemIndex,
+    //   packSetKey: pack.pubkey,
+    //   userToken,
+    //   voucherMint: editionMint,
+    //   metadataMint: packCardMetadata.info.mint,
+    //   edition: new BN(packCardEditionIndex),
+    // });
 
     setModalState(openState.Found);
 
