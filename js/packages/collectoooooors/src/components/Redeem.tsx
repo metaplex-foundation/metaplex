@@ -1,5 +1,7 @@
 import React from "react";
 
+import ContentLoader from 'react-content-loader';
+import { Image } from 'antd';
 import {
   Box,
   Button,
@@ -132,6 +134,40 @@ export const HoverButton = (
   );
 };
 
+export const ThreeDots = () => (
+  <ContentLoader
+    viewBox="0 0 212 200"
+    height={200}
+    width={212}
+    backgroundColor="transparent"
+    style={{
+      width: '100%',
+      margin: 'auto',
+    }}
+  >
+    <circle cx="86" cy="100" r="8" />
+    <circle cx="106" cy="100" r="8" />
+    <circle cx="126" cy="100" r="8" />
+  </ContentLoader>
+);
+
+const LoadingImage = (
+  props : {
+    url : string,
+  },
+) => {
+  const [loaded, setLoaded] = React.useState<boolean>(false);
+  return (
+    <Image
+      src={props.url}
+      onLoad={() => {
+        setLoaded(true);
+      }}
+      placeholder={<ThreeDots />}
+      {...(loaded ? {} : { height: "100%" })}
+    />
+  );
+}
 
 const createMintAndAccount = async (
   connection : RPCConnection,
@@ -864,9 +900,8 @@ export const Redeem = () => {
               )}
             >
               <ImageListItem>
-                <img
-                  src={r.image}
-                  alt={r.name}
+                <LoadingImage
+                  url={r.image}
                 />
               </ImageListItem>
             </HoverButton>
@@ -1039,9 +1074,8 @@ export const Redeem = () => {
               }
             >
               <ImageListItem key={idx}>
-                <img
-                  src={r.image}
-                  alt={r.name}
+                <LoadingImage
+                  url={r.image}
                 />
               </ImageListItem>
             </HoverButton>
