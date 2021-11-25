@@ -8,7 +8,6 @@ import {
   Link as HyperLink,
   ImageList,
   ImageListItem,
-  ImageListItemBar,
   Stack,
   Step,
   StepLabel,
@@ -17,7 +16,6 @@ import {
   ListItem,
   TextField,
 } from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
 import CancelIcon from '@mui/icons-material/Cancel';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 
@@ -36,6 +34,7 @@ import {
 } from '@solana/spl-token'
 import * as anchor from '@project-serum/anchor';
 import {
+  decodeMasterEdition,
   decodeMetadata,
   notify,
   shortenAddress,
@@ -78,6 +77,7 @@ export const HoverButton = (
     hoverDisplay : React.ReactNode,
     children : React.ReactNode,
     padding : number,
+    disabled : boolean,
   },
 ) => {
   const [hovering, setHovering] = React.useState(false);
@@ -90,6 +90,7 @@ export const HoverButton = (
       onMouseOver={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       onClick={props.handleClick}
+      disabled={props.disabled}
       variant="contained"
       style={{
         padding: props.padding,
@@ -674,11 +675,16 @@ export const Redeem = () => {
     setChangeList([]);
   };
 
-  const claim = async (e : React.SyntheticEvent) => {
-    e.preventDefault();
+  const claim = async (e : React.SyntheticEvent, masterMintKey : PublicKey) => {
+    // TODO: less hacky. let the link click go through
+    if ((e.target as any).href !== undefined) {
+      return;
+    } else {
+      e.preventDefault();
+    }
+
     if (!anchorWallet || !program) {
       throw new Error(`Wallet or program is not connected`);
-      return;
     }
 
     const recipeKey = new PublicKey(recipe);
@@ -690,8 +696,6 @@ export const Redeem = () => {
       ],
       COLLECTOOOOOORS_PROGRAM_ID,
     );
-
-    const masterMintKey = new PublicKey('2fLzRZkLj5ED5ZBCeyiUKuHuJ5MRT7fGLcbSQfbW1uEX');
 
     const [recipeMintOwner, recipeMintBump] = await PublicKey.findProgramAddress(
       [
@@ -719,7 +723,24 @@ export const Redeem = () => {
     const setup : Array<TransactionInstruction> = [];
     await createMintAndAccount(connection, anchorWallet.publicKey, newMint.publicKey, setup);
 
-    const edition = new BN(0);
+    const masterEditionAccount = await connection.getAccountInfo(masterEdition);
+    if (masterEditionAccount === null) {
+      throw new Error(`Could not retrieve master edition for mint ${masterMintKey.toBase58()}`);
+    }
+    const masterEditionDecoded = decodeMasterEdition(masterEditionAccount.data);
+
+    // TODO: less naive?
+    const masterEditionSupply = new BN(masterEditionDecoded.supply);
+    const edition = masterEditionSupply.add(new BN(1));
+    if (!masterEditionDecoded.maxSupply) {
+      // no limit. try for next
+    } else {
+      const maxSupply = new BN(masterEditionDecoded.maxSupply);
+      if (edition.gt(maxSupply)) {
+        throw new Error(`No more editions remaining for ${masterMintKey.toBase58()}`);
+      }
+    }
+
     const editionMarkKey = await getEditionMarkerPda(masterMintKey, edition);
 
     setup.push(await program.instruction.makeDish(
@@ -813,8 +834,9 @@ export const Redeem = () => {
           const inBatch = changeList.find(c => c.mint === r.mint && c.operation === 'add');
           return (
             <HoverButton
-              padding={inBatch ? 10 : 0}
               key={idx}
+              padding={inBatch ? 10 : 0}
+              disabled={false}
               handleClick={e => {
                 setLoading(true);
                 const wrap = async () => {
@@ -871,9 +893,8 @@ export const Redeem = () => {
                     {mint
                       ? (
                         <React.Fragment>
-                          {explorerLinkForAddress(mint.mint, false)}
                           <IconButton
-                            style={{marginLeft: 6}}
+                            style={{marginRight: 6}}
                             onClick={e => {
                               setLoading(true);
                               const wrap = async () => {
@@ -895,6 +916,7 @@ export const Redeem = () => {
                           >
                             {inBatch ? <CancelIcon /> : <RemoveCircleIcon />}
                           </IconButton>
+                          {explorerLinkForAddress(mint.mint, false)}
                         </React.Fragment>
                       )
                       : (
@@ -982,44 +1004,47 @@ export const Redeem = () => {
       <ImageList cols={params.cols}>
         {recipeYields.map((r, idx) => {
           return (
-            <ImageListItem key={idx}>
-              <img
-                src={r.image}
-                alt={r.name}
-              />
-              <ImageListItemBar
-                title={`${r.name}`}
-                subtitle={explorerLinkForAddress(r.mint, params.shortenAddress)}
-                actionIcon={
-                  (() => {
-                    if (!params.canClaim) return null;
-                    // TODO: check that PDA also doesn't exist
-                    return (
-                      <IconButton
-                        onClick={e => {
-                          setLoading(true);
-                          const wrap = async () => {
-                            try {
-                              await claim(e);
-                              setLoading(false);
-                            } catch (err) {
-                              notify({
-                                message: `Claim failed`,
-                                description: `${err}`,
-                              });
-                              setLoading(false);
-                            }
-                          };
-                          wrap();
-                        }}
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    );
-                  })()
-                }
-              />
-            </ImageListItem>
+            <HoverButton
+              key={idx}
+              padding={0}
+              disabled={!params.canClaim}
+              handleClick={e => {
+                setLoading(true);
+                const wrap = async () => {
+                  try {
+                    await claim(e, r.mint);
+                    setLoading(false);
+                  } catch (err) {
+                    notify({
+                      message: `Claim failed`,
+                      description: `${err}`,
+                    });
+                    setLoading(false);
+                  }
+                };
+                wrap();
+              }}
+              hoverDisplay={
+                params.canClaim
+                  ? (
+                    <React.Fragment>
+                      <Box sx={{fontSize: "2rem"}}>
+                        Claim!
+                      </Box>
+                      <div style={{ fontSize: "1.5rem" }}>{r.name}</div>
+                      {explorerLinkForAddress(r.mint, params.shortenAddress)}
+                    </React.Fragment>
+                  )
+                  : null
+              }
+            >
+              <ImageListItem key={idx}>
+                <img
+                  src={r.image}
+                  alt={r.name}
+                />
+              </ImageListItem>
+            </HoverButton>
           );
         })}
       </ImageList>
