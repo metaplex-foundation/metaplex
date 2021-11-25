@@ -28,27 +28,29 @@ const RedeemModal = ({
   onClose,
 }: RedeemModalProps): ReactElement => {
   const { packs } = useMeta();
-  const { packId, editionId }: { packId: string; editionId: string } =
-    useParams();
+  const {
+    packKey,
+    voucherEditionKey,
+  }: { packKey: string; voucherEditionKey: string } = useParams();
   const wallet = useWallet();
   const connection = useConnection();
   const { accountByMint } = useUserAccounts();
   const userVouchers = useUserVouchersByEdition();
   const [modalState, setModalState] = useState<openState>(openState.Ready);
 
-  const pack = packs[packId];
-  const metadataByPackCard = useMetadataByPackCard(packId);
+  const pack = packs[packKey];
+  const metadataByPackCard = useMetadataByPackCard(packKey);
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
 
   const handleClaim = async () => {
     setModalState(openState.Finding);
-    if (!wallet?.publicKey || !userVouchers[editionId]) {
+    if (!wallet?.publicKey || !userVouchers[voucherEditionKey]) {
       setModalState(openState.Ready);
       return;
     }
 
-    const { mint: editionMint } = userVouchers[editionId];
+    const { mint: editionMint } = userVouchers[voucherEditionKey];
 
     const voucherTokenAccount = accountByMint.get(editionMint);
     if (!voucherTokenAccount?.pubkey) {
@@ -61,7 +63,7 @@ const RedeemModal = ({
     await requestCards({
       userVouchers,
       pack,
-      editionId,
+      voucherEditionKey,
       connection,
       wallet,
       cardsLeftToOpen,

@@ -34,7 +34,7 @@ export interface RequestCardParams {
 export interface RequestCardsParams {
   pack: ParsedAccount<PackSet>;
   userVouchers: ExtendedVoucherByKey;
-  editionId: StringPublicKey;
+  voucherEditionKey: StringPublicKey;
   tokenAccount: StringPublicKey;
   wallet: WalletContextState;
   connection: Connection;

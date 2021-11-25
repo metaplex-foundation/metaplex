@@ -18,7 +18,7 @@ import {
 export const requestCards = async ({
   userVouchers,
   pack,
-  editionId,
+  voucherEditionKey,
   tokenAccount,
   connection,
   wallet,
@@ -30,7 +30,7 @@ export const requestCards = async ({
     pubkey: packVoucher,
     edition,
     mint: editionMint,
-  } = userVouchers[editionId];
+  } = userVouchers[voucherEditionKey];
 
   const requestCardsInstructions = await getRequestCardsInstructions({
     cardsLeftToOpen,
