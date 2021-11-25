@@ -10,6 +10,9 @@ import {
   ImageListItem,
   ImageListItemBar,
   Stack,
+  Step,
+  StepLabel,
+  Stepper,
   Table,
   TableBody,
   TableCell,
@@ -162,6 +165,37 @@ const fetchMintAndImage = async (
   };
 };
 
+const getRecipeYields = async (
+  connection : RPCConnection,
+  recipeKey : PublicKey,
+) => {
+  const [recipeMintOwner, ] = await PublicKey.findProgramAddress(
+    [
+      COLLECTOOOOOORS_PREFIX,
+      recipeKey.toBuffer(),
+    ],
+    COLLECTOOOOOORS_PROGRAM_ID
+  );
+
+  const yieldsAccounts = await connection.getTokenAccountsByOwner(
+      recipeMintOwner,
+      { programId: TOKEN_PROGRAM_ID },
+    );
+  const yieldsDecoded = yieldsAccounts.value.map(v => AccountLayout.decode(v.account.data));
+  const yieldImages : Array<MintAndImage> = [];
+  for (const r of yieldsDecoded) {
+    const hasToken = new BN(r.amount, 'le').toNumber() > 0;
+    if (!hasToken) {
+      continue;
+    }
+    const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
+    if (res !== null) {
+      yieldImages.push(res);
+    }
+  }
+  return yieldImages;
+};
+
 const getOnChainIngredients = async (
   connection : RPCConnection,
   recipeKey : PublicKey,
@@ -202,6 +236,43 @@ const getOnChainIngredients = async (
   }
 
   return ingredients;
+};
+
+const getRelevantTokenAccounts = async (
+  connection : RPCConnection,
+  walletKey : PublicKey,
+  ingredientList : Array<any>,
+) => {
+  const mints = {};
+  for (const group of ingredientList)
+    for (const mint of group.mints)
+      mints[mint] = group.ingredient;
+
+  const owned = await connection.getTokenAccountsByOwner(
+      walletKey,
+      { programId: TOKEN_PROGRAM_ID },
+    );
+
+  const decoded = owned.value.map(v => AccountLayout.decode(v.account.data));
+  console.log(decoded);
+  const relevant = decoded.filter(a => {
+    const mintMatches = (new PublicKey(a.mint).toBase58()) in mints;
+    const hasToken = new BN(a.amount, 'le').toNumber() > 0;
+    return mintMatches && hasToken;
+  });
+
+  // TODO: getMultipleAccounts
+  const relevantImages : Array<RelevantMint> = [];
+  for (const r of relevant) {
+    const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
+    if (res !== null) {
+      relevantImages.push({
+        ...res,
+        ingredient: mints[res.mint.toBase58()],
+      });
+    }
+  }
+  return relevantImages;
 };
 
 export const Redeem = () => {
@@ -269,8 +340,7 @@ export const Redeem = () => {
     try {
       recipe = await program.account.recipe.fetch(recipeKey);
     } catch (err) {
-      console.log('Failed to find recipe');
-      return;
+      throw new Error(`Failed to find recipe ${recipeKey.toBase58()}`);
     }
 
     const ingredientUrl = recipe.ingredients.replace(/\0/g, '');
@@ -286,59 +356,8 @@ export const Redeem = () => {
     setIngredients(await getOnChainIngredients(
           connection, recipeKey, anchorWallet.publicKey, ingredientList));
 
-    const [recipeMintOwner, ] = await PublicKey.findProgramAddress(
-      [
-        COLLECTOOOOOORS_PREFIX,
-        recipeKey.toBuffer(),
-      ],
-      COLLECTOOOOOORS_PROGRAM_ID
-    );
-
-    const yieldsAccounts = await connection.getTokenAccountsByOwner(
-        recipeMintOwner,
-        { programId: TOKEN_PROGRAM_ID },
-      );
-    const yieldsDecoded = yieldsAccounts.value.map(v => AccountLayout.decode(v.account.data));
-    const yieldImages : Array<MintAndImage> = [];
-    for (const r of yieldsDecoded) {
-      const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
-      if (res !== null) {
-        yieldImages.push(res);
-      }
-    }
-    setRecipeYields(yieldImages);
-
-    const mints = {};
-    for (const group of ingredientList)
-      for (const mint of group.mints)
-        mints[mint] = group.ingredient;
-
-    const owned = await connection.getTokenAccountsByOwner(
-        anchorWallet.publicKey,
-        { programId: TOKEN_PROGRAM_ID },
-      );
-
-    const decoded = owned.value.map(v => AccountLayout.decode(v.account.data));
-    console.log(decoded);
-    const relevant = decoded.filter(a => {
-      const mintMatches = (new PublicKey(a.mint).toBase58()) in mints;
-      const hasToken = new BN(a.amount, 'le').toNumber() > 0;
-      return mintMatches && hasToken;
-    });
-
-    // TODO: getMultipleAccounts
-    const relevantImages : Array<RelevantMint> = [];
-    for (const r of relevant) {
-      const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
-      if (res !== null) {
-        relevantImages.push({
-          ...res,
-          ingredient: mints[res.mint.toBase58()],
-        });
-      }
-    }
-
-    setRelevantMints(relevantImages);
+    setRelevantMints(await getRelevantTokenAccounts(
+          connection, anchorWallet.publicKey, ingredientList));
   };
 
   const addIngredient = async (e : React.SyntheticEvent, mint: PublicKey) => {
@@ -547,6 +566,9 @@ export const Redeem = () => {
 
     setIngredients(await getOnChainIngredients(
           connection, recipeKey, anchorWallet.publicKey, ingredientList));
+
+    setRelevantMints(await getRelevantTokenAccounts(
+          connection, anchorWallet.publicKey, ingredientList));
   };
 
   const claim = async (e : React.SyntheticEvent) => {
@@ -681,94 +703,60 @@ export const Redeem = () => {
     />
   );
 
-  return (
-    <Stack spacing={2}>
-      <TextField
-        id="recipe-field"
-        label={`Recipe`}
-        value={recipe}
-        inputProps={{
-          sx: { fontFamily: 'Monospace' }
-        }}
-        onChange={e => {
-          try {
-            const key = new PublicKey(e.target.value);
-            setLoading(true);
-            const wrap = async () => {
-              try {
-                await fetchRelevantMints(key);
-                setLoading(false);
-              } catch (err) {
-                notify({
-                  message: 'Fetch relevant mints failed',
-                  description: `${err}`,
-                });
-                setLoading(false);
-              }
-            };
-            wrap();
-          } catch (err) {
-            console.log(err);
-          }
-          setRecipe(e.target.value)
-        }}
-      />
-      {loading && loadingProgress()}
-      {Object.keys(ingredients).length > 0 && <Button
-        disabled={
-          !anchorWallet
-          || loading
-          || changeList.length === 0
-        }
-        variant="contained"
-        style={{ width: "100%" }}
-        onClick={(e) => {
-          setLoading(true);
-          const wrap = async () => {
-            try {
-              await submitDishChanges(e);
-              setLoading(false);
-            } catch (err) {
-              notify({
-                message: `Dish Changes failed`,
-                description: `${err}`,
-              });
-              setLoading(false);
-            }
-          };
-          wrap();
-        }}
-      >
-        Submit Dish Changes
-      </Button>}
-      {Object.keys(ingredients).length > 0 && <Button
-        disabled={
-          !anchorWallet
-          || loading
-          || Object.values(ingredients).some(x => x === null)
-        }
-        variant="contained"
-        style={{ width: "100%" }}
-        onClick={(e) => {
-          setLoading(true);
-          const wrap = async () => {
-            try {
-              await claim(e);
-              setLoading(false);
-            } catch (err) {
-              notify({
-                message: `Claim failed`,
-                description: `${err}`,
-              });
-              setLoading(false);
-            }
-          };
-          wrap();
-        }}
-      >
-        Claim
-      </Button>}
-      {Object.keys(ingredients).length > 0 && <TableContainer>
+  const relevantImagesC = () => {
+    return (
+      <ImageList cols={2}>
+        {relevantMints.map((r, idx) => {
+          return (
+            <ImageListItem key={idx}>
+              <img
+                src={r.image}
+                alt={r.name}
+              />
+              <ImageListItemBar
+                title={`${r.name} (${r.ingredient})`}
+                subtitle={explorerLinkForAddress(r.mint)}
+                actionIcon={
+                  (() => {
+                    // TODO: check that PDA also doesn't exist
+                    const inBatch = ingredients[r.ingredient]?.mint.equals(r.mint);
+                    return (
+                      <IconButton
+                        onClick={e => {
+                          setLoading(true);
+                          const wrap = async () => {
+                            try {
+                              inBatch
+                                ? await removeIngredient(e, r.mint)
+                                : await addIngredient(e, r.mint);
+                              setLoading(false);
+                            } catch (err) {
+                              notify({
+                                message: `${inBatch ? 'Remove': 'Add'} ingredient failed`,
+                                description: `${err}`,
+                              });
+                              setLoading(false);
+                            }
+                          };
+                          wrap();
+                        }}
+                      >
+                        {inBatch ? <RemoveIcon /> : <AddIcon />}
+                      </IconButton>
+                    );
+                  })()
+                }
+              />
+            </ImageListItem>
+          );
+        })}
+      </ImageList>
+    );
+  };
+
+  const dishSelectionC = () => {
+    return (
+      <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -802,7 +790,70 @@ export const Redeem = () => {
             })}
           </TableBody>
         </Table>
-      </TableContainer>}
+      </TableContainer>
+    );
+  };
+
+  const dishSelectionButtonsC = (onClick) => {
+    return (
+      <React.Fragment>
+        <Box sx={{ position: "relative" }}>
+        <Button
+          disabled={
+            !anchorWallet
+            || loading
+            || changeList.length === 0
+          }
+          variant="contained"
+          style={{ width: "100%" }}
+          onClick={(e) => {
+            setLoading(true);
+            const wrap = async () => {
+              try {
+                await submitDishChanges(e);
+                setLoading(false);
+              } catch (err) {
+                notify({
+                  message: `Dish Changes failed`,
+                  description: `${err}`,
+                });
+                setLoading(false);
+              }
+            };
+            wrap();
+          }}
+        >
+          Submit Dish Changes
+        </Button>
+        {loading && loadingProgress()}
+        </Box>
+
+        <Box sx={{ position: "relative" }}>
+        <Button
+          disabled={
+            !anchorWallet
+            || loading
+            || Object.values(ingredients).some(x => x === null)
+          }
+          variant="contained"
+          style={{ width: "100%" }}
+          onClick={() => {
+            onClick();
+            // TODO: should we requery recipe yields?
+            // setRecipeYields(await getRecipeYields(connection, recipeKey));
+          }}
+        >
+          Next
+        </Button>
+        {loading && loadingProgress()}
+        </Box>
+      </React.Fragment>
+    );
+  };
+
+  const recipeYieldsC = (canClaim : boolean) => {
+    // TODO: hover to claim and handle onClick?
+    return (
       <ImageList cols={2}>
         {recipeYields.map((r, idx) => {
           return (
@@ -814,40 +865,21 @@ export const Redeem = () => {
               <ImageListItemBar
                 title={`${r.name}`}
                 subtitle={explorerLinkForAddress(r.mint)}
-                // TODO: selection
-              />
-            </ImageListItem>
-          );
-        })}
-      </ImageList>
-      <ImageList cols={2}>
-        {relevantMints.map((r, idx) => {
-          return (
-            <ImageListItem key={idx}>
-              <img
-                src={r.image}
-                alt={r.name}
-              />
-              <ImageListItemBar
-                title={`${r.name} (${r.ingredient})`}
-                subtitle={explorerLinkForAddress(r.mint)}
                 actionIcon={
                   (() => {
+                    if (!canClaim) return null;
                     // TODO: check that PDA also doesn't exist
-                    const inBatch = ingredients[r.ingredient]?.mint.equals(r.mint);
                     return (
                       <IconButton
                         onClick={e => {
                           setLoading(true);
                           const wrap = async () => {
                             try {
-                              inBatch
-                                ? await removeIngredient(e, r.mint)
-                                : await addIngredient(e, r.mint);
+                              await claim(e);
                               setLoading(false);
                             } catch (err) {
                               notify({
-                                message: `${inBatch ? 'Remove': 'add'} ingredient failed`,
+                                message: `Claim failed`,
                                 description: `${err}`,
                               });
                               setLoading(false);
@@ -856,7 +888,7 @@ export const Redeem = () => {
                           wrap();
                         }}
                       >
-                        {inBatch ? <RemoveIcon /> : <AddIcon />}
+                        <AddIcon />
                       </IconButton>
                     );
                   })()
@@ -866,6 +898,153 @@ export const Redeem = () => {
           );
         })}
       </ImageList>
+    );
+  };
+
+  const recipeFieldC = (disabled : boolean) => {
+    return (
+      <TextField
+        id="recipe-field"
+        label={`Recipe`}
+        value={recipe}
+        inputProps={{
+          sx: { fontFamily: 'Monospace' }
+        }}
+        disabled={disabled}
+        onChange={e => {
+          setLoading(true);
+          setRecipe(e.target.value)
+          try {
+            const recipeKey = new PublicKey(e.target.value);
+            const wrap = async () => {
+              try {
+                setRecipeYields(await getRecipeYields(connection, recipeKey));
+              } catch (err) {
+                console.log('Fetch yield preview err', err);
+              }
+              setLoading(false);
+            };
+            wrap();
+          } catch (err) {
+            setRecipeYields([]);
+            console.log('Key decode err', err);
+            setLoading(false);
+          }
+        }}
+      />
+    );
+  };
+
+  const chooseRecipeC = (onClick) => {
+    return (
+      <React.Fragment>
+        {recipeFieldC(false)}
+        {recipeYieldsC(false)}
+        <Box sx={{ position: "relative" }}>
+        <Button
+          disabled={!anchorWallet || loading}
+          variant="contained"
+          color="primary"
+          style={{ width: "100%" }}
+          onClick={() => {
+            setLoading(true);
+            const wrap = async () => {
+              try {
+                // TODO: race condition between setting and clicking...
+                const key = new PublicKey(recipe);
+                await fetchRelevantMints(key);
+                setLoading(false);
+                onClick();
+              } catch (err) {
+               notify({
+                  message: 'Fetch relevant mints failed',
+                  description: `${err}`,
+                });
+                setLoading(false);
+              }
+            };
+            wrap();
+          }}
+        >
+          Next
+        </Button>
+        {loading && loadingProgress()}
+        </Box>
+      </React.Fragment>
+    );
+  };
+
+  // TODO: delay until ingredients is non-empty?
+  const selectIngredientsC = (onClick) => {
+    return (
+      <React.Fragment>
+        {recipeFieldC(true)}
+        {dishSelectionC()}
+        {relevantImagesC()}
+        {dishSelectionButtonsC(onClick)}
+      </React.Fragment>
+    );
+  };
+
+  const selectYieldC = () => {
+    return (
+      <React.Fragment>
+        {recipeFieldC(true)}
+        {recipeYieldsC(true)}
+      </React.Fragment>
+    );
+  };
+
+  const steps = [
+    { name: "Choose Recipe"      , inner: chooseRecipeC      } ,
+    { name: "Select Ingredients" , inner: selectIngredientsC } ,
+    { name: "Select Yield"       , inner: selectYieldC       } ,
+  ];
+
+  const [activeStep, setActiveStep] = React.useState(0);
+  const stepToUse = Math.min(activeStep, steps.length - 1);
+
+  const handleNext = () => {
+    // return to start if going past the end (claim succeeded)
+    setActiveStep(prev => {
+      if (prev === steps.length - 1) {
+        return 0;
+      } else {
+        return prev + 1;
+      }
+    });
+  };
+  const handleBack = () => {
+    setActiveStep(prev => prev - 1);
+  };
+
+  const stepper = (
+    <React.Fragment>
+      <Stepper activeStep={stepToUse}>
+        {steps.map(s => {
+          return (
+            <Step key={s.name}>
+              <StepLabel>{s.name}</StepLabel>
+            </Step>
+          );
+        })}
+      </Stepper>
+      <Box />
+    </React.Fragment>
+  );
+
+  return (
+    <Stack spacing={2}>
+      {stepper}
+      {steps[stepToUse].inner(handleNext)}
+      {stepToUse > 0 && (
+        <Button
+          color="info"
+          onClick={handleBack}
+        >
+          Back
+        </Button>
+      )}
     </Stack>
   );
 };
