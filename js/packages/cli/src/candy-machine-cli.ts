@@ -319,7 +319,7 @@ programCommand('verify')
     let allGood = true;
 
     const keys = Object.keys(cacheContent.items);
-    let problems = Array<String>();
+    const problems = Array<String>();
 
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 500).map(
@@ -333,8 +333,24 @@ programCommand('verify')
                 4 +
                 CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
             );
-            const name = fromUTF8Array([...thisSlice.slice(4, 36)]).replace(/\x00/g, "");
-            const uri = fromUTF8Array([...thisSlice.slice(40, 240)]).replace(/\x00/g, "");
+            const nameArray = [...thisSlice.slice(4, 36)];
+            const uriArray = [...thisSlice.slice(40, 240)];
+            for(let j=nameArray.length-1; j>=0; j--){
+              if(nameArray[j]==0) {
+                nameArray.pop();
+              }else{
+                break;
+              }
+            }
+            for(let j=uriArray.length-1; j>=0; j--){
+              if(uriArray[j]==0) {
+                uriArray.pop();
+              }else{
+                break;
+              }
+            }
+            const name = fromUTF8Array(nameArray);
+            const uri = fromUTF8Array(uriArray);
             const cacheItem = cacheContent.items[key];
             if (cacheItem.link === null) {
               cacheItem.onChain = false;
@@ -349,10 +365,10 @@ programCommand('verify')
               //   `and (${cacheItem.link}). marking to rerun for image`,
               //   key,
               // );
-              if (!name.match(cacheItem.name)) {
+              if (name != cacheItem.name) {
                 problems.push(`Item: ${key} - Cached name: "${cacheItem.name}" doesn't match on-chain value: "${name}"`);
               }
-              if (!uri.match(cacheItem.link)) {
+              if (uri != cacheItem.link) {
                 problems.push(`Item: ${key} - Cached link: "${cacheItem.link}" doesn't match on-chain value: "${uri}"`);
               }
               cacheItem.onChain = false;
