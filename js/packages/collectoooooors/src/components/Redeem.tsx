@@ -100,6 +100,7 @@ export const HoverButton = (
       onMouseLeave={() => setHovering(false)}
       onClick={props.handleClick}
       disabled={props.disabled}
+      disableRipple={true}
       variant="contained"
       style={{
         padding: props.padding,
@@ -1058,8 +1059,9 @@ export const Redeem = () => {
             <HoverButton
               key={idx}
               padding={0}
-              disabled={!params.canClaim}
+              disabled={false}
               handleClick={e => {
+                if (!params.canClaim) return;
                 setLoading(true);
                 const wrap = async () => {
                   try {
@@ -1075,19 +1077,15 @@ export const Redeem = () => {
                 };
                 wrap();
               }}
-              hoverDisplay={
-                params.canClaim
-                  ? (
-                    <React.Fragment>
-                      <Box sx={{fontSize: "2rem"}}>
-                        Claim!
-                      </Box>
-                      <div style={{ fontSize: "1.5rem" }}>{r.name}</div>
-                      {explorerLinkForAddress(r.mint, params.shortenAddress)}
-                    </React.Fragment>
-                  )
-                  : null
-              }
+              hoverDisplay={(
+                <React.Fragment>
+                  {params.canClaim && <Box sx={{fontSize: "2rem"}}>
+                    Claim!
+                  </Box>}
+                  <div style={{ fontSize: "1.5rem" }}>{r.name}</div>
+                  {explorerLinkForAddress(r.mint, params.shortenAddress)}
+                </React.Fragment>
+              )}
             >
               <ImageListItem key={idx}>
                 <LoadingImage
@@ -1140,7 +1138,6 @@ export const Redeem = () => {
     return (
       <React.Fragment>
         {recipeFieldC(false)}
-        {recipeYieldsC({cols: 3, shortenAddress: true})}
         <Box sx={{ position: "relative" }}>
         <Button
           disabled={!anchorWallet || loading}
@@ -1171,6 +1168,7 @@ export const Redeem = () => {
         </Button>
         {loading && loadingProgress()}
         </Box>
+        {recipeYieldsC({cols: 1, shortenAddress: true})}
       </React.Fragment>
     );
   };
