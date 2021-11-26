@@ -1,4 +1,6 @@
 import React from "react";
+import { RouteComponentProps, } from "react-router-dom";
+import queryString from 'query-string';
 
 import ContentLoader from 'react-content-loader';
 import { Image } from 'antd';
@@ -379,7 +381,11 @@ const getRelevantTokenAccounts = async (
   return relevantImages.map(r => ({ ...r, ingredient: mints[r.mint.toBase58()] }));
 };
 
-export const Redeem = () => {
+export type RedeemProps = {};
+
+export const Redeem = (
+  props : RouteComponentProps<RedeemProps>,
+) => {
   const connection = useConnection();
   const wallet = useWallet();
 
@@ -427,6 +433,13 @@ export const Redeem = () => {
     "recipe",
     "",
   );
+
+  const query = props.location.search;
+  if (query && query.length > 0) {
+    const params = queryString.parse(query);
+    if (params.recipe)
+      setRecipe(params.recipe);
+  }
 
   const [recipeYields, setRecipeYields] = React.useState<Array<MintAndImage>>([]);
   const [relevantMints, setRelevantMints] = React.useState<Array<RelevantMint>>([]);
