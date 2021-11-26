@@ -1,4 +1,4 @@
-import { SignerWalletAdapter, WalletError } from "@solana/wallet-adapter-base";
+import { WalletAdapter, WalletError } from "@solana/wallet-adapter-base";
 import {
   useWallet,
   WalletProvider as BaseWalletProvider,
@@ -202,6 +202,6 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export type WalletSigner = Pick<
-  SignerWalletAdapter,
+  WalletAdapter,
   "publicKey" | "signTransaction" | "signAllTransactions"
 >;

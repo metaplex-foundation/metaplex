@@ -38,6 +38,8 @@ import * as anchor from '@project-serum/anchor';
 import {
   decodeMasterEdition,
   decodeMetadata,
+  getUnixTs,
+  Metadata,
   notify,
   shortenAddress,
   useLocalStorageState,
@@ -235,29 +237,40 @@ type Ingredient = {
   mint: PublicKey,
 };
 
-const fetchMintAndImage = async (
+const fetchMintsAndImages = async (
   connection : RPCConnection,
-  mintKey : PublicKey
-) : Promise<MintAndImage | null> => {
-  const metadataKey = await getMetadata(mintKey);
-  const metadataAccount = await connection.getAccountInfo(metadataKey);
-  if (metadataAccount === null) {
-    notify({
-      message: 'Fetch mint failed',
-      description: `Could not fetch metadata for mint ${mintKey.toBase58()}`,
-    });
-    return null;
-  }
-  const metadata = decodeMetadata(metadataAccount.data);
-  const schema = await (await fetch(metadata.data.uri)).json();
+  mintKeys : Array<PublicKey>
+) : Promise<Array<MintAndImage>> => {
+  const metadataKeys = await Promise.all(mintKeys.map(getMetadata));
+  const metadataAccounts = await connection.getMultipleAccountsInfo(metadataKeys);
 
-  console.log(schema);
+  const metadatasDecoded : Array<Metadata> = metadataAccounts
+    .map((account, idx) => {
+      if (account === null) {
+        const missingMint = mintKeys[idx].toBase58();
+        notify({
+          message: 'Fetch mint failed',
+          description: `Could not fetch metadata for mint ${missingMint}`,
+        });
+        return null;
+      }
 
-  return {
-    mint: mintKey,
-    name: metadata.data.name,
-    image: schema.image,
-  };
+      return decodeMetadata(account.data);
+    })
+    .filter((ret) : ret is Metadata => ret !== null);
+
+  const schemas = await Promise.all(metadatasDecoded.map(m => fetch(m.data.uri)));
+  const schemaJsons = await Promise.all(schemas.map(s => s.json()));
+
+  console.log(schemaJsons);
+
+  return schemaJsons.map((schema, idx) => {
+    return {
+      mint: mintKeys[idx],
+      name: metadatasDecoded[idx].data.name,
+      image: schema.image,
+    };
+  });
 };
 
 const getRecipeYields = async (
@@ -277,18 +290,12 @@ const getRecipeYields = async (
       { programId: TOKEN_PROGRAM_ID },
     );
   const yieldsDecoded = yieldsAccounts.value.map(v => AccountLayout.decode(v.account.data));
-  const yieldImages : Array<MintAndImage> = [];
-  for (const r of yieldsDecoded) {
-    const hasToken = new BN(r.amount, 'le').toNumber() > 0;
-    if (!hasToken) {
-      continue;
-    }
-    const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
-    if (res !== null) {
-      yieldImages.push(res);
-    }
-  }
-  return yieldImages;
+  return await fetchMintsAndImages(
+      connection,
+      yieldsDecoded
+        .filter(r => new BN(r.amount, 'le').toNumber() > 0)
+        .map(r => new PublicKey(r.mint))
+    );
 };
 
 const getOnChainIngredients = async (
@@ -306,20 +313,24 @@ const getOnChainIngredients = async (
     COLLECTOOOOOORS_PROGRAM_ID,
   );
 
+  const storeKeys = await Promise.all(ingredientList.map((group, idx) => {
+          const ingredientNum = new BN(idx);
+          return PublicKey.findProgramAddress(
+            [
+              COLLECTOOOOOORS_PREFIX,
+              dishKey.toBuffer(),
+              Buffer.from(ingredientNum.toArray('le', 8)),
+            ],
+            COLLECTOOOOOORS_PROGRAM_ID,
+          );
+        }));
+
+  const storeAccounts = await connection.getMultipleAccountsInfo(storeKeys.map(s => s[0]));
+
   const ingredients = {};
   for (let idx = 0; idx < ingredientList.length; ++idx) {
     const group = ingredientList[idx];
-    const ingredientNum = new BN(idx);
-    const [storeKey, ] = await PublicKey.findProgramAddress(
-      [
-        COLLECTOOOOOORS_PREFIX,
-        dishKey.toBuffer(),
-        Buffer.from(ingredientNum.toArray('le', 8)),
-      ],
-      COLLECTOOOOOORS_PROGRAM_ID,
-    );
-
-    const storeAccount = await connection.getAccountInfo(storeKey);
+    const storeAccount = storeAccounts[idx];
     if (storeAccount !== null) {
       const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
       ingredients[group.ingredient] = {
@@ -329,7 +340,6 @@ const getOnChainIngredients = async (
       ingredients[group.ingredient] = null;
     }
   }
-
   return ingredients;
 };
 
@@ -357,17 +367,9 @@ const getRelevantTokenAccounts = async (
   });
 
   // TODO: getMultipleAccounts
-  const relevantImages : Array<RelevantMint> = [];
-  for (const r of relevant) {
-    const res = await fetchMintAndImage(connection, new PublicKey(r.mint));
-    if (res !== null) {
-      relevantImages.push({
-        ...res,
-        ingredient: mints[res.mint.toBase58()],
-      });
-    }
-  }
-  return relevantImages;
+  const relevantImages = await fetchMintsAndImages(
+      connection, relevant.map(r => new PublicKey(r.mint)));
+  return relevantImages.map(r => ({ ...r, ingredient: mints[r.mint.toBase58()] }));
 };
 
 export const Redeem = () => {
@@ -431,6 +433,7 @@ export const Redeem = () => {
       return;
     }
 
+    const startTime = getUnixTs();
     let recipe;
     try {
       recipe = await program.account.recipe.fetch(recipeKey);
@@ -438,8 +441,12 @@ export const Redeem = () => {
       throw new Error(`Failed to find recipe ${recipeKey.toBase58()}`);
     }
 
+    console.log('Finished recipe fetch', getUnixTs() - startTime);
+
     const ingredientUrl = recipe.ingredients.replace(/\0/g, '');
     const ingredientList = await (await fetch(ingredientUrl)).json();
+
+    console.log('Finished ingerdients fetch', getUnixTs() - startTime);
 
     if (recipe.roots.length !== ingredientList.length) {
       throw new Error(`Recipe has a different number of ingredient lists and merkle hashes. Bad configuration`);
@@ -451,8 +458,12 @@ export const Redeem = () => {
     setIngredients(await getOnChainIngredients(
           connection, recipeKey, anchorWallet.publicKey, ingredientList));
 
+    console.log('Finished on-chain ingredients fetch', getUnixTs() - startTime);
+
     setRelevantMints(await getRelevantTokenAccounts(
           connection, anchorWallet.publicKey, ingredientList));
+
+    console.log('Finished relevant tokens fetch', getUnixTs() - startTime);
   };
 
   const addIngredient = async (e : React.SyntheticEvent, ingredient: string, mint: PublicKey) => {
@@ -1085,6 +1096,26 @@ export const Redeem = () => {
     );
   };
 
+  React.useEffect(() => {
+    setLoading(true);
+    try {
+      const recipeKey = new PublicKey(recipe);
+      const wrap = async () => {
+        try {
+          setRecipeYields(await getRecipeYields(connection, recipeKey));
+        } catch (err) {
+          console.log('Fetch yield preview err', err);
+        }
+        setLoading(false);
+      };
+      wrap();
+    } catch (err) {
+      setRecipeYields([]);
+      console.log('Key decode err', err);
+      setLoading(false);
+    }
+  }, [recipe]);
+
   const recipeFieldC = (disabled : boolean) => {
     return (
       <TextField
@@ -1095,26 +1126,7 @@ export const Redeem = () => {
           sx: { fontFamily: 'Monospace' }
         }}
         disabled={disabled}
-        onChange={e => {
-          setLoading(true);
-          setRecipe(e.target.value)
-          try {
-            const recipeKey = new PublicKey(e.target.value);
-            const wrap = async () => {
-              try {
-                setRecipeYields(await getRecipeYields(connection, recipeKey));
-              } catch (err) {
-                console.log('Fetch yield preview err', err);
-              }
-              setLoading(false);
-            };
-            wrap();
-          } catch (err) {
-            setRecipeYields([]);
-            console.log('Key decode err', err);
-            setLoading(false);
-          }
-        }}
+        onChange={e => setRecipe(e.target.value)}
       />
     );
   };
