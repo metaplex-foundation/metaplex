@@ -52,19 +52,19 @@ const PackCard = ({
     <Card hoverable className="auction-render-card" bordered={false}>
       <div className="card-art-info">
         <div className="pack-gray-wrapper">
-        <div className="card-artist-info card-artist-info--pack">
-          <div className="pack-creator-info">
-            <MetaAvatar creators={[creator]} />
-            <span className="pack-creator-name">{creator.name || shortenAddress(creator?.address || '')}</span>
+          <div className="card-artist-info card-artist-info--pack">
+            <div className="pack-creator-info">
+              <MetaAvatar creators={[creator]} />
+              <span className="pack-creator-name">{creator.name || shortenAddress(creator?.address || '')}</span>
+            </div>
+            <div className="card-artist-info__subtitle">
+              <p className="info-message__main">{showBadge()}</p>
+            </div>
           </div>
-          <div className="card-artist-info__subtitle">
-            <p className="info-message__main">{showBadge()}</p>
+          <div className="art-content-wrapper">
+            <ArtContent pubkey={voucherMetadata} preview={false} />
           </div>
-        </div>
-        <div className="art-content-wrapper">
-          <ArtContent pubkey={voucherMetadata} preview={false} />
-        </div>
-        <div className="art-name">{name}</div>
+          <div className="art-name">{name}</div>
         </div>
         <div className="art-auction-info">
           <div className="art-auction-info__left-side">

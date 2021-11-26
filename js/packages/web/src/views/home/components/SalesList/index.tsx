@@ -2,7 +2,6 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
-import Masonry from 'react-masonry-css';
 
 import { useMeta } from '../../../../contexts';
 import { CardLoader } from '../../../../components/MyLoader';
@@ -21,13 +20,6 @@ export enum LiveAuctionViewState {
   Ended = '2',
   Resale = '3',
 }
-
-const breakpointColumnsObj = {
-  default: 4,
-  1100: 3,
-  700: 2,
-  500: 1,
-};
 
 export const SalesListView = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
@@ -77,11 +69,7 @@ export const SalesListView = () => {
               </Tabs>
             </Row>
             <Row>
-              <Masonry
-                breakpointCols={breakpointColumnsObj}
-                className="masonry-grid"
-                columnClassName="masonry-grid_column"
-              >
+              <div className="artwork-grid">
                 {isLoading &&
                   [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
                 {!isLoading &&
@@ -93,7 +81,7 @@ export const SalesListView = () => {
                       <AuctionRenderCard auctionView={auction} />
                     </Link>
                   ))}
-              </Masonry>
+              </div>
             </Row>
           </Col>
         </Content>

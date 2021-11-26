@@ -134,11 +134,15 @@
     width: 100%;
     height: 100%;
 
-    .pack-gray-wrapper {
+    .pack-gray-wrapper, .auction-gray-wrapper {
       padding: 16px;
       border-radius: 12px;
       background: @grey-60;
       height: calc(100% - 64px);
+    }
+
+    .auction-gray-wrapper {
+      height: 100%;
     }
 
     .card-artist-info {
@@ -200,8 +204,12 @@
       overflow: hidden;
       margin-top: 20px;
       font-size: 24px;
-      line-height: 24px;
+      line-height: 32px;
       font-weight: 600;
+    }
+
+    .auction-info-container {
+      padding: 16px 0;
     }
 
     .art-auction-info {
