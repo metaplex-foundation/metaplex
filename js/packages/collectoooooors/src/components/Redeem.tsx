@@ -799,7 +799,8 @@ export const Redeem = () => {
     } else {
       const maxSupply = new BN(masterEditionDecoded.maxSupply);
       if (edition.gt(maxSupply)) {
-        throw new Error(`No more editions remaining for ${masterMintKey.toBase58()}`);
+        const masterMintStr = masterMintKey.toBase58();
+        throw new Error(`No more editions remaining for ${masterMintStr}`);
       }
     }
 
@@ -999,6 +1000,40 @@ export const Redeem = () => {
   const dishSelectionButtonsC = (onClick) => {
     return (
       <React.Fragment>
+
+        <Button
+          disabled={!anchorWallet || loading}
+          variant="contained"
+          style={{ width: "100%" }}
+          onClick={() => {
+            try {
+              const uniqIngredients = relevantMints.reduce(
+                (acc, m) => {
+                  const mintStr = m.mint.toBase58();
+                  if (mintStr in acc) return acc;
+                  return {
+                    ...acc,
+                    [mintStr]: {
+                      ingredient: m.ingredient,
+                      mint: m.mint,
+                      operation: 'add',
+                    },
+                  };
+                },
+                {}
+              );
+              setChangeList(Object.values(uniqIngredients));
+            } catch (err) {
+              notify({
+                message: `Add Ingredients Failed`,
+                description: `${err}`,
+              });
+            }
+          }}
+        >
+          Add Unique Ingredients
+        </Button>
+
         <Box sx={{ position: "relative" }}>
         <Button
           disabled={
@@ -1017,7 +1052,7 @@ export const Redeem = () => {
               } catch (err) {
                 notify({
                   message: `Dish Changes failed`,
-                  description: `${err}`,
+                  description: typeof err === 'string' ? err : `${JSON.stringify(err)}`,
                 });
                 setLoading(false);
               }
@@ -1030,7 +1065,6 @@ export const Redeem = () => {
         {loading && loadingProgress()}
         </Box>
 
-        <Box sx={{ position: "relative" }}>
         <Button
           disabled={
             !anchorWallet
@@ -1047,8 +1081,6 @@ export const Redeem = () => {
         >
           Next
         </Button>
-        {loading && loadingProgress()}
-        </Box>
       </React.Fragment>
     );
   };
