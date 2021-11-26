@@ -8,7 +8,7 @@ import { useConnection, useMeta, useUserAccounts } from '@oyster/common';
 import RedeemCard from './components/RedeemCard';
 import { useMetadataByPackCard } from './hooks/useMetadataByPackCard';
 import { useUserVouchersByEdition } from '../../../artworks/hooks/useUserVouchersByEdition';
-import { requestCards } from './transactions/requestCards';
+import openPack from './actions/openPack';
 
 interface RedeemModalProps {
   isModalVisible: boolean;
@@ -43,48 +43,25 @@ const RedeemModal = ({
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
 
-  const handleClaim = async () => {
+  const handleOpenPack = async () => {
     setModalState(openState.Finding);
-    if (!wallet?.publicKey || !userVouchers[voucherEditionKey]) {
+
+    try {
+      await openPack({
+        pack,
+        voucherEditionKey,
+        userVouchers,
+        accountByMint,
+        connection,
+        wallet,
+      });
+
+      setModalState(openState.Found);
+    } finally {
       setModalState(openState.Ready);
-      return;
+
+      setTimeout(() => handleClose(), CLOSE_TIMEOUT);
     }
-
-    const { mint: editionMint } = userVouchers[voucherEditionKey];
-
-    const voucherTokenAccount = accountByMint.get(editionMint);
-    if (!voucherTokenAccount?.pubkey) {
-      setModalState(openState.Ready);
-      return;
-    }
-
-    const cardsLeftToOpen = pack.info.allowedAmountToRedeem;
-
-    await requestCards({
-      userVouchers,
-      pack,
-      voucherEditionKey,
-      connection,
-      wallet,
-      cardsLeftToOpen,
-      tokenAccount: voucherTokenAccount.pubkey,
-    });
-
-    // Have some waiting time
-    // const pp = await findProvingProcessProgramAddress(
-    //   toPublicKey(pack.pubkey),
-    //   wallet.publicKey,
-    //   toPublicKey(editionMint),
-    // );
-
-    // const p = await getProvingProcessByPubkey(
-    //   connection,
-    //   'BNgWzSzJh5XVSJsizMT6DFCH8khyH2LoFQ6WwTa7j3Xi',
-    // );
-
-    // console.log(p);
-
-    // console.log(pp);
 
     // const packCardMetadata = metadataByPackCard[packCardToRedeem];
     // const userToken = packCards[packCardToRedeem]?.info?.tokenAccount;
@@ -107,10 +84,6 @@ const RedeemModal = ({
     //   metadataMint: packCardMetadata.info.mint,
     //   edition: new BN(packCardEditionIndex),
     // });
-
-    setModalState(openState.Found);
-
-    setTimeout(() => handleClose(), CLOSE_TIMEOUT);
   };
 
   const handleClose = useCallback(() => {
@@ -163,7 +136,10 @@ const RedeemModal = ({
                 Once opened, a Pack cannot be resealed.
               </p>
 
-              <button className="modal-redeem__open-nft" onClick={handleClaim}>
+              <button
+                className="modal-redeem__open-nft"
+                onClick={handleOpenPack}
+              >
                 <span>Open NFT</span>
               </button>
             </div>

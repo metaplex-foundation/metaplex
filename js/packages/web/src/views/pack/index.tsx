@@ -17,10 +17,8 @@ export const PackView = () => {
     voucherEditionKey,
   }: { packKey: string; voucherEditionKey: string } = useParams();
   const { packs, metadata } = useMeta();
-  const { isLoading, mockBlocks, packMetadata, handleFetch } = usePackState(
-    packKey,
-    voucherEditionKey,
-  );
+  const { isLoading, mockBlocks, packMetadata, handleFetch } =
+    usePackState(packKey);
 
   const pack = packs[packKey];
   const metaInfo = useMemo(
