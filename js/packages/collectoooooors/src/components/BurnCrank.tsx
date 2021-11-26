@@ -13,6 +13,7 @@ import {
   useWallet,
 } from '@solana/wallet-adapter-react';
 import {
+  Keypair,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
@@ -21,6 +22,7 @@ import {
   AccountLayout,
 } from '@solana/spl-token'
 import {
+  chunks,
   notify,
   useLocalStorageState,
   TOKEN_PROGRAM_ID,
@@ -163,26 +165,35 @@ export const BurnCrank = () => {
         ));
       }
 
-      const crankResult = await Connection.sendTransactionWithRetry(
+      const instrsPerTx = 6; // arb
+      const chunked = chunks(instrs, instrsPerTx);
+      const passed = await Connection.sendTransactions(
         program.provider.connection,
         anchorWallet,
-        instrs,
-        [],
+        chunked,
+        new Array<Keypair[]>(chunked.length).fill([]),
+        Connection.SequenceType.StopOnFailure,
+        'singleGossip',
+        // success callback
+        (txid: string, ind: number) => {
+          notify({
+            message: `Crank succeeded: ${ind + 1} of ${chunked.length}`,
+            description: (
+              <HyperLink href={explorerLinkFor(txid, connection)}>
+                View transaction on explorer
+              </HyperLink>
+            ),
+          });
+        },
+        // failure callback
+        (reason: string, ind: number) => {
+          console.log(`Crank for dish ${dishAccount.pubkey} failed on ${ind}: ${reason}`);
+          return true;
+        },
       );
 
-      console.log(crankResult);
-
-      if (typeof crankResult === "string") {
-        throw new Error(crankResult);
-      } else {
-        notify({
-          message: `Crank succeeded for dish ${dishAccount.pubkey}`,
-          description: (
-            <HyperLink href={explorerLinkFor(crankResult.txid, connection)}>
-              View transaction on explorer
-            </HyperLink>
-          ),
-        });
+      if (passed !== chunked.length) {
+        throw new Error(`Crank for dish ${dishAccount.pubkey} failed`);
       }
     }
   };

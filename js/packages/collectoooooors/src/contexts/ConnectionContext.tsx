@@ -241,3 +241,100 @@ export const sendTransactionWithRetry = async (
   }
 };
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export const sendTransactions = async (
+  connection: Connection,
+  wallet: WalletSigner,
+  instructionSet: TransactionInstruction[][],
+  signersSet: Keypair[][],
+  sequenceType: SequenceType = SequenceType.Parallel,
+  commitment: Commitment = 'singleGossip',
+  successCallback: (txid: string, ind: number) => void = (txid, ind) => {},
+  failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
+  block?: BlockhashAndFeeCalculator,
+): Promise<number> => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const unsignedTxns: Transaction[] = [];
+
+  if (!block) {
+    block = await connection.getRecentBlockhash(commitment);
+  }
+
+  for (let i = 0; i < instructionSet.length; i++) {
+    const instructions = instructionSet[i];
+    const signers = signersSet[i];
+
+    if (instructions.length === 0) {
+      continue;
+    }
+
+    const transaction = new Transaction();
+    instructions.forEach(instruction => transaction.add(instruction));
+    transaction.recentBlockhash = block.blockhash;
+    transaction.setSigners(
+      // fee payed by the wallet owner
+      wallet.publicKey,
+      ...signers.map(s => s.publicKey),
+    );
+
+    if (signers.length > 0) {
+      transaction.partialSign(...signers);
+    }
+
+    unsignedTxns.push(transaction);
+  }
+
+  const signedTxns = await wallet.signAllTransactions(unsignedTxns);
+
+  const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
+
+  const breakEarlyObject = { breakEarly: false, i: 0 };
+  console.log(
+    'Signed txns length',
+    signedTxns.length,
+    'vs handed in length',
+    instructionSet.length,
+  );
+  for (let i = 0; i < signedTxns.length; i++) {
+    const signedTxnPromise = sendSignedTransaction({
+      connection,
+      signedTransaction: signedTxns[i],
+    });
+
+    signedTxnPromise
+      .then(({ txid, slot }) => {
+        successCallback(txid, i);
+      })
+      .catch(reason => {
+        // @ts-ignore
+        failCallback(signedTxns[i], i);
+        if (sequenceType === SequenceType.StopOnFailure) {
+          breakEarlyObject.breakEarly = true;
+          breakEarlyObject.i = i;
+        }
+      });
+
+    if (sequenceType !== SequenceType.Parallel) {
+      try {
+        await signedTxnPromise;
+      } catch (e) {
+        console.log('Caught failure', e);
+        if (breakEarlyObject.breakEarly) {
+          console.log('Died on ', breakEarlyObject.i);
+          return breakEarlyObject.i; // Return the txn we failed on by index
+        }
+      }
+    } else {
+      pendingTxns.push(signedTxnPromise);
+    }
+  }
+
+  if (sequenceType !== SequenceType.Parallel) {
+    await Promise.all(pendingTxns);
+  }
+
+  return signedTxns.length;
+};
+/* eslint-enable @typescript-eslint/no-unused-vars */
+

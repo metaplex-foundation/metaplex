@@ -41,6 +41,7 @@ import {
 } from '@solana/spl-token'
 import * as anchor from '@project-serum/anchor';
 import {
+  chunks,
   decodeMasterEdition,
   decodeMetadata,
   getUnixTs,
@@ -696,27 +697,35 @@ export const Redeem = () => {
 
     console.log(setup);
 
-    // TODO: batching into separate transactions...
-    const submitResult = await Connection.sendTransactionWithRetry(
+    const instrsPerTx = 2; // TODO: adjust based on proof size...
+    const chunked = chunks(setup, instrsPerTx);
+    const passed = await Connection.sendTransactions(
       program.provider.connection,
       anchorWallet,
-      setup,
-      [],
+      chunked,
+      new Array<Keypair[]>(chunked.length).fill([]),
+      Connection.SequenceType.StopOnFailure,
+      'singleGossip',
+      // success callback
+      (txid: string, ind: number) => {
+        notify({
+          message: `Dish Changes succeeded: ${ind + 1} of ${chunked.length}`,
+          description: (
+            <HyperLink href={explorerLinkFor(txid, connection)}>
+              View transaction on explorer
+            </HyperLink>
+          ),
+        });
+      },
+      // failure callback
+      (reason: string, ind: number) => {
+        console.log(`Dish Changes failed on ${ind}: ${reason}`);
+        return true;
+      },
     );
 
-    console.log(submitResult);
-
-    if (typeof submitResult === "string") {
-      throw new Error(submitResult);
-    } else {
-      notify({
-        message: "Dish Changes succeeded",
-        description: (
-          <HyperLink href={explorerLinkFor(submitResult.txid, connection)}>
-            View transaction on explorer
-          </HyperLink>
-        ),
-      });
+    if (passed !== chunked.length) {
+      throw new Error(`One of the dish changes failed. See console logs`);
     }
 
     setIngredients(await getOnChainIngredients(
