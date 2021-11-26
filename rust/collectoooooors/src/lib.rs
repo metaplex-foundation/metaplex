@@ -1,15 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self};
 
-use spl_associated_token_account::{
-    create_associated_token_account,
-    get_associated_token_address,
-};
-
 use metaplex_token_metadata::{
     instruction::{
-        create_metadata_accounts,
-        create_master_edition,
+        mint_new_edition_from_master_edition_via_token,
     },
     utils::{
         create_or_allocate_account_raw,
@@ -19,13 +13,9 @@ use metaplex_token_metadata::{
 
 use solana_program::{
     program::{
-        invoke,
         invoke_signed,
     },
-    system_instruction,
 };
-
-use std::convert::TryInto;
 
 pub mod merkle_proof;
 
@@ -79,6 +69,11 @@ pub mod collectoooooors {
         );
 
         let recipe = &ctx.accounts.recipe;
+
+        require!(
+            ctx.accounts.dish.recipe == recipe.key(),
+            ErrorCode::MismatchedRecipe,
+        );
 
         require!(
             ctx.accounts.from.mint
@@ -250,7 +245,6 @@ pub mod collectoooooors {
         );
 
         let recipe_key = ctx.accounts.recipe.key();
-        let master_mint_key = ctx.accounts.metadata_master_mint.key();
         let recipe_signer_seeds = [
             PREFIX,
             recipe_key.as_ref(),
@@ -275,7 +269,7 @@ pub mod collectoooooors {
         ];
 
         invoke_signed(
-            &metaplex_token_metadata::instruction::mint_new_edition_from_master_edition_via_token(
+            &mint_new_edition_from_master_edition_via_token(
                 *ctx.accounts.token_metadata_program.key,
                 *ctx.accounts.metadata_new_metadata.key,
                 *ctx.accounts.metadata_new_edition.key,
@@ -302,6 +296,71 @@ pub mod collectoooooors {
         Ok(())
     }
 
+    pub fn consume_ingredient(
+        ctx: Context<ConsumeIngredient>,
+        ingredient_bump: u8,
+        ingredient_num: u64,
+    ) -> ProgramResult {
+        require!(
+            ctx.accounts.dish.completed,
+            ErrorCode::RecipeNotCompleted,
+        );
+
+        // TODO: some other reward configured in recipe?
+        let recipe = &ctx.accounts.recipe;
+        require!(
+            ctx.accounts.dish.recipe == recipe.key(),
+            ErrorCode::MismatchedRecipe,
+        );
+
+        // anyone can call consume and claim the rent...
+
+        let dish_key = ctx.accounts.dish.key();
+        let ingredient_bytes = ingredient_num.to_le_bytes();
+        let ingredient_store_seeds = [
+            PREFIX,
+            dish_key.as_ref(),
+            &ingredient_bytes,
+            &[ingredient_bump],
+        ];
+
+        require!(
+            Pubkey::create_program_address(
+                &ingredient_store_seeds,
+                &ID,
+            )
+            == Ok(ctx.accounts.ingredient_store.key()),
+            ErrorCode::InvalidMintPDA,
+        );
+
+        token::burn(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Burn {
+                    mint: ctx.accounts.ingredient_mint.to_account_info(),
+                    to: ctx.accounts.ingredient_store.to_account_info(),
+                    authority: ctx.accounts.ingredient_store.to_account_info(),
+                },
+            )
+            .with_signer(&[&ingredient_store_seeds]),
+            1,
+        )?;
+
+        token::close_account(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::CloseAccount {
+                    account: ctx.accounts.ingredient_store.to_account_info(),
+                    destination: ctx.accounts.payer.to_account_info(),
+                    authority: ctx.accounts.ingredient_store.to_account_info(),
+                },
+            )
+            .with_signer(&[&ingredient_store_seeds]),
+        )?;
+
+        Ok(())
+    }
+
     pub fn reclaim_master_edition(
         ctx: Context<ReclaimMasterEdition>,
         recipe_signer_bump: u8,
@@ -315,7 +374,6 @@ pub mod collectoooooors {
         );
 
         let recipe_key = ctx.accounts.recipe.key();
-        let master_mint_key = ctx.accounts.master_mint.key();
         let recipe_signer_seeds = [
             PREFIX,
             recipe_key.as_ref(),
@@ -492,6 +550,27 @@ pub struct MakeDish<'info> {
 }
 
 #[derive(Accounts)]
+pub struct ConsumeIngredient<'info> {
+    pub recipe: Account<'info, Recipe>,
+
+    pub dish: Account<'info, Dish>,
+
+    // supply changes
+    #[account(mut)]
+    pub ingredient_mint: Account<'info, token::Mint>,
+
+    #[account(mut)]
+    pub ingredient_store: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+
+    pub token_program: Program<'info, token::Token>,
+}
+
+#[derive(Accounts)]
 pub struct ReclaimMasterEdition<'info> {
     pub recipe: Account<'info, Recipe>,
 
@@ -526,6 +605,7 @@ pub struct Recipe {
 #[derive(Default)]
 pub struct Dish {
     pub authority: Pubkey,
+    // redundant since pda. kept for matching
     pub recipe: Pubkey,
     pub ingredients_added: u64,
     pub completed: bool,
@@ -543,8 +623,10 @@ pub enum ErrorCode {
     MismatchedRecipe,
     #[msg("Incomplete Recipe")]
     IncompleteRecipe,
-    #[msg("Recipe Already Created")]
+    #[msg("Recipe Already Completed")]
     RecipeAlreadyCompleted,
+    #[msg("Recipe Not Completed")]
+    RecipeNotCompleted,
     #[msg("Invalid Authority")]
     InvalidAuthority,
     #[msg("Arithmetic Overflow")]

@@ -20,6 +20,7 @@ import {
 } from "./contexts";
 import { Header } from "./components/Header/Header";
 import { Redeem } from "./components/Redeem";
+import { BurnCrank } from "./components/BurnCrank";
 
 const About = () => {
   return (
@@ -97,6 +98,7 @@ function App() {
             <Box height="40px" />
             <Switch>
               <Route exact path="/collectoooooors/redeem/" component={Redeem} />
+              <Route exact path="/collectoooooors/burn/" component={BurnCrank} />
               <Route exact path="/collectoooooors/" component={About} />
             </Switch>
             <Box height="80px" />

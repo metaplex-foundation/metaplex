@@ -29,6 +29,10 @@ export const Header = ({ narrow } : { narrow : boolean }) => {
       href: `/collectoooooors/redeem/`,
       inner: "Redeem",
     },
+    {
+      href: `/collectoooooors/burn/`,
+      inner: "Burn",
+    },
   ];
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
