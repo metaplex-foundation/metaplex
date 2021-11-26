@@ -88,7 +88,7 @@ function App() {
           <CssBaseline />
           <Header narrow={width < 670}/>
           <Box
-            maxWidth="60ch"
+            maxWidth="80ch"
             width="calc(100% - 60px)"
             style={{
               marginLeft: "auto",

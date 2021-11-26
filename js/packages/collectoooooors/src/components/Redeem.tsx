@@ -3,9 +3,13 @@ import React from "react";
 import ContentLoader from 'react-content-loader';
 import { Image } from 'antd';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   CircularProgress,
+  Divider,
   IconButton,
   Link as HyperLink,
   ImageList,
@@ -19,6 +23,7 @@ import {
   TextField,
 } from "@mui/material";
 import CancelIcon from '@mui/icons-material/Cancel';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 
 import {
@@ -876,7 +881,7 @@ export const Redeem = () => {
 
   const relevantImagesC = () => {
     return (
-      <ImageList cols={2}>
+      <ImageList cols={3}>
         {relevantMints.map((r, idx) => {
           const inBatch = changeList.find(c => c.mint === r.mint && c.operation === 'add');
           return (
@@ -1175,8 +1180,27 @@ export const Redeem = () => {
     return (
       <React.Fragment>
         {recipeFieldC(true)}
-        {dishSelectionC()}
-        {relevantImagesC()}
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+          >
+            Dish
+          </AccordionSummary>
+          <AccordionDetails>
+            {dishSelectionC()}
+          </AccordionDetails>
+        </Accordion>
+        <Divider
+          style={{
+            marginTop: "5ch",
+            marginBottom: "2ch",
+          }}
+        >
+          Ingredients
+        </Divider>
+        <Box>
+          {relevantImagesC()}
+        </Box>
         {dishSelectionButtonsC(onClick)}
       </React.Fragment>
     );
