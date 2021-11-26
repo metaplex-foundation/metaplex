@@ -87,7 +87,7 @@ const About = () => {
 
       See a full explanation on the{" "}
       <HyperLink
-        href="https://docs.metaplex.com/create-gumdrop/"
+        href="https://docs.metaplex.com/airdrops/create-gumdrop"
         underline="none"
       >
         metaplex docs
