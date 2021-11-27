@@ -1,0 +1,37 @@
+{
+  "name": "the Notor",
+  "symbol": "",
+  "description": "UOG is a collection of 1111 unique otters living on the Solana blockchain. Utterly otters have been the strongest speicie on the planet Otty. Now, it's time for them to invade the Solana blockchain to take over.",
+  "seller_fee_basis_points": 500,
+  "image": "https://gateway.pinata.cloud/ipfs/Qmbuezqw2ZD4iZpcfyPtTodJvwJSTj8f8L4imcM1M3TotZ?ext=gif",
+  "external_url": "https://utterly-otters-group.vercel.app/",
+  "edition": 0,
+  "attributes": [
+
+    {
+      "trait_type": "Generation",
+      "value": "First Born"
+    },
+
+    {
+      "trait_type": "Legendaries",
+      "value": "the Ottorious Otter King, Notor"
+    }
+
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://gateway.pinata.cloud/ipfs/Qmbuezqw2ZD4iZpcfyPtTodJvwJSTj8f8L4imcM1M3TotZ?ext=gif",
+        "type": "image/gif"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "address": "A1q5dWEweRo2RmwP7Dix1yrtJ7uLcHsEpZrQFGk2UiKn",
+        "share": 100
+      }
+    ]
+  }
+}

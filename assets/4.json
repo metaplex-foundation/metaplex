@@ -1,0 +1,53 @@
+{
+  "name": "Utterly Otters Group #4",
+  "symbol": "",
+  "description": "UOG is a collection of 1111 unique otters living on the Solana blockchain. Utterly otters have been the strongest speicie on the planet Otty. Now, it's time for them to invade the Solana blockchain to take over.",
+  "seller_fee_basis_points": 500,
+  "image": "image.png",
+  "external_url": "https://utterly-otters-group.vercel.app/",
+  "attributes": [
+    {
+      "trait_type": "Background",
+      "value": "Purple"
+    },
+    {
+      "trait_type": "Generation",
+      "value": "First Born"
+    },
+    {
+      "trait_type": "Type",
+      "value": "Brown"
+    },
+    {
+      "trait_type": "Eyes",
+      "value": "None"
+    },
+    {
+      "trait_type": "Clothes",
+      "value": "Neon Yellow T Shirt"
+    },
+    {
+      "trait_type": "Hats",
+      "value": "Doctor's Head Mirror"
+    },
+    {
+      "trait_type": "Mouth",
+      "value": "Cigar"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "image.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "address": "A1q5dWEweRo2RmwP7Dix1yrtJ7uLcHsEpZrQFGk2UiKn",
+        "share": 100
+      }
+    ]
+  }
+}

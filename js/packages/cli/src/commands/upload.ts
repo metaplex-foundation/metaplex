@@ -1,4 +1,8 @@
-import { EXTENSION_JSON, EXTENSION_PNG } from '../helpers/constants';
+import {
+  EXTENSION_JSON,
+  EXTENSION_PNG,
+  EXTENSION_GIF,
+} from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -42,26 +46,44 @@ export async function upload(
   if (!cacheContent.items) {
     cacheContent.items = {};
   } else {
-    existingInCache = Object.keys(cacheContent.items);
+    existingInCache = cacheContent.items;
   }
+
+  console.log(`EXISTING IN CACHE: ${existingInCache}`);
 
   const seen = {};
   const newFiles = [];
 
+  // Filter all the images
   files.forEach(f => {
-    if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
-      seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
+    const imageExtension = path.extname(f);
+    if (imageExtension == '.json') return;
+    const baseName = f.replace(imageExtension, '').split('/').pop();
+    if (!seen[baseName]) {
+      seen[baseName] = true;
       newFiles.push(f);
     }
   });
-  existingInCache.forEach(f => {
+  Object.keys(existingInCache).forEach(f => {
+    const extension = existingInCache[f].extension;
     if (!seen[f]) {
       seen[f] = true;
-      newFiles.push(f + '.png');
+      newFiles.push(f + extension);
     }
   });
 
-  const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
+  const images = newFiles.filter(val => {
+    const fileExtension = path.extname(val);
+    switch (fileExtension) {
+      case EXTENSION_GIF:
+        return true;
+      case EXTENSION_PNG:
+        return true;
+      default:
+        return false;
+    }
+  });
+
   const SIZE = images.length;
 
   const walletKeyPair = loadWalletKey(keypair);
@@ -80,7 +102,8 @@ export async function upload(
           const i = allIndexesInSlice[ind];
           const image = images[i];
           const imageName = path.basename(image);
-          const index = imageName.replace(EXTENSION_PNG, '');
+          const imageExtension = path.extname(image);
+          const index = imageName.replace(imageExtension, '');
 
           log.debug(`Processing file: ${i}`);
 
@@ -91,12 +114,13 @@ export async function upload(
               lastPrinted = i;
               log.info(`Processing file: ${i}, ${imageName}`);
             }
-            const manifestPath = image.replace(EXTENSION_PNG, EXTENSION_JSON);
+            const manifestPath = image.replace(imageExtension, EXTENSION_JSON);
+            const imageFileName = `image${imageExtension}`;
             const manifestContent = fs
               .readFileSync(manifestPath)
               .toString()
-              .replace(imageName, 'image.png')
-              .replace(imageName, 'image.png');
+              .replace(imageName, imageFileName)
+              .replace(imageName, imageFileName);
             const manifest = JSON.parse(manifestContent);
 
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));
@@ -167,6 +191,7 @@ export async function upload(
                     link,
                     imageLink,
                     name: manifest.name,
+                    extension: imageExtension,
                     onChain: false,
                   };
                   cacheContent.authority = walletKeyPair.publicKey.toBase58();
@@ -191,12 +216,16 @@ export async function upload(
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 1000).map(
         async allIndexesInSlice => {
+          const sliceInterval = 10;
           for (
             let offset = 0;
             offset < allIndexesInSlice.length;
-            offset += 10
+            offset += sliceInterval
           ) {
-            const indexes = allIndexesInSlice.slice(offset, offset + 10);
+            const indexes = allIndexesInSlice.slice(
+              offset,
+              offset + sliceInterval,
+            );
             const onChain = indexes.filter(i => {
               const index = keys[i];
               return cacheContent.items[index]?.onChain || false;
