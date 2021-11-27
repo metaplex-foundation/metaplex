@@ -15,8 +15,9 @@ import {
   CandyMachineAccount,
   getCandyMachineState,
   shortenAddress,
-  mintOneTokenExiled,
+  mintOneCandyMachineToken,
   awaitTransactionSignatureConfirmationExiled,
+  mintOneToken,
 } from "./candy-machine";
 import { toDate } from "./utils";
 
@@ -25,8 +26,6 @@ const ConnectButton = styled(WalletDialogButton)``;
 const CounterText = styled.span``; // add your styles here
 
 const MintContainer = styled.div``; // add your styles here
-
-//const MintButton = styled(Button)``; // add your styles here
 
 const MintButton = styled(Button)`
   width: 100%;
@@ -39,16 +38,14 @@ const MintButton = styled(Button)`
   font-weight: bold;
 `;
 
-export interface OnlyCandyProps {
+export interface CandyMachineProps {
   candyMachineId: anchor.web3.PublicKey;
-//   config: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   startDate: number;
-//   treasury: anchor.web3.PublicKey;
   txTimeout: number;
 }
 
-const OnlyCandy = (props: OnlyCandyProps) => {
+const CandyMachineMint = (props: CandyMachineProps) => {
   const [balance, setBalance] = useState<number>();
   const [isActive, setIsActive] = useState(false); // true when countdown completes
   const [isSoldOut, setIsSoldOut] = useState(false); // true when items remaining is zero
@@ -100,10 +97,16 @@ const OnlyCandy = (props: OnlyCandyProps) => {
     try {
       setIsMinting(true);
       if (wallet && candyMachine?.program) {
-        const mintTxId = await mintOneTokenExiled(
+        // const mintTxId = await mintOneCandyMachineToken(
+        //   candyMachine,
+        //   wallet.publicKey,
+        //   props.connection
+        // );
+
+        const mintTxId = await mintOneToken(
           candyMachine,
           wallet.publicKey,
-          props.connection
+          //props.connection
         );
 
         console.log(mintTxId);
@@ -254,4 +257,4 @@ const renderCounter = ({ days, hours, minutes, seconds, completed }: any) => {
   );
 };
 
-export default OnlyCandy;
+export default CandyMachineMint;

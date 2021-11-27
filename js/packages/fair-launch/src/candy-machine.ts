@@ -439,7 +439,7 @@ const getTokenWallet = async (
   )[0];
 };
 
-export const mintOneTokenExiled = async (
+export const mintOneCandyMachineToken = async (
   candyMachine: CandyMachineAccount,
   payer: anchor.web3.PublicKey,
   connection: Connection,

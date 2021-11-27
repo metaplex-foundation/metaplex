@@ -1,5 +1,6 @@
 import axios from "axios";
 
+//This oauth client is an intermediary solution, it should be moved into the web3js lib.
 export async function getOAuthToken(
     client_id: string,
     redirect_url: string,
@@ -8,6 +9,12 @@ export async function getOAuthToken(
 ) {
     const urlParams = new URLSearchParams(window.location.search);
     const code: string | null = urlParams.get('code');
+    const hasError: string | null = urlParams.get('error');
+
+    if (!!hasError) {
+      const errorDescription: string | null = urlParams.get('error_description');
+      throw new Error(errorDescription!);
+    }
 
     if (!!code) {
         await handleRedirect(client_id, redirect_url, token_url);
@@ -15,12 +22,13 @@ export async function getOAuthToken(
         window.location.search = "";
     }
 
-    const tokenObjectRaw = window.sessionStorage.getItem('rpc.oauth.token') as any;
+    const tokenObjectRaw = window.sessionStorage.getItem('rpc.oauth.token') as string;
 
-    if (!tokenObjectRaw || JSON.parse(tokenObjectRaw).expires < Date.now()) {
-       return loginWithRedirect(client_id, redirect_url, auth_url);
+    if (!tokenObjectRaw || !JSON.parse(tokenObjectRaw).expires || JSON.parse(tokenObjectRaw).expires < Date.now()) {
+      window.sessionStorage.setItem('rpc.oauth.token', '');
+      return loginWithRedirect(client_id, redirect_url, auth_url);
     }
-
+    
     const tokenObject = JSON.parse(tokenObjectRaw);
     return tokenObject.accessToken;
 }
@@ -55,7 +63,6 @@ async function handleRedirect(
 ) {
 
     const storage = JSON.parse(window.sessionStorage.getItem('rpc.oauth')!);
-    //const state = storage.state;
     const code_verifier = storage.code_verifier;
 
     const urlParams = new URLSearchParams(window.location.search);

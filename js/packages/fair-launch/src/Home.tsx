@@ -45,7 +45,7 @@ import {
 
 import { formatNumber, getAtaForMint, toDate } from './utils';
 import Countdown from 'react-countdown';
-import OnlyCandy from './CandyMacnineOnly';
+import CandyMachineMint from './candy-machine-mint';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -827,7 +827,7 @@ const Home = (props: HomeProps) => {
                 )}
 
                 { !props.fairLaunchId && !!props.candyMachineId
-                  ? <OnlyCandy
+                  ? <CandyMachineMint
                   candyMachineId={props.candyMachineId} 
                   connection={props.connection} 
                   startDate={props.startDate} 
