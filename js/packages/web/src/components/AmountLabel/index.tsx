@@ -3,7 +3,6 @@ import { Statistic } from 'antd';
 import { useSolPrice, useAllSplPrices } from '../../contexts';
 import { formatAmount, formatUSD, WRAPPED_SOL_MINT } from '@oyster/common';
 import { TokenCircle } from '../Custom';
-import { useTokenList } from '../../contexts/tokenList';
 import { TokenInfo } from '@solana/spl-token-registry';
 
 interface IAmountLabel {
@@ -34,7 +33,10 @@ export const AmountLabel = (props: IAmountLabel) => {
   } = props;
   // Add formattedAmount to be able to parse USD value and retain abbreviation of value
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
-  const formattedAmount = formatAmount(amount)
+  let formattedAmount = `${amount}`;
+  if (amount >= 1) {
+    formattedAmount = formatAmount(amount);
+  }
 
   const solPrice = useSolPrice();
   const altSplPrice = useAllSplPrices().filter(a=>a.tokenMint == tokenInfo?.address)[0]?.tokenPrice

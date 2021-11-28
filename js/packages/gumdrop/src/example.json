@@ -1,0 +1,12 @@
+[
+  {
+    "handle": "alice@solana.com",
+    "mint": "58iV1fAXFvXoPk28xpB2ihedEnM9HSRkiPHXXm1r4V8z",
+    "amount": 1500000000
+  },
+  {
+    "handle": "bob@solana.com",
+    "mint": "58iV1fAXFvXoPk28xpB2ihedEnM9HSRkiPHXXm1r4V8z",
+    "amount": 1500000000
+  }
+]

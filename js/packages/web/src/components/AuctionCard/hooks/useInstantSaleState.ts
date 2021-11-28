@@ -1,5 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView } from '../../../hooks';
+import { BidStateType } from '@oyster/common';
 
 interface ActionButtonContentProps {
   isInstantSale: boolean;
@@ -14,22 +15,36 @@ export const useInstantSaleState = (
 ): ActionButtonContentProps => {
   const wallet = useWallet();
 
-  const { isInstantSale, auctionManager, auction, myBidRedemption } =
-    auctionView;
+  const {
+    isInstantSale,
+    auctionManager,
+    auction,
+    myBidRedemption,
+    myBidderPot,
+    myBidderMetadata,
+  } = auctionView;
 
   const items = auctionView.items;
   let isAlreadyBought: boolean = false;
-
-  for (const item of items) {
-    for (const subItem of item) {
-      const bidRedeemed = myBidRedemption?.info.getBidRedeemed(
-        subItem.safetyDeposit.info.order,
-      );
-      isAlreadyBought = bidRedeemed ? bidRedeemed : false;
-      if (isAlreadyBought) break;
+  const isBidCanceled = !!myBidderMetadata?.info.cancelled;
+  let canClaimPurchasedItem: boolean = false;
+  if (auctionView.auction.info.bidState.type == BidStateType.EnglishAuction) {
+    for (const item of items) {
+      for (const subItem of item) {
+        const bidRedeemed = myBidRedemption?.info.getBidRedeemed(
+          subItem.safetyDeposit.info.order,
+        );
+        isAlreadyBought = bidRedeemed ? bidRedeemed : false;
+        if (isAlreadyBought) break;
+      }
     }
+    canClaimPurchasedItem =
+      !!(myBidderPot && !isBidCanceled) && !isAlreadyBought;
+  } else {
+    isAlreadyBought = !!(myBidderPot && isBidCanceled);
+    canClaimPurchasedItem = !!(myBidderPot && !isBidCanceled);
   }
-  const canClaimPurchasedItem = isAlreadyBought;
+
   const isOwner = auctionManager.authority === wallet?.publicKey?.toBase58();
   const isAuctionEnded = auction.info.endedAt;
   const canClaimItem = !!(isOwner && isAuctionEnded);

@@ -1,14 +1,10 @@
-name: Pull Request (CLI)
+name: Yarn Install and Test CandyMachine
 
 on:
-  pull_request:
-    paths:
-      - js/packages/cli/*
   push:
-    branches:
-      - master
-    paths:
-      - js/packages/cli/*
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
   unit_tests:

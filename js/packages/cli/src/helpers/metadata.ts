@@ -1,7 +1,12 @@
 import fs from 'fs';
 import log from 'loglevel';
 import _ from 'lodash';
-import { generateRandomSet, getMetadata, readJsonFile } from './various';
+import {
+  generateRandomSet,
+  getMetadata,
+  readJsonFile,
+  shuffle,
+} from './various';
 
 const { writeFile, mkdir } = fs.promises;
 
@@ -11,6 +16,7 @@ export const TRAITS_DIRECTORY = './traits';
 export async function createMetadataFiles(
   numberOfImages: string,
   configLocation: string,
+  treatAttributesAsFileNames: boolean,
 ): Promise<any[]> {
   let numberOfFilesCreated: number = 0;
   const randomizedSets = [];
@@ -31,40 +37,51 @@ export async function createMetadataFiles(
     description,
     seller_fee_basis_points,
     collection,
+    dnp,
+    premadeCustoms,
   } = await readJsonFile(configLocation);
 
+  while (numberOfFilesCreated < premadeCustoms.length) {
+    randomizedSets.push(premadeCustoms[numberOfFilesCreated]);
+    numberOfFilesCreated += 1;
+  }
+
   while (numberOfFilesCreated < parseInt(numberOfImages, 10)) {
-    const randomizedSet = generateRandomSet(breakdown);
+    const randomizedSet = generateRandomSet(breakdown, dnp);
 
     if (!_.some(randomizedSets, randomizedSet)) {
       randomizedSets.push(randomizedSet);
-
-      const metadata = getMetadata(
-        name,
-        symbol,
-        numberOfFilesCreated,
-        creators,
-        description,
-        seller_fee_basis_points,
-        randomizedSet,
-        collection,
-      );
-
-      try {
-        await writeFile(
-          `${ASSETS_DIRECTORY}/${numberOfFilesCreated}.json`,
-          JSON.stringify(metadata),
-        );
-      } catch (err) {
-        log.error(`${numberOfFilesCreated} failed to get created`, err);
-      }
-
       numberOfFilesCreated += 1;
     }
   }
 
+  const shuffled = shuffle(randomizedSets);
+
+  for (let i = 0; i < shuffled.length; i++) {
+    const metadata = getMetadata(
+      name,
+      symbol,
+      i,
+      creators,
+      description,
+      seller_fee_basis_points,
+      shuffled[i],
+      collection,
+      treatAttributesAsFileNames,
+    );
+
+    try {
+      await writeFile(
+        `${ASSETS_DIRECTORY}/${i}.json`,
+        JSON.stringify(metadata),
+      );
+    } catch (err) {
+      log.error(`${numberOfFilesCreated} failed to get created`, err);
+    }
+  }
+
   // map through after because IDs would make sets unique
-  const randomSetWithIds = randomizedSets.map((item, index) => ({
+  const randomSetWithIds = shuffled.map((item, index) => ({
     id: index + 1,
     ...item,
   }));

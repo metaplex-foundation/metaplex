@@ -6,9 +6,7 @@ import { LiveAuctionViewState } from '../..';
 
 // Check if the auction is primary sale or not
 const checkPrimarySale = (auction: AuctionView): boolean =>
-  auction.items.some(item =>
-    item.some(({ metadata }) => metadata.info.primarySaleHappened),
-  );
+  auction.thumbnail.metadata.info.primarySaleHappened;
 
 // Removed resales from live auctions
 const liveAuctionsFilter = (auction: AuctionView): boolean =>
