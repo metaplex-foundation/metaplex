@@ -15,9 +15,8 @@ import {
   CandyMachineAccount,
   getCandyMachineState,
   shortenAddress,
-  mintOneCandyMachineToken,
-  awaitTransactionSignatureConfirmationExiled,
   mintOneToken,
+  awaitTransactionSignatureConfirmation,
 } from "./candy-machine";
 import { toDate } from "./utils";
 
@@ -97,29 +96,18 @@ const CandyMachineMint = (props: CandyMachineProps) => {
     try {
       setIsMinting(true);
       if (wallet && candyMachine?.program) {
-        // const mintTxId = await mintOneCandyMachineToken(
-        //   candyMachine,
-        //   wallet.publicKey,
-        //   props.connection
-        // );
-
         const mintTxId = await mintOneToken(
           candyMachine,
           wallet.publicKey,
-          //props.connection
         );
 
-        console.log(mintTxId);
-
-        const status = await awaitTransactionSignatureConfirmationExiled(
+        const status = await awaitTransactionSignatureConfirmation(
           mintTxId,
           props.txTimeout,
           props.connection,
           "singleGossip",
           false
         );
-
-        console.log(status)
 
         if (!status?.err) {
           setAlertState({

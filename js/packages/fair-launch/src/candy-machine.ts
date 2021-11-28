@@ -36,72 +36,7 @@ export interface CandyMachineAccount {
   state: CandyMachineState;
 }
 
-export const awaitTransactionSignatureConfirmation = async (
-  txid: anchor.web3.TransactionSignature,
-  timeout: number,
-  connection: anchor.web3.Connection,
-  commitment: anchor.web3.Commitment = 'recent',
-  queryStatus = false,
-): Promise<anchor.web3.SignatureStatus | null | void> => {
-  let done = false;
-  let status: anchor.web3.SignatureStatus | null | void = {
-    slot: 0,
-    confirmations: 0,
-    err: null,
-  };
-  let subId = 0;
-  status = await new Promise(async (resolve, reject) => {
-    setTimeout(() => {
-      if (done) {
-        return;
-      }
-      done = true;
-      console.log('Rejecting for timeout...');
-      reject({ timeout: true });
-    }, timeout);
-    while (!done && queryStatus) {
-      // eslint-disable-next-line no-loop-func
-      (async () => {
-        try {
-          const signatureStatuses = await connection.getSignatureStatuses([
-            txid,
-          ]);
-          status = signatureStatuses && signatureStatuses.value[0];
-          if (!done) {
-            if (!status) {
-              console.log('REST null result for', txid, status);
-            } else if (status.err) {
-              console.log('REST error for', txid, status);
-              done = true;
-              reject(status.err);
-            } else if (!status.confirmations) {
-              console.log('REST no confirmations for', txid, status);
-            } else {
-              console.log('REST confirmation for', txid, status);
-              done = true;
-              resolve(status);
-            }
-          }
-        } catch (e) {
-          if (!done) {
-            console.log('REST connection error: txid', txid, e);
-          }
-        }
-      })();
-      await sleep(2000);
-    }
-  });
-
-  //@ts-ignore
-  if (connection._signatureSubscriptions[subId]) {
-    connection.removeSignatureListener(subId);
-  }
-  done = true;
-  console.log('Returning status', status);
-  return status;
-};
-
-export const awaitTransactionSignatureConfirmationExiled = async (
+export const awaitTransactionSignatureConfirmation= async (
   txid: anchor.web3.TransactionSignature,
   timeout: number,
   connection: anchor.web3.Connection,
@@ -298,10 +233,6 @@ export const mintOneToken = async (
     await getAtaForMint(mint.publicKey, payer)
   )[0];
 
-  const userPayingAccountAddress = (
-    await getAtaForMint(candyMachine.state.tokenMint, payer)
-  )[0];
-
   const candyMachineAddress = candyMachine.id;
 
   const remainingAccounts = [];
@@ -340,9 +271,11 @@ export const mintOneToken = async (
     ),
   ];
 
-  let tokenAccount;
   if (candyMachine.state.tokenMint) {
     const transferAuthority = anchor.web3.Keypair.generate();
+    const userPayingAccountAddress = (
+      await getAtaForMint(candyMachine.state.tokenMint, payer)
+    )[0];
 
     signers.push(transferAuthority);
     remainingAccounts.push({
@@ -393,16 +326,6 @@ export const mintOneToken = async (
     }),
   );
 
-  if (tokenAccount) {
-    instructions.push(
-      Token.createRevokeInstruction(
-        TOKEN_PROGRAM_ID,
-        userPayingAccountAddress,
-        payer,
-        [],
-      ),
-    );
-  }
   console.log('Pong')
   try {
     return (
@@ -438,69 +361,3 @@ const getTokenWallet = async (
     )
   )[0];
 };
-
-export const mintOneCandyMachineToken = async (
-  candyMachine: CandyMachineAccount,
-  payer: anchor.web3.PublicKey,
-  connection: Connection,
-): Promise<string> => {
-  const mint = anchor.web3.Keypair.generate();
-  const token = await getTokenWallet(payer, mint.publicKey);
-  const { program } = candyMachine;
-  const metadata = await getMetadata(mint.publicKey);
-  const masterEdition = await getMasterEdition(mint.publicKey);
-
-  const rent = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span
-  );
-
-  return program.rpc.mintNft({
-    accounts: {
-      config: candyMachine.state.config,
-      candyMachine: candyMachine.id,
-      payer: payer,
-      wallet: candyMachine.state.treasury,
-      mint: mint.publicKey,
-      metadata,
-      masterEdition,
-      mintAuthority: payer,
-      updateAuthority: payer,
-      tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-    },
-    signers: [mint],
-    instructions: [
-      anchor.web3.SystemProgram.createAccount({
-        fromPubkey: payer,
-        newAccountPubkey: mint.publicKey,
-        space: MintLayout.span,
-        lamports: rent,
-        programId: TOKEN_PROGRAM_ID,
-      }),
-      Token.createInitMintInstruction(
-        TOKEN_PROGRAM_ID,
-        mint.publicKey,
-        0,
-        payer,
-        payer
-      ),
-      createAssociatedTokenAccountInstruction(
-        token,
-        payer,
-        payer,
-        mint.publicKey
-      ),
-      Token.createMintToInstruction(
-        TOKEN_PROGRAM_ID,
-        mint.publicKey,
-        token,
-        payer,
-        [],
-        1
-      ),
-    ],
-  });
-}
