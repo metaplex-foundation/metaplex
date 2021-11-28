@@ -326,7 +326,6 @@ export const mintOneToken = async (
     }),
   );
 
-  console.log('Pong')
   try {
     return (
       await sendTransactionWithRetry(
