@@ -81,13 +81,13 @@ export function useCompactAuctions(): AuctionViewCompact[] {
   const { auctionManagersByAuction, auctions, vaults } = useMeta();
 
   const result = useMemo(() => {
-    return Object.values(auctionManagersByAuction).map(
-      (am: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>) => ({
+    return Object.values(auctionManagersByAuction)
+      .filter(am => auctions[am.info.auction])
+      .map((am: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>) => ({
         auctionManager: am,
         auction: auctions[am.info.auction],
         vault: vaults[am.info.vault],
-      }),
-    );
+      }));
   }, [auctions, auctionManagersByAuction, vaults]);
 
   return result;
@@ -117,7 +117,7 @@ export function useCachedRedemptionKeysByWallet() {
     (async () => {
       const temp: CachedRedemptionKeys = {};
       await createPipelineExecutor(
-        auctions.values(),
+        auctions.filter(a => a).values(),
         async auction => {
           if (!cachedRedemptionKeys[auction.pubkey]) {
             await getBidderKeys(auction.pubkey, publicKey.toBase58()).then(
@@ -254,7 +254,9 @@ export const useInfiniteScrollAuctions = () => {
     (async () => {
       const storeAuctionManagers = Object.values(
         auctionManagersByAuction,
-      ).filter(am => am.info.store === storeAddress);
+      ).filter(
+        am => am.info.store === storeAddress && auctions[am.info.auction],
+      );
       const initializedAuctions = storeAuctionManagers
         .map(am => auctions[am.info.auction])
         .filter(a => a.info.state > 0);
