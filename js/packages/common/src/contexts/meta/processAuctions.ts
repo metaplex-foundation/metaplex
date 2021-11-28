@@ -15,12 +15,16 @@ import { AUCTION_ID, pubkeyToString } from '../../utils';
 import { ParsedAccount } from '../accounts';
 import { cache } from '../accounts';
 import { CheckAccountFunc, ProcessAccountsFunc } from './types';
+const AUCTION_BLACK_LIST = [
+  '9zcrbzSmBPdDjAGYXkfufP2wy1kbHKac8UYLBmHpbuYy',
+  'DzR58tU6ZXx2sMBVjaL2dhNF9SL9qd42eYXLbtu5qcCx',
+];
 
 export const processAuctions: ProcessAccountsFunc = async (
   { account, pubkey },
   setter,
 ) => {
-  if (!isAuctionAccount(account)) return;
+  if (!isAuctionAccount(account) || isOnBlackList(pubkey)) return;
 
   try {
     const parsedAccount = cache.add(
@@ -90,6 +94,8 @@ export const processAuctions: ProcessAccountsFunc = async (
     // add type as first byte for easier deserialization
   }
 };
+
+const isOnBlackList = (pubkey: string) => AUCTION_BLACK_LIST.includes(pubkey);
 
 const isAuctionAccount: CheckAccountFunc = account =>
   pubkeyToString(account?.owner) === AUCTION_ID;
