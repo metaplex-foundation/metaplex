@@ -152,7 +152,7 @@ export const BurnCrank = (
           );
         }
       ));
-      const storeAccounts = await connection.getMultipleAccountsInfo(
+      const storeAccounts = await (connection as any).getMultipleAccountsInfo(
           storeKeysAndBumps.map(s => s[0]));
 
       // TODO: separate on overflow

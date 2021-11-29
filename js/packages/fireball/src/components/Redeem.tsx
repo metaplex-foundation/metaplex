@@ -237,7 +237,7 @@ const fetchMintsAndImages = async (
   mintKeys : Array<PublicKey>
 ) : Promise<Array<MintAndImage>> => {
   const metadataKeys = await Promise.all(mintKeys.map(getMetadata));
-  const metadataAccounts = await connection.getMultipleAccountsInfo(metadataKeys);
+  const metadataAccounts = await (connection as any).getMultipleAccountsInfo(metadataKeys);
 
   const metadatasDecoded : Array<Metadata> = metadataAccounts
     .map((account, idx) => {
@@ -291,7 +291,7 @@ const getRecipeYields = async (
 
   const masterEditions = await Promise.all(masterMints.map(m => getEdition(m)));
 
-  const editionAccounts = await connection.getMultipleAccountsInfo(masterEditions);
+  const editionAccounts = await (connection as any).getMultipleAccountsInfo(masterEditions);
   const remaining = editionAccounts
     .map((account, idx) => {
       if (account === null) {
@@ -357,7 +357,7 @@ const getOnChainIngredients = async (
           );
         }));
 
-  const storeAccounts = await connection.getMultipleAccountsInfo(storeKeys.map(s => s[0]));
+  const storeAccounts = await (connection as any).getMultipleAccountsInfo(storeKeys.map(s => s[0]));
 
   const mints = {};
   for (let idx = 0; idx < ingredientList.length; ++idx) {
@@ -667,7 +667,7 @@ export const Redeem = (
         );
       }
     ));
-    const storeAccounts = await connection.getMultipleAccountsInfo(
+    const storeAccounts = await (connection as any).getMultipleAccountsInfo(
         storeKeysAndBumps.map(s => s[0]));
     console.log('Finished fetching stores', getUnixTs() - startTime);
     for (let idx = 0; idx < ingredientList.length; ++idx) {
