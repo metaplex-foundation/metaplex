@@ -5,11 +5,11 @@ use {
         deprecated_state::AuctionManagerV1,
         state::{AuctionManagerV2, AuctionWinnerTokenTypeTracker, Key},
     },
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended},
     solana_clap_utils::input_parsers::pubkey_of,
     solana_client::rpc_client::RpcClient,
     solana_program::{borsh::try_from_slice_unchecked, pubkey::Pubkey},
     solana_sdk::signature::Keypair,
-    metaplex_auction::processor::{AuctionData, AuctionDataExtended},
 };
 
 pub fn send_show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {

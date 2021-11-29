@@ -1,16 +1,14 @@
-use mem::size_of;
-
 use crate::{
     errors::AuctionError,
     processor::create_auction::*,
     processor::{
-        AuctionData, AuctionDataExtended, AuctionName, AuctionState, Bid, BidState, PriceFloor,
-        WinnerLimit, BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
+        AuctionData, AuctionDataExtended, AuctionName, AuctionState, Bid,
+        /*BidState,*/ PriceFloor, WinnerLimit, BASE_AUCTION_DATA_SIZE,
+        MAX_AUCTION_DATA_EXTENDED_SIZE,
     },
     utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw},
     EXTENDED, PREFIX,
 };
-
 use {
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
@@ -21,7 +19,7 @@ use {
         program_error::ProgramError,
         pubkey::Pubkey,
     },
-    std::mem,
+    std::mem::{self, size_of},
 };
 
 #[repr(C)]

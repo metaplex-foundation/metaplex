@@ -11,13 +11,13 @@ use {
     },
     arrayref::array_ref,
     borsh::{BorshDeserialize, BorshSerialize},
+    metaplex_auction::processor::AuctionData,
     metaplex_token_metadata::state::Metadata,
     metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
         pubkey::Pubkey,
     },
-    metaplex_auction::processor::AuctionData,
 };
 
 pub const MAX_WINNERS: usize = 200;

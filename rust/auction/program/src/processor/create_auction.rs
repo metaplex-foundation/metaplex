@@ -1,26 +1,24 @@
-use mem::size_of;
-
 use crate::{
     errors::AuctionError,
     processor::{
-        AuctionData, AuctionDataExtended, AuctionName, AuctionState, Bid, BidState, PriceFloor,
-        WinnerLimit, BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
+        AuctionData, AuctionDataExtended, AuctionName, AuctionState, Bid, BidState, BidStateData,
+        PriceFloor, WinnerLimit, BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
     },
     utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw},
     EXTENDED, PREFIX,
 };
-
 use {
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         clock::UnixTimestamp,
         entrypoint::ProgramResult,
         msg,
         program_error::ProgramError,
         pubkey::Pubkey,
     },
-    std::mem,
+    std::mem::{self, size_of},
 };
 
 #[repr(C)]
@@ -34,13 +32,13 @@ pub struct CreateAuctionArgs {
     pub end_auction_gap: Option<UnixTimestamp>,
     /// Token mint for the SPL token used for bidding.
     pub token_mint: Pubkey,
-    /// Authority
+    /// Authority.
     pub authority: Pubkey,
     /// The resource being auctioned. See AuctionData.
     pub resource: Pubkey,
     /// Set a price floor.
     pub price_floor: PriceFloor,
-    /// Add a tick size increment
+    /// Add a tick size increment.
     pub tick_size: Option<u64>,
     /// Add a minimum percentage increase each bid must meet.
     pub gap_tick_size_percentage: Option<u8>,
@@ -49,6 +47,7 @@ pub struct CreateAuctionArgs {
 struct Accounts<'a, 'b: 'a> {
     auction: &'a AccountInfo<'b>,
     auction_extended: &'a AccountInfo<'b>,
+    bid_state_data: Option<&'a AccountInfo<'b>>,
     payer: &'a AccountInfo<'b>,
     rent: &'a AccountInfo<'b>,
     system: &'a AccountInfo<'b>,
@@ -65,6 +64,7 @@ fn parse_accounts<'a, 'b: 'a>(
         auction_extended: next_account_info(account_iter)?,
         rent: next_account_info(account_iter)?,
         system: next_account_info(account_iter)?,
+        bid_state_data: next_account_info(account_iter).ok(),
     };
     Ok(accounts)
 }
@@ -91,17 +91,47 @@ pub fn create_auction(
     if auction_key != *accounts.auction.key {
         return Err(AuctionError::InvalidAuctionAccount.into());
     }
-    // The data must be large enough to hold at least the number of winners.
-    let auction_size = match args.winners {
-        WinnerLimit::Capped(n) => {
-            mem::size_of::<Bid>() * BidState::max_array_size_for(n) + BASE_AUCTION_DATA_SIZE
-        }
-        WinnerLimit::Unlimited(_) => BASE_AUCTION_DATA_SIZE,
-    };
 
-    let bid_state = match args.winners {
-        WinnerLimit::Capped(n) => BidState::new_english(n),
-        WinnerLimit::Unlimited(_) => BidState::new_open_edition(),
+    // Initialize `BidStateData` account internal state
+    // Extend bids count by moving actual bids to AuctionDataExtended
+    // The data must be large enough to hold at least the number of winners.
+    let (auction_size, bid_state, bid_state_data_key) = match args.winners {
+        WinnerLimit::Capped(n) => {
+            let bid_state = BidState::new_english(n);
+
+            if n > 126 {
+                let bid_state_data_acc = accounts
+                    .bid_state_data
+                    .ok_or(AuctionError::InvalidBidAccount)?;
+
+                // Check `BidStateData` owner
+                assert_owned_by(bid_state_data_acc, program_id)?;
+
+                // Obtain `BidStateData` account state
+                let mut bid_state_data: BidStateData =
+                    try_from_slice_unchecked(&bid_state_data_acc.data.borrow_mut())?;
+
+                bid_state_data.auction_key = auction_key;
+                bid_state_data.state = bid_state.clone();
+
+                // Serialize BidStateData.
+                bid_state_data.serialize(&mut *bid_state_data_acc.data.borrow_mut())?;
+
+                (
+                    BASE_AUCTION_DATA_SIZE,
+                    bid_state,
+                    Some(*bid_state_data_acc.key),
+                )
+            } else {
+                (
+                    mem::size_of::<Bid>() * BidState::max_array_size_for(n)
+                        + BASE_AUCTION_DATA_SIZE,
+                    bid_state,
+                    None,
+                )
+            }
+        }
+        WinnerLimit::Unlimited(_) => (BASE_AUCTION_DATA_SIZE, BidState::new_open_edition(), None),
     };
 
     if let Some(gap_tick) = args.gap_tick_size_percentage {
@@ -155,6 +185,7 @@ pub fn create_auction(
 
     // Configure extended
     AuctionDataExtended {
+        bid_state_data: bid_state_data_key,
         total_uncancelled_bids: 0,
         tick_size: args.tick_size,
         gap_tick_size_percentage: args.gap_tick_size_percentage,
@@ -166,7 +197,7 @@ pub fn create_auction(
     // Configure Auction.
     AuctionData {
         authority: args.authority,
-        bid_state: bid_state,
+        bid_state,
         end_auction_at: args.end_auction_at,
         end_auction_gap: args.end_auction_gap,
         ended_at: None,

@@ -8,13 +8,13 @@ use {
             CommonRedeemFinishArgs, CommonRedeemReturn,
         },
     },
+    metaplex_token_metadata::state::Metadata,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         msg,
         pubkey::Pubkey,
     },
-    metaplex_token_metadata::state::Metadata,
 };
 pub fn process_full_rights_transfer_bid<'a>(
     program_id: &'a Pubkey,

@@ -185,6 +185,7 @@ pub async fn create_auction(
             &[instruction::create_auction_instruction(
                 *program_id,
                 payer.pubkey(),
+                &None,
                 CreateAuctionArgs {
                     authority: payer.pubkey(),
                     end_auction_at: None,

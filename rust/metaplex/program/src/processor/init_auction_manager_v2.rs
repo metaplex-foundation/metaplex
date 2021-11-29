@@ -10,6 +10,8 @@ use {
         },
     },
     borsh::BorshSerialize,
+    metaplex_auction::processor::{AuctionData, AuctionState},
+    metaplex_token_vault::state::{Vault, VaultState},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
@@ -17,9 +19,7 @@ use {
         program_option::COption,
         pubkey::Pubkey,
     },
-    metaplex_auction::processor::{AuctionData, AuctionState},
     spl_token::state::Account,
-    metaplex_token_vault::state::{Vault, VaultState},
 };
 
 pub fn assert_common_checks(

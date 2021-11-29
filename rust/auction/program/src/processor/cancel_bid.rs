@@ -4,6 +4,7 @@
 //! 2) The auction has finished, but the bid did not win. This allows users to claim back their
 //!    funds from bid accounts.
 
+use super::AuctionState;
 use crate::{
     errors::AuctionError,
     processor::{AuctionData, AuctionDataExtended, BidderMetadata, BidderPot},
@@ -14,9 +15,6 @@ use crate::{
     },
     EXTENDED, PREFIX,
 };
-
-use super::AuctionState;
-
 use {
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{

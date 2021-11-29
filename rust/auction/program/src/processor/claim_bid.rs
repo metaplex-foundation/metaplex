@@ -11,7 +11,6 @@ use crate::{
     },
     EXTENDED, PREFIX,
 };
-
 use {
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{

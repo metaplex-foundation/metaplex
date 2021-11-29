@@ -2,13 +2,13 @@
 
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
+use metaplex_token_metadata::{self};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
     program::{invoke, invoke_signed},
+    system_instruction,
     sysvar::{self},
-    system_instruction::self,
 };
-use metaplex_token_metadata::{self};
 use std::io::Write;
 
 pub mod merkle_proof;
@@ -16,14 +16,14 @@ pub mod merkle_proof;
 declare_id!("gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a");
 
 fn get_or_create_claim_count<'a>(
-    distributor     : &Account<'a, MerkleDistributor>,
-    claim_count     : &AccountInfo<'a>,
-    temporal        : &Signer<'a>,
-    payer           : &Signer<'a>,
-    system_program  : &Program<'a, System>,
-    _claim_bump     : u8,
-    index           : u64,
-    claimant_secret : Pubkey,
+    distributor: &Account<'a, MerkleDistributor>,
+    claim_count: &AccountInfo<'a>,
+    temporal: &Signer<'a>,
+    payer: &Signer<'a>,
+    system_program: &Program<'a, System>,
+    _claim_bump: u8,
+    index: u64,
+    claimant_secret: Pubkey,
 ) -> core::result::Result<anchor_lang::Account<'a, ClaimCount>, ProgramError> {
     let rent = &Rent::get()?;
     let space = 8 + ClaimCount::default().try_to_vec().unwrap().len();
@@ -43,7 +43,8 @@ fn get_or_create_claim_count<'a>(
                 claim_count.key,
                 lamports,
                 space as u64,
-                &ID),
+                &ID,
+            ),
             &[
                 payer.to_account_info().clone(),
                 claim_count.clone(),
@@ -55,27 +56,24 @@ fn get_or_create_claim_count<'a>(
         let mut data = claim_count.try_borrow_mut_data()?;
         let dst: &mut [u8] = &mut data;
         let mut cursor = std::io::Cursor::new(dst);
-        cursor.write_all(&<ClaimCount as anchor_lang::Discriminator>::discriminator()).unwrap();
+        cursor
+            .write_all(&<ClaimCount as anchor_lang::Discriminator>::discriminator())
+            .unwrap();
     }
 
     // anchor_lang::Account::try_from(&claim_count)?;
-    let mut pa: anchor_lang::Account<ClaimCount> =
-        anchor_lang::Account::try_from(&claim_count)?;
+    let mut pa: anchor_lang::Account<ClaimCount> = anchor_lang::Account::try_from(&claim_count)?;
 
     if create_claim_state {
         require!(
             temporal.key() == distributor.temporal
-            || temporal.key() == claimant_secret
-            || distributor.temporal == Pubkey::default()
-            ,
+                || temporal.key() == claimant_secret
+                || distributor.temporal == Pubkey::default(),
             TemporalMismatch
         );
         pa.claimant = payer.key();
     } else {
-        require!(
-            pa.claimant == payer.key(),
-            OwnerMismatch,
-        );
+        require!(pa.claimant == payer.key(), OwnerMismatch,);
     }
 
     Ok(pa)
@@ -177,9 +175,7 @@ pub mod merkle_distributor {
             let candy_machine_program_info = &ctx.remaining_accounts[1];
 
             // TODO. global::update_authority instruction...
-            let mut data = vec![
-                0x20, 0x2e, 0x40, 0x1c, 0x95, 0x4b, 0xf3, 0x58,
-            ];
+            let mut data = vec![0x20, 0x2e, 0x40, 0x1c, 0x95, 0x4b, 0xf3, 0x58];
 
             data.push(0x01);
             data.extend_from_slice(&ctx.accounts.receiver.key.to_bytes());
@@ -228,10 +224,7 @@ pub mod merkle_distributor {
         proof: Vec<[u8; 32]>,
     ) -> ProgramResult {
         let claim_status = &mut ctx.accounts.claim_status;
-        require!(
-            *claim_status.to_account_info().owner == ID,
-            OwnerMismatch
-        );
+        require!(*claim_status.to_account_info().owner == ID, OwnerMismatch);
         require!(
             // This check is redudant, we should not be able to initialize a claim status account at the same key.
             !claim_status.is_claimed && claim_status.claimed_at == 0,
@@ -269,9 +262,8 @@ pub mod merkle_distributor {
 
         require!(
             ctx.accounts.temporal.key() == distributor.temporal
-            || ctx.accounts.temporal.key() == claimant_secret
-            || distributor.temporal == Pubkey::default()
-            ,
+                || ctx.accounts.temporal.key() == claimant_secret
+                || distributor.temporal == Pubkey::default(),
             TemporalMismatch
         );
         token::transfer(
@@ -316,10 +308,7 @@ pub mod merkle_distributor {
             index,
             claimant_secret,
         )?;
-        require!(
-            *claim_count.to_account_info().owner == ID,
-            OwnerMismatch
-        );
+        require!(*claim_count.to_account_info().owner == ID, OwnerMismatch);
 
         // TODO: this is a bit weird but we verify elsewhere that the candy_machine_config is
         // actually a config thing and not a mint
@@ -337,10 +326,7 @@ pub mod merkle_distributor {
         );
 
         // This user is whitelisted to mint at most `amount` NFTs from the candy machine
-        require!(
-            claim_count.count < amount,
-            DropAlreadyClaimed
-        );
+        require!(claim_count.count < amount, DropAlreadyClaimed);
 
         // Mark it claimed
         claim_count.count += 1;
@@ -350,7 +336,9 @@ pub mod merkle_distributor {
         {
             let rent = &Rent::get()?;
             let mut candy_machine_data: &[u8] = &ctx.accounts.candy_machine.try_borrow_data()?;
-            required_lamports = CandyMachine::try_deserialize(&mut candy_machine_data)?.data.price
+            required_lamports = CandyMachine::try_deserialize(&mut candy_machine_data)?
+                .data
+                .price
                 + rent.minimum_balance(metaplex_token_metadata::state::MAX_METADATA_LEN)
                 + rent.minimum_balance(metaplex_token_metadata::state::MAX_MASTER_EDITION_LEN);
         }
@@ -421,7 +409,8 @@ pub mod merkle_distributor {
 
         // reserialize claim_count
         {
-            let mut claim_count_data: &mut [u8] = &mut ctx.accounts.claim_count.try_borrow_mut_data()?;
+            let mut claim_count_data: &mut [u8] =
+                &mut ctx.accounts.claim_count.try_borrow_mut_data()?;
             claim_count.try_serialize(&mut claim_count_data)?;
         }
 
@@ -449,10 +438,7 @@ pub mod merkle_distributor {
             index,
             claimant_secret,
         )?;
-        require!(
-            *claim_count.to_account_info().owner == ID,
-            OwnerMismatch
-        );
+        require!(*claim_count.to_account_info().owner == ID, OwnerMismatch);
 
         // TODO: master_edition or something else? should we has the edition here also?
         let node = solana_program::keccak::hashv(&[
@@ -469,10 +455,7 @@ pub mod merkle_distributor {
         );
 
         // This user is whitelisted to mint at most `amount` NFTs from the candy machine
-        require!(
-            claim_count.count < amount,
-            DropAlreadyClaimed
-        );
+        require!(claim_count.count < amount, DropAlreadyClaimed);
 
         // Mark it claimed
         claim_count.count += 1;
@@ -490,7 +473,10 @@ pub mod merkle_distributor {
             ctx.accounts.metadata_master_edition.clone(),
             ctx.accounts.metadata_new_mint.clone(),
             ctx.accounts.metadata_edition_mark_pda.clone(),
-            ctx.accounts.metadata_new_mint_authority.to_account_info().clone(),
+            ctx.accounts
+                .metadata_new_mint_authority
+                .to_account_info()
+                .clone(),
             ctx.accounts.payer.to_account_info().clone(),
             ctx.accounts.distributor.to_account_info().clone(),
             ctx.accounts.metadata_master_token_account.clone(),
@@ -522,7 +508,8 @@ pub mod merkle_distributor {
 
         // reserialize claim_count
         {
-            let mut claim_count_data: &mut [u8] = &mut ctx.accounts.claim_count.try_borrow_mut_data()?;
+            let mut claim_count_data: &mut [u8] =
+                &mut ctx.accounts.claim_count.try_borrow_mut_data()?;
             claim_count.try_serialize(&mut claim_count_data)?;
         }
 
@@ -560,47 +547,47 @@ pub struct NewDistributor<'info> {
 #[derive(Accounts)]
 #[instruction(_bump: u8)]
 pub struct CloseDistributorTokenAccount<'info> {
-  /// Base key of the distributor.
-  pub base: Signer<'info>,
+    /// Base key of the distributor.
+    pub base: Signer<'info>,
 
-  /// [MerkleDistributor].
-  #[account(
+    /// [MerkleDistributor].
+    #[account(
       seeds = [
           b"MerkleDistributor".as_ref(),
           base.key().to_bytes().as_ref()
       ],
       bump = _bump,
   )]
-  pub distributor: Account<'info, MerkleDistributor>,
+    pub distributor: Account<'info, MerkleDistributor>,
 
-  /// Distributor containing the tokens to distribute.
-  #[account(mut)]
-  pub from: Account<'info, TokenAccount>,
+    /// Distributor containing the tokens to distribute.
+    #[account(mut)]
+    pub from: Account<'info, TokenAccount>,
 
-  /// Account to send the claimed tokens to.
-  #[account(mut)]
-  pub to: Account<'info, TokenAccount>,
+    /// Account to send the claimed tokens to.
+    #[account(mut)]
+    pub to: Account<'info, TokenAccount>,
 
-  /// Who is receiving the remaining rent allocation.
-  #[account(mut)]
-  pub receiver: AccountInfo<'info>,
+    /// Who is receiving the remaining rent allocation.
+    #[account(mut)]
+    pub receiver: AccountInfo<'info>,
 
-  /// The [System] program.
-  pub system_program: Program<'info, System>,
+    /// The [System] program.
+    pub system_program: Program<'info, System>,
 
-  /// SPL [Token] program.
-  pub token_program: Program<'info, Token>,
+    /// SPL [Token] program.
+    pub token_program: Program<'info, Token>,
 }
 
 /// [merkle_distributor::close_distributor] accounts.
 #[derive(Accounts)]
 #[instruction(_bump: u8, _wallet_bump: u8)]
 pub struct CloseDistributor<'info> {
-  /// Base key of the distributor.
-  pub base: Signer<'info>,
+    /// Base key of the distributor.
+    pub base: Signer<'info>,
 
-  /// [MerkleDistributor].
-  #[account(
+    /// [MerkleDistributor].
+    #[account(
       seeds = [
           b"MerkleDistributor".as_ref(),
           base.key().to_bytes().as_ref()
@@ -609,9 +596,9 @@ pub struct CloseDistributor<'info> {
       mut,
       close = receiver,
   )]
-  pub distributor: Account<'info, MerkleDistributor>,
+    pub distributor: Account<'info, MerkleDistributor>,
 
-  #[account(
+    #[account(
       seeds = [
           b"Wallet".as_ref(),
           distributor.key().to_bytes().as_ref()
@@ -619,16 +606,16 @@ pub struct CloseDistributor<'info> {
       bump = _wallet_bump,
       mut,
   )]
-  pub distributor_wallet: AccountInfo<'info>,
+    pub distributor_wallet: AccountInfo<'info>,
 
-  /// Who is receiving the remaining tokens and rent allocations.
-  pub receiver: AccountInfo<'info>,
+    /// Who is receiving the remaining tokens and rent allocations.
+    pub receiver: AccountInfo<'info>,
 
-  /// The [System] program.
-  pub system_program: Program<'info, System>,
+    /// The [System] program.
+    pub system_program: Program<'info, System>,
 
-  /// SPL [Token] program.
-  pub token_program: Program<'info, Token>,
+    /// SPL [Token] program.
+    pub token_program: Program<'info, Token>,
 }
 
 /// [merkle_distributor::claim] accounts.
@@ -711,7 +698,6 @@ pub struct ClaimCandy<'info> {
     /// Payer of the claim. Should be `mint_authority` for `candy_machine_mint` and will be
     /// `update_authority` for `candy_machine_metadata`
     pub payer: Signer<'info>,
-
 
     /// Candy-machine Config
     pub candy_machine_config: AccountInfo<'info>,

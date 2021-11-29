@@ -34,6 +34,7 @@ pub enum AuctionInstruction {
     ///   2. `[writable]` Auction extended data account (pda relative to auction of ['auction', program id, vault key, 'extended']).
     ///   3. `[]` Rent sysvar
     ///   4. `[]` System account
+    ///   5. `[writable]` Optional bid state data account tracks the running state of an auction bids.
     CreateAuction(CreateAuctionArgs),
 
     /// Move SPL tokens from winning bid to the destination account.
@@ -98,6 +99,7 @@ pub enum AuctionInstruction {
 pub fn create_auction_instruction(
     program_id: Pubkey,
     creator_pubkey: Pubkey,
+    bid_state_data: &Option<Pubkey>,
     args: CreateAuctionArgs,
 ) -> Instruction {
     let seeds = &[
@@ -115,15 +117,21 @@ pub fn create_auction_instruction(
     ];
     let (auction_extended_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
 
+    let mut accounts = vec![
+        AccountMeta::new(creator_pubkey, true),
+        AccountMeta::new(auction_pubkey, false),
+        AccountMeta::new(auction_extended_pubkey, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    if let Some(bid_state_data) = bid_state_data {
+        accounts.push(AccountMeta::new(*bid_state_data, false));
+    }
+
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(creator_pubkey, true),
-            AccountMeta::new(auction_pubkey, false),
-            AccountMeta::new(auction_extended_pubkey, false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        ],
+        accounts,
         data: AuctionInstruction::CreateAuction(args)
             .try_to_vec()
             .unwrap(),
@@ -403,7 +411,7 @@ pub fn claim_bid_instruction(
         AccountMeta::new_readonly(bidder_pubkey, false),
         AccountMeta::new_readonly(token_mint_pubkey, false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
-        AccountMeta::new_readonly(spl_token::id(), false),        
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     if let Some(auction_extended) = auction_extended_pubkey {

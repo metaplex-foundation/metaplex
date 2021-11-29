@@ -91,7 +91,9 @@ pub struct AuctionData {
     pub price_floor: PriceFloor,
     /// The state the auction is in, whether it has started or ended.
     pub state: AuctionState,
-    /// Auction Bids, each user may have one bid open at a time.
+    /// Auction bids, each user may have one bid open at a time.
+    /// Technically there are limitation for 126 bids only, but more bids will be stored in `AuctionDataExtended`
+    /// as a separate account.
     pub bid_state: BidState,
 }
 
@@ -105,17 +107,21 @@ pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 9 + 33 + 158;
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
 pub struct AuctionDataExtended {
-    /// Total uncancelled bids
+    /// Total uncancelled bids.
     pub total_uncancelled_bids: u64,
-    // Unimplemented fields
-    /// Tick size
+    // Unimplemented fields.
+    /// Tick size.
     pub tick_size: Option<u64>,
-    /// gap_tick_size_percentage - two decimal points
+    /// gap_tick_size_percentage - two decimal points.
     pub gap_tick_size_percentage: Option<u8>,
-    /// Instant sale price
+    /// Instant sale price.
     pub instant_sale_price: Option<u64>,
-    /// Auction name
+    /// Auction name.
     pub name: Option<AuctionName>,
+    /// Auction bids state data, each user may have one bid open at a time.
+    /// Represent account key.
+    /// This account will be used, if there are more than 126 bids.
+    pub bid_state_data: Option<Pubkey>,
 }
 
 impl AuctionDataExtended {
@@ -350,29 +356,35 @@ impl AuctionData {
         };
     }
 
+    /// TODO: Provide implementation for methods below according to new bids count refactoring.
     pub fn is_winner(&self, key: &Pubkey) -> Option<usize> {
+        unimplemented!();
         let minimum = match self.price_floor {
             PriceFloor::MinimumPrice(min) => min[0],
             _ => 0,
         };
-        self.bid_state.is_winner(key, minimum)
+        // self.bid_state.is_winner(key, minimum)
     }
 
     pub fn num_winners(&self) -> u64 {
-        self.bid_state.num_winners()
+        unimplemented!();
+        // self.bid_state.num_winners()
     }
 
     pub fn num_possible_winners(&self) -> u64 {
-        self.bid_state.num_possible_winners()
+        unimplemented!();
+        // self.bid_state.num_possible_winners()
     }
 
     pub fn winner_at(&self, idx: usize) -> Option<Pubkey> {
-        self.bid_state.winner_at(idx)
+        unimplemented!();
+        // self.bid_state.winner_at(idx)
     }
 
     pub fn consider_instant_bid(&mut self, instant_sale_price: Option<u64>) {
+        unimplemented!();
         // Check if all the lots were sold with instant_sale_price
-        if let Some(price) = instant_sale_price {
+        /*if let Some(price) = instant_sale_price {
             if self
                 .bid_state
                 .lowest_winning_bid_is_instant_bid_price(price)
@@ -380,7 +392,7 @@ impl AuctionData {
                 msg!("All the lots were sold with instant_sale_price, auction is ended");
                 self.state = AuctionState::Ended;
             }
-        }
+        }*/
     }
 
     pub fn place_bid(
@@ -391,7 +403,8 @@ impl AuctionData {
         now: UnixTimestamp,
         instant_sale_price: Option<u64>,
     ) -> Result<(), ProgramError> {
-        let gap_val = match self.ended_at {
+        unimplemented!();
+        /*let gap_val = match self.ended_at {
             Some(end) => {
                 // We use the actual gap tick size perc if we're in gap window,
                 // otherwise we pass in none so the logic isnt used
@@ -419,7 +432,7 @@ impl AuctionData {
 
         self.consider_instant_bid(instant_sale_price);
 
-        Ok(())
+        Ok(())*/
     }
 }
 
@@ -459,6 +472,20 @@ impl AuctionState {
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
 pub struct Bid(pub Pubkey, pub u64);
+
+/// BidStateData account tracks the running state of an auction, each variant represents a different kind of
+/// auction being run.
+#[repr(C)]
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize, PartialEq)]
+struct BidStateData {
+    auction_key: Pubkey,
+    state: BidState,
+}
+
+impl BidStateData {
+    /// Represent account length in bytes.
+    const LEN: usize = 0;
+}
 
 /// BidState tracks the running state of an auction, each variant represents a different kind of
 /// auction being run.
