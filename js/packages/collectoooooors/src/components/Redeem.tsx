@@ -5,14 +5,9 @@ import queryString from 'query-string';
 import ContentLoader from 'react-content-loader';
 import { Image } from 'antd';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   CircularProgress,
-  Divider,
-  IconButton,
   Link as HyperLink,
   ImageList,
   ImageListItem,
@@ -20,13 +15,10 @@ import {
   Step,
   StepLabel,
   Stepper,
-  List,
-  ListItem,
+  Tab,
+  Tabs,
   TextField,
 } from "@mui/material";
-import CancelIcon from '@mui/icons-material/Cancel';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 
 import {
   Connection as RPCConnection,
@@ -57,6 +49,7 @@ import {
   useWallet,
 } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
+import { capitalize } from 'lodash';
 
 import {
   useColorMode,
@@ -241,10 +234,6 @@ type MintAndImage = {
 
 type RelevantMint = MintAndImage & { ingredient : string };
 
-type Ingredient = {
-  mint: PublicKey,
-};
-
 const fetchMintsAndImages = async (
   connection : RPCConnection,
   mintKeys : Array<PublicKey>
@@ -335,20 +324,22 @@ const getOnChainIngredients = async (
 
   const storeAccounts = await connection.getMultipleAccountsInfo(storeKeys.map(s => s[0]));
 
-  const ingredients = {};
+  const mints = {};
   for (let idx = 0; idx < ingredientList.length; ++idx) {
     const group = ingredientList[idx];
     const storeAccount = storeAccounts[idx];
     if (storeAccount !== null) {
       const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
-      ingredients[group.ingredient] = {
-        mint: new PublicKey(currentStore.mint),
-      };
-    } else {
-      ingredients[group.ingredient] = null;
+      mints[new PublicKey(currentStore.mint).toBase58()] = group.ingredient;
     }
   }
-  return ingredients;
+  console.log(mints);
+  const ingredientImages = await fetchMintsAndImages(
+      connection, Object.keys(mints).map(r => new PublicKey(r)));
+  const ret = ingredientImages.map(
+      r => ({ ...r, ingredient: mints[r.mint.toBase58()] }));
+  ret.sort((lft, rht) => lft.ingredient.localeCompare(rht.ingredient));
+  return ret;
 };
 
 const getRelevantTokenAccounts = async (
@@ -382,6 +373,11 @@ const getRelevantTokenAccounts = async (
   ret.sort((lft, rht) => lft.ingredient.localeCompare(rht.ingredient));
   return ret;
 };
+
+enum IngredientView {
+  add = 'add',
+  recover = 'recover',
+}
 
 export type RedeemProps = {};
 
@@ -438,8 +434,9 @@ export const Redeem = (
   const [recipeYields, setRecipeYields] = React.useState<Array<MintAndImage>>([]);
   const [relevantMints, setRelevantMints] = React.useState<Array<RelevantMint>>([]);
   const [ingredientList, setIngredientList] = React.useState<Array<any>>([]);
-  const [ingredients, setIngredients] = React.useState<{ [key: string]: (Ingredient | null) }>({});
+  const [dishIngredients, setIngredients] = React.useState<Array<RelevantMint>>([]);
   const [changeList, setChangeList] = React.useState<Array<any>>([]);
+  const [ingredientView, setIngredientView] = React.useState(IngredientView.add);
 
   // TODO: on page load also
   const fetchRelevantMints = async (recipeKey : PublicKey) => {
@@ -488,7 +485,7 @@ export const Redeem = (
       e.preventDefault();
     }
 
-    if (ingredients[ingredient] !== null) {
+    if (dishIngredients.find(c => c.ingredient === ingredient)) {
       throw new Error(`Ingredient ${ingredient} has already been added to this dish`);
     }
 
@@ -513,7 +510,7 @@ export const Redeem = (
           {
             ingredient: ingredient,
             mint: mint,
-            operation: 'add',
+            operation: IngredientView.add,
           },
         ]
       );
@@ -528,8 +525,8 @@ export const Redeem = (
       e.preventDefault();
     }
 
-    const mint = ingredients[ingredient];
-    if (mint === null) {
+    const mint = dishIngredients.find(c => c.ingredient === ingredient);
+    if (!mint) {
       throw new Error(`Ingredient ${ingredient} is not part of this dish`);
     }
 
@@ -546,7 +543,7 @@ export const Redeem = (
           {
             ingredient: ingredient,
             mint: mint.mint,
-            operation: 'recover',
+            operation: IngredientView.recover,
           },
         ]
       );
@@ -731,6 +728,8 @@ export const Redeem = (
       },
     );
 
+    console.log(passed);
+
     if (passed !== chunked.length) {
       throw new Error(`One of the dish changes failed. See console logs`);
     }
@@ -897,11 +896,14 @@ export const Redeem = (
     />
   );
 
-  const relevantImagesC = () => {
+  const relevantImagesC = (
+    relevant : Array<RelevantMint>,
+    operation : IngredientView,
+  ) => {
     return (
       <ImageList cols={3}>
-        {relevantMints.map((r, idx) => {
-          const inBatch = changeList.find(c => c.mint === r.mint && c.operation === 'add');
+        {relevant.map((r, idx) => {
+          const inBatch = changeList.find(c => c.mint === r.mint && c.operation === operation);
           return (
             <HoverButton
               key={idx}
@@ -911,13 +913,20 @@ export const Redeem = (
                 setLoading(true);
                 const wrap = async () => {
                   try {
-                    inBatch
-                      ? await cancelChangeForIngredient(e, r.ingredient)
-                      : await addIngredient(e, r.ingredient, r.mint);
+                    if (inBatch) {
+                      await cancelChangeForIngredient(e, r.ingredient);
+                    } else if (operation === 'add') {
+                      await addIngredient(e, r.ingredient, r.mint);
+                    } else if (operation === 'recover') {
+                      await recoverIngredient(e, r.ingredient);
+                    } else {
+                      // TODO: error earlier...
+                      throw new Error(`Unknown operation ${operation}`);
+                    }
                     setLoading(false);
                   } catch (err) {
                     notify({
-                      message: `${inBatch ? 'Cancel of Add': 'Add'} ingredient failed`,
+                      message: `${inBatch ? 'Cancel of ' : ''} ${capitalize(operation)} ingredient failed`,
                       description: `${err}`,
                     });
                     setLoading(false);
@@ -945,102 +954,9 @@ export const Redeem = (
     );
   };
 
-  const dishSelectionC = () => {
-    return (
-      <React.Fragment>
-        <List>
-          {Object.keys(ingredients).map((ingredient, idx) => {
-            const mint = ingredients[ingredient];
-            const inBatch = changeList.find(c => c.mint === mint?.mint && c.operation === 'recover');
-            return (
-              <ListItem key={idx}>
-                <Stack spacing={0}>
-                  <div>
-                    {ingredient}
-                  </div>
-                  <div>
-                    {mint
-                      ? (
-                        <React.Fragment>
-                          <IconButton
-                            style={{marginRight: 6}}
-                            onClick={e => {
-                              setLoading(true);
-                              const wrap = async () => {
-                                try {
-                                  inBatch
-                                    ? await cancelChangeForIngredient(e, ingredient)
-                                    : await recoverIngredient(e, ingredient);
-                                  setLoading(false);
-                                } catch (err) {
-                                  notify({
-                                    message: `${inBatch ? 'Cancel of Recover': 'Recover'} ingredient failed`,
-                                    description: `${err}`,
-                                  });
-                                  setLoading(false);
-                                }
-                              };
-                              wrap();
-                            }}
-                          >
-                            {inBatch ? <CancelIcon /> : <RemoveCircleIcon />}
-                          </IconButton>
-                          {explorerLinkForAddress(mint.mint, false)}
-                        </React.Fragment>
-                      )
-                      : (
-                        <Box sx={{fontFamily: 'Monospace'}}>
-                          {'\u00A0'.repeat(60)}
-                        </Box>
-                      )
-                    }
-                  </div>
-                </Stack>
-              </ListItem>
-            );
-          })}
-        </List>
-      </React.Fragment>
-    );
-  };
-
   const dishSelectionButtonsC = (onClick) => {
     return (
       <React.Fragment>
-
-        <Button
-          disabled={!anchorWallet || loading}
-          variant="contained"
-          style={{ width: "100%" }}
-          onClick={() => {
-            try {
-              const uniqIngredients = relevantMints.reduce(
-                (acc, m) => {
-                  const ingredientStr = m.ingredient;
-                  if (ingredientStr in acc) return acc;
-                  if (ingredients[ingredientStr]) return acc;
-                  return {
-                    ...acc,
-                    [ingredientStr]: {
-                      ingredient: m.ingredient,
-                      mint: m.mint,
-                      operation: 'add',
-                    },
-                  };
-                },
-                {}
-              );
-              setChangeList(Object.values(uniqIngredients));
-            } catch (err) {
-              notify({
-                message: `Add Ingredients Failed`,
-                description: `${err}`,
-              });
-            }
-          }}
-        >
-          Add Unique Ingredients
-        </Button>
 
         <Box sx={{ position: "relative" }}>
         <Button
@@ -1069,7 +985,9 @@ export const Redeem = (
             wrap();
           }}
         >
-          Submit Dish Changes
+          {ingredientView === IngredientView.add
+            ? 'Add Ingredients'
+            : 'Recover Ingredients'}
         </Button>
         {loading && loadingProgress()}
         </Box>
@@ -1078,7 +996,7 @@ export const Redeem = (
           disabled={
             !anchorWallet
             || loading
-            || Object.values(ingredients).some(x => x === null)
+            || dishIngredients.length !== ingredientList.length
           }
           variant="contained"
           style={{ width: "100%" }}
@@ -1225,30 +1143,77 @@ export const Redeem = (
 
   // TODO: delay until ingredients is non-empty?
   const selectIngredientsC = (onClick) => {
+    const operatingList = ingredientView === IngredientView.add
+      ? relevantMints
+      : dishIngredients;
     return (
       <React.Fragment>
         {recipeFieldC(true)}
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={ingredientView == IngredientView.add ? 0 : 1}
+            onChange={(e, newValue) => {
+              switch (newValue) {
+                case 0: {
+                  setChangeList([]);
+                  setIngredientView(IngredientView.add);
+                  break;
+                }
+                case 1: {
+                  setChangeList([]);
+                  setIngredientView(IngredientView.recover);
+                  break;
+                }
+                default: {
+                  throw new Error(`Invalid view value ${newValue}`);
+                }
+              }
+            }}
           >
-            Dish
-          </AccordionSummary>
-          <AccordionDetails>
-            {dishSelectionC()}
-          </AccordionDetails>
-        </Accordion>
-        <Divider
-          style={{
-            marginTop: "5ch",
-            marginBottom: "2ch",
-          }}
-        >
-          Ingredients in Wallet
-        </Divider>
-        <Box>
-          {relevantImagesC()}
+            <Tab label="Wallet" />
+            <Tab label="Dish" />
+          </Tabs>
         </Box>
+          <Button
+            disabled={!anchorWallet || loading}
+            //variant="contained"
+            style={{ width: "100%" }}
+            onClick={() => {
+              try {
+                const uniqIngredients = operatingList.reduce(
+                  (acc, m) => {
+                    const ingredientStr = m.ingredient;
+                    if (ingredientStr in acc) return acc;
+                    if (ingredientView === IngredientView.add
+                        && dishIngredients.find(c => c.ingredient === ingredientStr)) {
+                      return acc;
+                    }
+                    return {
+                      ...acc,
+                      [ingredientStr]: {
+                        ingredient: m.ingredient,
+                        mint: m.mint,
+                        operation: ingredientView,
+                      },
+                    };
+                  },
+                  {}
+                );
+                setChangeList(Object.values(uniqIngredients));
+              } catch (err) {
+                notify({
+                  message: `Select Ingredients Failed`,
+                  description: `${err}`,
+                });
+              }
+            }}
+          >
+            {ingredientView === IngredientView.add
+              ? 'Select New Ingredients'
+              : 'Select All Ingredients'
+            }
+          </Button>
+        {relevantImagesC(operatingList, ingredientView)}
         {dishSelectionButtonsC(onClick)}
       </React.Fragment>
     );
