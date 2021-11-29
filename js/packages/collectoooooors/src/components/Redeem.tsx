@@ -378,7 +378,10 @@ const getRelevantTokenAccounts = async (
   // TODO: getMultipleAccounts
   const relevantImages = await fetchMintsAndImages(
       connection, relevant.map(r => new PublicKey(r.mint)));
-  return relevantImages.map(r => ({ ...r, ingredient: mints[r.mint.toBase58()] }));
+  const ret = relevantImages.map(
+      r => ({ ...r, ingredient: mints[r.mint.toBase58()] }));
+  ret.sort((lft, rht) => lft.ingredient.localeCompare(rht.ingredient));
+  return ret;
 };
 
 export type RedeemProps = {};
@@ -1022,11 +1025,12 @@ export const Redeem = (
             try {
               const uniqIngredients = relevantMints.reduce(
                 (acc, m) => {
-                  const mintStr = m.mint.toBase58();
-                  if (mintStr in acc) return acc;
+                  const ingredientStr = m.ingredient;
+                  if (ingredientStr in acc) return acc;
+                  if (ingredients[ingredientStr]) return acc;
                   return {
                     ...acc,
-                    [mintStr]: {
+                    [ingredientStr]: {
                       ingredient: m.ingredient,
                       mint: m.mint,
                       operation: 'add',
