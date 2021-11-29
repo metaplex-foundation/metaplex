@@ -234,6 +234,10 @@ type MintAndImage = {
 
 type RelevantMint = MintAndImage & { ingredient : string };
 
+// remaining is never technically strictly up-to-date...
+// TODO: add as of block height?
+type RecipeYield = MintAndImage & { remaining : number };
+
 const fetchMintsAndImages = async (
   connection : RPCConnection,
   mintKeys : Array<PublicKey>
@@ -287,12 +291,49 @@ const getRecipeYields = async (
       { programId: TOKEN_PROGRAM_ID },
     );
   const yieldsDecoded = yieldsAccounts.value.map(v => AccountLayout.decode(v.account.data));
-  return await fetchMintsAndImages(
+  const masterMints = yieldsDecoded
+    .filter(r => new BN(r.amount, 'le').toNumber() > 0)
+    .map(r => new PublicKey(r.mint));
+
+  const masterEditions = await Promise.all(masterMints.map(m => getEdition(m)));
+
+  const editionAccounts = await connection.getMultipleAccountsInfo(masterEditions);
+  const remaining = editionAccounts
+    .map((account, idx) => {
+      if (account === null) {
+        const missingMint = masterMints[idx].toBase58();
+        notify({
+          message: 'Fetch mint failed',
+          description: `Could not fetch master edition for mint ${missingMint}`,
+        });
+        return NaN;
+      }
+
+      const edition = decodeMasterEdition(account.data);
+      if (!edition.maxSupply) {
+        return NaN;
+      }
+      const maxSupply = new BN(edition.maxSupply);
+      const supply = new BN(edition.supply);
+      if (supply.gte(maxSupply)) {
+        return 0;
+      } else {
+        return maxSupply.sub(supply).toNumber();
+      }
+    })
+    .reduce((acc, n, idx) => {
+      return {
+        ...acc,
+        [masterMints[idx].toBase58()]: n,
+      }
+    },
+    {});
+
+  return (await fetchMintsAndImages(
       connection,
-      yieldsDecoded
-        .filter(r => new BN(r.amount, 'le').toNumber() > 0)
-        .map(r => new PublicKey(r.mint))
-    );
+      masterMints,
+    ))
+    .map(r => ({ ...r, remaining: remaining[r.mint.toBase58()] }));
 };
 
 const getOnChainIngredients = async (
@@ -431,7 +472,7 @@ export const Redeem = (
   const initialRecipe = query && query.length > 0 ? String(queryString.parse(query).recipe) : "";
   const [recipe, setRecipe] = React.useState(initialRecipe);
 
-  const [recipeYields, setRecipeYields] = React.useState<Array<MintAndImage>>([]);
+  const [recipeYields, setRecipeYields] = React.useState<Array<RecipeYield>>([]);
   const [relevantMints, setRelevantMints] = React.useState<Array<RelevantMint>>([]);
   const [ingredientList, setIngredientList] = React.useState<Array<any>>([]);
   const [dishIngredients, setIngredients] = React.useState<Array<RelevantMint>>([]);
@@ -1051,6 +1092,9 @@ export const Redeem = (
                     Claim!
                   </Box>}
                   <div style={{ fontSize: "1.5rem" }}>{r.name}</div>
+                  <div>
+                    {!isNaN(r.remaining) && `Remaining: ${r.remaining}`}
+                  </div>
                   {explorerLinkForAddress(r.mint, params.shortenAddress)}
                 </React.Fragment>
               )}
