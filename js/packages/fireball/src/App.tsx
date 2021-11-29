@@ -33,9 +33,9 @@ const About = () => {
     >
       <Stack spacing={1.5}>
         <div>
-          The Recipe program allows various NFT mints to be grouped as
-          ingredients that, once added to an on-chain dish (a temporary storage
-          vault), can be used to create a new NFT.
+          The Fireball program allows various NFT mints to be grouped as
+          ingredients in a recipe. Clients can add ingredients to an on-chain
+          dish and then invoke the recipe to create a new NFT.
         </div>
 
         <div>
@@ -73,7 +73,7 @@ const About = () => {
         </div>
 
         <div>
-          The current Recipe program assumes no structure about the ingredients
+          The current Fireball program assumes no structure about the ingredients
           or their metadata. As such, recipes are created directly from a list of
           ingredients that are each a list of specific mints. It is the recipe
           creator&apos;s responsibility to ensure that each mint matches
@@ -90,7 +90,7 @@ const About = () => {
 
         <div>
           When adding an ingredient, clients must submit the mint along with
-          merkle-proof that the mint is that ingredient. The Recipe program
+          merkle-proof that the mint is that ingredient. The Fireball program
           will check that the proof matches and transfer the NFT from the
           client&apos;s token account to the dish. While the recipe has not
           been completed, clients can add and remove ingredients as they wish.
