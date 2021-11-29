@@ -24,6 +24,33 @@ declare_id!("9R4RuSGk3raAVf6TJ7o1ixywcDW89p1MSo2ns9LEBXNK");
 pub const PREFIX: &[u8] = b"collectoooooors";
 pub const MAX_URI_LENGTH : usize = 200; // smaller?
 
+fn incomplete_dish_checks<'info>(
+    dish: &Account<'info, Dish>,
+    payer: &Signer<'info>,
+) -> ProgramResult {
+    require!(
+        !dish.completed,
+        ErrorCode::RecipeAlreadyCompleted,
+    );
+
+    require!(
+        dish.authority == payer.key(),
+        ErrorCode::InvalidAuthority,
+    );
+
+    Ok(())
+}
+
+fn complete_dish_checks<'info>(
+    dish: &Account<'info, Dish>,
+) -> ProgramResult {
+    require!(
+        dish.completed,
+        ErrorCode::RecipeNotCompleted,
+    );
+
+    Ok(())
+}
 
 #[program]
 pub mod collectoooooors {
@@ -63,10 +90,7 @@ pub mod collectoooooors {
         ingredient_num: u64,
         proof: Vec<[u8; 32]>,
     ) -> ProgramResult {
-        require!(
-            !ctx.accounts.dish.completed,
-            ErrorCode::RecipeAlreadyCompleted,
-        );
+        incomplete_dish_checks(&ctx.accounts.dish, &ctx.accounts.payer)?;
 
         let recipe = &ctx.accounts.recipe;
 
@@ -158,16 +182,7 @@ pub mod collectoooooors {
         ingredient_bump: u8,
         ingredient_num: u64,
     ) -> ProgramResult {
-        require!(
-            !ctx.accounts.dish.completed,
-            ErrorCode::RecipeAlreadyCompleted,
-        );
-
-        require!(
-            ctx.accounts.dish.authority
-            == ctx.accounts.payer.key(),
-            ErrorCode::InvalidAuthority,
-        );
+        incomplete_dish_checks(&ctx.accounts.dish, &ctx.accounts.payer)?;
 
         let dish_key = ctx.accounts.dish.key();
         let ingredient_bytes = ingredient_num.to_le_bytes();
@@ -226,6 +241,7 @@ pub mod collectoooooors {
         recipe_signer_bump: u8,
         edition: u64,
     ) -> ProgramResult {
+        incomplete_dish_checks(&ctx.accounts.dish, &ctx.accounts.payer)?;
 
         require!(
             ctx.accounts.dish.recipe
@@ -237,11 +253,6 @@ pub mod collectoooooors {
             ctx.accounts.dish.ingredients_added
             == ctx.accounts.recipe.roots.len() as u64,
             ErrorCode::IncompleteRecipe,
-        );
-
-        require!(
-            !ctx.accounts.dish.completed,
-            ErrorCode::RecipeAlreadyCompleted,
         );
 
         let recipe_key = ctx.accounts.recipe.key();
@@ -301,10 +312,7 @@ pub mod collectoooooors {
         ingredient_bump: u8,
         ingredient_num: u64,
     ) -> ProgramResult {
-        require!(
-            ctx.accounts.dish.completed,
-            ErrorCode::RecipeNotCompleted,
-        );
+        complete_dish_checks(&ctx.accounts.dish)?;
 
         // TODO: some other reward configured in recipe?
         let recipe = &ctx.accounts.recipe;
@@ -357,6 +365,18 @@ pub mod collectoooooors {
             )
             .with_signer(&[&ingredient_store_seeds]),
         )?;
+
+        let dish = &mut ctx.accounts.dish;
+
+        dish.ingredients_added = dish.ingredients_added
+            .checked_sub(1)
+            .ok_or(ErrorCode::ArithmeticOverflow)?;
+
+        if dish.ingredients_added == 0 {
+            dish.completed = false;
+        } else {
+            complete_dish_checks(&ctx.accounts.dish)?;
+        }
 
         Ok(())
     }
@@ -553,6 +573,7 @@ pub struct MakeDish<'info> {
 pub struct ConsumeIngredient<'info> {
     pub recipe: Account<'info, Recipe>,
 
+    #[account(mut)]
     pub dish: Account<'info, Dish>,
 
     // supply changes
