@@ -38,8 +38,8 @@ export const SalesListView = () => {
     <>
       <Banner
         src="/main-banner.svg"
-        headingText="The amazing world of Halluce."
-        subHeadingText="Buy exclusive video NFTs."
+        headingText="Create, collect  and sell NFTs of your favourite social media videos."
+        subHeadingText="The worlds first NFT marketplace created for viral social media video."
         actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
         useBannerBg
       />
