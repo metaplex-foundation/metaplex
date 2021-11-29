@@ -50,7 +50,6 @@ import {
   Metadata,
   notify,
   shortenAddress,
-  useLocalStorageState,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@oyster/common';
@@ -432,17 +431,9 @@ export const Redeem = (
     wrap();
   }, [anchorWallet]);
 
-  const [recipe, setRecipe] = useLocalStorageState(
-    "recipe",
-    "",
-  );
-
   const query = props.location.search;
-  if (query && query.length > 0) {
-    const params = queryString.parse(query);
-    if (params.recipe)
-      setRecipe(params.recipe);
-  }
+  const initialRecipe = query && query.length > 0 ? String(queryString.parse(query).recipe) : "";
+  const [recipe, setRecipe] = React.useState(initialRecipe);
 
   const [recipeYields, setRecipeYields] = React.useState<Array<MintAndImage>>([]);
   const [relevantMints, setRelevantMints] = React.useState<Array<RelevantMint>>([]);
