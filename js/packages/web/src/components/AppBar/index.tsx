@@ -1,17 +1,18 @@
+import { MenuOutlined } from '@ant-design/icons';
+import { ConnectButton } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Button, Menu, Modal } from 'antd';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Menu, Modal } from 'antd';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
-import { MenuOutlined } from '@ant-design/icons';
-import { HowToBuyModal } from '../HowToBuyModal';
+import { CachedImageContent } from '../ArtContent';
 import {
   Cog,
   CurrentUserBadge,
-  CurrentUserBadgeMobile,
+  CurrentUserBadgeMobile
 } from '../CurrentUserBadge';
-import { ConnectButton } from '@oyster/common';
+import { HowToBuyModal } from '../HowToBuyModal';
+import { Notifications } from '../Notifications';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
@@ -50,7 +51,12 @@ const MetaplexMenu = () => {
     return (
       <>
         <Modal
-          title={<img src={'/halluce-logo.svg'} />}
+          title={
+            <CachedImageContent
+              uri={'/halluce-logo.svg'}
+              style={{ width: '40px', height: '40px' }}
+            />
+          }
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
