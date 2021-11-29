@@ -100,7 +100,7 @@ pub struct AuctionData {
 // Alias for auction name.
 pub type AuctionName = [u8; 32];
 
-pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 9 + 33 + 158;
+pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 9 + 33 + 33 + 125;
 // Further storage for more fields. Would like to store more on the main data but due
 // to a borsh issue that causes more added fields to inflict "Access violation" errors
 // during redemption in main Metaplex app for no reason, we had to add this nasty PDA.
@@ -484,7 +484,7 @@ struct BidStateData {
 
 impl BidStateData {
     /// Represent account length in bytes.
-    const LEN: usize = 0;
+    const LEN: usize = 32 + 24;
 }
 
 /// BidState tracks the running state of an auction, each variant represents a different kind of

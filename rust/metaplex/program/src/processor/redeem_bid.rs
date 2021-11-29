@@ -9,16 +9,16 @@ use {
         },
     },
     arrayref::array_ref,
-    metaplex_auction::processor::AuctionData,
-    metaplex_token_metadata::{
-        deprecated_instruction::deprecated_set_reservation_list, state::Reservation,
-    },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
         program_error::ProgramError,
         pubkey::Pubkey,
+    },
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_metadata::{
+        deprecated_instruction::deprecated_set_reservation_list, state::Reservation,
     },
 };
 
@@ -230,7 +230,7 @@ pub fn process_redeem_bid<'a>(
                 };
                 let reservation_list_info = match auction_extended_info {
                     Some(val) => val,
-                    None => return Err(ProgramError::NotEnoughAccountKeys),
+                    None => return Err(ProgramError::NotEnoughAccountKeys)
                 };
 
                 reserve_list_if_needed(

@@ -1,18 +1,5 @@
 use {
     clap::{crate_description, crate_name, crate_version, App, Arg, ArgMatches, SubCommand},
-    metaplex_token_vault::{
-        instruction::{
-            create_activate_vault_instruction, create_add_shares_instruction,
-            create_add_token_to_inactive_vault_instruction, create_combine_vault_instruction,
-            create_init_vault_instruction, create_mint_shares_instruction,
-            create_redeem_shares_instruction, create_update_external_price_account_instruction,
-            create_withdraw_shares_instruction, create_withdraw_tokens_instruction,
-        },
-        state::{
-            ExternalPriceAccount, SafetyDepositBox, Vault, VaultState, MAX_EXTERNAL_ACCOUNT_SIZE,
-            MAX_VAULT_SIZE, PREFIX,
-        },
-    },
     solana_clap_utils::{
         input_parsers::pubkey_of,
         input_validators::{is_url, is_valid_pubkey, is_valid_signer},
@@ -28,6 +15,19 @@ use {
     spl_token::{
         instruction::{approve, initialize_account, initialize_mint, mint_to},
         state::{Account, Mint},
+    },
+    metaplex_token_vault::{
+        instruction::{
+            create_activate_vault_instruction, create_add_shares_instruction,
+            create_add_token_to_inactive_vault_instruction, create_combine_vault_instruction,
+            create_init_vault_instruction, create_mint_shares_instruction,
+            create_redeem_shares_instruction, create_update_external_price_account_instruction,
+            create_withdraw_shares_instruction, create_withdraw_tokens_instruction,
+        },
+        state::{
+            ExternalPriceAccount, SafetyDepositBox, Vault, VaultState, MAX_EXTERNAL_ACCOUNT_SIZE,
+            MAX_VAULT_SIZE, PREFIX,
+        },
     },
     std::str::FromStr,
 };
@@ -239,7 +239,11 @@ fn add_token_to_vault(app_matches: &ArgMatches, payer: Keypair, client: RpcClien
     let transfer_authority = Keypair::new();
 
     let clone_of_key = token_mint.pubkey().clone();
-    let seeds = &[PREFIX.as_bytes(), vault_key.as_ref(), clone_of_key.as_ref()];
+    let seeds = &[
+        PREFIX.as_bytes(),
+        vault_key.as_ref(),
+        clone_of_key.as_ref(),
+    ];
     let (safety_deposit_box, _) = Pubkey::find_program_address(seeds, &program_key);
     let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (authority, _) = Pubkey::find_program_address(seeds, &program_key);

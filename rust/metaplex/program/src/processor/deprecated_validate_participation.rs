@@ -10,8 +10,6 @@ use {
         },
     },
     borsh::BorshSerialize,
-    metaplex_token_metadata::state::{MasterEditionV1, Metadata},
-    metaplex_token_vault::state::{SafetyDepositBox, Vault},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
@@ -21,6 +19,8 @@ use {
         sysvar::Sysvar,
     },
     spl_token::state::Account,
+    metaplex_token_metadata::state::{MasterEditionV1, Metadata},
+    metaplex_token_vault::state::{SafetyDepositBox, Vault},
 };
 
 pub fn process_deprecated_validate_participation(
