@@ -165,6 +165,8 @@ export const BurnCrank = () => {
         ));
       }
 
+      if (instrs.length == 0) continue;
+
       const instrsPerTx = 6; // arb
       const chunked = chunks(instrs, instrsPerTx);
       const passed = await Connection.sendTransactions(
@@ -236,9 +238,10 @@ export const BurnCrank = () => {
               await crank(new PublicKey(recipe));
               setLoading(false);
             } catch (err) {
-             notify({
+              console.log(err);
+              notify({
                 message: 'Burn crank failed',
-                description: `${err}`,
+                description: err.message,
               });
               setLoading(false);
             }

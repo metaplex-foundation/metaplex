@@ -1063,9 +1063,10 @@ export const Redeem = (
                 await submitDishChanges(e);
                 setLoading(false);
               } catch (err) {
+                console.log(err);
                 notify({
                   message: `Dish Changes failed`,
-                  description: typeof err === 'string' ? err : `${JSON.stringify(err)}`,
+                  description: err.message,
                 });
                 setLoading(false);
               }
@@ -1248,7 +1249,7 @@ export const Redeem = (
             marginBottom: "2ch",
           }}
         >
-          Ingredients
+          Ingredients in Wallet
         </Divider>
         <Box>
           {relevantImagesC()}
