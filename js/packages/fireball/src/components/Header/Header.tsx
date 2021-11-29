@@ -21,16 +21,16 @@ import { Settings } from "../Settings";
 export const Header = ({ narrow } : { narrow : boolean }) => {
   const navs = [
     {
-      href: `/collectoooooors/`,
+      href: `/fireball/`,
       innerNarrow: "About",
       inner: <HomeIcon />,
     },
     {
-      href: `/collectoooooors/redeem/`,
+      href: `/fireball/redeem/`,
       inner: "Redeem",
     },
     {
-      href: `/collectoooooors/burn/`,
+      href: `/fireball/burn/`,
       inner: "Burn",
     },
   ];

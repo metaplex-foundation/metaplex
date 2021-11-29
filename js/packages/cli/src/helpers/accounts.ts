@@ -19,7 +19,7 @@ import {
   TOKEN_ENTANGLEMENT_PROGRAM_ID,
   TOKEN_ENTANGLER,
   ESCROW,
-  COLLECTOOOOOORS_PROGRAM_ID,
+  FIREBALL_PROGRAM_ID,
   B,
   A,
 } from './constants';
@@ -543,7 +543,7 @@ export async function loadTokenEntanglementProgream(
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
-export async function loadCollectoooooorsProgram(
+export async function loadFireballProgram(
   walletKeyPair: Keypair,
   env: string,
   customRpcUrl?: string,
@@ -561,11 +561,11 @@ export async function loadCollectoooooorsProgram(
     preflightCommitment: 'recent',
   });
   const idl = await anchor.Program.fetchIdl(
-    COLLECTOOOOOORS_PROGRAM_ID,
+    FIREBALL_PROGRAM_ID,
     provider,
   );
 
-  return new anchor.Program(idl, COLLECTOOOOOORS_PROGRAM_ID, provider);
+  return new anchor.Program(idl, FIREBALL_PROGRAM_ID, provider);
 }
 
 export async function getTokenAmount(

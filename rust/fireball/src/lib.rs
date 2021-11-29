@@ -21,7 +21,7 @@ pub mod merkle_proof;
 
 declare_id!("9R4RuSGk3raAVf6TJ7o1ixywcDW89p1MSo2ns9LEBXNK");
 
-pub const PREFIX: &[u8] = b"collectoooooors";
+pub const PREFIX: &[u8] = b"fireball";
 pub const MAX_URI_LENGTH : usize = 200; // smaller?
 
 fn incomplete_dish_checks<'info>(
@@ -53,7 +53,7 @@ fn complete_dish_checks<'info>(
 }
 
 #[program]
-pub mod collectoooooors {
+pub mod fireball {
     use super::*;
 
     pub fn create_recipes(

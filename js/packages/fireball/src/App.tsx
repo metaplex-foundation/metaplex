@@ -46,7 +46,7 @@ const About = () => {
 
         <div>
           Check out the{WHITESPACE}
-          <Link to={`/collectoooooors/redeem?recipe=HV3om5hpwce6HTew26U4ULSNXWmv3vgGbR23Fgcyd52U`}>
+          <Link to={`/fireball/redeem?recipe=HV3om5hpwce6HTew26U4ULSNXWmv3vgGbR23Fgcyd52U`}>
             city-swap recipe for Collectoooooors!
           </Link>
 
@@ -173,9 +173,9 @@ function App() {
           >
             <Box height="40px" />
             <Switch>
-              <Route exact path="/collectoooooors/redeem/" component={Redeem} />
-              <Route exact path="/collectoooooors/burn/" component={BurnCrank} />
-              <Route exact path="/collectoooooors/" component={About} />
+              <Route exact path="/fireball/redeem/" component={Redeem} />
+              <Route exact path="/fireball/burn/" component={BurnCrank} />
+              <Route exact path="/fireball/" component={About} />
             </Switch>
             <Box height="80px" />
           </Box>

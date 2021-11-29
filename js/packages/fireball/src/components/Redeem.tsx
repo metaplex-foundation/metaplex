@@ -63,8 +63,8 @@ import {
   getMetadata,
 } from '../utils/accounts';
 import {
-  COLLECTOOOOOORS_PREFIX,
-  COLLECTOOOOOORS_PROGRAM_ID,
+  FIREBALL_PREFIX,
+  FIREBALL_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
 } from '../utils/ids';
 import {
@@ -276,10 +276,10 @@ const getRecipeYields = async (
 ) => {
   const [recipeMintOwner, ] = await PublicKey.findProgramAddress(
     [
-      COLLECTOOOOOORS_PREFIX,
+      FIREBALL_PREFIX,
       recipeKey.toBuffer(),
     ],
-    COLLECTOOOOOORS_PROGRAM_ID
+    FIREBALL_PROGRAM_ID
   );
 
   const yieldsAccounts = await connection.getTokenAccountsByOwner(
@@ -303,22 +303,22 @@ const getOnChainIngredients = async (
 ) => {
   const [dishKey, ] = await PublicKey.findProgramAddress(
     [
-      COLLECTOOOOOORS_PREFIX,
+      FIREBALL_PREFIX,
       recipeKey.toBuffer(),
       walletKey.toBuffer(),
     ],
-    COLLECTOOOOOORS_PROGRAM_ID,
+    FIREBALL_PROGRAM_ID,
   );
 
   const storeKeys = await Promise.all(ingredientList.map((group, idx) => {
           const ingredientNum = new BN(idx);
           return PublicKey.findProgramAddress(
             [
-              COLLECTOOOOOORS_PREFIX,
+              FIREBALL_PREFIX,
               dishKey.toBuffer(),
               Buffer.from(ingredientNum.toArray('le', 8)),
             ],
-            COLLECTOOOOOORS_PROGRAM_ID,
+            FIREBALL_PROGRAM_ID,
           );
         }));
 
@@ -416,9 +416,9 @@ export const Redeem = (
         const provider = new anchor.Provider(connection, anchorWallet, {
           preflightCommitment: 'recent',
         });
-        const idl = await anchor.Program.fetchIdl(COLLECTOOOOOORS_PROGRAM_ID, provider);
+        const idl = await anchor.Program.fetchIdl(FIREBALL_PROGRAM_ID, provider);
 
-        const program = new anchor.Program(idl, COLLECTOOOOOORS_PROGRAM_ID, provider);
+        const program = new anchor.Program(idl, FIREBALL_PROGRAM_ID, provider);
         setProgram(program);
       } catch (err) {
         console.error('Failed to fetch IDL', err);
@@ -582,11 +582,11 @@ export const Redeem = (
     const recipeKey = new PublicKey(recipe);
     const [dishKey, dishBump] = await PublicKey.findProgramAddress(
       [
-        COLLECTOOOOOORS_PREFIX,
+        FIREBALL_PREFIX,
         recipeKey.toBuffer(),
         anchorWallet.publicKey.toBuffer(),
       ],
-      COLLECTOOOOOORS_PROGRAM_ID,
+      FIREBALL_PROGRAM_ID,
     );
 
     const setup : Array<TransactionInstruction> = [];
@@ -619,11 +619,11 @@ export const Redeem = (
       const ingredientNum = new BN(idx);
       const [storeKey, storeBump] = await PublicKey.findProgramAddress(
         [
-          COLLECTOOOOOORS_PREFIX,
+          FIREBALL_PREFIX,
           dishKey.toBuffer(),
           Buffer.from(ingredientNum.toArray('le', 8)),
         ],
-        COLLECTOOOOOORS_PROGRAM_ID,
+        FIREBALL_PROGRAM_ID,
       );
 
       const storeAccount = await connection.getAccountInfo(storeKey);
@@ -758,19 +758,19 @@ export const Redeem = (
     const recipeKey = new PublicKey(recipe);
     const [dishKey, ] = await PublicKey.findProgramAddress(
       [
-        COLLECTOOOOOORS_PREFIX,
+        FIREBALL_PREFIX,
         recipeKey.toBuffer(),
         anchorWallet.publicKey.toBuffer(),
       ],
-      COLLECTOOOOOORS_PROGRAM_ID,
+      FIREBALL_PROGRAM_ID,
     );
 
     const [recipeMintOwner, recipeMintBump] = await PublicKey.findProgramAddress(
       [
-        COLLECTOOOOOORS_PREFIX,
+        FIREBALL_PREFIX,
         recipeKey.toBuffer(),
       ],
-      COLLECTOOOOOORS_PROGRAM_ID
+      FIREBALL_PROGRAM_ID
     );
 
     const [recipeATA, ] = await PublicKey.findProgramAddress(

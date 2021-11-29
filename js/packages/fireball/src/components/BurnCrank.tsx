@@ -34,8 +34,8 @@ import {
   Connection,
 } from '../contexts';
 import {
-  COLLECTOOOOOORS_PREFIX,
-  COLLECTOOOOOORS_PROGRAM_ID,
+  FIREBALL_PREFIX,
+  FIREBALL_PROGRAM_ID,
 } from '../utils/ids';
 import {
   explorerLinkFor,
@@ -74,9 +74,9 @@ export const BurnCrank = () => {
         const provider = new anchor.Provider(connection, anchorWallet, {
           preflightCommitment: 'recent',
         });
-        const idl = await anchor.Program.fetchIdl(COLLECTOOOOOORS_PROGRAM_ID, provider);
+        const idl = await anchor.Program.fetchIdl(FIREBALL_PROGRAM_ID, provider);
 
-        const program = new anchor.Program(idl, COLLECTOOOOOORS_PROGRAM_ID, provider);
+        const program = new anchor.Program(idl, FIREBALL_PROGRAM_ID, provider);
         setProgram(program);
       } catch (err) {
         console.error('Failed to fetch IDL', err);
@@ -103,7 +103,7 @@ export const BurnCrank = () => {
     }
 
     const dishAccounts = await connection.getProgramAccounts(
-      COLLECTOOOOOORS_PROGRAM_ID,
+      FIREBALL_PROGRAM_ID,
       {
         filters: [
           {
@@ -134,11 +134,11 @@ export const BurnCrank = () => {
         const ingredientNum = new BN(idx);
         const [storeKey, storeBump] = await PublicKey.findProgramAddress(
           [
-            COLLECTOOOOOORS_PREFIX,
+            FIREBALL_PREFIX,
             dishKey.toBuffer(),
             Buffer.from(ingredientNum.toArray('le', 8)),
           ],
-          COLLECTOOOOOORS_PROGRAM_ID,
+          FIREBALL_PROGRAM_ID,
         );
 
         const storeAccount = await connection.getAccountInfo(storeKey);

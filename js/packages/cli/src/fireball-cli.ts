@@ -24,7 +24,7 @@ import BN from 'bn.js';
 import {
   getMetadata,
   getTokenWallet,
-  loadCollectoooooorsProgram,
+  loadFireballProgram,
 } from './helpers/accounts';
 import {
   loadCache,
@@ -32,8 +32,8 @@ import {
 } from './helpers/cache';
 import {
   ARWEAVE_PAYMENT_WALLET,
-  COLLECTOOOOOORS_PREFIX,
-  COLLECTOOOOOORS_PROGRAM_ID,
+  FIREBALL_PREFIX,
+  FIREBALL_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   EXTENSION_PNG,
@@ -95,7 +95,7 @@ programCommand('create_recipe')
     console.log(roots);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadCollectoooooorsProgram(wallet, options.env);
+    const anchorProgram = await loadFireballProgram(wallet, options.env);
 
     const setup : Array<TransactionInstruction> = [];
 
@@ -173,7 +173,7 @@ programCommand('add_master_edition')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadCollectoooooorsProgram(wallet, options.env);
+    const anchorProgram = await loadFireballProgram(wallet, options.env);
 
     const recipeKey = new PublicKey(options.recipe);
     const mintKey = new PublicKey(options.mint);
@@ -181,10 +181,10 @@ programCommand('add_master_edition')
     // transfer master edition to recipe
     const [recipeMintOwner, recipeMintBump] = await PublicKey.findProgramAddress(
       [
-        COLLECTOOOOOORS_PREFIX,
+        FIREBALL_PREFIX,
         recipeKey.toBuffer(),
       ],
-      COLLECTOOOOOORS_PROGRAM_ID
+      FIREBALL_PROGRAM_ID
     );
 
     const [walletATA, ] = await PublicKey.findProgramAddress(
@@ -247,7 +247,7 @@ programCommand('reclaim_master_edition')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadCollectoooooorsProgram(wallet, options.env);
+    const anchorProgram = await loadFireballProgram(wallet, options.env);
 
     const recipeKey = new PublicKey(options.recipe);
     const mintKey = new PublicKey(options.mint);
@@ -255,10 +255,10 @@ programCommand('reclaim_master_edition')
     // transfer master edition to recipe
     const [recipeMintOwner, recipeMintBump] = await PublicKey.findProgramAddress(
       [
-        COLLECTOOOOOORS_PREFIX,
+        FIREBALL_PREFIX,
         recipeKey.toBuffer(),
       ],
-      COLLECTOOOOOORS_PROGRAM_ID
+      FIREBALL_PROGRAM_ID
     );
 
     const [walletATA, ] = await PublicKey.findProgramAddress(

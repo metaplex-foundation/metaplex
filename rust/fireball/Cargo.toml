@@ -1,5 +1,5 @@
 [package]
-name = "collectoooooors"
+name = "fireball"
 version = "0.0.1"
 authors = [
     "Lawrence Wu <larry.wu@solana.com>",
@@ -9,7 +9,7 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "collectoooooors"
+name = "fireball"
 
 [features]
 no-entrypoint = []

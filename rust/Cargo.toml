@@ -12,7 +12,7 @@ members = [
   "token-vault/test",
   "token-metadata/test",
   "gumdrop/",
-  "collectoooooors/",
+  "fireball/",
 ]
 exclude = [
 ]

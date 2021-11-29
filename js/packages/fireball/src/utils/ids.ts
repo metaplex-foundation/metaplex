@@ -1,11 +1,11 @@
 import { PublicKey } from '@solana/web3.js';
 
-export const COLLECTOOOOOORS_PROGRAM_ID = new PublicKey(
+export const FIREBALL_PROGRAM_ID = new PublicKey(
   '9R4RuSGk3raAVf6TJ7o1ixywcDW89p1MSo2ns9LEBXNK',
 );
 
-export const COLLECTOOOOOORS_PREFIX = Buffer.from(
-  'collectoooooors'
+export const FIREBALL_PREFIX = Buffer.from(
+  'fireball'
 );
 
 export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
