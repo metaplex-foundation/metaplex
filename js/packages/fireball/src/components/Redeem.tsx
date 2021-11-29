@@ -178,14 +178,8 @@ const createMintAndAccount = async (
   mint : PublicKey,
   setup : Array<TransactionInstruction>,
 ) => {
-  const [walletTokenKey, ] = await PublicKey.findProgramAddress(
-    [
-      walletKey.toBuffer(),
-      TOKEN_PROGRAM_ID.toBuffer(),
-      mint.toBuffer(),
-    ],
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-  );
+  const walletTokenKey = await getAssociatedTokenAccount(
+      walletKey, mint);
 
   setup.push(SystemProgram.createAccount({
     fromPubkey: walletKey,
@@ -620,6 +614,8 @@ export const Redeem = (
       throw new Error(`No ingredient list`);
     }
 
+    const startTime = getUnixTs();
+
     const recipeKey = new PublicKey(recipe);
     const [dishKey, dishBump] = await PublicKey.findProgramAddress(
       [
@@ -649,6 +645,24 @@ export const Redeem = (
       ));
     }
 
+    console.log('Finished finding dish', getUnixTs() - startTime);
+
+    const storeKeysAndBumps = await Promise.all(ingredientList.map(
+      (_, idx) => {
+        const ingredientNum = new BN(idx);
+        return PublicKey.findProgramAddress(
+          [
+            FIREBALL_PREFIX,
+            dishKey.toBuffer(),
+            Buffer.from(ingredientNum.toArray('le', 8)),
+          ],
+          FIREBALL_PROGRAM_ID,
+        );
+      }
+    ));
+    const storeAccounts = await connection.getMultipleAccountsInfo(
+        storeKeysAndBumps.map(s => s[0]));
+    console.log('Finished fetching stores', getUnixTs() - startTime);
     for (let idx = 0; idx < ingredientList.length; ++idx) {
       const group = ingredientList[idx];
       const change = changeList.find(c => c.ingredient === group.ingredient);
@@ -658,18 +672,10 @@ export const Redeem = (
       }
 
       const ingredientNum = new BN(idx);
-      const [storeKey, storeBump] = await PublicKey.findProgramAddress(
-        [
-          FIREBALL_PREFIX,
-          dishKey.toBuffer(),
-          Buffer.from(ingredientNum.toArray('le', 8)),
-        ],
-        FIREBALL_PROGRAM_ID,
-      );
-
-      const storeAccount = await connection.getAccountInfo(storeKey);
+      const [storeKey, storeBump] = storeKeysAndBumps[idx];
+      const storeAccount = storeAccounts[idx];
       const walletATA = await getAssociatedTokenAccount(
-        anchorWallet.publicKey, change.mint, connection);
+        anchorWallet.publicKey, change.mint);
       if (change.operation === 'add') {
         if (storeAccount === null) {
           // nothing
@@ -735,6 +741,8 @@ export const Redeem = (
         throw new Error(`Unknown change operation ${change.operation}`);
       }
     }
+
+    console.log('Finished building instrs', getUnixTs() - startTime);
 
     if (setup.length === 0) {
       return;
@@ -814,14 +822,8 @@ export const Redeem = (
       FIREBALL_PROGRAM_ID
     );
 
-    const [recipeATA, ] = await PublicKey.findProgramAddress(
-      [
-        recipeMintOwner.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        masterMintKey.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
+    const recipeATA = await getAssociatedTokenAccount(
+        recipeMintOwner, masterMintKey);
 
     const newMint = Keypair.generate();
     const newMetadataKey = await getMetadata(newMint.publicKey);

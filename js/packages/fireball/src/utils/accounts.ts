@@ -1,7 +1,6 @@
 import * as anchor from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
-  AccountLayout,
   MintInfo,
   MintLayout,
   TOKEN_PROGRAM_ID,
@@ -44,9 +43,8 @@ export const getMintInfo = async (
 export const getAssociatedTokenAccount = async (
   walletKey : PublicKey,
   mintKey : PublicKey,
-  connection : Connection,
 ) => {
-  const [creatorTokenKey, ] = await PublicKey.findProgramAddress(
+  const [ataKey, ] = await PublicKey.findProgramAddress(
     [
       walletKey.toBuffer(),
       TOKEN_PROGRAM_ID.toBuffer(),
@@ -54,14 +52,7 @@ export const getAssociatedTokenAccount = async (
     ],
     SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
   );
-  const creatorTokenAccount = await connection.getAccountInfo(creatorTokenKey);
-  if (creatorTokenAccount === null) {
-    throw new Error(`Could not fetch creator token account`);
-  }
-  if (creatorTokenAccount.data.length !== AccountLayout.span) {
-    throw new Error(`Invalid token account size ${creatorTokenAccount.data.length}`);
-  }
-  return creatorTokenKey;
+  return ataKey;
 };
 
 export const fetchCoder = async (

@@ -128,24 +128,32 @@ export const BurnCrank = () => {
 
       const dishKey = new PublicKey(dishAccount.pubkey);
 
+      const storeKeysAndBumps : Array<[PublicKey, number]> = await Promise.all(recipe.roots.map(
+        (_, idx) => {
+          const ingredientNum = new BN(idx);
+          return PublicKey.findProgramAddress(
+            [
+              FIREBALL_PREFIX,
+              dishKey.toBuffer(),
+              Buffer.from(ingredientNum.toArray('le', 8)),
+            ],
+            FIREBALL_PROGRAM_ID,
+          );
+        }
+      ));
+      const storeAccounts = await connection.getMultipleAccountsInfo(
+          storeKeysAndBumps.map(s => s[0]));
+
       // TODO: separate on overflow
       const instrs : Array<TransactionInstruction> = [];
       for (let idx = 0; idx < recipe.roots.length; ++idx) {
-        const ingredientNum = new BN(idx);
-        const [storeKey, storeBump] = await PublicKey.findProgramAddress(
-          [
-            FIREBALL_PREFIX,
-            dishKey.toBuffer(),
-            Buffer.from(ingredientNum.toArray('le', 8)),
-          ],
-          FIREBALL_PROGRAM_ID,
-        );
-
-        const storeAccount = await connection.getAccountInfo(storeKey);
+        const [storeKey, storeBump] = storeKeysAndBumps[idx];
+        const storeAccount = storeAccounts[idx];
         if (storeAccount === null) {
           continue;
         }
 
+        const ingredientNum = new BN(idx);
         instrs.push(await program.instruction.consumeIngredient(
           storeBump,
           ingredientNum,
