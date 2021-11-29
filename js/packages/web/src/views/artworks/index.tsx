@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ArtCard } from '../../components/ArtCard';
-import { Layout, Row, Col, Tabs } from 'antd';
+import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { useCreatorArts, useUserArts } from '../../hooks';
@@ -71,6 +71,9 @@ export const ArtworksView = () => {
     </Masonry>
   );
 
+  const refreshButton = connected && storeIndexer.length !== 0 &&
+  <Button className="refresh-button" onClick={() => pullAllMetadata()}>Refresh</Button>
+
   return (
     <Layout style={{ margin: 0, marginTop: 30 }}>
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
@@ -79,6 +82,7 @@ export const ArtworksView = () => {
             <Tabs
               activeKey={activeKey}
               onTabClick={key => setActiveKey(key as ArtworkViewState)}
+              tabBarExtraContent={refreshButton}
             >
               <TabPane
                 tab={<span className="tab-title">All</span>}
@@ -103,9 +107,6 @@ export const ArtworksView = () => {
                 </TabPane>
               )}
             </Tabs>
-            {connected && storeIndexer.length !== 0 && (
-              <a onClick={() => pullAllMetadata()}>Load all metadata</a>
-            )}
           </Row>
         </Col>
       </Content>

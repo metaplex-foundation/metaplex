@@ -27,6 +27,7 @@ export async function upload(
   rpcUrl: string,
   ipfsCredentials: ipfsCreds,
   awsS3Bucket: string,
+  batchSize: number,
 ): Promise<boolean> {
   let uploadSuccessful = true;
 
@@ -72,102 +73,118 @@ export async function upload(
 
   const tick = SIZE / 100; //print every one percent
   let lastPrinted = 0;
-  for (let i = 0; i < SIZE; i++) {
-    const image = images[i];
-    const imageName = path.basename(image);
-    const index = imageName.replace(EXTENSION_PNG, '');
+  await Promise.all(
+    chunks(Array.from(Array(SIZE).keys()), batchSize || 1000).map(
+      async allIndexesInSlice => {
+        for (let ind = 0; ind < allIndexesInSlice.length; ind++) {
+          const i = allIndexesInSlice[ind];
+          const image = images[i];
+          const imageName = path.basename(image);
+          const index = imageName.replace(EXTENSION_PNG, '');
 
-      log.debug(`Processing file: ${i}`);
+          log.debug(`Processing file: ${i}`);
 
-    let link = cacheContent?.items?.[index]?.link;
-    let imageLink = cacheContent?.items?.[index]?.imageLink;
-    if (!link || !cacheContent.program.uuid) {
-      if (i >= lastPrinted + tick || i === 0) {
-        lastPrinted = i;
-        log.info(`Processing file: ${i}, ${imageName}`);
-      }
-      const manifestPath = image.replace(EXTENSION_PNG, EXTENSION_JSON);
-      const manifestContent = fs
-        .readFileSync(manifestPath)
-        .toString()
-        .replace(imageName, 'image.png')
-        .replace(imageName, 'image.png');
-      const manifest = JSON.parse(manifestContent);
+          let link = cacheContent?.items?.[index]?.link;
+          let imageLink = cacheContent?.items?.[index]?.imageLink;
+          if (!link || !cacheContent.program.uuid) {
+            if (i >= lastPrinted + tick || i === 0) {
+              lastPrinted = i;
+              log.info(`Processing file: ${i}, ${imageName}`);
+            }
+            const manifestPath = image.replace(EXTENSION_PNG, EXTENSION_JSON);
+            const manifestContent = fs
+              .readFileSync(manifestPath)
+              .toString()
+              .replace(imageName, 'image.png')
+              .replace(imageName, 'image.png');
+            const manifest = JSON.parse(manifestContent);
 
-      const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+            const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
-      if (i === 0 && !cacheContent.program.uuid) {
-        // initialize config
-        log.info(`initializing config`);
-        try {
-          const res = await createConfig(anchorProgram, walletKeyPair, {
-            maxNumberOfLines: new BN(totalNFTs),
-            symbol: manifest.symbol,
-            sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-            isMutable: mutable,
-            maxSupply: new BN(0),
-            retainAuthority: retainAuthority,
-            creators: manifest.properties.creators.map(creator => {
-              return {
-                address: new PublicKey(creator.address),
-                verified: true,
-                share: creator.share,
-              };
-            }),
-          });
-          cacheContent.program.uuid = res.uuid;
-          cacheContent.program.config = res.config.toBase58();
-          config = res.config;
+            if (i === 0 && !cacheContent.program.uuid) {
+              // initialize config
+              log.info(`initializing config`);
+              try {
+                const res = await createConfig(anchorProgram, walletKeyPair, {
+                  maxNumberOfLines: new BN(totalNFTs),
+                  symbol: manifest.symbol,
+                  sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+                  isMutable: mutable,
+                  maxSupply: new BN(0),
+                  retainAuthority: retainAuthority,
+                  creators: manifest.properties.creators.map(creator => {
+                    return {
+                      address: new PublicKey(creator.address),
+                      verified: true,
+                      share: creator.share,
+                    };
+                  }),
+                });
+                cacheContent.program.uuid = res.uuid;
+                cacheContent.program.config = res.config.toBase58();
+                config = res.config;
 
-          log.info(
-            `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
-          );
+                log.info(
+                  `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
+                );
 
-          saveCache(cacheName, env, cacheContent);
-        } catch (exx) {
-          log.error('Error deploying config to Solana network.', exx);
-          throw exx;
-        }
-      }
+                saveCache(cacheName, env, cacheContent);
+              } catch (exx) {
+                log.error('Error deploying config to Solana network.', exx);
+                throw exx;
+              }
+            }
 
-      if (!link) {
-        try {
-          if (storage === 'arweave') {
-            [link, imageLink] = await arweaveUpload(
-              walletKeyPair,
-              anchorProgram,
-              env,
-              image,
-              manifestBuffer,
-              manifest,
-              index,
-            );
-          } else if (storage === 'ipfs') {
-            [link, imageLink] = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
-          } else if (storage === 'aws') {
-            [link, imageLink] = await awsUpload(awsS3Bucket, image, manifestBuffer);
+            if (!link) {
+              try {
+                if (storage === 'arweave') {
+                  [link, imageLink] = await arweaveUpload(
+                    walletKeyPair,
+                    anchorProgram,
+                    env,
+                    image,
+                    manifestBuffer,
+                    manifest,
+                    index,
+                  );
+                } else if (storage === 'ipfs') {
+                  [link, imageLink] = await ipfsUpload(
+                    ipfsCredentials,
+                    image,
+                    manifestBuffer,
+                  );
+                } else if (storage === 'aws') {
+                  [link, imageLink] = await awsUpload(
+                    awsS3Bucket,
+                    image,
+                    manifestBuffer,
+                  );
+                }
+
+                if (link && imageLink) {
+                  log.debug('setting cache for ', index);
+                  cacheContent.items[index] = {
+                    link,
+                    imageLink,
+                    name: manifest.name,
+                    onChain: false,
+                  };
+                  cacheContent.authority = walletKeyPair.publicKey.toBase58();
+                  saveCache(cacheName, env, cacheContent);
+                }
+              } catch (er) {
+                uploadSuccessful = false;
+                log.error(`Error uploading file ${index}`, er);
+              }
+            }
+          } else {
+            log.debug(`file ${index} already has a link`);
           }
-
-          if (link && imageLink) {
-            log.debug('setting cache for ', index);
-            cacheContent.items[index] = {
-              link,
-              imageLink,
-              name: manifest.name,
-              onChain: false,
-            };
-            cacheContent.authority = walletKeyPair.publicKey.toBase58();
-            saveCache(cacheName, env, cacheContent);
-          }
-        } catch (er) {
-          uploadSuccessful = false;
-          log.error(`Error uploading file ${index}`, er);
         }
-      }
-    } else {
-      log.debug(`file ${index} already has a link`);
-    }
-  }
+      },
+    ),
+  );
+  saveCache(cacheName, env, cacheContent);
 
   const keys = Object.keys(cacheContent.items);
   try {
