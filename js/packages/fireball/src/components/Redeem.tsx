@@ -462,9 +462,16 @@ export const Redeem = (
     wrap();
   }, [anchorWallet]);
 
-  const query = props.location.search;
-  const initialRecipe = query && query.length > 0 ? String(queryString.parse(query).recipe) : "";
-  const [recipe, setRecipe] = React.useState(initialRecipe);
+  let query = props.location.search;
+  if (query && query.length > 0) {
+    localStorage.setItem("redeemQuery", query);
+  } else {
+    const stored = localStorage.getItem("redeemQuery");
+    if (stored)
+      query = stored;
+  }
+  const params = queryString.parse(query);
+  const [recipe, setRecipe] = React.useState(params.recipe);
 
   const [recipeYields, setRecipeYields] = React.useState<Array<RecipeYield>>([]);
   const [relevantMints, setRelevantMints] = React.useState<Array<RelevantMint>>([]);

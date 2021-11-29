@@ -1,4 +1,6 @@
 import React from "react";
+import { RouteComponentProps, } from "react-router-dom";
+import queryString from 'query-string';
 
 import {
   Box,
@@ -24,7 +26,6 @@ import {
 import {
   chunks,
   notify,
-  useLocalStorageState,
   TOKEN_PROGRAM_ID,
 } from '@oyster/common';
 import BN from 'bn.js';
@@ -41,7 +42,11 @@ import {
   explorerLinkFor,
 } from '../utils/transactions';
 
-export const BurnCrank = () => {
+export type BurnCrankProps = {};
+
+export const BurnCrank = (
+  props : RouteComponentProps<BurnCrankProps>,
+) => {
   const connection = useConnection();
   const wallet = useWallet();
 
@@ -85,10 +90,16 @@ export const BurnCrank = () => {
     wrap();
   }, [anchorWallet]);
 
-  const [recipe, setRecipe] = useLocalStorageState(
-    "recipe",
-    "",
-  );
+  let query = props.location.search;
+  if (query && query.length > 0) {
+    localStorage.setItem("burnQuery", query);
+  } else {
+    const stored = localStorage.getItem("burnQuery");
+    if (stored)
+      query = stored;
+  }
+  const params = queryString.parse(query);
+  const [recipe, setRecipe] = React.useState(params.recipe);
 
   const crank = async (recipeKey : PublicKey) => {
     if (!anchorWallet || !program) {
