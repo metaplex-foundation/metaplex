@@ -19,6 +19,7 @@ import {
   pullStoreMetadata,
 } from '.';
 import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
+import { timeStart } from '../../utils';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -129,11 +130,10 @@ export function MetaProvider({ children = null as any }) {
     } else if (!state.store) {
       setIsLoading(true);
     }
-    console.log('------->Query started');
 
+    const done = timeStart('pullAllSiteData');
     const nextState = await loadAccounts(connection);
-
-    console.log('------->Query finished');
+    done();
 
     setState(nextState);
     await updateMints(nextState.metadataByMint);
@@ -158,15 +158,17 @@ export function MetaProvider({ children = null as any }) {
       setIsLoading(true);
     }
 
-    console.log('-----> Query started');
-
+    const doneQuery = timeStart('MetaProvider#update#Query');
+    const donePullPage = timeStart('MetaProvider#update#pullPage');
     let nextState = await pullPage(connection, page, state);
+    donePullPage();
 
     if (nextState.storeIndexer.length) {
       if (USE_SPEED_RUN) {
+        const done = timeStart('MetaProvider#update#limitedLoadAccounts');
         nextState = await limitedLoadAccounts(connection);
-
-        console.log('------->Query finished');
+        done();
+        doneQuery();
 
         setState(nextState);
 
@@ -187,14 +189,14 @@ export function MetaProvider({ children = null as any }) {
           userTokenAccounts.length &&
           !currMetadataLoaded
         ) {
-          console.log('--------->User metadata loading now.');
-
           setMetadataLoaded(true);
+          const done = timeStart('MetaProvider#update#pullYourMetadata');
           nextState = await pullYourMetadata(
             connection,
             userTokenAccounts,
             nextState,
           );
+          done();
         }
 
         const auction = window.location.href.match(/#\/auction\/(\w+)/);
@@ -202,19 +204,18 @@ export function MetaProvider({ children = null as any }) {
           /#\/auction\/(\w+)\/billing/,
         );
         if (auction && page == 0) {
-          console.log(
-            '---------->Loading auction page on initial load, pulling sub accounts',
-          );
-
+          const done = timeStart('MetaProvider#update#pullAuctionSubaccounts');
           nextState = await pullAuctionSubaccounts(
             connection,
             auction[1],
             nextState,
           );
+          done();
 
           if (billing) {
-            console.log('-----> Pulling all payout tickets');
+            const done = timeStart('MetaProvider#update#pullPayoutTickets');
             await pullPayoutTickets(connection, nextState);
+            done();
           }
         }
 
@@ -235,11 +236,17 @@ export function MetaProvider({ children = null as any }) {
       }
     } else {
       console.log('------->No pagination detected');
-      nextState = !USE_SPEED_RUN
-        ? await loadAccounts(connection)
-        : await limitedLoadAccounts(connection);
+      if (!USE_SPEED_RUN) {
+        const done = timeStart('MetaProvider#update#loadAccounts');
+        nextState = await loadAccounts(connection);
+        done();
+      } else {
+        const done = timeStart('MetaProvider#update#limitedLoadAccounts');
+        nextState = await limitedLoadAccounts(connection);
+        done();
+      }
 
-      console.log('------->Query finished');
+      doneQuery();
 
       setState(nextState);
 
@@ -250,14 +257,18 @@ export function MetaProvider({ children = null as any }) {
 
     console.log('------->set finished');
 
+    const done = timeStart('MetaProvider#update#updateMints');
     await updateMints(nextState.metadataByMint);
+    done();
 
     if (auctionAddress && bidderAddress) {
+      const done = timeStart('MetaProvider#update#pullAuctionSubaccounts');
       nextState = await pullAuctionSubaccounts(
         connection,
         auctionAddress,
         nextState,
       );
+      done();
       setState(nextState);
 
       const auctionBidderKey = auctionAddress + '-' + bidderAddress;
