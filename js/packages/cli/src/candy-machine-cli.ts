@@ -10,6 +10,7 @@ import {
   fromUTF8Array,
   parseDate,
   parsePrice,
+  shuffle,
 } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -22,6 +23,7 @@ import {
   CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
+  getBalance,
   getCandyMachineAddress,
   getProgramAccounts,
   loadCandyProgram,
@@ -43,6 +45,7 @@ import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
 import { withdraw } from './commands/withdraw';
+import { updateFromCache } from './commands/updateFromCache';
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -626,7 +629,7 @@ programCommand('create_candy_machine')
   )
   .option(
     '-s, --sol-treasury-account <string>',
-    'SOL account that receives mint payments.',
+    'SOL account that receives mint payments. Should have minimum 0.1 sol balance',
   )
   .option(
     '-r, --rpc-url <string>',
@@ -702,7 +705,12 @@ programCommand('create_candy_machine')
     }
 
     if (solTreasuryAccount) {
-      wallet = new PublicKey(solTreasuryAccount);
+      const treasuryAccount = new PublicKey(solTreasuryAccount);
+      const treasuryBalance = await getBalance(treasuryAccount, env, rpcUrl);
+      if (treasuryBalance === 0) {
+        throw new Error(`Cannot use treasury account with 0 balance!`);
+      }
+      wallet = treasuryAccount
     }
 
     const config = new PublicKey(cacheContent.program.config);
@@ -823,27 +831,41 @@ programCommand('mint_one_token')
     log.info('mint_one_token finished', tx);
   });
 
-programCommand('mint_tokens')
-  .option('-n, --number <number>', 'Number of tokens to mint', '1')
-  .action(async (directory, cmd) => {
+programCommand('mint_multiple_tokens')
+  .option('-n, --number <string>', 'Number of tokens')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (_, cmd) => {
     const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
 
-    const parsedNumber = parseInt(number);
-
+    const NUMBER_OF_NFTS_TO_MINT = parseInt(number, 10);
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
-    for (let i = 0; i < parsedNumber; i++) {
-      await mint(
+
+    log.info(`Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...`);
+
+    const mintToken = async index => {
+      const tx = await mint(
         keypair,
         env,
         configAddress,
         cacheContent.program.uuid,
         rpcUrl,
       );
-      log.info(`token ${i} minted`);
-    }
+      log.info(`transaction ${index + 1} complete`, tx);
 
-    log.info(`minted ${parsedNumber} tokens`);
+      if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
+        log.info('minting another token...');
+        await mintToken(index + 1);
+      }
+    };
+
+    await mintToken(0);
+
+    log.info(`minted ${NUMBER_OF_NFTS_TO_MINT} tokens`);
+    log.info('mint_multiple_tokens finished');
   });
 
 programCommand('sign')
@@ -890,6 +912,83 @@ programCommand('sign_all')
       daemon,
     );
   });
+
+programCommand('update_existing_nfts_from_latest_cache_file')
+  .option('-b, --batch-size <string>', 'Batch size', '2')
+  .option('-nc, --new-cache <string>', 'Path to new updated cache file')
+  .option('-d, --daemon', 'Run updating continuously', false)
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, rpcUrl, batchSize, daemon, newCache } =
+      cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const newCacheContent = loadCache(newCache, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const candyAddress = cacheContent.candyMachineAddress;
+
+    const batchSizeParsed = parseInt(batchSize);
+    if (!parseInt(batchSize)) {
+      throw new Error('Batch size needs to be an integer!');
+    }
+
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
+    log.debug('Batch Size: ', batchSizeParsed);
+    await updateFromCache(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      candyAddress,
+      batchSizeParsed,
+      daemon,
+      cacheContent,
+      newCacheContent,
+    );
+  });
+
+// can then upload these
+programCommand('randomize_unminted_nfts_in_new_cache_file').action(
+  async (directory, cmd) => {
+    const { keypair, env, cacheName } = cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const candyAddress = cacheContent.candyMachineAddress;
+
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
+
+    const candyMachine = await anchorProgram.account.candyMachine.fetch(
+      candyAddress,
+    );
+
+    const itemsRedeemed = candyMachine.itemsRedeemed;
+    log.info('Randomizing one later than', itemsRedeemed.toNumber());
+    const keys = Object.keys(cacheContent.items).filter(
+      k => parseInt(k) > itemsRedeemed,
+    );
+    const shuffledKeys = shuffle(keys.slice());
+    const newItems = {};
+    for (let i = 0; i < keys.length; i++) {
+      newItems[keys[i].toString()] =
+        cacheContent.items[shuffledKeys[i].toString()];
+      log.debug('Setting ', keys[i], 'to ', shuffledKeys[i]);
+      newItems[keys[i].toString()].onChain = false;
+    }
+    fs.writeFileSync(
+      '.cache/' + env + '-' + cacheName + '-randomized',
+      JSON.stringify({
+        ...cacheContent,
+        items: { ...cacheContent.items, ...newItems },
+      }),
+    );
+  },
+);
 
 programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   const { env, cacheName, keypair } = cmd.opts();
@@ -944,8 +1043,17 @@ programCommand('create_generative_art')
     '-o, --output-location <string>',
     'If you wish to do image generation elsewhere, skip it and dump randomized sets to file',
   )
+  .option(
+    '-ta, --treat-attributes-as-file-names <string>',
+    'If your attributes are filenames, trim the .png off if set to true',
+  )
   .action(async (directory, cmd) => {
-    const { numberOfImages, configLocation, outputLocation } = cmd.opts();
+    const {
+      numberOfImages,
+      configLocation,
+      outputLocation,
+      treatAttributesAsFileNames,
+    } = cmd.opts();
 
     log.info('Loaded configuration file');
 
@@ -953,6 +1061,7 @@ programCommand('create_generative_art')
     const randomSets = await createMetadataFiles(
       numberOfImages,
       configLocation,
+      treatAttributesAsFileNames == 'true',
     );
 
     log.info('JSON files have been created within the assets directory');

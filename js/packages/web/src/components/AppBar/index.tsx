@@ -6,6 +6,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { HowToBuyModal } from '../HowToBuyModal';
+import { HashQueryLink } from '@oyster/common';
 import {
   Cog,
   CurrentUserBadge,
@@ -15,15 +16,15 @@ import { ConnectButton } from '@oyster/common';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    <Link to={`/`} key={'explore'}>
+    <HashQueryLink to={`/`} key={'explore'}>
       <Button className="app-btn">Explore</Button>
-    </Link>,
-    <Link to={`/artworks`} key={'artwork'}>
+    </HashQueryLink>,
+    <HashQueryLink to={`/artworks`} key={'artwork'}>
       <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
-    </Link>,
-    <Link to={`/artists`} key={'artists'}>
+    </HashQueryLink>,
+    <HashQueryLink to={`/artists`} key={'artists'}>
       <Button className="app-btn">Creators</Button>
-    </Link>,
+    </HashQueryLink>,
   ];
 };
 

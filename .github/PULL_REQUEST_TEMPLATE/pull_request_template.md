@@ -1,3 +1,6 @@
+## NOTE
+Its much easier for us to read and review a PR that is small, linted, and contains only one material enhancement. If your PR is very large and encompasing many features consider breaking it up in to a few PRs so we can digest the information in each pr with more accuracy.
+
 ## Description
 
 _Describe the purpose of and changes within this Pull Request._
