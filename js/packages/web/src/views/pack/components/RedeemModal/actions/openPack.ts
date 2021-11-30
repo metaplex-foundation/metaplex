@@ -12,6 +12,7 @@ import {
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 import { requestCards } from '../transactions/requestCards';
+import { claimPackCards } from '../transactions/claimPackCards';
 import {
   FetchProvingProcessWithRetryParams,
   OpenPackParams,
@@ -25,6 +26,9 @@ const openPack = async ({
   voucherEditionKey,
   userVouchers,
   accountByMint,
+  metadataByPackCard,
+  packCards,
+  masterEditions,
   connection,
   wallet,
 }: OpenPackParams): Promise<void> => {
@@ -35,9 +39,9 @@ const openPack = async ({
     throw new Error('Voucher is missing');
   }
 
-  const { mint: editionMint } = userVouchers[voucherEditionKey];
+  const { mint: voucherMint } = userVouchers[voucherEditionKey];
 
-  const voucherTokenAccount = accountByMint.get(editionMint);
+  const voucherTokenAccount = accountByMint.get(voucherMint);
   if (!voucherTokenAccount?.pubkey) {
     throw new Error('Voucher token account is missing');
   }
@@ -54,18 +58,30 @@ const openPack = async ({
     tokenAccount: voucherTokenAccount.pubkey,
   });
 
-  // Have some waiting time
-  await fetchProvingProcessWithRetry({
-    editionMint: toPublicKey(editionMint),
+  const {
+    info: { cardsToRedeem },
+  } = await fetchProvingProcessWithRetry({
+    voucherMint: toPublicKey(voucherMint),
     packKey: toPublicKey(pack.pubkey),
     walletKey: toPublicKey(wallet.publicKey),
     connection,
+  });
+
+  await claimPackCards({
+    wallet,
+    connection,
+    voucherMint,
+    cardsToRedeem,
+    metadataByPackCard,
+    packCards,
+    masterEditions,
+    packSetKey: toPublicKey(pack.pubkey),
   });
 };
 
 // Sometimes it requires several attempts to fetch ProvingProcess
 const fetchProvingProcessWithRetry = async ({
-  editionMint,
+  voucherMint,
   packKey,
   walletKey,
   connection,
@@ -75,16 +91,13 @@ const fetchProvingProcessWithRetry = async ({
   const provingProcessKey = await findProvingProcessProgramAddress(
     packKey,
     walletKey,
-    editionMint,
+    voucherMint,
   );
 
   let provingProcess;
-
   const startTime = getUnixTs();
-  const shouldFetchAgain =
-    !provingProcess && getUnixTs() - startTime < REQUEST_TIMEOUT;
 
-  while (shouldFetchAgain) {
+  while (!provingProcess && getUnixTs() - startTime < REQUEST_TIMEOUT) {
     try {
       provingProcess = await getProvingProcessByPubkey(
         connection,

@@ -2,10 +2,10 @@ import {
   PublicKey,
   TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
-  SYSVAR_CLOCK_PUBKEY,
   SystemProgram,
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
+import BN from 'bn.js';
 
 import { programIds, toPublicKey, StringPublicKey } from '../../../utils';
 import {
@@ -20,10 +20,9 @@ import {
   findProvingProcessProgramAddress,
   getProgramAuthority,
 } from '../find';
-import BN from 'bn.js';
+import { ClaimPackParams } from '..';
 
-interface Params {
-  index: number;
+interface Params extends ClaimPackParams {
   packSetKey: PublicKey;
   wallet: PublicKey;
   voucherMint: StringPublicKey;
@@ -44,8 +43,7 @@ export async function claimPack({
   edition,
 }: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
-
-  const value = new ClaimPackArgs();
+  const value = new ClaimPackArgs({ index });
 
   const provingProcess = await findProvingProcessProgramAddress(
     packSetKey,
@@ -67,7 +65,7 @@ export async function claimPack({
     {
       pubkey: toPublicKey(packSetKey),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     // proving_process
     {
@@ -174,12 +172,6 @@ export async function claimPack({
     // system_program
     {
       pubkey: SystemProgram.programId,
-      isSigner: false,
-      isWritable: false,
-    },
-    // clock
-    {
-      pubkey: toPublicKey(SYSVAR_CLOCK_PUBKEY),
       isSigner: false,
       isWritable: false,
     },

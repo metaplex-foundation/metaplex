@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 type MetadataWithProbability = ParsedAccount<Metadata> & {
   probability: string;
 };
-type PackMetadataByPackCard = Record<string, MetadataWithProbability>;
+export type PackMetadataByPackCard = Record<string, MetadataWithProbability>;
 
 export const useMetadataByPackCard = (
   packId: string,

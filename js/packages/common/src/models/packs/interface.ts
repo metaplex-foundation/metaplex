@@ -21,3 +21,7 @@ export interface AddCardToPackParams {
 export interface RequestCardToRedeemParams {
   index: number;
 }
+
+export interface ClaimPackParams {
+  index: number;
+}

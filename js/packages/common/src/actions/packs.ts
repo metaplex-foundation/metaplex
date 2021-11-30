@@ -4,6 +4,7 @@ import {
   AddCardToPackParams,
   InitPackSetParams,
   RequestCardToRedeemParams,
+  ClaimPackParams,
 } from '../models/packs/interface';
 
 export class InitPackSetArgs {
@@ -56,8 +57,11 @@ export class ActivatePackArgs {
 
 export class ClaimPackArgs {
   instruction = 6;
+  index: number;
 
-  constructor() {}
+  constructor(args: ClaimPackParams) {
+    this.index = args.index;
+  }
 }
 
 export class RequestCardToRedeemArgs {
@@ -123,7 +127,10 @@ export const PACKS_SCHEMA = new Map<any, any>([
     ClaimPackArgs,
     {
       kind: 'struct',
-      fields: [['instruction', 'u8']],
+      fields: [
+        ['instruction', 'u8'],
+        ['index', 'u32'],
+      ],
     },
   ],
   [

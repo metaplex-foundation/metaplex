@@ -5,6 +5,7 @@ import { PackKey, MAX_PACK_PROVING_PROCESS_SIZE } from '..';
 import {
   AccountAndPubkey,
   PACK_CREATE_ID,
+  ParsedAccount,
   StringPublicKey,
   toPublicKey,
 } from '../../..';
@@ -96,11 +97,15 @@ export const getProvingProcessByPackSetAndWallet = ({
 export const getProvingProcessByPubkey = async (
   connection: Connection,
   pubkey: StringPublicKey,
-) => {
+): Promise<ParsedAccount<ProvingProcess>> => {
   const info = await connection.getAccountInfo(new PublicKey(pubkey));
   if (!info) {
     throw new Error(`Unable to find account: ${pubkey}`);
   }
 
-  return { ...info, data: decodePackProvingProcess(Buffer.from(info?.data)) };
+  return {
+    pubkey,
+    account: info,
+    info: decodePackProvingProcess(Buffer.from(info?.data)),
+  };
 };

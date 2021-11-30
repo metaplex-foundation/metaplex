@@ -4,6 +4,7 @@ import {
   toPublicKey,
   requestCardToRedeem,
   cleanUp,
+  chunks,
 } from '@oyster/common';
 
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
@@ -14,6 +15,8 @@ import {
   RequestCardsInstructionsParams,
   RequestCardParams,
 } from './interface';
+
+const REQUEST_CARDS_CHUNK_SIZE = 46;
 
 export const requestCards = async ({
   userVouchers,
@@ -41,14 +44,19 @@ export const requestCards = async ({
     wallet,
     packSetKey: pack.pubkey,
   });
-  // ToDo: Add chunks
-  const flatRequestCards = [requestCardsInstructions.flat()];
-  const requestCardsInstructionsSigners = flatRequestCards.map(() => []);
+
+  const requestCardsInstructionsChunks = chunks(
+    requestCardsInstructions.flat(),
+    REQUEST_CARDS_CHUNK_SIZE,
+  );
+  const requestCardsInstructionsSigners = requestCardsInstructionsChunks.map(
+    () => [],
+  );
 
   return sendTransactions(
     connection,
     wallet,
-    flatRequestCards,
+    requestCardsInstructionsChunks,
     requestCardsInstructionsSigners,
     SequenceType.Sequential,
   );
@@ -56,24 +64,14 @@ export const requestCards = async ({
 
 const getRequestCardsInstructions = async ({
   cardsLeftToOpen,
-  packSetKey,
-  edition,
-  editionMint,
-  tokenAccount,
-  packVoucher,
-  wallet,
+  ...params
 }: RequestCardsInstructionsParams): Promise<TransactionInstruction[][]> => {
-  const addCardsToPack = Array.from({ length: cardsLeftToOpen }).map(() => {
-    return generateRequestCardInstructions({
+  const addCardsToPack = Array.from({ length: cardsLeftToOpen }).map(() =>
+    generateRequestCardInstructions({
       index: 1, // voucher index, currently we have only one
-      packSetKey,
-      edition,
-      editionMint,
-      tokenAccount,
-      packVoucher,
-      wallet,
-    });
-  });
+      ...params,
+    }),
+  );
 
   return Promise.all(addCardsToPack);
 };
@@ -81,11 +79,8 @@ const getRequestCardsInstructions = async ({
 const generateRequestCardInstructions = async ({
   index,
   packSetKey,
-  edition,
-  editionMint,
-  tokenAccount,
-  packVoucher,
   wallet,
+  ...params
 }: RequestCardParams): Promise<TransactionInstruction[]> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -94,11 +89,8 @@ const generateRequestCardInstructions = async ({
   const claimPackInstruction = await requestCardToRedeem({
     index,
     packSetKey: toPublicKey(packSetKey),
-    edition,
-    editionMint,
-    tokenAccount,
-    packVoucher,
     wallet: wallet.publicKey,
+    ...params,
   });
 
   return [cleanUpInstruction, claimPackInstruction];

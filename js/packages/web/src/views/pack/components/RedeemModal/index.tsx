@@ -27,7 +27,7 @@ const RedeemModal = ({
   isModalVisible,
   onClose,
 }: RedeemModalProps): ReactElement => {
-  const { packs } = useMeta();
+  const { packs, packCards, masterEditions } = useMeta();
   const {
     packKey,
     voucherEditionKey,
@@ -54,6 +54,9 @@ const RedeemModal = ({
         accountByMint,
         connection,
         wallet,
+        packCards,
+        masterEditions,
+        metadataByPackCard,
       });
 
       setModalState(openState.Found);
@@ -62,28 +65,6 @@ const RedeemModal = ({
 
       setTimeout(() => handleClose(), CLOSE_TIMEOUT);
     }
-
-    // const packCardMetadata = metadataByPackCard[packCardToRedeem];
-    // const userToken = packCards[packCardToRedeem]?.info?.tokenAccount;
-
-    // if (!packCardMetadata?.info?.masterEdition || !userToken) {
-    //   setModalState(openState.Ready);
-    //   return;
-    // }
-
-    // const packCardEdition = masterEditions[packCardMetadata.info.masterEdition];
-    // const packCardEditionIndex = packCardEdition.info.supply.toNumber() + 1;
-
-    // await sendClaimPack({
-    //   connection,
-    //   wallet,
-    //   index: packCardToRedeemIndex,
-    //   packSetKey: pack.pubkey,
-    //   userToken,
-    //   voucherMint: editionMint,
-    //   metadataMint: packCardMetadata.info.mint,
-    //   edition: new BN(packCardEditionIndex),
-    // });
   };
 
   const handleClose = useCallback(() => {
