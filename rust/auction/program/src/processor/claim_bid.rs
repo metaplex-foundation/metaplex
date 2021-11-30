@@ -3,7 +3,7 @@
 
 use crate::{
     errors::AuctionError,
-    processor::{AuctionData, AuctionDataExtended, BidderMetadata, BidderPot},
+    processor::{AuctionData, AuctionDataExtended, BidStateData, BidderMetadata, BidderPot},
     utils::{
         assert_derivation, assert_initialized, assert_owned_by, assert_signer,
         assert_token_program_matches_package, create_or_allocate_account_raw, spl_token_transfer,
@@ -15,6 +15,7 @@ use {
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
         msg,
         program::invoke_signed,
@@ -44,6 +45,7 @@ struct Accounts<'a, 'b: 'a> {
     clock_sysvar: &'a AccountInfo<'b>,
     token_program: &'a AccountInfo<'b>,
     auction_extended: Option<&'a AccountInfo<'b>>,
+    bid_state_data: Option<&'a AccountInfo<'b>>,
 }
 
 fn parse_accounts<'a, 'b: 'a>(
@@ -62,6 +64,7 @@ fn parse_accounts<'a, 'b: 'a>(
         clock_sysvar: next_account_info(account_iter)?,
         token_program: next_account_info(account_iter)?,
         auction_extended: next_account_info(account_iter).ok(),
+        bid_state_data: next_account_info(account_iter).ok(),
     };
 
     assert_owned_by(accounts.auction, program_id)?;
@@ -78,6 +81,10 @@ fn parse_accounts<'a, 'b: 'a>(
 
     if *accounts.token_program.key != spl_token::id() {
         return Err(AuctionError::InvalidTokenProgram.into());
+    }
+
+    if let Some(bid_state_data) = accounts.bid_state_data {
+        assert_owned_by(bid_state_data, program_id)?;
     }
 
     Ok(accounts)
@@ -118,14 +125,46 @@ pub fn claim_bid(
 
     // Load the auction and verify this bid is valid.
     let auction = AuctionData::from_account_info(accounts.auction)?;
-
     if auction.authority != *accounts.authority.key {
         return Err(AuctionError::InvalidAuthority.into());
     }
 
+    // Obtain BidState instance
+    // Current implementation depend on AuctionDataExtended
+    let bid_state = if let Some(bid_state_data) = accounts.bid_state_data {
+        let auction_extended_acc = accounts
+            .auction_extended
+            .ok_or(ProgramError::InvalidArgument)?;
+        assert_derivation(
+            program_id,
+            auction_extended_acc,
+            &[
+                PREFIX.as_bytes(),
+                program_id.as_ref(),
+                args.resource.as_ref(),
+                EXTENDED.as_bytes(),
+            ],
+        )?;
+
+        let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
+        if auction_extended
+            .bid_state_data
+            .ok_or(ProgramError::InvalidArgument)?
+            != *bid_state_data.key
+        {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let bid_state_data_acc: BidStateData =
+            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
+        bid_state_data_acc.state
+    } else {
+        auction.bid_state.clone()
+    };
+
     // User must have won the auction in order to claim their funds. Check early as the rest of the
     // checks will be for nothing otherwise.
-    let bid_index = auction.is_winner(accounts.bidder.key);
+    let bid_index = AuctionData::is_winner(accounts.bidder.key, &auction.price_floor, &bid_state);
     if bid_index.is_none() {
         msg!("User {:?} is not winner", accounts.bidder.key);
         return Err(AuctionError::InvalidState.into());
@@ -153,7 +192,7 @@ pub fn claim_bid(
     if !auction.ended(clock.unix_timestamp)? {
         match instant_sale_price {
             Some(instant_sale_price)
-                if auction.bid_state.amount(bid_index.unwrap()) < instant_sale_price =>
+                if bid_state.amount(bid_index.unwrap()) < instant_sale_price =>
             {
                 return Err(AuctionError::InvalidState.into())
             }

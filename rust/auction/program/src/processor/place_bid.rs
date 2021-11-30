@@ -10,12 +10,12 @@
 //! A few solutions come to mind: don't allow cancelling bids, and simply prune all bids that
 //! are not winning bids from the state.
 
-use borsh::try_to_vec_with_schema;
-
+use super::BIDDER_METADATA_LEN;
 use crate::{
     errors::AuctionError,
     processor::{
-        AuctionData, AuctionDataExtended, AuctionState, Bid, BidderMetadata, BidderPot, PriceFloor,
+        AuctionData, AuctionDataExtended, AuctionState, Bid, BidStateData, BidderMetadata,
+        BidderPot, PriceFloor,
     },
     utils::{
         assert_derivation, assert_initialized, assert_owned_by, assert_signer,
@@ -24,13 +24,11 @@ use crate::{
     },
     EXTENDED, PREFIX,
 };
-
-use super::BIDDER_METADATA_LEN;
-
 use {
-    borsh::{BorshDeserialize, BorshSerialize},
+    borsh::{try_to_vec_with_schema, BorshDeserialize, BorshSerialize},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
         msg,
         program::{invoke, invoke_signed},
@@ -72,6 +70,7 @@ struct Accounts<'a, 'b: 'a> {
     system: &'a AccountInfo<'b>,
     token_program: &'a AccountInfo<'b>,
     transfer_authority: &'a AccountInfo<'b>,
+    bid_state_data: Option<&'a AccountInfo<'b>>,
 }
 
 fn parse_accounts<'a, 'b: 'a>(
@@ -94,6 +93,7 @@ fn parse_accounts<'a, 'b: 'a>(
         rent: next_account_info(account_iter)?,
         system: next_account_info(account_iter)?,
         token_program: next_account_info(account_iter)?,
+        bid_state_data: next_account_info(account_iter).ok(),
     };
 
     assert_owned_by(accounts.auction, program_id)?;
@@ -116,6 +116,10 @@ fn parse_accounts<'a, 'b: 'a>(
 
     if *accounts.token_program.key != spl_token::id() {
         return Err(AuctionError::InvalidTokenProgram.into());
+    }
+
+    if let Some(bid_state_data) = accounts.bid_state_data {
+        assert_owned_by(bid_state_data, program_id)?;
     }
 
     Ok(accounts)
@@ -143,6 +147,7 @@ pub fn place_bid<'r, 'b: 'r>(
         msg!("Auction ended!");
         return Ok(());
     }
+
     // Derive Metadata key and load it.
     let metadata_bump = assert_derivation(
         program_id,
@@ -273,13 +278,33 @@ pub fn place_bid<'r, 'b: 'r>(
             EXTENDED.as_bytes(),
         ],
     )?;
+
     let mut auction_extended: AuctionDataExtended =
         AuctionDataExtended::from_account_info(accounts.auction_extended)?;
+
     auction_extended.total_uncancelled_bids = auction_extended
         .total_uncancelled_bids
         .checked_add(1)
         .ok_or(AuctionError::NumericalOverflowError)?;
     auction_extended.serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
+
+    let (mut bid_state, mut bid_state_data_acc) =
+        if let Some(bid_state_data) = accounts.bid_state_data {
+            if auction_extended
+                .bid_state_data
+                .ok_or(ProgramError::InvalidArgument)?
+                != *bid_state_data.key
+            {
+                return Err(ProgramError::InvalidArgument);
+            }
+
+            let bid_state_data_acc: BidStateData =
+                try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
+
+            (bid_state_data_acc.state.clone(), Some(bid_state_data_acc))
+        } else {
+            (auction.bid_state.clone(), None)
+        };
 
     let mut bid_price = args.amount;
 
@@ -319,7 +344,22 @@ pub fn place_bid<'r, 'b: 'r>(
         auction_extended.gap_tick_size_percentage,
         clock.unix_timestamp,
         auction_extended.instant_sale_price,
+        &mut bid_state,
     )?;
+
+    if let Some(mut bid_state_data_acc) = bid_state_data_acc {
+        bid_state_data_acc.state = bid_state;
+        bid_state_data_acc.serialize(
+            &mut *accounts
+                .bid_state_data
+                .ok_or(ProgramError::InvalidArgument)?
+                .data
+                .borrow_mut(),
+        )?;
+    } else {
+        auction.bid_state = bid_state;
+    }
+
     auction.serialize(&mut *accounts.auction.data.borrow_mut())?;
 
     // Update latest metadata with results from the bid.

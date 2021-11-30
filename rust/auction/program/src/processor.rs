@@ -357,30 +357,32 @@ impl AuctionData {
     }
 
     /// TODO: Provide implementation for methods below according to new bids count refactoring.
-    pub fn is_winner(&self, key: &Pubkey) -> Option<usize> {
-        unimplemented!();
-        let minimum = match self.price_floor {
+    pub fn is_winner(
+        key: &Pubkey,
+        price_floor: &PriceFloor,
+        bid_state: &BidState,
+    ) -> Option<usize> {
+        let minimum = match price_floor {
             PriceFloor::MinimumPrice(min) => min[0],
             _ => 0,
         };
-        // self.bid_state.is_winner(key, minimum)
+
+        bid_state.is_winner(key, minimum)
     }
 
-    pub fn num_winners(&self) -> u64 {
-        unimplemented!();
-        // self.bid_state.num_winners()
+    pub fn num_winners(bid_state: &BidState) -> u64 {
+        bid_state.num_winners()
     }
 
-    pub fn num_possible_winners(&self) -> u64 {
-        unimplemented!();
-        // self.bid_state.num_possible_winners()
+    pub fn num_possible_winners(bid_state: &BidState) -> u64 {
+        bid_state.num_possible_winners()
     }
 
-    pub fn winner_at(&self, idx: usize) -> Option<Pubkey> {
-        unimplemented!();
-        // self.bid_state.winner_at(idx)
+    pub fn winner_at(idx: usize, bid_state: &BidState) -> Option<Pubkey> {
+        bid_state.winner_at(idx)
     }
 
+    // TODO: Remove because of instant-sale fix
     pub fn consider_instant_bid(&mut self, instant_sale_price: Option<u64>) {
         unimplemented!();
         // Check if all the lots were sold with instant_sale_price
@@ -402,9 +404,9 @@ impl AuctionData {
         gap_tick_size_percentage: Option<u8>,
         now: UnixTimestamp,
         instant_sale_price: Option<u64>,
+        bid_state: &mut BidState,
     ) -> Result<(), ProgramError> {
-        unimplemented!();
-        /*let gap_val = match self.ended_at {
+        let gap_val = match self.ended_at {
             Some(end) => {
                 // We use the actual gap tick size perc if we're in gap window,
                 // otherwise we pass in none so the logic isnt used
@@ -416,12 +418,13 @@ impl AuctionData {
             }
             None => None,
         };
+
         let minimum = match self.price_floor {
             PriceFloor::MinimumPrice(min) => min[0],
             _ => 0,
         };
 
-        self.bid_state.place_bid(
+        bid_state.place_bid(
             bid,
             tick_size,
             gap_val,
@@ -430,9 +433,10 @@ impl AuctionData {
             &mut self.state,
         )?;
 
-        self.consider_instant_bid(instant_sale_price);
+        // TODO: Remove, because of instant-sale fix
+        // self.consider_instant_bid(instant_sale_price);
 
-        Ok(())*/
+        Ok(())
     }
 }
 

@@ -26,6 +26,7 @@ pub enum AuctionInstruction {
     ///   8. `[]` Rent sysvar
     ///   9. `[]` System program
     ///   10. `[]` SPL Token Program
+    ///   11. `[writable]` Optional bid state data account tracks the running state of an auction bids.
     CancelBid(CancelBidArgs),
 
     /// Create a new auction account bound to a resource, initially in a pending state.
@@ -48,6 +49,7 @@ pub enum AuctionInstruction {
     ///   7. `[]` Clock sysvar
     ///   8. `[]` Token program
     ///   9. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
+    ///  10. `[]` Optional bid state data account tracks the running state of an auction bids.
     ClaimBid(ClaimBidArgs),
 
     /// Ends an auction, regardless of end timing conditions
@@ -83,6 +85,7 @@ pub enum AuctionInstruction {
     ///   10. `[]` Rent sysvar
     ///   11. `[]` System program
     ///   12. `[]` SPL Token Program
+    ///   13. `[writable]` Optional bid state data account tracks the running state of an auction bids.
     PlaceBid(PlaceBidArgs),
 
     /// Create a new auction account bound to a resource, initially in a pending state.
@@ -228,6 +231,7 @@ pub fn place_bid_instruction(
     token_mint_pubkey: Pubkey,
     transfer_authority: Pubkey,
     payer: Pubkey,
+    bid_state_data: &Option<Pubkey>,
     args: PlaceBidArgs,
 ) -> Instruction {
     // Derive Auction Key
@@ -265,24 +269,31 @@ pub fn place_bid_instruction(
     ];
     let (bidder_meta_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
 
+    let mut accounts = vec![
+        AccountMeta::new(bidder_pubkey, true),
+        AccountMeta::new(bidder_token_pubkey, false),
+        AccountMeta::new(bidder_pot_pubkey, false),
+        AccountMeta::new(bidder_pot_token_pubkey, false),
+        AccountMeta::new(bidder_meta_pubkey, false),
+        AccountMeta::new(auction_pubkey, false),
+        AccountMeta::new(auction_extended_pubkey, false),
+        AccountMeta::new(token_mint_pubkey, false),
+        AccountMeta::new_readonly(transfer_authority, true),
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+    ];
+
+    // Append optional bid state data account
+    if let Some(bid_state_data) = bid_state_data {
+        accounts.push(AccountMeta::new(*bid_state_data, false));
+    }
+
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(bidder_pubkey, true),
-            AccountMeta::new(bidder_token_pubkey, false),
-            AccountMeta::new(bidder_pot_pubkey, false),
-            AccountMeta::new(bidder_pot_token_pubkey, false),
-            AccountMeta::new(bidder_meta_pubkey, false),
-            AccountMeta::new(auction_pubkey, false),
-            AccountMeta::new(auction_extended_pubkey, false),
-            AccountMeta::new(token_mint_pubkey, false),
-            AccountMeta::new_readonly(transfer_authority, true),
-            AccountMeta::new_readonly(payer, true),
-            AccountMeta::new_readonly(sysvar::clock::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
+        accounts,
         data: AuctionInstruction::PlaceBid(args).try_to_vec().unwrap(),
     }
 }
@@ -294,6 +305,7 @@ pub fn cancel_bid_instruction(
     bidder_token_pubkey: Pubkey,
     bidder_pot_token_pubkey: Pubkey,
     token_mint_pubkey: Pubkey,
+    bid_state_data: &Option<Pubkey>,
     args: CancelBidArgs,
 ) -> Instruction {
     // Derive Auction Key
@@ -331,22 +343,29 @@ pub fn cancel_bid_instruction(
     ];
     let (bidder_meta_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
 
+    let mut accounts = vec![
+        AccountMeta::new(bidder_pubkey, true),
+        AccountMeta::new(bidder_token_pubkey, false),
+        AccountMeta::new(bidder_pot_pubkey, false),
+        AccountMeta::new(bidder_pot_token_pubkey, false),
+        AccountMeta::new(bidder_meta_pubkey, false),
+        AccountMeta::new(auction_pubkey, false),
+        AccountMeta::new(auction_extended_pubkey, false),
+        AccountMeta::new(token_mint_pubkey, false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+    ];
+
+    // Append optional bid state data account
+    if let Some(bid_state_data) = bid_state_data {
+        accounts.push(AccountMeta::new(*bid_state_data, false))
+    }
+
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(bidder_pubkey, true),
-            AccountMeta::new(bidder_token_pubkey, false),
-            AccountMeta::new(bidder_pot_pubkey, false),
-            AccountMeta::new(bidder_pot_token_pubkey, false),
-            AccountMeta::new(bidder_meta_pubkey, false),
-            AccountMeta::new(auction_pubkey, false),
-            AccountMeta::new(auction_extended_pubkey, false),
-            AccountMeta::new(token_mint_pubkey, false),
-            AccountMeta::new_readonly(sysvar::clock::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
+        accounts,
         data: AuctionInstruction::CancelBid(args).try_to_vec().unwrap(),
     }
 }
@@ -383,6 +402,7 @@ pub fn claim_bid_instruction(
     bidder_pot_token_pubkey: Pubkey,
     token_mint_pubkey: Pubkey,
     auction_extended_pubkey: Option<Pubkey>,
+    bid_state_data: &Option<Pubkey>,
     args: ClaimBidArgs,
 ) -> Instruction {
     // Derive Auction Key
@@ -416,6 +436,11 @@ pub fn claim_bid_instruction(
 
     if let Some(auction_extended) = auction_extended_pubkey {
         accounts.push(AccountMeta::new_readonly(auction_extended, false));
+    }
+
+    // Append optional bid state data account
+    if let Some(bid_state_data) = bid_state_data {
+        accounts.push(AccountMeta::new_readonly(*bid_state_data, false));
     }
 
     Instruction {

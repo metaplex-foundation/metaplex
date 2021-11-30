@@ -276,6 +276,7 @@ pub async fn place_bid(
             *mint,           // Token Mint
             transfer_authority.pubkey(), // Approved to Move Tokens
             payer.pubkey(),  // Pays for Transactions
+            &None,
             PlaceBidArgs {
                 amount,
                 resource: *resource,
@@ -307,6 +308,7 @@ pub async fn cancel_bid(
             bidder.pubkey(),
             bidder_spl_account.pubkey(),
             *mint,
+            &None,
             CancelBidArgs {
                 resource: *resource,
             },
@@ -367,6 +369,7 @@ pub async fn claim_bid(
             bidder_spl_account.pubkey(),
             *mint,
             None,
+            &None,
             ClaimBidArgs {
                 resource: *resource,
             },
