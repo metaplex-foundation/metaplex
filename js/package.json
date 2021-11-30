@@ -18,9 +18,9 @@
     "build": "lerna run build --ignore=token-entangler --ignore=candy-machine-ui",
     "build-web": "lerna run build --stream --scope @oyster/common --scope web",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
-    "lint": "prettier -c 'packages/*/{src,test}/**/*.ts' && npm run lint:eslint",
-    "lint:eslint": "eslint 'packages/*/{src,test}/**/*.ts'",
-    "lint:fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && eslint --fix 'packages/*/{src,test}/**/*.ts'",
+    "lint": "prettier -c 'packages/*/{src,test}/**/*.{ts,tsx}' && npm run lint:eslint",
+    "lint:eslint": "eslint 'packages/*/{src,test}/**/*.{ts,tsx}'",
+    "lint:fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && eslint --fix 'packages/*/{src,test}/**/*.{ts,tsx}'",
     "format:fix": "lerna run format:fix",
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
     "deploy:docs": "lerna run docs",
@@ -28,7 +28,7 @@
     "test": "lerna run test --concurrency 1 --stream"
   },
   "lint-staged": {
-    "packages/*/{src,test}/**/*.ts": [
+    "packages/*/{src,test}/**/*.{ts,tsx}": [
       "prettier --write",
       "eslint --cache --fix --max-warnings=0"
     ]
