@@ -257,15 +257,52 @@
   &__title {
     font-weight: bold;
     font-size: 24px;
+    height: 80px;
 
     padding: 24px;
   }
 
+  &__title-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    height: 80px;
+
+    .text {
+      font-family: @fontFamilyInter;
+      font-weight: bold;
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .arrow-back {
+      position: absolute;
+      left: 24px;
+    }
+  }
+
+  &__content-container {
+    scroll-behavior: smooth;
+    display: flex;
+    width: 500px !important;
+    overflow: hidden;
+
+    & > div {
+      min-width: 100%;
+    }
+  }
+
   &__body {
     background: @grey-60;
-    border-radius: 12px;
-    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+    padding: 20px 24px 0;
     font-family: @fontFamilyInter;
+    height: 320px;
+
+    display: flex;
+    flex-direction: column;
 
     .body-title {
       font-size: 18px;
@@ -277,6 +314,21 @@
     .body-desc {
       font-size: 16px;
       line-height: 20px;
+    }
+
+    .body-big-title {
+      font-weight: bold;
+      font-size: 24px;
+      line-height: 28px;
+      margin-bottom: 5px;
+    }
+
+    .body-big-desc {
+      width: 90%;
+      font-weight: normal;
+      font-size: 18px;
+      line-height: 24px;
+      margin-bottom: 14px;
     }
 
     .general-desc {
@@ -342,11 +394,57 @@
     }
   }
 
+  &__footer {
+    background: @grey-60;
+    border-radius: 0 0 12px 12px;
+    padding: 20px 24px;
+
+    & > p {
+      margin-bottom: 16px;
+    }
+  }
+
   &__cards {
     max-height: 500px;
     overflow: auto;
     margin-top: 30px;
-    margin-bottom: 16px;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__transaction-cards {
+    .transaction-card {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      height: 92px;
+      margin-bottom: 22px;
+      background: @grey-60;
+      border-radius: 12px;
+      font-family: @fontFamilyInter;
+
+      .number-frame {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: @grey-50;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 18px;
+        line-height: 24px;
+        margin-right: 10px;
+      }
+
+      .transaction-desc {
+        font-size: 16px;
+        line-height: 20px;
+        color: @grey-20;
+      }
+    }
   }
 
   ::-webkit-scrollbar {

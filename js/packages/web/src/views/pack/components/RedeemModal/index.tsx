@@ -1,14 +1,16 @@
-import React, { ReactElement, useCallback, useState } from 'react';
+import React, { ReactElement, useCallback, useMemo, useState } from 'react';
 import { Col, Modal, Row, Space, Spin } from 'antd';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useConnection, useMeta, useUserAccounts } from '@oyster/common';
+import { shortenAddress, useConnection, useMeta, useUserAccounts } from '@oyster/common';
 
-import RedeemCard from './components/RedeemCard';
 import { useMetadataByPackCard } from './hooks/useMetadataByPackCard';
 import { useUserVouchersByEdition } from '../../../artworks/hooks/useUserVouchersByEdition';
 import openPack from './actions/openPack';
+import ClaimingPackStep from './components/ClaimingPackStep';
+import TransactionApprovalStep from './components/TransactionApprovalStep';
+import { useArt } from '../../../../hooks';
 
 interface RedeemModalProps {
   isModalVisible: boolean;
@@ -17,6 +19,7 @@ interface RedeemModalProps {
 
 enum openState {
   Ready,
+  TransactionApproval,
   Finding,
   Found,
 }
@@ -27,7 +30,7 @@ const RedeemModal = ({
   isModalVisible,
   onClose,
 }: RedeemModalProps): ReactElement => {
-  const { packs, packCards, masterEditions } = useMeta();
+  const { packs, metadata, packCards, masterEditions } = useMeta();
   const {
     packKey,
     voucherEditionKey,
@@ -42,6 +45,14 @@ const RedeemModal = ({
   const metadataByPackCard = useMetadataByPackCard(packKey);
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
+
+  const metaInfo = useMemo(
+    () => metadata.find(meta => meta?.info?.edition === voucherEditionKey),
+    [metadata, voucherEditionKey],
+  );
+
+  const art = useArt(metaInfo?.pubkey);
+  const creators = (art.creators || []).map(creator => creator.name || shortenAddress(creator.address || ''));
 
   const handleOpenPack = async () => {
     setModalState(openState.Finding);
@@ -74,6 +85,14 @@ const RedeemModal = ({
     }
   }, [modalState, onClose, setModalState]);
 
+  const onClickOpen = useCallback(() => {
+    if (modalState === openState.Ready) setModalState(openState.TransactionApproval);
+    else handleOpenPack();
+  }, [modalState]);
+
+  const isModalClosable = modalState !== openState.Finding && modalState !== openState.TransactionApproval;
+  const isFirstsSteps = modalState === openState.Ready || modalState === openState.TransactionApproval;
+
   return (
     <Modal
       className="modal-redeem-wr"
@@ -83,50 +102,38 @@ const RedeemModal = ({
       visible={isModalVisible}
       onCancel={handleClose}
       footer={null}
-      closable={modalState !== openState.Finding}
+      closable={isModalClosable}
     >
       <div className="modal-redeem">
-        {modalState === openState.Ready && (
+        {isFirstsSteps && (
           <>
-            <div>
-              <p className="modal-redeem__title">Claim an NFT</p>
-            </div>
-            <div className="modal-redeem__body">
-              <p className="body-title">Pack of {numberOfNFTs}</p>
-              <p className="body-desc">
-                Your NFT pack from Street Dreams grants you {numberOfAttempts}{' '}
-                chances to own any of the following collectibles.
-              </p>
-
-              <div className="modal-redeem__cards">
-                <p>POTENTIAL NFTs</p>
-                {metadataByPackCard &&
-                  Object.values(metadataByPackCard)?.map(
-                    item =>
-                      item && (
-                        <RedeemCard
-                          key={item.pubkey}
-                          item={item}
-                          probability={item.probability}
-                        />
-                      ),
-                  )}
-              </div>
-
+            {modalState === openState.Ready ? (
+                <ClaimingPackStep
+                  metadataByPackCard={metadataByPackCard}
+                  numberOfAttempts={numberOfAttempts}
+                  numberOfNFTs={numberOfNFTs}
+                  creators={creators}
+                />
+              ) : (
+                <TransactionApprovalStep
+                  goBack={() => setModalState(openState.Ready)}
+                />
+              )}
+            <div className="modal-redeem__footer">
               <p className="general-desc">
                 Once opened, a Pack cannot be resealed.
               </p>
 
               <button
                 className="modal-redeem__open-nft"
-                onClick={handleOpenPack}
+                onClick={onClickOpen}
               >
-                <span>Open NFT</span>
+                <span>Open Pack</span>
               </button>
             </div>
           </>
         )}
-        {modalState !== openState.Ready && (
+        {!isFirstsSteps && (
           <div className="modal-redeem__body">
             <div className="finding-body">
               <Space direction="vertical">

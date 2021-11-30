@@ -15,7 +15,7 @@ export const useOpenedMetadata = (
       ownedMetadata.reduce<SafetyDepositDraft[]>((acc, value) => {
         const parent = value.edition?.info.parent;
         if (parent) {
-          const metadataExistsInPack = packCards.some(
+          const metadataExistsInPack = packCards?.some(
             ({ info }) => info.master === parent,
           );
 
