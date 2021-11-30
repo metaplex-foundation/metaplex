@@ -18,6 +18,7 @@ import { CheckAccountFunc, ProcessAccountsFunc } from './types';
 const AUCTION_BLACK_LIST = [
   '9zcrbzSmBPdDjAGYXkfufP2wy1kbHKac8UYLBmHpbuYy',
   'DzR58tU6ZXx2sMBVjaL2dhNF9SL9qd42eYXLbtu5qcCx',
+  '5c87cDHxwiF3jeapwrYEtJjCxoddMrRKRwrFh7NAATtg',
 ];
 
 export const processAuctions: ProcessAccountsFunc = async (
