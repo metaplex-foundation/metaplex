@@ -25,7 +25,8 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
       .filter(
         a =>
           a.info.store == storeAddress &&
-          a.info.key === MetaplexKey.AuctionManagerV2,
+          a.info.key === MetaplexKey.AuctionManagerV2 &&
+          auctions[a.info.auction],
       )
       .sort((a, b) =>
         (auctions[b.info.auction].info.endedAt || new BN(Date.now() / 1000))
