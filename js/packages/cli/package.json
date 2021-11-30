@@ -47,6 +47,7 @@
     "@project-serum/anchor": "^0.17.0",
     "@metaplex/arweave-cost": "^1.0.4",
     "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.30.1",
     "arweave": "^1.10.16",
     "borsh": "^0.4.0",
     "canvas": "^2.8.0",

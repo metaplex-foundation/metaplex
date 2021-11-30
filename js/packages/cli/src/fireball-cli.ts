@@ -9,17 +9,22 @@ import FormData from 'form-data';
 import {
   Commitment,
   Connection as RPCConnection,
+  Context,
+  KeyedAccountInfo,
   Keypair,
+  ProgramAccountChangeCallback,
   PublicKey,
   SystemProgram,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import {
+  AccountLayout,
   Token,
 } from '@solana/spl-token';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
+import { sha256 } from 'js-sha256';
 
 import {
   getMetadata,
@@ -305,6 +310,123 @@ programCommand('reclaim_master_edition')
     );
 
     log.info(reclaimResult);
+  })
+
+programCommand('burn_crank')
+  .action(async (options) => {
+    log.info(`Parsed options:`, options);
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadFireballProgram(wallet, options.env);
+    const connection = new RPCConnection(anchor.web3.clusterApiUrl(options.env));
+
+    // TODO: anchor.accountDiscriminator
+    const dishPrefix = Buffer.from(sha256.digest('account:Dish')).slice(0, 8);
+
+    const burnCrank = async (keyedAccountInfo: KeyedAccountInfo, context: Context) => {
+      const data = keyedAccountInfo.accountInfo.data;
+      if (!data.slice(0, 8).equals(dishPrefix)) {
+        return;
+      }
+
+      const dish = await anchorProgram.coder.accounts.decode("Dish", data);
+      log.info(context.slot, keyedAccountInfo.accountId.toBase58(), dish)
+      if (!dish.completed) {
+        return;
+      }
+
+      const dishKey = keyedAccountInfo.accountId;
+      const recipeKey = new PublicKey(dish.recipe);
+
+      const recipe = await anchorProgram.account.recipe.fetch(recipeKey);
+
+      const storeKeysAndBumps : Array<[PublicKey, number]> = await Promise.all(recipe.roots.map(
+        (_, idx) => {
+          const ingredientNum = new BN(idx);
+          return PublicKey.findProgramAddress(
+            [
+              FIREBALL_PREFIX,
+              dishKey.toBuffer(),
+              Buffer.from(ingredientNum.toArray('le', 8)),
+            ],
+            FIREBALL_PROGRAM_ID,
+          );
+        }
+      ));
+      const storeAccounts = await connection.getMultipleAccountsInfo(
+          storeKeysAndBumps.map(s => s[0]));
+
+      // TODO: separate on overflow
+      const instrs : Array<[TransactionInstruction, PublicKey]> = [];
+      for (let idx = 0; idx < recipe.roots.length; ++idx) {
+        const [storeKey, storeBump] = storeKeysAndBumps[idx];
+        const storeAccount = storeAccounts[idx];
+        if (storeAccount === null) {
+          continue;
+        }
+
+        const ingredientNum = new BN(idx);
+        const mintKey = new PublicKey(AccountLayout.decode(storeAccount.data).mint);
+        instrs.push([
+          await anchorProgram.instruction.consumeIngredient(
+            storeBump,
+            ingredientNum,
+            {
+              accounts: {
+                recipe: recipeKey,
+                dish: dishKey,
+                ingredientMint: mintKey,
+                ingredientStore: storeKey,
+                payer: wallet.publicKey,
+                systemProgram: SystemProgram.programId,
+                tokenProgram: TOKEN_PROGRAM_ID,
+              },
+              signers: [],
+              instructions: [],
+            }
+          ),
+          mintKey,
+        ]);
+      }
+
+      if (instrs.length == 0) {
+        return;
+      }
+
+      // send individually to allow retry of others on collision... hopefully
+      // not an issue?
+      for (const [instr, mintKey] of instrs) {
+        try {
+          const consumeResult = await sendTransactionWithRetry(
+            connection,
+            wallet,
+            [instr],
+            [],
+          );
+
+          log.info(consumeResult);
+        } catch (err) {
+          log.warn(`Failed to send instruction to consume ${mintKey.toBase58()}: ${err}`);
+        }
+      }
+    };
+
+    const burnCrankWrapper : ProgramAccountChangeCallback =
+      (keyedAccountInfo: KeyedAccountInfo, context: Context) => {
+        const wrap = async () => {
+          try {
+            await burnCrank(keyedAccountInfo, context);
+          } catch (err) {
+            log.error(`Burn crank failed for ${keyedAccountInfo.accountId.toBase58()}: ${err}`);
+          }
+        };
+        wrap();
+      }
+
+    const subId = connection.onProgramAccountChange(
+      FIREBALL_PROGRAM_ID,
+      burnCrankWrapper);
+
   })
 
 function programCommand(name: string) {
