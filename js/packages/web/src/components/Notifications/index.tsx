@@ -142,6 +142,7 @@ export function useCollapseWrappedSol({
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
         }
+        // eslint-disable-next-line no-empty
       } catch (e) {}
     }
     setTimeout(fn, 60000);

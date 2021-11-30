@@ -722,6 +722,7 @@ export async function sendSignedTransaction({
       simulateResult = (
         await simulateTransaction(connection, signedTransaction, 'single')
       ).value;
+      // eslint-disable-next-line no-empty
     } catch (e) {}
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
