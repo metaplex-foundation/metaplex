@@ -63,6 +63,7 @@ export const ArtworksView = () => {
                   preview={false}
                   height={250}
                   width={250}
+                  artView
                 />
               </Link>
             );
