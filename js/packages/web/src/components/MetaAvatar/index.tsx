@@ -47,8 +47,8 @@ export const MetaAvatar = (props: {
     return <Avatar size={size} src={false} />;
   }
 
-  const controls = (creators || []).map(creator => (
-    <MetaAvatarItem creator={creator} alt={creator.name} size={size} />
+  const controls = (creators || []).map((creator, ii) => (
+    <MetaAvatarItem creator={creator} alt={creator.name} key={ii} size={size} />
   ));
 
   if (!showMultiple) {

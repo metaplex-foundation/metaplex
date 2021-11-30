@@ -590,8 +590,8 @@ export const sendTransaction = async (
         message: 'Transaction failed...',
         description: (
           <>
-            {errors.map(err => (
-              <div>{err}</div>
+            {errors.map((err, ii) => (
+              <div key={ii}>{err}</div>
             ))}
             <ExplorerLink address={txid} type="transaction" />
           </>

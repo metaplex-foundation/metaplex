@@ -99,11 +99,11 @@ export const Footer = () => {
             <div className="footer-link">Powered by Metaplex and Solana</div>
           </div>
         ) : null}
-        {footerConf.components.map(component => (
-          <div className="footer-section-container">
+        {footerConf.components.map((component, ii) => (
+          <div className="footer-section-container" key={ii}>
             <div className="sub-header">{component.title}</div>
-            {component.links.map(link => (
-              <div className="body-text">
+            {component.links.map((link, jj) => (
+              <div className="body-text" key={jj}>
                 <a
                   className="footer-link"
                   href={link.url}
