@@ -16,6 +16,9 @@ COPY ./js /app
 RUN yarn install --frozen-lockfile
 RUN yarn bootstrap
 
+# HERE ADD YOUR STORE WALLET ADDRESS
+ENV REACT_APP_STORE_OWNER_ADDRESS_ADDRESS=""
+
 # Generate the build of the application
 RUN yarn build
 
@@ -24,8 +27,6 @@ RUN yarn build
 # Production image, copy all the files and run next
 FROM node:14.17.6-alpine AS runner
 
-# HERE ADD YOUR STORE WALLET ADDRESS
-ENV REACT_APP_STORE_OWNER_ADDRESS_ADDRESS=""
 ENV NODE_ENV production
 
 WORKDIR /app
