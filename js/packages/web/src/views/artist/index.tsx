@@ -28,7 +28,7 @@ export const ArtistView = () => {
             const id = m.pubkey;
             return (
               <Link to={`/art/${id}`} key={idx}>
-                <ArtCard key={id} pubkey={m.pubkey} preview={false} />
+                <ArtCard key={id} pubkey={m.pubkey} preview={false} artView={true}/>
               </Link>
             );
           })
