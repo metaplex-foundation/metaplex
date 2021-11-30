@@ -291,14 +291,19 @@ programCommand('verify_token_metadata')
     const { number } = cmd.opts();
 
     const startMs = Date.now();
-    log.info('started at: ' + startMs.toString());
+    log.info(
+      `\n==> Starting verification: ${
+        new Date(startMs).toString().split(' G')[0]
+      }`,
+    );
     verifyTokenMetadata({ files, uploadElementsCount: number });
 
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
-      `ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`,
+      `==> Verification ended: ${new Date(endMs).toString().split(' G')[0]}`,
     );
+    log.info(`Elapsed time: ${timeTaken}\n`);
   });
 
 programCommand('verify')
@@ -710,7 +715,7 @@ programCommand('create_candy_machine')
       if (treasuryBalance === 0) {
         throw new Error(`Cannot use treasury account with 0 balance!`);
       }
-      wallet = treasuryAccount
+      wallet = treasuryAccount;
     }
 
     const config = new PublicKey(cacheContent.program.config);
