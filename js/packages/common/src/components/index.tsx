@@ -11,3 +11,4 @@ export { TokenDisplay } from './TokenDisplay';
 export { EtherscanLink } from './EtherscanLink';
 export { MetaplexModal } from './MetaplexModal';
 export { MetaplexOverlay } from './MetaplexOverlay';
+export { HashQueryLink } from './HashQueryLink';
