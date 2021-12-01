@@ -1,4 +1,7 @@
-import { useLocalStorageState } from "@oyster/common";
+import {
+  getTokenListContainerPromise,
+  useLocalStorageState,
+} from '@oyster/common';
 import {
   Keypair,
   Commitment,
@@ -14,7 +17,6 @@ import {
 } from "../utils/transactions";
 import {
   TokenInfo,
-  TokenListProvider,
   ENV as ChainId,
 } from "@solana/spl-token-registry";
 import { WalletSigner } from "./WalletContext/WalletContext";
@@ -79,7 +81,7 @@ export function ConnectionProvider({ children = undefined } : { children : React
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
   useEffect(() => {
     // fetch token files
-    new TokenListProvider().resolve().then((container) => {
+    getTokenListContainerPromise().then((container) => {
       const list = container
         .excludeByTag("nft")
         .filterByChainId(
