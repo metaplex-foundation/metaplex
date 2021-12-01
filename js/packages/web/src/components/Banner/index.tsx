@@ -1,5 +1,6 @@
 import React from 'react';
 import { Space, Typography } from 'antd';
+import { useStore } from '@oyster/common';
 const { Text } = Typography;
 
 export const Banner = ({
@@ -15,18 +16,11 @@ export const Banner = ({
   actionComponent?: JSX.Element;
   children?: React.ReactNode;
 }) => {
-  // mock storefront, should receive as prop or provider instead
-  const storefront = {
-    meta: {
-      social: {
-        discord: 'hello',
-        twitter: '',
-        web: 'https://kristianeboe.me',
-      },
-    },
-  };
-  const social = storefront.meta.social;
-  const hasSocial = false; // Object.values(social).some(link => link);
+  const { storefront } = useStore();
+  const social = storefront.social;
+
+  const hasSocial = Object.values(social || {}).some(link => link);
+
   return (
     <div id="metaplex-banner">
       {src && <img id="metaplex-banner-backdrop" src={src} />}
@@ -41,16 +35,18 @@ export const Banner = ({
             direction="horizontal"
             id="metaplex-banner-hero-social"
           >
-            <a href={social.discord}>
-              <DiscordIcon />
-            </a>
-            {social.twitter && (
+            {social?.discord && (
+              <a href={social.discord}>
+                <DiscordIcon />
+              </a>
+            )}
+            {social?.twitter && (
               <a href={social.twitter}>
                 <TwitterIcon />
               </a>
             )}
-            {social.web && (
-              <a href={social.web}>
+            {social?.website && (
+              <a href={social.website}>
                 <WebIcon />
               </a>
             )}

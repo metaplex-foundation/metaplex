@@ -29,11 +29,28 @@ export interface StorefrontTheme {
   };
 }
 
+export interface StorefrontSocialInfo {
+  instagram?: string;
+  discord?: string;
+  twitter?: string;
+  website?: string;
+}
+
+export interface StorefrontIntegrations {
+  injectInHeadTag?: string;
+  ga4?: string;
+  twitterVerification?: string;
+  hotjar?: string;
+  segment?: string;
+}
+
 export interface Storefront {
   pubkey: string;
   subdomain: string;
   meta: StorefrontMeta;
   theme: StorefrontTheme;
+  social?: StorefrontSocialInfo;
+  integrations?: StorefrontIntegrations;
 }
 
 export interface StorefrontConfig {
