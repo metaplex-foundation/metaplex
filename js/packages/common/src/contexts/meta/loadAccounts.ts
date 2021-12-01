@@ -49,6 +49,7 @@ import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
 import { getPackSets } from '../../models/packs/accounts/PackSet';
 import { processPackSets } from './processPackSets';
+import { timeStart } from '../../utils';
 const MULTIPLE_ACCOUNT_BATCH_SIZE = 100;
 
 export const USE_SPEED_RUN = false;
@@ -79,13 +80,14 @@ export const pullStoreMetadata = async (
   const loadEditions = () =>
     pullEditions(connection, updateTemp, tempCache, tempCache.metadata);
 
-  console.log('-------->Loading all metadata for store.');
+  const done = timeStart('Loading all metadata for store');
 
   await loadMetadata();
   await loadEditions();
 
   await postProcessMetadata(tempCache);
-  console.log('-------->Metadata processing complete.');
+
+  done();
   return tempCache;
 };
 
@@ -839,7 +841,9 @@ export const loadAccounts = async (connection: Connection) => {
     loadPacks(),
   ];
 
+  const done = timeStart('loadAccounts#Promise.all');
   await Promise.all(loading);
+  done();
 
   state.metadata = uniqWith(
     state.metadata,
@@ -856,7 +860,7 @@ const pullEditions = async (
   state: MetaState,
   metadataArr: ParsedAccount<Metadata>[],
 ) => {
-  console.log('Pulling editions for optimized metadata');
+  const donePullEditions = timeStart('pullEditions#for optimized metadata');
 
   type MultipleAccounts = UnPromise<ReturnType<typeof getMultipleAccounts>>;
   let setOf100MetadataEditionKeys: string[] = [];
@@ -915,13 +919,16 @@ const pullEditions = async (
     loadBatch();
   }
 
+  const done = timeStart('pullEditions#Promise.all(editionPromises)');
   await Promise.all(editionPromises);
+  done();
 
   console.log(
     'Edition size',
     Object.keys(state.editions).length,
     Object.keys(state.masterEditions).length,
   );
+  donePullEditions();
 };
 
 const pullMetadataByCreators = (
@@ -929,7 +936,7 @@ const pullMetadataByCreators = (
   state: MetaState,
   updater: UpdateStateValueFunc,
 ): Promise<any> => {
-  console.log('pulling optimized nfts');
+  const done = timeStart('pullMetadataByCreators#pulling optimized nfts');
 
   const whitelistedCreators = Object.values(state.whitelistedCreatorsByCreator);
 
@@ -972,7 +979,7 @@ const pullMetadataByCreators = (
     }
   }
 
-  return Promise.all(additionalPromises);
+  return Promise.all(additionalPromises).then(done);
 };
 
 export const makeSetter =
@@ -1014,9 +1021,11 @@ export const processingAccounts =
 const postProcessMetadata = async (state: MetaState) => {
   const values = Object.values(state.metadataByMint);
 
+  const done = timeStart('postProcessMetadata');
   for (const metadata of values) {
     await metadataByMintUpdater(metadata, state);
   }
+  done();
 };
 
 export const metadataByMintUpdater = async (

@@ -10,20 +10,25 @@ import {
   fromUTF8Array,
   parseDate,
   parsePrice,
+  shuffle,
 } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
+  CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
+  getBalance,
   getCandyMachineAddress,
+  getProgramAccounts,
   loadCandyProgram,
   loadWalletKey,
+  AccountAndPubkey,
 } from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
@@ -32,19 +37,21 @@ import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
-import { signAllMetadataFromCandyMachine } from './commands/signAll';
+import {
+  getAccountsByCreatorAddress,
+  signAllMetadataFromCandyMachine,
+} from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
-
+import { withdraw } from './commands/withdraw';
+import { updateFromCache } from './commands/updateFromCache';
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
-
 log.setLevel(log.levels.INFO);
-
 programCommand('upload')
   .argument(
     '<directory>',
@@ -54,6 +61,7 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
+  .option('-b, --batchSize <number>', 'Batch size - defaults to 1000')
   .option(
     '-s, --storage <string>',
     'Database to use for storage (arweave, ipfs, aws)',
@@ -90,6 +98,7 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      batchSize,
     } = cmd.opts();
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
@@ -152,6 +161,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
+        batchSize,
       );
 
       if (successful) {
@@ -169,6 +179,110 @@ programCommand('upload')
     );
     if (warn) {
       log.info('not all images have been uploaded, rerun this step.');
+    }
+  });
+
+programCommand('withdraw')
+  .option(
+    '-d ,--dry',
+    'Show Candy Machine withdraw amount without withdrawing.',
+  )
+  .option('-ch, --charity <string>', 'Which charity?', '')
+  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
+    if (charityPercent < 0 || charityPercent > 100) {
+      log.error('Charity percentage needs to be between 0 and 100');
+      return;
+    }
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+
+    // this is hash of first 8 symbols in pubkey
+    // account:Config
+    const hashConfig = [155, 12, 170, 224, 30, 250, 204, 130];
+    const configOrCommitment = {
+      commitment: 'confirmed',
+      filters: [
+        {
+          memcmp: {
+            offset: 0,
+            bytes: hashConfig,
+          },
+        },
+        {
+          memcmp: {
+            offset: 8,
+            bytes: walletKeyPair.publicKey.toBase58(),
+          },
+        },
+      ],
+    };
+    const configs: AccountAndPubkey[] = await getProgramAccounts(
+      anchorProgram.provider.connection,
+      CANDY_MACHINE_PROGRAM_ID.toBase58(),
+      configOrCommitment,
+    );
+    let t = 0;
+    for (const cg in configs) {
+      t += configs[cg].account.lamports;
+    }
+    const totalValue = t / LAMPORTS_PER_SOL;
+    const cpf = parseFloat(charityPercent);
+    let charityPub;
+    log.info(
+      `Total Number of Candy Machine Config Accounts to drain ${configs.length}`,
+    );
+    log.info(`${totalValue} SOL locked up in configs`);
+    if (!!charity && charityPercent > 0) {
+      const donation = totalValue * (100 / charityPercent);
+      charityPub = new PublicKey(charity);
+      log.info(
+        `Of that ${totalValue} SOL, ${donation} will be donated to ${charity}. Thank you!`,
+      );
+    }
+
+    if (!dry) {
+      const errors = [];
+      log.info(
+        'WARNING: This command will drain ALL of the Candy Machine config accounts that are owned by your current KeyPair, this will break your Candy Machine if its still in use',
+      );
+      for (const cg of configs) {
+        try {
+          if (cg.account.lamports > 0) {
+            const tx = await withdraw(
+              anchorProgram,
+              walletKeyPair,
+              env,
+              new PublicKey(cg.pubkey),
+              cg.account.lamports,
+              charityPub,
+              cpf,
+            );
+            log.info(
+              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+            );
+          }
+        } catch (e) {
+          log.error(
+            `Withdraw has failed for config account ${cg.pubkey} Error: ${e.message}`,
+          );
+          errors.push(e);
+        }
+      }
+      const successCount = configs.length - errors.length;
+      const richness =
+        successCount === configs.length ? 'rich again' : 'kinda rich';
+      log.info(
+        `Congratulations, ${successCount} config accounts have been successfully drained.`,
+      );
+      log.info(
+        `Now you ${richness}, please consider supporting Open Source developers.`,
+      );
     }
   });
 
@@ -525,7 +639,7 @@ programCommand('create_candy_machine')
   )
   .option(
     '-s, --sol-treasury-account <string>',
-    'SOL account that receives mint payments.',
+    'SOL account that receives mint payments. Should have minimum 0.1 sol balance',
   )
   .option(
     '-r, --rpc-url <string>',
@@ -601,7 +715,12 @@ programCommand('create_candy_machine')
     }
 
     if (solTreasuryAccount) {
-      wallet = new PublicKey(solTreasuryAccount);
+      const treasuryAccount = new PublicKey(solTreasuryAccount);
+      const treasuryBalance = await getBalance(treasuryAccount, env, rpcUrl);
+      if (treasuryBalance === 0) {
+        throw new Error(`Cannot use treasury account with 0 balance!`);
+      }
+      wallet = treasuryAccount;
     }
 
     const config = new PublicKey(cacheContent.program.config);
@@ -722,6 +841,43 @@ programCommand('mint_one_token')
     log.info('mint_one_token finished', tx);
   });
 
+programCommand('mint_multiple_tokens')
+  .option('-n, --number <string>', 'Number of tokens')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (_, cmd) => {
+    const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
+
+    const NUMBER_OF_NFTS_TO_MINT = parseInt(number, 10);
+    const cacheContent = loadCache(cacheName, env);
+    const configAddress = new PublicKey(cacheContent.program.config);
+
+    log.info(`Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...`);
+
+    const mintToken = async index => {
+      const tx = await mint(
+        keypair,
+        env,
+        configAddress,
+        cacheContent.program.uuid,
+        rpcUrl,
+      );
+      log.info(`transaction ${index + 1} complete`, tx);
+
+      if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
+        log.info('minting another token...');
+        await mintToken(index + 1);
+      }
+    };
+
+    await mintToken(0);
+
+    log.info(`minted ${NUMBER_OF_NFTS_TO_MINT} tokens`);
+    log.info('mint_multiple_tokens finished');
+  });
+
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .option('-m, --metadata <string>', 'base58 metadata account id')
@@ -767,6 +923,101 @@ programCommand('sign_all')
     );
   });
 
+programCommand('update_existing_nfts_from_latest_cache_file')
+  .option('-b, --batch-size <string>', 'Batch size', '2')
+  .option('-nc, --new-cache <string>', 'Path to new updated cache file')
+  .option('-d, --daemon', 'Run updating continuously', false)
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, rpcUrl, batchSize, daemon, newCache } =
+      cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const newCacheContent = loadCache(newCache, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const candyAddress = cacheContent.candyMachineAddress;
+
+    const batchSizeParsed = parseInt(batchSize);
+    if (!parseInt(batchSize)) {
+      throw new Error('Batch size needs to be an integer!');
+    }
+
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
+    log.debug('Batch Size: ', batchSizeParsed);
+    await updateFromCache(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      candyAddress,
+      batchSizeParsed,
+      daemon,
+      cacheContent,
+      newCacheContent,
+    );
+  });
+
+// can then upload these
+programCommand('randomize_unminted_nfts_in_new_cache_file').action(
+  async (directory, cmd) => {
+    const { keypair, env, cacheName } = cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const candyAddress = cacheContent.candyMachineAddress;
+
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
+
+    const candyMachine = await anchorProgram.account.candyMachine.fetch(
+      candyAddress,
+    );
+
+    const itemsRedeemed = candyMachine.itemsRedeemed;
+    log.info('Randomizing one later than', itemsRedeemed.toNumber());
+    const keys = Object.keys(cacheContent.items).filter(
+      k => parseInt(k) > itemsRedeemed,
+    );
+    const shuffledKeys = shuffle(keys.slice());
+    const newItems = {};
+    for (let i = 0; i < keys.length; i++) {
+      newItems[keys[i].toString()] =
+        cacheContent.items[shuffledKeys[i].toString()];
+      log.debug('Setting ', keys[i], 'to ', shuffledKeys[i]);
+      newItems[keys[i].toString()].onChain = false;
+    }
+    fs.writeFileSync(
+      '.cache/' + env + '-' + cacheName + '-randomized',
+      JSON.stringify({
+        ...cacheContent,
+        items: { ...cacheContent.items, ...newItems },
+      }),
+    );
+  },
+);
+
+programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
+  const { env, cacheName, keypair } = cmd.opts();
+
+  const cacheContent = loadCache(cacheName, env);
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+
+  const accountsByCreatorAddress = await getAccountsByCreatorAddress(
+    cacheContent.candyMachineAddress,
+    anchorProgram.provider.connection,
+  );
+  const addresses = accountsByCreatorAddress.map(it => {
+    return new PublicKey(it[0].mint).toBase58();
+  });
+
+  console.log(JSON.stringify(addresses, null, 2));
+});
+
 programCommand('generate_art_configurations')
   .argument('<directory>', 'Directory containing traits named from 0-n', val =>
     fs.readdirSync(`${val}`),
@@ -798,8 +1049,21 @@ programCommand('create_generative_art')
     'Location of the traits configuration file',
     './traits-configuration.json',
   )
+  .option(
+    '-o, --output-location <string>',
+    'If you wish to do image generation elsewhere, skip it and dump randomized sets to file',
+  )
+  .option(
+    '-ta, --treat-attributes-as-file-names <string>',
+    'If your attributes are filenames, trim the .png off if set to true',
+  )
   .action(async (directory, cmd) => {
-    const { numberOfImages, configLocation } = cmd.opts();
+    const {
+      numberOfImages,
+      configLocation,
+      outputLocation,
+      treatAttributesAsFileNames,
+    } = cmd.opts();
 
     log.info('Loaded configuration file');
 
@@ -807,14 +1071,20 @@ programCommand('create_generative_art')
     const randomSets = await createMetadataFiles(
       numberOfImages,
       configLocation,
+      treatAttributesAsFileNames == 'true',
     );
 
     log.info('JSON files have been created within the assets directory');
 
     // 2. piecemeal generate the images
-    await createGenerativeArt(configLocation, randomSets);
+    if (!outputLocation) {
+      await createGenerativeArt(configLocation, randomSets);
+      log.info('Images have been created successfully!');
+    } else {
+      fs.writeFileSync(outputLocation, JSON.stringify(randomSets));
 
-    log.info('Images have been created successfully!');
+      log.info('Traits written!');
+    }
   });
 
 function programCommand(name: string) {
