@@ -1,0 +1,79 @@
+.fireballs-masonry{
+  @media (max-width: @screen-sm-min) {
+    padding: 20px;
+  }
+}
+.fireball-card {
+  min-width: 200px;
+  filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.1));
+  overflow: hidden;
+  margin-bottom: 20px;
+  background-color: transparent;
+  border: 1px solid gray;
+  border-radius: 20px;
+
+
+  .card-title {
+    font-family: "Space Grotesk";
+    font-size: 10px;
+    font-weight: 500;
+    color: #828282;
+    margin: 0;
+    padding: 0;
+  }
+
+  .card-name {
+    font-family: Space Grotesk;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 0;
+    margin: 0;
+  }
+
+  .label-quantity {
+    background: #3e3e3e;
+    border-radius: 20px;
+    color: #BDBDBD;
+    padding: 2px 6px;
+    text-align: center;
+    display: inline-block;
+    font-size: 10px;
+  }
+
+  .image-container{
+    border-radius: 8px;
+    padding: 10px;
+    color: gray;
+
+  }
+
+  .header-container{
+    background: black;
+  }
+  .ant-card-cover{
+    position: initial;
+    img{
+      padding-bottom: 10px;
+      width: 100%;
+      border-radius: 20px;
+    }
+  }
+  .ant-card-body{
+    min-height: 100px;
+    display: flex;
+    background-color: #161618;
+    padding: 15px;
+    margin-top: -15px;
+    position: relative;
+    align-items: flex-start;
+  }
+
+  .ant-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .fireball-card-name {
+    font-size: 15px;
+  }
+}

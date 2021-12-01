@@ -1,0 +1,63 @@
+p {
+  color: white;
+}
+
+.mintContainer {
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 100px;
+
+  @media (max-width: @screen-sm-min){
+    flex-direction: column;
+  }
+}
+
+.imgNft {
+  align-self: flex-end;
+  background: #3f3f44;
+
+  @media (max-width: @screen-sm-min){
+    align-self: normal;
+  }
+}
+
+.nftContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mintBtn {
+  color: black;
+  background: #C4C4C4;
+  width: 120px;
+  height: 50px;
+  margin: 15px 0;
+  align-self: flex-end;
+}
+
+.textTitle {
+  font-family: "Space Grotesk";
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.unlock-nft {
+  background: #3f3f44;
+  border-radius: 20px;
+  color: white;
+  margin: 0 20px;
+  width: 160px;
+
+  .unlock-text {
+    margin: 0;
+    text-align: center;
+  }
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
