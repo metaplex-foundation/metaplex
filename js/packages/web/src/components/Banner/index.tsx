@@ -11,7 +11,7 @@ export const Banner = ({
 }: {
   src?: string;
   headingText: string;
-  subHeadingText: string;
+  subHeadingText?: string;
   actionComponent?: JSX.Element;
   children?: React.ReactNode;
 }) => {
@@ -26,14 +26,15 @@ export const Banner = ({
     },
   };
   const social = storefront.meta.social;
-  const hasSocial = Object.values(social).some(link => link);
+  const hasSocial = false; // Object.values(social).some(link => link);
   return (
     <div id="metaplex-banner">
       {src && <img id="metaplex-banner-backdrop" src={src} />}
 
       <div id="metaplex-banner-hero">
         <h1>{headingText}</h1>
-        <Text>{subHeadingText}</Text>
+        {subHeadingText && <Text>{subHeadingText}</Text>}
+
         {hasSocial && (
           <Space
             align="center"

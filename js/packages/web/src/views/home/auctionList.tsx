@@ -75,8 +75,6 @@ export const AuctionListView = () => {
           }
         />
       )}
-      {/* {storefront.theme.banner && (
-        )} */}
       <Banner
         src={storefront.theme.banner}
         headingText={storefront.meta.title}
