@@ -1,0 +1,46 @@
+.fireballs-masonry{
+  @media (max-width: @screen-sm-min) {
+    padding: 20px;
+  }
+}
+.fireball-card {
+  min-width: 200px;
+  filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.1));
+  overflow: hidden;
+  margin-bottom: 20px;
+  background-color: transparent;
+  border-radius: 8px;
+
+  .header-container{
+    background: black;
+  }
+  .ant-card-cover{
+    position: initial;
+    img{
+      width: 100%;
+      border-radius: 0;
+    }
+  }
+  .ant-card-body{
+    min-height: 100px;
+    display: flex;
+    background-color: #161618;
+    padding: 15px;
+    margin-top: -15px;
+    position: relative;
+    align-items: flex-start;
+  }
+
+  .ant-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .fireball-card-name {
+    font-size: 15px;
+  }
+}
+
+.fireball-card img {
+  cursor: pointer;
+}

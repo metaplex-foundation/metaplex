@@ -10,13 +10,13 @@ import {
   ArtworksView,
   AuctionCreateView,
   AuctionView,
-  HomeView,
   StaticPageView,
 } from './views';
 import { AdminView } from './views/admin';
 import { PackView } from './views/pack';
 import { PackCreateView } from './views/packCreate';
 import { BillingView } from './views/auction/billing';
+import { FireballView} from "./views/fireballView";
 
 export function Routes() {
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS;
@@ -71,7 +71,7 @@ export function Routes() {
               component={() => <BillingView />}
             />
             <Route path="/about" component={() => <StaticPageView />} />
-            <Route path="/" component={() => <HomeView />} />
+            <Route path="/" component={() => <FireballView />} />
           </Switch>
         </Providers>
       </HashRouter>
