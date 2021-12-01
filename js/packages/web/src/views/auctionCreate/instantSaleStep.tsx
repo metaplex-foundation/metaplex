@@ -22,7 +22,17 @@ export const InstantSaleStep = ({
   const isEdition = useMemo(() => !!nft?.edition, [nft]);
   const masterEdition = useMemo(() => nft?.masterEdition, [nft]);
   const availableSupply = useMemo(
-    () => (isEdition ? 0 : (masterEdition?.info?.supply.toNumber() as number)),
+    () => {
+      const info = masterEdition?.info;
+
+      if (isEdition || !info) {
+        return 0;
+      }
+      const maxSupply = info?.maxSupply?.toNumber() as number;
+      const supply = info?.supply?.toNumber() as number;
+
+      return maxSupply - supply;
+    },
     [masterEdition, isEdition],
   );
   const hasUlimatedPrints = useMemo(
