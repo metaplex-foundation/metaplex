@@ -1,5 +1,3 @@
-use solana_program::msg;
-
 use {
     crate::{
         error::MetaplexError,
@@ -15,12 +13,14 @@ use {
         },
     },
     borsh::BorshSerialize,
-    metaplex_auction::processor::AuctionData,
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidStateData},
     metaplex_token_metadata::state::{MasterEditionV1, Metadata},
     metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
+        msg,
         program_error::ProgramError,
         program_option::COption,
         pubkey::Pubkey,
@@ -234,6 +234,8 @@ pub fn process_empty_payment_account(
     let rent_info = next_account_info(account_info_iter)?;
     let auction_token_tracker_info = next_account_info(account_info_iter).ok();
     let safety_deposit_config_info = next_account_info(account_info_iter).ok();
+    let auction_extended = next_account_info(account_info_iter).ok();
+    let bid_state_data = next_account_info(account_info_iter).ok();
 
     if let Some(tracker_info) = auction_token_tracker_info {
         assert_derivation(
@@ -267,10 +269,42 @@ pub fn process_empty_payment_account(
         accept_payment.amount
     );
 
+    // Obtain BidState instance
+    // Current implementation depend on AuctionDataExtended
+    let bid_state = if let Some(bid_state_data) = bid_state_data {
+        let auction_extended_acc = auction_extended.ok_or(ProgramError::InvalidArgument)?;
+        // TODO: Check derivation
+        /*assert_derivation(
+            program_id,
+            auction_extended_acc,
+            &[
+                metaplex_auction::PREFIX.as_bytes(),
+                program_id.as_ref(),
+                args.resource.as_ref(),
+                metaplex_auction::EXTENDED.as_bytes(),
+            ],
+        )?;*/
+
+        let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
+        if auction_extended
+            .bid_state_data
+            .ok_or(ProgramError::InvalidArgument)?
+            != *bid_state_data.key
+        {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let bid_state_data_acc: BidStateData =
+            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
+        bid_state_data_acc.state
+    } else {
+        auction.bid_state.clone()
+    };
+
     // Before continuing further, assert all bid monies have been pushed to the main escrow
     // account so that we have a complete (less the unredeemed participation nft bids) accounting
     // to work with
-    auction_manager.assert_all_bids_claimed(&auction)?;
+    auction_manager.assert_all_bids_claimed(&bid_state)?;
 
     if *token_program_info.key != store.token_program {
         return Err(MetaplexError::AuctionManagerTokenProgramMismatch.into());

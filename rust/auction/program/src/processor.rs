@@ -481,9 +481,9 @@ pub struct Bid(pub Pubkey, pub u64);
 /// auction being run.
 #[repr(C)]
 #[derive(Debug, Clone, BorshSerialize, BorshDeserialize, PartialEq)]
-struct BidStateData {
-    auction_key: Pubkey,
-    state: BidState,
+pub struct BidStateData {
+    pub auction_key: Pubkey,
+    pub state: BidState,
 }
 
 impl BidStateData {

@@ -679,20 +679,27 @@ pub fn create_deprecated_init_auction_manager_v1_instruction(
     accept_payment_account_key: Pubkey,
     store: Pubkey,
     settings: AuctionManagerSettingsV1,
+    bid_state_data: &Option<Pubkey>,
 ) -> Instruction {
+    let mut accounts = vec![
+        AccountMeta::new(auction_manager, false),
+        AccountMeta::new_readonly(vault, false),
+        AccountMeta::new_readonly(auction, false),
+        AccountMeta::new_readonly(auction_manager_authority, false),
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(accept_payment_account_key, false),
+        AccountMeta::new_readonly(store, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    if let Some(bid_state_data) = bid_state_data {
+        accounts.push(AccountMeta::new_readonly(*bid_state_data, false));
+    }
+
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(auction_manager, false),
-            AccountMeta::new_readonly(vault, false),
-            AccountMeta::new_readonly(auction, false),
-            AccountMeta::new_readonly(auction_manager_authority, false),
-            AccountMeta::new_readonly(payer, true),
-            AccountMeta::new_readonly(accept_payment_account_key, false),
-            AccountMeta::new_readonly(store, false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-        ],
+        accounts,
         data: MetaplexInstruction::DeprecatedInitAuctionManagerV1(settings)
             .try_to_vec()
             .unwrap(),
@@ -1116,8 +1123,9 @@ pub fn create_deprecated_populate_participation_printing_account_instruction(
     master_edition: Pubkey,
     transfer_authority: Pubkey,
     payer: Pubkey,
+    bid_state_data: &Option<Pubkey>,
 ) -> Instruction {
-    let accounts = vec![
+    let mut accounts = vec![
         AccountMeta::new(safety_deposit_token_store, false),
         AccountMeta::new(transient_one_time_mint_account, false),
         AccountMeta::new(participation_state_printing_account, false),
@@ -1137,6 +1145,11 @@ pub fn create_deprecated_populate_participation_printing_account_instruction(
         AccountMeta::new_readonly(payer, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
+
+    if let Some(bid_state_data) = bid_state_data {
+        accounts.push(AccountMeta::new_readonly(*bid_state_data, false));
+    }
+
     Instruction {
         program_id,
         accounts,

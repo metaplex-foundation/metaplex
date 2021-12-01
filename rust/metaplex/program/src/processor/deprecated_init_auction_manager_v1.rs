@@ -10,9 +10,12 @@ use {
         utils::create_or_allocate_account_raw,
     },
     borsh::BorshSerialize,
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidStateData},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
+        program_error::ProgramError,
         pubkey::Pubkey,
     },
 };
@@ -33,6 +36,9 @@ pub fn process_deprecated_init_auction_manager_v1(
     let store_info = next_account_info(account_info_iter)?;
     let system_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
+    let auction_extended = next_account_info(account_info_iter).ok();
+    let bid_state_data = next_account_info(account_info_iter).ok();
+
     let (bump_seed, vault, auction) = assert_common_checks(
         program_id,
         auction_manager_info,
@@ -43,7 +49,41 @@ pub fn process_deprecated_init_auction_manager_v1(
         authority_info,
     )?;
 
-    if auction_manager_settings.winning_configs.len() != auction.num_possible_winners() as usize {
+    // Obtain BidState instance
+    // Current implementation depend on AuctionDataExtended
+    let bid_state = if let Some(bid_state_data) = bid_state_data {
+        let auction_extended_acc = auction_extended.ok_or(ProgramError::InvalidArgument)?;
+        // TODO: Check derivation
+        /*assert_derivation(
+            program_id,
+            auction_extended_acc,
+            &[
+                metaplex_auction::PREFIX.as_bytes(),
+                program_id.as_ref(),
+                args.resource.as_ref(),
+                metaplex_auction::EXTENDED.as_bytes(),
+            ],
+        )?;*/
+
+        let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
+        if auction_extended
+            .bid_state_data
+            .ok_or(ProgramError::InvalidArgument)?
+            != *bid_state_data.key
+        {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let bid_state_data_acc: BidStateData =
+            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
+        bid_state_data_acc.state
+    } else {
+        auction.bid_state.clone()
+    };
+
+    if auction_manager_settings.winning_configs.len()
+        != AuctionData::num_possible_winners(&bid_state) as usize
+    {
         return Err(MetaplexError::WinnerAmountMismatch.into());
     }
 

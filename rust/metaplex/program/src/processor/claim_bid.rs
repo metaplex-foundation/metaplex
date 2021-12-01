@@ -7,13 +7,16 @@ use {
     metaplex_auction::{
         instruction::claim_bid_instruction,
         processor::{
-            claim_bid::ClaimBidArgs, AuctionData, AuctionDataExtended, AuctionState, BidderPot,
+            claim_bid::ClaimBidArgs, AuctionData, AuctionDataExtended, AuctionState, BidStateData,
+            BidderPot,
         },
     },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
         program::invoke_signed,
+        program_error::ProgramError,
         pubkey::Pubkey,
     },
 };
@@ -31,6 +34,7 @@ pub fn issue_claim_bid<'a>(
     token_mint: AccountInfo<'a>,
     clock: AccountInfo<'a>,
     token_program: AccountInfo<'a>,
+    bid_state_data: Option<&AccountInfo<'a>>,
     vault: Pubkey,
     signer_seeds: &[&[u8]],
 ) -> ProgramResult {
@@ -52,6 +56,13 @@ pub fn issue_claim_bid<'a>(
         auction_extended_key = Some(*auction_extended_account.key);
         account_infos.push(auction_extended_account);
     }
+
+    let bid_state_data = if let Some(bid_state_data) = bid_state_data {
+        Some(*bid_state_data.key)
+    } else {
+        None
+    };
+
     invoke_signed(
         &claim_bid_instruction(
             *auction_program.key,
@@ -61,6 +72,7 @@ pub fn issue_claim_bid<'a>(
             *bidder_pot_token_acct.key,
             *token_mint.key,
             auction_extended_key,
+            &bid_state_data,
             ClaimBidArgs { resource: vault },
         ),
         account_infos.as_ref(),
@@ -85,6 +97,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     let clock_info = next_account_info(account_info_iter)?;
     let token_program_info = next_account_info(account_info_iter)?;
     let auction_extended_info = next_account_info(account_info_iter).ok();
+    let bid_state_data = next_account_info(account_info_iter).ok();
 
     let mut auction_manager = get_auction_manager(auction_manager_info)?;
     let store = Store::from_account_info(store_info)?;
@@ -144,7 +157,41 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
         auction_manager.set_status(AuctionManagerStatus::Disbursing);
     }
 
-    if let Some(winner_index) = auction.is_winner(bidder_info.key) {
+    // Obtain BidState instance
+    // Current implementation depend on AuctionDataExtended
+    let bid_state = if let Some(bid_state_data) = bid_state_data {
+        let auction_extended_acc = auction_extended_info.ok_or(ProgramError::InvalidArgument)?;
+        // TODO: Check derivation
+        /*assert_derivation(
+            program_id,
+            auction_extended_acc,
+            &[
+                metaplex_auction::PREFIX.as_bytes(),
+                program_id.as_ref(),
+                args.resource.as_ref(),
+                metaplex_auction::EXTENDED.as_bytes(),
+            ],
+        )?;*/
+
+        let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
+        if auction_extended
+            .bid_state_data
+            .ok_or(ProgramError::InvalidArgument)?
+            != *bid_state_data.key
+        {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let bid_state_data_acc: BidStateData =
+            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
+        bid_state_data_acc.state
+    } else {
+        auction.bid_state.clone()
+    };
+
+    if let Some(winner_index) =
+        AuctionData::is_winner(bidder_info.key, &auction.price_floor, &bid_state)
+    {
         if !token_pot_info.emptied {
             auction_manager.mark_bid_as_claimed(winner_index)?;
         }
@@ -170,6 +217,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
         token_mint_info.clone(),
         clock_info.clone(),
         token_program_info.clone(),
+        bid_state_data.clone(),
         *vault_info.key,
         authority_seeds,
     )?;

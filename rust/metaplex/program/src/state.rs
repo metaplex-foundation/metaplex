@@ -1,12 +1,10 @@
-use solana_program::msg;
-
 use {
     crate::{
         deprecated_state::AuctionManagerV1, error::MetaplexError, utils::try_from_slice_checked,
     },
     arrayref::{array_mut_ref, array_ref, mut_array_refs},
     borsh::{BorshDeserialize, BorshSerialize},
-    metaplex_auction::processor::AuctionData,
+    metaplex_auction::processor::{AuctionData, BidState},
     metaplex_token_metadata::state::Metadata,
     metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
@@ -173,7 +171,7 @@ pub trait AuctionManager {
 
     fn mark_bid_as_claimed(&mut self, winner_index: usize) -> ProgramResult;
 
-    fn assert_all_bids_claimed(&self, auction: &AuctionData) -> ProgramResult;
+    fn assert_all_bids_claimed(&self, bid_state: &BidState) -> ProgramResult;
 
     fn get_number_of_unique_token_types_for_this_winner(
         &self,
@@ -450,8 +448,8 @@ impl AuctionManager for AuctionManagerV2 {
         Ok(())
     }
 
-    fn assert_all_bids_claimed(&self, auction: &AuctionData) -> ProgramResult {
-        if self.state.bids_pushed_to_accept_payment != auction.num_winners() {
+    fn assert_all_bids_claimed(&self, bid_state: &BidState) -> ProgramResult {
+        if self.state.bids_pushed_to_accept_payment != AuctionData::num_winners(bid_state) {
             return Err(MetaplexError::NotAllBidsClaimed.into());
         }
 

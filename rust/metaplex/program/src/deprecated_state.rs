@@ -11,13 +11,13 @@ use {
     },
     arrayref::array_ref,
     borsh::{BorshDeserialize, BorshSerialize},
+    metaplex_auction::processor::{AuctionData, BidState},
     metaplex_token_metadata::state::Metadata,
     metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
         pubkey::Pubkey,
     },
-    metaplex_auction::processor::AuctionData,
 };
 
 pub const MAX_WINNERS: usize = 200;
@@ -405,8 +405,8 @@ impl AuctionManager for AuctionManagerV1 {
         Ok(())
     }
 
-    fn assert_all_bids_claimed(&self, auction: &AuctionData) -> ProgramResult {
-        for i in 0..auction.num_winners() {
+    fn assert_all_bids_claimed(&self, bid_state: &BidState) -> ProgramResult {
+        for i in 0..AuctionData::num_winners(bid_state) {
             if !self.state.winning_config_states[i as usize].money_pushed_to_accept_payment {
                 return Err(MetaplexError::NotAllBidsClaimed.into());
             }

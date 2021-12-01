@@ -8,15 +8,17 @@ use {
             assert_store_safety_vault_manager_match, transfer_safety_deposit_box_items,
         },
     },
-    metaplex_auction::processor::{AuctionData, AuctionDataExtended, AuctionState},
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, AuctionState, BidStateData},
     metaplex_token_metadata::{
         deprecated_instruction::deprecated_mint_printing_tokens_via_token, state::MasterEditionV1,
     },
     metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
         program::invoke_signed,
+        program_error::ProgramError,
         pubkey::Pubkey,
     },
     spl_token::{instruction::close_account, state::Account},
@@ -93,6 +95,7 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let payer_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
+    let bid_state_data = next_account_info(account_info_iter).ok();
 
     let auction_manager = AuctionManagerV1::from_account_info(auction_manager_info)?;
     let safety_deposit = SafetyDepositBox::from_account_info(safety_deposit_info)?;
@@ -105,6 +108,24 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
     let participation_printing_account: Account =
         assert_initialized(participation_printing_holding_account_info)?;
     let store = Store::from_account_info(store_info)?;
+
+    // Obtain BidState instance
+    // Current implementation depend on AuctionDataExtended
+    let bid_state = if let Some(bid_state_data) = bid_state_data {
+        if auction_extended
+            .bid_state_data
+            .ok_or(ProgramError::InvalidArgument)?
+            != *bid_state_data.key
+        {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let bid_state_data_acc: BidStateData =
+            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
+        bid_state_data_acc.state
+    } else {
+        auction.bid_state.clone()
+    };
 
     let config: &ParticipationConfigV1;
     if let Some(part_config) = &auction_manager.settings.participation_config {
@@ -234,10 +255,10 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
         let mut amount_to_mint = auction_extended.total_uncancelled_bids;
         if config.winner_constraint == WinningConstraint::NoParticipationPrize {
             amount_to_mint = amount_to_mint
-                .checked_sub(auction.num_winners())
+                .checked_sub(AuctionData::num_winners(&bid_state))
                 .ok_or(MetaplexError::NumericalOverflowError)?;
         } else if config.non_winning_constraint == NonWinningConstraint::NoParticipationPrize {
-            amount_to_mint = auction.num_winners();
+            amount_to_mint = AuctionData::num_winners(&bid_state);
         }
 
         mint_printing_tokens(
