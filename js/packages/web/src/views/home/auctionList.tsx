@@ -75,9 +75,13 @@ export const AuctionListView = () => {
           }
         />
       )}
-      { storefront.theme.banner && 
-        <Banner src={storefront.theme.banner} headingText={''} subHeadingText={''} />
-      }
+      {/* {storefront.theme.banner && (
+        )} */}
+      <Banner
+        src={storefront.theme.banner}
+        headingText={storefront.meta.title}
+        subHeadingText={storefront.meta.description}
+      />
       <MetaplexMasonry>
         {auctions.map((m, idx) => {
           const id = m.auction.pubkey;
