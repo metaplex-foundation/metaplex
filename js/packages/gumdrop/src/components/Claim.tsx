@@ -946,34 +946,23 @@ export const Claim = (
       throw new Error("Failed to sign transaction");
     }
 
-    const setupResult = await sendSignedTransaction({
-      connection,
-      signedTransaction: fullySigned[0],
-    });
-    console.log(setupResult);
-    notify({
-      message: "Claim setup succeeded",
-      description: (
-        <HyperLink href={explorerLinkFor(setupResult.txid, connection)}>
-          View transaction on explorer
-        </HyperLink>
-      ),
-    });
+    for (let idx = 0; idx < fullySigned.length; ++idx) {
+      const tx = fullySigned[idx];
+      const result = await sendSignedTransaction({
+        connection,
+        signedTransaction: tx,
+      });
+      console.log(result);
+      notify({
+        message: `Claim succeeded: ${idx + 1} of ${fullySigned.length}`,
+        description: (
+          <HyperLink href={explorerLinkFor(result.txid, connection)}>
+            View transaction on explorer
+          </HyperLink>
+        ),
+      });
+    }
 
-    const claimResult = await sendSignedTransaction({
-      connection,
-      signedTransaction: fullySigned[1],
-    });
-
-    console.log(claimResult);
-    notify({
-      message: "Claim succeeded",
-      description: (
-        <HyperLink href={explorerLinkFor(claimResult.txid, connection)}>
-          View transaction on explorer
-        </HyperLink>
-      ),
-    });
     setTransaction(null);
     try {
       setNeedsTemporalSigner(await fetchNeedsTemporalSigner(
