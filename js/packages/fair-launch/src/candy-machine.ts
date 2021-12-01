@@ -198,6 +198,94 @@ const getMetadata = async (
   )[0];
 };
 
+export const mintOneCandy = async (
+  candyMachine: CandyMachineAccount,
+  payer: anchor.web3.PublicKey,
+): Promise<string> => {
+  const mint = anchor.web3.Keypair.generate();
+
+  const userTokenAccountAddress = (
+    await getAtaForMint(mint.publicKey, payer)
+  )[0];
+console.log(userTokenAccountAddress)
+  const candyMachineAddress = candyMachine.id;
+
+  const signers: anchor.web3.Keypair[] = [mint];
+     const instructions = [
+    anchor.web3.SystemProgram.createAccount({
+      fromPubkey: payer,
+      newAccountPubkey: mint.publicKey,
+      space: MintLayout.span,
+      lamports:
+        await candyMachine.program.provider.connection.getMinimumBalanceForRentExemption(
+          MintLayout.span,
+        ),
+      programId: TOKEN_PROGRAM_ID,
+    }),
+    Token.createInitMintInstruction(
+      TOKEN_PROGRAM_ID,
+      mint.publicKey,
+      0,
+      payer,
+      payer,
+    ),
+    createAssociatedTokenAccountInstruction(
+      userTokenAccountAddress,
+      payer,
+      payer,
+      mint.publicKey,
+    ),
+    Token.createMintToInstruction(
+      TOKEN_PROGRAM_ID,
+      mint.publicKey,
+      userTokenAccountAddress,
+      payer,
+      [],
+      1,
+    ),
+          ];     
+
+  const metadataAddress = await getMetadata(mint.publicKey);
+  const masterEdition = await getMasterEdition(mint.publicKey);
+
+  instructions.push(
+    await candyMachine.program.instruction.mintNft({
+      accounts: {
+        config: candyMachine.state.config,
+        candyMachine: candyMachineAddress,
+        payer,
+        wallet: candyMachine.state.treasury,
+        mint: mint.publicKey,
+        metadata: metadataAddress,
+        masterEdition,
+        mintAuthority: payer,
+        updateAuthority: payer,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+      remainingAccounts:
+        undefined,
+    }),
+  );
+
+  try {
+    return (
+      await sendTransactionWithRetry(
+        candyMachine.program.provider.connection,
+        candyMachine.program.provider.wallet,
+        instructions,
+        signers,
+      )
+    ).txid;
+  } catch (e) {
+    console.log(e);
+  }
+  
+  return 'j';
+};
 export const mintOneToken = async (
   candyMachine: CandyMachineAccount,
   payer: anchor.web3.PublicKey,

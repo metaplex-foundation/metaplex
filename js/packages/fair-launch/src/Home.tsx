@@ -33,6 +33,7 @@ import {
   CandyMachineAccount,
   getCandyMachineState,
   mintOneToken,
+  mintOneCandy,
 } from './candy-machine';
 
 import {
@@ -162,6 +163,9 @@ function getPhase(
   fairLaunch: FairLaunchAccount | undefined,
   candyMachine: CandyMachineAccount | undefined,
 ): Phase {
+  if (!fairLaunch){
+    return Phase.Phase4;
+  }
   const curr = new Date().getTime();
 
   const phaseOne = toDate(fairLaunch?.state.data.phaseOneStart)?.getTime();
@@ -207,6 +211,9 @@ const FAIR_LAUNCH_LOTTERY_SIZE =
   8; // size of bitmask ones
 
 const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
+  if (!fairLaunch){
+    return true;
+  }
   if (
     !fairLaunch?.lottery.data ||
     !fairLaunch?.lottery.data.length ||
@@ -269,6 +276,41 @@ const Home = (props: HomeProps) => {
   const onMint = async () => {
     try {
       setIsMinting(true);
+
+      if (!fairLaunch){
+                              setContributed(
+                                (
+                                  candyMachine?.state.price
+                                ).toNumber() / LAMPORTS_PER_SOL,
+                              );
+                            
+        console.log(contributed)
+
+        const mintTxId = await mintOneCandy(candyMachine, wallet.publicKey);
+
+        const status = await awaitTransactionSignatureConfirmation(
+          mintTxId,
+          props.txTimeout,
+          props.connection,
+          'singleGossip',
+          false,
+        );
+
+        if (!status?.err) {
+          setAlertState({
+            open: true,
+            message: 'Congratulations! Mint succeeded!',
+            severity: 'success',
+          });
+        } else {
+          setAlertState({
+            open: true,
+            message: 'Mint failed! Please try again!',
+            severity: 'error',
+          });
+      }
+      }
+      else {
       if (wallet.connected && candyMachine?.program && wallet.publicKey) {
         if (fairLaunch?.ticket.data?.state.unpunched && isWinner(fairLaunch)) {
           await onPunchTicket();
@@ -297,8 +339,9 @@ const Home = (props: HomeProps) => {
             severity: 'error',
           });
         }
-      }
+      }}
     } catch (error: any) {
+      console.log(error)
       // TODO: blech:
       let message = error.msg || 'Minting failed! Please try again!';
       if (!error.msg) {
@@ -350,7 +393,7 @@ const Home = (props: HomeProps) => {
         setFairLaunch(state);
 
         try {
-          if (state.state.tokenMint) {
+          if (state.state.tokenMint && fairLaunch) {
             const fairLaunchBalance =
               await props.connection.getTokenAccountBalance(
                 (
@@ -369,6 +412,7 @@ const Home = (props: HomeProps) => {
           console.log('Problem getting fair launch token balance');
           console.log(e);
         }
+        
         if (contributed === 0) {
           const phase = getPhase(state, undefined);
 
@@ -384,13 +428,7 @@ const Home = (props: HomeProps) => {
                 randomTick * state.state.data.tickSize.toNumber()) /
                 LAMPORTS_PER_SOL,
             );
-          } else {
-            setContributed(
-              (
-                state.state.currentMedian || state.state.data.priceRangeStart
-              ).toNumber() / LAMPORTS_PER_SOL,
-            );
-          }
+          } 
         }
       } catch (e) {
         console.log('Problem getting fair launch state');
@@ -404,6 +442,7 @@ const Home = (props: HomeProps) => {
             props.connection,
           );
           setCandyMachine(cndy);
+
         } catch (e) {
           console.log('Problem getting candy machine state');
           console.log(e);
@@ -411,8 +450,10 @@ const Home = (props: HomeProps) => {
       } else {
         console.log('No candy machine detected in configuration.');
       }
+
     })();
   }, [
+
     anchorWallet,
     props.candyMachineId,
     props.connection,
@@ -575,13 +616,15 @@ const Home = (props: HomeProps) => {
   return (
     <Container style={{ marginTop: 100 }}>
       <Container maxWidth="xs" style={{ position: 'relative' }}>
+        
+            {fairLaunch && (
         <div
           style={{
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'flex-end',
           }}
-        >
+        > 
           <Link
             component="button"
             variant="body2"
@@ -593,7 +636,7 @@ const Home = (props: HomeProps) => {
           >
             Anti-Rug Policy
           </Link>
-        </div>
+        </div> )}
       </Container>
       <Container maxWidth="xs" style={{ position: 'relative' }}>
         <Paper
@@ -660,7 +703,9 @@ const Home = (props: HomeProps) => {
             {phase === Phase.Phase4 && (
               <Header
                 phaseName={
+                  fairLaunch ? 
                   candyMachinePredatesFairLaunch ? 'Phase 3' : 'Phase 4'
+                  : 'Minting Time!'
                 }
                 desc={'Candy Time 🍬 🍬 🍬'}
                 date={candyMachine?.state.goLiveDate}
@@ -887,9 +932,16 @@ const Home = (props: HomeProps) => {
                             'SOLD OUT'
                           ) : isMinting ? (
                             <CircularProgress />
-                          ) : (
+                          ) : !fairLaunch ? (
+                           // @ts-ignore
+                       
+                            'MINT @ '+((candyMachine?.state.price.toNumber() || 0) / LAMPORTS_PER_SOL).toString()
+                            
+                            ) : ( 
+
                             'MINT'
-                          )}
+                           )}
+                           
                         </MintButton>
                       </MintContainer>
                     )}
@@ -917,6 +969,7 @@ const Home = (props: HomeProps) => {
               justifyContent="space-between"
               color="textSecondary"
             >
+            {fairLaunch && (
               <Link
                 component="button"
                 variant="body2"
@@ -927,7 +980,8 @@ const Home = (props: HomeProps) => {
                 }}
               >
                 How this raffle works
-              </Link>
+              </Link> 
+              )}
               {fairLaunch?.ticket.data && (
                 <Link
                   component="button"
