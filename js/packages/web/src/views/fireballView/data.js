@@ -1,12 +1,12 @@
 export const data = [
   {
-    name: 'airplane', image: 'pplpleaser/image 17.png'
+    name: 'Pink Cloud', image: 'pplpleaser/image 17.png'
   },
   {
-    name: 'airplane', image: 'pplpleaser/image 18.png'
+    name: 'Ice Cream Cloud', image: 'pplpleaser/image 18.png'
   },
   {
-    name: 'airplane', image: 'pplpleaser/image 19.png'
+    name: 'Rainbow Cloud', image: 'pplpleaser/image 19.png'
   },
   {
     name: 'airplane', image: 'pplpleaser/image 20.png'

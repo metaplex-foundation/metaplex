@@ -11,12 +11,14 @@ import {
   AuctionCreateView,
   AuctionView,
   StaticPageView,
+  HomeView
 } from './views';
 import { AdminView } from './views/admin';
 import { PackView } from './views/pack';
 import { PackCreateView } from './views/packCreate';
 import { BillingView } from './views/auction/billing';
 import { FireballView} from "./views/fireballView";
+import Home from "../../fair-launch/src/Home";
 
 export function Routes() {
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS;
@@ -51,6 +53,7 @@ export function Routes() {
             <Route exact path="/art/:id" component={() => <ArtView />} />
             <Route exact path="/artists/:id" component={() => <ArtistView />} />
             <Route exact path="/artists" component={() => <ArtistsView />} />
+            <Route exact path="/fireball" component={() => <FireballView />} />
 
             {shouldEnableNftPacks && (
               <Route exact path="/pack/:id?" component={() => <PackView />} />
@@ -71,7 +74,7 @@ export function Routes() {
               component={() => <BillingView />}
             />
             <Route path="/about" component={() => <StaticPageView />} />
-            <Route path="/" component={() => <FireballView />} />
+            <Route path="/" component={() => <HomeView />} />
           </Switch>
         </Providers>
       </HashRouter>

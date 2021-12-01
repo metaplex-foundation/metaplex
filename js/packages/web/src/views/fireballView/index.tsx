@@ -1,12 +1,21 @@
 import { Col, Row, Layout } from 'antd';
-import React from 'react';
+import React, {useState} from 'react';
 import Masonry from 'react-masonry-css';
 import { FireballCard } from '../../components/FireballCard';
 import {data} from './data'
+import {ArtworkViewState} from "../artworks";
+import {useCreatorArts, useUserArts} from "../../hooks";
+import {useMeta} from "@oyster/common";
+import {useWallet} from "@solana/wallet-adapter-react";
 
 const { Content } = Layout;
 
 export const FireballView = () => {
+  const { publicKey } = useWallet();
+  const ownedMetadata = useUserArts();
+  const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
+  const { metadata } = useMeta();
+  const [activeKey] = useState(ArtworkViewState.Owned);
 
   const breakpointColumnsObj = {
     default: 4,
@@ -15,6 +24,13 @@ export const FireballView = () => {
     500: 1,
   };
 
+  const items =
+    activeKey === ArtworkViewState.Owned
+      ? ownedMetadata.map(m => m.metadata)
+      : activeKey === ArtworkViewState.Created
+      ? createdMetadata
+      : metadata;
+
 
   const cardGrid = (
     <Masonry
@@ -22,14 +38,15 @@ export const FireballView = () => {
       className="my-masonry-grid fireball-masonry"
       columnClassName="my-masonry-grid_column"
     >
-      {data.map((m, idx) => {
+      {items.map((m, id) => {
         return (
           <FireballCard
-            key={idx}
-            nft={{
-              name: m.name || '',
-              image: m.image || '',
-            }}
+            key={id}
+              pubkey={m.pubkey}
+              preview={false}
+              height={250}
+              width={250}
+              artView
           />
         );
       })}
@@ -39,7 +56,7 @@ export const FireballView = () => {
   return (
     <Layout style={{ margin: 0, marginTop: 30}}>
       <p>You`re a Collectoooooor</p>
-      <p>Choose an NFT to redeem. This will burn all 13 of your current NFTs</p>
+      <p>You can burn 13 NFTs to unlock an exclusive Collector NFT. You need more.</p>
       <Row className={"mintContainer"}>
         <Col lg={8} sm={24}>
           <div className={"nftContainer"}>
@@ -60,10 +77,12 @@ export const FireballView = () => {
           </div>
         </Col>
       </Row>
-      <p>Your Collected NFTs</p>
-      <p>Looks like you have some duplicates. In order to mint, you need 13 individual items, with no duplicates. Choose only one of each item.</p>
+      <div className={"row"}>
+        <p className={"textTitle"}>Your NFTs</p>
+        <div className={"unlock-nft"}> <p className={"unlock-text"}>3/13 NFTs unlocked</p></div>
+      </div>
+      <p>The NFTs you have collected so far.</p>
       <br/>
-      <p>12/13 Selected</p>
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
         <Col style={{ width: '100%', marginTop: 10}}>{cardGrid}</Col>
       </Content>

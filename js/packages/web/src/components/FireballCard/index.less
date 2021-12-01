@@ -9,7 +9,43 @@
   overflow: hidden;
   margin-bottom: 20px;
   background-color: transparent;
-  border-radius: 8px;
+  border: 1px solid gray;
+  border-radius: 20px;
+
+
+  .card-title {
+    font-family: "Space Grotesk";
+    font-size: 10px;
+    font-weight: 500;
+    color: #828282;
+    margin: 0;
+    padding: 0;
+  }
+
+  .card-name {
+    font-family: Space Grotesk;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 0;
+    margin: 0;
+  }
+
+  .label-quantity {
+    background: #3e3e3e;
+    border-radius: 20px;
+    color: #BDBDBD;
+    padding: 2px 6px;
+    text-align: center;
+    display: inline-block;
+    font-size: 10px;
+  }
+
+  .image-container{
+    border-radius: 8px;
+    padding: 10px;
+    color: gray;
+
+  }
 
   .header-container{
     background: black;
@@ -17,8 +53,9 @@
   .ant-card-cover{
     position: initial;
     img{
+      padding-bottom: 10px;
       width: 100%;
-      border-radius: 0;
+      border-radius: 20px;
     }
   }
   .ant-card-body{
@@ -39,8 +76,4 @@
   .fireball-card-name {
     font-size: 15px;
   }
-}
-
-.fireball-card img {
-  cursor: pointer;
 }
