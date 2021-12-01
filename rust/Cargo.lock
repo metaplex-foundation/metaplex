@@ -2033,6 +2033,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nft-candy-machine-v2"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "arrayref",
+ "metaplex-token-metadata 0.0.1",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
 name = "nix"
 version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
