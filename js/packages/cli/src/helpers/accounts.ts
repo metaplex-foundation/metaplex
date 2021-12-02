@@ -71,6 +71,84 @@ export const deserializeAccount = (data: Buffer) => {
   return accountInfo;
 };
 
+export enum WhitelistMintMode {
+  BurnEveryTime,
+  NeverBurn,
+}
+export interface CandyMachineData {
+  itemsAvailable: anchor.BN;
+  symbol: string;
+  sellerFeeBasisPoints: number;
+  isMutable: boolean;
+  maxSupply: anchor.BN;
+  retainAuthority: boolean;
+  useCaptcha: boolean;
+  goLiveDate: null | anchor.BN;
+  endSettings: null | [number, anchor.BN];
+  hiddenSetting: null | {
+    mode: WhitelistMintMode;
+    mint: anchor.web3.PublicKey;
+    presale: boolean;
+    discountPrice: null | anchor.BN;
+  };
+  creators: {
+    address: PublicKey;
+    verified: boolean;
+    share: number;
+  }[];
+}
+
+export const createCandyMachineV2 = async function (
+  anchorProgram: anchor.Program,
+  payerWallet: Keypair,
+  configData: CandyMachineData,
+) {
+  const candyAccount = Keypair.generate();
+  const uuid = uuidFromConfigPubkey(candyAccount.publicKey);
+
+  if (!configData.creators || configData.creators.length === 0) {
+    throw new Error(`Invalid config, there must be at least one creator.`);
+  }
+
+  const totalShare = (configData.creators || []).reduce(
+    (acc, curr) => acc + curr.share,
+    0,
+  );
+
+  if (totalShare !== 100) {
+    throw new Error(`Invalid config, creators shares must add up to 100`);
+  }
+
+  return {
+    config: candyAccount.publicKey,
+    uuid,
+    txId: await anchorProgram.rpc.initializeCandyMachine(
+      {
+        uuid,
+        ...configData,
+      },
+      {
+        accounts: {
+          config: configAccount.publicKey,
+          authority: payerWallet.publicKey,
+          payer: payerWallet.publicKey,
+          systemProgram: SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [payerWallet, configAccount],
+        instructions: [
+          await createConfigAccount(
+            anchorProgram,
+            configData,
+            payerWallet.publicKey,
+            configAccount.publicKey,
+          ),
+        ],
+      },
+    ),
+  };
+};
+
 export const createConfig = async function (
   anchorProgram: anchor.Program,
   payerWallet: Keypair,
@@ -570,7 +648,7 @@ export async function getTokenAmount(
 export const getBalance = async (
   account: anchor.web3.PublicKey,
   env: string,
-  customRpcUrl?: string
+  customRpcUrl?: string,
 ): Promise<number> => {
   if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
   const connection = new anchor.web3.Connection(
@@ -578,7 +656,7 @@ export const getBalance = async (
     customRpcUrl || web3.clusterApiUrl(env),
   );
   return await connection.getBalance(account);
-}
+};
 
 export async function getProgramAccounts(
   connection: anchor.web3.Connection,

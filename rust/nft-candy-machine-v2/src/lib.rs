@@ -17,11 +17,11 @@ use {
     spl_token::state::Mint,
     std::cell::RefMut,
 };
-anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
+anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
 const PREFIX: &str = "candy_machine";
 #[program]
-pub mod nft_candy_machine {
+pub mod nft_candy_machine_v2 {
     use anchor_lang::solana_program::{
         program::{invoke, invoke_signed},
         system_instruction,
@@ -40,21 +40,7 @@ pub mod nft_candy_machine {
         let wallet = &ctx.accounts.wallet;
         let token_program = &ctx.accounts.token_program;
         let recent_blockhashes = &ctx.accounts.recent_blockhashes;
-
-        match candy_machine.data.go_live_date {
-            None => {
-                if *ctx.accounts.payer.key != candy_machine.authority {
-                    return Err(ErrorCode::CandyMachineNotLive.into());
-                }
-            }
-            Some(val) => {
-                if clock.unix_timestamp < val {
-                    if *ctx.accounts.payer.key != candy_machine.authority {
-                        return Err(ErrorCode::CandyMachineNotLive.into());
-                    }
-                }
-            }
-        }
+        let mut price = candy_machine.data.price;
         if let Some(es) = &candy_machine.data.end_settings {
             match es {
                 EndSettings::Date(date) => {
@@ -100,6 +86,41 @@ pub mod nft_candy_machine {
                     token_program: token_program.to_account_info(),
                 })?;
             }
+
+            match candy_machine.data.go_live_date {
+                None => {
+                    if *ctx.accounts.payer.key != candy_machine.authority && !ws.presale {
+                        return Err(ErrorCode::CandyMachineNotLive.into());
+                    }
+                }
+                Some(val) => {
+                    if clock.unix_timestamp < val
+                        && *ctx.accounts.payer.key != candy_machine.authority
+                        && !ws.presale
+                    {
+                        return Err(ErrorCode::CandyMachineNotLive.into());
+                    }
+                }
+            }
+
+            if let Some(dp) = ws.discount_price {
+                price = dp;
+            }
+        } else {
+            match candy_machine.data.go_live_date {
+                None => {
+                    if *ctx.accounts.payer.key != candy_machine.authority {
+                        return Err(ErrorCode::CandyMachineNotLive.into());
+                    }
+                }
+                Some(val) => {
+                    if clock.unix_timestamp < val
+                        && *ctx.accounts.payer.key != candy_machine.authority
+                    {
+                        return Err(ErrorCode::CandyMachineNotLive.into());
+                    }
+                }
+            }
         }
 
         if candy_machine.items_redeemed >= candy_machine.data.items_available {
@@ -113,7 +134,7 @@ pub mod nft_candy_machine {
 
             let token_account = assert_is_ata(token_account_info, &wallet.key(), &mint)?;
 
-            if token_account.amount < candy_machine.data.price {
+            if token_account.amount < price {
                 return Err(ErrorCode::NotEnoughTokens.into());
             }
 
@@ -123,19 +144,15 @@ pub mod nft_candy_machine {
                 authority: transfer_authority_info.clone(),
                 authority_signer_seeds: &[],
                 token_program: token_program.to_account_info(),
-                amount: candy_machine.data.price,
+                amount: price,
             })?;
         } else {
-            if ctx.accounts.payer.lamports() < candy_machine.data.price {
+            if ctx.accounts.payer.lamports() < price {
                 return Err(ErrorCode::NotEnoughSOL.into());
             }
 
             invoke(
-                &system_instruction::transfer(
-                    &ctx.accounts.payer.key,
-                    wallet.key,
-                    candy_machine.data.price,
-                ),
+                &system_instruction::transfer(&ctx.accounts.payer.key, wallet.key, price),
                 &[
                     ctx.accounts.payer.to_account_info(),
                     wallet.to_account_info(),
@@ -192,7 +209,7 @@ pub mod nft_candy_machine {
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.system_program.to_account_info(),
             ctx.accounts.rent.to_account_info(),
-            candy_machine.to_account_info(),
+            candy_machine_creator.to_account_info(),
         ];
 
         let master_edition_infos = vec![
@@ -205,7 +222,7 @@ pub mod nft_candy_machine {
             ctx.accounts.token_program.to_account_info(),
             ctx.accounts.system_program.to_account_info(),
             ctx.accounts.rent.to_account_info(),
-            candy_machine.to_account_info(),
+            candy_machine_creator.to_account_info(),
         ];
 
         invoke_signed(
@@ -215,7 +232,7 @@ pub mod nft_candy_machine {
                 *ctx.accounts.mint.key,
                 *ctx.accounts.mint_authority.key,
                 *ctx.accounts.payer.key,
-                candy_machine.key(),
+                candy_machine_creator.key(),
                 config_line.name,
                 candy_machine.data.symbol.clone(),
                 config_line.uri,
@@ -233,7 +250,7 @@ pub mod nft_candy_machine {
                 *ctx.accounts.token_metadata_program.key,
                 *ctx.accounts.master_edition.key,
                 *ctx.accounts.mint.key,
-                candy_machine.key(),
+                candy_machine_creator.key(),
                 *ctx.accounts.mint_authority.key,
                 *ctx.accounts.metadata.key,
                 *ctx.accounts.payer.key,
@@ -253,7 +270,7 @@ pub mod nft_candy_machine {
             &update_metadata_accounts(
                 *ctx.accounts.token_metadata_program.key,
                 *ctx.accounts.metadata.key,
-                candy_machine.key(),
+                candy_machine_creator.key(),
                 new_update_authority,
                 None,
                 Some(true),
@@ -261,7 +278,7 @@ pub mod nft_candy_machine {
             &[
                 ctx.accounts.token_metadata_program.to_account_info(),
                 ctx.accounts.metadata.to_account_info(),
-                candy_machine.to_account_info(),
+                candy_machine_creator.to_account_info(),
             ],
             &[&authority_seeds],
         )?;
@@ -581,6 +598,8 @@ pub struct CandyMachine {
 pub struct WhitelistMintSettings {
     mode: WhitelistMintMode,
     mint: Pubkey,
+    presale: bool,
+    discount_price: Option<u64>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
@@ -641,7 +660,9 @@ pub const CONFIG_ARRAY_START: usize = 8 + // key
 8 + // items redeemed
 1 + // whitelist option
 1 + // whitelist mint mode
+1 + // allow presale
 1 + // use captcha
+9 + // discount price
 32; // mint key for whitelist
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
