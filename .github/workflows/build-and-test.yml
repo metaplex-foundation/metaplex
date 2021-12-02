@@ -24,7 +24,7 @@ jobs:
     needs:
       - test-token-vault
       - test-token-metadata
-      - test-metaplex-program
+      - test-metaplex
     steps:
       - run: echo "Done"
 
@@ -108,10 +108,10 @@ jobs:
           cargo +${{ env.RUST_TOOLCHAIN }} test -- --nocapture --test-threads 1
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf -- --nocapture --test-threads 1
-  test-metaplex-program:
+  test-metaplex:
     runs-on: ubuntu-latest
     env:
-      cache_id: test-metaplex-program
+      cache_id: test-metaplex
 
     steps:
       # Setup Deps
@@ -136,7 +136,7 @@ jobs:
           key: ${{ env.cache_id }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUSTC_HASH }}
 
       # Run test
-      - name: test-metaplex-program
+      - name: test-metaplex
         id: run_test
         working-directory: ./rust/metaplex/program
         run: |
