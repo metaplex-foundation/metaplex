@@ -36,7 +36,6 @@ export const SalesListView = () => {
         actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
         useBannerBg
       />
-      {/* <RedeemItemModal /> */}
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 32 }}>

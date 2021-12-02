@@ -1,40 +1,34 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Row, Col } from 'antd';
 
 import Card from './components/Card';
 import RedeemModal from './components/RedeemModal';
 import PackSidebar from './components/PackSidebar';
-import { useMeta } from '@oyster/common';
-import { useParams } from 'react-router';
-import { usePackState } from './hooks/usePackState';
 import ArtCard from './components/ArtCard';
 import OpenPackButton from './components/OpenPackButtom';
+import { PackProvider, usePack } from './contexts/PackContext';
 
-export const PackView = () => {
+const PackView: React.FC = () => {
   const [openModal, setOpenModal] = useState(false);
-  const { packKey }: { packKey: string } = useParams();
-  const { packs, vouchers } = useMeta();
-  const { isLoading, mockBlocks, packMetadata, handleFetch } =
-    usePackState(packKey);
-  const voucher = useMemo(
-    () =>
-      Object.values(vouchers).find(
-        voucher => voucher?.info?.packSet === packKey,
-      ),
-    [vouchers, packKey],
-  );
+  const { isLoading, openedMetadata, cardsRedeemed, pack } = usePack();
 
-  const pack = packs[packKey];
+  const cardsLeftToOpen = pack
+    ? pack.info.allowedAmountToRedeem - cardsRedeemed
+    : 0;
+  const mockBlocks = useMemo(
+    () => Array.from({ length: cardsLeftToOpen }, (_, i) => i + cardsRedeemed),
+    [cardsLeftToOpen, cardsRedeemed],
+  );
 
   const handleToggleModal = useCallback(async () => {
     setOpenModal(!openModal);
   }, [openModal]);
 
-  useEffect(() => {
-    if (!openModal) {
-      handleFetch();
-    }
-  }, [openModal]);
+  // useEffect(() => {
+  //   if (!openModal) {
+  //     handleFetch();
+  //   }
+  // }, [openModal]);
 
   return (
     <div className="pack-view">
@@ -42,7 +36,7 @@ export const PackView = () => {
         <Col md={16}>
           <div className="pack-view__list">
             {!isLoading &&
-              packMetadata.map(({ metadata }) => (
+              openedMetadata.map(({ metadata }) => (
                 <ArtCard key={metadata.pubkey} pubkey={metadata.pubkey} />
               ))}
             {!isLoading &&
@@ -50,7 +44,7 @@ export const PackView = () => {
           </div>
         </Col>
         <Col md={8} className="pack-view__sidebar-container">
-          <PackSidebar pack={pack} id={voucher?.info?.metadata} />
+          <PackSidebar />
           <OpenPackButton onClick={handleToggleModal} />
         </Col>
       </Row>
@@ -59,3 +53,11 @@ export const PackView = () => {
     </div>
   );
 };
+
+const PackViewWithContext: React.FC = () => (
+  <PackProvider>
+    <PackView />
+  </PackProvider>
+);
+
+export default PackViewWithContext;

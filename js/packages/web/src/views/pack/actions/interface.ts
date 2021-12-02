@@ -8,7 +8,7 @@ import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey } from '@solana/web3.js';
 
-import { ExtendedVoucherByKey } from '../../../../artworks/types';
+import { ExtendedVoucherByKey } from '../../artworks/types';
 import { PackMetadataByPackCard } from '../hooks/useMetadataByPackCard';
 
 export interface OpenPackParams

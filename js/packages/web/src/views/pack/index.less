@@ -1,4 +1,4 @@
-@scrollbar-color: #2c2c2c;
+@import './components/RedeemModal/index.less';
 
 .pack-view {
   &__sidebar-container {
@@ -127,7 +127,8 @@
     flex-direction: row;
     justify-content: space-between;
     .info-item {
-      &__title, h6 {
+      &__title,
+      h6 {
         font-size: 14px;
         font-weight: normal;
         margin: 0 0 16px 0;
@@ -213,6 +214,7 @@
       padding: 0 20px;
     }
   }
+
   .open-pack {
     width: calc(33% - 48px);
     max-width: 400px;

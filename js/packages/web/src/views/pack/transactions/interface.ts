@@ -9,7 +9,7 @@ import {
 import BN from 'bn.js';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 
-import { ExtendedVoucherByKey } from '../../../../artworks/types';
+import { ExtendedVoucherByKey } from '../../artworks/types';
 import { PackMetadataByPackCard } from '../hooks/useMetadataByPackCard';
 
 export interface GenerateTransactionsResponse {

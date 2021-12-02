@@ -14,7 +14,7 @@ import {
   StaticPageView,
 } from './views';
 import { AdminView } from './views/admin';
-import { PackView } from './views/pack';
+import PackView from './views/pack';
 import { PackCreateView } from './views/packCreate';
 import { BillingView } from './views/auction/billing';
 

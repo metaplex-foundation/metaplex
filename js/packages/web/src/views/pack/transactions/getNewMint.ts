@@ -3,7 +3,7 @@ import { MintLayout } from '@solana/spl-token';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { StringPublicKey } from '@oyster/common';
 
-import { createMintAndAccountWithOne } from '../../../../../actions/createMintAndAccountWithOne';
+import { createMintAndAccountWithOne } from '../../../actions/createMintAndAccountWithOne';
 
 interface Response {
   mint: StringPublicKey;
