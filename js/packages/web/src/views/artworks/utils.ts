@@ -1,4 +1,5 @@
-import { ExtendedPackWithMetadata, Item } from './types';
+import { ExtendedPack, Item } from './types';
 
-export const isPack = (item: Item): item is ExtendedPackWithMetadata =>
-  (item as ExtendedPackWithMetadata).info.distributionType !== undefined;
+export const isPack = (item: Item): item is ExtendedPack =>
+  item.info.distributionType !== undefined ||
+  Boolean((item as ExtendedPack)?.provingProcessKey);

@@ -1,9 +1,9 @@
 import React, { ReactElement, useCallback, useMemo, useState } from 'react';
 import { Col, Modal, Row, Space, Spin } from 'antd';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useParams } from 'react-router';
+import {useLocation, useParams} from 'react-router';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { shortenAddress, useConnection, useMeta, useUserAccounts } from '@oyster/common';
+import { shortenAddress, getSearchParams, useConnection, useMeta, useUserAccounts } from '@oyster/common';
 
 import { useMetadataByPackCard } from './hooks/useMetadataByPackCard';
 import { useUserVouchersByEdition } from '../../../artworks/hooks/useUserVouchersByEdition';
@@ -31,10 +31,9 @@ const RedeemModal = ({
   onClose,
 }: RedeemModalProps): ReactElement => {
   const { packs, metadata, packCards, masterEditions } = useMeta();
-  const {
-    packKey,
-    voucherEditionKey,
-  }: { packKey: string; voucherEditionKey: string } = useParams();
+  const { packKey }: { packKey: string } = useParams();
+  const { search } = useLocation()
+  const { voucherEditionKey } = getSearchParams(search);
   const wallet = useWallet();
   const connection = useConnection();
   const { accountByMint } = useUserAccounts();

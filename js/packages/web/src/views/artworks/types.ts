@@ -1,4 +1,4 @@
-import { Metadata, ParsedAccount, StringPublicKey } from '@oyster/common';
+import { ParsedAccount, StringPublicKey } from '@oyster/common';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 import { PackVoucher } from '@oyster/common/dist/lib/models/packs/accounts/PackVoucher';
 import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
@@ -15,14 +15,13 @@ export type ExtendedPack = ParsedAccount<PackSet> & {
   voucher: StringPublicKey;
   edition: StringPublicKey;
   cardsRedeemed?: number;
-};
-export type ExtendedPackWithMetadata = ExtendedPack & {
-  voucherMetadata: ParsedAccount<Metadata>;
+  voucherMetadataKey?: StringPublicKey;
+  provingProcessKey?: StringPublicKey;
 };
 export type ExtendedPackByKey = Record<string, ExtendedPack>;
 export type ProvingProcessByKey = Record<string, ParsedAccount<ProvingProcess>>;
 
-export type Item = ParsedAccount<Metadata> | ExtendedPackWithMetadata;
+export type Item = ExtendedPack | ParsedAccount<PackSet>;
 
 export enum ArtworkViewState {
   Metaplex = '0',

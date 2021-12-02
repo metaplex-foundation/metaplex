@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import { Row, Col } from 'antd';
 
 import Card from './components/Card';
@@ -12,19 +12,19 @@ import OpenPackButton from './components/OpenPackButtom';
 
 export const PackView = () => {
   const [openModal, setOpenModal] = useState(false);
-  const {
-    packKey,
-    voucherEditionKey,
-  }: { packKey: string; voucherEditionKey: string } = useParams();
-  const { packs, metadata } = useMeta();
+  const { packKey }: { packKey: string } = useParams();
+  const { packs, vouchers } = useMeta();
   const { isLoading, mockBlocks, packMetadata, handleFetch } =
     usePackState(packKey);
+  const voucher = useMemo(
+    () =>
+      Object.values(vouchers).find(
+        voucher => voucher?.info?.packSet === packKey,
+      ),
+    [vouchers, packKey],
+  );
 
   const pack = packs[packKey];
-  const metaInfo = useMemo(
-    () => metadata.find(meta => meta?.info?.edition === voucherEditionKey),
-    [metadata, voucherEditionKey],
-  );
 
   const handleToggleModal = useCallback(async () => {
     setOpenModal(!openModal);
@@ -50,7 +50,7 @@ export const PackView = () => {
           </div>
         </Col>
         <Col md={8} className="pack-view__sidebar-container">
-          <PackSidebar pack={pack} id={metaInfo?.pubkey} />
+          <PackSidebar pack={pack} id={voucher?.info?.metadata} />
           <OpenPackButton onClick={handleToggleModal} />
         </Col>
       </Row>

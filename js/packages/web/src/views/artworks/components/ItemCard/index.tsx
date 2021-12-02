@@ -9,20 +9,23 @@ import { isPack } from '../../utils';
 const ART_CARD_SIZE = 250;
 
 const ItemCard = ({ item }: { item: Item }): ReactElement => {
-  if (isPack(item)) {
+  if(isPack(item)) {
     const {
       pubkey,
-      info: { authority, allowedAmountToRedeem },
-      edition,
       cardsRedeemed,
-      voucherMetadata,
+      edition,
+      info: { authority, allowedAmountToRedeem },
+      provingProcessKey,
+      voucherMetadataKey,
     } = item;
 
+    const search = edition ? `voucherEditionKey=${edition}` : `provingProcessKey=${provingProcessKey}`;
+    console.log(item, ' item')
     return (
-      <Link to={`/pack/${pubkey}/${edition}`}>
+      <Link to={`/pack/${pubkey}?${search}`}>
         <PackCard
-          name={voucherMetadata.info.data.name}
-          voucherMetadata={voucherMetadata.pubkey}
+          name={item.info.name}
+          voucherMetadata={voucherMetadataKey || ''}
           authority={authority}
           cardsRedeemed={cardsRedeemed}
           allowedAmountToRedeem={allowedAmountToRedeem}
