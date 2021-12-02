@@ -73,6 +73,15 @@ pub mod nft_candy_machine {
         }
 
         let mut remaining_accounts_counter: usize = 0;
+        if let Some(gatekeeper_network) = &candy_machine.data.gatekeeper_network{
+            if ctx.remaining_accounts.len() == 0{
+                return Err(ErrorCode::GatewayTokenMissing.into());
+            }
+            let gateway_token = &ctx.remaining_accounts[remaining_accounts_counter];
+            remaining_accounts_counter += 1;
+            solana_gateway::Gateway::verify_gateway_token_account_info(gateway_token, &wallet.key(), gatekeeper_network)?;
+        }
+
         if let Some(ws) = &candy_machine.data.whitelist_mint_settings {
             let whitelist_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
             remaining_accounts_counter += 1;
@@ -110,6 +119,7 @@ pub mod nft_candy_machine {
             let token_account_info = &ctx.remaining_accounts[remaining_accounts_counter];
             remaining_accounts_counter += 1;
             let transfer_authority_info = &ctx.remaining_accounts[remaining_accounts_counter];
+            remaining_accounts_counter += 1;
 
             let token_account = assert_is_ata(token_account_info, &wallet.key(), &mint)?;
 
@@ -552,6 +562,16 @@ pub struct MintNFT<'info> {
     rent: Sysvar<'info, Rent>,
     clock: Sysvar<'info, Clock>,
     recent_blockhashes: Sysvar<'info, RecentBlockhashes>,
+    // > Only needed if candy machine has a gatekeeper network:
+    // gateway_token
+    // > Only needed if candy machine has whitelist_mint_settings
+    // whitelist_token_account
+    // > Only needed if candy machine has whitelist_mint_settings and mode is BurnEveryTime
+    // whitelist_token_mint
+    // whitelist_burn_authority
+    // > Only needed if candy machine has token mint
+    // token_account_info
+    // transfer_authority_info
 }
 
 #[derive(Accounts)]
@@ -603,13 +623,13 @@ pub struct CandyMachineData {
     pub max_supply: u64,
     pub is_mutable: bool,
     pub retain_authority: bool,
-    pub use_captcha: bool,
     pub go_live_date: Option<i64>,
     pub end_settings: Option<EndSettings>,
     pub creators: Vec<Creator>,
     pub hidden_setting: Option<HiddenSetting>,
     pub whitelist_mint_settings: Option<WhitelistMintSettings>,
     pub items_available: u64,
+    pub gatekeeper_network: Option<Pubkey>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -641,7 +661,6 @@ pub const CONFIG_ARRAY_START: usize = 8 + // key
 8 + // items redeemed
 1 + // whitelist option
 1 + // whitelist mint mode
-1 + // use captcha
 32; // mint key for whitelist
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -754,4 +773,6 @@ pub enum ErrorCode {
     NoWhitelistToken,
     #[msg("Token burn failed")]
     TokenBurnFailed,
+    #[msg("Missing gateway token when required")]
+    GatewayTokenMissing,
 }

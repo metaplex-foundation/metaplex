@@ -7,6 +7,12 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 
+export interface AlertState {
+  open: boolean;
+  message: string;
+  severity: 'success' | 'info' | 'warning' | 'error' | undefined;
+}
+
 export const FAIR_LAUNCH_PROGRAM_ID = new anchor.web3.PublicKey(
   'faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j',
 );
