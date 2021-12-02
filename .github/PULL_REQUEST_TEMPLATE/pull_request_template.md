@@ -4,10 +4,11 @@ Its much easier for us to read and review a PR that is small, linted, and contai
 ## Description
 
 This pull request improves several aspects of the verify process. 
-- Retries any (known) network related issues during the fetches
-- Outputs cleaned log values without nulls
-- Presents all of the issues at the end, with some recommendations
-- Does not replace links with null, and better handles on-chain true/false state
+- Retries any (known) network related issues during the fetches.
+- Outputs cleaned log values without nulls.
+- Presents all of the issues at the end, with some recommendations.
+- Does not replace links with null, and better handles on-chain true/false state.
+- Stores a hash of the link when checked out. Will not re-check on future runs if the link doesn't change.
 
 ## References
 
