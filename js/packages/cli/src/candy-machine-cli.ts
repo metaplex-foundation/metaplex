@@ -201,9 +201,19 @@ programCommand('withdraw')
     }
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+
+    // this is hash of first 8 symbols in pubkey
+    // account:Config
+    const hashConfig = [155, 12, 170, 224, 30, 250, 204, 130];
     const configOrCommitment = {
       commitment: 'confirmed',
       filters: [
+        {
+          memcmp: {
+            offset: 0,
+            bytes: hashConfig,
+          },
+        },
         {
           memcmp: {
             offset: 8,
