@@ -570,7 +570,7 @@ export async function getTokenAmount(
 export const getBalance = async (
   account: anchor.web3.PublicKey,
   env: string,
-  customRpcUrl?: string
+  customRpcUrl?: string,
 ): Promise<number> => {
   if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
   const connection = new anchor.web3.Connection(
@@ -578,7 +578,7 @@ export const getBalance = async (
     customRpcUrl || web3.clusterApiUrl(env),
   );
   return await connection.getBalance(account);
-}
+};
 
 export async function getProgramAccounts(
   connection: anchor.web3.Connection,
