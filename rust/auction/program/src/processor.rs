@@ -566,9 +566,7 @@ impl BidState {
                 // check for instance sale auction
                 if instant_sale_price.is_some() {
                     if *max > 0 {
-                        max.checked_sub(1)
-                            .ok_or(AuctionError::NumericalOverflowError)?;
-                        *max = *max - 1;
+                        *max = max.checked_sub(1).ok_or(AuctionError::NumericalOverflowError)?;
                         msg!("Decrement max supply for limited instant sale auction");
                         Ok(())
                     } else {
