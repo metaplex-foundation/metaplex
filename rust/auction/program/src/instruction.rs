@@ -403,7 +403,7 @@ pub fn claim_bid_instruction(
         AccountMeta::new_readonly(bidder_pubkey, false),
         AccountMeta::new_readonly(token_mint_pubkey, false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
-        AccountMeta::new_readonly(spl_token::id(), false),        
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     if let Some(auction_extended) = auction_extended_pubkey {

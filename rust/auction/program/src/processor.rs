@@ -74,7 +74,7 @@ pub struct AuctionData {
     pub authority: Pubkey,
     /// Pubkey of the resource being bid on.
     /// TODO try to bring this back some day. Had to remove this due to a stack access violation bug
-    /// interactin that happens in metaplex during redemptions due to some low level rust error
+    /// interaction that happens in metaplex during redemptions due to some low level rust error
     /// that happens when AuctionData has too many fields. This field was the least used.
     ///pub resource: Pubkey,
     /// Token mint for the SPL token being used to bid
@@ -559,66 +559,86 @@ impl BidState {
 
         match self {
             // In a capped auction, track the limited number of winners.
-            BidState::EnglishAuction { ref mut bids, max } => {
-                match bids.last() {
-                    Some(top) => {
-                        msg!("Looking to go over the loop, but check tick size first");
+            BidState::EnglishAuction {
+                ref mut bids,
+                ref mut max,
+            } => {
+                // check for instance sale auction
+                if instant_sale_price.is_some() {
+                    if *max > 0 {
+                        max.checked_sub(1)
+                            .ok_or(AuctionError::NumericalOverflowError)?;
+                        *max = *max - 1;
+                        msg!("Decrement max supply for limited instant sale auction");
+                        Ok(())
+                    } else {
+                        return Err(AuctionError::AllItemsAreSold.into());
+                    }
+                }
+                // regular EnglishAuction
+                else {
+                    match bids.last() {
+                        Some(top) => {
+                            msg!("Looking to go over the loop, but check tick size first");
 
-                        for i in (0..bids.len()).rev() {
-                            msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
-                            if bids[i].1 < bid.1 {
-                                if let Some(gap_tick) = gap_tick_size_percentage {
-                                    BidState::assert_valid_gap_insertion(gap_tick, &bids[i], &bid)?
-                                }
-
-                                msg!("Ok we can do an insert");
-                                if i + 1 < bids.len() {
-                                    msg!("Doing a normal insert");
-                                    bids.insert(i + 1, bid);
-                                } else {
-                                    msg!("Doing an on the end insert");
-                                    bids.push(bid)
-                                }
-                                break;
-                            } else if bids[i].1 == bid.1 {
-                                if let Some(gap_tick) = gap_tick_size_percentage {
-                                    if gap_tick > 0 {
-                                        msg!("Rejecting same-bid insert due to gap tick size of {:?}", gap_tick);
-                                        return Err(AuctionError::GapBetweenBidsTooSmall.into());
+                            for i in (0..bids.len()).rev() {
+                                msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
+                                if bids[i].1 < bid.1 {
+                                    if let Some(gap_tick) = gap_tick_size_percentage {
+                                        BidState::assert_valid_gap_insertion(
+                                            gap_tick, &bids[i], &bid,
+                                        )?
                                     }
-                                }
 
-                                msg!("Ok we can do an equivalent insert");
-                                if i == 0 {
-                                    msg!("Doing a normal insert");
+                                    msg!("Ok we can do an insert");
+                                    if i + 1 < bids.len() {
+                                        msg!("Doing a normal insert");
+                                        bids.insert(i + 1, bid);
+                                    } else {
+                                        msg!("Doing an on the end insert");
+                                        bids.push(bid)
+                                    }
+                                    break;
+                                } else if bids[i].1 == bid.1 {
+                                    if let Some(gap_tick) = gap_tick_size_percentage {
+                                        if gap_tick > 0 {
+                                            msg!("Rejecting same-bid insert due to gap tick size of {:?}", gap_tick);
+                                            return Err(AuctionError::GapBetweenBidsTooSmall.into());
+                                        }
+                                    }
+
+                                    msg!("Ok we can do an equivalent insert");
+                                    if i == 0 {
+                                        msg!("Doing a normal insert");
+                                        bids.insert(0, bid);
+                                        break;
+                                    } else {
+                                        if bids[i - 1].1 != bids[i].1 {
+                                            msg!("Doing an insert just before");
+                                            bids.insert(i, bid);
+                                            break;
+                                        }
+                                        msg!("More duplicates ahead...")
+                                    }
+                                } else if i == 0 {
+                                    msg!("Inserting at 0");
                                     bids.insert(0, bid);
                                     break;
-                                } else {
-                                    if bids[i - 1].1 != bids[i].1 {
-                                        msg!("Doing an insert just before");
-                                        bids.insert(i, bid);
-                                        break;
-                                    }
-                                    msg!("More duplicates ahead...")
                                 }
-                            } else if i == 0 {
-                                msg!("Inserting at 0");
-                                bids.insert(0, bid);
-                                break;
                             }
-                        }
 
-                        let max_size = BidState::max_array_size_for(*max);
+                            let max_size = BidState::max_array_size_for(*max);
 
-                        if bids.len() > max_size {
-                            bids.remove(0);
+                            if bids.len() > max_size {
+                                bids.remove(0);
+                            }
+                            Ok(())
                         }
-                        Ok(())
-                    }
-                    _ => {
-                        msg!("Pushing bid onto stack");
-                        bids.push(bid);
-                        Ok(())
+                        _ => {
+                            msg!("Pushing bid onto stack");
+                            bids.push(bid);
+                            Ok(())
+                        }
                     }
                 }
             }
@@ -710,12 +730,13 @@ impl BidState {
         }
     }
 
+    // TODO: rename to instant_sale_price? (instant_sale_amount = instant_sale_price)
     pub fn lowest_winning_bid_is_instant_bid_price(&self, instant_sale_amount: u64) -> bool {
         match self {
             // In a capped auction, track the limited number of winners.
             BidState::EnglishAuction { bids, max } => {
-                // bids.len() - max = index of the last winner bid
-                bids.len() >= *max && bids[bids.len() - *max].1 >= instant_sale_amount
+                msg!("processing lowest_winning_bid_is_instant_bid_price");
+                bids.len() >= *max
             }
             _ => false,
         }

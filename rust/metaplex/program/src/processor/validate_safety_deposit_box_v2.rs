@@ -371,10 +371,13 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
                 return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
             }
 
-            if master_edition.max_supply.is_some() {
-                return Err(
-                    MetaplexError::CantUseLimitedSupplyEditionsWithOpenEditionAuction.into(),
-                );
+            if let Some(max) = master_edition.max_supply {
+                let amount_available = max
+                    .checked_sub(master_edition.supply)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+                if amount_available < total_amount_requested {
+                    return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
+                }
             }
         }
     }
