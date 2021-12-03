@@ -1797,6 +1797,8 @@ dependencies = [
  "num-derive",
  "num-traits",
  "solana-program",
+ "solana-program-test",
+ "solana-sdk",
  "spl-token",
  "thiserror",
 ]

@@ -38,9 +38,10 @@ incremented for features.
 - Ability to use PSD instead of PNGs in the candy machine CLI
 - Parallelize with batchSize command the candy machine CLI uploader
 - Add ability for a candy machine owner to update existing candies using an old and new cache file
+- Adds a minumum auction funds modal to prevent people from making bad auctions
 
 ### Fixes
-
+- Fixes - Hides spl token list if no tokens configured
 - Fixes #840 - Claim button visible after claim.
 - Improve Candy Machine CLI `create_generative_art` command performance. (@0xCryptoSheik in #899)
 - Fixes an issue with Instant Sale when the auction is an english auction. By and claim buttons were broken.
