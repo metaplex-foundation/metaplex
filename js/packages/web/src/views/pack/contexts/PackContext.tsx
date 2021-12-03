@@ -1,5 +1,4 @@
 import {
-  Metadata,
   ParsedAccount,
   StringPublicKey,
   useConnection,
@@ -28,8 +27,9 @@ type PackContextProps = {
   openedMetadata: SafetyDepositDraft[];
   cardsRedeemed: number;
   pack?: ParsedAccount<PackSet>;
-  voucherMetadata?: ParsedAccount<Metadata>;
+  voucherMetadataKey?: StringPublicKey;
   metadataByPackCard: PackMetadataByPackCard;
+  isProvingProcess: boolean;
   handleOpenPack: () => Promise<void>;
 };
 
@@ -40,6 +40,7 @@ export const PackContext = React.createContext<PackContextProps>({
   openedMetadata: [],
   cardsRedeemed: 0,
   metadataByPackCard: {},
+  isProvingProcess: false,
   handleOpenPack: () => Promise.resolve(),
 });
 
@@ -48,10 +49,9 @@ export const PackProvider: React.FC = ({ children }) => {
   const connection = useConnection();
   const { packKey }: { packKey: string } = useParams();
   const { search } = useLocation();
-  const { voucherEditionKey } = getSearchParams(search);
+  const { voucherEditionKey, provingProcessKey } = getSearchParams(search);
 
-  const { packs, packCards, masterEditions, metadata, pullPackPage } =
-    useMeta();
+  const { packs, packCards, masterEditions, metadata, pullPackPage, provingProcesses, vouchers } = useMeta();
   const { accountByMint, userAccounts } = useUserAccounts();
   const userVouchers = useUserVouchersByEdition();
   const metadataByPackCard = useMetadataByPackCard(packKey);
@@ -59,7 +59,13 @@ export const PackProvider: React.FC = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const pack = packs[packKey];
-  const cardsRedeemed = 0;
+  const provingProcess = useMemo(() => {
+    const process = provingProcesses[provingProcessKey];
+    if (process) return process;
+    return Object.values(provingProcesses).find(process => process.info.packSet === packKey);
+  }, [provingProcesses, provingProcessKey]);
+
+  const cardsRedeemed = provingProcess?.info?.cardsRedeemed || 0 ;
 
   const openedMetadata = useOpenedMetadata(packKey, cardsRedeemed);
 
@@ -67,6 +73,17 @@ export const PackProvider: React.FC = ({ children }) => {
     () => metadata.find(meta => meta?.info?.edition === voucherEditionKey),
     [metadata, voucherEditionKey],
   );
+
+  const voucher = useMemo(
+    () =>
+      Object.values(vouchers).find(
+        voucher => voucher?.info?.packSet === packKey,
+      ),
+    [vouchers, packKey],
+  );
+
+  const voucherMetadataKey = voucherMetadata?.pubkey || voucher?.info?.metadata;
+  const isProvingProcess = Boolean(provingProcessKey);
 
   const handleOpenPack = async () => {
     await openPack({
@@ -102,11 +119,12 @@ export const PackProvider: React.FC = ({ children }) => {
         isLoading,
         packKey,
         voucherEditionKey,
-        voucherMetadata,
+        voucherMetadataKey,
         openedMetadata,
         pack,
         cardsRedeemed,
         metadataByPackCard,
+        isProvingProcess,
         handleOpenPack,
       }}
     >

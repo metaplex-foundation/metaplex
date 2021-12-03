@@ -26,14 +26,14 @@ const RedeemModal = ({
   isModalVisible,
   onClose,
 }: RedeemModalProps): ReactElement => {
-  const { handleOpenPack, pack, metadataByPackCard, voucherMetadata } =
+  const { handleOpenPack, pack, metadataByPackCard, voucherMetadataKey, isProvingProcess } =
     usePack();
   const [modalState, setModalState] = useState<openState>(openState.Ready);
 
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
 
-  const art = useArt(voucherMetadata?.pubkey);
+  const art = useArt(voucherMetadataKey);
   const creators = (art.creators || []).map(
     creator => creator.name || shortenAddress(creator.address || ''),
   );
@@ -106,7 +106,7 @@ const RedeemModal = ({
               </p>
 
               <button className="modal-redeem__open-nft" onClick={onClickOpen}>
-                <span>Open Pack</span>
+                <span>{isProvingProcess ? 'Resume Opening Pack' : 'Open Pack'}</span>
               </button>
             </div>
           </>

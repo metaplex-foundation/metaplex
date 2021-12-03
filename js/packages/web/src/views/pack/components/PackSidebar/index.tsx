@@ -15,9 +15,9 @@ interface IPropsPackSidebar {
 }
 
 const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
-  const { pack, voucherMetadata } = usePack();
+  const { pack, voucherMetadataKey } = usePack();
 
-  const metadataPubkey = voucherMetadata?.pubkey || '';
+  const metadataPubkey = voucherMetadataKey || '';
   const art = useArt(metadataPubkey);
   const { publicKey } = useWallet();
   const userWallet = pubkeyToString(publicKey);
