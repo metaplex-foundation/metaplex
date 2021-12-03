@@ -132,15 +132,16 @@ export function MetaProvider({ children = null as any }) {
     if (isLoading) {
       return;
     }
-
-    if (!storeAddress && isReady) {
+    if (!storeAddress) {
       return setIsLoading(false);
     } else if (!state.store) {
       setIsLoading(true);
     }
 
-    // ToDo: Add feature flag check
-    const packsState = await pullPacks(connection, state, wallet?.publicKey);
+    const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+    const packsState = shouldEnableNftPacks
+      ? await pullPacks(connection, state, wallet?.publicKey)
+      : state;
 
     const nextState = await pullYourMetadata(
       connection,
@@ -224,7 +225,15 @@ export function MetaProvider({ children = null as any }) {
 
     const doneQuery = timeStart('MetaProvider#update#Query');
     const donePullPage = timeStart('MetaProvider#update#pullPage');
-    let nextState = await pullPage(connection, page, state, wallet?.publicKey);
+
+    const shouldFetchNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+    let nextState = await pullPage(
+      connection,
+      page,
+      state,
+      wallet?.publicKey,
+      shouldFetchNftPacks,
+    );
     donePullPage();
 
     if (nextState.storeIndexer.length) {

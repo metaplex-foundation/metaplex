@@ -530,6 +530,7 @@ export const pullPage = async (
   page: number,
   tempCache: MetaState,
   walletKey?: PublicKey | null,
+  shouldFetchNftPacks?: boolean,
 ) => {
   const updateTemp = makeSetter(tempCache);
   const forEach =
@@ -675,7 +676,9 @@ export const pullPage = async (
       }
     }
 
-    await pullPacks(connection, tempCache, walletKey);
+    if (shouldFetchNftPacks) {
+      await pullPacks(connection, tempCache, walletKey);
+    }
 
     if (page == 0) {
       console.log('-------->Page 0, pulling creators and store');

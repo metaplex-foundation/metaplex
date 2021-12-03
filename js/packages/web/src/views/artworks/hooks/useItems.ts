@@ -20,13 +20,17 @@ export const useItems = ({
   const { metadata, provingProcesses, packs, vouchers } = useMeta();
   const userPacks = useUserPacksByEdition();
 
+  const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+  console.log({ shouldEnableNftPacks });
   if (activeKey === ArtworkViewState.Owned) {
     return [
       ...mergeMetadataWithPacks(
         ownedMetadata.map(m => m.metadata),
         userPacks,
       ),
-      ...getPacksBasedOnProvingProcesses({ provingProcesses, vouchers, packs }),
+      ...(shouldEnableNftPacks
+        ? getPacksBasedOnProvingProcesses({ provingProcesses, vouchers, packs })
+        : []),
     ];
   }
 
@@ -36,7 +40,9 @@ export const useItems = ({
 
   return [
     ...mergeMetadataWithPacks(metadata, userPacks),
-    ...getPacksBasedOnProvingProcesses({ provingProcesses, vouchers, packs }),
+    ...(shouldEnableNftPacks
+      ? getPacksBasedOnProvingProcesses({ provingProcesses, vouchers, packs })
+      : []),
   ];
 };
 

@@ -19,7 +19,7 @@ import { PackCreateView } from './views/packCreate';
 import { BillingView } from './views/auction/billing';
 
 export function Routes() {
-  const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS;
+  const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
   return (
     <>
       <HashRouter basename={'/'}>
