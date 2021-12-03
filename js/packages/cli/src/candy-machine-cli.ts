@@ -162,6 +162,7 @@ programCommand('upload')
         ipfsCredentials,
         awsS3Bucket,
         batchSize,
+        false,
       );
 
       if (successful) {
@@ -710,7 +711,7 @@ programCommand('create_candy_machine')
       if (treasuryBalance === 0) {
         throw new Error(`Cannot use treasury account with 0 balance!`);
       }
-      wallet = treasuryAccount
+      wallet = treasuryAccount;
     }
 
     const config = new PublicKey(cacheContent.program.config);

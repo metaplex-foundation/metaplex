@@ -1,9 +1,12 @@
 import { EXTENSION_JSON, EXTENSION_PNG } from '../helpers/constants';
 import path from 'path';
 import {
+  createCandyMachineV2,
   createConfig,
+  getBalance,
   loadCandyProgram,
   loadWalletKey,
+  WhitelistMintMode,
 } from '../helpers/accounts';
 import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
@@ -13,22 +16,63 @@ import log from 'loglevel';
 import { awsUpload } from '../helpers/upload/aws';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
-import { chunks } from '../helpers/various';
+import { chunks, parsePrice } from '../helpers/various';
+import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
-export async function upload(
-  files: string[],
-  cacheName: string,
-  env: string,
-  keypair: string,
-  totalNFTs: number,
-  storage: string,
-  retainAuthority: boolean,
-  mutable: boolean,
-  rpcUrl: string,
-  ipfsCredentials: ipfsCreds,
-  awsS3Bucket: string,
-  batchSize: number,
-): Promise<boolean> {
+export async function uploadV2({
+  files,
+  cacheName,
+  env,
+  keypair,
+  totalNFTs,
+  storage,
+  retainAuthority,
+  mutable,
+  rpcUrl,
+  ipfsCredentials,
+  awsS3Bucket,
+  batchSize,
+  price,
+  solTreasuryAccount,
+  splTokenAccount,
+  splToken,
+  useCaptcha,
+  goLiveDate,
+  endSettings,
+  whitelistMintSettings,
+  hiddenSettings,
+}: {
+  files: string[];
+  cacheName: string;
+  env: string;
+  keypair: string;
+  totalNFTs: number;
+  storage: string;
+  retainAuthority: boolean;
+  mutable: boolean;
+  rpcUrl: string;
+  ipfsCredentials: ipfsCreds;
+  awsS3Bucket: string;
+  batchSize: number;
+  price: string;
+  solTreasuryAccount: string;
+  splTokenAccount: string;
+  splToken: string;
+  useCaptcha: boolean;
+  goLiveDate: null | BN;
+  endSettings: null | [number, BN];
+  whitelistMintSettings: null | {
+    mode: WhitelistMintMode;
+    mint: PublicKey;
+    presale: boolean;
+    discountPrice: null | BN;
+  };
+  hiddenSettings: null | {
+    name: string;
+    uri: string;
+    hash: Uint8Array;
+  };
+}): Promise<boolean> {
   let uploadSuccessful = true;
 
   const savedContent = loadCache(cacheName, env);
@@ -102,24 +146,102 @@ export async function upload(
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
             if (i === 0 && !cacheContent.program.uuid) {
-              // initialize config
-              log.info(`initializing config`);
               try {
-                const res = await createConfig(anchorProgram, walletKeyPair, {
-                  maxNumberOfLines: new BN(totalNFTs),
-                  symbol: manifest.symbol,
-                  sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-                  isMutable: mutable,
-                  maxSupply: new BN(0),
-                  retainAuthority: retainAuthority,
-                  creators: manifest.properties.creators.map(creator => {
-                    return {
-                      address: new PublicKey(creator.address),
-                      verified: true,
-                      share: creator.share,
-                    };
-                  }),
-                });
+                const remainingAccounts = [];
+                let wallet = walletKeyPair.publicKey;
+                let parsedPrice = parsePrice(price);
+                if (splToken || splTokenAccount) {
+                  if (solTreasuryAccount) {
+                    throw new Error(
+                      'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
+                    );
+                  }
+                  if (!splToken) {
+                    throw new Error(
+                      'If spl-token-account is set, spl-token must also be set',
+                    );
+                  }
+                  const splTokenKey = new PublicKey(splToken);
+                  const splTokenAccountKey = new PublicKey(splTokenAccount);
+                  if (!splTokenAccount) {
+                    throw new Error(
+                      'If spl-token is set, spl-token-account must also be set',
+                    );
+                  }
+
+                  const token = new Token(
+                    anchorProgram.provider.connection,
+                    splTokenKey,
+                    TOKEN_PROGRAM_ID,
+                    walletKeyPair,
+                  );
+
+                  const mintInfo = await token.getMintInfo();
+                  if (!mintInfo.isInitialized) {
+                    throw new Error(
+                      `The specified spl-token is not initialized`,
+                    );
+                  }
+                  const tokenAccount = await token.getAccountInfo(
+                    splTokenAccountKey,
+                  );
+                  if (!tokenAccount.isInitialized) {
+                    throw new Error(
+                      `The specified spl-token-account is not initialized`,
+                    );
+                  }
+                  if (!tokenAccount.mint.equals(splTokenKey)) {
+                    throw new Error(
+                      `The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`,
+                    );
+                  }
+
+                  wallet = splTokenAccountKey;
+                  parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
+                  remainingAccounts.push({
+                    pubkey: splTokenKey,
+                    isWritable: false,
+                    isSigner: false,
+                  });
+                }
+
+                if (solTreasuryAccount) {
+                  const treasuryAccount = new PublicKey(solTreasuryAccount);
+                  const treasuryBalance = await getBalance(
+                    treasuryAccount,
+                    env,
+                    rpcUrl,
+                  );
+                  if (treasuryBalance === 0) {
+                    throw new Error(
+                      `Cannot use treasury account with 0 balance!`,
+                    );
+                  }
+                  wallet = treasuryAccount;
+                }
+                // initialize candy
+                log.info(`initializing candy machine`);
+                const res = await createCandyMachineV2(
+                  anchorProgram,
+                  walletKeyPair,
+                  wallet,
+                  {
+                    itemsAvailable: new BN(totalNFTs),
+                    symbol: manifest.symbol,
+                    sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+                    isMutable: mutable,
+                    maxSupply: new BN(0),
+                    retainAuthority: retainAuthority,
+
+                    creators: manifest.properties.creators.map(creator => {
+                      return {
+                        address: new PublicKey(creator.address),
+                        verified: true,
+                        share: creator.share,
+                      };
+                    }),
+                  },
+                );
                 cacheContent.program.uuid = res.uuid;
                 cacheContent.program.config = res.config.toBase58();
                 config = res.config;
@@ -252,7 +374,7 @@ export async function upload(
   return uploadSuccessful;
 }
 
-export async function uploadV2(
+export async function upload(
   files: string[],
   cacheName: string,
   env: string,
@@ -339,9 +461,9 @@ export async function uploadV2(
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
             if (i === 0 && !cacheContent.program.uuid) {
-              // initialize config
-              log.info(`initializing config`);
               try {
+                // initialize config
+                log.info(`initializing config`);
                 const res = await createConfig(anchorProgram, walletKeyPair, {
                   maxNumberOfLines: new BN(totalNFTs),
                   symbol: manifest.symbol,

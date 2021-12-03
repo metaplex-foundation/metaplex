@@ -26,12 +26,12 @@ import {
   getBalance,
   getCandyMachineAddress,
   getProgramAccounts,
-  loadCandyProgram,
+  loadCandyProgramV2,
   loadWalletKey,
   AccountAndPubkey,
 } from './helpers/accounts';
 import { Config } from './types';
-import { upload } from './commands/upload';
+import { upload, uploadV2 } from './commands/upload';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
@@ -44,7 +44,7 @@ import {
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
-import { withdraw } from './commands/withdraw';
+import { withdraw, withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 program.version('0.0.2');
 
@@ -62,6 +62,24 @@ programCommand('upload')
   )
   .option('-n, --number <number>', 'Number of images to upload')
   .option('-b, --batchSize <number>', 'Batch size - defaults to 1000')
+  .option(
+    '-p, --price <string>',
+    'Price denominated in SOL or spl-token override',
+    '1',
+  )
+  .option(
+    '-t, --spl-token <string>',
+    'SPL token used to price NFT mint. To use SOL leave this empty.',
+  )
+  .option(
+    '-a, --spl-token-account <string>',
+    'SPL token account that receives mint payments. Only required if spl-token is specified.',
+  )
+  .option(
+    '-s, --sol-treasury-account <string>',
+    'SOL account that receives mint payments. Should have minimum 0.1 sol balance',
+  )
+  .option('-uc, --use-captcha <string>', 'Use captcha', 'false')
   .option(
     '-s, --storage <string>',
     'Database to use for storage (arweave, ipfs, aws)',
@@ -99,7 +117,14 @@ programCommand('upload')
       mutable,
       rpcUrl,
       batchSize,
+      price,
+      splToken,
+      splTokenAccount,
+      solTreasuryAccount,
+      useCaptcha,
     } = cmd.opts();
+
+    let parsedPrice = parsePrice(price);
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
       throw new Error(
@@ -149,12 +174,13 @@ programCommand('upload')
     log.info('started at: ' + startMs.toString());
     let warn = false;
     for (;;) {
-      const successful = await upload(
+      const successful = await uploadV2({
         files,
         cacheName,
         env,
         keypair,
-        elemCount,
+        totalNFTs: elemCount,
+        useCaptcha: useCaptcha == 'true',
         storage,
         retainAuthority,
         mutable,
@@ -162,7 +188,11 @@ programCommand('upload')
         ipfsCredentials,
         awsS3Bucket,
         batchSize,
-      );
+        price,
+        solTreasuryAccount,
+        splTokenAccount,
+        splToken,
+      });
 
       if (successful) {
         warn = false;
@@ -200,7 +230,11 @@ programCommand('withdraw')
       return;
     }
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2V2(
+      walletKeyPair,
+      env,
+      rpcUrl,
+    );
     const configOrCommitment = {
       commitment: 'confirmed',
       filters: [
@@ -244,7 +278,7 @@ programCommand('withdraw')
       for (const cg of configs) {
         try {
           if (cg.account.lamports > 0) {
-            const tx = await withdraw(
+            const tx = await withdrawV2(
               anchorProgram,
               walletKeyPair,
               env,
@@ -311,9 +345,8 @@ programCommand('verify')
 
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
-    const configAddress = new PublicKey(cacheContent.program.config);
     const config = await anchorProgram.provider.connection.getAccountInfo(
       configAddress,
     );
@@ -504,7 +537,7 @@ programCommand('verify_price')
     }
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
     const candyAddress = new PublicKey(cacheContent.candyMachineAddress);
 
@@ -542,7 +575,7 @@ programCommand('show')
     }
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
     const [candyMachine] = await getCandyMachineAddress(
       new PublicKey(cacheContent.program.config),
@@ -651,7 +684,7 @@ programCommand('create_candy_machine')
     const cacheContent = loadCache(cacheName, env);
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
     let wallet = walletKeyPair.publicKey;
     const remainingAccounts = [];
@@ -768,7 +801,7 @@ programCommand('update_candy_machine')
     const newAuthorityKey = newAuthority ? new PublicKey(newAuthority) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
 
@@ -892,7 +925,7 @@ programCommand('sign_all')
     const { keypair, env, cacheName, rpcUrl, batchSize, daemon } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
     const candyAddress = cacheContent.candyMachineAddress;
 
     const batchSizeParsed = parseInt(batchSize);
@@ -927,7 +960,7 @@ programCommand('update_existing_nfts_from_latest_cache_file')
     const cacheContent = loadCache(cacheName, env);
     const newCacheContent = loadCache(newCache, env);
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
     const candyAddress = cacheContent.candyMachineAddress;
 
     const batchSizeParsed = parseInt(batchSize);
@@ -956,7 +989,7 @@ programCommand('randomize_unminted_nfts_in_new_cache_file').action(
     const { keypair, env, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
     const candyAddress = cacheContent.candyMachineAddress;
 
     log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
@@ -995,7 +1028,7 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
 
   const cacheContent = loadCache(cacheName, env);
   const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
 
   const accountsByCreatorAddress = await getAccountsByCreatorAddress(
     cacheContent.candyMachineAddress,
