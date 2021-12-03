@@ -21,10 +21,14 @@ import {
   ESCROW,
   B,
   A,
+  CANDY_MACHINE_PROGRAM_V2_ID,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import { createConfigAccount } from './instructions';
+import {
+  createCandyMachineV2Account,
+  createConfigAccount,
+} from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
 import { AccountLayout, u64 } from '@solana/spl-token';
@@ -77,6 +81,7 @@ export enum WhitelistMintMode {
 }
 export interface CandyMachineData {
   itemsAvailable: anchor.BN;
+  uuid: null | string;
   symbol: string;
   sellerFeeBasisPoints: number;
   isMutable: boolean;
@@ -85,11 +90,16 @@ export interface CandyMachineData {
   useCaptcha: boolean;
   goLiveDate: null | anchor.BN;
   endSettings: null | [number, anchor.BN];
-  hiddenSetting: null | {
+  whitelistMintSettings: null | {
     mode: WhitelistMintMode;
     mint: anchor.web3.PublicKey;
     presale: boolean;
     discountPrice: null | anchor.BN;
+  };
+  hiddenSettings: null | {
+    name: string;
+    uri: string;
+    hash: Uint8Array;
   };
   creators: {
     address: PublicKey;
@@ -101,16 +111,17 @@ export interface CandyMachineData {
 export const createCandyMachineV2 = async function (
   anchorProgram: anchor.Program,
   payerWallet: Keypair,
-  configData: CandyMachineData,
+  treasuryWallet: PublicKey,
+  candyData: CandyMachineData,
 ) {
   const candyAccount = Keypair.generate();
-  const uuid = uuidFromConfigPubkey(candyAccount.publicKey);
+  candyData.uuid = uuidFromConfigPubkey(candyAccount.publicKey);
 
-  if (!configData.creators || configData.creators.length === 0) {
+  if (!candyData.creators || candyData.creators.length === 0) {
     throw new Error(`Invalid config, there must be at least one creator.`);
   }
 
-  const totalShare = (configData.creators || []).reduce(
+  const totalShare = (candyData.creators || []).reduce(
     (acc, curr) => acc + curr.share,
     0,
   );
@@ -120,32 +131,27 @@ export const createCandyMachineV2 = async function (
   }
 
   return {
-    config: candyAccount.publicKey,
-    uuid,
-    txId: await anchorProgram.rpc.initializeCandyMachine(
-      {
-        uuid,
-        ...configData,
+    candyMachine: candyAccount.publicKey,
+    uuid: candyData.uuid,
+    txId: await anchorProgram.rpc.initializeCandyMachine(candyData, {
+      accounts: {
+        candyMachine: candyAccount.publicKey,
+        wallet: treasuryWallet,
+        authority: payerWallet.publicKey,
+        payer: payerWallet.publicKey,
+        systemProgram: SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
-      {
-        accounts: {
-          config: configAccount.publicKey,
-          authority: payerWallet.publicKey,
-          payer: payerWallet.publicKey,
-          systemProgram: SystemProgram.programId,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        },
-        signers: [payerWallet, configAccount],
-        instructions: [
-          await createConfigAccount(
-            anchorProgram,
-            configData,
-            payerWallet.publicKey,
-            configAccount.publicKey,
-          ),
-        ],
-      },
-    ),
+      signers: [payerWallet, candyAccount],
+      instructions: [
+        await createCandyMachineV2Account(
+          anchorProgram,
+          candyData,
+          payerWallet.publicKey,
+          candyAccount.publicKey,
+        ),
+      ],
+    }),
   };
 };
 
@@ -550,6 +556,36 @@ export async function loadCandyProgram(
   });
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
+  log.debug('program id from anchor', program.programId.toBase58());
+  return program;
+}
+
+export async function loadCandyProgramV2(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(
+    CANDY_MACHINE_PROGRAM_V2_ID,
+    provider,
+  );
+  const program = new anchor.Program(
+    idl,
+    CANDY_MACHINE_PROGRAM_V2_ID,
+    provider,
+  );
   log.debug('program id from anchor', program.programId.toBase58());
   return program;
 }
