@@ -4,7 +4,7 @@ import { Button } from 'antd';
 const OpenPackButton = ({ onClick }: { onClick: () => void }) => {
   return (
     <div className="open-pack">
-      <div className="open-pack__title">Once opened, the pack cannot be re-sealed.</div>
+      <div className="open-pack__title">Once opened a Pack cannot be resealed</div>
       <Button onClick={onClick}>
         Open Pack
       </Button>

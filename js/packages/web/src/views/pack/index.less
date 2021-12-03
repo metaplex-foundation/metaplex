@@ -222,7 +222,6 @@
     border-radius: 12px;
     position: fixed;
     bottom: 40px;
-    margin-left: 24px;
     background-color: @grey-70;
 
     & button {
@@ -234,6 +233,138 @@
     &__title {
       margin-bottom: 20px;
       color: @grey-20;
+    }
+  }
+
+  @media (min-width: @mobile-xs-min) {
+    &__info-mobile,
+    .you-label {
+        display: none;
+      }
+  }
+
+  @media (max-width: @mobile-xs-max) {
+    .ant-row {
+      flex-direction: column-reverse;
+    }
+
+    .ant-col-md-16 {
+      width: 100%;
+    }
+
+    &__list {
+      padding: 32px 24px;
+    }
+
+    &__block {
+      width: 100%;
+      margin: 0 0 32px;
+    }
+
+    .open-pack {
+      position: static;
+      margin: 0 8px;
+      width: calc(100% - 16px);
+      max-width: none;
+      padding: 16px;
+
+      &__title {
+        color: @accent-color;
+        font-size: 16px;
+        line-height: 20px;
+        margin-bottom: 16px;
+      }
+    }
+
+    &__sidebar {
+      padding: 0;
+      border-top: 1px solid @grey-50;
+
+      & > .ant-divider {
+        display: none;
+      }
+    }
+
+    &__owner {
+      padding: 16px 24px;
+
+      & > div {
+        display: flex;
+        align-items: center;
+      }
+
+      .item-title {
+        font-size: 14px;
+        line-height: 17px;
+        margin-bottom: 8px;
+      }
+
+      .you-label {
+        margin-left: 8px;
+        padding: 9px 16px;
+        background: @grey-60;
+        border-radius: 36px;
+
+        font-family: @fontFamilyInter;
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 14px;
+        color: @grey-20;
+      }
+    }
+
+    &__art-preview {
+      max-width: 100%;
+      margin: 0 0 30px;
+
+      .ant-image-img {
+        border-radius: 0;
+      }
+    }
+
+    &__name {
+       padding: 0 24px;
+    }
+
+    &__info {
+      padding: 0 24px;
+      justify-content: flex-start;
+      margin-bottom: 24px;
+
+      .info-item {
+        padding-right: 30px;
+
+        &__title {
+          margin-bottom: 0;
+        }
+
+        &__value {
+          font-size: 18px;
+          line-height: 24px;
+        }
+
+
+        &:first-of-type {
+          border: none;
+        }
+
+        &:last-of-type {
+          display: none;
+        }
+      }
+    }
+
+    &__info-mobile {
+      padding: 0 24px;
+
+      .ant-divider {
+        margin-top: 30px;
+      }
+    }
+
+    &__description-block {
+      margin: 34px 0 24px;
+      padding: 0 24px;
     }
   }
 }

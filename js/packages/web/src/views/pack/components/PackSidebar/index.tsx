@@ -1,4 +1,4 @@
-import { shortenAddress, royalty } from '@oyster/common';
+import { shortenAddress, royalty, pubkeyToString } from '@oyster/common';
 import React from 'react';
 import { Skeleton, Divider } from 'antd';
 
@@ -7,12 +7,20 @@ import { ArtContent } from '../../../../components/ArtContent';
 import { ViewOn } from '../../../../components/ViewOn';
 import { useArt } from '../../../../hooks';
 import { usePack } from '../../contexts/PackContext';
+import { useWallet } from '@solana/wallet-adapter-react';
+import OpenPackButton from '../OpenPackButtom';
 
-const PackSidebar = () => {
+interface IPropsPackSidebar {
+  onOpenPack: () => void,
+}
+
+const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
   const { pack, voucherMetadata } = usePack();
 
   const metadataPubkey = voucherMetadata?.pubkey || '';
   const art = useArt(metadataPubkey);
+  const { publicKey } = useWallet();
+  const userWallet = pubkeyToString(publicKey);
 
   return (
     <div className="pack-view__sidebar">
@@ -24,6 +32,12 @@ const PackSidebar = () => {
             <span className="item-name">
               {creator.name || shortenAddress(creator?.address || '')}
             </span>
+            {
+              userWallet === creator.address &&
+              <div className="you-label">
+                You
+              </div>
+            }
           </div>
         ))}
       </div>
@@ -55,11 +69,19 @@ const PackSidebar = () => {
         </div>
       </div>
       <Divider className="divider" />
+      <OpenPackButton onClick={onOpenPack} />
+      <Divider className="divider"/>
       <div className="pack-view__description-block">
         <p className="pack-view__title">DETAILS</p>
         <p className="pack-view__text">
           {pack?.info?.description || <Skeleton paragraph={{ rows: 3 }} />}
         </p>
+      </div>
+      <div className="pack-view__info-mobile">
+        <div className="info-item">
+          <ViewOn id={metadataPubkey} />
+        </div>
+        <Divider className="divider"/>
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import Card from './components/Card';
 import RedeemModal from './components/RedeemModal';
 import PackSidebar from './components/PackSidebar';
 import ArtCard from './components/ArtCard';
-import OpenPackButton from './components/OpenPackButtom';
 import { PackProvider, usePack } from './contexts/PackContext';
 
 const PackView: React.FC = () => {
@@ -38,8 +37,7 @@ const PackView: React.FC = () => {
           </div>
         </Col>
         <Col md={8} className="pack-view__sidebar-container">
-          <PackSidebar />
-          <OpenPackButton onClick={handleToggleModal} />
+          <PackSidebar onOpenPack={handleToggleModal} />
         </Col>
       </Row>
 
