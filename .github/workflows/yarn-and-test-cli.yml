@@ -1,14 +1,10 @@
-name: Yarn Install and Test JS
+name: Yarn Install and Test CandyMachine
 
 on:
   push:
     branches: [master]
-    paths:
-      - 'js/**'
   pull_request:
     branches: [master]
-    paths:
-      - 'js/**'
 
 jobs:
   unit_tests:

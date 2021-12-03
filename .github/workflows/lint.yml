@@ -3,12 +3,8 @@ name: Lint JavaScript
 on:
   push:
     branches: [master]
-    paths:
-      - 'js/**'
   pull_request:
     branches: [master]
-    paths:
-      - 'js/**'
 
 jobs:
   eslint:

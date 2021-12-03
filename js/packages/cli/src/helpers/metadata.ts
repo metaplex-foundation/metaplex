@@ -16,6 +16,7 @@ export const TRAITS_DIRECTORY = './traits';
 export async function createMetadataFiles(
   numberOfImages: string,
   configLocation: string,
+  treatAttributesAsFileNames: boolean,
 ): Promise<any[]> {
   let numberOfFilesCreated: number = 0;
   const randomizedSets = [];
@@ -64,8 +65,9 @@ export async function createMetadataFiles(
       creators,
       description,
       seller_fee_basis_points,
-      randomizedSets[i],
+      shuffled[i],
       collection,
+      treatAttributesAsFileNames,
     );
 
     try {
