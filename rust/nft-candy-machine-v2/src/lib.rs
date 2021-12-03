@@ -15,7 +15,10 @@ use {
         },
     },
     spl_token::state::Mint,
-    std::cell::RefMut,
+    std::{
+        cell::RefMut,
+        ops::Deref
+    },
 };
 anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
 
@@ -73,13 +76,32 @@ pub mod nft_candy_machine {
         }
 
         let mut remaining_accounts_counter: usize = 0;
-        if let Some(gatekeeper_network) = &candy_machine.data.gatekeeper_network{
-            if ctx.remaining_accounts.len() == 0{
+        if let Some(gatekeeper) = &candy_machine.data.gatekeeper{
+            if ctx.remaining_accounts.len() <= remaining_accounts_counter{
                 return Err(ErrorCode::GatewayTokenMissing.into());
             }
             let gateway_token = &ctx.remaining_accounts[remaining_accounts_counter];
             remaining_accounts_counter += 1;
-            solana_gateway::Gateway::verify_gateway_token_account_info(gateway_token, &wallet.key(), gatekeeper_network)?;
+            if gatekeeper.expire_on_use{
+                if ctx.remaining_accounts.len() <= remaining_accounts_counter{
+                    return Err(ErrorCode::NetworkExpireFeatureMissing.into());
+                }
+                let network_expire_feature = &ctx.remaining_accounts[remaining_accounts_counter];
+                remaining_accounts_counter += 1;
+                solana_gateway::Gateway::verify_and_expire_token(
+                    gateway_token.clone(),
+                    wallet.deref().clone(),
+                    &gatekeeper.gatekeeper_network,
+                    network_expire_feature.clone(),
+                    None,
+                )?;
+            } else {
+                solana_gateway::Gateway::verify_gateway_token_account_info(
+                    gateway_token,
+                    &wallet.key(),
+                    &gatekeeper.gatekeeper_network,
+                )?;
+            }
         }
 
         if let Some(ws) = &candy_machine.data.whitelist_mint_settings {
@@ -562,8 +584,10 @@ pub struct MintNFT<'info> {
     rent: Sysvar<'info, Rent>,
     clock: Sysvar<'info, Clock>,
     recent_blockhashes: Sysvar<'info, RecentBlockhashes>,
-    // > Only needed if candy machine has a gatekeeper network:
+    // > Only needed if candy machine has a gatekeeper:
     // gateway_token
+    // > Only needed if candy machine has a gatekeeper and it has expire_on_use set to true:
+    // network_expire_feature
     // > Only needed if candy machine has whitelist_mint_settings
     // whitelist_token_account
     // > Only needed if candy machine has whitelist_mint_settings and mode is BurnEveryTime
@@ -629,7 +653,18 @@ pub struct CandyMachineData {
     pub hidden_setting: Option<HiddenSetting>,
     pub whitelist_mint_settings: Option<WhitelistMintSettings>,
     pub items_available: u64,
-    pub gatekeeper_network: Option<Pubkey>,
+    /// If [`Some`] requires gateway tokens on mint
+    pub gatekeeper: Option<GatekeeperConfig>,
+}
+
+/// Configurations options for the gatekeeper
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct GatekeeperConfig{
+    /// The network for the gateway token required
+    gatekeeper_network: Pubkey,
+    /// Whether or not the token should expire after minting.
+    /// The gatekeeper network must support this if true.
+    expire_on_use: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -661,7 +696,9 @@ pub const CONFIG_ARRAY_START: usize = 8 + // key
 8 + // items redeemed
 1 + // whitelist option
 1 + // whitelist mint mode
-32; // mint key for whitelist
+32 + // mint key for whitelist
+1 + 32 + 1 // gatekeeper
+;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct HiddenSetting {
@@ -775,4 +812,6 @@ pub enum ErrorCode {
     TokenBurnFailed,
     #[msg("Missing gateway token when required")]
     GatewayTokenMissing,
+    #[msg("Missing gateway network expire feature when required")]
+    NetworkExpireFeatureMissing,
 }

@@ -5,9 +5,9 @@ import {PhaseCountdown} from './countdown';
 import {toDate} from './utils';
 import {FairLaunchAccount} from './fair-launch';
 import {CandyMachineAccount} from './candy-machine';
-import {Badge, } from '@civic/solana-gateway-react';
+import {ButtonMode, GatewayProvider, IdentityButton} from '@civic/solana-gateway-react';
 import {useWallet} from '@solana/wallet-adapter-react';
-import {Connection, PublicKey} from '@solana/web3.js';
+import {PublicKey} from '@solana/web3.js';
 
 export enum Phase {
   AnticipationPhase, // FL, AKA Phase 0
@@ -92,7 +92,6 @@ type PhaseHeaderProps = {
   fairLaunch?: FairLaunchAccount,
   candyMachine?: CandyMachineAccount,
   candyMachinePredatesFairLaunch: boolean,
-  connection: Connection,
 }
 
 export const PhaseHeader = (
@@ -101,7 +100,6 @@ export const PhaseHeader = (
     fairLaunch,
     candyMachine,
     candyMachinePredatesFairLaunch,
-    connection
   }: PhaseHeaderProps) => {
   const wallet = useWallet();
 
@@ -175,14 +173,23 @@ export const PhaseHeader = (
     )}
     {
       // TODO: Add network when added to machine state
-      candyMachine?.state.isActive &&
+      // candyMachine?.state.isActive &&
         // candyMachine.state.gatekeeper_network && // Do network check here
-          wallet.publicKey &&
-          <Badge publicKey={wallet.publicKey}
-             gatekeeperNetwork={new PublicKey("gatbGF9DvLAw3kWyn1EmH5Nh1Sqp8sTukF7yaQpSc71")} // Development network (published private key)
-            // gatekeeperNetwork={candyMachine.state.gatekeeper_network} // assign network here
-            connection={connection}
-          />
+        wallet.adapter &&
+        wallet.adapter.publicKey !== null &&
+        <GatewayProvider
+            wallet={'signTransaction' in wallet.adapter
+              ? {
+                ...wallet.adapter,
+                publicKey: wallet.adapter.publicKey,
+              }
+              : undefined
+            }
+            // // Replace with following when added
+            // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
+            gatekeeperNetwork={new PublicKey("tigoYhp9SpCDoCQmXGj2im5xa3mnjR1zuXrpCJ5ZRmi")}>
+            <IdentityButton mode={ButtonMode.DARK} >Cool</IdentityButton>
+        </GatewayProvider>
     }
   </>
 }

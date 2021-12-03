@@ -478,7 +478,6 @@ const Home = (props: HomeProps) => {
               fairLaunch={fairLaunch}
               candyMachine={candyMachine}
               candyMachinePredatesFairLaunch={!!candyMachinePredatesFairLaunch}
-              connection={props.connection}
             />
             {fairLaunch && (
               <Grid
