@@ -382,19 +382,15 @@ impl AuctionData {
         bid_state.winner_at(idx)
     }
 
-    // TODO: Remove because of instant-sale fix
-    pub fn consider_instant_bid(&mut self, instant_sale_price: Option<u64>) {
-        unimplemented!();
+    /// NOTE: Will be removed after instant-sale fix.
+    pub fn consider_instant_bid(&mut self, bid_state: &BidState, instant_sale_price: Option<u64>) {
         // Check if all the lots were sold with instant_sale_price
-        /*if let Some(price) = instant_sale_price {
-            if self
-                .bid_state
-                .lowest_winning_bid_is_instant_bid_price(price)
-            {
+        if let Some(price) = instant_sale_price {
+            if bid_state.lowest_winning_bid_is_instant_bid_price(price) {
                 msg!("All the lots were sold with instant_sale_price, auction is ended");
                 self.state = AuctionState::Ended;
             }
-        }*/
+        }
     }
 
     pub fn place_bid(
@@ -433,8 +429,8 @@ impl AuctionData {
             &mut self.state,
         )?;
 
-        // TODO: Remove, because of instant-sale fix
-        // self.consider_instant_bid(instant_sale_price);
+        // NOTE: Will be removed after instant-sale fix
+        self.consider_instant_bid(bid_state, instant_sale_price);
 
         Ok(())
     }

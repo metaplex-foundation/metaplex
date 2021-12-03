@@ -4,7 +4,7 @@
 //! 2) The auction has finished, but the bid did not win. This allows users to claim back their
 //!    funds from bid accounts.
 
-use super::AuctionState;
+use super::{AuctionState, BidState};
 use crate::{
     errors::AuctionError,
     processor::{AuctionData, AuctionDataExtended, BidStateData, BidderMetadata, BidderPot},
@@ -96,9 +96,9 @@ fn parse_accounts<'a, 'b: 'a>(
     Ok(accounts)
 }
 
-pub fn cancel_bid(
+pub fn cancel_bid<'a>(
     program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    accounts: &'a [AccountInfo],
     args: CancelBidArgs,
 ) -> ProgramResult {
     msg!("+ Processing Cancelbid");
@@ -139,8 +139,8 @@ pub fn cancel_bid(
     // and update cancelled bids if auction still active
     let mut auction_extended = AuctionDataExtended::from_account_info(accounts.auction_extended)?;
 
-    // Obtain correct BidState instance
-    let (mut bid_state, mut bid_state_data_acc) =
+    // Obtain `BidStateData` if provided to instruction
+    let mut bid_state_data_acc: Option<(BidStateData, Pubkey)> =
         if let Some(bid_state_data) = accounts.bid_state_data {
             if *bid_state_data.key
                 != auction_extended
@@ -150,15 +150,12 @@ pub fn cancel_bid(
                 return Err(ProgramError::InvalidArgument);
             }
 
-            let bid_state_data_acc: BidStateData =
-                try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
-
-            (
-                bid_state_data_acc.state.clone(),
-                Some(bid_state_data_acc.clone()),
-            )
+            Some((
+                try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?,
+                *bid_state_data.key,
+            ))
         } else {
-            (auction.bid_state.clone(), None)
+            None
         };
 
     // Load the clock, used for various auction timing.
@@ -208,8 +205,16 @@ pub fn cancel_bid(
 
     // NOTE: will be removed with instant sale fix
     // Refuse to cancel if the auction ended and this person is a winning account.
-    let winner_bid_index =
-        AuctionData::is_winner(accounts.bidder.key, &auction.price_floor, &bid_state);
+    let winner_bid_index = {
+        let bid_state = if let Some((bid_state_data, pubkey)) = &bid_state_data_acc {
+            &bid_state_data.state
+        } else {
+            &auction.bid_state
+        };
+
+        AuctionData::is_winner(accounts.bidder.key, &auction.price_floor, &bid_state)
+    };
+
     if auction.ended(clock.unix_timestamp)? && winner_bid_index.is_some() {
         return Err(AuctionError::InvalidState.into());
     }
@@ -217,6 +222,12 @@ pub fn cancel_bid(
     // Refuse to cancel if bidder set price above or equal instant_sale_price
     if let Some(bid_index) = winner_bid_index {
         if let Some(instant_sale_price) = auction_extended.instant_sale_price {
+            let bid_state = if let Some((bid_state_data, pubkey)) = &bid_state_data_acc {
+                &bid_state_data.state
+            } else {
+                &auction.bid_state
+            };
+
             if bid_state.amount(bid_index) >= instant_sale_price {
                 return Err(AuctionError::InvalidState.into());
             }
@@ -274,11 +285,10 @@ pub fn cancel_bid(
         auction_extended.serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
 
         // Only cancel the bid if the auction has not ended yet
-        bid_state.cancel_bid(*accounts.bidder.key)?;
+        if let Some((bid_state_data, pubkey)) = &mut bid_state_data_acc {
+            bid_state_data.state.cancel_bid(*accounts.bidder.key)?;
 
-        if let Some(mut bid_state_data_acc) = bid_state_data_acc {
-            bid_state_data_acc.state = bid_state;
-            bid_state_data_acc.serialize(
+            bid_state_data.serialize(
                 &mut *accounts
                     .bid_state_data
                     .ok_or(ProgramError::InvalidArgument)?
@@ -286,8 +296,8 @@ pub fn cancel_bid(
                     .borrow_mut(),
             )?;
         } else {
-            auction.bid_state = bid_state;
-        }
+            auction.bid_state.cancel_bid(*accounts.bidder.key)?;
+        };
 
         auction.serialize(&mut *accounts.auction.data.borrow_mut())?;
     }

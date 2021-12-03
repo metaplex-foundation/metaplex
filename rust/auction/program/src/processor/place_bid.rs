@@ -288,22 +288,23 @@ pub fn place_bid<'r, 'b: 'r>(
         .ok_or(AuctionError::NumericalOverflowError)?;
     auction_extended.serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
 
-    let (mut bid_state, mut bid_state_data_acc) =
+    // Obtain `BidStateData` if provided to instruction
+    let mut bid_state_data_acc: Option<(BidStateData, Pubkey)> =
         if let Some(bid_state_data) = accounts.bid_state_data {
-            if auction_extended
-                .bid_state_data
-                .ok_or(ProgramError::InvalidArgument)?
-                != *bid_state_data.key
+            if *bid_state_data.key
+                != auction_extended
+                    .bid_state_data
+                    .ok_or(ProgramError::InvalidArgument)?
             {
                 return Err(ProgramError::InvalidArgument);
             }
 
-            let bid_state_data_acc: BidStateData =
-                try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
-
-            (bid_state_data_acc.state.clone(), Some(bid_state_data_acc))
+            Some((
+                try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?,
+                *bid_state_data.key,
+            ))
         } else {
-            (auction.bid_state.clone(), None)
+            None
         };
 
     let mut bid_price = args.amount;
@@ -338,26 +339,41 @@ pub fn place_bid<'r, 'b: 'r>(
 
     // Serialize new Auction State
     auction.last_bid = Some(clock.unix_timestamp);
-    auction.place_bid(
-        Bid(*accounts.bidder.key, bid_price),
-        auction_extended.tick_size,
-        auction_extended.gap_tick_size_percentage,
-        clock.unix_timestamp,
-        auction_extended.instant_sale_price,
-        &mut bid_state,
-    )?;
+    {
+        // Obtain correct `BidState` instance
+        if let Some((bid_state_data, pubkey)) = &mut bid_state_data_acc {
+            let mut bid_state = &mut bid_state_data.state;
 
-    if let Some(mut bid_state_data_acc) = bid_state_data_acc {
-        bid_state_data_acc.state = bid_state;
-        bid_state_data_acc.serialize(
-            &mut *accounts
-                .bid_state_data
-                .ok_or(ProgramError::InvalidArgument)?
-                .data
-                .borrow_mut(),
-        )?;
-    } else {
-        auction.bid_state = bid_state;
+            auction.place_bid(
+                Bid(*accounts.bidder.key, bid_price),
+                auction_extended.tick_size,
+                auction_extended.gap_tick_size_percentage,
+                clock.unix_timestamp,
+                auction_extended.instant_sale_price,
+                &mut bid_state,
+            )?;
+
+            bid_state_data.serialize(
+                &mut *accounts
+                    .bid_state_data
+                    .ok_or(ProgramError::InvalidArgument)?
+                    .data
+                    .borrow_mut(),
+            )?;
+        } else {
+            let mut bid_state = auction.bid_state.clone();
+
+            auction.place_bid(
+                Bid(*accounts.bidder.key, bid_price),
+                auction_extended.tick_size,
+                auction_extended.gap_tick_size_percentage,
+                clock.unix_timestamp,
+                auction_extended.instant_sale_price,
+                &mut bid_state,
+            )?;
+
+            auction.bid_state = bid_state;
+        };
     }
 
     auction.serialize(&mut *accounts.auction.data.borrow_mut())?;

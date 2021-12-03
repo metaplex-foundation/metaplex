@@ -13,7 +13,7 @@ use {
         },
     },
     borsh::BorshSerialize,
-    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidStateData},
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidState, BidStateData},
     metaplex_token_metadata::state::{MasterEditionV1, Metadata},
     metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
@@ -79,8 +79,8 @@ fn calculate_owed_amount(
     auction_token_tracker_info: Option<&AccountInfo>,
     safety_deposit_config_info: Option<&AccountInfo>,
     auction_manager: &Box<dyn AuctionManager>,
-    auction: &AuctionData,
     metadata: &Metadata,
+    bid_state: &BidState,
     winning_config_index: &Option<u8>,
     winning_config_item_index: &Option<u8>,
     creator_index: &Option<u8>,
@@ -92,7 +92,7 @@ fn calculate_owed_amount(
     )?;
 
     let mut amount_available_to_split: u128 = match winning_config_index {
-        Some(index) => auction.bid_state.amount(*index as usize) as u128,
+        Some(index) => bid_state.amount(*index as usize) as u128,
         None => {
             // this means the amount owed is the amount collected from participation nft bids.
             auction_manager.get_collected_to_accept_payment(safety_deposit_config_info)?
@@ -451,8 +451,8 @@ pub fn process_empty_payment_account(
         auction_token_tracker_info,
         safety_deposit_config_info,
         &auction_manager,
-        &auction,
         &metadata,
+        &bid_state,
         &args.winning_config_index,
         &args.winning_config_item_index,
         &args.creator_index,

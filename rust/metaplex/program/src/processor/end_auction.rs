@@ -7,12 +7,14 @@ use {
     },
     metaplex_auction::{
         instruction::{end_auction_instruction, EndAuctionArgs},
-        processor::{AuctionData, AuctionDataExtended, BidState},
+        processor::{AuctionData, AuctionDataExtended, BidState, BidStateData},
     },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
         program::invoke_signed,
+        program_error::ProgramError,
         pubkey::Pubkey,
     },
 };
@@ -55,6 +57,7 @@ pub fn process_end_auction(
     let store_info = next_account_info(account_info_iter)?;
     let auction_program_info = next_account_info(account_info_iter)?;
     let clock_info = next_account_info(account_info_iter)?;
+    let bid_state_data = next_account_info(account_info_iter).ok();
 
     let mut auction_manager = get_auction_manager(auction_manager_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
@@ -86,6 +89,24 @@ pub fn process_end_auction(
         return Err(MetaplexError::AuctionManagerInFishedState.into());
     }
 
+    // Obtain BidState instance
+    // Current implementation depends on AuctionDataExtended
+    let bid_state = if let Some(bid_state_data) = bid_state_data {
+        if auction_data_extended
+            .bid_state_data
+            .ok_or(ProgramError::InvalidArgument)?
+            != *bid_state_data.key
+        {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let bid_state_data_acc: BidStateData =
+            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
+        bid_state_data_acc.state
+    } else {
+        auction.bid_state.clone()
+    };
+
     let auction_key = auction_manager.auction();
     let seeds = &[PREFIX.as_bytes(), &auction_key.as_ref()];
     let (_, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
@@ -102,7 +123,7 @@ pub fn process_end_auction(
     )?;
 
     if auction_data_extended.instant_sale_price.is_some() {
-        match auction.bid_state {
+        match bid_state {
             BidState::EnglishAuction { .. } => {
                 auction_manager.set_status(AuctionManagerStatus::Disbursing);
             }

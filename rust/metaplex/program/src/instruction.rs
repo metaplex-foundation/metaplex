@@ -645,6 +645,7 @@ pub enum MetaplexInstruction {
     ///   4. `[]` Store key
     ///   5. `[]` Auction program
     ///   6. `[]` Clock sysvar
+    ///   7. `[]` Optional Bid state data account to store auction bids
     EndAuction(EndAuctionArgs),
     /// Creates/Updates a store index page
     ///
@@ -1534,19 +1535,26 @@ pub fn create_end_auction_instruction(
     auction_data_extended: Pubkey,
     auction_manager_authority: Pubkey,
     store: Pubkey,
+    bid_state_data: &Option<Pubkey>,
     end_auction_args: EndAuctionArgs,
 ) -> Instruction {
+    let mut accounts = vec![
+        AccountMeta::new(auction_manager, false),
+        AccountMeta::new(auction, false),
+        AccountMeta::new_readonly(auction_data_extended, false),
+        AccountMeta::new_readonly(auction_manager_authority, true),
+        AccountMeta::new_readonly(store, false),
+        AccountMeta::new_readonly(metaplex_auction::id(), false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
+    ];
+
+    if let Some(bid_state_data) = bid_state_data {
+        accounts.push(AccountMeta::new_readonly(*bid_state_data, false));
+    }
+
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(auction_manager, false),
-            AccountMeta::new(auction, false),
-            AccountMeta::new_readonly(auction_data_extended, false),
-            AccountMeta::new_readonly(auction_manager_authority, true),
-            AccountMeta::new_readonly(store, false),
-            AccountMeta::new_readonly(metaplex_auction::id(), false),
-            AccountMeta::new_readonly(sysvar::clock::id(), false),
-        ],
+        accounts,
         data: MetaplexInstruction::EndAuction(end_auction_args)
             .try_to_vec()
             .unwrap(),

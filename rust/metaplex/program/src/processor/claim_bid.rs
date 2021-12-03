@@ -158,7 +158,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     }
 
     // Obtain BidState instance
-    // Current implementation depend on AuctionDataExtended
+    // Current implementation depends on AuctionDataExtended
     let bid_state = if let Some(bid_state_data) = bid_state_data {
         let auction_extended_acc = auction_extended_info.ok_or(ProgramError::InvalidArgument)?;
         assert_derivation(
@@ -216,7 +216,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
         token_mint_info.clone(),
         clock_info.clone(),
         token_program_info.clone(),
-        bid_state_data.clone(),
+        bid_state_data,
         *vault_info.key,
         authority_seeds,
     )?;

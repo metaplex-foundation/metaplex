@@ -129,37 +129,46 @@ pub fn claim_bid(
         return Err(AuctionError::InvalidAuthority.into());
     }
 
-    // Obtain BidState instance
-    // Current implementation depend on AuctionDataExtended
-    let bid_state = if let Some(bid_state_data) = accounts.bid_state_data {
-        let auction_extended_acc = accounts
-            .auction_extended
-            .ok_or(ProgramError::InvalidArgument)?;
-        assert_derivation(
-            program_id,
-            auction_extended_acc,
-            &[
-                PREFIX.as_bytes(),
-                program_id.as_ref(),
-                args.resource.as_ref(),
-                EXTENDED.as_bytes(),
-            ],
-        )?;
+    // Obtain `BidStateData` if provided to instruction
+    let mut bid_state_data_acc: Option<(BidStateData, Pubkey)> =
+        if let Some(bid_state_data) = accounts.bid_state_data {
+            let auction_extended_acc = accounts
+                .auction_extended
+                .ok_or(ProgramError::InvalidArgument)?;
+            assert_derivation(
+                program_id,
+                auction_extended_acc,
+                &[
+                    PREFIX.as_bytes(),
+                    program_id.as_ref(),
+                    args.resource.as_ref(),
+                    EXTENDED.as_bytes(),
+                ],
+            )?;
 
-        let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
-        if auction_extended
-            .bid_state_data
-            .ok_or(ProgramError::InvalidArgument)?
-            != *bid_state_data.key
-        {
-            return Err(ProgramError::InvalidArgument);
-        }
+            let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
 
-        let bid_state_data_acc: BidStateData =
-            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
-        bid_state_data_acc.state
+            if *bid_state_data.key
+                != auction_extended
+                    .bid_state_data
+                    .ok_or(ProgramError::InvalidArgument)?
+            {
+                return Err(ProgramError::InvalidArgument);
+            }
+
+            Some((
+                try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?,
+                *bid_state_data.key,
+            ))
+        } else {
+            None
+        };
+
+    // Obtain correct `BidState` instance
+    let bid_state = if let Some((bid_state_data, pubkey)) = &bid_state_data_acc {
+        &bid_state_data.state
     } else {
-        auction.bid_state.clone()
+        &auction.bid_state
     };
 
     // User must have won the auction in order to claim their funds. Check early as the rest of the
