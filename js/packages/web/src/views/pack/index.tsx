@@ -24,12 +24,6 @@ const PackView: React.FC = () => {
     setOpenModal(!openModal);
   }, [openModal]);
 
-  // useEffect(() => {
-  //   if (!openModal) {
-  //     handleFetch();
-  //   }
-  // }, [openModal]);
-
   return (
     <div className="pack-view">
       <Row>

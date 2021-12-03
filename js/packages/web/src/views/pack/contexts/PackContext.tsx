@@ -5,7 +5,7 @@ import {
   useConnection,
   useMeta,
   useUserAccounts,
-  getSearchParams
+  getSearchParams,
 } from '@oyster/common';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -80,6 +80,8 @@ export const PackProvider: React.FC = ({ children }) => {
       masterEditions,
       metadataByPackCard,
     });
+
+    await handleFetch();
   };
 
   const handleFetch = async () => {
