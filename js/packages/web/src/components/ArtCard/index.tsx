@@ -3,7 +3,6 @@ import { Card, CardProps, Button, Badge } from 'antd';
 import { MetadataCategory, StringPublicKey } from '@oyster/common';
 import { ArtContent } from './../ArtContent';
 import { useArt } from '../../hooks';
-import { PublicKey } from '@solana/web3.js';
 import { Artist, ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
 

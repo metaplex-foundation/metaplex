@@ -59,6 +59,7 @@ import { getCardsByPackSet } from '../../models/packs/accounts/PackCard';
 import { processPackCards } from './processPackCards';
 import { getProvingProcessByPackSetAndWallet } from '../../models/packs/accounts/ProvingProcess';
 import { processProvingProcess } from './processProvingProcess';
+import { timeStart } from '../../utils';
 const MULTIPLE_ACCOUNT_BATCH_SIZE = 100;
 
 export const USE_SPEED_RUN = false;

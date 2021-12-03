@@ -1,7 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
-import { Layout, Row, Col, Tabs } from 'antd';
-
+import { Layout, Row, Col, Tabs, Button } from 'antd';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
 
@@ -38,7 +37,7 @@ export const ArtworksView = () => {
     <div className="artwork-grid">
       {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
       {!isLoading &&
-      userItems.map(item => <ItemCard item={item} key={item.pubkey} />)}
+        userItems.map(item => <ItemCard item={item} key={item.pubkey} />)}
     </div>
   );
 

@@ -40,7 +40,7 @@ incremented for features.
 - Add ability for a candy machine owner to update existing candies using an old and new cache file
 - Adds a minumum auction funds modal to prevent people from making bad auctions
 - Implement NFT Packs Redeem
-- Remove Websockets
+- Remove Websockets for useMeta
 
 ### Fixes
 

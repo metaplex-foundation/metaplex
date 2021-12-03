@@ -9,7 +9,7 @@ import { isPack } from '../../utils';
 const ART_CARD_SIZE = 250;
 
 const ItemCard = ({ item }: { item: Item }): ReactElement => {
-  if(isPack(item)) {
+  if (isPack(item)) {
     const {
       pubkey,
       cardsRedeemed,
@@ -19,8 +19,10 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
       voucherMetadataKey,
     } = item;
 
-    const search = edition ? `voucherEditionKey=${edition}` : `provingProcessKey=${provingProcessKey}`;
-    console.log(item, ' item')
+    const search = edition
+      ? `voucherEditionKey=${edition}`
+      : `provingProcessKey=${provingProcessKey}`;
+
     return (
       <Link to={`/pack/${pubkey}?${search}`}>
         <PackCard
@@ -45,6 +47,7 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
         preview={false}
         height={ART_CARD_SIZE}
         width={ART_CARD_SIZE}
+        artView
       />
     </Link>
   );
