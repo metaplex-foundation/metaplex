@@ -42,6 +42,9 @@ import { capitalize } from 'lodash';
 import {
   WinningConfigType,
   AmountRange,
+  ParticipationConfigV2,
+  WinningConstraint,
+  NonWinningConstraint,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import moment from 'moment';
 import {
@@ -216,24 +219,14 @@ export const AuctionCreateView = () => {
         usize: ZERO,
       });
     } else if (attributes.category === AuctionCategory.InstantSale) {
-      const { items, editions } = attributes;
+      const { items, editions, instantSalePrice } = attributes;
 
       if (items.length > 0) {
-        const item = items[0];
-        if (!editions) {
-          item.winningConfigType =
-            item.metadata.info.updateAuthority ===
-            (wallet?.publicKey || SystemProgram.programId).toBase58()
-              ? WinningConfigType.FullRightsTransfer
-              : WinningConfigType.TokenOnlyTransfer;
-        }
-
-        item.amountRanges = [
-          new AmountRange({
-            amount: new BN(1),
-            length: new BN(editions || 1),
-          }),
-        ];
+        items[0].winningConfigType = WinningConfigType.Participation;
+        items[0].participationConfig = new ParticipationConfigV2({
+          winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
+          nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
+          fixedPrice: new BN(toLamports(instantSalePrice, mint)),})
       }
 
       winnerLimit = new WinnerLimit({
@@ -498,7 +491,7 @@ export const AuctionCreateView = () => {
 
     const isOpenEdition =
       attributes.category === AuctionCategory.Open ||
-      attributes.instantSaleType === InstantSaleType.Open;
+      attributes.category === AuctionCategory.InstantSale;
     const safetyDepositDrafts = isOpenEdition
       ? []
       : attributes.category !== AuctionCategory.Tiered
@@ -910,7 +903,7 @@ const InstantSaleStep = ({
               setMint={setMint}
               open={showTokenDialog}
               onClose={() => {
-                setShowTokenDialog(false); 
+                setShowTokenDialog(false);
               }}
             />
           </label>
@@ -966,7 +959,7 @@ const CopiesStep = (props: {
   const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
 
   props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
-  
+
   if (props.attributes.quoteMintAddress) {
     props.attributes.quoteMintInfo = useMint(props.attributes.quoteMintAddress)!
     props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(props.attributes.quoteMintAddress)!
@@ -1010,7 +1003,7 @@ const CopiesStep = (props: {
           >
             Select NFT
           </ArtSelector>
-              
+
           <label className="action-field">
             <span className="field-title">Auction mint</span>
             <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
@@ -1018,7 +1011,7 @@ const CopiesStep = (props: {
               setMint={setMint}
               open={showTokenDialog}
               onClose={() => {
-                setShowTokenDialog(false); 
+                setShowTokenDialog(false);
               }}
             />
           </label>
@@ -1107,7 +1100,7 @@ const NumberOfWinnersStep = (props: {
               }
             />
           </label>
-              
+
               <label className="action-field">
                 <span className="field-title">Auction mint</span>
                 <span className="field-info">
@@ -1118,7 +1111,7 @@ const NumberOfWinnersStep = (props: {
                   setMint={setMint}
                   open={showTokenDialog}
                   onClose={() => {
-                    setShowTokenDialog(false); 
+                    setShowTokenDialog(false);
                   }}
                 />
               </label>
@@ -1151,10 +1144,10 @@ const PriceAuction = (props: {
       <Row className="call-to-action">
         <h2>Price</h2>
         <p>
-          Set the price for your auction. 
+          Set the price for your auction.
           {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && ` Warning! the auction quote mint is `}
-          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58()&& <a href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`} target="_blank"> {props.attributes?.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && 
-            `${quoteMintName} (${quoteMintExt})`} 
+          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58()&& <a href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`} target="_blank"> {props.attributes?.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() &&
+            `${quoteMintName} (${quoteMintExt})`}
           </a>}
         </p>
       </Row>
@@ -1191,7 +1184,7 @@ const PriceAuction = (props: {
             <label className="action-field">
               <span className="field-title">Price Floor</span>
               <span className="field-info">
-                This is the starting bid price for your auction. 
+                This is the starting bid price for your auction.
               </span>
               <Input
                 type="number"

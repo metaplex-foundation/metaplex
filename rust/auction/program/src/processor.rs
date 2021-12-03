@@ -370,19 +370,6 @@ impl AuctionData {
         self.bid_state.winner_at(idx)
     }
 
-    pub fn consider_instant_bid(&mut self, instant_sale_price: Option<u64>) {
-        // Check if all the lots were sold with instant_sale_price
-        if let Some(price) = instant_sale_price {
-            if self
-                .bid_state
-                .lowest_winning_bid_is_instant_bid_price(price)
-            {
-                msg!("All the lots were sold with instant_sale_price, auction is ended");
-                self.state = AuctionState::Ended;
-            }
-        }
-    }
-
     pub fn place_bid(
         &mut self,
         bid: Bid,
@@ -416,8 +403,6 @@ impl AuctionData {
             instant_sale_price,
             &mut self.state,
         )?;
-
-        self.consider_instant_bid(instant_sale_price);
 
         Ok(())
     }
