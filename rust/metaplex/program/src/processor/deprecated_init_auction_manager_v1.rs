@@ -7,7 +7,7 @@ use {
         error::MetaplexError,
         processor::init_auction_manager_v2::assert_common_checks,
         state::{AuctionManagerStatus, Key, PREFIX},
-        utils::create_or_allocate_account_raw,
+        utils::{assert_derivation, create_or_allocate_account_raw},
     },
     borsh::BorshSerialize,
     metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidStateData},
@@ -53,17 +53,16 @@ pub fn process_deprecated_init_auction_manager_v1(
     // Current implementation depend on AuctionDataExtended
     let bid_state = if let Some(bid_state_data) = bid_state_data {
         let auction_extended_acc = auction_extended.ok_or(ProgramError::InvalidArgument)?;
-        // TODO: Check derivation
-        /*assert_derivation(
+        assert_derivation(
             program_id,
             auction_extended_acc,
             &[
                 metaplex_auction::PREFIX.as_bytes(),
                 program_id.as_ref(),
-                args.resource.as_ref(),
+                vault_info.key.as_ref(),
                 metaplex_auction::EXTENDED.as_bytes(),
             ],
-        )?;*/
+        )?;
 
         let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
         if auction_extended

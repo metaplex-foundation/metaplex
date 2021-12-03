@@ -206,6 +206,7 @@ pub fn cancel_bid(
         return Err(AuctionError::BidderPotDoesNotExist.into());
     }
 
+    // NOTE: will be removed with instant sale fix
     // Refuse to cancel if the auction ended and this person is a winning account.
     let winner_bid_index =
         AuctionData::is_winner(accounts.bidder.key, &auction.price_floor, &bid_state);

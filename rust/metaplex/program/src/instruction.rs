@@ -94,6 +94,8 @@ pub enum MetaplexInstruction {
     ///   6. `[]` Store that this auction manager will belong to
     ///   7. `[]` System sysvar
     ///   8. `[]` Rent sysvar
+    ///   9. `[]` Optional Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
+    ///  10. `[]` Optional Bid state data account to store auction bids
     DeprecatedInitAuctionManagerV1(AuctionManagerSettingsV1),
 
     /// Validates that a given safety deposit box has in it contents that match the expected WinningConfig in the auction manager.
@@ -272,7 +274,8 @@ pub enum MetaplexInstruction {
     ///   9. `[]` Auction program
     ///   10. `[]` Clock sysvar
     ///   11. `[]` Token program
-    ///   12. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
+    ///   12. `[]` Optional Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
+    ///   13. `[]` Optional Bid state data account to store auction bids
     ClaimBid,
 
     /// At any time, the auction manager authority may empty whatever funds are in the accept payment account
@@ -311,6 +314,8 @@ pub enum MetaplexInstruction {
     ///   13. `[]` Rent sysvar
     ///   14. `[]` AuctionWinnerTokenTypeTracker, pda of seed ['metaplex', program id, auction manager key, 'totals']
     ///   15. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
+    ///   16. `[]` Optional Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
+    ///   17. `[]` Optional Bid state data account to store auction bids
     EmptyPaymentAccount(EmptyPaymentAccountArgs),
 
     /// Given a signer wallet, create a store with pda ['metaplex', wallet] (if it does not exist) and/or update it

@@ -161,17 +161,16 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     // Current implementation depend on AuctionDataExtended
     let bid_state = if let Some(bid_state_data) = bid_state_data {
         let auction_extended_acc = auction_extended_info.ok_or(ProgramError::InvalidArgument)?;
-        // TODO: Check derivation
-        /*assert_derivation(
+        assert_derivation(
             program_id,
             auction_extended_acc,
             &[
                 metaplex_auction::PREFIX.as_bytes(),
                 program_id.as_ref(),
-                args.resource.as_ref(),
+                vault_info.key.as_ref(),
                 metaplex_auction::EXTENDED.as_bytes(),
             ],
-        )?;*/
+        )?;
 
         let auction_extended = AuctionDataExtended::from_account_info(auction_extended_acc)?;
         if auction_extended
