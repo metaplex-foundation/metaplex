@@ -3,18 +3,13 @@ Its much easier for us to read and review a PR that is small, linted, and contai
 
 ## Description
 
-This pull request improves several aspects of the verify process. 
-- Retries any (known) network related issues during the fetches.
-- Outputs cleaned log values without nulls.
-- Presents all of the issues at the end, with some recommendations.
-- Does not replace links with null, and better handles on-chain true/false state.
-- Stores a hash of the link when checked out. Will not re-check on future runs if the link doesn't change.
+_Describe the purpose of and changes within this Pull Request._
 
 ## References
 
-https://github.com/metaplex-foundation/metaplex/issues/1030
+_List links to any related tasks (GitHub Issues, Pull Requests, 3rd part task managers)_
 
 ## Testing
 
-Testing involves just running verify. If working with a large set of assets, the network issues seem frequent.  If not, changing the link uri in the cache to invalid uris will test some of the situations this handles.
+_How was this tested? If manually tested, list all steps necessary for the reviewer to confirm._
 
