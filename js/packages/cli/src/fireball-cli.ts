@@ -313,6 +313,10 @@ programCommand('reclaim_master_edition')
   })
 
 programCommand('burn_crank')
+  .option(
+    '--dish <pubkey>',
+    `Dish to burn (if not specified opens a program-account-subscribe)`,
+  )
   .action(async (options) => {
     log.info(`Parsed options:`, options);
 
@@ -422,6 +426,20 @@ programCommand('burn_crank')
         };
         wrap();
       }
+
+    if (options.dish) {
+      const dishKey = new PublicKey(options.dish);
+      burnCrankWrapper(
+        {
+          accountId: dishKey,
+          accountInfo: await connection.getAccountInfo(dishKey),
+        },
+        {
+          slot: 0, // only logged
+        }
+      );
+      return;
+    }
 
     const subId = connection.onProgramAccountChange(
       FIREBALL_PROGRAM_ID,
