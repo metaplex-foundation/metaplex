@@ -1,10 +1,8 @@
-use {
-    crate::{error::MetadataError, utils::try_from_slice_checked},
-    borsh::{BorshDeserialize, BorshSerialize},
-    solana_program::{
-        account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
-        pubkey::Pubkey,
-    },
+use crate::{error::MetadataError, utils::try_from_slice_checked};
+use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
+    pubkey::Pubkey,
 };
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
 pub const PREFIX: &str = "metadata";

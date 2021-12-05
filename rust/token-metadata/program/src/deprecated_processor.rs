@@ -1,31 +1,29 @@
 use solana_program::msg;
 
-use {
-    crate::{
-        error::MetadataError,
-        state::{
-            get_reservation_list, Key, MasterEditionV1, Metadata, Reservation, ReservationListV2,
-            EDITION, MAX_MASTER_EDITION_LEN, MAX_RESERVATIONS, MAX_RESERVATION_LIST_SIZE, PREFIX,
-            RESERVATION,
-        },
-        utils::{
-            assert_derivation, assert_initialized, assert_mint_authority_matches_mint,
-            assert_owned_by, assert_rent_exempt, assert_signer, assert_supply_invariance,
-            assert_token_program_matches_package, assert_update_authority_is_correct,
-            create_or_allocate_account_raw, mint_limited_edition, spl_token_burn,
-            spl_token_mint_to, transfer_mint_authority, TokenBurnParams, TokenMintToParams,
-        },
+use crate::{
+    error::MetadataError,
+    state::{
+        get_reservation_list, Key, MasterEditionV1, Metadata, Reservation, ReservationListV2,
+        EDITION, MAX_MASTER_EDITION_LEN, MAX_RESERVATIONS, MAX_RESERVATION_LIST_SIZE, PREFIX,
+        RESERVATION,
     },
-    borsh::BorshSerialize,
-    solana_program::{
-        account_info::{next_account_info, AccountInfo},
-        entrypoint::ProgramResult,
-        pubkey::Pubkey,
-        rent::Rent,
-        sysvar::Sysvar,
+    utils::{
+        assert_derivation, assert_initialized, assert_mint_authority_matches_mint, assert_owned_by,
+        assert_rent_exempt, assert_signer, assert_supply_invariance,
+        assert_token_program_matches_package, assert_update_authority_is_correct,
+        create_or_allocate_account_raw, mint_limited_edition, spl_token_burn, spl_token_mint_to,
+        transfer_mint_authority, TokenBurnParams, TokenMintToParams,
     },
-    spl_token::state::{Account, Mint},
 };
+use borsh::BorshSerialize;
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    pubkey::Pubkey,
+    rent::Rent,
+    sysvar::Sysvar,
+};
+use spl_token::state::{Account, Mint};
 
 /// Create master edition
 pub fn process_deprecated_create_master_edition(
