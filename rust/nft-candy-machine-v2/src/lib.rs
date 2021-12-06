@@ -74,7 +74,7 @@ pub mod nft_candy_machine_v2 {
                 }
                 let network_expire_feature = &ctx.remaining_accounts[remaining_accounts_counter];
                 remaining_accounts_counter += 1;
-                solana_gateway::Gateway::verify_and_expire_token(
+                ::solana_gateway::Gateway::verify_and_expire_token(
                     gateway_token.clone(),
                     wallet.deref().clone(),
                     &gatekeeper.gatekeeper_network,
@@ -82,7 +82,7 @@ pub mod nft_candy_machine_v2 {
                     None,
                 )?;
             } else {
-                solana_gateway::Gateway::verify_gateway_token_account_info(
+                ::solana_gateway::Gateway::verify_gateway_token_account_info(
                     gateway_token,
                     &wallet.key(),
                     &gatekeeper.gatekeeper_network,
