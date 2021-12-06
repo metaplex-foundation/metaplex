@@ -45,7 +45,6 @@ type Endpoint = {
   url: string;
   chainId: ChainId;
 };
-const LOCALHOST = 'localhost';
 
 export const ENDPOINTS: Array<Endpoint> = [
   {
@@ -100,22 +99,15 @@ export function ConnectionProvider({ children }: { children: any }) {
     useLocalStorageState<ENDPOINT_NAME>('network', DEFAULT_ENDPOINT.name);
   const networkParam = searchParams.get('network');
 
-  let maybeEndpoint: Endpoint | undefined = undefined;
-  if (networkParam != null) {
-    maybeEndpoint = ENDPOINTS.find(({ name }) => name === networkParam);
-    if (maybeEndpoint == null && networkParam === LOCALHOST) {
-      // solana-test-validator running on localhost is only used for testing and
-      // not exposed as an endpoint selector option
-      maybeEndpoint = {
-        name: LOCALHOST as ENDPOINT_NAME,
-        label: LOCALHOST,
-        url: 'http://127.0.0.1:8899/',
-        chainId: ChainId.Devnet,
-      };
+  let maybeEndpoint;
+  if (networkParam) {
+    let endpointParam = ENDPOINTS.find(({ name }) => name === networkParam);
+    if (endpointParam) {
+      maybeEndpoint = endpointParam;
     }
   }
 
-  if (networkStorage == null && maybeEndpoint == null) {
+  if (networkStorage && !maybeEndpoint) {
     let endpointStorage = ENDPOINTS.find(({ name }) => name === networkStorage);
     if (endpointStorage) {
       maybeEndpoint = endpointStorage;

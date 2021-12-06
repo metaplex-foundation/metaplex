@@ -17,7 +17,6 @@ import {
   useWalletModal,
   useQuerySearch,
   WRAPPED_SOL_MINT,
-  HashQueryLink,
 } from '@oyster/common';
 import { useMeta, useSolPrice } from '../../contexts';
 import { useTokenList } from '../../contexts/tokenList';
@@ -48,7 +47,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
         (props.mobile ? (
           <div className="actions-buttons actions-user">
             {canCreate && (
-              <HashQueryLink to={`/art/create`}>
+              <Link to={`/art/create`}>
                 <Button
                   onClick={() => {
                     props.onClick ? props.onClick() : null;
@@ -57,9 +56,9 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
                 >
                   Create
                 </Button>
-              </HashQueryLink>
+              </Link>
             )}
-            <HashQueryLink to={`/auction/create/0`}>
+            <Link to={`/auction/create/0`}>
               <Button
                 onClick={() => {
                   props.onClick ? props.onClick() : null;
@@ -68,7 +67,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
               >
                 Sell
               </Button>
-            </HashQueryLink>
+            </Link>
           </div>
         ) : (
           <div
@@ -78,19 +77,19 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
           >
             {canCreate && (
               <>
-                <HashQueryLink to={`/art/create`} style={{ width: '100%' }}>
+                <Link to={`/art/create`} style={{ width: '100%' }}>
                   <Button className="metaplex-button-default" style={btnStyle}>
                     Create
                   </Button>
-                </HashQueryLink>
+                </Link>
                 &nbsp;&nbsp;
               </>
             )}
-            <HashQueryLink to={`/auction/create/0`} style={{ width: '100%' }}>
+            <Link to={`/auction/create/0`} style={{ width: '100%' }}>
               <Button className="metaplex-button-default" style={btnStyle}>
                 Sell
               </Button>
-            </HashQueryLink>
+            </Link>
           </div>
         ))}
     </>
