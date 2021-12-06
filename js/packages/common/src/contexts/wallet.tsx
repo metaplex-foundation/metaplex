@@ -93,9 +93,9 @@ export const WalletModal: FC = () => {
               <path
                 d="M15 7.5L10 12.5L5 7.5"
                 stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               />
             </svg>
           ) : (
@@ -109,9 +109,9 @@ export const WalletModal: FC = () => {
               <path
                 d="M7.5 5L12.5 10L7.5 15"
                 stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               />
             </svg>
           )

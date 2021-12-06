@@ -17,7 +17,6 @@ import {
   WhitelistedCreator,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
-  HashQueryLink,
   MasterEditionV1,
   notify,
   ParsedAccount,
@@ -36,6 +35,7 @@ import {
   convertMasterEditions,
   filterMetadata,
 } from '../../actions/convertMasterEditions';
+import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
 import { cacheAllAuctions } from '../../actions/cacheAllAuctions';
 
@@ -101,7 +101,7 @@ export const AdminView = () => {
       ) : (
         <>
           <p>Store is not initialized</p>
-          <HashQueryLink to={`/`}>Go to initialize</HashQueryLink>
+          <Link to={`/`}>Go to initialize</Link>
         </>
       )}
     </>
@@ -366,9 +366,7 @@ function InnerAdminView({
         </>
       )}
       <Col>
-        <p style={{ marginTop: '30px' }}>
-          Upgrade the performance of your existing auctions.
-        </p>
+        <p style={{'marginTop': '30px'}}>Upgrade the performance of your existing auctions.</p>
         <Row>
           <Button
             disabled={loading}
