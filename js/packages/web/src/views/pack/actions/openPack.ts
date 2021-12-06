@@ -15,7 +15,9 @@ import { requestCards } from '../transactions/requestCards';
 import { claimPackCards } from '../transactions/claimPackCards';
 import {
   FetchProvingProcessWithRetryParams,
+  GetProvingProcessParams,
   OpenPackParams,
+  RequestCardsUsingVoucherParams,
 } from './interface';
 
 const SLEEP_TIMEOUT = 500;
@@ -24,6 +26,7 @@ const REQUEST_TIMEOUT = 15000;
 const openPack = async ({
   pack,
   voucherEditionKey,
+  provingProcess,
   userVouchers,
   accountByMint,
   metadataByPackCard,
@@ -35,6 +38,71 @@ const openPack = async ({
   if (!wallet.publicKey) {
     throw new WalletNotConnectedError();
   }
+
+  const {
+    info: { cardsToRedeem, voucherMint },
+  } = await getProvingProcess({
+    pack,
+    voucherEditionKey,
+    provingProcess,
+    userVouchers,
+    accountByMint,
+    connection,
+    wallet,
+  });
+
+  await claimPackCards({
+    wallet,
+    connection,
+    voucherMint,
+    cardsToRedeem,
+    metadataByPackCard,
+    packCards,
+    masterEditions,
+    pack,
+  });
+};
+
+const getProvingProcess = async ({
+  pack,
+  provingProcess,
+  voucherEditionKey,
+  userVouchers,
+  accountByMint,
+  connection,
+  wallet,
+}: GetProvingProcessParams): Promise<ParsedAccount<ProvingProcess>> => {
+  // ToDo: This will be executed even if not all the cards are requested.
+  if (provingProcess) {
+    return provingProcess;
+  }
+
+  if (!voucherEditionKey) {
+    throw new Error('Voucher or Proving Process is missing');
+  }
+
+  return requestCardsUsingVoucher({
+    pack,
+    voucherEditionKey,
+    userVouchers,
+    accountByMint,
+    connection,
+    wallet,
+  });
+};
+
+const requestCardsUsingVoucher = async ({
+  pack,
+  voucherEditionKey,
+  userVouchers,
+  accountByMint,
+  connection,
+  wallet,
+}: RequestCardsUsingVoucherParams): Promise<ParsedAccount<ProvingProcess>> => {
+  if (!wallet.publicKey) {
+    throw new WalletNotConnectedError();
+  }
+
   if (!userVouchers[voucherEditionKey]) {
     throw new Error('Voucher is missing');
   }
@@ -58,24 +126,11 @@ const openPack = async ({
     tokenAccount: voucherTokenAccount.pubkey,
   });
 
-  const {
-    info: { cardsToRedeem },
-  } = await fetchProvingProcessWithRetry({
+  return fetchProvingProcessWithRetry({
     voucherMint: toPublicKey(voucherMint),
     packKey: toPublicKey(pack.pubkey),
     walletKey: toPublicKey(wallet.publicKey),
     connection,
-  });
-
-  await claimPackCards({
-    wallet,
-    connection,
-    voucherMint,
-    cardsToRedeem,
-    metadataByPackCard,
-    packCards,
-    masterEditions,
-    pack,
   });
 };
 
