@@ -22,6 +22,7 @@ interface Params extends RequestCardToRedeemParams {
   packVoucher: StringPublicKey;
   tokenAccount: StringPublicKey;
   wallet: PublicKey;
+  randomOracle: StringPublicKey;
 }
 
 export async function requestCardToRedeem({
@@ -32,6 +33,7 @@ export async function requestCardToRedeem({
   packVoucher,
   tokenAccount,
   wallet,
+  randomOracle,
 }: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
 
@@ -103,7 +105,7 @@ export async function requestCardToRedeem({
     },
     // randomness_oracle
     {
-      pubkey: programIds().oracle,
+      pubkey: toPublicKey(randomOracle),
       isSigner: false,
       isWritable: false,
     },

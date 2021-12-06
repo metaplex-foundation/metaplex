@@ -23,13 +23,14 @@ import {
 import { ClaimPackParams } from '..';
 
 interface Params extends ClaimPackParams {
-  packSetKey: PublicKey;
+  packSetKey: StringPublicKey;
   wallet: PublicKey;
   voucherMint: StringPublicKey;
   userToken: StringPublicKey;
   newMint: StringPublicKey;
   metadataMint: StringPublicKey;
   edition: BN;
+  randomOracle: StringPublicKey;
 }
 
 export async function claimPack({
@@ -41,16 +42,20 @@ export async function claimPack({
   newMint,
   metadataMint,
   edition,
+  randomOracle,
 }: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
   const value = new ClaimPackArgs({ index });
 
   const provingProcess = await findProvingProcessProgramAddress(
-    packSetKey,
+    toPublicKey(packSetKey),
     wallet,
     toPublicKey(voucherMint),
   );
-  const packCard = await findPackCardProgramAddress(packSetKey, index);
+  const packCard = await findPackCardProgramAddress(
+    toPublicKey(packSetKey),
+    index,
+  );
 
   const newMetadata = await getMetadata(newMint);
   const metadata = await getMetadata(metadataMint);
@@ -153,7 +158,7 @@ export async function claimPack({
     },
     // randomness_oracle
     {
-      pubkey: programIds().oracle,
+      pubkey: toPublicKey(randomOracle),
       isSigner: false,
       isWritable: false,
     },

@@ -21,7 +21,7 @@ export const useItems = ({
   const userPacks = useUserPacksByEdition();
 
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
-  console.log({ shouldEnableNftPacks });
+
   if (activeKey === ArtworkViewState.Owned) {
     return [
       ...mergeMetadataWithPacks(

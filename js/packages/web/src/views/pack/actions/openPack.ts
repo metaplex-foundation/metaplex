@@ -75,7 +75,7 @@ const openPack = async ({
     metadataByPackCard,
     packCards,
     masterEditions,
-    packSetKey: toPublicKey(pack.pubkey),
+    pack,
   });
 };
 

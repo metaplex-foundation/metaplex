@@ -55,7 +55,7 @@ const getClaimPackCardsInstructions = async ({
 const claimSeveralCardsByIndex = async ({
   wallet,
   connection,
-  packSetKey,
+  pack,
   numberOfCards,
   voucherMint,
   index,
@@ -63,6 +63,9 @@ const claimSeveralCardsByIndex = async ({
   packCards,
   masterEditions,
 }: ClaimSeveralCardsByIndexParams): Promise<GenerateTransactionsResponse[]> => {
+  const packSetKey = pack.pubkey;
+  const randomOracle = pack.info.randomOracle;
+
   const packCardToRedeem = await findPackCardProgramAddress(
     toPublicKey(packSetKey),
     index,
@@ -90,6 +93,7 @@ const claimSeveralCardsByIndex = async ({
         connection,
         index,
         packSetKey,
+        randomOracle,
         userToken,
         voucherMint,
         metadataMint: packCardMetadata.info.mint,
@@ -104,6 +108,7 @@ const generateClaimPackInstructions = async ({
   connection,
   index,
   packSetKey,
+  randomOracle,
   userToken,
   voucherMint,
   metadataMint,
@@ -128,6 +133,7 @@ const generateClaimPackInstructions = async ({
     newMint,
     metadataMint,
     edition,
+    randomOracle,
   });
 
   return {

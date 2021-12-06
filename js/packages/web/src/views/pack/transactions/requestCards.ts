@@ -43,6 +43,7 @@ export const requestCards = async ({
     packVoucher,
     wallet,
     packSetKey: pack.pubkey,
+    randomOracle: pack.info.randomOracle,
   });
 
   const requestCardsInstructionsChunks = chunks(

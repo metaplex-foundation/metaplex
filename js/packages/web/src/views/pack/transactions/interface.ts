@@ -1,11 +1,6 @@
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { MetaState, ParsedAccount, StringPublicKey } from '@oyster/common';
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 
@@ -21,7 +16,7 @@ export interface ClaimPackCardsParams
   extends Pick<MetaState, 'packCards' | 'masterEditions'> {
   wallet: WalletContextState;
   connection: Connection;
-  packSetKey: PublicKey;
+  pack: ParsedAccount<PackSet>;
   voucherMint: StringPublicKey;
   cardsToRedeem: Map<number, number>;
   metadataByPackCard: PackMetadataByPackCard;
@@ -31,7 +26,7 @@ export interface ClaimSeveralCardsByIndexParams
   extends Pick<MetaState, 'packCards' | 'masterEditions'> {
   wallet: WalletContextState;
   connection: Connection;
-  packSetKey: PublicKey;
+  pack: ParsedAccount<PackSet>;
   numberOfCards: number;
   voucherMint: StringPublicKey;
   index: number;
@@ -41,7 +36,8 @@ export interface GenerateClaimPackInstructionsParams {
   wallet: WalletContextState;
   connection: Connection;
   index: number;
-  packSetKey: PublicKey;
+  packSetKey: StringPublicKey;
+  randomOracle: StringPublicKey;
   userToken: StringPublicKey;
   voucherMint: StringPublicKey;
   metadataMint: StringPublicKey;
@@ -81,4 +77,5 @@ export interface RequestCardsInstructionsParams {
   tokenAccount: StringPublicKey;
   packVoucher: StringPublicKey;
   wallet: WalletContextState;
+  randomOracle: StringPublicKey;
 }

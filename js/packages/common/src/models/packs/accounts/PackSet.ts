@@ -28,6 +28,7 @@ export class PackSet {
   allowedAmountToRedeem: number;
   redeemStartDate: BN;
   redeemEndDate?: BN;
+  randomOracle: StringPublicKey;
 
   constructor(args: {
     key: PackKey;
@@ -46,6 +47,7 @@ export class PackSet {
     allowedAmountToRedeem: number;
     redeemStartDate: BN;
     redeemEndDate?: BN;
+    randomOracle: StringPublicKey;
   }) {
     this.key = PackKey.PackSet;
     this.store = args.store;
@@ -63,6 +65,7 @@ export class PackSet {
     this.distributionType = args.distributionType;
     this.redeemStartDate = args.redeemStartDate;
     this.redeemEndDate = args.redeemEndDate;
+    this.randomOracle = args.randomOracle;
   }
 }
 
@@ -88,6 +91,7 @@ export const PACK_SET_SCHEMA = new Map<any, any>([
         ['allowedAmountToRedeem', 'u32'],
         ['redeemStartDate', 'u64'],
         ['redeemEndDate', { kind: 'option', type: 'u64' }],
+        ['randomOracle', 'pubkeyAsString'],
       ],
     },
   ],

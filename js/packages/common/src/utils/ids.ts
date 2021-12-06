@@ -78,11 +78,11 @@ export const METAPLEX_ID =
   'p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98' as StringPublicKey;
 
 export const PACK_CREATE_ID = new PublicKey(
-  'GTFVL9hA9AhWjNxhH99Hw2mp1MycFqRTjDS4xAHREheC',
+  'packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu',
 );
 
 export const ORACLE_ID = new PublicKey(
-  'HS66XZHFBWQAcXa124E9qkxFB2JQpm9AhXdD4Q4dtLsY',
+  'rndshKFf48HhGaPbaCd3WQYtgCNKzRgVQ3U2we4Cvf9',
 );
 
 export const SYSTEM = new PublicKey('11111111111111111111111111111111');
