@@ -17,7 +17,7 @@ const TransactionApprovalStep = ({ goBack }: IPropsTransactionApprovalStep) =>
     <div className="modal-redeem__body">
       <span className="body-big-title">Safe and secure.</span>
       <span className="body-big-desc">Your wallet will ask you to approve two transactions.</span>
-      <div className="modal-redeem__transaction-cards">
+      <div className="transaction-cards">
         {transactions.map((item, idx) => (
           <div className="transaction-card" key={item}>
             <div className="number-frame">{idx + 1}</div>

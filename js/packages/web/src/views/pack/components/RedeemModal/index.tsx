@@ -89,17 +89,18 @@ const RedeemModal = ({
         {isFirstsSteps && (
           <>
             {modalState === openState.Ready ? (
-              <ClaimingPackStep
-                metadataByPackCard={metadataByPackCard}
-                numberOfAttempts={numberOfAttempts}
-                numberOfNFTs={numberOfNFTs}
-                creators={creators}
-              />
-            ) : (
-              <TransactionApprovalStep
-                goBack={() => setModalState(openState.Ready)}
-              />
-            )}
+                <ClaimingPackStep
+                  onClose={onClose}
+                  metadataByPackCard={metadataByPackCard}
+                  numberOfAttempts={numberOfAttempts}
+                  numberOfNFTs={numberOfNFTs}
+                  creators={creators}
+                />
+              ) : (
+                <TransactionApprovalStep
+                  goBack={() => setModalState(openState.Ready)}
+                />
+              )}
             <div className="modal-redeem__footer">
               <p className="general-desc">
                 Once opened, a Pack cannot be resealed.
