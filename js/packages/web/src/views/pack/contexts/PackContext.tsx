@@ -59,14 +59,9 @@ export const PackProvider: React.FC = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const pack = packs[packKey];
-  const provingProcess = useMemo(() => {
-    const process = provingProcesses[provingProcessKey];
-    if (process) return process;
-    return Object.values(provingProcesses).find(process => process.info.packSet === packKey);
-  }, [provingProcesses, provingProcessKey]);
+  const provingProcess = provingProcesses[provingProcessKey];
 
   const cardsRedeemed = provingProcess?.info?.cardsRedeemed || 0 ;
-
   const openedMetadata = useOpenedMetadata(packKey, cardsRedeemed);
 
   const voucherMetadata = useMemo(
