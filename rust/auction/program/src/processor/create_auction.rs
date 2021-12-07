@@ -99,7 +99,7 @@ pub fn create_auction(
         WinnerLimit::Capped(n) => {
             let bid_state = BidState::new_english(n);
 
-            if n > 126 {
+            if n > 80 {
                 let bid_state_data_acc = accounts
                     .bid_state_data
                     .ok_or(AuctionError::InvalidBidAccount)?;
