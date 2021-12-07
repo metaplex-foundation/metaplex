@@ -1,0 +1,19 @@
+{
+  "name": "Simple NFT #11",
+  "symbol": "",
+  "image": "11.png",
+  "properties": {
+    "files": [
+      {
+        "uri": "11.png",
+        "type": "image/png"
+      }
+    ],
+    "creators": [
+      {
+        "address": "DhrdtmuSprBntcnVXEf7iFwv3wM1wd1PXU3LhQpWwbNq",
+        "share": 100
+      }
+    ]
+  }
+}

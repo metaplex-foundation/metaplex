@@ -7,6 +7,7 @@ import {
 } from '@solana/web3.js';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
 import * as borsh from 'borsh';
+import * as anchor from '@project-serum/anchor';
 import {
   MAX_CREATOR_LEN,
   MAX_NAME_LENGTH,
@@ -14,12 +15,14 @@ import {
   MAX_URI_LENGTH,
   TOKEN_METADATA_PROGRAM_ID,
 } from '../helpers/constants';
+
+import { loadWalletKey } from '../helpers/accounts';
 import { AccountAndPubkey, Metadata, METADATA_SCHEMA } from '../types';
 import { signMetadataInstruction } from './sign';
 import log from 'loglevel';
 import { sleep } from '../helpers/various';
 
-const SIGNING_INTERVAL = 60 * 1000; //60s
+const SIGNING_INTERVAL = 40 * 1000; //60s
 let lastCount = 0;
 /*
  Get accounts by candy machine creator address
@@ -29,7 +32,26 @@ let lastCount = 0;
 
  PS: Don't sign candy machine addresses that you do not know about. Signing verifies your participation.
 */
-export async function signAllMetadataFromCandyMachine(
+// const rpcHost = process.env.NEXT_PUBLIC_SOLANA_RPC_HOST!;
+const rpcHost = 'https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/';
+const connection = new anchor.web3.Connection(rpcHost);
+const walletKeypair: Keypair = loadWalletKey('../addresses/candymachineTest1.json');
+
+
+// WalletKeypair hace referencia a la wallet del creador de la candy machine, ya que es quien firma las nuevas mints
+// Tambien debemos enviar la wallet keypar del updateAuthority para modificar la metadata.
+
+
+
+spaceheadsSwapper(
+  connection,
+  walletKeypair, // Signer -> UpdateAuthority
+  '3tFA6HiQce3QDRyKeEJkWym7q3qWWfZuSu3mbNvM94D1',
+  100, //batchSize ?
+  true,
+);
+
+async function spaceheadsSwapper(
   connection: Connection,
   wallet: Keypair,
   candyMachineAddress: string,
@@ -86,6 +108,12 @@ async function findAndSignMetadata(
       candyVerifiedListToSign.length
     } nft's to sign by  ${wallet.publicKey.toBase58()}`,
   );
+
+  // UPDATE del URI
+
+
+
+
   await sendSignMetadata(
     connection,
     wallet,

@@ -204,7 +204,7 @@ programCommand('verify')
   )
   .action(async (directory, cmd) => {
     const { env, keypair, rpcUrl, cacheName } = cmd.opts();
-
+    console.log('keypair', keypair);
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
