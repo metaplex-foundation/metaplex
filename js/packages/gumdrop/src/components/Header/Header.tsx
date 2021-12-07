@@ -25,18 +25,18 @@ export const Header = ({ narrow } : { narrow : boolean }) => {
       innerNarrow: "About",
       inner: <HomeIcon />,
     },
-    {
-      href: `/gumdrop/create`,
-      inner: "Create",
-    },
+    // {
+    //   href: `/gumdrop/create`,
+    //   inner: "Create",
+    // },
     {
       href: `/gumdrop/claim`,
       inner: "Claim",
     },
-    {
-      href: `/gumdrop/close`,
-      inner: "Close",
-    },
+    // {
+    //   href: `/gumdrop/close`,
+    //   inner: "Close",
+    // },
   ];
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
