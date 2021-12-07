@@ -76,6 +76,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         onOk={confirm}
         width={1100}
         footer={null}
+        className={"modalp-40"}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
           <h2>Select the NFT you want to sell</h2>
