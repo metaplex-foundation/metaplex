@@ -210,7 +210,7 @@ export const tryParseKey = (key: string): PublicKey | null => {
   }
 };
 
-export const formatAmount = (val: number) => val.toLocaleString();
+export const formatAmount = (val: number): string => val.toLocaleString();
 
 export function formatTokenAmount(
   account?: TokenAccount | number | BN,
