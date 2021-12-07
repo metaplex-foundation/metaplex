@@ -2107,8 +2107,10 @@ const Congrats = (props: {
           </Button>
           <Button
             className="metaplex-button"
-            onClick={_ =>
-              history.push(`/auction/${props.auction?.auction.toString()}`)
+            onClick={() => {
+                history.push(`/`);
+                history.go(0);
+              }
             }
           >
             <span>See it in your auctions</span>
