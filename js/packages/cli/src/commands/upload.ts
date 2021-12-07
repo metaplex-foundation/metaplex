@@ -1,4 +1,4 @@
-import { EXTENSION_PNG } from '../helpers/constants';
+import { EXTENSION_HTML } from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -48,8 +48,8 @@ export async function upload(
   const newFiles = [];
 
   files.forEach(f => {
-    if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
-      seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
+    if (!seen[f.replace(EXTENSION_HTML, '').split('/').pop()]) {
+      seen[f.replace(EXTENSION_HTML, '').split('/').pop()] = true;
       newFiles.push(f);
     }
   });
@@ -60,8 +60,8 @@ export async function upload(
     }
   });
 
-  const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
-  const SIZE = images.length;
+  const htmlFiles = newFiles.filter(val => path.extname(val) === EXTENSION_HTML);
+  const SIZE = htmlFiles.length;
 
   const walletKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
@@ -71,9 +71,9 @@ export async function upload(
     : undefined;
 
   for (let i = 0; i < SIZE; i++) {
-    const image = images[i];
-    const imageName = path.basename(image);
-    const index = imageName.replace(EXTENSION_PNG, '');
+    const htmlFile = htmlFiles[i];
+    const htmlFileName = path.basename(htmlFile);
+    const index = htmlFileName.replace(EXTENSION_HTML, '');
 
     if (i % 50 === 0) {
       log.info(`Processing file: ${i}`);
@@ -83,12 +83,12 @@ export async function upload(
 
     let link = cacheContent?.items?.[index]?.link;
     if (!link || !cacheContent.program.uuid) {
-      const manifestPath = image.replace(EXTENSION_PNG, '.json');
+      const manifestPath = htmlFile.replace(EXTENSION_HTML, '.json');
       const manifestContent = fs
         .readFileSync(manifestPath)
         .toString()
-        .replace(imageName, 'image.png')
-        .replace(imageName, 'image.png');
+        .replace(htmlFileName, 'file.html')
+        .replace(htmlFileName, 'file.html');
       const manifest = JSON.parse(manifestContent);
 
       const manifestBuffer = Buffer.from(JSON.stringify(manifest));
@@ -134,15 +134,15 @@ export async function upload(
               walletKeyPair,
               anchorProgram,
               env,
-              image,
+              htmlFile,
               manifestBuffer,
               manifest,
               index,
             );
           } else if (storage === 'ipfs') {
-            link = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
+            link = await ipfsUpload(ipfsCredentials, htmlFile, manifestBuffer);
           } else if (storage === 'aws') {
-            link = await awsUpload(awsS3Bucket, image, manifestBuffer);
+            link = await awsUpload(awsS3Bucket, htmlFile, manifestBuffer);
           }
 
           if (link) {

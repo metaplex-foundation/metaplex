@@ -58,14 +58,14 @@ export async function arweaveUpload(
   walletKeyPair,
   anchorProgram,
   env,
-  image,
+  htmlFile,
   manifestBuffer, // TODO rename metadataBuffer
   manifest, // TODO rename metadata
   index,
 ) {
-  const fsStat = await stat(image);
+  const fsStat = await stat(htmlFile);
   const estimatedManifestSize = estimateManifestSize([
-    'image.png',
+    'file.html',
     'metadata.json',
   ]);
   const storageCost = await fetchAssetCostToStore([
@@ -73,7 +73,7 @@ export async function arweaveUpload(
     manifestBuffer.length,
     estimatedManifestSize,
   ]);
-  console.log(`lamport cost to store ${image}: ${storageCost}`);
+  console.log(`lamport cost to store ${htmlFile}: ${storageCost}`);
 
   const instructions = [
     anchor.web3.SystemProgram.transfer({
@@ -95,9 +95,9 @@ export async function arweaveUpload(
   const data = new FormData();
   data.append('transaction', tx['txid']);
   data.append('env', env);
-  data.append('file[]', fs.createReadStream(image), {
-    filename: `image.png`,
-    contentType: 'image/png',
+  data.append('file[]', fs.createReadStream(htmlFile), {
+    filename: `file.html`,
+    contentType: 'text/html',
   });
   data.append('file[]', manifestBuffer, 'metadata.json');
 

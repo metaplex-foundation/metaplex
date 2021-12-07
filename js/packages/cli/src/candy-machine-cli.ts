@@ -19,6 +19,7 @@ import {
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
+  EXTENSION_HTML
 } from './helpers/constants';
 import {
   getCandyMachineAddress,
@@ -48,12 +49,12 @@ log.setLevel(log.levels.INFO);
 programCommand('upload')
   .argument(
     '<directory>',
-    'Directory containing images named from 0-n',
+    'Directory containing html files named from 0-n',
     val => {
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
-  .option('-n, --number <number>', 'Number of images to upload')
+  .option('-n, --number <number>', 'Number of files to upload')
   .option(
     '-s, --storage <string>',
     'Database to use for storage (arweave, ipfs, aws)',
@@ -112,29 +113,29 @@ programCommand('upload')
       secretKey: ipfsInfuraSecret,
     };
 
-    const pngFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_PNG);
+    const htmlFileCount = files.filter(it => {
+      return it.endsWith(EXTENSION_HTML);
     }).length;
     const jsonFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_JSON);
     }).length;
 
     const parsedNumber = parseInt(number);
-    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
+    const elemCount = parsedNumber ? parsedNumber : htmlFileCount;
 
-    if (pngFileCount !== jsonFileCount) {
+    if (htmlFileCount !== jsonFileCount) {
       throw new Error(
-        `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+        `number of html files (${htmlFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
     }
 
-    if (elemCount < pngFileCount) {
+    if (elemCount < htmlFileCount) {
       throw new Error(
-        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${htmlFileCount})`,
       );
     }
 
-    log.info(`Beginning the upload for ${elemCount} (png+json) pairs`);
+    log.info(`Beginning the upload for ${elemCount} (html+json) pairs`);
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
@@ -168,21 +169,21 @@ programCommand('upload')
       `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
     if (warn) {
-      log.info('not all images have been uploaded, rerun this step.');
+      log.info('not all files have been uploaded, rerun this step.');
     }
   });
 
 programCommand('verify_token_metadata')
   .argument(
     '<directory>',
-    'Directory containing images and metadata files named from 0-n',
+    'Directory containing html and metadata files named from 0-n',
     val => {
       return fs
         .readdirSync(`${val}`)
         .map(file => path.join(process.cwd(), val, file));
     },
   )
-  .option('-n, --number <number>', 'Number of images to upload')
+  .option('-n, --number <number>', 'Number of files to upload')
   .action((files: string[], options, cmd) => {
     const { number } = cmd.opts();
 
@@ -243,6 +244,7 @@ programCommand('verify')
               allGood = false;
             } else {
               const json = await fetch(cacheItem.link);
+              
               if (
                 json.status == 200 ||
                 json.status == 204 ||
@@ -250,8 +252,12 @@ programCommand('verify')
               ) {
                 const body = await json.text();
                 const parsed = JSON.parse(body);
-                if (parsed.image) {
-                  const check = await fetch(parsed.image);
+                if (parsed.animation_url) {
+                  let check = await fetch(parsed.animation_url);
+
+                  if (check.redirected) {
+                    check = await fetch(check.url)
+                  }
                   if (
                     check.status == 200 ||
                     check.status == 204 ||

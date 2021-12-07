@@ -2,11 +2,11 @@ import path from 'path';
 import log from 'loglevel';
 import { validate } from 'jsonschema';
 
-import { EXTENSION_JSON, EXTENSION_PNG } from '../../helpers/constants';
+import { EXTENSION_JSON, EXTENSION_HTML } from '../../helpers/constants';
 import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
 type TokenMetadata = {
-  image: string;
+  animation_url: string;
   properties: {
     files: { uri: string; type: string }[];
     creators: { address: string; share: number }[];
@@ -14,29 +14,29 @@ type TokenMetadata = {
 };
 
 export const verifyAssets = ({ files, uploadElementsCount }) => {
-  const pngFileCount = files.filter(it => {
-    return it.endsWith(EXTENSION_PNG);
+  const htmlFileCount = files.filter(it => {
+    return it.endsWith(EXTENSION_HTML);
   }).length;
   const jsonFileCount = files.filter(it => {
     return it.endsWith(EXTENSION_JSON);
   }).length;
 
   const parsedNumber = parseInt(uploadElementsCount, 10);
-  const elemCount = parsedNumber ?? pngFileCount;
+  const elemCount = parsedNumber ?? htmlFileCount;
 
-  if (pngFileCount !== jsonFileCount) {
+  if (htmlFileCount !== jsonFileCount) {
     throw new Error(
-      `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+      `number of html files (${htmlFileCount}) is different than the number of json files (${jsonFileCount})`,
     );
   }
 
-  if (elemCount < pngFileCount) {
+  if (elemCount < htmlFileCount) {
     throw new Error(
-      `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+      `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${htmlFileCount})`,
     );
   }
 
-  log.info(`Verifying token metadata for ${pngFileCount} (png+json) pairs`);
+  log.info(`Verifying token metadata for ${htmlFileCount} (html+json) pairs`);
 };
 
 export const verifyAggregateShare = (
@@ -89,21 +89,21 @@ export const verifyCreatorCollation = (
   }
 };
 
-export const verifyImageURL = (image, files, manifestFile) => {
-  const expectedImagePath = `image${EXTENSION_PNG}`;
-  if (image !== expectedImagePath) {
+export const verifyAnimationURL = (htmlFile, files, manifestFile) => {
+  const expectedHtmlPath = `file${EXTENSION_HTML}`;
+  if (htmlFile !== expectedHtmlPath) {
     // We _could_ match against this in the JSON schema validation, but it is totally valid to have arbitrary URLs to images here.
     // The downside, though, is that those images will not get uploaded to Arweave since they're not on-disk.
-    log.warn(`We expected the \`image\` property in ${manifestFile} to be ${expectedImagePath}.
-This will still work properly (assuming the URL is valid!), however, this image will not get uploaded to Arweave through the \`metaplex upload\` command.
-If you want us to take care of getting this into Arweave, make sure to set \`image\`: "${expectedImagePath}"
+    log.warn(`We expected the \`animation_url\` property in ${manifestFile} to be ${expectedHtmlPath}.
+This will still work properly (assuming the URL is valid!), however, this file will not get uploaded to Arweave through the \`metaplex upload\` command.
+If you want us to take care of getting this into Arweave, make sure to set \`animation_url\`: "${expectedHtmlPath}"
 The \`metaplex upload\` command will automatically substitute this URL with the Arweave URL location.
     `);
   }
-  const pngFiles = files.filter(file => file.type === 'image/png');
-  if (pngFiles.length === 0 || !pngFiles.some(file => file.uri === image)) {
+  const htmlFiles = files.filter(file => file.type === 'text/html');
+  if (htmlFiles.length === 0 || !htmlFiles.some(file => file.uri === htmlFile)) {
     throw new Error(
-      `At least one entry with the \`image/png\` type in the \`properties.files\` array is expected to match the \`image\` property.`,
+      `At least one entry with the \`text/html\` type in the \`properties.files\` array is expected to match the \`animation_url\` property.`,
     );
   }
 };
@@ -145,10 +145,10 @@ export const verifyMetadataManifests = ({ files }) => {
 
     // Check that the `image` and at least one of the files has a URI matching the index of this token.
     const {
-      image,
+      animation_url,
       properties: { files },
     } = tokenMetadata;
-    verifyImageURL(image, files, manifestFile);
+    verifyAnimationURL(animation_url, files, manifestFile);
   }
 
   verifyConsistentShares(collatedCreators);
