@@ -96,7 +96,7 @@ programCommand('create')
   .option(
     '--host <string>',
     'Website to claim gumdrop',
-    'https://lwus.github.io/gumdrop',
+    'http://bankr2fpv.github.io/metaplex/',
   )
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (options, cmd) => {
