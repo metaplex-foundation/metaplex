@@ -307,50 +307,6 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// -----------------
-// Benchmarking/Performance
-// -----------------
-const tracePerf = false;
-let timerId = 0;
-/**
- * Starts a timer for the [label] via
- * {@link https://developer.mozilla.org/en-US/docs/Web/API/console/time | console.time}
- * and returns a function that invokes
- *
- * {@link https://developer.mozilla.org/en-US/docs/Web/API/console/timeEnd | console.timeEnd}
- * with the same label.
- *
- * ### Example
- *
- * ```js
- * const done = timeStart('getting stuff')
- * await getStuff()
- * done()
- * ```
- *
- * <br>
- * This will print something similar to the below to the browser console:
- *
- * ```
- * 🎬[0015] getting stuff
- * ⏱️ [0015] getting stuff: 0.8322265625 ms
- * ```
- */
-export function timeStart(label: string) {
-  timerId++;
-  const id = timerId.toString().padStart(4, '0');
-
-  if (tracePerf) {
-    console.trace(`🎬[${id}] ${label}`);
-  } else {
-    console.log(`🎬[${id}] ${label}`);
-  }
-
-  const key = `⏱️[${id}] ${label}`;
-  console.time(key);
-  return () => timeEnd(key);
-}
-
-function timeEnd(key: string) {
-  console.timeLog(key);
+export function royalty(value: number | undefined): string {
+  return `${((value || 0) / 100).toFixed(2)}%`;
 }

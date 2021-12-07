@@ -1,0 +1,117 @@
+.ant-modal-body {
+  border-radius: 12px;
+  background: transparent;
+}
+
+.redeem-root {
+  position: relative;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 24px;
+  background: @grey-70;
+
+  .redeem-title {
+    font-family: @fontFamilyInter;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 28px;
+    color: @accent-color;
+  }
+
+  .redeem-creator {
+    font-family: @fontFamilyInter;
+    font-size: 16px;
+    line-height: 24px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .redeem-cards-container {
+    overflow: hidden;
+    margin: 24px 0 40px;
+    height: fit-content;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+
+    .redeem-ghost-cards {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+
+      .redeem-card {
+        opacity: 5%;
+        background: @accent-color !important;
+        position: absolute;
+        width: 308px;
+        height: 80px;
+        border-radius: 8px;
+      }
+    }
+
+    .redeem-art-content {
+      width: 356px;
+      z-index: 10;
+      height: fit-content !important;
+    }
+  }
+
+  .redeem-notes {
+    padding: 16px 27px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+
+    img {
+      margin-right: 27px;
+      width: 18px;
+      height: 18px;
+    }
+
+    span {
+      font-family: @fontFamilyInter;
+      font-size: 16px;
+      line-height: 20px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+}
+
+.redeem-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 18px;
+  position: absolute;
+  top: 100%;
+  background: transparent;
+  font-family: @fontFamilyInter;
+  font-size: 14px;
+  line-height: 17px;
+  color: @accent-color;
+
+  & > div {
+    margin-right: 10px;
+  }
+}
+
+.small-loader {
+  svg {
+    animation: infinite linear loader 1s;
+  }
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    }
+}
