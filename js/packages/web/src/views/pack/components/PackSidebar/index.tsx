@@ -15,12 +15,13 @@ interface IPropsPackSidebar {
 }
 
 const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
-  const { pack, voucherMetadataKey } = usePack();
+  const { pack, voucherMetadataKey, cardsRedeemed } = usePack();
 
   const metadataPubkey = voucherMetadataKey || '';
   const art = useArt(metadataPubkey);
   const { publicKey } = useWallet();
   const userWallet = pubkeyToString(publicKey);
+  const canOpen = pack?.info.allowedAmountToRedeem !== cardsRedeemed;
 
   return (
     <div className="pack-view__sidebar">
@@ -69,7 +70,9 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
         </div>
       </div>
       <Divider className="divider" />
-      <OpenPackButton onClick={onOpenPack} />
+      {
+        canOpen && <OpenPackButton onClick={onOpenPack} />
+      }
       <Divider className="divider"/>
       <div className="pack-view__description-block">
         <p className="pack-view__title">DETAILS</p>

@@ -38,7 +38,10 @@ const PackCard = ({
   const canBeReveal = allowedAmountToRedeem && cardsRedeemed ?
     allowedAmountToRedeem - cardsRedeemed : allowedAmountToRedeem || 0;
 
-  const infoMessageTitle = artView ? `${canBeReveal} NFT reveal left` : 'PACK OPENING UNLOCKS';
+  const showInfoMessage = () => {
+    if (!artView) return 'PACK OPENING UNLOCKS';
+    return canBeReveal ? `${canBeReveal} NFT reveal left` : 'All revealed';
+  }
 
   const showBadge = useCallback(() => {
     switch (art.type) {
@@ -69,7 +72,7 @@ const PackCard = ({
         <div className="art-auction-info">
           <div className="art-auction-info__left-side">
             <img src="/grid-4.svg" />
-            <span className="info-message">{infoMessageTitle}</span>
+            <span className="info-message">{showInfoMessage()}</span>
           </div>
           <div className="art-auction-info__right-side">
             <span>{headingTitle}</span>
