@@ -123,6 +123,7 @@ export async function upload(
                 cacheContent.program.uuid = res.uuid;
                 cacheContent.program.config = res.config.toBase58();
                 config = res.config;
+                cacheContent.totalNFTs = totalNFTs;
 
                 log.info(
                   `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
