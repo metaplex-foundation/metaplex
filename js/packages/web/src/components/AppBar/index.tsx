@@ -12,7 +12,7 @@ import {
   CurrentUserBadgeMobile,
 } from '../CurrentUserBadge';
 import { ConnectButton } from '@oyster/common';
-import { MobileNavbar } from "../MobileNavbar";
+import { MobileNavbar } from '../MobileNavbar';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
