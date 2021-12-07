@@ -290,7 +290,11 @@ pub fn place_bid<'r, 'b: 'r>(
 
     // Obtain `BidStateData` if provided to instruction
     let mut bid_state_data_acc: Option<(BidStateData, Pubkey)> =
-        if let Some(bid_state_data) = accounts.bid_state_data {
+        if let Some(bid_state_data_key) = auction_extended.bid_state_data {
+            let bid_state_data = accounts
+                .bid_state_data
+                .ok_or(ProgramError::InvalidArgument)?;
+
             if *bid_state_data.key
                 != auction_extended
                     .bid_state_data

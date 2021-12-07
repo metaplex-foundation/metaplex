@@ -109,22 +109,28 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
         assert_initialized(participation_printing_holding_account_info)?;
     let store = Store::from_account_info(store_info)?;
 
-    // Obtain BidState instance
-    // Current implementation depend on AuctionDataExtended
-    let bid_state = if let Some(bid_state_data) = bid_state_data {
-        if auction_extended
-            .bid_state_data
-            .ok_or(ProgramError::InvalidArgument)?
-            != *bid_state_data.key
-        {
-            return Err(ProgramError::InvalidArgument);
-        }
+    // Obtain `BidStateData` if provided to instruction
+    let bid_state_data_acc: Option<(BidStateData, Pubkey)> =
+        if let Some(bid_state_data_key) = auction_extended.bid_state_data {
+            let bid_state_data = bid_state_data.ok_or(ProgramError::InvalidArgument)?;
 
-        let bid_state_data_acc: BidStateData =
-            try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?;
-        bid_state_data_acc.state
+            if *bid_state_data.key != bid_state_data_key {
+                return Err(ProgramError::InvalidArgument);
+            }
+
+            Some((
+                try_from_slice_unchecked(&bid_state_data.data.borrow_mut())?,
+                *bid_state_data.key,
+            ))
+        } else {
+            None
+        };
+
+    // Obtain `BidState` instance
+    let bid_state = if let Some((bid_state_data, _)) = &bid_state_data_acc {
+        &bid_state_data.state
     } else {
-        auction.bid_state.clone()
+        &auction.bid_state
     };
 
     let config: &ParticipationConfigV1;

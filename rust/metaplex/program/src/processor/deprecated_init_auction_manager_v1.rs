@@ -7,10 +7,12 @@ use {
         error::MetaplexError,
         processor::init_auction_manager_v2::assert_common_checks,
         state::{AuctionManagerStatus, Key, PREFIX},
-        utils::{assert_derivation, create_or_allocate_account_raw},
+        utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw},
     },
     borsh::BorshSerialize,
-    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidStateData},
+    metaplex_auction::processor::{
+        AuctionData, AuctionDataExtended, BidState, BidStateData, MAX_AUCTION_BIDS_STATE_LIMIT,
+    },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         borsh::try_from_slice_unchecked,
@@ -49,10 +51,24 @@ pub fn process_deprecated_init_auction_manager_v1(
         authority_info,
     )?;
 
-    // Obtain BidState instance
+    // Check `AuctionData` for max bids limit
+    // Ensure, that required accounts are provided
+    match &auction.bid_state {
+        BidState::EnglishAuction { bids: _, max } => {
+            if *max > MAX_AUCTION_BIDS_STATE_LIMIT {
+                if bid_state_data.is_none() || auction_extended.is_none() {
+                    return Err(ProgramError::InvalidArgument);
+                }
+            }
+        }
+        _ => {}
+    };
+
+    // Obtain `BidState` instance
     // Current implementation depend on AuctionDataExtended
     let bid_state = if let Some(bid_state_data) = bid_state_data {
         let auction_extended_acc = auction_extended.ok_or(ProgramError::InvalidArgument)?;
+        assert_owned_by(auction_extended_acc, program_id)?;
         assert_derivation(
             program_id,
             auction_extended_acc,

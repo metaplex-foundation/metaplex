@@ -61,6 +61,10 @@ pub enum PriceFloor {
     BlindedPrice(Hash),
 }
 
+/// Represent maximum amount of bids, that `AuctionData`
+/// can handle without external account.
+pub const MAX_AUCTION_BIDS_STATE_LIMIT: usize = 80;
+
 // The two extra 8's are present, one 8 is for the Vec's amount of elements and one is for the max
 // usize in bid state.
 // NOTE: New research suggests u32s are used for vecs in borsh, not u64s, so the first extra 8 should be a 4

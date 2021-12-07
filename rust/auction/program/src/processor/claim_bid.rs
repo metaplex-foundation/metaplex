@@ -3,7 +3,10 @@
 
 use crate::{
     errors::AuctionError,
-    processor::{AuctionData, AuctionDataExtended, BidStateData, BidderMetadata, BidderPot},
+    processor::{
+        AuctionData, AuctionDataExtended, BidState, BidStateData, BidderMetadata, BidderPot,
+        MAX_AUCTION_BIDS_STATE_LIMIT,
+    },
     utils::{
         assert_derivation, assert_initialized, assert_owned_by, assert_signer,
         assert_token_program_matches_package, create_or_allocate_account_raw, spl_token_transfer,
@@ -128,6 +131,19 @@ pub fn claim_bid(
     if auction.authority != *accounts.authority.key {
         return Err(AuctionError::InvalidAuthority.into());
     }
+
+    // Check `AuctionData` for max bids limit
+    // Ensure, that required accounts are provided
+    match &auction.bid_state {
+        BidState::EnglishAuction { bids, max } => {
+            if *max > MAX_AUCTION_BIDS_STATE_LIMIT {
+                if accounts.bid_state_data.is_none() || accounts.auction_extended.is_none() {
+                    return Err(ProgramError::InvalidArgument);
+                }
+            }
+        }
+        _ => {}
+    };
 
     // Obtain `BidStateData` if provided to instruction
     let mut bid_state_data_acc: Option<(BidStateData, Pubkey)> =

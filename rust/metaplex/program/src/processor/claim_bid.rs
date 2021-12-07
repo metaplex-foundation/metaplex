@@ -7,8 +7,8 @@ use {
     metaplex_auction::{
         instruction::claim_bid_instruction,
         processor::{
-            claim_bid::ClaimBidArgs, AuctionData, AuctionDataExtended, AuctionState, BidStateData,
-            BidderPot,
+            claim_bid::ClaimBidArgs, AuctionData, AuctionDataExtended, AuctionState, BidState,
+            BidStateData, BidderPot, MAX_AUCTION_BIDS_STATE_LIMIT,
         },
     },
     solana_program::{
@@ -156,6 +156,19 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     {
         auction_manager.set_status(AuctionManagerStatus::Disbursing);
     }
+
+    // Check `AuctionData` for max bids limit
+    // Ensure, that required accounts are provided
+    match &auction.bid_state {
+        BidState::EnglishAuction { bids: _, max } => {
+            if *max > MAX_AUCTION_BIDS_STATE_LIMIT {
+                if bid_state_data.is_none() || auction_extended_info.is_none() {
+                    return Err(ProgramError::InvalidArgument);
+                }
+            }
+        }
+        _ => {}
+    };
 
     // Obtain BidState instance
     // Current implementation depends on AuctionDataExtended

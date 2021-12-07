@@ -2,7 +2,8 @@ use crate::{
     errors::AuctionError,
     processor::{
         AuctionData, AuctionDataExtended, AuctionName, AuctionState, Bid, BidState, BidStateData,
-        PriceFloor, WinnerLimit, BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
+        PriceFloor, WinnerLimit, BASE_AUCTION_DATA_SIZE, MAX_AUCTION_BIDS_STATE_LIMIT,
+        MAX_AUCTION_DATA_EXTENDED_SIZE,
     },
     utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw},
     EXTENDED, PREFIX,
@@ -99,7 +100,7 @@ pub fn create_auction(
         WinnerLimit::Capped(n) => {
             let bid_state = BidState::new_english(n);
 
-            if n > 80 {
+            if n > MAX_AUCTION_BIDS_STATE_LIMIT {
                 let bid_state_data_acc = accounts
                     .bid_state_data
                     .ok_or(AuctionError::InvalidBidAccount)?;

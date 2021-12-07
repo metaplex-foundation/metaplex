@@ -13,7 +13,9 @@ use {
         },
     },
     borsh::BorshSerialize,
-    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidState, BidStateData},
+    metaplex_auction::processor::{
+        AuctionData, AuctionDataExtended, BidState, BidStateData, MAX_AUCTION_BIDS_STATE_LIMIT,
+    },
     metaplex_token_metadata::state::{MasterEditionV1, Metadata},
     metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
@@ -269,10 +271,24 @@ pub fn process_empty_payment_account(
         accept_payment.amount
     );
 
+    // Check `AuctionData` for max bids limit
+    // Ensure, that required accounts are provided
+    match &auction.bid_state {
+        BidState::EnglishAuction { bids: _, max } => {
+            if *max > MAX_AUCTION_BIDS_STATE_LIMIT {
+                if bid_state_data.is_none() || auction_extended.is_none() {
+                    return Err(ProgramError::InvalidArgument);
+                }
+            }
+        }
+        _ => {}
+    };
+
     // Obtain BidState instance
     // Current implementation depend on AuctionDataExtended
     let bid_state = if let Some(bid_state_data) = bid_state_data {
         let auction_extended_acc = auction_extended.ok_or(ProgramError::InvalidArgument)?;
+        assert_owned_by(auction_extended_acc, program_id)?;
         assert_derivation(
             program_id,
             auction_extended_acc,
