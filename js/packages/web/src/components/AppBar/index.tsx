@@ -120,7 +120,12 @@ export const AppBar = () => {
     <>
       <div id="mobile-navbar">
         <LogoLink />
-        <MetaplexMenu />
+        <div className="mobile-menu">
+          {connected && (
+            <Notifications />
+          )}
+          <MetaplexMenu />
+        </div>
       </div>
       <div id="desktop-navbar">
         <div className="app-left">

@@ -22,11 +22,48 @@
 #mobile-navbar {
   display: flex;
   width: 100%;
-  padding: 20px;
+  padding: 16px 24px;
   align-items: center;
   justify-content: space-between;
   @media (min-width: @screen-sm-min) {
     display: none;
+  }
+
+  & > a {
+    width: 50%;
+    max-width: 200px;
+    img {
+      width: 100%;
+    }
+  }
+}
+
+.mobile-menu {
+  display: flex;
+  align-items: center;
+
+  & > :first-child {
+    display: flex;
+    margin-right: 12px;
+  }
+
+  @media (max-width: @mobile-xs-max) {
+    :first-child {
+      display: flex;
+      margin: 0;
+
+      img {
+        margin-right: 12px;
+      }
+
+      div {
+        margin-right: 5px;
+      }
+    }
+
+    sup {
+      display: none;
+    }
   }
 }
 
