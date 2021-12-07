@@ -651,6 +651,8 @@ const InfoStep = (props: {
               symbol={props.attributes.symbol}
               small={true}
               artView={!(props.files.length > 1)}
+              className="art-create-card"
+              artView={!(props.files.length > 1)}
             />
           )}
         </Col>
@@ -1126,6 +1128,8 @@ const LaunchStep = (props: {
               name={props.attributes.name}
               symbol={props.attributes.symbol}
               small={true}
+              artView={props.files[1]?.type === 'unknown'}
+              className="art-create-card"
               artView={props.files[1]?.type === 'unknown'}
             />
           )}

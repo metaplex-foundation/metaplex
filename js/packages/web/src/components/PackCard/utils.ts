@@ -1,5 +1,5 @@
 import { ParsedAccount, WhitelistedCreator } from '@oyster/common';
-import { Artist } from '../../../../../../types';
+import { Artist } from '../../types';
 
 export const getCreator = (
   whitelistedCreatorsByCreator: Record<
