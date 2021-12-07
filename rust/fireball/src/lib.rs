@@ -19,7 +19,7 @@ use solana_program::{
 
 pub mod merkle_proof;
 
-declare_id!("9R4RuSGk3raAVf6TJ7o1ixywcDW89p1MSo2ns9LEBXNK");
+declare_id!("fireo2tXc3j1Es8GjsGUf6whnEPte8oUvdDz4U2zN9n");
 
 pub const PREFIX: &[u8] = b"fireball";
 pub const MAX_URI_LENGTH : usize = 200; // smaller?
