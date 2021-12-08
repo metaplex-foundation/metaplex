@@ -7,6 +7,7 @@ import {
   getSearchParams,
 } from '@oyster/common';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
+import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useLocation } from 'react-router';
@@ -21,6 +22,7 @@ import {
 import { useOpenedMetadata } from '../hooks/useOpenedMetadata';
 
 type PackContextProps = {
+  provingProcess?: ParsedAccount<ProvingProcess>,
   isLoading: boolean;
   packKey: StringPublicKey;
   voucherEditionKey: StringPublicKey;
@@ -111,6 +113,7 @@ export const PackProvider: React.FC = ({ children }) => {
   return (
     <PackContext.Provider
       value={{
+        provingProcess,
         isLoading,
         packKey,
         voucherEditionKey,

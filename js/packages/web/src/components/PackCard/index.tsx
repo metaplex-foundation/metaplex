@@ -35,10 +35,13 @@ const PackCard = ({
 
   const packStatusTitle = cardsRedeemed ? 'Opened' : 'Sealed';
   const headingTitle = artView ? packStatusTitle : 'Pack';
-  const canBeReveal = allowedAmountToRedeem && cardsRedeemed ?
+  const numberOfCardsLeft = allowedAmountToRedeem && cardsRedeemed ?
     allowedAmountToRedeem - cardsRedeemed : allowedAmountToRedeem || 0;
 
-  const infoMessageTitle = artView ? `${canBeReveal} NFT reveal left` : 'PACK OPENING UNLOCKS';
+  const infoMessage = useMemo(() => {
+      if (!artView) return 'PACK OPENING UNLOCKS';
+      return numberOfCardsLeft ? `${numberOfCardsLeft} NFT reveal left` : 'All revealed';
+  }, [artView, numberOfCardsLeft]);
 
   const showBadge = useCallback(() => {
     switch (art.type) {
@@ -69,7 +72,7 @@ const PackCard = ({
         <div className="art-auction-info">
           <div className="art-auction-info__left-side">
             <img src="/grid-4.svg" />
-            <span className="info-message">{infoMessageTitle}</span>
+            <span className="info-message">{infoMessage}</span>
           </div>
           <div className="art-auction-info__right-side">
             <span>{headingTitle}</span>
