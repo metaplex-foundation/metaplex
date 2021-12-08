@@ -9,7 +9,6 @@ import { programIds } from '../../utils/programIds';
 import { genericCache, cache } from './cache';
 import { deserializeAccount } from './deserialize';
 import { TokenAccountParser, MintParser } from './parsesrs';
-import { timeStart } from '../../utils';
 
 const AccountsContext = React.createContext<any>(null);
 
@@ -83,18 +82,10 @@ const UseNativeAccount = () => {
         return;
       }
 
-      const subDone = timeStart(
-        'UseNativeAccount#sub$connection.onAccountChange',
-      );
-      subId = connection.onAccountChange(publicKey, info => {
-        subDone();
-        updateAccount(info);
-      });
-
-      const done = timeStart('UseNativeAccount#connection.getAccountInfo');
       const account = await connection.getAccountInfo(publicKey);
       updateAccount(account);
-      done();
+
+      subId = connection.onAccountChange(publicKey, updateAccount);
     })();
 
     return () => {

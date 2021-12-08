@@ -1,8 +1,10 @@
 import { Creator, PackDistributionType } from '@oyster/common';
 import { Keypair } from '@solana/web3.js';
 import { BN } from 'bn.js';
+import { notification } from 'antd';
 
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import { MAX_PACKS_CREATION_COUNT } from '../../constants';
 import {
   MapSelectedItemsParams,
   MapSelectedVouchersParams,
@@ -125,3 +127,11 @@ export const mapSelectedVouchers = ({
       tokenAccount,
     };
   });
+
+export const exceededPacksCountNotification = (): void => {
+  notification.warning({
+    message: 'Exceeded Max Selected Count!',
+    description: `Maximum ${MAX_PACKS_CREATION_COUNT} items can be selected.`,
+    className: 'notification-container',
+  });
+};

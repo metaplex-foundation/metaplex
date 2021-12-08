@@ -20,6 +20,7 @@ export class PackSet {
   name: string;
   packCards: number;
   packVouchers: number;
+  totalWeight?: BN;
   totalEditions?: BN;
   mutable: boolean;
   packState: PackSetState;
@@ -27,6 +28,7 @@ export class PackSet {
   allowedAmountToRedeem: number;
   redeemStartDate: BN;
   redeemEndDate?: BN;
+  randomOracle: StringPublicKey;
 
   constructor(args: {
     key: PackKey;
@@ -37,6 +39,7 @@ export class PackSet {
     name: Uint8Array;
     packCards: number;
     packVouchers: number;
+    totalWeight?: BN;
     totalEditions?: BN;
     mutable: number;
     packState: PackSetState;
@@ -44,6 +47,7 @@ export class PackSet {
     allowedAmountToRedeem: number;
     redeemStartDate: BN;
     redeemEndDate?: BN;
+    randomOracle: StringPublicKey;
   }) {
     this.key = PackKey.PackSet;
     this.store = args.store;
@@ -53,6 +57,7 @@ export class PackSet {
     this.name = new TextDecoder().decode(args.name).replace(/\0/g, '');
     this.packCards = args.packCards;
     this.packVouchers = args.packVouchers;
+    this.totalWeight = args.totalWeight;
     this.totalEditions = args.totalEditions;
     this.mutable = !!args.mutable;
     this.packState = args.packState;
@@ -60,6 +65,7 @@ export class PackSet {
     this.distributionType = args.distributionType;
     this.redeemStartDate = args.redeemStartDate;
     this.redeemEndDate = args.redeemEndDate;
+    this.randomOracle = args.randomOracle;
   }
 }
 
@@ -85,6 +91,7 @@ export const PACK_SET_SCHEMA = new Map<any, any>([
         ['allowedAmountToRedeem', 'u32'],
         ['redeemStartDate', 'u64'],
         ['redeemEndDate', { kind: 'option', type: 'u64' }],
+        ['randomOracle', 'pubkeyAsString'],
       ],
     },
   ],
@@ -118,4 +125,19 @@ export const getPackSets = ({
       },
     ],
   });
+};
+
+export const getPackSetByPubkey = async (
+  connection: Connection,
+  pubkey: StringPublicKey,
+): Promise<AccountAndPubkey> => {
+  const info = await connection.getAccountInfo(new PublicKey(pubkey));
+  if (!info) {
+    throw new Error(`Unable to find account: ${pubkey}`);
+  }
+
+  return {
+    pubkey,
+    account: info,
+  };
 };
