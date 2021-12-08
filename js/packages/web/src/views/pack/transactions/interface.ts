@@ -58,7 +58,6 @@ export interface RequestCardParams {
   tokenAccount: StringPublicKey;
   packVoucher: StringPublicKey;
   wallet: WalletContextState;
-  randomOracle: StringPublicKey;
 }
 
 export interface RequestCardsParams {
