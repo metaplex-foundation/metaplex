@@ -60,7 +60,7 @@ export async function awsUpload(
   });
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 
-  const extensionRegex = new RegExp(`/${imageExt}$/`);
+  const extensionRegex = new RegExp(`${imageExt}$`);
   const metadataFilename = filename.replace(extensionRegex, '.json');
   const metadataUrl = await uploadFile(
     s3Client,
