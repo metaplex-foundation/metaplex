@@ -616,7 +616,7 @@ programCommand('verify')
         'You can go to one of the failing links in your browser and check for it to be available there before re-running.\n',
       );
       log.info('Running upload again will resolve most other issues.\n\n');
-      throw new Error(`Not all NFTs checked out. View problem details above.`);
+      return log.error(`Not all NFTs checked out. View problem details above.`);
     }
 
     const configData = (await anchorProgram.account.config.fetch(
