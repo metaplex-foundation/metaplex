@@ -1,48 +1,32 @@
 import {
-  ParsedAccount,
-  StringPublicKey,
   useConnection,
   useMeta,
   useUserAccounts,
   getSearchParams,
+  ParsedAccount,
 } from '@oyster/common';
-import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useLocation } from 'react-router';
 
-import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
 import { useUserVouchersByEdition } from '../../artworks/hooks/useUserVouchersByEdition';
-import openPack from '../actions/openPack';
-import {
-  PackMetadataByPackCard,
-  useMetadataByPackCard,
-} from '../hooks/useMetadataByPackCard';
-import { useOpenedMetadata } from '../hooks/useOpenedMetadata';
+import { claimPackCards } from '../transactions/claimPackCards';
 
-type PackContextProps = {
-  provingProcess?: ParsedAccount<ProvingProcess>,
-  isLoading: boolean;
-  packKey: StringPublicKey;
-  voucherEditionKey: StringPublicKey;
-  openedMetadata: SafetyDepositDraft[];
-  cardsRedeemed: number;
-  pack?: ParsedAccount<PackSet>;
-  voucherMetadataKey?: StringPublicKey;
-  metadataByPackCard: PackMetadataByPackCard;
-  isProvingProcess: boolean;
-  handleOpenPack: () => Promise<void>;
-};
+import { getProvingProcess } from './utils/getProvingProcess';
+import { getInitialProvingProcess } from './utils/getInitialProvingProcess';
+import { useMetadataByPackCard } from './hooks/useMetadataByPackCard';
+import { useOpenedMetadata } from './hooks/useOpenedMetadata';
+
+import { PackContextProps } from './interface';
+import { fetchProvingProcessWithRetry } from './utils/fetchProvingProcessWithRetry';
 
 export const PackContext = React.createContext<PackContextProps>({
   isLoading: false,
   packKey: '',
   voucherEditionKey: '',
   openedMetadata: [],
-  cardsRedeemed: 0,
   metadataByPackCard: {},
-  isProvingProcess: false,
   handleOpenPack: () => Promise.resolve(),
 });
 
@@ -66,19 +50,15 @@ export const PackProvider: React.FC = ({ children }) => {
   const userVouchers = useUserVouchersByEdition();
   const metadataByPackCard = useMetadataByPackCard(packKey);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const pack = packs[packKey];
-  const provingProcess = provingProcesses[provingProcessKey];
-
-  const cardsRedeemed = provingProcess?.info?.cardsRedeemed || 0;
-  const openedMetadata = useOpenedMetadata(packKey, cardsRedeemed);
+  const [provingProcess, setProvingProcess] =
+    useState<ParsedAccount<ProvingProcess>>();
 
   const voucherMetadata = useMemo(
     () => metadata.find(meta => meta?.info?.edition === voucherEditionKey),
     [metadata, voucherEditionKey],
   );
-
   const voucher = useMemo(
     () =>
       Object.values(vouchers).find(
@@ -87,30 +67,62 @@ export const PackProvider: React.FC = ({ children }) => {
     [vouchers, packKey],
   );
 
+  const cardsRedeemed = provingProcess?.info?.cardsRedeemed || 0;
+  const pack = packs[packKey];
   const voucherMetadataKey = voucherMetadata?.pubkey || voucher?.info?.metadata;
-  const isProvingProcess = Boolean(provingProcessKey);
+
+  const openedMetadata = useOpenedMetadata(packKey, cardsRedeemed);
 
   const handleOpenPack = async () => {
-    await openPack({
+    const newProvingProcess = await getProvingProcess({
       pack,
       voucherEditionKey,
-      provingProcess,
+      provingProcessKey,
       userVouchers,
       accountByMint,
       connection,
       wallet,
+    });
+    setProvingProcess(newProvingProcess);
+
+    const {
+      info: { cardsToRedeem, voucherMint },
+      pubkey,
+    } = newProvingProcess;
+
+    await claimPackCards({
+      wallet,
+      connection,
+      voucherMint,
+      cardsToRedeem,
+      metadataByPackCard,
       packCards,
       masterEditions,
-      metadataByPackCard,
+      pack,
     });
 
-    await handleFetch();
+    const resultingProvingProcess = await fetchProvingProcessWithRetry({
+      provingProcessKey: pubkey,
+      connection,
+    });
+
+    setProvingProcess(resultingProvingProcess);
   };
 
   const handleFetch = async () => {
     setIsLoading(true);
 
     await pullPackPage(userAccounts, packKey);
+
+    const initialProvingProcess = getInitialProvingProcess({
+      provingProcesses,
+      provingProcessKey,
+      voucherMetadata,
+    });
+
+    if (initialProvingProcess) {
+      setProvingProcess(initialProvingProcess);
+    }
 
     setIsLoading(false);
   };
@@ -122,17 +134,15 @@ export const PackProvider: React.FC = ({ children }) => {
   return (
     <PackContext.Provider
       value={{
-        provingProcess,
         isLoading,
         packKey,
         voucherEditionKey,
         voucherMetadataKey,
         openedMetadata,
         pack,
-        cardsRedeemed,
         metadataByPackCard,
-        isProvingProcess,
         handleOpenPack,
+        provingProcess,
       }}
     >
       {children}
