@@ -52,6 +52,7 @@ export interface NewMintParams {
 export interface RequestCardParams {
   index: number;
   packSetKey: StringPublicKey;
+  randomOracle: StringPublicKey;
   edition: StringPublicKey;
   editionMint: StringPublicKey;
   tokenAccount: StringPublicKey;
