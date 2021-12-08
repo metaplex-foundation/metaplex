@@ -36,7 +36,6 @@ type PackContextProps = {
 };
 
 export const PackContext = React.createContext<PackContextProps>({
-  provingProcess: undefined,
   isLoading: false,
   packKey: '',
   voucherEditionKey: '',
