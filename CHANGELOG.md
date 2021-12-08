@@ -39,9 +39,10 @@ incremented for features.
 - Ability to use PSD instead of PNGs in the candy machine CLI
 - Parallelize with batchSize command the candy machine CLI uploader
 - Add ability for a candy machine owner to update existing candies using an old and new cache file
-- Adds a minumum auction funds modal to prevent people from making bad auctions
+- Adds a minimum auction funds modal to prevent people from making bad auctions
 - Implement NFT Packs Redeem
 - Remove Websockets for useMeta
+- Redirect to home and reload on auction creation
 
 ### Fixes
 
@@ -66,6 +67,8 @@ incremented for features.
 - Fix issue where ata is not detected during ticket punching in FLP
 - Fix issue where random shuffled array is not using in image generation
 - Fix NFT Packs creation transaction failing when adding multiple items
+- Fix layout on token selection
+- Fix type of sale and edition number for non master edition NFTs
 
 ### Breaking
 
