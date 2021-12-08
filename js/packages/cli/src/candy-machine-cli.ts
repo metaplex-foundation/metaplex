@@ -368,7 +368,7 @@ programCommand('verify')
               cacheItem.checkHash = false;
               allGood = false;
               problems.push(
-                `Item: ${key} - Invalid null json link in cache. On-Chain value: ${uri}`,
+                `Item: ${key} - Invalid null json link in cache. This can cause issues when trying to upload. Either remove the entire item from the cache to re-upload, or set it to the on-chain value, if correct: ${uri} `,
               );
               saveCache(cacheName, env, cacheContent);
               continue;
@@ -610,7 +610,7 @@ programCommand('verify')
       log.info('\n\n### Problem Details ###');
       log.info(problems, '\n#######################\n');
       log.info(
-        "If the only issues are arweave 'Not Found' and uploading succeeded then you may just need to wait several minutes and run verify again.",
+        "If the only issues are arweave 'Not Found' but uploading seemed successful then you may just need to wait several minutes for the links to be available and run verify again.",
       );
       log.info(
         'You can go to one of the failing links in your browser and check for it to be available there before re-running.\n',
