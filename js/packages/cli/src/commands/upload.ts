@@ -122,6 +122,7 @@ export async function upload(
                 });
                 cacheContent.program.uuid = res.uuid;
                 cacheContent.program.config = res.config.toBase58();
+                cacheContent.totalNFTs = totalNFTs;
                 config = res.config;
 
                 log.info(
