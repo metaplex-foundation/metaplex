@@ -3,6 +3,7 @@ import { basename } from 'path';
 import { createReadStream } from 'fs';
 import { Readable } from 'form-data';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import path from 'path';
 
 async function uploadFile(
   s3Client: S3Client,
@@ -41,13 +42,13 @@ export async function awsUpload(
   const filename = `assets/${basename(file)}`;
   log.debug('file:', file);
   log.debug('filename:', filename);
-
+  const imageExt = path.extname(file);
   const fileStream = createReadStream(file);
   const mediaUrl = await uploadFile(
     s3Client,
     awsS3Bucket,
     filename,
-    'image/png',
+    `image/${imageExt.replace('.', '')}`,
     fileStream,
   );
 
@@ -59,7 +60,8 @@ export async function awsUpload(
   });
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 
-  const metadataFilename = filename.replace(/.png$/, '.json');
+  const extensionRegex = new RegExp(`${imageExt}$`);
+  const metadataFilename = filename.replace(extensionRegex, '.json');
   const metadataUrl = await uploadFile(
     s3Client,
     awsS3Bucket,

@@ -1,4 +1,9 @@
-import { EXTENSION_JSON, EXTENSION_PNG } from '../helpers/constants';
+import {
+  EXTENSION_JSON,
+  EXTENSION_PNG,
+  EXTENSION_GIF,
+  EXTENSION_JPG,
+} from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -47,21 +52,33 @@ export async function upload(
 
   const seen = {};
   const newFiles = [];
+  const EXTENSION_ARRAY = [EXTENSION_PNG, EXTENSION_GIF, EXTENSION_JPG];
 
   files.forEach(f => {
-    if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
-      seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
+    const extensionRegex = new RegExp(
+      `/(${EXTENSION_PNG})|(${EXTENSION_GIF})|(${EXTENSION_JPG})/g`,
+    );
+    if (!seen[f.replace(extensionRegex, '').split('/').pop()]) {
+      seen[f.replace(extensionRegex, '').split('/').pop()] = true;
       newFiles.push(f);
     }
   });
   existingInCache.forEach(f => {
     if (!seen[f]) {
       seen[f] = true;
-      newFiles.push(f + '.png');
+      const imageLink = cacheContent?.items?.[f]?.imageLink;
+      if (imageLink && EXTENSION_ARRAY.includes(path.extname(imageLink))) {
+        newFiles.push(f + path.extname(imageLink));
+      } else {
+        log.error(`Unknown file extension or image (${f}): ${imageLink}`);
+        newFiles.push(f + '.png');
+      }
     }
   });
 
-  const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
+  const images = newFiles.filter(val =>
+    EXTENSION_ARRAY.includes(path.extname(val)),
+  );
   const SIZE = images.length;
 
   const walletKeyPair = loadWalletKey(keypair);
@@ -79,8 +96,9 @@ export async function upload(
         for (let ind = 0; ind < allIndexesInSlice.length; ind++) {
           const i = allIndexesInSlice[ind];
           const image = images[i];
+          const imageExt = path.extname(image);
           const imageName = path.basename(image);
-          const index = imageName.replace(EXTENSION_PNG, '');
+          const index = imageName.replace(imageExt, '');
 
           log.debug(`Processing file: ${i}`);
 
@@ -91,12 +109,12 @@ export async function upload(
               lastPrinted = i;
               log.info(`Processing file: ${i}, ${imageName}`);
             }
-            const manifestPath = image.replace(EXTENSION_PNG, EXTENSION_JSON);
+            const manifestPath = image.replace(imageExt, EXTENSION_JSON);
             const manifestContent = fs
               .readFileSync(manifestPath)
               .toString()
-              .replace(imageName, 'image.png')
-              .replace(imageName, 'image.png');
+              .replace(imageName, `image${imageExt}`)
+              .replace(imageName, `image${imageExt}`);
             const manifest = JSON.parse(manifestContent);
 
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));
@@ -122,6 +140,7 @@ export async function upload(
                 });
                 cacheContent.program.uuid = res.uuid;
                 cacheContent.program.config = res.config.toBase58();
+                cacheContent.totalNFTs = totalNFTs;
                 config = res.config;
 
                 log.info(
