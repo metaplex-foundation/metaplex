@@ -1,12 +1,12 @@
 import React, { ReactElement, useCallback, useState } from 'react';
-import { Modal } from 'antd';
+import { Col, Modal, Row, Space, Spin } from 'antd';
+import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { shortenAddress } from '@oyster/common';
 
-import InitialStep from './components/InitialStep';
+import ClaimingPackStep from './components/ClaimingPackStep';
 import TransactionApprovalStep from './components/TransactionApprovalStep';
 import { useArt } from '../../../../hooks';
 import { usePack } from '../../contexts/PackContext';
-import ClaimingStep from './components/ClaimingStep';
 
 interface RedeemModalProps {
   isModalVisible: boolean;
@@ -14,9 +14,10 @@ interface RedeemModalProps {
 }
 
 enum openState {
-  Initial,
+  Ready,
   TransactionApproval,
-  Claiming,
+  Finding,
+  Found,
 }
 
 const CLOSE_TIMEOUT = 2500;
@@ -32,7 +33,7 @@ const RedeemModal = ({
     voucherMetadataKey,
     provingProcess,
   } = usePack();
-  const [modalState, setModalState] = useState<openState>(openState.Initial);
+  const [modalState, setModalState] = useState<openState>(openState.Ready);
 
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
@@ -43,34 +44,40 @@ const RedeemModal = ({
   );
 
   const handleOpen = async () => {
-    setModalState(openState.Claiming);
+    setModalState(openState.Finding);
 
     try {
       await handleOpenPack();
+
+      setModalState(openState.Found);
     } catch {
-      setModalState(openState.Initial);
+      setModalState(openState.Ready);
     } finally {
       setTimeout(() => handleClose(), CLOSE_TIMEOUT);
     }
   };
 
   const handleClose = useCallback(() => {
-    if (modalState !== openState.Claiming) {
+    if (modalState !== openState.Finding) {
       onClose();
-      setModalState(openState.Initial);
+      setModalState(openState.Ready);
     }
   }, [modalState, onClose, setModalState]);
 
   const onClickOpen = useCallback(() => {
-    if (modalState === openState.Initial) {
+    if (modalState === openState.Ready) {
       return setModalState(openState.TransactionApproval);
     }
 
     handleOpen();
   }, [modalState]);
 
-  const isModalClosable = modalState === openState.Initial;
-  const isClaiming = modalState === openState.Claiming;
+  const isModalClosable =
+    modalState !== openState.Finding &&
+    modalState !== openState.TransactionApproval;
+  const isFirstsSteps =
+    modalState === openState.Ready ||
+    modalState === openState.TransactionApproval;
 
   return (
     <Modal
@@ -84,21 +91,19 @@ const RedeemModal = ({
       closable={isModalClosable}
     >
       <div className="modal-redeem">
-        {isClaiming && <ClaimingStep />}
-        {!isClaiming && (
+        {isFirstsSteps && (
           <>
-            {modalState === openState.Initial && (
-              <InitialStep
+            {modalState === openState.Ready ? (
+              <ClaimingPackStep
                 onClose={onClose}
                 metadataByPackCard={metadataByPackCard}
                 numberOfAttempts={numberOfAttempts}
                 numberOfNFTs={numberOfNFTs}
                 creators={creators}
               />
-            )}
-            {modalState === openState.TransactionApproval && (
+            ) : (
               <TransactionApprovalStep
-                goBack={() => setModalState(openState.Claiming)}
+                goBack={() => setModalState(openState.Ready)}
               />
             )}
             <div className="modal-redeem__footer">
@@ -113,6 +118,42 @@ const RedeemModal = ({
               </button>
             </div>
           </>
+        )}
+        {!isFirstsSteps && (
+          <div className="modal-redeem__body">
+            <div className="finding-body">
+              <Space direction="vertical">
+                {modalState === openState.Finding ? (
+                  <Spin
+                    indicator={
+                      <LoadingOutlined className="finding-body__spinner" spin />
+                    }
+                  />
+                ) : (
+                  <div className="finding-body__check">
+                    <div className="icon-wrapper">
+                      <CheckOutlined />
+                    </div>
+                  </div>
+                )}
+                <p className="finding-body__title">Finding your NFT</p>
+                <p className="finding-body__desc">
+                  NFTs are randomly distributed throughout
+                  <br />
+                  the totall supply.
+                </p>
+              </Space>
+            </div>
+            <Row className="finding-body__info">
+              <Col span={3} className="finding-body__info__col center">
+                <img src={'/wallet.svg'} style={{ height: 16 }} />
+              </Col>
+              <Col span={21} className="finding-body__info__col">
+                You may also have to approve the purchase in your wallet if you
+                don’t have “auto-approve” turned on.
+              </Col>
+            </Row>
+          </div>
         )}
       </div>
     </Modal>
