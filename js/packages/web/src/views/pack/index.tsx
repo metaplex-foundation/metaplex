@@ -9,8 +9,9 @@ import { PackProvider, usePack } from './contexts/PackContext';
 
 const PackView: React.FC = () => {
   const [openModal, setOpenModal] = useState(false);
-  const { isLoading, openedMetadata, cardsRedeemed, pack } = usePack();
+  const { isLoading, openedMetadata, provingProcess, pack } = usePack();
 
+  const cardsRedeemed = provingProcess?.info.cardsRedeemed || 0;
   const cardsLeftToOpen = pack
     ? pack.info.allowedAmountToRedeem - cardsRedeemed
     : 0;

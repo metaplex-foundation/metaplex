@@ -5,7 +5,7 @@ import BN from 'bn.js';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 
 import { ExtendedVoucherByKey } from '../../artworks/types';
-import { PackMetadataByPackCard } from '../hooks/useMetadataByPackCard';
+import { PackMetadataByPackCard } from '../contexts/hooks/useMetadataByPackCard';
 
 export interface GenerateTransactionsResponse {
   instructions: TransactionInstruction[];
@@ -58,7 +58,6 @@ export interface RequestCardParams {
   tokenAccount: StringPublicKey;
   packVoucher: StringPublicKey;
   wallet: WalletContextState;
-  randomOracle: StringPublicKey;
 }
 
 export interface RequestCardsParams {

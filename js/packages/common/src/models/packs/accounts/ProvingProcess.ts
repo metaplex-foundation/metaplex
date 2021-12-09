@@ -75,6 +75,7 @@ export const getProvingProcessByPackSetAndWallet = ({
   walletKey: PublicKey;
 }): Promise<AccountAndPubkey[]> =>
   getProgramAccounts(connection, PACK_CREATE_ID.toString(), {
+    commitment: 'processed', // don't wait for cluster approval
     filters: [
       {
         dataSize: MAX_PACK_PROVING_PROCESS_SIZE,
@@ -98,7 +99,11 @@ export const getProvingProcessByPubkey = async (
   connection: Connection,
   pubkey: StringPublicKey,
 ): Promise<ParsedAccount<ProvingProcess>> => {
-  const info = await connection.getAccountInfo(new PublicKey(pubkey));
+  const info = await connection.getAccountInfo(
+    new PublicKey(pubkey),
+    'processed', // don't wait for cluster approval
+  );
+
   if (!info) {
     throw new Error(`Unable to find account: ${pubkey}`);
   }
