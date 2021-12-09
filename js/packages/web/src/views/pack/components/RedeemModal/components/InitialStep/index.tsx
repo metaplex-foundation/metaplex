@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 
 import RedeemCard from '../RedeemCard';
-import { PackMetadataByPackCard } from '../../../../hooks/useMetadataByPackCard';
+import { PackMetadataByPackCard } from '../../../../contexts/hooks/useMetadataByPackCard';
 
 interface InitialStepProps {
   numberOfNFTs: number;
