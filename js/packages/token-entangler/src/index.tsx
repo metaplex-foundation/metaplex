@@ -16,7 +16,7 @@ import "@fontsource/sora";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
-import "./index.css";
+// import "./index.css";
 
 ReactDOM.render(
   <React.StrictMode>
