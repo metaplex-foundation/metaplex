@@ -12,6 +12,8 @@ import { getType, getExtension } from 'mime';
 import { AssetKey } from '../../types';
 import Transaction from 'arweave/node/lib/transaction';
 import Bundlr from '@bundlr-network/client';
+
+export const LAMPORTS = 1_000_000_000;
 /**
  * The Arweave Path Manifest object for a given asset file pair.
  * https://github.com/ArweaveTeam/arweave/blob/master/doc/path-manifest-schema.md
@@ -193,18 +195,23 @@ type BundleRange = {
  * according to the size of the files to be included in respect of the
  * BUNDLE_SIZE_LIMIT.
  */
-async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
+async function getBundleRange(
+  filePairs: FilePair[],
+  splitSize: boolean = false,
+): Promise<BundleRange> {
   let total = 0;
   let count = 0;
   for (const { key, image, manifest } of filePairs) {
     const filePairSize = await [image, manifest].reduce(async (accP, file) => {
       const acc = await accP;
       const { size } = await stat(file);
-      console.log();
       return acc + size;
     }, Promise.resolve(dummyAreaveManifestByteSize));
 
-    if (total + filePairSize >= BUNDLE_SIZE_BYTE_LIMIT) {
+    const limit = splitSize
+      ? BUNDLE_SIZE_BYTE_LIMIT * 2
+      : BUNDLE_SIZE_BYTE_LIMIT;
+    if (total + filePairSize >= limit) {
       if (count === 0) {
         throw new Error(
           `Image + Manifest filepair (${key}) too big (${sizeMB(
@@ -334,10 +341,10 @@ export function* makeArweaveBundleUploadGenerator(
   // As long as we still have file pairs needing upload, compute the next range
   // of file pairs we can include in the next bundle.
   while (filePairs.length) {
-    const result = getBundleRange(filePairs).then(async function processBundle({
-      count,
-      size,
-    }) {
+    const result = getBundleRange(
+      filePairs,
+      storage === StorageType.ArweaveSol ? true : false,
+    ).then(async function processBundle({ count, size }) {
       log.info(
         `Computed Bundle range, including ${count} file pair(s) totaling ${sizeMB(
           size,
@@ -363,7 +370,6 @@ export function* makeArweaveBundleUploadGenerator(
           const acc = await accP;
           log.debug('Processing File Pair', filePair.key);
           const contentType = getType(filePair.image);
-          console.log(contentType);
           const imageDataItem = await getImageDataItem(
             signer,
             filePair.image,
@@ -421,14 +427,12 @@ export function* makeArweaveBundleUploadGenerator(
         );
         const bytes = dataItems.reduce((c, d) => c + d.data.length, 0);
         const cost = await bundlr.utils.getStorageCost('solana', bytes);
-        console.log(`${cost.toNumber() * 1} lamports to upload`);
+        console.log(`${cost.toNumber() / LAMPORTS} SOL to upload`);
         await bundlr.fund(cost.toNumber());
         for (const d of dataItems) {
           const tx = bundlr.createTransaction(d.rawData, { tags: d.tags });
           await tx.sign();
-          log.info('Uploading ', d.id, tx.id);
           await tx.upload();
-          log.info('Uploaded ', tx.id);
         }
         log.info('Bundle uploaded!');
       }

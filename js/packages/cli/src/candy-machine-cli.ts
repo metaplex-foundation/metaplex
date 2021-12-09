@@ -31,6 +31,7 @@ import {
 } from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
+import { updateFromCache } from './commands/updateFromCache';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
@@ -61,7 +62,11 @@ programCommand('upload')
   )
   .option('-n, --number <number>', 'Number of images to upload')
 
-  .option('-b, --batchSize <number>', 'Batch size - defaults to 50. Has no Affect on Bundlr', '50')
+  .option(
+    '-b, --batchSize <number>',
+    'Batch size - defaults to 50. Has no Affect on Bundlr',
+    '50',
+  )
 
   .option(
     '-s, --storage <string>',
@@ -154,7 +159,7 @@ programCommand('upload')
     const imageFileCount = files.filter(it => {
       return !it.endsWith(EXTENSION_JSON);
     }).length;
-  
+
     const jsonFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_JSON);
     }).length;
