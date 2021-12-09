@@ -5,11 +5,16 @@ export class MerkleTree {
   leafs: Array<Buffer>;
   layers: Array<Array<Buffer>>;
 
-  constructor(leafs: Array<Buffer>) {
+  constructor(leafs: Array<Buffer>, leaf_flags?: Array<number>) {
     this.leafs = leafs.slice();
     this.layers = [];
 
-    let hashes = this.leafs.map(MerkleTree.nodeHash);
+    let hashes;
+    if (!leaf_flags) {
+      hashes = this.leafs.map(MerkleTree.nodeHash);
+    } else {
+      hashes = this.leafs.map((l, idx) => MerkleTree.nodeHash(l, leaf_flags[idx]));
+    }
     while (hashes.length > 0) {
       log.debug('Hashes', this.layers.length, hashes);
       this.layers.push(hashes.slice());
@@ -24,8 +29,8 @@ export class MerkleTree {
     }
   }
 
-  static nodeHash(data: Buffer): Buffer {
-    return Buffer.from(keccak_256.digest([0x00, ...data]));
+  static nodeHash(data: Buffer, data_flags: number = 0x00): Buffer {
+    return Buffer.from(keccak_256.digest([data_flags, ...data]));
   }
 
   static internalHash(first: Buffer, second: Buffer | undefined): Buffer {

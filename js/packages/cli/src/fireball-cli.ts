@@ -87,12 +87,18 @@ programCommand('create_recipe')
           'mints': [],
         }
       }
-      assoc[mint.ingredient].mints.push(new PublicKey(mint.mint));
+      assoc[mint.ingredient].mints.push([
+        new PublicKey(mint.mint),
+        !!mint.allowLimitedEditions,
+      ]);
     }
     const groups = [...Object.keys(assoc)].map(i => assoc[i]);
 
     for (const group of groups) {
-      const tree = new MerkleTree(group.mints.map(m => m.toBuffer()));
+      const tree = new MerkleTree(
+        group.mints.map(([m, ]) => m.toBuffer()),
+        group.mints.map(([, b]) => b ? 0x02 : 0x00),
+      );
       group['root'] = tree.getRoot();
     }
 
@@ -124,8 +130,15 @@ programCommand('create_recipe')
     log.info(`writing recipe manifest to ${recipePath}`);
     fs.writeFileSync(recipePath, JSON.stringify(groups.map(
       g => ({
+        ...(
+          g.mints.every(([, b]) => !b)
+          ? {}
+          : {
+            allowLimitedEditions: g.mints.map(([, b]) => b),
+          }
+        ),
         ingredient: g.ingredient,
-        mints: g.mints.map(m => m.toBase58()),
+        mints: g.mints.map(([m, ]) => m.toBase58()),
         root: [...g.root],
       })
     )));
