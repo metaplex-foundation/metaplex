@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Row, Button, Modal, ButtonProps } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { useUserArts } from '../../hooks';
-import Masonry from 'react-masonry-css';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 
 export interface ArtSelectorProps extends ButtonProps {
@@ -41,20 +40,9 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     close();
   };
 
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
-
   return (
     <>
-      <Masonry
-        breakpointCols={breakpointColumnsObj}
-        className="my-masonry-grid"
-        columnClassName="my-masonry-grid_column"
-      >
+      <div className="artwork-grid">
         {selected.map(m => {
           let key = m?.metadata.pubkey || '';
 
@@ -80,7 +68,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
             <span className="text-center">Add an NFT</span>
           </div>
         )}
-      </Masonry>
+      </div>
 
       <Modal
         visible={visible}
@@ -88,6 +76,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         onOk={confirm}
         width={1100}
         footer={null}
+        className={"modalp-40"}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
           <h2>Select the NFT you want to sell</h2>
@@ -99,11 +88,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           className="content-action"
           style={{ overflowY: 'auto', height: '50vh' }}
         >
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
+          <div className="artwork-grid">
             {items.map(m => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
@@ -134,11 +119,11 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   pubkey={m.metadata.pubkey}
                   preview={false}
                   onClick={onSelect}
-                  className={isSelected ? 'selected-card' : 'not-selected-card'}
+                  className={isSelected ? 'selected-card art-card-for-selector' : 'not-selected-card art-card-for-selector'}
                 />
               );
             })}
-          </Masonry>
+          </div>
         </Row>
         <Row>
           <Button

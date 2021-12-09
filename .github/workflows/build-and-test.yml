@@ -24,6 +24,7 @@ jobs:
     needs:
       - test-token-vault
       - test-token-metadata
+      - test-metaplex
     steps:
       - run: echo "Done"
 
@@ -103,6 +104,41 @@ jobs:
       - name: test-token-metadata-program
         id: run_test
         working-directory: ./rust/token-metadata/program
+        run: |
+          cargo +${{ env.RUST_TOOLCHAIN }} test -- --nocapture --test-threads 1
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf -- --nocapture --test-threads 1
+  test-metaplex:
+    runs-on: ubuntu-latest
+    env:
+      cache_id: test-metaplex
+
+    steps:
+      # Setup Deps
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/install-linux-build-deps
+      - uses: ./.github/actions/install-solana
+        with: 
+          solana_version: ${{ env.SOLANA_VERSION }}
+      - uses: ./.github/actions/install-rust
+        with: 
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      # Restore Cache from previous build/test
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./rust/target
+          key: ${{ env.cache_id }}-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ env.RUSTC_HASH }}
+
+      # Run test
+      - name: test-metaplex
+        id: run_test
+        working-directory: ./rust/metaplex/program
         run: |
           cargo +${{ env.RUST_TOOLCHAIN }} test -- --nocapture --test-threads 1
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version

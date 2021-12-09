@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+
 import { queryExtendedMetadata } from './queryExtendedMetadata';
-import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
@@ -17,6 +18,8 @@ import {
   pullPage,
   pullPayoutTickets,
   pullStoreMetadata,
+  pullPacks,
+  pullPack,
 } from '.';
 import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 
@@ -30,6 +33,7 @@ const MetaContext = React.createContext<MetaContextState>({
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
   const { isReady, storeAddress } = useStore();
+  const wallet = useWallet();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
   const [page, setPage] = useState(0);
@@ -68,7 +72,9 @@ export function MetaProvider({ children = null as any }) {
       setIsLoading(true);
     }
     setIsLoading(true);
+
     const nextState = await pullStoreMetadata(connection, state);
+
     setIsLoading(false);
     setState(nextState);
     await updateMints(nextState.metadataByMint);
@@ -119,6 +125,65 @@ export function MetaProvider({ children = null as any }) {
     return nextState;
   }
 
+  async function pullItemsPage(
+    userTokenAccounts: TokenAccount[],
+  ): Promise<void> {
+    if (isLoading) {
+      return;
+    }
+    if (!storeAddress) {
+      return setIsLoading(false);
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+
+    const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+    const packsState = shouldEnableNftPacks
+      ? await pullPacks(connection, state, wallet?.publicKey)
+      : state;
+
+    const nextState = await pullYourMetadata(
+      connection,
+      userTokenAccounts,
+      packsState,
+    );
+
+    await updateMints(nextState.metadataByMint);
+
+    setState(nextState);
+  }
+
+  async function pullPackPage(
+    userTokenAccounts: TokenAccount[],
+    packSetKey: StringPublicKey,
+  ): Promise<void> {
+    if (isLoading) {
+      return;
+    }
+
+    if (!storeAddress && isReady) {
+      return setIsLoading(false);
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+
+    const packState = await pullPack({
+      connection,
+      state,
+      packSetKey,
+      walletKey: wallet?.publicKey,
+    });
+
+    const nextState = await pullYourMetadata(
+      connection,
+      userTokenAccounts,
+      packState,
+    );
+    await updateMints(nextState.metadataByMint);
+
+    setState(nextState);
+  }
+
   async function pullAllSiteData() {
     if (isLoading) return state;
     if (!storeAddress) {
@@ -158,9 +223,15 @@ export function MetaProvider({ children = null as any }) {
       setIsLoading(true);
     }
 
+    const shouldFetchNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+    let nextState = await pullPage(
+      connection,
+      page,
+      state,
+      wallet?.publicKey,
+      shouldFetchNftPacks,
+    );
     console.log('-----> Query started');
-
-    let nextState = await pullPage(connection, page, state);
 
     if (nextState.storeIndexer.length) {
       if (USE_SPEED_RUN) {
@@ -297,14 +368,6 @@ export function MetaProvider({ children = null as any }) {
     userAccounts.length > 0,
   ]);
 
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    return subscribeAccountsChange(connection, () => state, setState);
-  }, [connection, setState, isLoading, state]);
-
   // TODO: fetch names dynamically
   // TODO: get names for creators
   // useEffect(() => {
@@ -344,6 +407,8 @@ export function MetaProvider({ children = null as any }) {
         pullBillingPage,
         // @ts-ignore
         pullAllSiteData,
+        pullItemsPage,
+        pullPackPage,
         isLoading,
       }}
     >

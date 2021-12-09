@@ -6,8 +6,8 @@
 
 .ant-layout-content {
   overflow: auto !important;
-  @media (max-width: @screen-sm-min){
-    padding: 0 12px !important;
+  @media (max-width: @mobile-xs-max){
+    padding: 0 !important;
   }
 }
 .section {
@@ -44,6 +44,15 @@
     align-items: center;
     color: #ffffff;
   }
+}
+.modalp-40 {
+  .ant-modal-body {
+    padding: 40px;
+  }
+}
+
+.width-100 {
+  width: 100% !important;
 }
 
 .call-to-action {
@@ -106,7 +115,7 @@
   background: #282828;
   border-radius: 8px;
   padding: 10px;
-  border-width: 0px;
+  border-width: 0;
 }
 
 .textarea {
@@ -118,7 +127,7 @@
   width: 450px;
   border-radius: 8px;
   background-color: #1d1d1d;
-  border-width: 0px;
+  border-width: 0;
   margin-bottom: 20px;
   text-align: left;
 
@@ -129,7 +138,6 @@
   padding: 20px 24px;
 
   background: linear-gradient(270deg, #616774 7.29%, #403f4c 100%);
-  border-radius: 8px;
   max-width: 100%;
   white-space: normal;
 }
@@ -167,8 +175,6 @@
   font-size: 16px;
   line-height: 18px;
   /* identical to box height */
-  display: flex;
-  align-items: center;
   text-align: right;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -181,7 +187,7 @@
   color: #121212;
   border-color: #121212;
   background: white !important;
-  box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+  box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
   border-radius: 8px;
   padding: 12px 20px;
   font-family: "SF Pro Text";
@@ -227,7 +233,7 @@ h2 {
     flex: none;
     order: 0;
     flex-grow: 0;
-    margin: 12px 0px;
+    margin: 12px 0;
   }
 
   .ant-statistic-content {
@@ -281,7 +287,7 @@ h2 {
   background: #282828;
   border-radius: 8px;
   padding: 10px;
-  border-width: 0px;
+  border-width: 0;
   margin-bottom: 10px;
 }
 
@@ -305,7 +311,7 @@ h2 {
   order: 1;
   align-self: stretch;
   flex-grow: 0;
-  margin: 12px 0px;
+  margin: 12px 0;
 }
 
 
@@ -371,7 +377,7 @@ h2 {
 
 .ant-slider-handle {
   background: rgb(255, 255, 255);
-  box-shadow: rgb(0 0 0 / 30%) 0px 6px 12px 8px;
+  box-shadow: rgb(0 0 0 / 30%) 0 6px 12px 8px;
   width: 24px;
   height: 24px;
   margin-top: -7px;
