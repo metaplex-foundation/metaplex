@@ -103,7 +103,9 @@ export const useAuctionStatus = (
 
   const hasBids = bids.length > 0;
 
-  if (hasBids) amount = formatTokenAmount(winningBid.info.lastBid);
+  if (hasBids && winningBid) {
+    amount = formatTokenAmount(winningBid.info.lastBid);
+  }
 
   return {
     status: {

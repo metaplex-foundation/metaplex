@@ -17,7 +17,7 @@ import { deserializeAccount } from './deserialize';
 import { TokenAccountParser, MintParser } from './parsesrs';
 
 const AccountsContext = React.createContext<any>(null);
-const ACCOUNT_POOL_INTERVAL = 10 * 1000;
+const ACCOUNT_POOL_INTERVAL = 5 * 1000;
 
 export const useAccountsContext = () => {
   const context = useContext(AccountsContext);
