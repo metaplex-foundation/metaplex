@@ -342,6 +342,13 @@ model-viewer {
   cursor: pointer !important;
   width: fit-content;
 
+  button {
+    &:not(.ant-btn-icon-only) {
+      padding-right: 0;
+    }
+    border: none;
+  }
+
   & > span {
     font-weight: bold;
     font-size: 16px;
