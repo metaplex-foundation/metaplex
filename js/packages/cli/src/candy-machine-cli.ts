@@ -18,9 +18,6 @@ import {
   CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
-  EXTENSION_PNG,
-  EXTENSION_JPG,
-  EXTENSION_GIF,
   CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
@@ -150,11 +147,7 @@ programCommand('upload')
     };
 
     const imageFileCount = files.filter(it => {
-      return (
-        it.endsWith(EXTENSION_PNG) ||
-        it.endsWith(EXTENSION_GIF) ||
-        it.endsWith(EXTENSION_JPG)
-      );
+      return !it.endsWith(EXTENSION_JSON);
     }).length;
     const jsonFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_JSON);

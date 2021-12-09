@@ -263,6 +263,7 @@ type UploadParams = {
   ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
   arweaveJwk: string;
+  batchSize: number;
 };
 export async function upload({
   files,
@@ -277,6 +278,7 @@ export async function upload({
   ipfsCredentials,
   awsS3Bucket,
   arweaveJwk,
+  batchSize,
 }: UploadParams): Promise<void> {
   // Read the content of the Cache file into the Cache object, initialize it
   // otherwise.
@@ -344,98 +346,107 @@ export async function upload({
       log.info('Upload done.');
     } else {
       // For other storage methods, we upload the files individually.
-
-      const tick = dedupedAssetKeys.length / 100; // print every one percent
+      const SIZE = dedupedAssetKeys.length;
+      const tick = SIZE / 100; // print every one percent
       let lastPrinted = 0;
 
-      for (let i = 0; i < dedupedAssetKeys.length; i++) {
-        const assetKey = dedupedAssetKeys[i];
-        const image = path.join(
-          dirname,
-          `${assetKey.index}${assetKey.mediaExt}`,
-        );
-        const manifest = getAssetManifest(dirname, `${assetKey.index}.json`);
-        const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-        if (i >= lastPrinted + tick || i === 0) {
-          lastPrinted = i;
-          log.info(`Processing asset: ${assetKey}`);
-        }
+      await Promise.all(
+        chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
+          async allIndexesInSlice => {
+            for (let i = 0; i < allIndexesInSlice.length; i++) {
+              const assetKey = dedupedAssetKeys[i];
+              const image = path.join(
+                dirname,
+                `${assetKey.index}${assetKey.mediaExt}`,
+              );
+              const manifest = getAssetManifest(
+                dirname,
+                `${assetKey.index}.json`,
+              );
+              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+              if (i >= lastPrinted + tick || i === 0) {
+                lastPrinted = i;
+                log.info(`Processing asset: ${assetKey}`);
+              }
 
-        let link, imageLink;
-        try {
-          switch (storage) {
-            case StorageType.Ipfs:
-              [link, imageLink] = await ipfsUpload(
-                ipfsCredentials,
-                image,
-                manifestBuffer,
-              );
-              break;
-            case StorageType.Aws:
-              [link, imageLink] = await awsUpload(
-                awsS3Bucket,
-                image,
-                manifestBuffer,
-              );
-              break;
-            case StorageType.Arweave:
-            default:
-              [link, imageLink] = await arweaveUpload(
-                walletKeyPair,
-                anchorProgram,
-                env,
-                image,
-                manifestBuffer,
-                manifest,
-                i,
-              );
-          }
-          if (link && imageLink) {
-            log.debug('Updating cache for ', assetKey);
-            cache.items[assetKey.index] = {
-              link,
-              imageLink,
-              name: manifest.name,
-              onChain: false,
-            };
-            saveCache(cacheName, env, cache);
-          }
-        } catch (err) {
-          log.error(`Error uploading file ${assetKey}`, err);
-          throw err;
-        }
-      }
+              let link, imageLink;
+              try {
+                switch (storage) {
+                  case StorageType.Ipfs:
+                    [link, imageLink] = await ipfsUpload(
+                      ipfsCredentials,
+                      image,
+                      manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Aws:
+                    [link, imageLink] = await awsUpload(
+                      awsS3Bucket,
+                      image,
+                      manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Arweave:
+                  default:
+                    [link, imageLink] = await arweaveUpload(
+                      walletKeyPair,
+                      anchorProgram,
+                      env,
+                      image,
+                      manifestBuffer,
+                      manifest,
+                      i,
+                    );
+                }
+                if (link && imageLink) {
+                  log.debug('Updating cache for ', assetKey);
+                  cache.items[assetKey.index] = {
+                    link,
+                    imageLink,
+                    name: manifest.name,
+                    onChain: false,
+                  };
+                  saveCache(cacheName, env, cache);
+                }
+              } catch (err) {
+                log.error(`Error uploading file ${assetKey}`, err);
+                throw err;
+              }
+            }
+          },
+        ),
+      );
     }
+
+    const {
+      properties: { creators },
+      seller_fee_basis_points: sellerFeeBasisPoints,
+      symbol,
+    } = getAssetManifest(dirname, '0');
+
+    const config = cache.program.config
+      ? new PublicKey(cache.program.config)
+      : await initConfig(anchorProgram, walletKeyPair, {
+          totalNFTs,
+          mutable,
+          retainAuthority,
+          sellerFeeBasisPoints,
+          symbol,
+          creators,
+          env,
+          cache,
+          cacheName,
+        });
+
+    setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
+
+    return writeIndices({
+      anchorProgram,
+      cache,
+      cacheName,
+      env,
+      config,
+      walletKeyPair,
+    });
   }
-
-  const {
-    properties: { creators },
-    seller_fee_basis_points: sellerFeeBasisPoints,
-    symbol,
-  } = getAssetManifest(dirname, '0');
-
-  const config = cache.program.config
-    ? new PublicKey(cache.program.config)
-    : await initConfig(anchorProgram, walletKeyPair, {
-        totalNFTs,
-        mutable,
-        retainAuthority,
-        sellerFeeBasisPoints,
-        symbol,
-        creators,
-        env,
-        cache,
-        cacheName,
-      });
-
-  setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
-
-  return writeIndices({
-    anchorProgram,
-    cache,
-    cacheName,
-    env,
-    config,
-    walletKeyPair,
-  });
 }
