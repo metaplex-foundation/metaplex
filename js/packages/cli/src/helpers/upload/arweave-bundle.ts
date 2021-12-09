@@ -435,6 +435,7 @@ export function* makeArweaveBundleUploadGenerator(
 
       if (storageType === StorageType.ArweaveBundle) {
         const startBundleTime = Date.now();
+
         log.info('Bundling...');
 
         const bundle = await bundleAndSignData(dataItems, signer);
