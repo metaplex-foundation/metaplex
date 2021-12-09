@@ -19,8 +19,6 @@ enum openState {
   Claiming,
 }
 
-const CLOSE_TIMEOUT = 2500;
-
 const RedeemModal = ({
   isModalVisible,
   onClose,
@@ -49,23 +47,18 @@ const RedeemModal = ({
       await handleOpenPack();
     } catch {
       setModalState(openState.Initial);
-    } finally {
-      setTimeout(() => handleClose(), CLOSE_TIMEOUT);
     }
   };
 
   const handleClose = useCallback(() => {
-    if (modalState !== openState.Claiming) {
-      onClose();
-      setModalState(openState.Initial);
-    }
+    onClose();
+    setModalState(openState.Initial);
   }, [modalState, onClose, setModalState]);
 
   const onClickOpen = useCallback(() => {
     if (modalState === openState.Initial) {
       return setModalState(openState.TransactionApproval);
     }
-    console.log(modalState);
 
     handleOpen();
   }, [modalState]);
@@ -85,7 +78,7 @@ const RedeemModal = ({
       closable={isModalClosable}
     >
       <div className="modal-redeem">
-        {isClaiming && <ClaimingStep />}
+        {isClaiming && <ClaimingStep onClose={handleClose} />}
         {!isClaiming && (
           <>
             {modalState === openState.Initial && (
