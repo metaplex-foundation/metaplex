@@ -1,15 +1,17 @@
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
 import Arweave from 'arweave';
-import {
-  ArweaveSigner,
-  bundleAndSignData,
-  createData,
-  DataItem,
-} from 'arbundles';
-import log from 'loglevel';
-import { EXTENSION_PNG } from '../constants';
 
+import { signers, bundleAndSignData, createData, DataItem } from 'arbundles';
+import { Signer } from 'arbundles/src/signing';
+import log from 'loglevel';
+import { StorageType } from '../storage-type';
+import { Keypair } from '@solana/web3.js';
+import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
+import { getType, getExtension } from 'mime';
+import { AssetKey } from '../../types';
+import Transaction from 'arweave/node/lib/transaction';
+import Bundlr from '@bundlr-network/client';
 /**
  * The Arweave Path Manifest object for a given asset file pair.
  * https://github.com/ArweaveTeam/arweave/blob/master/doc/path-manifest-schema.md
@@ -18,7 +20,7 @@ type ArweavePathManifest = {
   manifest: 'arweave/paths';
   version: '0.1.0';
   paths: {
-    'image.png': {
+    [key: string]: {
       id: string; // arweave transaction id
     };
     'metadata.json': {
@@ -73,12 +75,13 @@ const BUNDLE_SIZE_BYTE_LIMIT = 50 * 1024 * 1024;
  */
 const BASE_TAGS = [{ name: 'App-Name', value: 'Metaplex Candy Machine' }];
 
-const CONTENT_TYPES = {
-  png: 'image/png',
-};
+// const CONTENT_TYPES = {
+//   png: 'image/png',
+//   gif: 'image/gif',
+//   jpeg: 'image/png',
+// };
 
 const contentTypeTags = {
-  png: { name: 'Content-Type', value: CONTENT_TYPES['png'] },
   json: { name: 'Content-Type', value: 'application/json' },
   'arweave-manifest': {
     name: 'Content-Type',
@@ -123,12 +126,13 @@ function sizeMB(bytes: number): string {
 function createArweavePathManifest(
   imageTxId: string,
   manifestTxId: string,
+  mediaType: string,
 ): ArweavePathManifest {
   const arweavePathManifest: ArweavePathManifest = {
     manifest: 'arweave/paths',
     version: '0.1.0',
     paths: {
-      'image.png': {
+      [`image${mediaType}`]: {
         id: imageTxId,
       },
       'metadata.json': {
@@ -150,6 +154,7 @@ const dummyAreaveManifestByteSize = (() => {
   const dummyAreaveManifest = createArweavePathManifest(
     'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
     'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
+    '.png',
   );
   return Buffer.byteLength(JSON.stringify(dummyAreaveManifest));
 })();
@@ -195,6 +200,7 @@ async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
     const filePairSize = await [image, manifest].reduce(async (accP, file) => {
       const acc = await accP;
       const { size } = await stat(file);
+      console.log();
       return acc + size;
     }, Promise.resolve(dummyAreaveManifestByteSize));
 
@@ -217,17 +223,19 @@ async function getBundleRange(filePairs: FilePair[]): Promise<BundleRange> {
   return { count, size: total };
 }
 
-const imageTags = [...BASE_TAGS, contentTypeTags['png']];
+const imageTags = [...BASE_TAGS];
 /**
  * Retrieve a DataItem which will hold the asset's image binary data
  * & represent an individual Arweave transaction which can be signed & bundled.
  */
 async function getImageDataItem(
-  signer: ArweaveSigner,
+  signer: Signer,
   image: string,
+  contentType: string,
 ): Promise<DataItem> {
+  console.log(imageTags.concat({ name: 'Content-Type', value: contentType }));
   return createData(await readFile(image), signer, {
-    tags: imageTags,
+    tags: imageTags.concat({ name: 'Content-Type', value: contentType }),
   });
 }
 
@@ -236,10 +244,7 @@ const manifestTags = [...BASE_TAGS, contentTypeTags['json']];
  * Retrieve a DataItem which will hold the asset's manifest binary data
  * & represent an individual Arweave transaction which can be signed & bundled.
  */
-function getManifestDataItem(
-  signer: ArweaveSigner,
-  manifest: Manifest,
-): DataItem {
+function getManifestDataItem(signer: Signer, manifest: Manifest): DataItem {
   return createData(JSON.stringify(manifest), signer, { tags: manifestTags });
 }
 
@@ -252,7 +257,7 @@ const arweavePathManifestTags = [
  * & represent an individual Arweave transaction which can be signed & bundled.
  */
 function getArweavePathManifestDataItem(
-  signer: ArweaveSigner,
+  signer: Signer,
   arweavePathManifest: ArweavePathManifest,
 ): DataItem {
   return createData(JSON.stringify(arweavePathManifest), signer, {
@@ -267,12 +272,13 @@ function getArweavePathManifestDataItem(
 async function getUpdatedManifest(
   manifestPath: string,
   imageLink: string,
+  contentType: string,
 ): Promise<Manifest> {
   const manifest: Manifest = JSON.parse(
     (await readFile(manifestPath)).toString(),
   );
   manifest.image = imageLink;
-  manifest.properties.files = [{ type: CONTENT_TYPES['png'], uri: imageLink }];
+  manifest.properties.files = [{ type: contentType, uri: imageLink }];
 
   return manifest;
 }
@@ -286,17 +292,35 @@ async function getUpdatedManifest(
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
  */
 export function* makeArweaveBundleUploadGenerator(
+  storage: StorageType,
   dirname: string,
-  assets: string[],
-  jwk: any,
+  assets: AssetKey[],
+  jwk?: any,
+  walletKeyPair?: Keypair,
 ): Generator<Promise<UploadGeneratorResult>> {
-  const signer = new ArweaveSigner(jwk);
+  let signer;
+  const storageType: StorageType = storage;
+  if (storage === StorageType.ArweaveSol && !walletKeyPair) {
+    throw new Error(
+      'To pay for uploads with SOL, you need to pass a Solana Keypair',
+    );
+  }
+  if (storage === StorageType.ArweaveBundle) {
+    throw new Error(
+      'To pay for uploads with AR, you need to pass a Arweave JWK',
+    );
+  }
+  if (storage === StorageType.ArweaveSol) {
+    signer = new signers.SolanaSigner(bs58.encode(walletKeyPair.secretKey));
+  } else {
+    signer = new signers.ArweaveSigner(jwk);
+  }
   const arweave = getArweave();
 
-  const filePairs = assets.map(asset => ({
-    key: asset,
-    image: path.join(dirname, `${asset}${EXTENSION_PNG}`),
-    manifest: path.join(dirname, `${asset}.json`),
+  const filePairs = assets.map((asset: AssetKey) => ({
+    key: asset.index,
+    image: path.join(dirname, `${asset.index}${asset.mediaExt}`),
+    manifest: path.join(dirname, `${asset.index}.json`),
   }));
 
   // Yield an empty result object before processing file pairs
@@ -338,14 +362,20 @@ export function* makeArweaveBundleUploadGenerator(
         async function processBundleFilePair(accP, filePair) {
           const acc = await accP;
           log.debug('Processing File Pair', filePair.key);
-
-          const imageDataItem = await getImageDataItem(signer, filePair.image);
+          const contentType = getType(filePair.image);
+          console.log(contentType);
+          const imageDataItem = await getImageDataItem(
+            signer,
+            filePair.image,
+            contentType,
+          );
           await imageDataItem.sign(signer);
           const imageLink = `https://arweave.net/${imageDataItem.id}`;
-
+          console.log(imageLink);
           const manifest = await getUpdatedManifest(
             filePair.manifest,
             imageLink,
+            contentType,
           );
           const manifestDataItem = getManifestDataItem(signer, manifest);
           await manifestDataItem.sign(signer);
@@ -353,6 +383,7 @@ export function* makeArweaveBundleUploadGenerator(
           const arweavePathManifest = createArweavePathManifest(
             imageDataItem.id,
             manifestDataItem.id,
+            `.${getExtension(contentType)}`,
           );
           const arweavePathManifestDataItem = getArweavePathManifestDataItem(
             signer,
@@ -360,6 +391,7 @@ export function* makeArweaveBundleUploadGenerator(
           );
           await arweavePathManifestDataItem.sign(signer);
           const arweavePathManifestLink = `https://arweave.net/${manifestDataItem.id}`;
+          console.log(arweavePathManifestLink);
 
           acc.cacheKeys.push(filePair.key);
           acc.dataItems.push(
@@ -380,27 +412,50 @@ export function* makeArweaveBundleUploadGenerator(
           updatedManifests: [],
         }),
       );
+      if (storageType === StorageType.ArweaveSol) {
+        log.info('Uploading bundle... in multiple transactions');
+        const bundlr = new Bundlr(
+          'https://node1.bundlr.network',
+          'solana',
+          walletKeyPair.secretKey,
+        );
+        const bytes = dataItems.reduce((c, d) => c + d.data.length, 0);
+        const cost = await bundlr.utils.getStorageCost('solana', bytes);
+        console.log(`${cost.toNumber() * 1} lamports to upload`);
+        await bundlr.fund(cost.toNumber());
+        for (const d of dataItems) {
+          const tx = bundlr.createTransaction(d.data, { tags: d.tags });
+          await tx.sign();
+          log.info('Uploading ', d.id, tx.id);
+          await tx.upload();
+          log.info('Uploaded ', tx.id);
+        }
+        log.info('Bundle uploaded!');
+      }
 
-      const startBundleTime = Date.now();
-      log.info('Bundling...');
-      const bundle = await bundleAndSignData(dataItems, signer);
-      const endBundleTime = Date.now();
-      log.info(
-        `Bundled ${dataItems.length} data items in ${
-          (endBundleTime - startBundleTime) / 1000
-        }s`,
-      );
-      // @ts-ignore
-      // Argument of type
-      // 'import("node_modules/arweave/node/common").default'
-      // is not assignable to parameter of type
-      // 'import("node_modules/arbundles/node_modules/arweave/node/common").default'.
-      // Types of property 'api' are incompatible.
-      const tx = await bundle.toTransaction(arweave, jwk);
-      await arweave.transactions.sign(tx, jwk);
-      log.info('Uploading bundle...');
-      await arweave.transactions.post(tx);
-      log.info('Bundle uploaded!', tx.id);
+      if (storageType === StorageType.ArweaveBundle) {
+        const startBundleTime = Date.now();
+        log.info('Bundling...');
+
+        const bundle = await bundleAndSignData(dataItems, signer);
+        const endBundleTime = Date.now();
+        log.info(
+          `Bundled ${dataItems.length} data items in ${
+            (endBundleTime - startBundleTime) / 1000
+          }s`,
+        );
+        // @ts-ignore
+        // Argument of type
+        // 'import("node_modules/arweave/node/common").default'
+        // is not assignable to parameter of type
+        // 'import("node_modules/arbundles/node_modules/arweave/node/common").default'.
+        // Types of property 'api' are incompatible.
+        const tx = await bundle.toTransaction(arweave, jwk);
+        await arweave.transactions.sign(tx as Transaction, jwk);
+        log.info('Uploading bundle...');
+        await arweave.transactions.post(tx);
+        log.info('Bundle uploaded!', tx.id);
+      }
 
       return { cacheKeys, arweavePathManifestLinks, updatedManifests };
     });

@@ -13,13 +13,13 @@ import {
   loadWalletKey,
 } from '../helpers/accounts';
 import { loadCache, saveCache } from '../helpers/cache';
-import { EXTENSION_PNG } from '../helpers/constants';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 import { StorageType } from '../helpers/storage-type';
 import { chunks } from '../helpers/various';
+import { AssetKey } from '../types';
 
 /**
  * The Cache object, represented in its minimal form.
@@ -51,7 +51,6 @@ type Manifest = {
     }>;
   };
 };
-
 /**
  * From the Cache object & a list of file paths, return a list of asset keys
  * (filenames without extension nor path) that should be uploaded, sorted numerically in ascending order.
@@ -61,23 +60,27 @@ type Manifest = {
 function getAssetKeysNeedingUpload(
   items: Cache['items'],
   files: string[],
-): string[] {
+): AssetKey[] {
   const all = [
     ...new Set([
       ...Object.keys(items),
-      ...files.map(filePath => path.basename(filePath, path.extname(filePath))),
+      ...files.map(filePath => path.basename(filePath)),
     ]),
   ];
-
+  const keyMap = {};
   return all
+    .filter(k => !k.includes('.json'))
     .reduce((acc, assetKey) => {
-      if (!items[assetKey]?.link) {
-        acc.push(assetKey);
+      const ext = path.extname(assetKey);
+      const key = path.basename(assetKey, ext);
+      if (!items[key]?.link && !keyMap[key]) {
+        keyMap[key] = true;
+        acc.push({ mediaExt: ext, index: key });
       }
-
+      console.log(acc);
       return acc;
     }, [])
-    .sort((a, b) => Number.parseInt(a) - Number.parseInt(b));
+    .sort((a, b) => Number.parseInt(a.key, 10) - Number.parseInt(b.key, 10));
 }
 
 /**
@@ -296,9 +299,8 @@ export async function upload({
   // These will be needed anyway either to initialize the
   // Candy Machine Custom Program configuration, or to write the assets
   // to the deployed configuration on chain.
-  let walletKeyPair;
-  let anchorProgram;
-
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
   // Some assets need to be uploaded.
   if (dedupedAssetKeys.length) {
     // Arweave Native storage leverages Arweave Bundles.
@@ -307,13 +309,20 @@ export async function upload({
     // which pays the reward for all bundled data.
     // https://github.com/Bundlr-Network/arbundles
     // Each bundle consists of one or multiple asset filepair (PNG + JSON).
-    if (storage === StorageType.ArweaveBundle) {
+    if (
+      storage === StorageType.ArweaveBundle ||
+      storage === StorageType.ArweaveSol
+    ) {
       // Initialize the Arweave Bundle Upload Generator.
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
       const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(
+        storage,
         dirname,
         dedupedAssetKeys,
-        JSON.parse((await readFile(arweaveJwk)).toString()),
+        storage === StorageType.ArweaveBundle
+          ? JSON.parse((await readFile(arweaveJwk)).toString())
+          : undefined,
+        storage === StorageType.ArweaveSol ? walletKeyPair : undefined,
       );
 
       let result = arweaveBundleUploadGenerator.next();
@@ -335,16 +344,17 @@ export async function upload({
       log.info('Upload done.');
     } else {
       // For other storage methods, we upload the files individually.
-      walletKeyPair = loadWalletKey(keypair);
-      anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
       const tick = dedupedAssetKeys.length / 100; // print every one percent
       let lastPrinted = 0;
 
       for (let i = 0; i < dedupedAssetKeys.length; i++) {
         const assetKey = dedupedAssetKeys[i];
-        const image = path.join(dirname, `${assetKey}${EXTENSION_PNG}`);
-        const manifest = getAssetManifest(dirname, assetKey);
+        const image = path.join(
+          dirname,
+          `${assetKey.index}${assetKey.mediaExt}`,
+        );
+        const manifest = getAssetManifest(dirname, `${assetKey.index}.json`);
         const manifestBuffer = Buffer.from(JSON.stringify(manifest));
         if (i >= lastPrinted + tick || i === 0) {
           lastPrinted = i;
@@ -382,7 +392,7 @@ export async function upload({
           }
           if (link && imageLink) {
             log.debug('Updating cache for ', assetKey);
-            cache.items[assetKey] = {
+            cache.items[assetKey.index] = {
               link,
               imageLink,
               name: manifest.name,
@@ -403,10 +413,6 @@ export async function upload({
     seller_fee_basis_points: sellerFeeBasisPoints,
     symbol,
   } = getAssetManifest(dirname, '0');
-
-  walletKeyPair = walletKeyPair || loadWalletKey(keypair);
-  anchorProgram =
-    anchorProgram || (await loadCandyProgram(walletKeyPair, env, rpcUrl));
 
   const config = cache.program.config
     ? new PublicKey(cache.program.config)

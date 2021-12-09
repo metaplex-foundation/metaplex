@@ -39,10 +39,10 @@ export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
 );
 export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(
-  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a'
+  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a',
 );
 export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(
-  'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV'
+  'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV',
 );
 
 export const CONFIG_ARRAY_START =
@@ -66,4 +66,6 @@ export const CACHE_PATH = './.cache';
 export const DEFAULT_TIMEOUT = 15000;
 
 export const EXTENSION_PNG = '.png';
+export const EXTENSION_JPG = '.jpg';
+export const EXTENSION_GIF = '.gif';
 export const EXTENSION_JSON = '.json';

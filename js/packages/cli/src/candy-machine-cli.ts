@@ -19,6 +19,8 @@ import {
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
+  EXTENSION_JPG,
+  EXTENSION_GIF,
   CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
@@ -63,7 +65,7 @@ programCommand('upload')
   .option(
     '-s, --storage <string>',
     `Database to use for storage (${Object.values(StorageType).join(', ')})`,
-    'arweave',
+    'arweave-sol',
   )
   .option(
     '--ipfs-infura-project-id <string>',
@@ -103,6 +105,18 @@ programCommand('upload')
       arweaveJwk,
     } = cmd.opts();
 
+    if (storage === StorageType.ArweaveSol && env !== 'mainnet') {
+      throw new Error(
+        'Arweave Sol must receive real SOL from mainnet, for devnet please use Arweave Bundle, AWS or IPFS',
+      );
+    }
+
+    if (storage === StorageType.Arweave) {
+      console.info(
+        'WARNING: This upload method will be going away soon. Please migrate to Arweave Bundler, or Arweave SOL',
+      );
+    }
+
     if (storage === StorageType.ArweaveBundle && !arweaveJwk) {
       throw new Error(
         'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundle',
@@ -135,29 +149,33 @@ programCommand('upload')
       secretKey: ipfsInfuraSecret,
     };
 
-    const pngFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_PNG);
+    const imageFileCount = files.filter(it => {
+      return (
+        it.endsWith(EXTENSION_PNG) ||
+        it.endsWith(EXTENSION_GIF) ||
+        it.endsWith(EXTENSION_JPG)
+      );
     }).length;
     const jsonFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_JSON);
     }).length;
 
     const parsedNumber = parseInt(number);
-    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
+    const elemCount = parsedNumber ? parsedNumber : imageFileCount;
 
-    if (pngFileCount !== jsonFileCount) {
+    if (imageFileCount !== jsonFileCount) {
       throw new Error(
-        `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+        `number of image files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
     }
 
-    if (elemCount < pngFileCount) {
+    if (elemCount < imageFileCount) {
       throw new Error(
-        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
       );
     }
 
-    log.info(`Beginning the upload for ${elemCount} (png+json) pairs`);
+    log.info(`Beginning the upload for ${elemCount} (image+json) pairs`);
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
