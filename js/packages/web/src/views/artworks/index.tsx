@@ -47,8 +47,9 @@ export const ArtworksView = () => {
       className={"refresh-button padding0"}
       onClick={() => pullItemsPage(userAccounts)}
       icon={<DownOutlined />}
+      overlayClassName={"refresh-overlay"}
       overlay={
-        <Menu className={'black-dropdown'}>
+        <Menu className={'gray-dropdown'}>
           <Menu.Item onClick={() => pullAllMetadata()}>Load All Metadata</Menu.Item>
         </Menu>
       }
