@@ -1,10 +1,10 @@
 import React from 'react';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 
 import RedeemCard from '../RedeemCard';
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import { PackMetadataByPackCard } from '../../../../contexts/hooks/useMetadataByPackCard';
+import { PackMetadataByPackCard } from '../../../../hooks/useMetadataByPackCard';
 
-interface IPropsClaimingPackStep {
+interface InitialStepProps {
   numberOfNFTs: number;
   numberOfAttempts: number;
   metadataByPackCard: PackMetadataByPackCard;
@@ -12,13 +12,13 @@ interface IPropsClaimingPackStep {
   onClose: () => void;
 }
 
-const ClaimingPackStep = ({
+const InitialStep = ({
   numberOfNFTs,
   numberOfAttempts,
   metadataByPackCard,
   creators,
   onClose,
-}: IPropsClaimingPackStep) => (
+}: InitialStepProps) => (
   <div>
     <div className="modal-redeem__title-container">
       <p className="title">Claiming Pack Cards</p>
@@ -52,4 +52,4 @@ const ClaimingPackStep = ({
   </div>
 );
 
-export default ClaimingPackStep;
+export default InitialStep;
