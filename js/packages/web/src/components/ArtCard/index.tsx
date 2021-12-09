@@ -76,7 +76,7 @@ export const ArtCard = (props: ArtCardProps) => {
           onClick={e => {
             e.stopPropagation();
             e.preventDefault();
-            onClose();
+            onClose && onClose();
           }}
         >
           X
