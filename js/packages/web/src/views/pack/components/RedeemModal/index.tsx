@@ -30,7 +30,7 @@ const RedeemModal = ({
     pack,
     metadataByPackCard,
     voucherMetadataKey,
-    isProvingProcess,
+    provingProcess,
   } = usePack();
   const [modalState, setModalState] = useState<openState>(openState.Initial);
 
@@ -109,7 +109,7 @@ const RedeemModal = ({
 
               <button className="modal-redeem__open-nft" onClick={onClickOpen}>
                 <span>
-                  {isProvingProcess ? 'Resume Opening Pack' : 'Open Pack'}
+                  {provingProcess ? 'Resume Opening Pack' : 'Open Pack'}
                 </span>
               </button>
             </div>

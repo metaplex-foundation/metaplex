@@ -1,27 +1,29 @@
-import {
-  MetaState,
-  ParsedAccount,
-  StringPublicKey,
-  TokenAccount,
-} from '@oyster/common';
+import { ParsedAccount, StringPublicKey, TokenAccount } from '@oyster/common';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
 import { WalletContextState } from '@solana/wallet-adapter-react';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 
+import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
 import { ExtendedVoucherByKey } from '../../artworks/types';
-import { PackMetadataByPackCard } from '../hooks/useMetadataByPackCard';
+import { PackMetadataByPackCard } from './hooks/useMetadataByPackCard';
 
-export interface OpenPackParams
-  extends GetProvingProcessParams,
-    Pick<MetaState, 'packCards' | 'masterEditions'> {
+export type PackContextProps = {
+  isLoading: boolean;
+  packKey: StringPublicKey;
+  voucherEditionKey: StringPublicKey;
+  openedMetadata: SafetyDepositDraft[];
+  pack?: ParsedAccount<PackSet>;
+  voucherMetadataKey?: StringPublicKey;
   metadataByPackCard: PackMetadataByPackCard;
-}
+  handleOpenPack: () => Promise<void>;
+  provingProcess?: ParsedAccount<ProvingProcess>;
+};
 
 export interface GetProvingProcessParams
   extends Omit<RequestCardsUsingVoucherParams, 'voucherEditionKey'> {
   voucherEditionKey?: StringPublicKey;
-  provingProcess?: ParsedAccount<ProvingProcess>;
+  provingProcessKey?: StringPublicKey;
 }
 
 export interface RequestCardsUsingVoucherParams {
@@ -31,11 +33,4 @@ export interface RequestCardsUsingVoucherParams {
   accountByMint: Map<string, TokenAccount>;
   connection: Connection;
   wallet: WalletContextState;
-}
-
-export interface FetchProvingProcessWithRetryParams {
-  voucherMint: PublicKey;
-  packKey: PublicKey;
-  walletKey: PublicKey;
-  connection: Connection;
 }
