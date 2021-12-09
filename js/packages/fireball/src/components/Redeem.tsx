@@ -393,13 +393,21 @@ const getRelevantTokenAccounts = async (
         allowLimitedEdition: group.allowLimitedEditions && group.allowLimitedEditions[idx],
       };
 
+  const mintEditions = {}
+  for (const m of Object.keys(mints)) {
+    const edition = (await getEdition(new PublicKey(m))).toBase58();
+    mintEditions[edition] = {
+      allowLimitedEdition: mints[m].allowLimitedEdition,
+      ingredient: mints[m].ingredient,
+    };
+  }
+
   const owned = await connection.getTokenAccountsByOwner(
       walletKey,
       { programId: TOKEN_PROGRAM_ID },
     );
 
   const decoded = owned.value.map(v => AccountLayout.decode(v.account.data));
-  console.log(decoded);
   // TODO: can we skip some of these when allowLimitedEditions is false?
   const editionKeys = await Promise.all(decoded.map(async (a) => {
     const mint = new PublicKey(a.mint);
@@ -408,7 +416,6 @@ const getRelevantTokenAccounts = async (
   const editionDatas = (await getMultipleAccounts(
     // TODO: different commitment?
     connection, editionKeys, 'processed')).array;
-  console.log(editionDatas);
   const editionParentKeys = editionDatas.map(e => {
     if (!e) {
       // shouldn't happen?
@@ -420,11 +427,13 @@ const getRelevantTokenAccounts = async (
       return undefined;
     }
   });
-  const relevant = decoded.filter((a, idx) => {
-    const editionParentKey = editionParentKeys[idx];
+  const relevant = decoded
+    .map((a, idx) => ({ ...a, editionParentKey: editionParentKeys[idx] }))
+    .filter(a => {
+    const editionParentKey = a.editionParentKey;
     const mintMatches =
       (new PublicKey(a.mint).toBase58()) in mints
-      || (editionParentKey && mints[editionParentKey]);
+      || (editionParentKey && mintEditions[editionParentKey]?.allowLimitedEdition);
     const hasToken = new BN(a.amount, 'le').toNumber() > 0;
     return mintMatches && hasToken;
   });
@@ -432,8 +441,18 @@ const getRelevantTokenAccounts = async (
   // TODO: getMultipleAccounts
   const relevantImages = await fetchMintsAndImages(
       connection, relevant.map(r => new PublicKey(r.mint)));
-  const ret = relevantImages.map(
-      r => ({ ...r, ingredient: mints[r.mint.toBase58()].ingredient }));
+  const ret = relevantImages.map((r, idx) => {
+    // TODO: better
+    const mint = r.mint.toBase58();
+    const editionParentKey = relevant[idx].editionParentKey;
+    return {
+      ...r,
+      ingredient: mint in mints
+        ? mints[mint].ingredient
+        : mintEditions[editionParentKey].ingredient,  // lookup by parent edition
+    }
+  });
+  console.log(ret);
   ret.sort((lft, rht) => lft.ingredient.localeCompare(rht.ingredient));
   return ret;
 };
