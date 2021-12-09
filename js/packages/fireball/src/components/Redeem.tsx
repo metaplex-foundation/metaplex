@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 
 import {
+  AccountMeta,
   Connection as RPCConnection,
   Keypair,
   PublicKey,
@@ -229,7 +230,14 @@ type MintAndImage = {
   image: string,
 };
 
-type RelevantMint = MintAndImage & { ingredient : string };
+type RelevantMint = MintAndImage & {
+  ingredient : string,
+  parent ?: {
+    edition : PublicKey,
+    masterMint : PublicKey,
+    masterEdition : PublicKey,
+  },
+};
 
 // remaining is never technically strictly up-to-date...
 // TODO: add as of block height?
@@ -393,40 +401,48 @@ const getRelevantTokenAccounts = async (
         allowLimitedEdition: group.allowLimitedEditions && group.allowLimitedEditions[idx],
       };
 
-  const mintEditions = {}
-  for (const m of Object.keys(mints)) {
-    const edition = (await getEdition(new PublicKey(m))).toBase58();
-    mintEditions[edition] = {
-      allowLimitedEdition: mints[m].allowLimitedEdition,
-      ingredient: mints[m].ingredient,
-    };
-  }
-
   const owned = await connection.getTokenAccountsByOwner(
       walletKey,
       { programId: TOKEN_PROGRAM_ID },
     );
 
   const decoded = owned.value.map(v => AccountLayout.decode(v.account.data));
-  // TODO: can we skip some of these when allowLimitedEditions is false?
-  const editionKeys = await Promise.all(decoded.map(async (a) => {
-    const mint = new PublicKey(a.mint);
-    return (await getEdition(mint)).toBase58();
-  }));
-  const editionDatas = (await getMultipleAccounts(
-    // TODO: different commitment?
-    connection, editionKeys, 'processed')).array;
-  const editionParentKeys = editionDatas.map(e => {
-    if (!e) {
-      // shouldn't happen?
-      return undefined;
+
+  let editionParentKeys;
+  const mintEditions = {};
+  if (Object.values(mints).every(m => !(m as any).allowLimitedEdition)) {
+    console.log('No limited editions allowed. Skipping fetches');
+    editionParentKeys = new Array(decoded.length);
+  } else {
+    for (const m of Object.keys(mints)) {
+      const edition = (await getEdition(new PublicKey(m))).toBase58();
+      mintEditions[edition] = {
+        allowLimitedEdition: mints[m].allowLimitedEdition,
+        ingredient: mints[m].ingredient,
+        key: new PublicKey(m),
+      };
     }
-    if (e.data[0] == MetadataKey.EditionV1) {
-      return decodeEdition(e.data).parent;
-    } else {
-      return undefined;
-    }
-  });
+
+    const editionKeys = await Promise.all(decoded.map(async (a) => {
+      const mint = new PublicKey(a.mint);
+      return (await getEdition(mint)).toBase58();
+    }));
+    const editionDatas = (await getMultipleAccounts(
+      // TODO: different commitment?
+      connection, editionKeys, 'processed')).array;
+    editionParentKeys = editionDatas.map(e => {
+      if (!e) {
+        // skip if this is a non-NFT token
+        return undefined;
+      }
+      if (e.data[0] == MetadataKey.EditionV1) {
+        return decodeEdition(e.data).parent;
+      } else {
+        return undefined;
+      }
+    });
+  }
+
   const relevant = decoded
     .map((a, idx) => ({ ...a, editionParentKey: editionParentKeys[idx] }))
     .filter(a => {
@@ -441,17 +457,31 @@ const getRelevantTokenAccounts = async (
   // TODO: getMultipleAccounts
   const relevantImages = await fetchMintsAndImages(
       connection, relevant.map(r => new PublicKey(r.mint)));
-  const ret = relevantImages.map((r, idx) => {
+  const ret = await Promise.all(relevantImages.map(async (r, idx) => {
     // TODO: better
     const mint = r.mint.toBase58();
     const editionParentKey = relevant[idx].editionParentKey;
-    return {
-      ...r,
-      ingredient: mint in mints
-        ? mints[mint].ingredient
-        : mintEditions[editionParentKey].ingredient,  // lookup by parent edition
+    if (mint in mints) {
+      return {
+        ...r,
+        ingredient: mints[mint].ingredient
+      };
+    } else {
+      const parent = mintEditions[editionParentKey];
+      if (!(await getEdition(parent.key)).equals(new PublicKey(editionParentKey))) {
+        throw new Error(`internal error: mismatched master mint and parent edition`);
+      }
+      return {
+        ...r,
+        ingredient: parent.ingredient,  // lookup by parent edition
+        parent: {
+          edition: await getEdition(new PublicKey(mint)),
+          masterMint: parent.key,
+          masterEdition: new PublicKey(editionParentKey),
+        },
+      };
     }
-  });
+  }));
   console.log(ret);
   ret.sort((lft, rht) => lft.ingredient.localeCompare(rht.ingredient));
   return ret;
@@ -718,6 +748,9 @@ export const Redeem = (
     const storeAccounts = await (connection as any).getMultipleAccountsInfo(
         storeKeysAndBumps.map(s => s[0]));
     console.log('Finished fetching stores', getUnixTs() - startTime);
+
+    const recipeData = await program.account.recipe.fetch(recipeKey) as any;
+
     for (let idx = 0; idx < ingredientList.length; ++idx) {
       const group = ingredientList[idx];
       const change = changeList.find(c => c.ingredient === group.ingredient);
@@ -731,23 +764,62 @@ export const Redeem = (
       const storeAccount = storeAccounts[idx];
       const walletATA = await getAssociatedTokenAccount(
         anchorWallet.publicKey, change.mint);
-      if (change.operation === 'add') {
+      if (change.operation === IngredientView.add) {
         if (storeAccount === null) {
           // nothing
         } else {
           throw new Error(`Ingredient ${group.ingredient} has already been added to this dish`);
         }
 
+        const relevantMint = relevantMints.find(c => c.mint.equals(change.mint));
+        if (!relevantMint) {
+          throw new Error(`Could not find wallet mint matching ${relevantMint}`);
+        }
+
         // TODO: cache?
         const mintsKeys = group.mints.map(m => new PublicKey(m));
         const mintIdx = mintsKeys.findIndex(m => m.equals(change.mint));
-        if (mintIdx === -1) {
+        const parentIdx = relevantMint.parent
+          ? mintsKeys.findIndex(m => m.equals(relevantMint.parent?.masterMint))
+          : -1;
+        if (mintIdx === -1 && parentIdx == -1) {
           const changeMint = change.mint.toBase58();
           throw new Error(`Could not find mint matching ${changeMint} in ingredient group ${group.ingredient}`);
         }
 
-        const tree = new MerkleTree(mintsKeys.map(m => m.toBuffer()));
-        const proof = tree.getProof(mintIdx);
+        const dataFlags = mintsKeys.map((m, idx) => {
+          return group.allowLimitedEditions && group.allowLimitedEditions[idx] ? 0x02 : 0x00;
+        });
+        const tree = new MerkleTree(
+          mintsKeys.map(m => m.toBuffer()),
+          dataFlags,
+        );
+
+        if (!Buffer.from(recipeData.roots[idx]).equals(tree.getRoot())) {
+          throw new Error(`Merkle tree for ingredient ${group.ingredientMint} does not match chain`);
+        }
+
+        const remainingAccounts : Array<AccountMeta> = [];
+        let proof, ingredientMint;
+        if (mintIdx !== -1) {
+          proof = tree.getProof(mintIdx);
+          ingredientMint = change.mint;
+        } else {
+          if (!relevantMint.parent) { // typescript...
+            throw new Error(`internal error: inconsistent parent state`);
+          }
+          proof = tree.getProof(parentIdx);
+          ingredientMint = relevantMint.parent.masterMint;
+          remainingAccounts.push(
+            {pubkey: change.mint, isSigner: false, isWritable: false},
+            {pubkey: relevantMint.parent.edition, isSigner: false, isWritable: false},
+            {pubkey: relevantMint.parent.masterEdition, isSigner: false, isWritable: false},
+          );
+        }
+
+        if (!tree.verifyProof(mintIdx !== -1 ? mintIdx : parentIdx, proof, tree.getRoot())) {
+          throw new Error(`Invalid ingredient ${change.mint.toBase58()}: bad merkle proof`);
+        }
 
         setup.push(await program.instruction.addIngredient(
           storeBump,
@@ -757,7 +829,7 @@ export const Redeem = (
             accounts: {
               recipe: recipeKey,
               dish: dishKey,
-              ingredientMint: change.mint,
+              ingredientMint,
               ingredientStore: storeKey,
               payer: anchorWallet.publicKey,
               from: walletATA,
@@ -765,11 +837,12 @@ export const Redeem = (
               tokenProgram: TOKEN_PROGRAM_ID,
               rent: SYSVAR_RENT_PUBKEY,
             },
+            remainingAccounts,
             signers: [],
             instructions: [],
           }
         ));
-      } else if (change.operation === 'recover') {
+      } else if (change.operation === IngredientView.recover) {
         if (storeAccount === null) {
           throw new Error(`Ingredient ${group.ingredient} is not in this dish`);
         }

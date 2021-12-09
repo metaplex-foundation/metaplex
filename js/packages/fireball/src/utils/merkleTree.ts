@@ -2,15 +2,22 @@ import { keccak_256 } from "js-sha3";
 
 export class MerkleTree {
   leafs: Array<Buffer>;
+  leaf_flags: undefined | Array<number>;
   layers: Array<Array<Buffer>>;
 
-  constructor(leafs : Array<Buffer>) {
+  constructor(leafs: Array<Buffer>, leaf_flags?: Array<number>) {
     this.leafs = leafs.slice();
+    this.leaf_flags = leaf_flags && leaf_flags.slice();
     this.layers = [];
 
-    let hashes = this.leafs.map(MerkleTree.nodeHash);
+    let hashes;
+    if (!leaf_flags) {
+      hashes = this.leafs.map(MerkleTree.nodeHash);
+    } else {
+      hashes = this.leafs.map((l, idx) => MerkleTree.nodeHash(l, leaf_flags[idx]));
+    }
     while (hashes.length > 0) {
-      console.log("Hashes", this.layers.length, hashes);
+      console.log('Hashes', this.layers.length, hashes);
       this.layers.push(hashes.slice());
       if (hashes.length === 1) break;
       hashes = hashes.reduce((acc, cur, idx, arr) => {
@@ -23,10 +30,8 @@ export class MerkleTree {
     }
   }
 
-  static nodeHash(
-    data : Buffer,
-  ) : Buffer {
-    return Buffer.from(keccak_256.digest([0x00, ...data]));
+  static nodeHash(data: Buffer, data_flags: number = 0x00): Buffer {
+    return Buffer.from(keccak_256.digest([data_flags, ...data]));
   }
 
 
@@ -71,7 +76,10 @@ export class MerkleTree {
     proof : Buffer[],
     root : Buffer
   ): boolean {
-    let pair = MerkleTree.nodeHash(this.leafs[idx]);
+    let pair = MerkleTree.nodeHash(
+      this.leafs[idx],
+      this.leaf_flags ? this.leaf_flags[idx] : 0x00,
+    );
     for (const item of proof) {
       pair = MerkleTree.internalHash(pair, item);
     }
