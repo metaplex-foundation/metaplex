@@ -14,7 +14,7 @@ Metaplex is comprised of two core components: an on-chain program, and a self-ho
 
 ## Important NOTE
 
-Metaplex now follows a release versioning process called semantic versioning. If you are make a new market place, launching a candy machine or any live project that will handle real money, we recommend using a release tag. Using a release tag will ensure that new changes don't break your UI.
+Metaplex now follows a release versioning process called semantic versioning. If you are making a new market place, launching a candy machine or any live project that will handle real money, we recommend using a release tag. Using a release tag will ensure that new changes don't break your UI.
 
 https://github.com/metaplex-foundation/metaplex/releases
 
