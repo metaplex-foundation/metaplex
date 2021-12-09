@@ -41,6 +41,7 @@ incremented for features.
 - Adds a minumum auction funds modal to prevent people from making bad auctions
 - Implement NFT Packs Redeem
 - Remove Websockets for useMeta
+- Refresh metadata loads user metadata with dropdown menu
 
 ### Fixes
 
@@ -65,6 +66,7 @@ incremented for features.
 - Fix issue where ata is not detected during ticket punching in FLP
 - Fix issue where random shuffled array is not using in image generation
 - Fix NFT Packs creation transaction failing when adding multiple items
+- Fix not allowing to buy a sale without enough balance
 
 ### Breaking
 
