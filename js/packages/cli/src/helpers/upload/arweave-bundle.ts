@@ -427,7 +427,7 @@ export function* makeArweaveBundleUploadGenerator(
           const tx = bundlr.createTransaction(d.rawData, { tags: d.tags });
           await tx.sign();
           log.info('Uploading ', d.id, tx.id);
-          console.log(await tx.upload());
+          await tx.upload();
           log.info('Uploaded ', tx.id);
         }
         log.info('Bundle uploaded!');

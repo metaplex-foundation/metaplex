@@ -106,19 +106,19 @@ programCommand('upload')
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet') {
       throw new Error(
-        'Arweave Sol must receive real SOL from mainnet, for devnet please use Arweave Bundle, AWS or IPFS',
+        'Arweave Sol must receive real SOL from mainnet, for devnet please use Arweave Bundle, AWS or IPFS\n',
       );
     }
 
     if (storage === StorageType.Arweave) {
       console.info(
-        'WARNING: This upload method will be going away soon. Please migrate to Arweave Bundler, or Arweave SOL',
+        'WARNING: This upload method will be going away soon. Please migrate to Arweave Bundler, or Arweave SOL\n',
       );
     }
 
     if (storage === StorageType.ArweaveBundle && !arweaveJwk) {
       throw new Error(
-        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundle',
+        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundl',
       );
     }
 
@@ -1015,5 +1015,16 @@ function setLogLevel(value, prev) {
   log.info('setting the log value to: ' + value);
   log.setLevel(value);
 }
-
-program.parse(process.argv);
+function errorColor(str) {
+  // Add ANSI escape codes to display text in red.
+  return `\x1b[31m${str}\x1b[0m`;
+}
+program
+  .configureOutput({
+    // Visibly override write routines as example!
+    writeOut: str => process.stdout.write(`[OUT] ${str}`),
+    writeErr: str => process.stdout.write(`[ERR] ${str}`),
+    // Highlight errors in color.
+    outputError: (str, write) => write(errorColor(str)),
+  })
+  .parse(process.argv);
