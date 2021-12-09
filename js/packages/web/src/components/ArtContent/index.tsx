@@ -53,21 +53,17 @@ export const CachedImageContent = ({
   preview?: boolean;
   style?: React.CSSProperties;
 }) => {
-  const [loaded, setLoaded] = useState<boolean>(false);
   const { cachedBlob } = useCachedImage(uri || '');
 
   return (
     <Image
+      fallback="image-placeholder.svg"
       src={cachedBlob}
       preview={preview}
       wrapperClassName={className}
       loading="lazy"
       wrapperStyle={{ ...style }}
-      onLoad={e => {
-        setLoaded(true);
-      }}
       placeholder={<ThreeDots />}
-      {...(loaded ? {} : { height: 200 })}
     />
   );
 };

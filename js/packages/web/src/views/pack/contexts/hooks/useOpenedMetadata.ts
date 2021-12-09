@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { StringPublicKey, useMeta } from '@oyster/common';
 
-import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
-import { useUserArts } from '../../../hooks';
+import { SafetyDepositDraft } from '../../../../actions/createAuctionManager';
+import { useUserArts } from '../../../../hooks';
 
 // Here we check if user has NFTs that could be received from pack opening
 // Opened cards may shuffle between user's packs that have the same PackSet key,

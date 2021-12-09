@@ -247,9 +247,9 @@ export const AuctionCard = ({
     ? 'SOL'
     : 'CUSTOM';
 
-
-  const LAMPORTS_PER_MINT = tokenInfo? Math.ceil(10 ** tokenInfo.decimals): LAMPORTS_PER_SOL;
-
+  const LAMPORTS_PER_MINT = tokenInfo
+    ? Math.ceil(10 ** tokenInfo.decimals)
+    : LAMPORTS_PER_SOL;
 
   //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
@@ -287,7 +287,13 @@ export const AuctionCard = ({
     (value * LAMPORTS_PER_MINT) % tickSize.toNumber() != 0
   );
 
-  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView, LAMPORTS_PER_MINT);
+  const gapBidInvalid = useGapTickCheck(
+    value,
+    gapTick,
+    gapTime,
+    auctionView,
+    LAMPORTS_PER_MINT,
+  );
 
   const isAuctionManagerAuthorityNotWalletOwner =
     auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
@@ -396,6 +402,8 @@ export const AuctionCard = ({
           auctionView,
           accountByMint,
           instantSalePrice,
+          // make sure all accounts are created
+          'finalized',
         );
         setLastBid(bid);
       } catch (e) {
@@ -451,10 +459,9 @@ export const AuctionCard = ({
         prizeTrackingTickets,
         bidRedemptions,
         bids,
-      ).then(async () => {
-        await update();
-        setShowRedeemedBidModal(true);
-      });
+      );
+      await update();
+      setShowRedeemedBidModal(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
