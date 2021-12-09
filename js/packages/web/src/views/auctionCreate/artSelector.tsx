@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Row, Button, Modal, ButtonProps } from 'antd';
 import { useUserArts } from '../../hooks';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
-import AuctionItemCard from "./AuctionItemCard";
+import AuctionItemCard from './AuctionItemCard';
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[];

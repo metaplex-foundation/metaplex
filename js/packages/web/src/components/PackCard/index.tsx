@@ -15,7 +15,7 @@ interface Props {
   cardsRedeemed?: number;
   allowedAmountToRedeem?: number;
   artView?: boolean;
-  close?: () => void;
+  onClose?: () => void;
 }
 
 const PackCard = ({
@@ -25,7 +25,7 @@ const PackCard = ({
   cardsRedeemed,
   allowedAmountToRedeem,
   artView,
-  close,
+  onClose,
 }: Props): ReactElement => {
   const { whitelistedCreatorsByCreator } = useMeta();
   const art = useArt(voucherMetadata);
@@ -55,14 +55,14 @@ const PackCard = ({
 
   return (
     <Card hoverable className="auction-render-card" bordered={false}>
-      {close && (
+      {onClose && (
         <Button
           className="card-close-button"
           shape="circle"
           onClick={e => {
             e.stopPropagation();
             e.preventDefault();
-            close && close();
+            onClose();
           }}
         >
           X
