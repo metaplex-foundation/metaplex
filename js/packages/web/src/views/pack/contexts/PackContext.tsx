@@ -7,6 +7,7 @@ import {
   getSearchParams,
 } from '@oyster/common';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
+import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useLocation } from 'react-router';
@@ -21,6 +22,7 @@ import {
 import { useOpenedMetadata } from '../hooks/useOpenedMetadata';
 
 type PackContextProps = {
+  provingProcess?: ParsedAccount<ProvingProcess>,
   isLoading: boolean;
   packKey: StringPublicKey;
   voucherEditionKey: StringPublicKey;
@@ -51,7 +53,15 @@ export const PackProvider: React.FC = ({ children }) => {
   const { search } = useLocation();
   const { voucherEditionKey, provingProcessKey } = getSearchParams(search);
 
-  const { packs, packCards, masterEditions, metadata, pullPackPage, provingProcesses, vouchers } = useMeta();
+  const {
+    packs,
+    packCards,
+    masterEditions,
+    metadata,
+    pullPackPage,
+    provingProcesses,
+    vouchers,
+  } = useMeta();
   const { accountByMint, userAccounts } = useUserAccounts();
   const userVouchers = useUserVouchersByEdition();
   const metadataByPackCard = useMetadataByPackCard(packKey);
@@ -61,7 +71,7 @@ export const PackProvider: React.FC = ({ children }) => {
   const pack = packs[packKey];
   const provingProcess = provingProcesses[provingProcessKey];
 
-  const cardsRedeemed = provingProcess?.info?.cardsRedeemed || 0 ;
+  const cardsRedeemed = provingProcess?.info?.cardsRedeemed || 0;
   const openedMetadata = useOpenedMetadata(packKey, cardsRedeemed);
 
   const voucherMetadata = useMemo(
@@ -84,6 +94,7 @@ export const PackProvider: React.FC = ({ children }) => {
     await openPack({
       pack,
       voucherEditionKey,
+      provingProcess,
       userVouchers,
       accountByMint,
       connection,
@@ -111,6 +122,7 @@ export const PackProvider: React.FC = ({ children }) => {
   return (
     <PackContext.Provider
       value={{
+        provingProcess,
         isLoading,
         packKey,
         voucherEditionKey,
