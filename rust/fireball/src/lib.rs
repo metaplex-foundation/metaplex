@@ -90,6 +90,7 @@ pub mod fireball {
         ingredient_num: u64,
         proof: Vec<[u8; 32]>,
     ) -> ProgramResult {
+        msg!("entered add_ingredient");
         incomplete_dish_checks(&ctx.accounts.dish, &ctx.accounts.payer)?;
 
         let recipe = &ctx.accounts.recipe;
@@ -102,9 +103,12 @@ pub mod fireball {
         let (transfer_mint_info, data_hash_flags)  = if ctx.remaining_accounts.len() == 0 {
             (ctx.accounts.ingredient_mint.to_account_info(), 0x00)
         } else {
+            msg!("checking remaining accounts: {}", ctx.remaining_accounts.len());
             let edition_mint = &ctx.remaining_accounts[0];
             let edition_account = &ctx.remaining_accounts[1].to_account_info();
+            let master_edition_account = &ctx.remaining_accounts[2].to_account_info();
 
+            // check that the edition account matches the edition mint
             let _edition_bump = metaplex_token_metadata::utils::assert_derivation(
                 &metaplex_token_metadata::ID,
                 edition_account,
@@ -112,8 +116,21 @@ pub mod fireball {
                     metaplex_token_metadata::state::PREFIX.as_ref(),
                     metaplex_token_metadata::ID.as_ref(),
                     edition_mint.key.as_ref(),
+                    metaplex_token_metadata::state::EDITION.as_ref(),
                 ],
-            )?;
+            ).map_err(|_| ErrorCode::DerivedKeyInvalid)?;
+
+            // check that the master edition account matches the ingredient mint
+            let _master_edition_bump = metaplex_token_metadata::utils::assert_derivation(
+                &metaplex_token_metadata::ID,
+                master_edition_account,
+                &[
+                    metaplex_token_metadata::state::PREFIX.as_ref(),
+                    metaplex_token_metadata::ID.as_ref(),
+                    ctx.accounts.ingredient_mint.key().as_ref(),
+                    metaplex_token_metadata::state::EDITION.as_ref(),
+                ],
+            ).map_err(|_| ErrorCode::DerivedKeyInvalid)?;
 
             let edition = metaplex_token_metadata::state::Edition::from_account_info(
                 edition_account)?;
@@ -123,9 +140,9 @@ pub mod fireball {
                 ErrorCode::EditionZeroInvalid,
             );
 
-            // we check that the parent 'master edition' is part of the merkle tree
+            // check that the parent 'master edition' is part of the merkle tree
             require!(
-                edition.parent == ctx.accounts.ingredient_mint.key(),
+                edition.parent == *master_edition_account.key,
                 ErrorCode::MismatchedEditionMint,
             );
 
@@ -690,5 +707,7 @@ pub enum ErrorCode {
     MismatchedEditionMint,
     #[msg("Edition Zero Invalid")]
     EditionZeroInvalid,
+    #[msg("Derived Key Invalid")]
+    DerivedKeyInvalid,
 }
 
