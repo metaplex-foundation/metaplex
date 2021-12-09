@@ -65,7 +65,6 @@ incremented for features.
 - Fix issue where ata is not detected during ticket punching in FLP
 - Fix issue where random shuffled array is not using in image generation
 - Fix NFT Packs creation transaction failing when adding multiple items
-- Added placeholder for images on create pack flow
 
 ### Breaking
 
