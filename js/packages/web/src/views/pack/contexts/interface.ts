@@ -13,10 +13,11 @@ export type PackContextProps = {
   packKey: StringPublicKey;
   voucherEditionKey: StringPublicKey;
   openedMetadata: SafetyDepositDraft[];
-  pack?: ParsedAccount<PackSet>;
-  voucherMetadataKey?: StringPublicKey;
   metadataByPackCard: PackMetadataByPackCard;
   handleOpenPack: () => Promise<void>;
+  redeemModalMetadata: StringPublicKey[];
+  pack?: ParsedAccount<PackSet>;
+  voucherMetadataKey?: StringPublicKey;
   provingProcess?: ParsedAccount<ProvingProcess>;
 };
 

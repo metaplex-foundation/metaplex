@@ -3,7 +3,7 @@
   background: transparent;
 }
 
-.redeem-root {
+.claiming-step {
   position: relative;
   border-radius: 12px;
   display: flex;
@@ -13,7 +13,7 @@
   padding: 32px 24px 24px;
   background: @grey-70;
 
-  .redeem-title {
+  &__title {
     font-family: @fontFamilyInter;
     font-weight: bold;
     font-size: 24px;
@@ -21,14 +21,14 @@
     color: @accent-color;
   }
 
-  .redeem-creator {
+  &__subtitle {
     font-family: @fontFamilyInter;
     font-size: 16px;
     line-height: 24px;
     color: rgba(255, 255, 255, 0.7);
   }
 
-  .redeem-cards-container {
+  &__cards-container {
     overflow: hidden;
     margin: 24px 0 40px;
     height: fit-content;
@@ -36,31 +36,31 @@
     display: flex;
     justify-content: center;
     flex-direction: column;
-
-    .redeem-ghost-cards {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      width: 100%;
-
-      .redeem-card {
-        opacity: 5%;
-        background: @accent-color !important;
-        position: absolute;
-        width: 308px;
-        height: 80px;
-        border-radius: 8px;
-      }
-    }
-
-    .redeem-art-content {
-      width: 356px;
-      z-index: 10;
-      height: fit-content !important;
-    }
   }
 
-  .redeem-notes {
+  &__ghost-cards {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  &__card {
+    opacity: 5%;
+    background: @accent-color !important;
+    position: absolute;
+    width: 308px;
+    height: 80px;
+    border-radius: 8px;
+  }
+
+  &__art-content {
+    width: 356px;
+    z-index: 10;
+    height: fit-content !important;
+  }
+
+  &__notes {
     padding: 16px 27px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
@@ -80,23 +80,50 @@
       color: rgba(255, 255, 255, 0.7);
     }
   }
-}
 
-.redeem-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 18px;
-  position: absolute;
-  top: 100%;
-  background: transparent;
-  font-family: @fontFamilyInter;
-  font-size: 14px;
-  line-height: 17px;
-  color: @accent-color;
+  &__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-  & > div {
+    outline: none;
+    background: @metaplex-primary-color;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+
+    height: 64px;
+
+    span {
+      display: block;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: @fontFamilyInter;
+      color: @black-100;
+      padding: 0 20px;
+    }
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 18px;
+    position: absolute;
+    top: 100%;
+    background: transparent;
+    font-family: @fontFamilyInter;
+    font-size: 14px;
+    line-height: 17px;
+    color: @accent-color;
+
+    & > div {
+      margin-right: 10px;
+    }
+  }
+
+  &__check {
     margin-right: 10px;
   }
 }
@@ -113,5 +140,5 @@
   }
   100% {
     transform: rotate(360deg);
-    }
+  }
 }

@@ -14,11 +14,13 @@ import { useUserVouchersByEdition } from '../../artworks/hooks/useUserVouchersBy
 import { claimPackCards } from '../transactions/claimPackCards';
 
 import { getProvingProcess } from './utils/getProvingProcess';
+import { getMetadataUserToReceive } from './utils/getMetadataUserToReceive';
 import { getInitialProvingProcess } from './utils/getInitialProvingProcess';
 import { useMetadataByPackCard } from './hooks/useMetadataByPackCard';
 import { useOpenedMetadata } from './hooks/useOpenedMetadata';
 
 import { PackContextProps } from './interface';
+import { useListenForProvingProcess } from './hooks/useListenForProvingProcess';
 import { fetchProvingProcessWithRetry } from './utils/fetchProvingProcessWithRetry';
 
 export const PackContext = React.createContext<PackContextProps>({
@@ -28,6 +30,7 @@ export const PackContext = React.createContext<PackContextProps>({
   openedMetadata: [],
   metadataByPackCard: {},
   handleOpenPack: () => Promise.resolve(),
+  redeemModalMetadata: [],
 });
 
 export const PackProvider: React.FC = ({ children }) => {
@@ -51,9 +54,12 @@ export const PackProvider: React.FC = ({ children }) => {
   const metadataByPackCard = useMetadataByPackCard(packKey);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isPollingProvingProcess, setIsPollingProvingProcess] =
+    useState<boolean>(false);
 
   const [provingProcess, setProvingProcess] =
     useState<ParsedAccount<ProvingProcess>>();
+  const [redeemModalMetadata, setRedeemModalMetadata] = useState<string[]>([]);
 
   const voucherMetadata = useMemo(
     () => metadata.find(meta => meta?.info?.edition === voucherEditionKey),
@@ -72,6 +78,11 @@ export const PackProvider: React.FC = ({ children }) => {
   const voucherMetadataKey = voucherMetadata?.pubkey || voucher?.info?.metadata;
 
   const openedMetadata = useOpenedMetadata(packKey, cardsRedeemed);
+  // Listens for updates on proving process while pack is being opened
+  const updatedProvingProcess = useListenForProvingProcess(
+    isPollingProvingProcess,
+    provingProcess?.pubkey,
+  );
 
   const handleOpenPack = async () => {
     const newProvingProcess = await getProvingProcess({
@@ -90,6 +101,16 @@ export const PackProvider: React.FC = ({ children }) => {
       pubkey,
     } = newProvingProcess;
 
+    const metadataUserToReceive = await getMetadataUserToReceive({
+      cardsToRedeem,
+      metadataByPackCard,
+      packPubKey: pack.pubkey,
+    });
+    setRedeemModalMetadata(metadataUserToReceive);
+
+    // Starts proving process polling
+    setIsPollingProvingProcess(true);
+
     await claimPackCards({
       wallet,
       connection,
@@ -101,6 +122,10 @@ export const PackProvider: React.FC = ({ children }) => {
       pack,
     });
 
+    setIsPollingProvingProcess(false);
+
+    // Fetch final proving process state
+    // Because polling can be terminated too soon
     const resultingProvingProcess = await fetchProvingProcessWithRetry({
       provingProcessKey: pubkey,
       connection,
@@ -128,6 +153,10 @@ export const PackProvider: React.FC = ({ children }) => {
   };
 
   useEffect(() => {
+    setProvingProcess(updatedProvingProcess);
+  }, [updatedProvingProcess]);
+
+  useEffect(() => {
     handleFetch();
   }, []);
 
@@ -142,6 +171,7 @@ export const PackProvider: React.FC = ({ children }) => {
         pack,
         metadataByPackCard,
         handleOpenPack,
+        redeemModalMetadata,
         provingProcess,
       }}
     >
