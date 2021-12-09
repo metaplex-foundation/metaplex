@@ -84,8 +84,8 @@ pub mod fireball {
         Ok(())
     }
 
-    pub fn add_ingredient(
-        ctx: Context<AddIngredient>,
+    pub fn add_ingredient<'info>(
+        ctx: Context<'_, '_, '_, 'info, AddIngredient<'info>>,
         ingredient_bump: u8,
         ingredient_num: u64,
         proof: Vec<[u8; 32]>,
@@ -99,14 +99,48 @@ pub mod fireball {
             ErrorCode::MismatchedRecipe,
         );
 
+        let (transfer_mint_info, data_hash_flags)  = if ctx.remaining_accounts.len() == 0 {
+            (ctx.accounts.ingredient_mint.to_account_info(), 0x00)
+        } else {
+            let edition_mint = &ctx.remaining_accounts[0];
+            let edition_account = &ctx.remaining_accounts[1].to_account_info();
+
+            let _edition_bump = metaplex_token_metadata::utils::assert_derivation(
+                &metaplex_token_metadata::ID,
+                edition_account,
+                &[
+                    metaplex_token_metadata::state::PREFIX.as_ref(),
+                    metaplex_token_metadata::ID.as_ref(),
+                    edition_mint.key.as_ref(),
+                ],
+            )?;
+
+            let edition = metaplex_token_metadata::state::Edition::from_account_info(
+                edition_account)?;
+
+            require!(
+                edition.edition != 0,
+                ErrorCode::EditionZeroInvalid,
+            );
+
+            // we check that the parent 'master edition' is part of the merkle tree
+            require!(
+                edition.parent == ctx.accounts.ingredient_mint.key(),
+                ErrorCode::MismatchedEditionMint,
+            );
+
+            // NB: different offset so this is opt-in
+            (edition_mint.to_account_info(), 0x02)
+        };
+
         require!(
             ctx.accounts.from.mint
-            == ctx.accounts.ingredient_mint.to_account_info().key(),
+            == transfer_mint_info.key(),
             ErrorCode::InvalidMint,
         );
 
         let node = solana_program::keccak::hashv(&[
-            &[0x00],
+            &[data_hash_flags],
             &ctx.accounts.ingredient_mint.key().to_bytes(),
         ]);
 
@@ -148,7 +182,7 @@ pub mod fireball {
                 ctx.accounts.token_program.to_account_info(),
                 token::InitializeAccount {
                     account: ctx.accounts.ingredient_store.to_account_info(),
-                    mint: ctx.accounts.ingredient_mint.to_account_info(),
+                    mint: transfer_mint_info,
                     authority: ctx.accounts.ingredient_store.to_account_info(),
                     rent: ctx.accounts.rent.to_account_info(),
                 },
@@ -652,5 +686,9 @@ pub enum ErrorCode {
     InvalidAuthority,
     #[msg("Arithmetic Overflow")]
     ArithmeticOverflow,
+    #[msg("Mismatched Edition Mint Parent")]
+    MismatchedEditionMint,
+    #[msg("Edition Zero Invalid")]
+    EditionZeroInvalid,
 }
 
