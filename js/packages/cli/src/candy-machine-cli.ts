@@ -59,6 +59,7 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
+  .option('--batch-size <number>', 'Batch Szie for uploads', '50')
   .option(
     '-s, --storage <string>',
     `Database to use for storage (${Object.values(StorageType).join(', ')})`,
@@ -100,6 +101,7 @@ programCommand('upload')
       mutable,
       rpcUrl,
       arweaveJwk,
+      batchSize,
     } = cmd.opts();
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet') {
@@ -186,6 +188,7 @@ programCommand('upload')
         ipfsCredentials,
         awsS3Bucket,
         arweaveJwk,
+        batchSize,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
