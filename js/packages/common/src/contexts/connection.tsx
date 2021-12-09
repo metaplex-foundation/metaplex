@@ -54,7 +54,6 @@ export const ENDPOINTS: Array<Endpoint> = [
     chainId: ChainId.MainnetBeta,
   },
   {
-    name: 'mainnet-beta-solana',
     label: 'mainnet-beta (Solana)',
     url: 'https://api.mainnet-beta.solana.com',
     chainId: ChainId.MainnetBeta,

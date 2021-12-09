@@ -424,10 +424,10 @@ export function* makeArweaveBundleUploadGenerator(
         console.log(`${cost.toNumber() * 1} lamports to upload`);
         await bundlr.fund(cost.toNumber());
         for (const d of dataItems) {
-          const tx = bundlr.createTransaction(d.data, { tags: d.tags });
+          const tx = bundlr.createTransaction(d.rawData, { tags: d.tags });
           await tx.sign();
           log.info('Uploading ', d.id, tx.id);
-          await tx.upload();
+          console.log(await tx.upload());
           log.info('Uploaded ', tx.id);
         }
         log.info('Bundle uploaded!');
