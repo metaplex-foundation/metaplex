@@ -119,7 +119,7 @@ programCommand('upload')
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet') {
       throw new Error(
-        'arweave-sol must receive real SOL from mainnet, for devnet please use arweave-bundl, AWS or IPFS\n',
+        'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
       );
     }
 
