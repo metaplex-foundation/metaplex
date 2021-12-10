@@ -109,7 +109,7 @@ const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/metaplex-logo.png'} />
+      <img style={{ height: "60px", padding: 1, marginLeft: "3rem" }} src={'/metaplex-logo.png'} />
     </Link>
   );
 };
@@ -125,7 +125,8 @@ export const AppBar = () => {
       <div id="desktop-navbar">
         <div className="app-left">
           <LogoLink />
-          &nbsp;&nbsp;&nbsp;
+        </div>
+        <div className="app-center">
           <MetaplexMenu />
         </div>
         <div className="app-right">
