@@ -235,6 +235,7 @@ async function claimAllBids(
       bid.info.bidderPot,
       auctionView.vault.pubkey,
       auctionView.auction.info.tokenMint,
+      auctionView.auctionDataExtended?.info.bidStateData ?? '',
       claimBidInstructions,
     );
 

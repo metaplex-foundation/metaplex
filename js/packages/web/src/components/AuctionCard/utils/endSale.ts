@@ -38,6 +38,7 @@ export async function endSale({
   await endAuction(
     new PublicKey(vault.pubkey),
     new PublicKey(auctionManager.authority),
+    auctionView.auctionDataExtended?.info.bidStateData ?? '',
     endAuctionInstructions,
   );
 

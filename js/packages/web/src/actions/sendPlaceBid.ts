@@ -139,7 +139,7 @@ export async function setupPlaceBid(
       signers,
     );
   } else {
-    receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
+    receivingSolAccountOrAta = await findAta(auctionView, wallet, connection);
   }
   const transferAuthority = approve(
     instructions,
@@ -151,6 +151,11 @@ export async function setupPlaceBid(
 
   signers.push(transferAuthority);
 
+  let bidStateData = '';
+  if (auctionView.auctionDataExtended != undefined) {
+    bidStateData = auctionView.auctionDataExtended.info.bidStateData ?? '';
+  }
+
   const bid = new BN(lamports - accountRentExempt);
   await placeBid(
     wallet.publicKey.toBase58(),
@@ -160,6 +165,7 @@ export async function setupPlaceBid(
     transferAuthority.publicKey.toBase58(),
     wallet.publicKey.toBase58(),
     auctionView.auctionManager.vault,
+    bidStateData,
     bid,
     instructions,
   );
@@ -169,38 +175,42 @@ export async function setupPlaceBid(
   return bid;
 }
 
-export const findAta = async (auctionView: AuctionView, wallet: WalletSigner, connection:Connection) => {
+export const findAta = async (
+  auctionView: AuctionView,
+  wallet: WalletSigner,
+  connection: Connection,
+) => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
   let receivingSolAccountOrAta = '';
-   // if alternative currency is set, go for it
-   const PROGRAM_IDS = programIds();
-   const auctionTokenMint = new PublicKey(auctionView.auction.info.tokenMint);
-   const ata = (
-     await PublicKey.findProgramAddress(
-       [
-         wallet.publicKey.toBuffer(),
-         PROGRAM_IDS.token.toBuffer(),
-         auctionTokenMint.toBuffer(),
-       ],
-       PROGRAM_IDS.associatedToken,
-     )
-   )[0];
-   receivingSolAccountOrAta = pubkeyToString(ata);
-   const settleInstructions: TransactionInstruction[] = [];
+  // if alternative currency is set, go for it
+  const PROGRAM_IDS = programIds();
+  const auctionTokenMint = new PublicKey(auctionView.auction.info.tokenMint);
+  const ata = (
+    await PublicKey.findProgramAddress(
+      [
+        wallet.publicKey.toBuffer(),
+        PROGRAM_IDS.token.toBuffer(),
+        auctionTokenMint.toBuffer(),
+      ],
+      PROGRAM_IDS.associatedToken,
+    )
+  )[0];
+  receivingSolAccountOrAta = pubkeyToString(ata);
+  const settleInstructions: TransactionInstruction[] = [];
 
-   const existingAta = await connection.getAccountInfo(ata);
+  const existingAta = await connection.getAccountInfo(ata);
 
-   // create a new ATA if there is none
-   console.log('Looking for existing ata?', existingAta);
-   if (!existingAta) {
-     createAssociatedTokenAccountInstruction(
-       settleInstructions,
-       toPublicKey(receivingSolAccountOrAta),
-       wallet.publicKey,
-       wallet.publicKey,
-       auctionTokenMint,
-     );
-   }
+  // create a new ATA if there is none
+  console.log('Looking for existing ata?', existingAta);
+  if (!existingAta) {
+    createAssociatedTokenAccountInstruction(
+      settleInstructions,
+      toPublicKey(receivingSolAccountOrAta),
+      wallet.publicKey,
+      wallet.publicKey,
+      auctionTokenMint,
+    );
+  }
 
-   return receivingSolAccountOrAta
-}
+  return receivingSolAccountOrAta;
+};

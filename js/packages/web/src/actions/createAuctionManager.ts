@@ -59,6 +59,7 @@ import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
 import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV2';
 import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2';
 import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
+import { createBidStateDataAccount } from './createBidStateDataAccount';
 
 interface normalPattern {
   instructions: TransactionInstruction[];
@@ -77,6 +78,7 @@ interface byType {
   validateBoxes: arrayPattern;
   createVault: normalPattern;
   closeVault: normalPattern;
+  bidStateData?: normalPattern;
   makeAuction: normalPattern;
   initAuctionManager: normalPattern;
   startAuction: normalPattern;
@@ -117,6 +119,7 @@ export async function createAuctionManager(
   vault: StringPublicKey;
   auction: StringPublicKey;
   auctionManager: StringPublicKey;
+  bidStateData: StringPublicKey;
 }> {
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
@@ -138,11 +141,33 @@ export async function createAuctionManager(
     fractionTreasury,
   } = await createVault(connection, wallet, priceMint, externalPriceAccount);
 
+  // AuctionData account can handle N <= 80 max
+  // If there are more bids, move BidState to BidStateData account
+  let bidStateDataInstructions: TransactionInstruction[] = [];
+  let bidStateDataSigners: Keypair[] = [];
+  let bidStateDataAccount: string = '';
+
+  if (auctionSettings.winners.usize > new BN(80)) {
+    const {
+      bidStateDataAccount: account,
+      instructions,
+      signers,
+    } = await createBidStateDataAccount(
+      connection,
+      wallet,
+      auctionSettings.winners.usize,
+    );
+
+    bidStateDataInstructions = instructions;
+    bidStateDataSigners = signers;
+    bidStateDataAccount = account;
+  }
+
   const {
     instructions: makeAuctionInstructions,
     signers: makeAuctionSigners,
     auction,
-  } = await makeAuction(wallet, vault, auctionSettings);
+  } = await makeAuction(wallet, vault, bidStateDataAccount, auctionSettings);
 
   const safetyDepositConfigsWithPotentiallyUnsetTokens =
     await buildSafetyDepositArray(
@@ -219,6 +244,13 @@ export async function createAuctionManager(
       instructions: createReservationInstructions,
       signers: createReservationSigners,
     },
+    bidStateData:
+      bidStateDataAccount.length != 0
+        ? {
+            instructions: bidStateDataInstructions,
+            signers: bidStateDataSigners,
+          }
+        : undefined,
     makeAuction: {
       instructions: makeAuctionInstructions,
       signers: makeAuctionSigners,
@@ -296,6 +328,7 @@ export async function createAuctionManager(
     ...lookup.addTokens.signers,
     ...lookup.deprecatedCreateReservationList.signers,
     lookup.closeVault.signers,
+    lookup.bidStateData?.signers || [],
     lookup.makeAuction.signers,
     lookup.initAuctionManager.signers,
     lookup.setVaultAndAuctionAuthorities.signers,
@@ -315,6 +348,7 @@ export async function createAuctionManager(
     ...lookup.addTokens.instructions,
     ...lookup.deprecatedCreateReservationList.instructions,
     lookup.closeVault.instructions,
+    lookup.bidStateData?.instructions || [],
     lookup.makeAuction.instructions,
     lookup.initAuctionManager.instructions,
     lookup.setVaultAndAuctionAuthorities.instructions,
@@ -379,7 +413,7 @@ export async function createAuctionManager(
 
   if (stopPoint < instructions.length) throw new Error('Failed to create');
 
-  return { vault, auction, auctionManager };
+  return { vault, auction, auctionManager, bidStateData: bidStateDataAccount };
 }
 
 async function buildSafetyDepositArray(

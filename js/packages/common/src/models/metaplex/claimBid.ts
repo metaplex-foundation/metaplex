@@ -11,6 +11,7 @@ export async function claimBid(
   bidderPotToken: StringPublicKey,
   vault: StringPublicKey,
   tokenMint: StringPublicKey,
+  bidStateData: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -51,7 +52,6 @@ export async function claimBid(
       isSigner: false,
       isWritable: true,
     },
-
     {
       pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
@@ -103,6 +103,14 @@ export async function claimBid(
       isWritable: false,
     },
   ];
+
+  if (bidStateData.length != 0) {
+    keys.push({
+      pubkey: toPublicKey(bidStateData),
+      isSigner: false,
+      isWritable: false,
+    });
+  }
 
   instructions.push(
     new TransactionInstruction({

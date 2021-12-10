@@ -141,12 +141,18 @@ export async function setupCancelBid(
       receivingSolAccountOrAta = await findAta(auctionView, wallet, connection);
     }
 
+    let bidStateData = '';
+    if (auctionView.auctionDataExtended != undefined) {
+      bidStateData = auctionView.auctionDataExtended.info.bidStateData ?? '';
+    }
+
     await cancelBid(
       wallet.publicKey.toBase58(),
       pubkeyToString(receivingSolAccountOrAta),
       auctionView.myBidderPot.info.bidderPot,
       auctionView.auction.info.tokenMint,
       auctionView.vault.pubkey,
+      bidStateData,
       cancelInstructions,
     );
     signers.push(cancelSigners);

@@ -18,6 +18,7 @@ import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 export async function makeAuction(
   wallet: WalletSigner,
   vault: StringPublicKey,
+  bidStateData: StringPublicKey,
   auctionSettings: IPartialCreateAuctionArgs,
 ): Promise<{
   auction: StringPublicKey;
@@ -47,7 +48,12 @@ export async function makeAuction(
     resource: vault,
   });
 
-  createAuction(fullSettings, wallet.publicKey.toBase58(), instructions);
+  createAuction(
+    fullSettings,
+    wallet.publicKey.toBase58(),
+    bidStateData,
+    instructions,
+  );
 
   return { instructions, signers, auction: auctionKey };
 }

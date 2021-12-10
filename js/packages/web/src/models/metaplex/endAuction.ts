@@ -16,6 +16,7 @@ import { serialize } from 'borsh';
 export async function endAuction(
   vault: PublicKey,
   auctionManagerAuthority: PublicKey,
+  bidStateData: string,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -71,6 +72,14 @@ export async function endAuction(
       isWritable: false,
     },
   ];
+
+  if (bidStateData.length != 0) {
+    keys.push({
+      pubkey: toPublicKey(bidStateData),
+      isSigner: false,
+      isWritable: false,
+    });
+  }
 
   instructions.push(
     new TransactionInstruction({

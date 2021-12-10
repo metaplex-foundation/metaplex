@@ -186,6 +186,7 @@ export class AuctionDataExtended {
   gapTickSizePercentage: number | null;
   instantSalePrice: BN | null;
   name: number[] | null;
+  bidStateData: StringPublicKey | null;
 
   constructor(args: {
     totalUncancelledBids: BN;
@@ -193,12 +194,14 @@ export class AuctionDataExtended {
     gapTickSizePercentage: number | null;
     instantSalePrice: BN | null;
     name: number[] | null;
+    bidStateData: StringPublicKey | null;
   }) {
     this.totalUncancelledBids = args.totalUncancelledBids;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
     this.instantSalePrice = args.instantSalePrice;
     this.name = args.name;
+    this.bidStateData = args.bidStateData;
   }
 }
 
@@ -566,6 +569,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
         ['instantSalePrice', { kind: 'option', type: 'u64' }],
         ['name', { kind: 'option', type: [32] }],
+        ['bidStateData', { kind: 'option', type: 'pubkeyAsString' }],
       ],
     },
   ],
@@ -638,6 +642,7 @@ export const decodeAuctionData = (buffer: Buffer) => {
 export async function createAuction(
   settings: CreateAuctionArgs,
   creator: StringPublicKey,
+  bidStateData: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const auctionProgramId = programIds().auction;
@@ -687,6 +692,16 @@ export async function createAuction(
       isWritable: false,
     },
   ];
+
+  if (bidStateData.length != 0) {
+    keys.push({
+      pubkey: toPublicKey(bidStateData),
+      isSigner: false,
+      isWritable: true,
+    });
+    console.log('MAKE MAKE MAKE!');
+  }
+
   instructions.push(
     new TransactionInstruction({
       keys,
@@ -793,6 +808,7 @@ export async function placeBid(
   transferAuthority: StringPublicKey,
   payer: StringPublicKey,
   resource: StringPublicKey,
+  bidStateData: StringPublicKey,
   amount: BN,
   instructions: TransactionInstruction[],
 ) {
@@ -912,6 +928,15 @@ export async function placeBid(
       isWritable: false,
     },
   ];
+
+  if (bidStateData.length != 0) {
+    keys.push({
+      pubkey: toPublicKey(bidStateData),
+      isSigner: false,
+      isWritable: true,
+    });
+  }
+
   instructions.push(
     new TransactionInstruction({
       keys,
@@ -973,6 +998,7 @@ export async function cancelBid(
   bidderPotTokenPubkey: StringPublicKey,
   tokenMintPubkey: StringPublicKey,
   resource: StringPublicKey,
+  bidStateData: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const auctionProgramId = programIds().auction;
@@ -1080,6 +1106,15 @@ export async function cancelBid(
       isWritable: false,
     },
   ];
+
+  if (bidStateData.length != 0) {
+    keys.push({
+      pubkey: toPublicKey(bidStateData),
+      isSigner: false,
+      isWritable: true,
+    });
+  }
+
   instructions.push(
     new TransactionInstruction({
       keys,

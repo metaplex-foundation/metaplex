@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   Divider,
   Steps,
@@ -159,6 +165,7 @@ export const AuctionCreateView = () => {
           vault: StringPublicKey;
           auction: StringPublicKey;
           auctionManager: StringPublicKey;
+          bidStateData: StringPublicKey;
         }
       | undefined
     >(undefined);
@@ -182,9 +189,10 @@ export const AuctionCreateView = () => {
     items: [],
     tiers: [],
   });
-  const [quoteMintAddress, setQuoteMintAddress] = useState<string>()
-  const [quoteMintInfo, setQuoteMintInfo] = useState<MintInfo>()
-  const [quoteMintInfoExtended, setQuoteMintInfoExtended] = useState<TokenInfo>()
+  const [quoteMintAddress, setQuoteMintAddress] = useState<string>();
+  const [quoteMintInfo, setQuoteMintInfo] = useState<MintInfo>();
+  const [quoteMintInfoExtended, setQuoteMintInfoExtended] =
+    useState<TokenInfo>();
 
   useEffect(() => {
     if (step_param) setStep(parseInt(step_param));
@@ -454,8 +462,10 @@ export const AuctionCreateView = () => {
       attributes.instantSalePrice &&
       attributes.priceFloor === attributes.instantSalePrice;
 
-    const LAMPORTS_PER_TOKEN = attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? LAMPORTS_PER_SOL
-      : Math.pow(10, attributes.quoteMintInfo.decimals || 0)
+    const LAMPORTS_PER_TOKEN =
+      attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()
+        ? LAMPORTS_PER_SOL
+        : Math.pow(10, attributes.quoteMintInfo.decimals || 0);
 
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
@@ -809,15 +819,19 @@ const InstantSaleStep = ({
   confirm: () => void;
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
   // give default value to mint
-  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+  const mintInfo = useTokenList().tokenMap.get(
+    !mint ? QUOTE_MINT.toString() : mint.toString(),
+  );
 
-  attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
+  attributes.quoteMintAddress = mint ? mint.toBase58() : QUOTE_MINT.toBase58();
 
   if (attributes.quoteMintAddress) {
-    attributes.quoteMintInfo = useMint(attributes.quoteMintAddress)!
-    attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(attributes.quoteMintAddress)!
+    attributes.quoteMintInfo = useMint(attributes.quoteMintAddress)!;
+    attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(
+      attributes.quoteMintAddress,
+    )!;
   }
 
   //console.log("OBJ MINT", mint.toBase58())
@@ -910,7 +924,7 @@ const InstantSaleStep = ({
               setMint={setMint}
               open={showTokenDialog}
               onClose={() => {
-                setShowTokenDialog(false); 
+                setShowTokenDialog(false);
               }}
             />
           </label>
@@ -927,7 +941,7 @@ const InstantSaleStep = ({
               className="input"
               placeholder="Price"
               prefix="◎"
-              suffix={mintInfo?.symbol || "CUSTOM"}
+              suffix={mintInfo?.symbol || 'CUSTOM'}
               onChange={info =>
                 setAttributes({
                   ...attributes,
@@ -961,15 +975,23 @@ const CopiesStep = (props: {
   confirm: () => void;
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
   // give default value to mint
-  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+  const mintInfo = useTokenList().tokenMap.get(
+    !mint ? QUOTE_MINT.toString() : mint.toString(),
+  );
 
-  props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
-  
+  props.attributes.quoteMintAddress = mint
+    ? mint.toBase58()
+    : QUOTE_MINT.toBase58();
+
   if (props.attributes.quoteMintAddress) {
-    props.attributes.quoteMintInfo = useMint(props.attributes.quoteMintAddress)!
-    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(props.attributes.quoteMintAddress)!
+    props.attributes.quoteMintInfo = useMint(
+      props.attributes.quoteMintAddress,
+    )!;
+    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(
+      props.attributes.quoteMintAddress,
+    )!;
   }
 
   let artistFilter = (i: SafetyDepositDraft) =>
@@ -1010,7 +1032,7 @@ const CopiesStep = (props: {
           >
             Select NFT
           </ArtSelector>
-              
+
           <label className="action-field">
             <span className="field-title">Auction mint</span>
             <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
@@ -1018,7 +1040,7 @@ const CopiesStep = (props: {
               setMint={setMint}
               open={showTokenDialog}
               onClose={() => {
-                setShowTokenDialog(false); 
+                setShowTokenDialog(false);
               }}
             />
           </label>
@@ -1068,15 +1090,23 @@ const NumberOfWinnersStep = (props: {
   confirm: () => void;
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
   // give default value to mint
-  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+  const mintInfo = useTokenList().tokenMap.get(
+    !mint ? QUOTE_MINT.toString() : mint.toString(),
+  );
 
-  props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
+  props.attributes.quoteMintAddress = mint
+    ? mint.toBase58()
+    : QUOTE_MINT.toBase58();
 
   if (props.attributes.quoteMintAddress) {
-    props.attributes.quoteMintInfo = useMint(props.attributes.quoteMintAddress)!
-    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(props.attributes.quoteMintAddress)!
+    props.attributes.quoteMintInfo = useMint(
+      props.attributes.quoteMintAddress,
+    )!;
+    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(
+      props.attributes.quoteMintAddress,
+    )!;
   }
 
   return (
@@ -1107,21 +1137,21 @@ const NumberOfWinnersStep = (props: {
               }
             />
           </label>
-              
-              <label className="action-field">
-                <span className="field-title">Auction mint</span>
-                <span className="field-info">
-                  This will be the quote mint for your auction.
-                </span>
-                <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
-                <TokenDialog
-                  setMint={setMint}
-                  open={showTokenDialog}
-                  onClose={() => {
-                    setShowTokenDialog(false); 
-                  }}
-                />
-              </label>
+
+          <label className="action-field">
+            <span className="field-title">Auction mint</span>
+            <span className="field-info">
+              This will be the quote mint for your auction.
+            </span>
+            <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+            <TokenDialog
+              setMint={setMint}
+              open={showTokenDialog}
+              onClose={() => {
+                setShowTokenDialog(false);
+              }}
+            />
+          </label>
         </Col>
       </Row>
       <Row>
@@ -1143,19 +1173,31 @@ const PriceAuction = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
-  console.log(props.attributes)
-  const quoteMintName = props.attributes?.quoteMintInfoExtended?.name || "Custom Token"
-  const quoteMintExt = props.attributes?.quoteMintInfoExtended?.symbol || shortenAddress(props.attributes.quoteMintAddress)
+  console.log(props.attributes);
+  const quoteMintName =
+    props.attributes?.quoteMintInfoExtended?.name || 'Custom Token';
+  const quoteMintExt =
+    props.attributes?.quoteMintInfoExtended?.symbol ||
+    shortenAddress(props.attributes.quoteMintAddress);
   return (
     <>
       <Row className="call-to-action">
         <h2>Price</h2>
         <p>
-          Set the price for your auction. 
-          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && ` Warning! the auction quote mint is `}
-          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58()&& <a href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`} target="_blank"> {props.attributes?.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && 
-            `${quoteMintName} (${quoteMintExt})`} 
-          </a>}
+          Set the price for your auction.
+          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() &&
+            ` Warning! the auction quote mint is `}
+          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && (
+            <a
+              href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`}
+              target="_blank"
+            >
+              {' '}
+              {props.attributes?.quoteMintAddress !=
+                WRAPPED_SOL_MINT.toBase58() &&
+                `${quoteMintName} (${quoteMintExt})`}
+            </a>
+          )}
         </p>
       </Row>
       <Row className="content-action">
@@ -1174,8 +1216,14 @@ const PriceAuction = (props: {
                 className="input"
                 placeholder="Fixed Price"
                 prefix="◎"
-                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                    : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+                suffix={
+                  props.attributes.quoteMintInfoExtended
+                    ? props.attributes.quoteMintInfoExtended.symbol
+                    : props.attributes.quoteMintAddress ==
+                      WRAPPED_SOL_MINT.toBase58()
+                    ? 'SOL'
+                    : 'CUSTOM'
+                }
                 onChange={info =>
                   props.setAttributes({
                     ...props.attributes,
@@ -1191,7 +1239,7 @@ const PriceAuction = (props: {
             <label className="action-field">
               <span className="field-title">Price Floor</span>
               <span className="field-info">
-                This is the starting bid price for your auction. 
+                This is the starting bid price for your auction.
               </span>
               <Input
                 type="number"
@@ -1200,8 +1248,14 @@ const PriceAuction = (props: {
                 className="input"
                 placeholder="Price"
                 prefix="◎"
-                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                  : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+                suffix={
+                  props.attributes.quoteMintInfoExtended
+                    ? props.attributes.quoteMintInfoExtended.symbol
+                    : props.attributes.quoteMintAddress ==
+                      WRAPPED_SOL_MINT.toBase58()
+                    ? 'SOL'
+                    : 'CUSTOM'
+                }
                 onChange={info =>
                   props.setAttributes({
                     ...props.attributes,
@@ -1220,11 +1274,23 @@ const PriceAuction = (props: {
               type="number"
               min={0}
               className="input"
-              placeholder={`Tick size in ${props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "your custom currency"}`}
+              placeholder={`Tick size in ${
+                props.attributes.quoteMintInfoExtended
+                  ? props.attributes.quoteMintInfoExtended.symbol
+                  : props.attributes.quoteMintAddress ==
+                    WRAPPED_SOL_MINT.toBase58()
+                  ? 'SOL'
+                  : 'your custom currency'
+              }`}
               prefix="◎"
-              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+              suffix={
+                props.attributes.quoteMintInfoExtended
+                  ? props.attributes.quoteMintInfoExtended.symbol
+                  : props.attributes.quoteMintAddress ==
+                    WRAPPED_SOL_MINT.toBase58()
+                  ? 'SOL'
+                  : 'CUSTOM'
+              }
               onChange={info =>
                 props.setAttributes({
                   ...props.attributes,
@@ -1534,7 +1600,6 @@ const TierTableStep = (props: {
   maxWinners: number;
   confirm: () => void;
 }) => {
-
   const newImmutableTiers = (tiers: Tier[]) => {
     return tiers.map(wc => ({
       items: [...wc.items.map(it => ({ ...it }))],
@@ -1859,8 +1924,14 @@ const ParticipationStep = (props: {
               className="input"
               placeholder="Fixed Price"
               prefix="◎"
-              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+              suffix={
+                props.attributes.quoteMintInfoExtended
+                  ? props.attributes.quoteMintInfoExtended.symbol
+                  : props.attributes.quoteMintAddress ==
+                    WRAPPED_SOL_MINT.toBase58()
+                  ? 'SOL'
+                  : 'CUSTOM'
+              }
               onChange={info =>
                 props.setAttributes({
                   ...props.attributes,
@@ -1925,7 +1996,13 @@ const ReviewStep = (props: {
             }
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost} tokenInfo={useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString())}/>
+            <AmountLabel
+              title="Cost to Create"
+              amount={cost}
+              tokenInfo={useTokenList().tokenMap.get(
+                WRAPPED_SOL_MINT.toString(),
+              )}
+            />
           ) : (
             <Spin />
           )}
