@@ -44,6 +44,10 @@ export const Header = ({ narrow }: { narrow: boolean }) => {
       href: `/entanglement/search`,
       inner: "Search",
     },
+    {
+      href: `/entanglement/wizard`,
+      inner: "Wizard",
+    },
 
   ];
 

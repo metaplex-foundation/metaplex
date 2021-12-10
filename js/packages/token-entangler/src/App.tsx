@@ -23,6 +23,7 @@ import { Show } from "./components/Show";
 import { Create } from "./components/Create";
 import { Swap } from "./components/Swap";
 import { Search } from "./components/Search";
+import { Wizard } from "./components/Wizard";
 
 const WHITESPACE = "\u00A0";
 
@@ -237,7 +238,8 @@ function App() {
               <Route path="/entanglement/show" component={Show} />
               <Route path="/entanglement/swap" component={Swap} />
               <Route path="/entanglement/search" component={Search} />
-              <Route path="/entanglement/" component={About} />
+              <Route path="/entanglement/wizard" component={Wizard} />
+              <Route path="/entanglement/" component= {About} />
             </Switch>
             <Box height="80px" />
           </Box>
