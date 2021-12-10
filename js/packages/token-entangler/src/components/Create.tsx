@@ -66,6 +66,13 @@ export const Create = () => {
         console.log(res);
     };
 
+    const isEnable = (mintA: string, mintB: string, price: string): boolean => {
+        return ( 
+            // eslint-disable-next-line no-extra-boolean-cast
+            !!mintA && !!mintB && !!price
+        )
+    }
+
     return (
         <React.Fragment>
             <h1>Create Entanglement</h1>
@@ -118,12 +125,15 @@ export const Create = () => {
                     <FormControlLabel control={<Checkbox defaultChecked />} label="Pay the swapping fee each swap" />
                 </FormGroup>
                 <FormGroup>
-                    <Button variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SendIcon />}>
+                    <Button 
+                      variant="contained" 
+                      onClick={async (e) => await handleSubmit(e)} 
+                      endIcon={<SendIcon />}
+                      disabled={!isEnable(mintA, mintB, price)}
+                    >
                         Entangle
                     </Button>
                 </FormGroup>
-
-
             </Box>
 
 
