@@ -61,7 +61,6 @@ const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
     },
     // Delay in milliseconds or null to stop it
     isClaiming ? DELAY_BETWEEN_CARDS_CHANGE : null,
-    true,
   );
 
   return (

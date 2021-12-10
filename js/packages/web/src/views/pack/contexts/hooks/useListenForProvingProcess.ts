@@ -1,18 +1,8 @@
-import {
-  Metadata,
-  ParsedAccount,
-  StringPublicKey,
-  useConnection,
-} from '@oyster/common';
+import { ParsedAccount, StringPublicKey, useConnection } from '@oyster/common';
 import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
 import { useState } from 'react';
 import useInterval from '../../../../hooks/useInterval';
 import { fetchProvingProcessWithRetry } from '../utils/fetchProvingProcessWithRetry';
-
-type MetadataWithProbability = ParsedAccount<Metadata> & {
-  probability: string;
-};
-export type PackMetadataByPackCard = Record<string, MetadataWithProbability>;
 
 const INTERVAL = 2000;
 
@@ -48,7 +38,6 @@ export const useListenForProvingProcess = (
       fetchProvingProcess();
     },
     shouldListen ? INTERVAL : null,
-    true,
   );
 
   return provingProcess;

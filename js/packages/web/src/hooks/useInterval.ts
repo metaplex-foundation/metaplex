@@ -1,10 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
-function useInterval(
-  callback: () => void,
-  delay: number | null,
-  shouldCallImmediately?: boolean,
-) {
+function useInterval(callback: () => void, delay: number | null) {
   const savedCallback = useRef(callback);
 
   // Remember the latest callback if it changes.
@@ -18,10 +14,6 @@ function useInterval(
     // Note: 0 is a valid value for delay.
     if (!delay && delay !== 0) {
       return;
-    }
-
-    if (shouldCallImmediately) {
-      savedCallback.current();
     }
 
     const id = setInterval(() => savedCallback.current(), delay);
