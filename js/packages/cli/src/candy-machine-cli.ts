@@ -125,7 +125,7 @@ programCommand('upload')
 
     if (storage === StorageType.ArweaveBundle && env !== 'mainnet') {
       throw new Error(
-        'arweave-bundl must receive real AR from their network, for devnet please use AWS or IPFS\n',
+        'The arweave-bundl storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
       );
     }
 
