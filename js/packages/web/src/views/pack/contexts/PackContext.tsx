@@ -10,7 +10,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useLocation } from 'react-router';
 
-import { useUserVouchersByEdition } from '../../artworks/hooks/useUserVouchersByEdition';
+import { useUserVouchersByEdition } from './hooks/useUserVouchersByEdition';
 import { claimPackCards } from '../transactions/claimPackCards';
 
 import { getProvingProcess } from './utils/getProvingProcess';
