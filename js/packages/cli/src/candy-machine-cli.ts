@@ -131,7 +131,7 @@ programCommand('upload')
 
     if (storage === StorageType.Arweave) {
       log.warn(
-        'WARNING: This upload method will be going away soon. Please migrate to arweave-bundl, or Arweave-sol\n',
+        'WARNING: The "arweave" storage option will soon stop supporting mainnet. Please use --storage arweave-bundl, or arweave-sol when uploading to Arweave on mainnet\n',
       );
     }
 
