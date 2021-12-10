@@ -180,8 +180,6 @@ export function MetaProvider({ children = null as any }) {
     );
     await updateMints(nextState.metadataByMint);
 
-    console.log(nextState);
-
     setState(nextState);
   }
 
