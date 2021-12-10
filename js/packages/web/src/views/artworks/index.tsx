@@ -9,6 +9,7 @@ import { useItems } from './hooks/useItems';
 import ItemCard from './components/ItemCard';
 import { useUserAccounts } from '@oyster/common';
 import { DownOutlined } from "@ant-design/icons";
+import { isMetadata, isPack } from './utils';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -38,7 +39,15 @@ export const ArtworksView = () => {
     <div className="artwork-grid">
       {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
       {!isLoading &&
-        userItems.map(item => <ItemCard item={item} key={item.pubkey} />)}
+        userItems.map(item => {
+          const pubkey = isMetadata(item)
+            ? item.pubkey
+            : isPack(item)
+            ? item.provingProcessKey
+            : item.edition?.pubkey || item.metadata.pubkey;
+
+          return <ItemCard item={item} key={pubkey} />;
+        })}
     </div>
   );
 
