@@ -129,7 +129,7 @@ export const createCandyMachineV2 = async function (
   if (totalShare !== 100) {
     throw new Error(`Invalid config, creators shares must add up to 100`);
   }
-
+  console.log('Hey', candyData);
   return {
     candyMachine: candyAccount.publicKey,
     uuid: candyData.uuid,
@@ -275,6 +275,15 @@ export const getFairLaunch = async (
   return await anchor.web3.PublicKey.findProgramAddress(
     [Buffer.from('fair_launch'), tokenMint.toBuffer()],
     FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getCandyMachineCreator = async (
+  candyMachine: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('candy_machine'), candyMachine.toBuffer()],
+    CANDY_MACHINE_PROGRAM_V2_ID,
   );
 };
 

@@ -1,5 +1,6 @@
 {
   "price": 1,
+  "number": null,
   "useCaptcha": false,
   "solTreasuryAccount": null,
   "splTokenAccount": null,

@@ -5,6 +5,7 @@ import {
   createConfig,
   getBalance,
   loadCandyProgram,
+  loadCandyProgramV2,
   loadWalletKey,
   WhitelistMintMode,
 } from '../helpers/accounts';
@@ -41,6 +42,7 @@ export async function uploadV2({
   endSettings,
   whitelistMintSettings,
   hiddenSettings,
+  uuid,
 }: {
   files: string[];
   cacheName: string;
@@ -72,6 +74,7 @@ export async function uploadV2({
     uri: string;
     hash: Uint8Array;
   };
+  uuid: string;
 }): Promise<boolean> {
   let uploadSuccessful = true;
 
@@ -109,10 +112,10 @@ export async function uploadV2({
   const SIZE = images.length;
 
   const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
-  let config = cacheContent.program.config
-    ? new PublicKey(cacheContent.program.config)
+  let candyMachine = cacheContent.program.candyMachine
+    ? new PublicKey(cacheContent.program.candyMachine)
     : undefined;
 
   const tick = SIZE / 100; //print every one percent
@@ -149,7 +152,7 @@ export async function uploadV2({
               try {
                 const remainingAccounts = [];
                 let wallet = walletKeyPair.publicKey;
-                let parsedPrice = parsePrice(price);
+                let parsedPrice;
                 if (splToken || splTokenAccount) {
                   if (solTreasuryAccount) {
                     throw new Error(
@@ -227,12 +230,17 @@ export async function uploadV2({
                   wallet,
                   {
                     itemsAvailable: new BN(totalNFTs),
+                    uuid,
                     symbol: manifest.symbol,
                     sellerFeeBasisPoints: manifest.seller_fee_basis_points,
                     isMutable: mutable,
                     maxSupply: new BN(0),
                     retainAuthority: retainAuthority,
-
+                    useCaptcha,
+                    goLiveDate,
+                    endSettings,
+                    whitelistMintSettings,
+                    hiddenSettings,
                     creators: manifest.properties.creators.map(creator => {
                       return {
                         address: new PublicKey(creator.address),
@@ -243,11 +251,10 @@ export async function uploadV2({
                   },
                 );
                 cacheContent.program.uuid = res.uuid;
-                cacheContent.program.config = res.config.toBase58();
-                config = res.config;
-
+                cacheContent.program.candyMachine = res.candyMachine.toBase58();
+                candyMachine = res.candyMachine;
                 log.info(
-                  `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
+                  `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
                 );
 
                 saveCache(cacheName, env, cacheContent);
@@ -338,7 +345,7 @@ export async function uploadV2({
                   })),
                   {
                     accounts: {
-                      config,
+                      candyMachine,
                       authority: walletKeyPair.publicKey,
                     },
                     signers: [walletKeyPair],

@@ -100,6 +100,7 @@ export const CONFIG_ARRAY_START_V2 =
   9 + // discount price
   32; // mint key for whitelist
 
+export const CONFIG_LINE_SIZE_V2 = 1 + 4 + 32 + 4 + 200;
 export const CONFIG_LINE_SIZE = 4 + 32 + 4 + 200;
 
 export const CACHE_PATH = './.cache';

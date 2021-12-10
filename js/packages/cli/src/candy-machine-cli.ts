@@ -162,7 +162,6 @@ programCommand('upload')
         ipfsCredentials,
         awsS3Bucket,
         batchSize,
-        false,
       );
 
       if (successful) {
