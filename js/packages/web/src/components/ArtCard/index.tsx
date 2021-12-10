@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardProps, Button, Badge } from 'antd';
 import { MetadataCategory, StringPublicKey } from '@oyster/common';
-import { ArtContent } from './../ArtContent';
+import { ArtContent } from '../ArtContent';
 import { useArt } from '../../hooks';
 import { Artist, ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
@@ -22,7 +22,7 @@ export interface ArtCardProps extends CardProps {
   creators?: Artist[];
   preview?: boolean;
   small?: boolean;
-  close?: () => void;
+  onClose?: () => void;
 
   height?: number;
   artView?: boolean;
@@ -42,7 +42,7 @@ export const ArtCard = (props: ArtCardProps) => {
     preview,
     creators,
     description,
-    close,
+    onClose,
     pubkey,
     height,
     artView,
@@ -69,14 +69,14 @@ export const ArtCard = (props: ArtCardProps) => {
       className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
       {...rest}
     >
-      {close && (
+      {onClose && (
         <Button
           className="card-close-button"
           shape="circle"
           onClick={e => {
             e.stopPropagation();
             e.preventDefault();
-            close && close();
+            onClose && onClose();
           }}
         >
           X

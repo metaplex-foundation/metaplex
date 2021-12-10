@@ -1,5 +1,5 @@
 import React, { ReactElement, useCallback, useMemo } from 'react';
-import { Card } from 'antd';
+import { Button, Card } from 'antd';
 import { shortenAddress, useMeta } from '@oyster/common';
 
 import { MetaAvatar } from '../MetaAvatar';
@@ -15,6 +15,7 @@ interface Props {
   cardsRedeemed?: number;
   allowedAmountToRedeem?: number;
   artView?: boolean;
+  onClose?: () => void;
 }
 
 const PackCard = ({
@@ -24,6 +25,7 @@ const PackCard = ({
   cardsRedeemed,
   allowedAmountToRedeem,
   artView,
+  onClose,
 }: Props): ReactElement => {
   const { whitelistedCreatorsByCreator } = useMeta();
   const art = useArt(voucherMetadata);
@@ -53,6 +55,19 @@ const PackCard = ({
 
   return (
     <Card hoverable className="auction-render-card" bordered={false}>
+      {onClose && (
+        <Button
+          className="card-close-button"
+          shape="circle"
+          onClick={e => {
+            e.stopPropagation();
+            e.preventDefault();
+            onClose();
+          }}
+        >
+          X
+        </Button>
+      )}
       <div className="card-art-info">
         <div className="pack-gray-wrapper">
           <div className="card-artist-info card-artist-info--pack">
