@@ -130,7 +130,7 @@ programCommand('upload')
     }
 
     if (storage === StorageType.Arweave) {
-      console.info(
+      log.warn(
         'WARNING: This upload method will be going away soon. Please migrate to arweave-bundl, or Arweave-sol\n',
       );
     }
