@@ -46,6 +46,19 @@ import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
 import { withdraw } from './commands/withdraw';
 import { StorageType } from './helpers/storage-type';
+import { getType } from 'mime';
+const supportedFileTypes = {
+  'image/png': 1,
+  'image/gif': 1,
+  'image/jpeg': 1,
+  'gltf-binary': 1,
+  'video/mp4': 1,
+  'audio/mp3': 1,
+  'audio/mpeg': 1,
+  'video/mpeg': 1,
+  'audio/wav': 1,
+  'text/html': 1,
+};
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -67,7 +80,6 @@ programCommand('upload')
     'Batch size - defaults to 50. Has no Affect on Bundlr',
     '50',
   )
-
   .option(
     '-s, --storage <string>',
     `Database to use for storage (${Object.values(StorageType).join(', ')})`,
@@ -114,13 +126,19 @@ programCommand('upload')
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet') {
       throw new Error(
-        'Arweave Sol must receive real SOL from mainnet, for devnet please use Arweave Bundle, AWS or IPFS\n',
+        'arweave-sol must receive real SOL from mainnet, for devnet please use arweave-bundl, AWS or IPFS\n',
+      );
+    }
+
+    if (storage === StorageType.ArweaveBundle && env !== 'mainnet') {
+      throw new Error(
+        'arweave-bundl must receive real AR from their network, for devnet please use AWS or IPFS\n',
       );
     }
 
     if (storage === StorageType.Arweave) {
       console.info(
-        'WARNING: This upload method will be going away soon. Please migrate to Arweave Bundler, or Arweave SOL\n',
+        'WARNING: This upload method will be going away soon. Please migrate to arweave-bundl, or Arweave-sol\n',
       );
     }
 
@@ -161,6 +179,9 @@ programCommand('upload')
     }).length;
 
     const jsonFileCount = files.filter(it => {
+      if (!supportedFileTypes[getType(it)]) {
+        throw new Error(`The file ${it} is not a supported file type.`);
+      }
       return it.endsWith(EXTENSION_JSON);
     }).length;
 

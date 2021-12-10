@@ -77,12 +77,6 @@ const BUNDLE_SIZE_BYTE_LIMIT = 50 * 1024 * 1024;
  */
 const BASE_TAGS = [{ name: 'App-Name', value: 'Metaplex Candy Machine' }];
 
-// const CONTENT_TYPES = {
-//   png: 'image/png',
-//   gif: 'image/gif',
-//   jpeg: 'image/png',
-// };
-
 const contentTypeTags = {
   json: { name: 'Content-Type', value: 'application/json' },
   'arweave-manifest': {
