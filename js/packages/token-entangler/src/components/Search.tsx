@@ -11,6 +11,8 @@ import {
 } from "@solana/wallet-adapter-react";
 
 import * as anchor from '@project-serum/anchor';
+import { searchEntanglements } from "../utils/entangler";
+
 
 export const Search = () => {
     const connection = useConnection();
@@ -37,8 +39,9 @@ export const Search = () => {
         if (!anchorWallet) {
             return;
         }
-        // const res = await createEntanglement(anchorWallet, connection, null, null, false, price, mintA, mintB);
-        // console.log(res);
+        const res = await searchEntanglements(anchorWallet, connection, mintA);
+
+        console.log(res);
     };
 
     const [mintA, setMintA] = React.useState(localStorage.getItem("mintA") || "");
