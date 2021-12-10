@@ -110,6 +110,10 @@ export interface MetaContextState extends MetaState {
     userTokenAccounts: TokenAccount[],
     packSetKey: StringPublicKey,
   ) => Promise<void>;
+  pullUserMetadata: (
+    userTokenAccounts: TokenAccount[],
+    tempState?: MetaState,
+  ) => Promise<void>;
 }
 
 export type AccountAndPubkey = {

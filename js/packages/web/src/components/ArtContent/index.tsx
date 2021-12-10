@@ -255,70 +255,91 @@ export const ArtContent = ({
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
+  const [uriState, setUriState] = useState<string | undefined>();
+  const [animationURLState, setAnimationURLState] = useState<string | undefined>();
+  const [filesState, setFilesState] = useState<(MetadataFile|string)[] | undefined>();
+  const [categoryState, setCategoryState] = useState<MetadataCategory | undefined>();
+
   const id = pubkeyToString(pubkey);
 
   const { ref, data } = useExtendedArt(id);
 
-  if (pubkey && data) {
-    uri = data.image;
-    animationURL = data.animation_url;
-  }
+  useEffect(() => {
+    setUriState(uri);
+  }, [uri]);
 
-  if (pubkey && data?.properties) {
-    files = data.properties.files;
-    category = data.properties.category;
-  }
+  useEffect(() => {
+    setAnimationURLState(animationURL);
+  }, [animationURL]);
 
-  animationURL = animationURL || '';
+  useEffect(() => {
+    setFilesState(files);
+  }, [files]);
+
+  useEffect(() => {
+    setCategoryState(category);
+  }, [category]);
+
+  useEffect(() => {
+    if (pubkey && data) {
+      setUriState(data.image);
+      setAnimationURLState(data.animation_url);
+    }
+
+    if (pubkey && data?.properties) {
+      setFilesState(data.properties.files);
+      setCategoryState(data.properties.category);
+    }
+  }, [pubkey, data])
 
   const animationUrlExt = new URLSearchParams(
-    getLast(animationURL.split('?')),
+    getLast((animationURLState || '').split('?')),
   ).get('ext');
 
   if (
     allowMeshRender &&
-    (category === 'vr' ||
+    (categoryState === 'vr' ||
       animationUrlExt === 'glb' ||
       animationUrlExt === 'gltf')
   ) {
     return (
       <MeshArtContent
-        uri={uri}
-        animationUrl={animationURL}
+        uri={uriState}
+        animationUrl={animationURLState}
         className={className}
         style={style}
-        files={files}
+        files={filesState}
       />
     );
   }
 
-  if (category === 'html' || animationUrlExt === 'html') {
+  if (categoryState === 'html' || animationUrlExt === 'html') {
     return (
       <HTMLContent
-        uri={uri}
-        animationUrl={animationURL}
+        uri={uriState}
+        animationUrl={animationURLState}
         className={className}
         preview={preview}
         style={style}
-        files={files}
+        files={filesState}
         artView={artView}
       />
     );
   }
 
   const content =
-    category === 'video' ? (
+    categoryState === 'video' ? (
       <VideoArtContent
         className={className}
         style={style}
-        files={files}
-        uri={uri}
-        animationURL={animationURL}
+        files={filesState}
+        uri={uriState}
+        animationURL={animationURLState}
         active={active}
       />
     ) : (
       <CachedImageContent
-        uri={uri}
+        uri={uriState}
         className={className}
         preview={preview}
         style={style}

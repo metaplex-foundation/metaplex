@@ -71,6 +71,7 @@ incremented for features.
 - Fix layout on token selection
 - Fix type of sale and edition number for non master edition NFTs
 - Fix not allowing to buy a sale without enough balance
+- Added placeholder for images on create pack flow
 
 ### Breaking
 
