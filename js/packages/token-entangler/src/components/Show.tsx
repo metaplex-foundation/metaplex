@@ -90,6 +90,14 @@ export const Show = () => {
         }
     };
 
+    const isEnable = (mintA: string, mintB: string, entangledPair: string): boolean => {
+        return ( 
+            // eslint-disable-next-line no-extra-boolean-cast
+            (!!mintA && !!mintB  && !(!!entangledPair)) ||
+            (!(!!mintA || !!mintB) && !!entangledPair )
+        )
+    }
+
     return (
         <React.Fragment>
             <h1>Show Entanglement</h1>
@@ -131,24 +139,29 @@ export const Show = () => {
                     }}
                 />
                 <FormGroup>
-                    <Button variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SendIcon />}>
+                    <Button 
+                      variant="contained" 
+                      onClick={async (e) => await handleSubmit(e)} 
+                      endIcon={<SendIcon />}
+                      disabled={!isEnable(mintA, mintB, entangledPair)}
+                    >
                         Show Entanglement
                     </Button>
                 </FormGroup>
-                <Box sx={{ maxWidth: 'md' }}>
-                    <TextField
-                        multiline
-                        fullWidth
-                        rows={20}
-                        id="price-text-field"
-                        label="Entanglement Info"
-                        value={entangledPairInfo}
-                        InputProps={{
-                            readOnly: true,
-                        }}
+            </Box>
+            <Box sx={{ maxWidth: 'md', display:'block', marginTop: '2rem' }}>
+                <TextField
+                    multiline
+                    fullWidth
+                    rows={20}
+                    id="price-text-field"
+                    label="Entanglement Info"
+                    value={entangledPairInfo}
+                    InputProps={{
+                        readOnly: true,
+                    }}
 
-                    />
-                </Box>
+                />
             </Box>
 
 

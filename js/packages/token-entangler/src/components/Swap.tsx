@@ -59,7 +59,15 @@ export const Swap = () => {
             return;
         }
         const txnResult = await swapEntanglement(anchorWallet, connection, mintA, mintB, entangledPair);
-        console.log(txnResult);
+        setEntangledPair(txnResult.epkey);
+    }
+
+    const isEnable = (mintA: string, mintB: string, entangledPair: string): boolean => {
+        return ( 
+            // eslint-disable-next-line no-extra-boolean-cast
+            (!!mintA && !!mintB  && !(!!entangledPair)) ||
+            (!(!!mintA || !!mintB) && !!entangledPair )
+        )
     }
 
 
@@ -103,11 +111,22 @@ export const Swap = () => {
                         setEntangledPair(e.target.value);
                     }}
                 />
+                
                 <FormGroup>
-                    <Button variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SendIcon />}>
+                    <Button 
+                     variant="contained" 
+                     onClick={async (e) => await handleSubmit(e)} 
+                     endIcon={<SendIcon />}
+                     disabled={!isEnable(mintA, mintB, entangledPair)}
+                    >
                         Swap
                     </Button>
                 </FormGroup>
+            </Box>
+            
+            <Box component="span" sx={{ display: 'block' , marginTop: '2rem'}}>
+                { !entangledPair ? "" :  <h2>Entangled Pair</h2> }
+                <p>{entangledPair}</p>
             </Box>
 
 
