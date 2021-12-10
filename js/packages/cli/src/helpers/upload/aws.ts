@@ -4,6 +4,7 @@ import { createReadStream } from 'fs';
 import { Readable } from 'form-data';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import path from 'path';
+import { getType } from 'mime';
 
 async function uploadFile(
   s3Client: S3Client,
@@ -42,13 +43,14 @@ export async function awsUpload(
   const filename = `assets/${basename(file)}`;
   log.debug('file:', file);
   log.debug('filename:', filename);
+
   const imageExt = path.extname(file);
   const fileStream = createReadStream(file);
   const mediaUrl = await uploadFile(
     s3Client,
     awsS3Bucket,
     filename,
-    `image/${imageExt.replace('.', '')}`,
+    getType(file),
     fileStream,
   );
 
