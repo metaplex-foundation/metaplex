@@ -167,14 +167,18 @@ programCommand('upload')
       secretKey: ipfsInfuraSecret,
     };
 
-    const imageFileCount = files.filter(it => {
+    const imageFiles = files.filter(it => {
       return !it.endsWith(EXTENSION_JSON);
-    }).length;
+    });
+    const imageFileCount = imageFiles.length;
 
-    const jsonFileCount = files.filter(it => {
+    imageFiles.forEach(it => {
       if (!supportedImageTypes[getType(it)]) {
         throw new Error(`The file ${it} is not a supported file type.`);
       }
+    });
+
+    const jsonFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_JSON);
     }).length;
 
