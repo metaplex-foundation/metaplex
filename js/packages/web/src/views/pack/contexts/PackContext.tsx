@@ -22,6 +22,7 @@ import { useOpenedMetadata } from './hooks/useOpenedMetadata';
 import { PackContextProps } from './interface';
 import { useListenForProvingProcess } from './hooks/useListenForProvingProcess';
 import { fetchProvingProcessWithRetry } from './utils/fetchProvingProcessWithRetry';
+import { useListenForTokenAccounts } from './hooks/useListenForTokenAccounts';
 
 export const PackContext = React.createContext<PackContextProps>({
   isLoading: false,
@@ -39,6 +40,8 @@ export const PackProvider: React.FC = ({ children }) => {
   const { packKey }: { packKey: string } = useParams();
   const { search } = useLocation();
   const { voucherEditionKey, provingProcessKey } = getSearchParams(search);
+
+  useListenForTokenAccounts();
 
   const {
     packs,

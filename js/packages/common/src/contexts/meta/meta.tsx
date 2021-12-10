@@ -142,15 +142,7 @@ export function MetaProvider({ children = null as any }) {
       ? await pullPacks(connection, state, wallet?.publicKey)
       : state;
 
-    const nextState = await pullYourMetadata(
-      connection,
-      userTokenAccounts,
-      packsState,
-    );
-
-    await updateMints(nextState.metadataByMint);
-
-    setState(nextState);
+    await pullUserMetadata(userTokenAccounts, packsState);
   }
 
   async function pullPackPage(
@@ -174,12 +166,21 @@ export function MetaProvider({ children = null as any }) {
       walletKey: wallet?.publicKey,
     });
 
+    await pullUserMetadata(userTokenAccounts, packState);
+  }
+
+  async function pullUserMetadata(
+    userTokenAccounts: TokenAccount[],
+    tempState?: MetaState,
+  ): Promise<void> {
     const nextState = await pullYourMetadata(
       connection,
       userTokenAccounts,
-      packState,
+      tempState || state,
     );
     await updateMints(nextState.metadataByMint);
+
+    console.log(nextState);
 
     setState(nextState);
   }
@@ -409,6 +410,7 @@ export function MetaProvider({ children = null as any }) {
         pullAllSiteData,
         pullItemsPage,
         pullPackPage,
+        pullUserMetadata,
         isLoading,
       }}
     >
