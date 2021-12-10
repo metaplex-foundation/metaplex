@@ -117,13 +117,13 @@ programCommand('upload')
       batchSize,
     } = cmd.opts();
 
-    if (storage === StorageType.ArweaveSol && env !== 'mainnet') {
+    if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
       throw new Error(
         'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
       );
     }
 
-    if (storage === StorageType.ArweaveBundle && env !== 'mainnet') {
+    if (storage === StorageType.ArweaveBundle && env !== 'mainnet-beta') {
       throw new Error(
         'The arweave-bundl storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
       );

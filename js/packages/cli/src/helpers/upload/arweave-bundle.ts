@@ -234,7 +234,6 @@ async function getImageDataItem(
   image: string,
   contentType: string,
 ): Promise<DataItem> {
-  console.log(imageTags.concat({ name: 'Content-Type', value: contentType }));
   return createData(await readFile(image), signer, {
     tags: imageTags.concat({ name: 'Content-Type', value: contentType }),
   });
@@ -371,7 +370,6 @@ export function* makeArweaveBundleUploadGenerator(
           );
           await imageDataItem.sign(signer);
           const imageLink = `https://arweave.net/${imageDataItem.id}`;
-          console.log(imageLink);
           const manifest = await getUpdatedManifest(
             filePair.manifest,
             imageLink,
@@ -391,7 +389,6 @@ export function* makeArweaveBundleUploadGenerator(
           );
           await arweavePathManifestDataItem.sign(signer);
           const arweavePathManifestLink = `https://arweave.net/${manifestDataItem.id}`;
-          console.log(arweavePathManifestLink);
 
           acc.cacheKeys.push(filePair.key);
           acc.dataItems.push(
@@ -421,7 +418,7 @@ export function* makeArweaveBundleUploadGenerator(
         );
         const bytes = dataItems.reduce((c, d) => c + d.data.length, 0);
         const cost = await bundlr.utils.getStorageCost('solana', bytes);
-        console.log(`${cost.toNumber() / LAMPORTS} SOL to upload`);
+        log.info(`${cost.toNumber() / LAMPORTS} SOL to upload`);
         await bundlr.fund(cost.toNumber());
         for (const d of dataItems) {
           const tx = bundlr.createTransaction(d.rawData, { tags: d.tags });
