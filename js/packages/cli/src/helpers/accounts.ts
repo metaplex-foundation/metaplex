@@ -86,6 +86,7 @@ export interface CandyMachineData {
   sellerFeeBasisPoints: number;
   isMutable: boolean;
   maxSupply: anchor.BN;
+  price: anchor.BN;
   retainAuthority: boolean;
   useCaptcha: boolean;
   goLiveDate: null | anchor.BN;

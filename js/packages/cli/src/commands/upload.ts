@@ -11,7 +11,7 @@ import {
 } from '../helpers/accounts';
 import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
-import { BN } from '@project-serum/anchor';
+import { BN, Program, web3 } from '@project-serum/anchor';
 import { loadCache, saveCache } from '../helpers/cache';
 import log from 'loglevel';
 import { awsUpload } from '../helpers/upload/aws';
@@ -34,8 +34,7 @@ export async function uploadV2({
   awsS3Bucket,
   batchSize,
   price,
-  solTreasuryAccount,
-  splTokenAccount,
+  treasuryWallet,
   splToken,
   useCaptcha,
   goLiveDate,
@@ -43,6 +42,8 @@ export async function uploadV2({
   whitelistMintSettings,
   hiddenSettings,
   uuid,
+  walletKeyPair,
+  anchorProgram,
 }: {
   files: string[];
   cacheName: string;
@@ -56,9 +57,8 @@ export async function uploadV2({
   ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
   batchSize: number;
-  price: string;
-  solTreasuryAccount: string;
-  splTokenAccount: string;
+  price: BN;
+  treasuryWallet: PublicKey;
   splToken: string;
   useCaptcha: boolean;
   goLiveDate: null | BN;
@@ -75,6 +75,8 @@ export async function uploadV2({
     hash: Uint8Array;
   };
   uuid: string;
+  walletKeyPair: web3.Keypair;
+  anchorProgram: Program;
 }): Promise<boolean> {
   let uploadSuccessful = true;
 
@@ -110,9 +112,6 @@ export async function uploadV2({
 
   const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
   const SIZE = images.length;
-
-  const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
   let candyMachine = cacheContent.program.candyMachine
     ? new PublicKey(cacheContent.program.candyMachine)
@@ -151,56 +150,10 @@ export async function uploadV2({
             if (i === 0 && !cacheContent.program.uuid) {
               try {
                 const remainingAccounts = [];
-                let wallet = walletKeyPair.publicKey;
-                let parsedPrice;
-                if (splToken || splTokenAccount) {
-                  if (solTreasuryAccount) {
-                    throw new Error(
-                      'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
-                    );
-                  }
-                  if (!splToken) {
-                    throw new Error(
-                      'If spl-token-account is set, spl-token must also be set',
-                    );
-                  }
+
+                if (splToken) {
                   const splTokenKey = new PublicKey(splToken);
-                  const splTokenAccountKey = new PublicKey(splTokenAccount);
-                  if (!splTokenAccount) {
-                    throw new Error(
-                      'If spl-token is set, spl-token-account must also be set',
-                    );
-                  }
 
-                  const token = new Token(
-                    anchorProgram.provider.connection,
-                    splTokenKey,
-                    TOKEN_PROGRAM_ID,
-                    walletKeyPair,
-                  );
-
-                  const mintInfo = await token.getMintInfo();
-                  if (!mintInfo.isInitialized) {
-                    throw new Error(
-                      `The specified spl-token is not initialized`,
-                    );
-                  }
-                  const tokenAccount = await token.getAccountInfo(
-                    splTokenAccountKey,
-                  );
-                  if (!tokenAccount.isInitialized) {
-                    throw new Error(
-                      `The specified spl-token-account is not initialized`,
-                    );
-                  }
-                  if (!tokenAccount.mint.equals(splTokenKey)) {
-                    throw new Error(
-                      `The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`,
-                    );
-                  }
-
-                  wallet = splTokenAccountKey;
-                  parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
                   remainingAccounts.push({
                     pubkey: splTokenKey,
                     isWritable: false,
@@ -208,26 +161,12 @@ export async function uploadV2({
                   });
                 }
 
-                if (solTreasuryAccount) {
-                  const treasuryAccount = new PublicKey(solTreasuryAccount);
-                  const treasuryBalance = await getBalance(
-                    treasuryAccount,
-                    env,
-                    rpcUrl,
-                  );
-                  if (treasuryBalance === 0) {
-                    throw new Error(
-                      `Cannot use treasury account with 0 balance!`,
-                    );
-                  }
-                  wallet = treasuryAccount;
-                }
                 // initialize candy
                 log.info(`initializing candy machine`);
                 const res = await createCandyMachineV2(
                   anchorProgram,
                   walletKeyPair,
-                  wallet,
+                  treasuryWallet,
                   {
                     itemsAvailable: new BN(totalNFTs),
                     uuid,
@@ -238,6 +177,7 @@ export async function uploadV2({
                     retainAuthority: retainAuthority,
                     useCaptcha,
                     goLiveDate,
+                    price,
                     endSettings,
                     whitelistMintSettings,
                     hiddenSettings,

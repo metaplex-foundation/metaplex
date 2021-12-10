@@ -8,6 +8,7 @@ import fetch from 'node-fetch';
 import {
   chunks,
   fromUTF8Array,
+  getCandyMachineV2Config,
   parseDate,
   parsePrice,
   shuffle,
@@ -73,9 +74,8 @@ programCommand('upload')
   .action(async (files: string[], options, cmd) => {
     const { keypair, env, cacheName, configPath, rpcUrl } = cmd.opts();
 
-    const configString = fs.readFileSync(configPath);
-    //@ts-ignore
-    let config = JSON.parse(configString);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
     const {
       storage,
@@ -88,15 +88,20 @@ programCommand('upload')
       batchSize,
       price,
       splToken,
-      splTokenAccount,
-      solTreasuryAccount,
+      treasuryWallet,
       useCaptcha,
       endSettings,
       hiddenSettings,
       whitelistMintSettings,
       goLiveDate,
       uuid,
-    } = config;
+    } = await getCandyMachineV2Config(
+      walletKeyPair,
+      anchorProgram,
+      env,
+      rpcUrl,
+      configPath,
+    );
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
       throw new Error(
@@ -161,8 +166,9 @@ programCommand('upload')
         awsS3Bucket,
         batchSize,
         price,
-        solTreasuryAccount,
-        splTokenAccount,
+        treasuryWallet,
+        anchorProgram,
+        walletKeyPair,
         splToken,
         endSettings,
         hiddenSettings,
@@ -643,13 +649,9 @@ programCommand('update_candy_machine')
 
     const candyMachine = new PublicKey(cacheContent.program.candyMachine);
 
-    const configString = fs.readFileSync(configPath);
-
     const candyMachineObj = await anchorProgram.account.candyMachine.fetch(
       candyMachine,
     );
-    //@ts-ignore
-    let config = JSON.parse(configString);
 
     const {
       storage,
@@ -662,59 +664,20 @@ programCommand('update_candy_machine')
       batchSize,
       price,
       splToken,
-      splTokenAccount,
-      solTreasuryAccount,
+      treasuryWallet,
       useCaptcha,
       endSettings,
       hiddenSettings,
       whitelistMintSettings,
       goLiveDate,
       uuid,
-    } = config;
-
-    let parsedPrice = parsePrice(price);
-    if (splToken || splTokenAccount) {
-      if (solTreasuryAccount) {
-        throw new Error(
-          'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
-        );
-      }
-      if (!splToken) {
-        throw new Error(
-          'If spl-token-account is set, spl-token must also be set',
-        );
-      }
-      const splTokenKey = new PublicKey(splToken);
-      const splTokenAccountKey = new PublicKey(splTokenAccount);
-      if (!splTokenAccount) {
-        throw new Error(
-          'If spl-token is set, spl-token-account must also be set',
-        );
-      }
-
-      const token = new Token(
-        anchorProgram.provider.connection,
-        splTokenKey,
-        TOKEN_PROGRAM_ID,
-        walletKeyPair,
-      );
-
-      const mintInfo = await token.getMintInfo();
-      if (!mintInfo.isInitialized) {
-        throw new Error(`The specified spl-token is not initialized`);
-      }
-      const tokenAccount = await token.getAccountInfo(splTokenAccountKey);
-      if (!tokenAccount.isInitialized) {
-        throw new Error(`The specified spl-token-account is not initialized`);
-      }
-      if (!tokenAccount.mint.equals(splTokenKey)) {
-        throw new Error(
-          `The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`,
-        );
-      }
-
-      parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
-    }
+    } = await getCandyMachineV2Config(
+      walletKeyPair,
+      anchorProgram,
+      env,
+      rpcUrl,
+      configPath,
+    );
 
     const newSettings = {
       itemsAvailable: new anchor.BN(number),
@@ -727,6 +690,7 @@ programCommand('update_candy_machine')
       useCaptcha,
       goLiveDate,
       endSettings,
+      price,
       whitelistMintSettings,
       hiddenSettings,
       creators: candyMachineObj.data.creators.map(creator => {

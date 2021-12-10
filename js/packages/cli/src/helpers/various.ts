@@ -2,11 +2,143 @@ import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
 import fs from 'fs';
 import weighted from 'weighted';
 import path from 'path';
-import { Program, web3 } from '@project-serum/anchor';
+import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { getBalance } from './accounts';
 
 const { readFile } = fs.promises;
 
+export async function getCandyMachineV2Config(
+  walletKeyPair: web3.Keypair,
+  anchorProgram: Program,
+  env: string,
+  rpcUrl: string,
+  configPath: any,
+) {
+  const configString = fs.readFileSync(configPath);
+
+  //@ts-ignore
+  let config = JSON.parse(configString);
+
+  const {
+    storage,
+    ipfsInfuraProjectId,
+    number,
+    ipfsInfuraSecret,
+    awsS3Bucket,
+    retainAuthority,
+    mutable,
+    batchSize,
+    price,
+    splToken,
+    splTokenAccount,
+    solTreasuryAccount,
+    useCaptcha,
+    endSettings,
+    hiddenSettings,
+    whitelistMintSettings,
+    goLiveDate,
+    uuid,
+  } = config;
+
+  if (whitelistMintSettings) {
+    whitelistMintSettings.mint = new web3.PublicKey(whitelistMintSettings);
+    if (whitelistMintSettings.discountPrice) {
+      whitelistMintSettings.discountPrice = new BN(
+        whitelistMintSettings.discountPrice,
+      );
+    }
+  }
+
+  let wallet;
+  let parsedPrice;
+  if (splToken || splTokenAccount) {
+    if (solTreasuryAccount) {
+      throw new Error(
+        'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
+      );
+    }
+    if (!splToken) {
+      throw new Error(
+        'If spl-token-account is set, spl-token must also be set',
+      );
+    }
+    const splTokenKey = new web3.PublicKey(splToken);
+    const splTokenAccountKey = new web3.PublicKey(splTokenAccount);
+    if (!splTokenAccount) {
+      throw new Error(
+        'If spl-token is set, spl-token-account must also be set',
+      );
+    }
+
+    const token = new Token(
+      anchorProgram.provider.connection,
+      splTokenKey,
+      TOKEN_PROGRAM_ID,
+      walletKeyPair,
+    );
+
+    const mintInfo = await token.getMintInfo();
+    if (!mintInfo.isInitialized) {
+      throw new Error(`The specified spl-token is not initialized`);
+    }
+    const tokenAccount = await token.getAccountInfo(splTokenAccountKey);
+    if (!tokenAccount.isInitialized) {
+      throw new Error(`The specified spl-token-account is not initialized`);
+    }
+    if (!tokenAccount.mint.equals(splTokenKey)) {
+      throw new Error(
+        `The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`,
+      );
+    }
+
+    wallet = splTokenAccountKey;
+    parsedPrice = price * 10 ** mintInfo.decimals;
+    if (whitelistMintSettings?.discountPrice) {
+      whitelistMintSettings.discountPrice = new BN(
+        whitelistMintSettings.discountPrice.toNumber() *
+          10 ** mintInfo.decimals,
+      );
+    }
+  } else {
+    parsedPrice = price * 10 ** LAMPORTS_PER_SOL;
+    if (whitelistMintSettings?.discountPrice) {
+      whitelistMintSettings.discountPrice = new BN(
+        whitelistMintSettings.discountPrice.toNumber() * 10 ** LAMPORTS_PER_SOL,
+      );
+    }
+    wallet = solTreasuryAccount || walletKeyPair.publicKey;
+  }
+
+  if (solTreasuryAccount) {
+    const treasuryAccount = new web3.PublicKey(solTreasuryAccount);
+    const treasuryBalance = await getBalance(treasuryAccount, env, rpcUrl);
+    if (treasuryBalance === 0) {
+      throw new Error(`Cannot use treasury account with 0 balance!`);
+    }
+    wallet = treasuryAccount;
+  }
+
+  return {
+    storage,
+    ipfsInfuraProjectId,
+    number,
+    ipfsInfuraSecret,
+    awsS3Bucket,
+    retainAuthority,
+    mutable,
+    batchSize,
+    price: new BN(parsedPrice),
+    treasuryWallet: wallet,
+    splToken,
+    useCaptcha,
+    endSettings,
+    hiddenSettings,
+    whitelistMintSettings,
+    goLiveDate,
+    uuid,
+  };
+}
 export async function readJsonFile(fileName: string) {
   const file = await readFile(fileName, 'utf-8');
   return JSON.parse(file);
