@@ -5,7 +5,7 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 
 import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
-import { ExtendedVoucherByKey } from '../../artworks/types';
+import { ExtendedVoucherByKey } from '../../../types/packs';
 import { PackMetadataByPackCard } from './hooks/useMetadataByPackCard';
 
 export type PackContextProps = {
