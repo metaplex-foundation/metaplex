@@ -47,17 +47,10 @@ import { createGenerativeArt } from './commands/createArt';
 import { withdraw } from './commands/withdraw';
 import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
-const supportedFileTypes = {
+const supportedImageTypes = {
   'image/png': 1,
   'image/gif': 1,
   'image/jpeg': 1,
-  'gltf-binary': 1,
-  'video/mp4': 1,
-  'audio/mp3': 1,
-  'audio/mpeg': 1,
-  'video/mpeg': 1,
-  'audio/wav': 1,
-  'text/html': 1,
 };
 program.version('0.0.2');
 
@@ -179,7 +172,7 @@ programCommand('upload')
     }).length;
 
     const jsonFileCount = files.filter(it => {
-      if (!supportedFileTypes[getType(it)]) {
+      if (!supportedImageTypes[getType(it)]) {
         throw new Error(`The file ${it} is not a supported file type.`);
       }
       return it.endsWith(EXTENSION_JSON);
