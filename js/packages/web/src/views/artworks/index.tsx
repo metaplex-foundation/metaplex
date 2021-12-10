@@ -1,6 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
-import { Layout, Row, Col, Tabs, Button } from 'antd';
+import { Layout, Row, Col, Tabs, Button, Dropdown, Menu } from 'antd';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
 
@@ -8,6 +8,8 @@ import { ArtworkViewState } from './types';
 import { useItems } from './hooks/useItems';
 import ItemCard from './components/ItemCard';
 import { useUserAccounts } from '@oyster/common';
+import { DownOutlined } from "@ant-design/icons";
+import { isMetadata, isPack } from './utils';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -37,14 +39,32 @@ export const ArtworksView = () => {
     <div className="artwork-grid">
       {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
       {!isLoading &&
-        userItems.map(item => <ItemCard item={item} key={item.pubkey} />)}
+        userItems.map(item => {
+          const pubkey = isMetadata(item)
+            ? item.pubkey
+            : isPack(item)
+            ? item.provingProcessKey
+            : item.edition?.pubkey || item.metadata.pubkey;
+
+          return <ItemCard item={item} key={pubkey} />;
+        })}
     </div>
   );
 
   const refreshButton = connected && storeIndexer.length !== 0 && (
-    <Button className="refresh-button" onClick={() => pullAllMetadata()}>
+    <Dropdown.Button
+      className={"refresh-button padding0"}
+      onClick={() => pullItemsPage(userAccounts)}
+      icon={<DownOutlined />}
+      overlayClassName={"refresh-overlay"}
+      overlay={
+        <Menu className={'gray-dropdown'}>
+          <Menu.Item onClick={() => pullAllMetadata()}>Load All Metadata</Menu.Item>
+        </Menu>
+      }
+    >
       Refresh
-    </Button>
+    </Dropdown.Button>
   );
 
   return (

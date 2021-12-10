@@ -5,12 +5,13 @@ import { useTokenList } from "../../contexts/tokenList";
 import { Button } from "antd";
 
 export const FundsIssueModal = (props: {
+  message: string,
   isModalVisible: boolean,
   minimumFunds: any,
   currentFunds: any,
   onClose: () => void
 }) => {
-  const {currentFunds: balance, minimumFunds} = props
+  const {currentFunds: balance, minimumFunds, message} = props
   const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == WRAPPED_SOL_MINT.toBase58())[0]
   return (
       <MetaplexModal
@@ -36,7 +37,7 @@ export const FundsIssueModal = (props: {
         <div className="card-bid-info">
           <AmountLabel
             containerStyle={{ flexDirection: 'row' }}
-            title={"Estimated minimum fee"}
+            title={message}
             displaySymbol={"SOL"}
             amount={minimumFunds}
             iconSize={24}

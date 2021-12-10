@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArtCard } from '../../../../components/ArtCard';
 import PackCard from '../../../../components/PackCard';
 import { Item } from '../../types';
-import { isPack } from '../../utils';
+import { isMetadata, isPack } from '../../utils';
 
 const ART_CARD_SIZE = 250;
 
@@ -27,7 +27,7 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
       <Link to={`/pack/${pubkey}?${search}`}>
         <PackCard
           name={item.info.name}
-          voucherMetadata={voucherMetadataKey || ''}
+          voucherMetadata={voucherMetadataKey}
           authority={authority}
           cardsRedeemed={cardsRedeemed}
           allowedAmountToRedeem={allowedAmountToRedeem}
@@ -37,12 +37,11 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
     );
   }
 
-  const { pubkey } = item;
+  const pubkey = isMetadata(item) ? item.pubkey : item.metadata.pubkey;
 
   return (
     <Link to={`/art/${pubkey}`}>
       <ArtCard
-        key={pubkey}
         pubkey={pubkey}
         preview={false}
         height={ART_CARD_SIZE}
