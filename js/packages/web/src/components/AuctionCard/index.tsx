@@ -360,8 +360,8 @@ export const AuctionCard = ({
     setLoading(false);
   };
   const instantSaleAction = () => {
-
-    if (balance.balanceLamports < (instantSalePrice?.toNumber()  || 0)) {
+    const isNotEnoughLamports = balance.balanceLamports < (instantSalePrice?.toNumber()  || 0)
+    if (isNotEnoughLamports) {
       setShowFundsIssueModal(true);
       return;
     }
