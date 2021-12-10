@@ -37,8 +37,8 @@ export const SalesListView = () => {
   return (
     <>
       <Banner
-        src={'/main-banner.svg'}
-        headingText={'Welcome to Fluid Chains Martketplace'}
+        src={'/main-banner.png'}
+        headingText={'Welcome to YWhales Martketplace'}
         subHeadingText={'Buy exclusive NFTs.'}
         actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
         useBannerBg
