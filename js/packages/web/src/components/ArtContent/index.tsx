@@ -255,21 +255,30 @@ export const ArtContent = ({
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
-  const [uriState, setUriState] = useState<string | undefined>(uri);
-  const [animationURLState, setAnimationURLState] = useState<string | undefined>(animationURL);
-  const [filesState, setFilesState] = useState<(MetadataFile|string)[] | undefined>(files);
-  const [categoryState, setCategoryState] = useState<MetadataCategory | undefined>(category);
+  const [uriState, setUriState] = useState<string | undefined>();
+  const [animationURLState, setAnimationURLState] = useState<string | undefined>();
+  const [filesState, setFilesState] = useState<(MetadataFile|string)[] | undefined>();
+  const [categoryState, setCategoryState] = useState<MetadataCategory | undefined>();
 
   const id = pubkeyToString(pubkey);
 
   const { ref, data } = useExtendedArt(id);
 
   useEffect(() => {
-    if (!uriState) setUriState(uri);
-    if (!animationURLState) setAnimationURLState(animationURL);
-    if (!filesState) setFilesState(files);
-    if (!categoryState) setCategoryState(category);
-  }, [uri, animationURLState, files, category]);
+    setUriState(uri);
+  }, [uri]);
+
+  useEffect(() => {
+    setAnimationURLState(animationURL);
+  }, [animationURL]);
+
+  useEffect(() => {
+    setFilesState(files);
+  }, [files]);
+
+  useEffect(() => {
+    setCategoryState(category);
+  }, [category]);
 
   useEffect(() => {
     if (pubkey && data) {
