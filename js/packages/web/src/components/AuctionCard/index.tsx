@@ -892,7 +892,7 @@ export const AuctionCard = ({
                 <AmountLabel
                   title="in your wallet"
                   displaySOL={true}
-                  amount={formatAmount(balance.balance)}
+                  amount={formatAmount(balance.balance, 2)}
                   customPrefix={
                     <Identicon
                       size={24}
