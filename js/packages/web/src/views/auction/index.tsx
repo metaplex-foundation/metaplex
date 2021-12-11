@@ -372,7 +372,7 @@ export const AuctionBids = ({
         {auctionRunning && auctionView.myBidderMetadata && !auctionView.myBidderMetadata.info.cancelled && (
           <Tooltip
             placement="right"
-            title="You are currently a winning bid, and thus can not reclaim."
+            title="You are currently a winning bid, and thus can not cancel your bid."
             trigger={isWinner ? ['hover'] : []}
           >
             <Button
