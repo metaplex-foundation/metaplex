@@ -315,7 +315,7 @@ export const AuctionCard = ({
     } else {
       if (showPlaceBidUI) setShowPlaceBidUI(false);
     }
-  }, [wallet.connected]);
+  }, [wallet.connected, wallet.publicKey]);
 
   const endInstantSale = async () => {
     setLoading(true);
