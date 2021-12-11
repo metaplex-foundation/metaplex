@@ -26,14 +26,16 @@ const MeshArtContent = ({
       : animationUrl;
 
   const { isLoading } = useCachedImage(renderURL || '', true);
-
+  console.log('is loading mesh', isLoading)
   if (isLoading) {
     return <CachedImageContent loaderStyle={loaderStyle} uri={uri} preview={false} />;
   }
 
   return (
-    <div className="metaplex-mesh-art-content">
-      <MeshViewer url={renderURL} />
+    <div className="metaplex-art-content">
+      <div className="metaplex-mesh-art-content">
+        <MeshViewer url={renderURL} />
+      </div>
     </div>
   );
 };
@@ -54,7 +56,7 @@ const CachedImageContent = ({
     <Image
       preview={preview}
       src={cachedBlob}
-      wrapperClassName={(cx("metaplex-image", `metaplex-loader-${loaderStyle}`, { "metaplex-image-loaded": loaded  }))}
+      wrapperClassName={(cx("metaplex-image", `metaplex-loader-${loaderStyle}`, { "metaplex-image-loaded": loaded }))}
       loading="lazy"
       onLoad={() => { setLoaded(true) }}
       placeholder={<Loading type="bars" color="inherit" />}
