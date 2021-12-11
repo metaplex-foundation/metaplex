@@ -5,14 +5,12 @@
   "solTreasuryAccount": null,
   "splTokenAccount": null,
   "splToken": null,
-  "goLiveDate": null,
-  "endSettings": null,
-  "whitelistMintSettings": {
-    "mode": { "neverBurn": true },
-    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
-    "presale": true,
-    "discountPrice": null
+  "goLiveDate": "11 Dec 2021 13:00:00 CST",
+  "endSettings": {
+    "endSettingType": { "amount": true },
+    "value": 5
   },
+  "whitelistMintSettings": null,
   "hiddenSettings": null,
   "storage": "arweave",
   "ipfsInfuraProjectId": null,

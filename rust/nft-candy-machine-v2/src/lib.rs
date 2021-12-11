@@ -56,7 +56,7 @@ pub mod nft_candy_machine_v2 {
                     }
                 }
                 EndSettingType::Amount => {
-                    if candy_machine.items_redeemed > es.number {
+                    if candy_machine.items_redeemed >= es.number {
                         return Err(ErrorCode::CandyMachineNotLive.into());
                     }
                 }

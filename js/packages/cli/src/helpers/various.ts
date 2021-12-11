@@ -134,6 +134,15 @@ export async function getCandyMachineV2Config(
     }
   }
 
+  if (endSettings) {
+    if (endSettings.endSettingType.date) {
+      endSettings.number = new BN(parseDate(endSettings.value));
+    } else if (endSettings.endSettingType.amount) {
+      endSettings.number = new BN(endSettings.value);
+    }
+    delete endSettings.value;
+  }
+
   return {
     storage,
     ipfsInfuraProjectId,

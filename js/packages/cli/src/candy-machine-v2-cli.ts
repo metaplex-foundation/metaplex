@@ -614,8 +614,22 @@ programCommand('show')
 
       //@ts-ignore
       log.info('hidden settings: ', machine.data.hiddenSettings);
-      //@ts-ignore
-      log.info('end settings: ', machine.data.endSettings);
+      if (machine.data.endSettings) {
+        log.info('End settings: ');
+
+        if (machine.data.endSettings.endSettingType.date) {
+          //@ts-ignore
+          log.info('End on', new Date(machine.data.endSettings.number * 1000));
+        } else {
+          log.info(
+            'End when',
+            machine.data.endSettings.number.toNumber(),
+            'sold',
+          );
+        }
+      } else {
+        log.info('No end settings detectred');
+      }
 
       if (machine.data.whitelistMintSettings) {
         //@ts-ignore
@@ -711,7 +725,7 @@ programCommand('update_candy_machine')
         };
       }),
     };
-    console.log('Fuckl', newSettings);
+
     const remainingAccounts = [];
     if (splToken) {
       remainingAccounts.push({

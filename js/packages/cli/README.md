@@ -4,6 +4,25 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 ## Settings examples
 
+### End Settings
+
+Stop a mint at a date
+
+````
+{
+    "endSettingType": { "date": true },
+    "value": "11 Dec 2021 13:30:00 CST"
+  }```
+
+Stop a mint after a certain amount have sold
+````
+
+{
+"endSettingType": { "amount": true },
+"value": 10
+}
+
+```
 ### Whitelist Mint Settings
 
 Here are some examples to help you construct your settings file.
@@ -12,47 +31,55 @@ I want to burn the token each time. This whitelist is ONLY used for presale,
 and once the sale begins, the whitelist gets you nothing.
 
 ```
+
 "whitelistMintSettings": {
-    "mode": { "burnEveryTime": true },
-    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
-    "presale": true,
-    "discountPrice": null
-  },
+"mode": { "burnEveryTime": true },
+"mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+"presale": true,
+"discountPrice": null
+},
+
 ```
 
 I want to burn the token each time. This whitelist is ONLY used for presale, and gives users
 a 0.5 SOL price tag instead. Once the sale begins, the whitelist gets you only a discount.
 
 ```
+
 "whitelistMintSettings": {
-    "mode": { "burnEveryTime": true },
-    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
-    "presale": true,
-    "discountPrice": 0.5
-  },
+"mode": { "burnEveryTime": true },
+"mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+"presale": true,
+"discountPrice": 0.5
+},
+
 ```
 
 I do not want to burn the whitelist token - it can be reused. This whitelist is ONLY used for presale, and gives users
 a 0.5 SOL price tag instead. Once the sale begins, the whitelist gets you only a discount.
 
 ```
+
 "whitelistMintSettings": {
-    "mode": { "neverBurn": true },
-    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
-    "presale": true,
-    "discountPrice": 0.5
-  },
+"mode": { "neverBurn": true },
+"mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+"presale": true,
+"discountPrice": 0.5
+},
+
 ```
 
 I do not want to burn the whitelist token - it can be reused. This whitelist is ONLY used to grant users discounts - a 0.5 SOL price tag.
 
 ```
+
 "whitelistMintSettings": {
-    "mode": { "neverBurn": true },
-    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
-    "presale": false,
-    "discountPrice": 0.5
-  },
+"mode": { "neverBurn": true },
+"mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+"presale": false,
+"discountPrice": 0.5
+},
+
 ```
 
 I want the whitelist token to be burned every mint. This whitelist runs during the sale(not presale) and will restrict any user without such a token from purchasing at all. This
@@ -60,12 +87,14 @@ is because why would you have this setting with no discount price unless you wan
 applied to all.
 
 ```
+
 "whitelistMintSettings": {
-    "mode": { "burnEveryTime": true },
-    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
-    "presale": false,
-    "discountPrice": null
-  },
+"mode": { "burnEveryTime": true },
+"mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+"presale": false,
+"discountPrice": null
+},
+
 ```
 
 ## Creating generative art
@@ -75,9 +104,11 @@ applied to all.
    NOTE: The <directory> should be point to your traits folder you created in step 1
 
 ```
+
 metaplex generate_art_configurations <directory>
 ts-node cli generate_art_configurations <directory>
-```
+
+````
 
 The following file will be generated (based off of `example-traits`):
 
@@ -160,7 +191,7 @@ The following file will be generated (based off of `example-traits`):
   "width": 1000,
   "height": 1000
 }
-```
+````
 
 3. Go through and customize the fields in the `traits-configuration.json`, such as `name`, `symbol`, `description`, , `creators`, `collection`, `width`, and `height`.
 4. After you have adjusted the configurations to your heart's content, you can run the following command to generate the JSON files along with the images.
