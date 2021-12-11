@@ -1,5 +1,5 @@
 import React, { ReactElement, useCallback, useMemo } from 'react';
-import { Card } from 'antd';
+import { Button, Card } from 'antd';
 import { shortenAddress, useMeta } from '@oyster/common';
 
 import { MetaAvatar } from '../MetaAvatar';
@@ -15,6 +15,7 @@ interface Props {
   cardsRedeemed?: number;
   allowedAmountToRedeem?: number;
   artView?: boolean;
+  onClose?: () => void;
 }
 
 const PackCard = ({
@@ -24,6 +25,7 @@ const PackCard = ({
   cardsRedeemed,
   allowedAmountToRedeem,
   artView,
+  onClose,
 }: Props): ReactElement => {
   const { whitelistedCreatorsByCreator } = useMeta();
   const art = useArt(voucherMetadata);
@@ -35,10 +37,13 @@ const PackCard = ({
 
   const packStatusTitle = cardsRedeemed ? 'Opened' : 'Sealed';
   const headingTitle = artView ? packStatusTitle : 'Pack';
-  const canBeReveal = allowedAmountToRedeem && cardsRedeemed ?
+  const numberOfCardsLeft = allowedAmountToRedeem && cardsRedeemed ?
     allowedAmountToRedeem - cardsRedeemed : allowedAmountToRedeem || 0;
 
-  const infoMessageTitle = artView ? `${canBeReveal} NFT reveal left` : 'PACK OPENING UNLOCKS';
+  const infoMessage = useMemo(() => {
+      if (!artView) return 'PACK OPENING UNLOCKS';
+      return numberOfCardsLeft ? `${numberOfCardsLeft} NFT reveal left` : 'All revealed';
+  }, [artView, numberOfCardsLeft]);
 
   const showBadge = useCallback(() => {
     switch (art.type) {
@@ -50,6 +55,19 @@ const PackCard = ({
 
   return (
     <Card hoverable className="auction-render-card" bordered={false}>
+      {onClose && (
+        <Button
+          className="card-close-button"
+          shape="circle"
+          onClick={e => {
+            e.stopPropagation();
+            e.preventDefault();
+            onClose();
+          }}
+        >
+          X
+        </Button>
+      )}
       <div className="card-art-info">
         <div className="pack-gray-wrapper">
           <div className="card-artist-info card-artist-info--pack">
@@ -69,7 +87,7 @@ const PackCard = ({
         <div className="art-auction-info">
           <div className="art-auction-info__left-side">
             <img src="/grid-4.svg" />
-            <span className="info-message">{infoMessageTitle}</span>
+            <span className="info-message">{infoMessage}</span>
           </div>
           <div className="art-auction-info__right-side">
             <span>{headingTitle}</span>

@@ -4,8 +4,8 @@ import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 
-import { ExtendedVoucherByKey } from '../../artworks/types';
-import { PackMetadataByPackCard } from '../hooks/useMetadataByPackCard';
+import { ExtendedVoucherByKey } from '../../../types/packs';
+import { PackMetadataByPackCard } from '../contexts/hooks/useMetadataByPackCard';
 
 export interface GenerateTransactionsResponse {
   instructions: TransactionInstruction[];
@@ -52,12 +52,12 @@ export interface NewMintParams {
 export interface RequestCardParams {
   index: number;
   packSetKey: StringPublicKey;
+  randomOracle: StringPublicKey;
   edition: StringPublicKey;
   editionMint: StringPublicKey;
   tokenAccount: StringPublicKey;
   packVoucher: StringPublicKey;
   wallet: WalletContextState;
-  randomOracle: StringPublicKey;
 }
 
 export interface RequestCardsParams {

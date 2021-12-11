@@ -351,9 +351,9 @@ export const pullPack = async ({
     );
   }
 
-  const metadataKeys = Object.values(state.packCardsByPackSet[packSetKey]).map(
-    ({ info }) => info.metadata,
-  );
+  const metadataKeys = Object.values(
+    state.packCardsByPackSet[packSetKey] || {},
+  ).map(({ info }) => info.metadata);
   const newState = await pullMetadataByKeys(connection, state, metadataKeys);
 
   await pullEditions(

@@ -11,6 +11,7 @@ import {
   useUserAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useHistory } from 'react-router-dom';
 
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 import { useExtendedArt, useUserArts } from '../../hooks';
@@ -32,6 +33,7 @@ import SuccessModal from './components/SuccessModal';
 import { useValidation } from './hooks/useValidation';
 
 export const PackCreateView = (): ReactElement => {
+  const history = useHistory();
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
@@ -165,6 +167,7 @@ export const PackCreateView = (): ReactElement => {
     setAttributes(INITIAL_PACK_STATE);
     resetStep();
     setShouldShowSuccessModal(false);
+    history.push('/artworks');
   }, []);
 
   return (
