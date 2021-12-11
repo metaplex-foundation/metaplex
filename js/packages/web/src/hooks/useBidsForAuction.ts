@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { find, filter, take } from 'lodash';
 import {
   BidderMetadata,
   ParsedAccount,
@@ -11,10 +12,28 @@ export const useHighestBidForAuction = (
 ) => {
   const bids = useBidsForAuction(auctionPubkey);
   const winner = useMemo(() => {
-    return bids?.[0];
+    return find(bids || [], bid => !bid.info.cancelled);
   }, [bids]);
 
   return winner;
+};
+
+export const useWinningBidsForAuction = (
+  auctionPubkey: StringPublicKey | string,
+) => {
+  const bids = useBidsForAuction(auctionPubkey);
+  const { auctions } = useMeta();
+
+  const auction = auctions[auctionPubkey];
+
+  const winners = useMemo(() => {
+    const activeBids = filter(bids || [], bid => !bid.info.cancelled);
+    const maxWinners = auction.info.bidState.max.toNumber();
+
+    return take(activeBids, maxWinners);
+  }, [bids]);
+
+  return winners;
 };
 
 export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
