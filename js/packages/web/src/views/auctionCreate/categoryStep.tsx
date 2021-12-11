@@ -18,25 +18,25 @@ export const CategoryStep = (props: {
                 desc: 'At a fixed price, sell a single Master NFT or copies of it',
               },
               {
+                cat: AuctionCategory.Single,
+                title: 'Sell an Existing NFT',
+                desc: 'Sell an existing item in your NFT collection, including Master NFTs',
+              },
+              {
                 cat: AuctionCategory.Limited,
                 title: 'Limited Edition',
                 desc: 'Sell a limited copy or copies of a single Master NFT',
               },
-              {
-                cat: AuctionCategory.Open,
-                title: 'Open Edition',
-                desc: 'Sell unlimited copies of a single Master NFT',
-              },
+              // {
+              //   cat: AuctionCategory.Open,
+              //   title: 'Open Edition',
+              //   desc: 'Sell unlimited copies of a single Master NFT',
+              // },
               // {
               //   cat: AuctionCategory.Tiered,
               //   title: 'Tiered Auction',
               //   desc: 'Participants get unique rewards based on their leaderboard rank',
               // },
-              {
-                cat: AuctionCategory.Single,
-                title: 'Sell an Existing Item',
-                desc: 'Sell an existing item in your NFT collection, including Master NFTs',
-              },
             ].map(({ cat, title, desc }) => (
               <Button
                 key={cat}

@@ -15,7 +15,6 @@ import {
   MAX_METADATA_LEN,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   MetaplexModal,
-  MetaplexOverlay,
   ParsedAccount,
   PriceFloorType,
   programIds,
@@ -28,6 +27,7 @@ import {
 } from '@oyster/common';
 import { last } from 'lodash';
 import Bugsnag from '@bugsnag/browser';
+import { useHistory } from 'react-router-dom';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -44,7 +44,6 @@ import {
 } from 'antd';
 import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { sendCancelBid } from '../../actions/cancelBid';
 import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -65,7 +64,6 @@ import {
 import { AmountLabel } from '../AmountLabel';
 import { useAnalytics } from '../Analytics';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
-import { Confetti } from '../Confetti';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 import { endSale } from './utils/endSale';
 
@@ -215,6 +213,7 @@ export const AuctionCard = ({
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
     [wallet.wallet, wallet.connect, setVisible],
   );
+  const history = useHistory();
 
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
@@ -223,11 +222,6 @@ export const AuctionCard = ({
   const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [showRedeemedBidModal, setShowRedeemedBidModal] =
-    useState<boolean>(false);
-  const [showEndingBidModal, setShowEndingBidModal] = useState<boolean>(false);
-  const [showRedemptionIssue, setShowRedemptionIssue] =
-    useState<boolean>(false);
   const [showPlaceBidUI, setShowPlaceBidUI] = useState<boolean>(false);
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
@@ -339,7 +333,11 @@ export const AuctionCard = ({
           wallet,
         });
       } catch (e: any) {
-        notification.error({ message: "End Sale Error", description: "Unable to end the sale an error occured. Please try again or reach out to support. " });
+        notification.error({
+          message: "End Sale Error",
+          duration: 30,
+          description: "Unable to end the sale an error occured. Please try again or reach out to support."
+        });
         Bugsnag.notify(e);
         return;
       }
@@ -349,7 +347,13 @@ export const AuctionCard = ({
         label: 'canceled',
       });
 
-      setShowEndingBidModal(true);
+      notification.success({
+        message: "Listing Ended",
+        description: "The listing was successfully ended. Click this message to view the reclaimed NFT in your owned tab.",
+        onClick: () => {
+          history.push("/owned");
+        }
+      })
     } finally {
       setLoading(false);
     }
@@ -463,10 +467,22 @@ export const AuctionCard = ({
           bidRedemptions,
           bids,
         );
-        setShowRedeemedBidModal(true);
+
+        notification.success({
+          message: "Purchase Success",
+          description: "Congratulations, your purchase ticket was exchanged for the NFT. Click this message to view it in your owned tab.",
+          onClick: () => {
+            history.push("/owned");
+          }
+        })
       } catch (e: any) {
         Bugsnag.notify(e);
-        setShowRedemptionIssue(true);
+
+        notification.error({
+          message: "Purchase Error",
+          duration: 20,
+          description: "Your purchase ticket was not redeemed for the NFT. Please try again or wait for support."
+        })
         return;
       }
 
@@ -523,7 +539,6 @@ export const AuctionCard = ({
       }
       onClick={async () => {
         setLoading(true);
-        setShowRedemptionIssue(false);
         if (
           wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority
         ) {
@@ -538,33 +553,58 @@ export const AuctionCard = ({
         }
         try {
           if (eligibleForAnything) {
-            await sendRedeemBid(
-              connection,
-              wallet,
-              myPayingAccount.pubkey,
-              auctionView,
-              accountByMint,
-              prizeTrackingTickets,
-              bidRedemptions,
-              bids,
-            );
-
-            setShowRedeemedBidModal(true);
+            try {
+              await sendRedeemBid(
+                connection,
+                wallet,
+                myPayingAccount.pubkey,
+                auctionView,
+                accountByMint,
+                prizeTrackingTickets,
+                bidRedemptions,
+                bids,
+              );
+              
+              notification.success({
+                message: "Bid Redeemed",
+                duration: 30,
+                description: "Congratulations, your bid was redeemed for the NFT! Click this message to view it in your owned tab.",
+                onClick: () => {
+                  history.push("/owned");
+                },
+              });
+            } catch (e: any) {
+              Bugsnag.notify(e);
+              notification.error({
+                message: "Bid Redemption Error",
+                duration: 20,
+                description: "There was an error redeeming your bid. Please try again or reach out to support.",
+              });
+            }
           } else {
-            await sendCancelBid(
-              connection,
-              wallet,
-              myPayingAccount.pubkey,
-              auctionView,
-              accountByMint,
-              bids,
-              bidRedemptions,
-              prizeTrackingTickets,
-            );
+            try {
+              await sendCancelBid(
+                connection,
+                wallet,
+                myPayingAccount.pubkey,
+                auctionView,
+                accountByMint,
+                bids,
+                bidRedemptions,
+                prizeTrackingTickets,
+              );
+  
+              notification.success({
+                message: "Bid Refunded",
+                description: "Your bid was refunded. See your wallet for the transaction.",
+              });
+            } catch(e: any) {
+              notification.error({
+                message: "Bid Refund Error",
+                description: "There was an error refunding your bid. Please try again or reach out to support.",
+              });
+            }
           }
-        } catch (e) {
-          console.error(e);
-          setShowRedemptionIssue(true);
         } finally {
           setLoading(false);
         }
@@ -854,65 +894,8 @@ export const AuctionCard = ({
 
           {action}
 
-
-          {showRedemptionIssue && (
-            <Text type="danger">
-              There was an issue redeeming or refunding your bid. Please try
-              again.
-            </Text>
-          )}
         </Space>
       </Card>
-
-      <MetaplexOverlay visible={showEndingBidModal}>
-        <Confetti />
-        <h1
-          className="title"
-          style={{
-            fontSize: '3rem',
-            marginBottom: 20,
-          }}
-        >
-          Congratulations
-        </h1>
-        <p
-          style={{
-            color: 'white',
-            textAlign: 'center',
-            fontSize: '2rem',
-          }}
-        >
-          Your sale has been ended please view your NFTs in{' '}
-          <Link to="/artworks">My Items</Link>.
-        </p>
-        <Button
-          onClick={() => setShowEndingBidModal(false)}
-          className="overlay-btn"
-        >
-          Got it
-        </Button>
-      </MetaplexOverlay>
-
-      <MetaplexOverlay visible={showRedeemedBidModal}>
-        <Confetti />
-        <Space
-          className="metaplex-fullwidth"
-          direction="vertical"
-          align="center"
-        >
-          <div>
-            <h1>Congratulations</h1>
-            <p>
-              Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
-              redeemed, you can view your NFTs in{' '}
-              <Link to="/artworks">My Items</Link>.
-            </p>
-          </div>
-          <Button type="primary" onClick={() => setShowRedeemedBidModal(false)}>
-            Got it
-          </Button>
-        </Space>
-      </MetaplexOverlay>
 
       <MetaplexModal
         visible={showWarningModal}

@@ -16,7 +16,7 @@ export const HowAuctionsWorkModal = (props: {
       cardProps={[
         {
           title: 'Placing a Bid',
-          description: `Once you find an NFT you’d like to own, place a bid on the auction page..`,
+          description: `Once you find an NFT you’d like to own, place a bid on the auction page.`,
           imgSrc: '/modals/how-auctions-work-1.jpg',
         },
         {
