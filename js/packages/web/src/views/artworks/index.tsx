@@ -33,7 +33,7 @@ export const ArtworksView = () => {
       patchState(metadataState);
       setLoadingArt(false);
     })();
-  }, [connection, wallet.connected, userAccounts]);
+  }, [connection, wallet.connected]);
 
   if (loadingArt) {
     return (

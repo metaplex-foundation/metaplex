@@ -1,10 +1,13 @@
 import {
+  BidderMetadata,
   CountdownState,
   formatTokenAmount,
   fromLamports,
   PriceFloorType,
   useMint,
+  ParsedAccount,
 } from '@oyster/common';
+import { find } from 'lodash';
 import { Col, Row, Typography } from 'antd';
 import React from 'react';
 import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
@@ -72,7 +75,7 @@ export const AuctionNumbers = (props: {
             <AmountLabel
               displaySOL={props.displaySOL}
               title="Highest bid"
-              amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
+              amount={formatTokenAmount(find(bids, (bid) => !bid.info.cancelled)?.info.lastBid.toNumber(), mintInfo)}
             />
           )}
         </>

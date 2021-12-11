@@ -17,6 +17,7 @@ import { deserializeAccount } from './deserialize';
 import { TokenAccountParser, MintParser } from './parsesrs';
 
 const AccountsContext = React.createContext<any>(null);
+const ACCOUNT_POOL_INTERVAL = 5 * 1000;
 
 export const useAccountsContext = () => {
   const context = useContext(AccountsContext);
@@ -149,30 +150,23 @@ export function AccountsProvider({ children = null }: { children: ReactNode }) {
     setUserAccounts(accounts);
   }, [nativeAccount, tokenAccounts, selectUserAccounts]);
 
-  useEffect(() => {
-    const subs: number[] = [];
-    cache.emitter.onCache(args => {
-      if (args.isNew && args.isActive) {
-        const { id, parser } = args;
-        connection.onAccountChange(new PublicKey(id), info => {
-          cache.add(id, info, parser);
-        });
-      }
-    });
 
-    return () => {
-      subs.forEach(id => connection.removeAccountChangeListener(id));
-    };
-  }, [connection]);
+  const onFetchAccounts = () => {
+    if (!publicKey) {
+      return;
+    }
+
+    precacheUserTokenAccounts(connection, publicKey).then(() => {
+      setTokenAccounts(selectUserAccounts());
+    });
+  }
 
   useEffect(() => {
     if (!connection || !publicKey) {
       setTokenAccounts([]);
     } else {
-      precacheUserTokenAccounts(connection, publicKey).then(() => {
-        setTokenAccounts(selectUserAccounts());
-      });
-
+      onFetchAccounts();
+      const refetchAccounts = setInterval(onFetchAccounts, ACCOUNT_POOL_INTERVAL);
       // This can return different types of accounts: token-account, mint, multisig
       // TODO: web3.js expose ability to filter.
       // this should use only filter syntax to only get accounts that are owned by user
@@ -195,6 +189,7 @@ export function AccountsProvider({ children = null }: { children: ReactNode }) {
       );
 
       return () => {
+        clearInterval(refetchAccounts);
         connection.removeProgramAccountChangeListener(tokenSubID);
       };
     }

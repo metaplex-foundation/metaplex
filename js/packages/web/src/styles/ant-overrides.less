@@ -43,6 +43,10 @@
     stroke: @theme-color-text-faint;
   }
 }
+.ant-btn[disabled], .ant-btn[disabled]:hover, .ant-btn[disabled]:focus, .ant-btn[disabled]:active,
+.ant-btn-ghost[disabled], .ant-btn-ghost[disabled]:hover, .ant-btn-ghost[disabled]:focus, .ant-btn-ghost[disabled]:active {
+  color: @theme-color-text-faint;
+}
 
 .ant-divider,
 .ant-card-head,
@@ -50,6 +54,10 @@
 .ant-table-thead > tr > th,
 .ant-table-tbody > tr > td {
   border-color: @theme-color-border;
+}
+
+.ant-notification-notice-close {
+  color: @theme-color-text-faint;
 }
 
 .ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-tail::after,

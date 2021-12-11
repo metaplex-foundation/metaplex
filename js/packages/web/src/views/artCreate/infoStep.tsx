@@ -43,18 +43,25 @@ export const InfoStep = (props: {
         <Col span={16}>
           <Space className="metaplex-fullwidth" direction="vertical">
             <label>
-              <h3>Title</h3>
+              <h3>Name</h3>
               <Input
                 autoFocus
-                placeholder="Max 50 characters"
+                placeholder="Max 20 characters (fewer if using emojis)"
                 allowClear
                 value={props.attributes.name}
-                onChange={info =>
+                onChange={info => {
                   props.setAttributes({
                     ...props.attributes,
                     name: info.target.value,
-                  })
-                }
+                  });
+                  if (Buffer.from(info.target.value).length > 28) {
+                    info.target.value = info.target.value.substring(
+                      0,
+                      info.target.value.length - 1,
+                    );
+                  }
+                }}
+                maxLength={20}
               />
             </label>
             {/* <label>

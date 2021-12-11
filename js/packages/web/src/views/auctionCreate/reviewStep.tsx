@@ -1,10 +1,8 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Connection } from '@solana/web3.js';
-import { Button, Col, Divider, Row, Space, Spin, Statistic } from 'antd';
+import { Button, Col, Divider, Row, Space, Statistic } from 'antd';
 import moment from 'moment';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { AuctionCategory, AuctionState } from '.';
-import { AmountLabel } from '../../components/AmountLabel';
 import { ArtCard } from '../../components/ArtCard';
 
 export const ReviewStep = (props: {
@@ -13,16 +11,6 @@ export const ReviewStep = (props: {
   setAttributes: Function;
   connection: Connection;
 }) => {
-  const [cost, setCost] = useState(0);
-  useEffect(() => {
-    // const rentCall = Promise.all([
-    //   props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
-    //   props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
-    // ]);
-    // TODO: add
-    // TODO: ^ what does that mean
-  }, [setCost]);
-
   const item = props.attributes.items?.[0];
 
   return (
@@ -48,11 +36,6 @@ export const ReviewStep = (props: {
                 : props.attributes.editions
             }
           />
-          {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost} />
-          ) : (
-            <Spin indicator={<LoadingOutlined />} />
-          )}
         </Col>
       </Row>
       <div>
