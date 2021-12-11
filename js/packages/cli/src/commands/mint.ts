@@ -282,7 +282,7 @@ export async function mintV2(
       isSigner: false,
     });
     remainingAccounts.push({
-      pubkey: userKeyPair.publicKey,
+      pubkey: transferAuthority.publicKey,
       isWritable: false,
       isSigner: true,
     });

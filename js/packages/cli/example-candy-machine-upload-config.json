@@ -3,16 +3,17 @@
   "number": null,
   "useCaptcha": false,
   "solTreasuryAccount": null,
-  "splTokenAccount": null,
-  "splToken": null,
+  "splTokenAccount": "HrLNiZxhJf2CtYAkgi9QYj4R5MBiG8BDhkKZz2wrJY6B",
+  "splToken": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
   "goLiveDate": "11 Dec 2021 13:00:00 CST",
   "endSettings": null,
-  "whitelistMintSettings": null,
-  "hiddenSettings": {
-    "name": "Billy Bob #",
-    "uri": "https://arweave.net/w_yuIHAmS10B4VFGVGqdSig3fYqZ5_SwR_DUCll1o3c",
-    "hash": "44kiGWWsSgdqPMvmqYgTS78Mx2BKCWzd"
+  "whitelistMintSettings": {
+    "mode": { "burnEveryTime": true },
+    "mint": "8DpP2NRhA4pumygcVJGPWnXSCbrdaJtb4as3vvLQP9bs",
+    "presale": true,
+    "discountPrice": null
   },
+  "hiddenSettings": null,
   "storage": "arweave",
   "ipfsInfuraProjectId": null,
   "ipfsInfuraSecret": null,

@@ -41,6 +41,7 @@ pub mod nft_candy_machine_v2 {
         let candy_machine = &mut ctx.accounts.candy_machine;
         let candy_machine_creator = &ctx.accounts.candy_machine_creator;
         let clock = &ctx.accounts.clock;
+        // Note this is the wallet of the Candy machine
         let wallet = &ctx.accounts.wallet;
         let payer = &ctx.accounts.payer;
         let token_program = &ctx.accounts.token_program;
@@ -176,14 +177,12 @@ pub mod nft_candy_machine_v2 {
             let token_account_info = &ctx.remaining_accounts[remaining_accounts_counter];
             remaining_accounts_counter += 1;
             let transfer_authority_info = &ctx.remaining_accounts[remaining_accounts_counter];
-            remaining_accounts_counter += 1;
-
-            let token_account = assert_is_ata(token_account_info, &wallet.key(), &mint)?;
+            let token_account = assert_is_ata(token_account_info, &payer.key(), &mint)?;
 
             if token_account.amount < price {
                 return Err(ErrorCode::NotEnoughTokens.into());
             }
-
+            msg!("1");
             spl_token_transfer(TokenTransferParams {
                 source: token_account_info.clone(),
                 destination: wallet.to_account_info(),
@@ -192,6 +191,7 @@ pub mod nft_candy_machine_v2 {
                 token_program: token_program.to_account_info(),
                 amount: price,
             })?;
+            msg!("2");
         } else {
             if ctx.accounts.payer.lamports() < price {
                 return Err(ErrorCode::NotEnoughSOL.into());

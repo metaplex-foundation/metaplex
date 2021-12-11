@@ -77,6 +77,11 @@ pub fn spl_token_transfer(params: TokenTransferParams<'_, '_>) -> ProgramResult 
         authority_signer_seeds,
     } = params;
 
+    let mut signer_seeds = vec![];
+    if authority_signer_seeds.len() > 0 {
+        signer_seeds.push(authority_signer_seeds)
+    }
+
     let result = invoke_signed(
         &spl_token::instruction::transfer(
             token_program.key,
@@ -87,7 +92,7 @@ pub fn spl_token_transfer(params: TokenTransferParams<'_, '_>) -> ProgramResult 
             amount,
         )?,
         &[source, destination, authority, token_program],
-        &[authority_signer_seeds],
+        &signer_seeds,
     );
 
     result.map_err(|_| ErrorCode::TokenTransferFailed.into())
