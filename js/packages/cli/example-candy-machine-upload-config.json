@@ -6,12 +6,13 @@
   "splTokenAccount": null,
   "splToken": null,
   "goLiveDate": "11 Dec 2021 13:00:00 CST",
-  "endSettings": {
-    "endSettingType": { "amount": true },
-    "value": 5
-  },
+  "endSettings": null,
   "whitelistMintSettings": null,
-  "hiddenSettings": null,
+  "hiddenSettings": {
+    "name": "Billy Bob #",
+    "uri": "https://arweave.net/w_yuIHAmS10B4VFGVGqdSig3fYqZ5_SwR_DUCll1o3c",
+    "hash": "44kiGWWsSgdqPMvmqYgTS78Mx2BKCWzd"
+  },
   "storage": "arweave",
   "ipfsInfuraProjectId": null,
   "ipfsInfuraSecret": null,

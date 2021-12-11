@@ -143,6 +143,11 @@ export async function getCandyMachineV2Config(
     delete endSettings.value;
   }
 
+  if (hiddenSettings) {
+    let utf8Encode = new TextEncoder();
+    hiddenSettings.hash = utf8Encode.encode(hiddenSettings.hash);
+  }
+
   return {
     storage,
     ipfsInfuraProjectId,

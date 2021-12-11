@@ -4,6 +4,25 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 ## Settings examples
 
+### Hidden Settings
+
+If you plan to do a mint larger than 20k, consider this option. With this, none of the arweave URIs actually go on Solana. You just provide the following in the config for hiddenSettings:
+
+```
+{
+    "name": "Billy Bob ",
+    "uri": "https://arweave.net/w_yuIHAmS10B4VFGVGqdSig3fYqZ5_SwR_DUCll1o3c",
+    "hash": "44kiGWWsSgdqPMvmqYgTS78Mx2BKCWzd"
+  }
+```
+
+And it will mint the same URI and name (plus #45 or whatever, notice the space I left in there)
+each time someone mints. You will need to use a script to make a post-mint update. One
+will be inside the candy machine CLI soon.
+
+The hash can be any 32 character string you want but would preferably be a hash of the cache
+file itself so that the order can be verified by others after the mint is complete.
+
 ### End Settings
 
 Stop a mint at a date
