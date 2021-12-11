@@ -4,7 +4,12 @@ import { Link } from 'react-router-dom';
 import { usePack } from '../../contexts/PackContext';
 import SmallLoader from '../../../../components/SmallLoader';
 
-const ArtCard = ({ index }: { index: number }) => {
+interface ArtCardProps {
+  index: number;
+  isModalOpened: boolean;
+}
+
+const ArtCard = ({ index, isModalOpened }: ArtCardProps) => {
   const { openedMetadata, provingProcess } = usePack();
   const cardsRedeemed = provingProcess?.info.cardsRedeemed || 0;
 
@@ -18,7 +23,7 @@ const ArtCard = ({ index }: { index: number }) => {
     backgroundImage: `url(${data?.image})`,
   };
 
-  const shouldRenderImage = isOpenedCard && pubkey;
+  const shouldRenderImage = !isModalOpened && isOpenedCard && pubkey;
 
   return (
     <div className="pack-card" ref={ref}>
