@@ -351,7 +351,7 @@ export const swapEntanglement = async (
   const paymentAccount = isNative
     ? anchorWallet.publicKey
     : //@ts-ignore
-      (await getAtaForMint(epObj.treasuryMint, anchorWallet.publicKey))[0];
+    (await getAtaForMint(epObj.treasuryMint, anchorWallet.publicKey))[0];
 
   if (!isNative) signers.push(paymentTransferAuthority);
   const remainingAccounts = [];
@@ -431,16 +431,16 @@ export const swapEntanglement = async (
     ),
     ...(!isNative
       ? [
-          Token.createApproveInstruction(
-            TOKEN_PROGRAM_ID,
-            paymentAccount,
-            paymentTransferAuthority.publicKey,
-            anchorWallet.publicKey,
-            [],
-            //@ts-ignore
-            epObj.price.toNumber(),
-          ),
-        ]
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          paymentAccount,
+          paymentTransferAuthority.publicKey,
+          anchorWallet.publicKey,
+          [],
+          //@ts-ignore
+          epObj.price.toNumber(),
+        ),
+      ]
       : []),
     instruction,
     Token.createRevokeInstruction(
@@ -451,13 +451,13 @@ export const swapEntanglement = async (
     ),
     ...(!isNative
       ? [
-          Token.createRevokeInstruction(
-            TOKEN_PROGRAM_ID,
-            paymentAccount,
-            anchorWallet.publicKey,
-            [],
-          ),
-        ]
+        Token.createRevokeInstruction(
+          TOKEN_PROGRAM_ID,
+          paymentAccount,
+          anchorWallet.publicKey,
+          [],
+        ),
+      ]
       : []),
   ];
   const txnResult = await ContextConnection.sendTransactionWithRetry(

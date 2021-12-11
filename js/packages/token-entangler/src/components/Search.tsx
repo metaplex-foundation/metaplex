@@ -40,7 +40,6 @@ export const Search = () => {
             return;
         }
         const res = await searchEntanglements(anchorWallet, connection, mintA);
-
         console.log(res);
     };
 
