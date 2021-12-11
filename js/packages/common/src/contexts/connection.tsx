@@ -39,10 +39,7 @@ interface BlockhashAndFeeCalculator {
 
 export type ENV =
   | 'mainnet-beta (Triton)'
-  | 'mainnet-beta (Triton Staging)'
-  | 'mainnet-beta (Solana)'
   | 'mainnet-beta (Serum)'
-  | 'testnet'
   | 'devnet'
   | 'localnet'
   | 'lending';
@@ -54,24 +51,9 @@ export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'mainnet-beta (Triton Staging)',
-    endpoint: 'https://stage.mainnet.rpcpool.com/4715f6087c8269548f2edb003a5e',
-    ChainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'mainnet-beta (Solana)',
-    endpoint: 'https://api.mainnet-beta.solana.com',
-    ChainId: ChainId.MainnetBeta,
-  },
-  {
     name: 'mainnet-beta (Serum)',
     endpoint: 'https://solana-api.projectserum.com/',
     ChainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'testnet',
-    endpoint: clusterApiUrl('testnet'),
-    ChainId: ChainId.Testnet,
   },
   {
     name: 'devnet',

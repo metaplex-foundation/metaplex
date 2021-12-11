@@ -97,6 +97,7 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
     const result = cachedImages.get(uri);
 
     if (result) {
+      setIsLoading(false);
       setCachedBlob(result);
       return;
     }
@@ -116,11 +117,12 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
         try {
           response = await fetch(uri, { cache: 'reload' });
           blob = await response.blob();
-        } catch {
+
           // If external URL, just use the uri
           if (uri?.startsWith('http')) {
             setCachedBlob(uri);
           }
+        } catch {
           setIsLoading(false);
           return;
         }

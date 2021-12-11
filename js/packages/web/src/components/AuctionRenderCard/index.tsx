@@ -6,7 +6,6 @@ import { ArtContent } from '../ArtContent';
 import { AuctionCountdown } from '../AuctionNumbers';
 import { MetaAvatar } from '../MetaAvatar';
 import { getHumanStatus, useAuctionStatus } from './hooks/useAuctionStatus';
-
 export interface AuctionCard extends CardProps {
   auctionView: AuctionView;
 }
@@ -31,7 +30,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           </span>
         </Space>
 
-        <ArtContent preview={false} pubkey={id} allowMeshRender={false} card />
+        <ArtContent backdrop="light" preview={false} pubkey={id} allowMeshRender={false} />
         <h3>{name}</h3>
 
         {!status.isInstantSale && status.isLive && (

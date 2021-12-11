@@ -49,7 +49,7 @@ export const CategoryStep = (props: {
                 size="large"
                 onClick={() => props.confirm(cat)}
               >
-                <h4>{title}</h4>
+                <div>{title}</div>
                 <div>{types.join(', ')}</div>
               </Button>
             ))}
