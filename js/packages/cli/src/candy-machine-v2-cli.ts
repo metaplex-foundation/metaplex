@@ -643,7 +643,7 @@ programCommand('show')
         //@ts-ignore
         log.info(
           'Discounted Price: ',
-          machine.data.whitelistMintSettings.discountPrice.toNumber(),
+          machine.data.whitelistMintSettings.discountPrice?.toNumber() || 'N/A',
         );
       } else {
         log.info('no whitelist settings');

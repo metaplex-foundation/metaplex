@@ -2,12 +2,19 @@ pub mod utils;
 
 use {
     crate::utils::{
-        assert_initialized, assert_is_ata, assert_owned_by, assert_valid_go_live, spl_token_burn,
-        spl_token_transfer, TokenBurnParams, TokenTransferParams,
+        assert_initialized, assert_is_ata, assert_keys_equal, assert_owned_by,
+        assert_valid_go_live, spl_token_burn, spl_token_transfer, TokenBurnParams,
+        TokenTransferParams,
     },
     anchor_lang::{
-        prelude::*, solana_program::log::sol_log_compute_units, AnchorDeserialize, AnchorSerialize,
-        Discriminator, Key,
+        prelude::*,
+        solana_program::{
+            log::sol_log_compute_units,
+            program::{invoke, invoke_signed},
+            serialize_utils::read_u16,
+            system_instruction, sysvar,
+        },
+        AnchorDeserialize, AnchorSerialize, Discriminator, Key,
     },
     anchor_spl::token::Token,
     arrayref::array_ref,
@@ -18,19 +25,13 @@ use {
         },
     },
     spl_token::state::Mint,
-    std::{cell::RefMut, ops::Deref, str::FromStr},
+    std::{cell::RefMut, ops::Deref},
 };
 anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
-const RECENT_BLOCKHASHES: &str = "SysvarRecentB1ockHashes11111111111111111111";
 
 const PREFIX: &str = "candy_machine";
 #[program]
 pub mod nft_candy_machine_v2 {
-    use anchor_lang::solana_program::{
-        program::{invoke, invoke_signed},
-        system_instruction,
-    };
-    use utils::assert_keys_equal;
 
     use super::*;
 
@@ -46,6 +47,7 @@ pub mod nft_candy_machine_v2 {
         let payer = &ctx.accounts.payer;
         let token_program = &ctx.accounts.token_program;
         let recent_blockhashes = &ctx.accounts.recent_blockhashes;
+        let instruction_sysvar_account = &ctx.accounts.instruction_sysvar_account;
         let mut price = candy_machine.data.price;
         if let Some(es) = &candy_machine.data.end_settings {
             match es.end_setting_type {
@@ -182,7 +184,7 @@ pub mod nft_candy_machine_v2 {
             if token_account.amount < price {
                 return Err(ErrorCode::NotEnoughTokens.into());
             }
-            msg!("1");
+
             spl_token_transfer(TokenTransferParams {
                 source: token_account_info.clone(),
                 destination: wallet.to_account_info(),
@@ -191,7 +193,6 @@ pub mod nft_candy_machine_v2 {
                 token_program: token_program.to_account_info(),
                 amount: price,
             })?;
-            msg!("2");
         } else {
             if ctx.accounts.payer.lamports() < price {
                 return Err(ErrorCode::NotEnoughSOL.into());
@@ -334,6 +335,21 @@ pub mod nft_candy_machine_v2 {
             &[&authority_seeds],
         )?;
 
+        msg!("Before instr check");
+        sol_log_compute_units();
+
+        let instruction_sysvar_account_info = instruction_sysvar_account.to_account_info();
+
+        let instruction_sysvar = instruction_sysvar_account_info.data.borrow();
+        let current_instruction = sysvar::instructions::load_current_index(&instruction_sysvar);
+        let mut idx = 0;
+        let num_instructions = read_u16(&mut idx, &instruction_sysvar)
+            .map_err(|_| ProgramError::InvalidAccountData)?;
+
+        if current_instruction < num_instructions - 1 {
+            msg!("This must be the last instruction in the transaction");
+            return Err(ErrorCode::SuspiciousTransaction.into());
+        }
         msg!("At the end");
         sol_log_compute_units();
         Ok(())
@@ -356,6 +372,8 @@ pub mod nft_candy_machine_v2 {
 
         if ctx.remaining_accounts.len() > 0 {
             candy_machine.token_mint = Some(ctx.remaining_accounts[0].key())
+        } else {
+            candy_machine.token_mint = None;
         }
         Ok(())
     }
@@ -628,8 +646,10 @@ pub struct MintNFT<'info> {
     system_program: Program<'info, System>,
     rent: Sysvar<'info, Rent>,
     clock: Sysvar<'info, Clock>,
-    #[account(address = Pubkey::from_str(RECENT_BLOCKHASHES).unwrap())]
+    #[account(address = sysvar::recent_blockhashes::id())]
     recent_blockhashes: UncheckedAccount<'info>,
+    #[account(address = sysvar::instructions::id())]
+    instruction_sysvar_account: UncheckedAccount<'info>,
     // gateway_token
     // > Only needed if candy machine has a gatekeeper and it has expire_on_use set to true:
     // network_expire_feature
@@ -974,4 +994,6 @@ pub enum ErrorCode {
     CannotFindUsableConfigLine,
     #[msg("Invalid string")]
     InvalidString,
+    #[msg("Suspicious transaction detected")]
+    SuspiciousTransaction,
 }
