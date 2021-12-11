@@ -1,4 +1,4 @@
-import { Box, Button, FormGroup} from "@mui/material";
+import { Box, Button, FormGroup } from "@mui/material";
 import React from "react";
 import SearchIcon from '@mui/icons-material/Search';
 import {
@@ -11,7 +11,7 @@ import {
 } from "@solana/wallet-adapter-react";
 
 import * as anchor from '@project-serum/anchor';
-import { searchTokenNFT } from "../utils/entangler";
+import { getOwnedNFTMints } from "../utils/entangler";
 
 
 export const Wizard = () => {
@@ -19,7 +19,7 @@ export const Wizard = () => {
     console.log(connection);
     const wallet = useWallet();
     const [mints, setMints] = React.useState<Array<string>>([]);
-    
+
     const anchorWallet = useMemo(() => {
         if (
             !wallet ||
@@ -42,7 +42,7 @@ export const Wizard = () => {
         if (!anchorWallet) {
             return;
         }
-        const res = await searchTokenNFT(anchorWallet, connection);
+        const res = await getOwnedNFTMints(anchorWallet, connection);
         const mintsFounded = res.map((token) => (token.info.mint));
         setMints([...mintsFounded]);
     };
@@ -68,9 +68,9 @@ export const Wizard = () => {
                 </FormGroup>
 
             </Box>
-             <Box sx={{ maxWidth: 'md', display:'block', marginTop: '2rem' }}>
-               <h2>Mint List</h2>
-               { mints.map( (mint) => ( <li key={mint}>{mint}</li>) ) }
+            <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
+                <h2>Mint List</h2>
+                {mints.map((mint) => (<li key={mint}>{mint}</li>))}
             </Box>
         </React.Fragment>
     );

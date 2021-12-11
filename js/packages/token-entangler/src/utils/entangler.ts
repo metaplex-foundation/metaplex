@@ -145,12 +145,10 @@ export const showEntanglement = async (
   mintA: string | null,
   mintB: string | null,
 ) => {
-  console.log('Loading token entanglement program...');
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
     connection,
   );
-  console.log('Token entanglement program loaded.');
 
   const epKey = await getEpKeyFromArgs(
     anchorProgram,
@@ -194,12 +192,10 @@ export const createEntanglement = async (
   mintA: string,
   mintB: string,
 ) => {
-  console.log('Loading token entanglement program...');
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
     connection,
   );
-  console.log('Token entanglement program loaded.');
 
   const priceNumber = parseFloat(price);
 
@@ -310,12 +306,10 @@ export const swapEntanglement = async (
   mintB: string | null,
   entangledPair: string | undefined,
 ) => {
-  console.log('Loading token entanglement program...');
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
     connection,
   );
-  console.log('Token entanglement program loaded.');
 
   const epKey = await getEpKeyFromArgs(
     anchorProgram,
@@ -484,12 +478,10 @@ export const searchEntanglements = async (
   connection: Connection,
   mint: string,
 ) => {
-  console.log('Loading token entanglement program...');
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
     connection,
   );
-  console.log('Token entanglement program loaded.');
 
   const searchMint = new PublicKey(mint);
 
@@ -537,16 +529,14 @@ export const searchEntanglements = async (
   return Promise.all(entanglements);
 };
 
-export const searchTokenNFT = async (
+export const getOwnedNFTMints = async (
   anchorWallet: anchor.Wallet,
   connection: Connection,
 ) => {
-  console.log('Loading token entanglement program...');
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
     connection,
   );
-  console.log('Token entanglement program loaded.');
 
   //const searchMint = new PublicKey(mint);
 
@@ -555,10 +545,7 @@ export const searchTokenNFT = async (
       anchorWallet.publicKey,
       { programId: TOKEN_PROGRAM_ID },
     );
-  // const Tokens = TokenAccounts.map(async (account) => await anchorProgram.account.token.fetch(account.pubkey).then((tokenObj) => tokenObj));
-  const Tokens = TokenAccounts.value.map(val => val.account.data.parsed);
-  // console.log("TokenAccounts",Tokens)
-  console.log('TokenAccounts', TokenAccounts, Tokens);
+  const NFTMints = TokenAccounts.value.map(val => val.account.data.parsed).filter(val => val.info.tokenAmount.decimals === 0);
 
-  return Tokens;
+  return NFTMints;
 };
