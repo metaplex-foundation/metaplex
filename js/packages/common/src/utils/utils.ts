@@ -210,7 +210,25 @@ export const tryParseKey = (key: string): PublicKey | null => {
   }
 };
 
-export const formatAmount = (val: number): string => val.toLocaleString();
+const SI_SYMBOL = ['', 'k', 'M', 'G', 'T', 'P', 'E'] as const;
+
+const abbreviateNumber = (number: number, precision: number) => {
+  const tier = (Math.log10(number) / 3) | 0;
+  let scaled = number;
+  const suffix = SI_SYMBOL[tier];
+  if (tier !== 0) {
+    const scale = Math.pow(10, tier * 3);
+    scaled = number / scale;
+  }
+
+  return scaled.toFixed(precision) + suffix;
+};
+
+export const formatAmount = (
+  val: number,
+  precision: number = 2,
+  abbr: boolean = true,
+) => (abbr ? abbreviateNumber(val, precision) : val.toFixed(precision));
 
 export function formatTokenAmount(
   account?: TokenAccount | number | BN,
@@ -218,6 +236,8 @@ export function formatTokenAmount(
   rate: number = 1.0,
   prefix = '',
   suffix = '',
+  precision = 2,
+  abbr = false,
 ): string {
   if (!account) {
     return '';
@@ -225,6 +245,8 @@ export function formatTokenAmount(
 
   return `${[prefix]}${formatAmount(
     fromLamports(account, mint, rate),
+    precision,
+    abbr,
   )}${suffix}`;
 }
 
