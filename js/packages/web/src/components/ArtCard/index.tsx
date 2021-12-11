@@ -75,7 +75,7 @@ export const ArtCard = ({
             animationURL={animationURL}
             category={category}
             preview={preview}
-            loaderStyle="light"
+            backdrop="light"
           />
         </>
       }

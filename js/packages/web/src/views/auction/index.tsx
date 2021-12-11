@@ -20,13 +20,16 @@ import {
   VAULT_ID,
   processVaultData,
 } from '@oyster/common';
+import { actions } from '@metaplex/js';
+import { PublicKey } from '@solana/web3.js';
+import cx from 'classnames';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import { MintInfo } from '@solana/spl-token';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Button, Carousel, Col, List, Row, Skeleton, Space, Spin, Typography, Card } from 'antd';
+import { Button, Carousel, Col, List, Row, Skeleton, Space, Spin, Typography, Tooltip, notification } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format } from 'timeago.js';
@@ -36,6 +39,7 @@ import { AuctionCard } from '../../components/AuctionCard';
 import { ClickToCopy } from '../../components/ClickToCopy';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { ViewOn } from '../../components/ViewOn';
+import { some } from 'lodash';
 import {
   AuctionView as Auction,
   useArt,
@@ -43,6 +47,7 @@ import {
   useBidsForAuction,
   useCreators,
   useExtendedArt,
+  useWinningBidsForAuction,
 } from '../../hooks';
 import { ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
@@ -57,7 +62,8 @@ export const AuctionItem = ({
   active?: boolean;
 }) => {
   const id = item.metadata.pubkey;
-  return <ArtContent loaderStyle="dark" pubkey={id} active={active} allowMeshRender={true} />;
+  
+  return <ArtContent pubkey={id} active={active} allowMeshRender={true} backdrop="dark" />;
 };
 
 export const AuctionView = () => {
@@ -235,8 +241,9 @@ const BidLine = (props: {
   mint?: MintInfo;
   isCancelled?: boolean;
   isActive?: boolean;
+  isLastWinner?: boolean;
 }) => {
-  const { bid, mint, isCancelled } = props;
+  const { bid, mint, isCancelled, isLastWinner } = props;
   const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
   const isme = publicKey?.toBase58() === bidder;
@@ -264,21 +271,16 @@ const BidLine = (props: {
   }, [bidderTwitterHandle]);
 
   return (
-    <Row wrap={false} align="middle" className="metaplex-fullwidth">
+    <Row wrap={false} align="middle" className={cx("metaplex-fullwidth", "auction-bid-line-item", { "auction-bid-last-winner": isLastWinner })}>
       <Col span={9}>
-        {isCancelled ? (
-          <div />
-        ) : (
-          <Space direction="horizontal">
-            {isme && <CheckOutlined />}
-            <AmountLabel
-              displaySOL={true}
-              amount={formatTokenAmount(bid.info.lastBid, mint)}
-            />
-          </Space>
-        )}
+        <Space direction="horizontal" className={cx({ "auction-bid-line-item-is-canceled": isCancelled && publicKey?.toBase58() === bidder })}>
+          {isme && <CheckOutlined />}
+          <AmountLabel
+            displaySOL={true}
+            amount={formatTokenAmount(bid.info.lastBid, mint)}
+          />
+        </Space>
       </Col>
-
       <Col span={6}>
         {/* uses milliseconds */}
         {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
@@ -312,7 +314,11 @@ export const AuctionBids = ({
 }: {
   auctionView?: Auction | null;
 }) => {
-  const bids = useBidsForAuction(auctionView?.auction.pubkey || '');
+  const auctionPubkey = auctionView?.auction.pubkey || '';
+  const bids = useBidsForAuction(auctionPubkey);
+  const connection = useConnection();
+  const wallet = useWallet();
+  const [cancellingBid, setCancellingBid] = useState(false);
 
   const mint = useMint(auctionView?.auction.info.tokenMint);
   const { width } = useWindowDimensions();
@@ -321,19 +327,22 @@ export const AuctionBids = ({
 
   const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
-  const activeBidders = useMemo(() => {
-    return new Set(activeBids.map(b => b.key));
-  }, [activeBids]);
-
+  const winners = useWinningBidsForAuction(auctionPubkey);
+  const isWinner = some(winners, bid => bid.info.bidderPubkey === wallet.publicKey?.toBase58());
   const auctionState = auctionView
     ? auctionView.auction.info.state
     : AuctionState.Created;
+  const auctionRunning = auctionState !== AuctionState.Ended;
+
+  const activeBidders = useMemo(() => {
+    return new Set(activeBids.map(b => b.key));
+  }, [activeBids]);
   const bidLines = useMemo(() => {
     let activeBidIndex = 0;
     return bids.map((bid, index) => {
       const isCancelled =
         (index < winnersCount && !!bid.info.cancelled) ||
-        (auctionState !== AuctionState.Ended && !!bid.info.cancelled);
+        (auctionRunning && !!bid.info.cancelled);
 
       const line = (
         <BidLine
@@ -341,6 +350,7 @@ export const AuctionBids = ({
           index={activeBidIndex}
           key={index}
           mint={mint}
+          isLastWinner={index + 1 === winners.length}
           isCancelled={isCancelled}
           isActive={!bid.info.cancelled}
         />
@@ -358,7 +368,55 @@ export const AuctionBids = ({
 
   return (
     <Space direction="vertical" className="metaplex-fullwidth">
-      <Text>Bid History</Text>
+      <Space direction="horizontal" size="middle">
+        <Text>Bid History</Text>
+        {auctionRunning && auctionView.myBidderMetadata && !auctionView.myBidderMetadata.info.cancelled && (
+          <Tooltip
+            placement="right"
+            title="You are currently a winning bid, and thus can not cancel your bid."
+            trigger={isWinner ? ['hover'] : []}
+          >
+            <Button
+              type="ghost"
+              disabled={isWinner}
+              loading={cancellingBid}
+              onClick={async () => {
+                const myBidderPot = auctionView.myBidderPot;
+
+                if (!myBidderPot) {
+                  return;
+                }
+
+                setCancellingBid(true);
+
+                try {
+                  await actions.cancelBid({
+                    connection,
+                    //@ts-ignore
+                    wallet,
+                    auction: new PublicKey(auctionView.auction.pubkey),
+                    bidderPotToken: new PublicKey(myBidderPot.info.bidderPot),
+                  });
+
+                  notification.success({
+                    message: "Bid Cancelled",
+                    description: "Your bid was successfully cancelled. You may rebid to enter the auction again.",
+                  });
+                } catch {
+                  notification.error({
+                    message: "Bid Cancel Error",
+                    description: "There was an issue cancelling your bid. Please check your transaction history and try again.",
+                  });
+                } finally {
+                  setCancellingBid(false);
+                }
+              }}
+            >
+              Cancel Bid
+            </Button>
+          </Tooltip>
+        )}
+      </Space>
       <div>{bidLines.slice(0, 10)}</div>
       {bids.length > 10 && (
         <Button onClick={() => setShowHistoryModal(true)}>

@@ -464,7 +464,7 @@ export const InnerBillingView = ({
           style={{ margin: '0 30px', textAlign: 'left' }}
         >
           <Col span={12}>
-            <ArtContent pubkey={id} loaderStyle="dark" allowMeshRender/>
+            <ArtContent pubkey={id} backdrop="dark" allowMeshRender/>
           </Col>
           <Col span={12}>
             <h1>{art.title}</h1>

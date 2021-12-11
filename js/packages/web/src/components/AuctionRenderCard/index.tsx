@@ -30,7 +30,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           </span>
         </Space>
 
-        <ArtContent loaderStyle="light" preview={false} pubkey={id} allowMeshRender={false} />
+        <ArtContent backdrop="light" preview={false} pubkey={id} allowMeshRender={false} />
         <h3>{name}</h3>
 
         {!status.isInstantSale && status.isLive && (

@@ -92,7 +92,7 @@ export const ArtView = () => {
               active={true}
               allowMeshRender={true}
               artView={true}
-              loaderStyle="dark"
+              backdrop="dark"
             />
           </Col>
           <Col span="24">

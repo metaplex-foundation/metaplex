@@ -23,7 +23,7 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
   return (
     <Row>
       <Col md={12}>
-        <ArtContent loaderStyle="light" pubkey={id} allowMeshRender={true} />
+        <ArtContent backdrop="light" pubkey={id} allowMeshRender={true} />
       </Col>
       <Col md={12}>
         <h2>{art.title}</h2>

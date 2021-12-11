@@ -13,12 +13,12 @@ const MeshArtContent = ({
   uri,
   animationUrl,
   files,
-  loaderStyle,
+  backdrop,
 }: {
   uri?: string;
   animationUrl?: string;
   files?: (MetadataFile | string)[];
-  loaderStyle: string;
+  backdrop: string;
 }) => {
   const renderURL =
     files && files.length > 0 && typeof files[0] === 'string'
@@ -26,9 +26,9 @@ const MeshArtContent = ({
       : animationUrl;
 
   const { isLoading } = useCachedImage(renderURL || '', true);
-  console.log('is loading mesh', isLoading)
+
   if (isLoading) {
-    return <CachedImageContent loaderStyle={loaderStyle} uri={uri} preview={false} />;
+    return <CachedImageContent backdrop={backdrop} uri={uri} preview={false} />;
   }
 
   return (
@@ -43,11 +43,11 @@ const MeshArtContent = ({
 const CachedImageContent = ({
   uri,
   preview,
-  loaderStyle = "dark",
+  backdrop = "dark",
 }: {
   uri?: string;
   preview?: boolean;
-  loaderStyle: string;
+  backdrop: string;
 }) => {
   const { cachedBlob } = useCachedImage(uri || '');
   const [loaded, setLoaded] = useState(false);
@@ -56,7 +56,7 @@ const CachedImageContent = ({
     <Image
       preview={preview}
       src={cachedBlob}
-      wrapperClassName={(cx("metaplex-image", `metaplex-loader-${loaderStyle}`, { "metaplex-image-loaded": loaded }))}
+      wrapperClassName={(cx("metaplex-image", `metaplex-loader-${backdrop}`, { "metaplex-image-loaded": loaded }))}
       loading="lazy"
       onLoad={() => { setLoaded(true) }}
       placeholder={<Loading type="bars" color="inherit" />}
@@ -140,17 +140,17 @@ const HTMLContent = ({
   preview,
   files,
   artView,
-  loaderStyle,
+  backdrop,
 }: {
   uri?: string;
   animationUrl?: string;
   preview?: boolean;
   files?: (MetadataFile | string)[];
   artView?: boolean;
-  loaderStyle: string;
+  backdrop: string;
 }) => {
   if (!artView) {
-    return <CachedImageContent loaderStyle={loaderStyle} uri={uri} preview={preview} />;
+    return <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />;
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
@@ -178,7 +178,7 @@ export const ArtContent = ({
   animationURL,
   files,
   artView,
-  loaderStyle,
+  backdrop,
 }: {
   category?: MetadataCategory;
   preview?: boolean;
@@ -189,7 +189,7 @@ export const ArtContent = ({
   animationURL?: string;
   files?: (MetadataFile | string)[];
   artView?: boolean;
-  loaderStyle: "dark" | "light";
+  backdrop: "dark" | "light";
 }) => {
   const id = pubkeyToString(pubkey);
 
@@ -218,7 +218,7 @@ export const ArtContent = ({
       animationUrlExt === 'gltf')
   ) {
     return (
-      <MeshArtContent loaderStyle={loaderStyle} uri={uri} animationUrl={animationURL} files={files} />
+      <MeshArtContent backdrop={backdrop} uri={uri} animationUrl={animationURL} files={files} />
     );
   }
 
@@ -237,10 +237,10 @@ export const ArtContent = ({
         preview={preview}
         files={files}
         artView={artView}
-        loaderStyle={loaderStyle}
+        backdrop={backdrop}
       />
     ) : (
-      <CachedImageContent loaderStyle={loaderStyle} uri={uri} preview={preview} />
+      <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />
     );
 
   return (
