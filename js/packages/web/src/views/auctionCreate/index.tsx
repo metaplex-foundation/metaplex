@@ -2014,7 +2014,8 @@ const ReviewStep = (props: {
             : 'Publish Auction'}
         </Button>
         <FundsIssueModal
-          minimumFunds={0.06}
+          message={"Estimated Minimum Fee"}
+          minimumFunds={MINIMUM_SAFE_FEE_AUCTION_CREATION}
           currentFunds={balance}
           isModalVisible={showFundsIssueModal}
           onClose={() => setShowFundsIssueModal(false)}
