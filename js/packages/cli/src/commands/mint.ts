@@ -1,5 +1,6 @@
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
+  getAtaForMint,
   getCandyMachineAddress,
   getCandyMachineCreator,
   getMasterEdition,
@@ -177,6 +178,7 @@ export async function mintV2(
 
   const remainingAccounts = [];
   const signers = [mint, userKeyPair];
+  const cleanupInstructions = [];
   const instructions = [
     anchor.web3.SystemProgram.createAccount({
       fromPubkey: userKeyPair.publicKey,
@@ -211,6 +213,60 @@ export async function mintV2(
     ),
   ];
 
+  if (candyMachine.data.whitelistMintSettings) {
+    const mint = new anchor.web3.PublicKey(
+      candyMachine.data.whitelistMintSettings.mint,
+    );
+
+    const whitelistToken = (
+      await getAtaForMint(mint, userKeyPair.publicKey)
+    )[0];
+    remainingAccounts.push({
+      pubkey: whitelistToken,
+      isWritable: true,
+      isSigner: false,
+    });
+
+    if (candyMachine.data.whitelistMintSettings.mode.burnEveryTime) {
+      const whitelistBurnAuthority = anchor.web3.Keypair.generate();
+
+      remainingAccounts.push({
+        pubkey: mint,
+        isWritable: true,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: whitelistBurnAuthority.publicKey,
+        isWritable: false,
+        isSigner: true,
+      });
+      signers.push(whitelistBurnAuthority);
+      const exists = await anchorProgram.provider.connection.getAccountInfo(
+        whitelistToken,
+      );
+      if (exists) {
+        instructions.push(
+          Token.createApproveInstruction(
+            TOKEN_PROGRAM_ID,
+            whitelistToken,
+            whitelistBurnAuthority.publicKey,
+            userKeyPair.publicKey,
+            [],
+            1,
+          ),
+        );
+        cleanupInstructions.push(
+          Token.createRevokeInstruction(
+            TOKEN_PROGRAM_ID,
+            whitelistToken,
+            userKeyPair.publicKey,
+            [],
+          ),
+        );
+      }
+    }
+  }
+
   let tokenAccount;
   if (candyMachine.tokenMint) {
     const transferAuthority = anchor.web3.Keypair.generate();
@@ -239,6 +295,15 @@ export async function mintV2(
         userKeyPair.publicKey,
         [],
         candyMachine.data.price.toNumber(),
+      ),
+    );
+    signers.push(transferAuthority);
+    cleanupInstructions.push(
+      Token.createRevokeInstruction(
+        TOKEN_PROGRAM_ID,
+        tokenAccount,
+        userKeyPair.publicKey,
+        [],
       ),
     );
   }
@@ -273,18 +338,7 @@ export async function mintV2(
     }),
   );
 
-  if (tokenAccount) {
-    instructions.push(
-      Token.createRevokeInstruction(
-        TOKEN_PROGRAM_ID,
-        tokenAccount,
-        userKeyPair.publicKey,
-        [],
-      ),
-    );
-  }
-
-  return (
+  const finished = (
     await sendTransactionWithRetryWithKeypair(
       anchorProgram.provider.connection,
       userKeyPair,
@@ -292,4 +346,13 @@ export async function mintV2(
       signers,
     )
   ).txid;
+
+  await sendTransactionWithRetryWithKeypair(
+    anchorProgram.provider.connection,
+    userKeyPair,
+    cleanupInstructions,
+    [],
+  );
+
+  return finished;
 }

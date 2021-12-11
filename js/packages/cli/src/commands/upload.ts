@@ -59,12 +59,12 @@ export async function uploadV2({
   batchSize: number;
   price: BN;
   treasuryWallet: PublicKey;
-  splToken: string;
+  splToken: PublicKey;
   useCaptcha: boolean;
   goLiveDate: null | BN;
   endSettings: null | [number, BN];
   whitelistMintSettings: null | {
-    mode: WhitelistMintMode;
+    mode: any;
     mint: PublicKey;
     presale: boolean;
     discountPrice: null | BN;
@@ -167,6 +167,7 @@ export async function uploadV2({
                   anchorProgram,
                   walletKeyPair,
                   treasuryWallet,
+                  splToken,
                   {
                     itemsAvailable: new BN(totalNFTs),
                     uuid,

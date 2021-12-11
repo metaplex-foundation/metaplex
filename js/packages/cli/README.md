@@ -2,6 +2,72 @@
 
 https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-bf0e-db0ccc972ff7.mp4
 
+## Settings examples
+
+### Whitelist Mint Settings
+
+Here are some examples to help you construct your settings file.
+
+I want to burn the token each time. This whitelist is ONLY used for presale,
+and once the sale begins, the whitelist gets you nothing.
+
+```
+"whitelistMintSettings": {
+    "mode": { "burnEveryTime": true },
+    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+    "presale": true,
+    "discountPrice": null
+  },
+```
+
+I want to burn the token each time. This whitelist is ONLY used for presale, and gives users
+a 0.5 SOL price tag instead. Once the sale begins, the whitelist gets you only a discount.
+
+```
+"whitelistMintSettings": {
+    "mode": { "burnEveryTime": true },
+    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+    "presale": true,
+    "discountPrice": 0.5
+  },
+```
+
+I do not want to burn the whitelist token - it can be reused. This whitelist is ONLY used for presale, and gives users
+a 0.5 SOL price tag instead. Once the sale begins, the whitelist gets you only a discount.
+
+```
+"whitelistMintSettings": {
+    "mode": { "neverBurn": true },
+    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+    "presale": true,
+    "discountPrice": 0.5
+  },
+```
+
+I do not want to burn the whitelist token - it can be reused. This whitelist is ONLY used to grant users discounts - a 0.5 SOL price tag.
+
+```
+"whitelistMintSettings": {
+    "mode": { "neverBurn": true },
+    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+    "presale": false,
+    "discountPrice": 0.5
+  },
+```
+
+I want the whitelist token to be burned every mint. This whitelist runs during the sale(not presale) and will restrict any user without such a token from purchasing at all. This
+is because why would you have this setting with no discount price unless you wanted it
+applied to all.
+
+```
+"whitelistMintSettings": {
+    "mode": { "burnEveryTime": true },
+    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+    "presale": false,
+    "discountPrice": null
+  },
+```
+
 ## Creating generative art
 
 1. Create a `traits` folder and create a list of directories for the traits (i.e. background, shirt, sunglasses). Look at the `example-traits` for guidance
@@ -236,7 +302,7 @@ metaplex mint_one_token -k ~/.config/solana/id.json
 ts-node cli mint_one_token -k ~/.config/solana/id.json
 ```
 
-6. Test mint multiple tokens 
+6. Test mint multiple tokens
 
 ```
 metaplex mint_multiple_tokens -k ~/.config/solana/id.json -n 100

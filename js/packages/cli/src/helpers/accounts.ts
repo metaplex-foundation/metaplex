@@ -113,6 +113,7 @@ export const createCandyMachineV2 = async function (
   anchorProgram: anchor.Program,
   payerWallet: Keypair,
   treasuryWallet: PublicKey,
+  splToken: PublicKey,
   candyData: CandyMachineData,
 ) {
   const candyAccount = Keypair.generate();
@@ -130,7 +131,15 @@ export const createCandyMachineV2 = async function (
   if (totalShare !== 100) {
     throw new Error(`Invalid config, creators shares must add up to 100`);
   }
-  console.log('Hey', candyData);
+
+  const remainingAccounts = [];
+  if (splToken) {
+    remainingAccounts.push({
+      pubkey: splToken,
+      isSigner: false,
+      isWritable: false,
+    });
+  }
   return {
     candyMachine: candyAccount.publicKey,
     uuid: candyData.uuid,
@@ -144,6 +153,8 @@ export const createCandyMachineV2 = async function (
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
       signers: [payerWallet, candyAccount],
+      remainingAccounts:
+        remainingAccounts.length > 0 ? remainingAccounts : undefined,
       instructions: [
         await createCandyMachineV2Account(
           anchorProgram,

@@ -14,7 +14,34 @@ export async function getCandyMachineV2Config(
   env: string,
   rpcUrl: string,
   configPath: any,
-) {
+): Promise<{
+  storage: string;
+  ipfsInfuraProjectId: string;
+  number: number;
+  ipfsInfuraSecret: string;
+  awsS3Bucket: string;
+  retainAuthority: boolean;
+  mutable: boolean;
+  batchSize: number;
+  price: BN;
+  treasuryWallet: web3.PublicKey;
+  splToken: web3.PublicKey | null;
+  useCaptcha: boolean;
+  endSettings: null | [number, BN];
+  whitelistMintSettings: null | {
+    mode: any;
+    mint: web3.PublicKey;
+    presale: boolean;
+    discountPrice: null | BN;
+  };
+  hiddenSettings: null | {
+    name: string;
+    uri: string;
+    hash: Uint8Array;
+  };
+  goLiveDate: BN | null;
+  uuid: string;
+}> {
   const configString = fs.readFileSync(configPath);
 
   //@ts-ignore
@@ -26,8 +53,8 @@ export async function getCandyMachineV2Config(
     number,
     ipfsInfuraSecret,
     awsS3Bucket,
-    retainAuthority,
-    mutable,
+    noRetainAuthority,
+    noMutable,
     batchSize,
     price,
     splToken,
@@ -41,17 +68,8 @@ export async function getCandyMachineV2Config(
     uuid,
   } = config;
 
-  if (whitelistMintSettings) {
-    whitelistMintSettings.mint = new web3.PublicKey(whitelistMintSettings);
-    if (whitelistMintSettings.discountPrice) {
-      whitelistMintSettings.discountPrice = new BN(
-        whitelistMintSettings.discountPrice,
-      );
-    }
-  }
-
   let wallet;
-  let parsedPrice;
+  let parsedPrice = price;
   if (splToken || splTokenAccount) {
     if (solTreasuryAccount) {
       throw new Error(
@@ -92,31 +110,28 @@ export async function getCandyMachineV2Config(
       );
     }
 
-    wallet = splTokenAccountKey;
+    wallet = new web3.PublicKey(splTokenAccountKey);
     parsedPrice = price * 10 ** mintInfo.decimals;
     if (whitelistMintSettings?.discountPrice) {
-      whitelistMintSettings.discountPrice = new BN(
-        whitelistMintSettings.discountPrice.toNumber() *
-          10 ** mintInfo.decimals,
-      );
+      whitelistMintSettings.discountPrice *= 10 ** mintInfo.decimals;
     }
   } else {
-    parsedPrice = price * 10 ** LAMPORTS_PER_SOL;
+    parsedPrice = price * 10 ** 9;
     if (whitelistMintSettings?.discountPrice) {
-      whitelistMintSettings.discountPrice = new BN(
-        whitelistMintSettings.discountPrice.toNumber() * 10 ** LAMPORTS_PER_SOL,
-      );
+      whitelistMintSettings.discountPrice *= 10 ** 9;
     }
-    wallet = solTreasuryAccount || walletKeyPair.publicKey;
+    wallet = solTreasuryAccount
+      ? new web3.PublicKey(solTreasuryAccount)
+      : walletKeyPair.publicKey;
   }
 
-  if (solTreasuryAccount) {
-    const treasuryAccount = new web3.PublicKey(solTreasuryAccount);
-    const treasuryBalance = await getBalance(treasuryAccount, env, rpcUrl);
-    if (treasuryBalance === 0) {
-      throw new Error(`Cannot use treasury account with 0 balance!`);
+  if (whitelistMintSettings) {
+    whitelistMintSettings.mint = new web3.PublicKey(whitelistMintSettings.mint);
+    if (whitelistMintSettings?.discountPrice) {
+      whitelistMintSettings.discountPrice = new BN(
+        whitelistMintSettings.discountPrice,
+      );
     }
-    wallet = treasuryAccount;
   }
 
   return {
@@ -125,17 +140,17 @@ export async function getCandyMachineV2Config(
     number,
     ipfsInfuraSecret,
     awsS3Bucket,
-    retainAuthority,
-    mutable,
+    retainAuthority: !noRetainAuthority,
+    mutable: !noMutable,
     batchSize,
     price: new BN(parsedPrice),
     treasuryWallet: wallet,
-    splToken,
+    splToken: splToken ? new web3.PublicKey(splToken) : null,
     useCaptcha,
     endSettings,
     hiddenSettings,
     whitelistMintSettings,
-    goLiveDate,
+    goLiveDate: goLiveDate ? new BN(parseDate(goLiveDate)) : null,
     uuid,
   };
 }

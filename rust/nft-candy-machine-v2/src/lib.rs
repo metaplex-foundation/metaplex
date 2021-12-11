@@ -2,8 +2,8 @@ pub mod utils;
 
 use {
     crate::utils::{
-        assert_initialized, assert_is_ata, assert_owned_by, spl_token_burn, spl_token_transfer,
-        TokenBurnParams, TokenTransferParams,
+        assert_initialized, assert_is_ata, assert_owned_by, assert_valid_go_live, spl_token_burn,
+        spl_token_transfer, TokenBurnParams, TokenTransferParams,
     },
     anchor_lang::{
         prelude::*, solana_program::log::sol_log_compute_units, AnchorDeserialize, AnchorSerialize,
@@ -42,6 +42,7 @@ pub mod nft_candy_machine_v2 {
         let candy_machine_creator = &ctx.accounts.candy_machine_creator;
         let clock = &ctx.accounts.clock;
         let wallet = &ctx.accounts.wallet;
+        let payer = &ctx.accounts.payer;
         let token_program = &ctx.accounts.token_program;
         let recent_blockhashes = &ctx.accounts.recent_blockhashes;
         let mut price = candy_machine.data.price;
@@ -94,65 +95,77 @@ pub mod nft_candy_machine_v2 {
         if let Some(ws) = &candy_machine.data.whitelist_mint_settings {
             let whitelist_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
             remaining_accounts_counter += 1;
-            let wta = assert_is_ata(whitelist_token_account, &wallet.key(), &ws.mint)?;
+            // If the user has not actually made this account,
+            // this explodes and wej ust check normal dates.
+            // If they have, we check amount, if it's > 0 we let them use the lkogic
+            // if 0, check normal dates.
+            match assert_is_ata(whitelist_token_account, &payer.key(), &ws.mint) {
+                Ok(wta) => {
+                    if wta.amount > 0 {
+                        if ws.mode == WhitelistMintMode::BurnEveryTime {
+                            let whitelist_token_mint =
+                                &ctx.remaining_accounts[remaining_accounts_counter];
+                            remaining_accounts_counter += 1;
 
-            if wta.amount == 0 {
-                return Err(ErrorCode::NoWhitelistToken.into());
-            }
+                            let whitelist_burn_authority =
+                                &ctx.remaining_accounts[remaining_accounts_counter];
+                            remaining_accounts_counter += 1;
 
-            if ws.mode == WhitelistMintMode::BurnEveryTime {
-                let whitelist_token_mint = &ctx.remaining_accounts[remaining_accounts_counter];
-                remaining_accounts_counter += 1;
+                            assert_keys_equal(*whitelist_token_mint.key, ws.mint)?;
 
-                let whitelist_burn_authority = &ctx.remaining_accounts[remaining_accounts_counter];
-                remaining_accounts_counter += 1;
+                            spl_token_burn(TokenBurnParams {
+                                mint: whitelist_token_mint.clone(),
+                                source: whitelist_token_account.clone(),
+                                amount: 1,
+                                authority: whitelist_burn_authority.clone(),
+                                authority_signer_seeds: None,
+                                token_program: token_program.to_account_info(),
+                            })?;
+                        }
 
-                assert_keys_equal(*whitelist_token_mint.key, ws.mint)?;
+                        match candy_machine.data.go_live_date {
+                            None => {
+                                if *ctx.accounts.payer.key != candy_machine.authority && !ws.presale
+                                {
+                                    return Err(ErrorCode::CandyMachineNotLive.into());
+                                }
+                            }
+                            Some(val) => {
+                                if clock.unix_timestamp < val
+                                    && *ctx.accounts.payer.key != candy_machine.authority
+                                    && !ws.presale
+                                {
+                                    return Err(ErrorCode::CandyMachineNotLive.into());
+                                }
+                            }
+                        }
 
-                spl_token_burn(TokenBurnParams {
-                    mint: whitelist_token_mint.clone(),
-                    source: whitelist_token_account.clone(),
-                    amount: 1,
-                    authority: whitelist_burn_authority.clone(),
-                    authority_signer_seeds: None,
-                    token_program: token_program.to_account_info(),
-                })?;
-            }
-
-            match candy_machine.data.go_live_date {
-                None => {
-                    if *ctx.accounts.payer.key != candy_machine.authority && !ws.presale {
-                        return Err(ErrorCode::CandyMachineNotLive.into());
+                        if let Some(dp) = ws.discount_price {
+                            price = dp;
+                        }
+                    } else {
+                        if wta.amount == 0 && ws.discount_price.is_none() && !ws.presale {
+                            // A non-presale whitelist with no discount price is a forced whitelist
+                            // If a pre-sale has no discount, its no issue, because the "discount"
+                            // is minting first - a presale whitelist always has an open post sale.
+                            return Err(ErrorCode::NoWhitelistToken.into());
+                        }
+                        assert_valid_go_live(payer, clock, candy_machine)?;
                     }
                 }
-                Some(val) => {
-                    if clock.unix_timestamp < val
-                        && *ctx.accounts.payer.key != candy_machine.authority
-                        && !ws.presale
-                    {
-                        return Err(ErrorCode::CandyMachineNotLive.into());
+                Err(_) => {
+                    if ws.discount_price.is_none() && !ws.presale {
+                        // A non-presale whitelist with no discount price is a forced whitelist
+                        // If a pre-sale has no discount, its no issue, because the "discount"
+                        // is minting first - a presale whitelist always has an open post sale.
+                        return Err(ErrorCode::NoWhitelistToken.into());
                     }
+                    assert_valid_go_live(payer, clock, candy_machine)?
                 }
-            }
-
-            if let Some(dp) = ws.discount_price {
-                price = dp;
             }
         } else {
-            match candy_machine.data.go_live_date {
-                None => {
-                    if *ctx.accounts.payer.key != candy_machine.authority {
-                        return Err(ErrorCode::CandyMachineNotLive.into());
-                    }
-                }
-                Some(val) => {
-                    if clock.unix_timestamp < val
-                        && *ctx.accounts.payer.key != candy_machine.authority
-                    {
-                        return Err(ErrorCode::CandyMachineNotLive.into());
-                    }
-                }
-            }
+            // no whitelist means normal datecheck
+            assert_valid_go_live(payer, clock, candy_machine)?;
         }
 
         if candy_machine.items_redeemed >= candy_machine.data.items_available {
@@ -321,6 +334,8 @@ pub mod nft_candy_machine_v2 {
             &[&authority_seeds],
         )?;
 
+        msg!("At the end");
+        sol_log_compute_units();
         Ok(())
     }
 
@@ -335,7 +350,13 @@ pub mod nft_candy_machine_v2 {
         {
             return Err(ErrorCode::CannotChangeNumberOfLines.into());
         }
+
+        candy_machine.wallet = ctx.accounts.wallet.key();
         candy_machine.data = data;
+
+        if ctx.remaining_accounts.len() > 0 {
+            candy_machine.token_mint = Some(ctx.remaining_accounts[0].key())
+        }
         Ok(())
     }
 
@@ -373,11 +394,7 @@ pub mod nft_candy_machine_v2 {
                 array_of_zeroes.push(0u8);
             }
             let uri = line.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
-            fixed_config_lines.push(ConfigLine {
-                used: false,
-                name,
-                uri,
-            })
+            fixed_config_lines.push(ConfigLine { name, uri })
         }
 
         let as_vec = fixed_config_lines.try_to_vec()?;
@@ -388,14 +405,6 @@ pub mod nft_candy_machine_v2 {
 
         let array_slice: &mut [u8] =
             &mut data[position..position + fixed_config_lines.len() * CONFIG_LINE_SIZE];
-
-        for i in 0..fixed_config_lines.len() {
-            // Record if the entry was used already into the new row
-            if array_slice[i * CONFIG_LINE_SIZE] == 1 {
-                msg!("Line {} already used, marking used", i);
-                fixed_config_lines[i].used = true;
-            }
-        }
 
         array_slice.copy_from_slice(serialized);
 
@@ -553,11 +562,12 @@ fn get_space_for_candy(data: CandyMachineData) -> core::result::Result<usize, Pr
         CONFIG_ARRAY_START
             + 4
             + (data.items_available as usize) * CONFIG_LINE_SIZE
-            + 4
-            + (data
+            + 8
+            + 2 * ((data
                 .items_available
                 .checked_div(8)
-                .ok_or(ErrorCode::NumericalOverflowError)? as usize)
+                .ok_or(ErrorCode::NumericalOverflowError)?
+                + 1) as usize)
     };
 
     Ok(num)
@@ -641,6 +651,7 @@ pub struct UpdateCandyMachine<'info> {
     )]
     candy_machine: Account<'info, CandyMachine>,
     authority: Signer<'info>,
+    wallet: UncheckedAccount<'info>,
 }
 
 #[account]
@@ -757,6 +768,82 @@ pub fn get_config_count(data: &RefMut<&mut [u8]>) -> core::result::Result<usize,
     return Ok(u32::from_le_bytes(*array_ref![data, CONFIG_ARRAY_START, 4]) as usize);
 }
 
+pub fn get_good_index(
+    arr: &mut RefMut<&mut [u8]>,
+    items_available: usize,
+    index: usize,
+    pos: bool,
+) -> core::result::Result<(usize, bool), ProgramError> {
+    let mut index_to_use = index;
+    let mut taken = 1;
+    let mut found = false;
+    let bit_mask_vec_start = CONFIG_ARRAY_START
+        + 4
+        + (items_available) * CONFIG_LINE_SIZE
+        + 4
+        + items_available
+            .checked_div(8)
+            .ok_or(ErrorCode::NumericalOverflowError)?
+        + 4;
+
+    while taken > 0 && index_to_use < items_available {
+        let my_position_in_vec = bit_mask_vec_start
+            + index_to_use
+                .checked_div(8)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+        /*  msg!(
+            "My position is {} and value there is {}",
+            my_position_in_vec,
+            arr[my_position_in_vec]
+        );*/
+        if arr[my_position_in_vec] == 254 {
+            // msg!("We are screwed here, move on");
+            let eight_remainder = 8 - index_to_use
+                .checked_rem(8)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+            if eight_remainder != 0 {
+                // msg!("Moving by {}", eight_remainder);
+                if pos {
+                    index_to_use += eight_remainder;
+                } else {
+                    index_to_use -= eight_remainder;
+                }
+            } else {
+                //msg!("Moving by 8");
+                if pos {
+                    index_to_use += 8;
+                } else {
+                    index_to_use -= 8;
+                }
+            }
+        } else {
+            let position_from_right = 7 - index_to_use
+                .checked_rem(8)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+            let mask = u8::pow(2, position_from_right as u32);
+
+            taken = mask & arr[my_position_in_vec];
+            if taken > 0 {
+                //msg!("Index to use {} is taken", index_to_use);
+                if pos {
+                    index_to_use += 1;
+                } else {
+                    if index_to_use == 0 {
+                        break;
+                    }
+                    index_to_use -= 1;
+                }
+            } else if taken == 0 {
+                //msg!("Index to use {} is not taken, exiting", index_to_use);
+                found = true;
+                arr[my_position_in_vec] = arr[my_position_in_vec] | mask;
+            }
+        }
+    }
+
+    Ok((index_to_use, found))
+}
+
 pub fn get_config_line<'info>(
     a: &Account<'info, CandyMachine>,
     index: usize,
@@ -764,7 +851,6 @@ pub fn get_config_line<'info>(
 ) -> core::result::Result<ConfigLine, ProgramError> {
     if let Some(hs) = &a.data.hidden_settings {
         return Ok(ConfigLine {
-            used: false,
             name: hs.name.clone() + "#" + &(mint_number + 1).to_string(),
             uri: hs.uri.clone(),
         });
@@ -774,25 +860,14 @@ pub fn get_config_line<'info>(
 
     let mut arr = a_info.data.borrow_mut();
 
-    let mut index_to_use = index;
-    let mut found = false;
-    let items_available = a.data.items_available as usize;
-    while arr[CONFIG_ARRAY_START + 4 + index_to_use * (CONFIG_LINE_SIZE)] == 1 {
-        index_to_use += 1;
-        if index_to_use == items_available {
-            break;
-        } else if arr[CONFIG_ARRAY_START + 4 + index_to_use * (CONFIG_LINE_SIZE)] == 0 {
-            found = true
-        }
-    }
-
-    if !found {
-        index_to_use = index;
-        while arr[CONFIG_ARRAY_START + 4 + index_to_use * (CONFIG_LINE_SIZE)] == 1 {
-            index_to_use -= 1;
-            if index_to_use == 0 {
-                break;
-            }
+    let (mut index_to_use, good) =
+        get_good_index(&mut arr, a.data.items_available as usize, index, true)?;
+    if !good {
+        let (index_to_use_new, good_new) =
+            get_good_index(&mut arr, a.data.items_available as usize, index, false)?;
+        index_to_use = index_to_use_new;
+        if !good_new {
+            return Err(ErrorCode::CannotFindUsableConfigLine.into());
         }
     }
 
@@ -809,40 +884,35 @@ pub fn get_config_line<'info>(
 
     let mut name_vec = vec![];
     let mut uri_vec = vec![];
-    for i in 5..5 + MAX_NAME_LENGTH {
+    for i in 4..4 + MAX_NAME_LENGTH {
         if data_array[i] == 0 {
             break;
         }
         name_vec.push(data_array[i])
     }
-    for i in 9 + MAX_NAME_LENGTH..9 + MAX_NAME_LENGTH + MAX_URI_LENGTH {
+    for i in 8 + MAX_NAME_LENGTH..8 + MAX_NAME_LENGTH + MAX_URI_LENGTH {
         if data_array[i] == 0 {
             break;
         }
         uri_vec.push(data_array[i])
     }
     let config_line: ConfigLine = ConfigLine {
-        used: false,
         name: match String::from_utf8(name_vec) {
             Ok(val) => val,
             Err(_) => return Err(ErrorCode::InvalidString.into()),
         },
         uri: match String::from_utf8(uri_vec) {
             Ok(val) => val,
-            Err(e) => return Err(ErrorCode::InvalidString.into()),
+            Err(_) => return Err(ErrorCode::InvalidString.into()),
         },
     };
-
-    arr[CONFIG_ARRAY_START + 4 + index_to_use * (CONFIG_LINE_SIZE)] = 1;
 
     Ok(config_line)
 }
 
-pub const CONFIG_LINE_SIZE: usize = 1 + 4 + MAX_NAME_LENGTH + 4 + MAX_URI_LENGTH;
+pub const CONFIG_LINE_SIZE: usize = 4 + MAX_NAME_LENGTH + 4 + MAX_URI_LENGTH;
 #[derive(AnchorSerialize, AnchorDeserialize, Debug)]
 pub struct ConfigLine {
-    pub used: bool,
-    /// The name of the asset
     pub name: String,
     /// URI pointing to JSON representing the asset
     pub uri: String,

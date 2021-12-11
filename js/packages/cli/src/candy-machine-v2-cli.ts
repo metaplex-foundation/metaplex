@@ -130,8 +130,7 @@ programCommand('upload')
       return it.endsWith(EXTENSION_JSON);
     }).length;
 
-    const parsedNumber = parseInt(number);
-    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
+    const elemCount = number ? number : pngFileCount;
 
     if (pngFileCount !== jsonFileCount) {
       throw new Error(
@@ -157,7 +156,7 @@ programCommand('upload')
         env,
         keypair,
         totalNFTs: elemCount,
-        useCaptcha: useCaptcha == 'true',
+        useCaptcha,
         storage,
         retainAuthority,
         mutable,
@@ -618,8 +617,23 @@ programCommand('show')
       //@ts-ignore
       log.info('end settings: ', machine.data.endSettings);
 
-      //@ts-ignore
-      log.info('whitelist settings: ', machine.data.whitelistMintSettings);
+      if (machine.data.whitelistMintSettings) {
+        //@ts-ignore
+        log.info('whitelist settings: ');
+        //@ts-ignore
+        log.info('Mint: ', machine.data.whitelistMintSettings.mint.toBase58());
+        //@ts-ignore
+        log.info('Mode: ', machine.data.whitelistMintSettings.mode);
+        //@ts-ignore
+        log.info('Presale: ', machine.data.whitelistMintSettings.presale);
+        //@ts-ignore
+        log.info(
+          'Discounted Price: ',
+          machine.data.whitelistMintSettings.discountPrice.toNumber(),
+        );
+      } else {
+        log.info('no whitelist settings');
+      }
     } catch (e) {
       console.error(e);
       console.log('No machine found');
@@ -637,11 +651,10 @@ programCommand('update_candy_machine')
   )
   .option('--new-authority <Pubkey>', 'New Authority. Base58-encoded')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, rpcUrl, configPath, newAuthority, cacheName } =
+    const { keypair, env, rpcUrl, configPath, newAuthority, cacheName } =
       cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
-    const secondsSinceEpoch = date ? parseDate(date) : null;
     const newAuthorityKey = newAuthority ? new PublicKey(newAuthority) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
@@ -654,14 +667,9 @@ programCommand('update_candy_machine')
     );
 
     const {
-      storage,
-      ipfsInfuraProjectId,
       number,
-      ipfsInfuraSecret,
-      awsS3Bucket,
       retainAuthority,
       mutable,
-      batchSize,
       price,
       splToken,
       treasuryWallet,
@@ -680,11 +688,13 @@ programCommand('update_candy_machine')
     );
 
     const newSettings = {
-      itemsAvailable: new anchor.BN(number),
-      uuid,
+      itemsAvailable: number
+        ? new anchor.BN(number)
+        : candyMachineObj.data.itemsAvailable,
+      uuid: uuid || candyMachineObj.data.uuid,
       symbol: candyMachineObj.data.symbol,
-      sellerFeeBasisPoints: candyMachineObj.data.seller_fee_basis_points,
-      isMutable: candyMachineObj.data.isMutable,
+      sellerFeeBasisPoints: candyMachineObj.data.sellerFeeBasisPoints,
+      isMutable: mutable,
       maxSupply: new anchor.BN(0),
       retainAuthority: retainAuthority,
       useCaptcha,
@@ -701,12 +711,23 @@ programCommand('update_candy_machine')
         };
       }),
     };
-
+    console.log('Fuckl', newSettings);
+    const remainingAccounts = [];
+    if (splToken) {
+      remainingAccounts.push({
+        pubkey: splToken,
+        isSigner: false,
+        isWritable: false,
+      });
+    }
     const tx = await anchorProgram.rpc.updateCandyMachine(newSettings, {
       accounts: {
         candyMachine,
         authority: walletKeyPair.publicKey,
+        wallet: treasuryWallet,
       },
+      remainingAccounts:
+        remainingAccounts.length > 0 ? remainingAccounts : undefined,
     });
 
     cacheContent.startDate = goLiveDate;

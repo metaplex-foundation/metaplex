@@ -1,11 +1,12 @@
 use {
-    crate::ErrorCode,
+    crate::{CandyMachine, ErrorCode},
     anchor_lang::{
-        prelude::{Account, AccountInfo, ProgramError, ProgramResult, Pubkey},
+        prelude::{Account, AccountInfo, Clock, ProgramError, ProgramResult, Pubkey},
         solana_program::{
             program::invoke_signed,
             program_pack::{IsInitialized, Pack},
         },
+        Signer, Sysvar,
     },
     spl_associated_token_account::get_associated_token_address,
 };
@@ -19,6 +20,27 @@ pub fn assert_initialized<T: Pack + IsInitialized>(
     } else {
         Ok(account)
     }
+}
+
+pub fn assert_valid_go_live<'info>(
+    payer: &Signer<'info>,
+    clock: &Sysvar<Clock>,
+    candy_machine: &Account<'info, CandyMachine>,
+) -> ProgramResult {
+    match candy_machine.data.go_live_date {
+        None => {
+            if *payer.key != candy_machine.authority {
+                return Err(ErrorCode::CandyMachineNotLive.into());
+            }
+        }
+        Some(val) => {
+            if clock.unix_timestamp < val && *payer.key != candy_machine.authority {
+                return Err(ErrorCode::CandyMachineNotLive.into());
+            }
+        }
+    }
+
+    Ok(())
 }
 
 pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> ProgramResult {

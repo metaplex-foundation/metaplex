@@ -7,7 +7,12 @@
   "splToken": null,
   "goLiveDate": null,
   "endSettings": null,
-  "whitelistMintSettings": null,
+  "whitelistMintSettings": {
+    "mode": { "neverBurn": true },
+    "mint": "7nE1GmnMmDKiycFkpHF7mKtxt356FQzVonZqBWsTWZNf",
+    "presale": true,
+    "discountPrice": null
+  },
   "hiddenSettings": null,
   "storage": "arweave",
   "ipfsInfuraProjectId": null,
