@@ -1,31 +1,63 @@
-.metaplex-video-content,
-.metaplex-image-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  width: 100%;
-  height: fit-content;
-
-  > image,
-  > video,
-  > audio {
+.metaplex-art-content {
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  &:after {
+    content: '';
     display: block;
-    aspect-ratio: auto;
-    width: 100%;
-    height: auto;
-    object-position: center;
+    padding-bottom: 100%;
+  }
 
-    .metaplex-art-content-card & {
-      /* max-width: 300px; */
-      max-height: 400px;
+    .ant-image-placeholder {
+      > div {
+        position: absolute;
+        top: 50%;
+        right: 50%;
+        width: 80px;
+        height: 80px;
+        margin: -40px -40px 0 0;
+      }
+    }
+    
+    .metaplex-loader-light {
+      .ant-image-placeholder {
+        > div {
+          fill: @theme-color-base-faint !important;
+          color: @theme-color-base-faint;
+        }
+      }
+    }
+    .metaplex-loader-dark {
+      .ant-image-placeholder {
+        > div {
+          fill: @theme-color-base-bold !important;
+          color: @theme-color-base-bold;
+        }
+      }
+    }
+    
+  .ant-image, .metaplex-video-content, .metaplex-html-content, .metaplex-mesh-art-content {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    .ant-image-img, video, iframe, .metaplex-3d-viewer {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
     }
 
-    .metaplex-art-content-full & {
-      max-width: 500px;
-      max-height: 500px;
-      object-fit: contain;
+    &.metaplex-image {
+      img { 
+        display: none;
+      }
+      &.metaplex-image-loaded {
+        img {
+          display: block;
+        }
+      }
     }
   }
 }

@@ -62,7 +62,8 @@ export const AuctionItem = ({
   active?: boolean;
 }) => {
   const id = item.metadata.pubkey;
-  return <ArtContent pubkey={id} active={active} allowMeshRender={true} />;
+  
+  return <ArtContent pubkey={id} active={active} allowMeshRender={true} backdrop="dark" />;
 };
 
 export const AuctionView = () => {

@@ -43,7 +43,7 @@ import {
   notification,
 } from 'antd';
 import moment from 'moment';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { sendCancelBid } from '../../actions/cancelBid';
 import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -68,6 +68,30 @@ import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 import { endSale } from './utils/endSale';
 
 const { Text } = Typography;
+
+type NotificationMessage = {
+  message: string;
+  description: string | ReactNode;
+}
+type CancelSuccessMessages = {
+  refunded: NotificationMessage;
+  redeemed: NotificationMessage;
+}
+
+const cancelBidMessages = {
+  refunded: {
+    message: "Bid Refunded",
+    description: "Your bid was refunded. Check your wallet for the transaction history."
+  },
+  redeemed: {
+    message: "NFT Recovered",
+    description: (
+      <Space direction="horizontal">
+        <Text>Your NFT was recovered from the listing vault.</Text>
+      </Space>
+    ),
+  },
+} as CancelSuccessMessages;
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -254,6 +278,8 @@ export const AuctionCard = ({
   );
   const auctionExtended = useAuctionExtended(auctionView);
 
+  const isAuctioneer = wallet?.publicKey && auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+
   const eligibleForAnything = winnerIndex !== null || eligibleForOpenEdition;
   const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
   const gapTick = auctionExtended
@@ -349,10 +375,17 @@ export const AuctionCard = ({
 
       notification.success({
         message: "Listing Ended",
-        description: "The listing was successfully ended. Click this message to view the reclaimed NFT in your owned tab.",
+        description: (
+          <Space direction="horizontal">
+            <Text>The listing was successfully ended and the NFT reclaimed.</Text>
+            <Button type="primary">
+              View Owned
+            </Button>
+          </Space>
+        ),
         onClick: () => {
-          history.push("/owned");
-        }
+          history.push('/owned');
+        },
       })
     } finally {
       setLoading(false);
@@ -470,7 +503,14 @@ export const AuctionCard = ({
 
         notification.success({
           message: "Purchase Success",
-          description: "Congratulations, your purchase ticket was exchanged for the NFT. Click this message to view it in your owned tab.",
+          description: (
+            <Space direction="horizontal">
+              <Text>Congratulations, your purchase ticket was exchanged for the NFT.</Text>
+              <Button type="primary">
+                View Owned
+              </Button>
+            </Space>
+          ),
           onClick: () => {
             history.push("/owned");
           }
@@ -564,14 +604,21 @@ export const AuctionCard = ({
                 bidRedemptions,
                 bids,
               );
-              
+
               notification.success({
                 message: "Bid Redeemed",
                 duration: 30,
-                description: "Congratulations, your bid was redeemed for the NFT! Click this message to view it in your owned tab.",
+                description: (
+                  <Space direction="horizontal">
+                    <Text>Congratulations, your bid was redeemed for the NFT! See it in your owned tab.</Text>
+                      <Button type="primary">
+                        View Owned
+                      </Button>
+                  </Space>
+                ),
                 onClick: () => {
-                  history.push("/owned");
-                },
+                  history.push('/owned');
+                }
               });
             } catch (e: any) {
               Bugsnag.notify(e);
@@ -593,12 +640,11 @@ export const AuctionCard = ({
                 bidRedemptions,
                 prizeTrackingTickets,
               );
-  
-              notification.success({
-                message: "Bid Refunded",
-                description: "Your bid was refunded. See your wallet for the transaction.",
-              });
-            } catch(e: any) {
+
+              const message = cancelBidMessages[isAuctioneer ? "redeemed" : "refunded"];
+
+              notification.success(message);
+            } catch (e: any) {
               notification.error({
                 message: "Bid Refund Error",
                 description: "There was an error refunding your bid. Please try again or reach out to support.",
@@ -617,8 +663,7 @@ export const AuctionCard = ({
       ) : eligibleForAnything ? (
         `Redeem bid`
       ) : (
-        `${wallet?.publicKey &&
-          auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+        `${isAuctioneer
           ? 'Reclaim Items'
           : 'Refund bid'
         }`
