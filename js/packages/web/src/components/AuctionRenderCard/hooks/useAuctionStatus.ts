@@ -1,9 +1,4 @@
-import {
-  formatTokenAmount,
-  fromLamports,
-  useMint,
-  PriceFloorType,
-} from '@oyster/common';
+import { fromLamports, useMint, PriceFloorType } from '@oyster/common';
 import {
   AuctionView,
   AuctionViewState,
@@ -69,7 +64,7 @@ export const useAuctionStatus = (
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
 
-  let amount: string | number = fromLamports(
+  let amount: number = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
     mintInfo,
   );
@@ -82,9 +77,8 @@ export const useAuctionStatus = (
     const soldOut =
       bids.length === auctionView.auctionManager.numWinners.toNumber();
 
-    amount = formatTokenAmount(
-      auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber(),
-    );
+    amount =
+      auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber() || 0;
 
     return {
       status: { isInstantSale: true, isLive, soldOut },
@@ -104,7 +98,7 @@ export const useAuctionStatus = (
   const hasBids = bids.length > 0;
 
   if (hasBids && winningBid) {
-    amount = formatTokenAmount(winningBid.info.lastBid);
+    amount = fromLamports(winningBid.info.lastBid);
   }
 
   return {

@@ -78,7 +78,7 @@ export const LaunchStep = (props: {
             suffix="%"
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} />
+            <AmountLabel title="Cost to Create" amount={cost} />
           ) : (
             <Spin indicator={<LoadingOutlined />} />
           )}

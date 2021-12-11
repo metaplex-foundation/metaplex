@@ -19,6 +19,7 @@ import {
   processMetaplexAccounts,
   VAULT_ID,
   processVaultData,
+  fromLamports,
 } from '@oyster/common';
 import { actions } from '@metaplex/js';
 import { PublicKey } from '@solana/web3.js';
@@ -277,7 +278,7 @@ const BidLine = (props: {
           {isme && <CheckOutlined />}
           <AmountLabel
             displaySOL={true}
-            amount={formatTokenAmount(bid.info.lastBid, mint)}
+            amount={fromLamports(bid.info.lastBid, mint)}
           />
         </Space>
       </Col>
