@@ -69,6 +69,26 @@ import { endSale } from './utils/endSale';
 
 const { Text } = Typography;
 
+type NotificationMessage = {
+  message: string;
+  description: string;
+}
+type CancelSuccessMessages = {
+  refunded: NotificationMessage;
+  redeemed: NotificationMessage;
+}
+
+const cancelBidMessages = {
+  refunded: {
+    message: "Bid Refunded",
+    description: "Your bid was refunded. Check your wallet for the transaction history."
+  },
+  redeemed: {
+    message: "NFT Recovered",
+    description: "Your NFT was recovered from the listing vault."
+  },
+} as CancelSuccessMessages;
+
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
   auctionView: AuctionView,
@@ -253,6 +273,8 @@ export const AuctionCard = ({
     auctionView.myBidRedemption,
   );
   const auctionExtended = useAuctionExtended(auctionView);
+
+  const isAuctioneer = wallet?.publicKey && auctionView.auctionManager.authority === wallet.publicKey.toBase58()
 
   const eligibleForAnything = winnerIndex !== null || eligibleForOpenEdition;
   const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
@@ -593,11 +615,10 @@ export const AuctionCard = ({
                 bidRedemptions,
                 prizeTrackingTickets,
               );
+
+              const message = cancelBidMessages[isAuctioneer ? "redeemed" : "refunded"];
   
-              notification.success({
-                message: "Bid Refunded",
-                description: "Your bid was refunded. See your wallet for the transaction.",
-              });
+              notification.success(message);
             } catch(e: any) {
               notification.error({
                 message: "Bid Refund Error",
@@ -617,8 +638,7 @@ export const AuctionCard = ({
       ) : eligibleForAnything ? (
         `Redeem bid`
       ) : (
-        `${wallet?.publicKey &&
-          auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+        `${isAuctioneer
           ? 'Reclaim Items'
           : 'Refund bid'
         }`

@@ -1,8 +1,10 @@
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
+import Loading from 'react-loading';
 import { Image } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
+import cx from 'classnames';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { getLast } from '../../utils/utils';
 import { MeshViewer } from '../MeshViewer';
@@ -11,10 +13,12 @@ const MeshArtContent = ({
   uri,
   animationUrl,
   files,
+  loaderStyle,
 }: {
   uri?: string;
   animationUrl?: string;
   files?: (MetadataFile | string)[];
+  loaderStyle: string;
 }) => {
   const renderURL =
     files && files.length > 0 && typeof files[0] === 'string'
@@ -24,31 +28,36 @@ const MeshArtContent = ({
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
-    return <CachedImageContent uri={uri} preview={false} />;
+    return <CachedImageContent loaderStyle={loaderStyle} uri={uri} preview={false} />;
   }
 
-  return <MeshViewer url={renderURL} />;
+  return (
+    <div className="metaplex-mesh-art-content">
+      <MeshViewer url={renderURL} />
+    </div>
+  );
 };
 
 const CachedImageContent = ({
   uri,
   preview,
+  loaderStyle = "dark",
 }: {
   uri?: string;
   preview?: boolean;
+  loaderStyle: string;
 }) => {
-  const [, /* loaded */ setLoaded] = useState<boolean>(false);
   const { cachedBlob } = useCachedImage(uri || '');
+  const [loaded, setLoaded] = useState(false);
 
   return (
     <Image
-      wrapperClassName="metaplex-image-content"
-      src={cachedBlob}
       preview={preview}
+      src={cachedBlob}
+      wrapperClassName={(cx("metaplex-image", `metaplex-loader-${loaderStyle}`, { "metaplex-image-loaded": loaded  }))}
       loading="lazy"
-      onLoad={() => {
-        setLoaded(true);
-      }}
+      onLoad={() => { setLoaded(true) }}
+      placeholder={<Loading type="bars" color="inherit" />}
     />
   );
 };
@@ -90,7 +99,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <Stream
         streamRef={(e: any) => playerRef(e)}
         src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
@@ -129,34 +138,37 @@ const HTMLContent = ({
   preview,
   files,
   artView,
+  loaderStyle,
 }: {
   uri?: string;
   animationUrl?: string;
   preview?: boolean;
   files?: (MetadataFile | string)[];
   artView?: boolean;
+  loaderStyle: string;
 }) => {
   if (!artView) {
-    return <CachedImageContent uri={uri} preview={preview} />;
+    return <CachedImageContent loaderStyle={loaderStyle} uri={uri} preview={preview} />;
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
       ? files[0]
       : animationUrl;
   return (
-    <iframe
-      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-      sandbox="allow-scripts"
-      frameBorder="0"
-      src={htmlURL}
-    ></iframe>
+    <div className="metaplex-html-content">
+      <iframe
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+        sandbox="allow-scripts"
+        frameBorder="0"
+        src={htmlURL}
+      ></iframe>
+    </div>
   );
 };
 
 export const ArtContent = ({
   category,
   preview,
-  card,
   active,
   allowMeshRender,
   pubkey,
@@ -164,10 +176,10 @@ export const ArtContent = ({
   animationURL,
   files,
   artView,
+  loaderStyle,
 }: {
   category?: MetadataCategory;
   preview?: boolean;
-  card?: boolean;
   active?: boolean;
   allowMeshRender?: boolean;
   pubkey?: PublicKey | string;
@@ -175,6 +187,7 @@ export const ArtContent = ({
   animationURL?: string;
   files?: (MetadataFile | string)[];
   artView?: boolean;
+  loaderStyle: "dark" | "light";
 }) => {
   const id = pubkeyToString(pubkey);
 
@@ -203,7 +216,7 @@ export const ArtContent = ({
       animationUrlExt === 'gltf')
   ) {
     return (
-      <MeshArtContent uri={uri} animationUrl={animationURL} files={files} />
+      <MeshArtContent loaderStyle={loaderStyle} uri={uri} animationUrl={animationURL} files={files} />
     );
   }
 
@@ -222,13 +235,14 @@ export const ArtContent = ({
         preview={preview}
         files={files}
         artView={artView}
+        loaderStyle={loaderStyle}
       />
     ) : (
-      <CachedImageContent uri={uri} preview={preview} />
+      <CachedImageContent loaderStyle={loaderStyle} uri={uri} preview={preview} />
     );
 
   return (
-    <div className={`metaplex-art-content-${card ? 'card' : 'full'}`} ref={ref}>
+    <div className="metaplex-art-content" ref={ref}>
       {content}
     </div>
   );
