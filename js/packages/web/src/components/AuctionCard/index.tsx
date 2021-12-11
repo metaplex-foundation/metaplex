@@ -86,7 +86,7 @@ const cancelBidMessages = {
   redeemed: {
     message: "NFT Recovered",
     description: (
-      <Space direction="horizontal">
+      <Space direction="vertical">
         <Text>Your NFT was recovered from the listing vault.</Text>
       </Space>
     ),
@@ -376,7 +376,7 @@ export const AuctionCard = ({
       notification.success({
         message: "Listing Ended",
         description: (
-          <Space direction="horizontal">
+          <Space direction="vertical">
             <Text>The listing was successfully ended and the NFT reclaimed.</Text>
             <Button type="primary">
               View Owned
@@ -504,7 +504,7 @@ export const AuctionCard = ({
         notification.success({
           message: "Purchase Success",
           description: (
-            <Space direction="horizontal">
+            <Space direction="vertical">
               <Text>Congratulations, your purchase ticket was exchanged for the NFT.</Text>
               <Button type="primary">
                 View Owned
@@ -609,7 +609,7 @@ export const AuctionCard = ({
                 message: "Bid Redeemed",
                 duration: 30,
                 description: (
-                  <Space direction="horizontal">
+                  <Space direction="vertical">
                     <Text>Congratulations, your bid was redeemed for the NFT! See it in your owned tab.</Text>
                       <Button type="primary">
                         View Owned
