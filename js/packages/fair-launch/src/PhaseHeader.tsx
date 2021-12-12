@@ -175,20 +175,20 @@ export const PhaseHeader = (
       // TODO: Add network when added to machine state
       // candyMachine?.state.isActive &&
         // candyMachine.state.gatekeeper_network && // Do network check here
-        wallet.adapter &&
-        wallet.adapter.publicKey !== null &&
+        wallet.publicKey &&
+        wallet.signTransaction &&
         <GatewayProvider
-            wallet={'signTransaction' in wallet.adapter
-              ? {
-                ...wallet.adapter,
-                publicKey: wallet.adapter.publicKey,
-              }
-              : undefined
-            }
+            wallet={{
+              publicKey: wallet.publicKey,
+              signTransaction: wallet.signTransaction,
+            }}
             // // Replace with following when added
             // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
-            gatekeeperNetwork={new PublicKey("tigoYhp9SpCDoCQmXGj2im5xa3mnjR1zuXrpCJ5ZRmi")}>
-            <IdentityButton mode={ButtonMode.DARK} >Cool</IdentityButton>
+            gatekeeperNetwork={new PublicKey("ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6")} // This is the ignite (captcha) network
+            /// Don't need this for mainnet
+            clusterUrl={"https://api.devnet.solana.com"}
+        >
+            <IdentityButton mode={ButtonMode.DARK}/>
         </GatewayProvider>
     }
   </>
