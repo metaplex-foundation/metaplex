@@ -27,7 +27,7 @@ use {
     spl_token::state::Mint,
     std::{cell::RefMut, ops::Deref},
 };
-anchor_lang::declare_id!("Ch3qpQYqr7AvLP6Eph9xxbtneAbzovzuEexAGh48URHS");
+anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
 const PREFIX: &str = "candy_machine";
 #[program]
@@ -67,7 +67,7 @@ pub mod nft_candy_machine_v2 {
         }
 
         let mut remaining_accounts_counter: usize = 0;
-        if let Some(gatekeeper) = &candy_machine.data.gatekeeper {
+        /*if let Some(gatekeeper) = &candy_machine.data.gatekeeper {
             if ctx.remaining_accounts.len() <= remaining_accounts_counter {
                 return Err(ErrorCode::GatewayTokenMissing.into());
             }
@@ -93,7 +93,7 @@ pub mod nft_candy_machine_v2 {
                     &gatekeeper.gatekeeper_network,
                 )?;
             }
-        }
+        }*/
 
         if let Some(ws) = &candy_machine.data.whitelist_mint_settings {
             let whitelist_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
@@ -716,14 +716,16 @@ pub struct CandyMachineData {
     pub max_supply: u64,
     pub is_mutable: bool,
     pub retain_authority: bool,
+    pub use_captcha: bool,
     pub go_live_date: Option<i64>,
     pub end_settings: Option<EndSettings>,
     pub creators: Vec<Creator>,
     pub hidden_settings: Option<HiddenSettings>,
     pub whitelist_mint_settings: Option<WhitelistMintSettings>,
-    pub items_available: u64,
+
     /// If [`Some`] requires gateway tokens on mint
-    pub gatekeeper: Option<GatekeeperConfig>,
+    //pub gatekeeper: Option<GatekeeperConfig>,
+    pub items_available: u64,
 }
 
 /// Configurations options for the gatekeeper
@@ -811,18 +813,18 @@ pub fn get_good_index(
             + index_to_use
                 .checked_div(8)
                 .ok_or(ErrorCode::NumericalOverflowError)?;
-        /*  msg!(
+        /*msg!(
             "My position is {} and value there is {}",
             my_position_in_vec,
             arr[my_position_in_vec]
         );*/
-        if arr[my_position_in_vec] == 254 {
-            // msg!("We are screwed here, move on");
+        if arr[my_position_in_vec] == 255 {
+            //msg!("We are screwed here, move on");
             let eight_remainder = 8 - index_to_use
                 .checked_rem(8)
                 .ok_or(ErrorCode::NumericalOverflowError)?;
             if eight_remainder != 0 {
-                // msg!("Moving by {}", eight_remainder);
+                //msg!("Moving by {}", eight_remainder);
                 if pos {
                     index_to_use += eight_remainder;
                 } else {
