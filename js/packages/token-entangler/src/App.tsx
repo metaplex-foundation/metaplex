@@ -10,7 +10,6 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import {
   Box,
-  Link as HyperLink,
   Stack,
 } from "@mui/material";
 
@@ -25,136 +24,91 @@ import { Swap } from "./components/Swap";
 import { Search } from "./components/Search";
 import { Wizard } from "./components/Wizard";
 
-const WHITESPACE = "\u00A0";
 
 const About = () => {
   const summary = (
     <Stack spacing={1}>
       <div>
-        The Gumdrop program leverages the Solana blockchain and merkle trees to
-        facilitate airdrops to a large number of whitelisted users at a low cost
-        to creators.
+        <h1>Token Entangler</h1>
       </div>
 
-      <div>
-        In the Solana ecosystem, the cost of token airdrops is currently largely
-        due to rent costs being{WHITESPACE}
-        <HyperLink
-          href="https://docs.solana.com/implemented-proposals/rent"
-          underline="none"
-        >
-          &quot;fixed at the genesis&quot;
-        </HyperLink>
-        . With the large increase in SOLUSD since genesis, rent costs when
-        creating accounts for thousands of users have duly skyrocketed.
-      </div>
 
-      <div>
-        Simultaneously, NFT projects often have a presale to early project
-        followers and contributors. However, the candy-machine doesn&apos;t have the
-        ability to grant early minting to a whitelisted subset of wallets while
-        also using the same asset configuration for open launch.
-      </div>
-
-      <div>
-        Gumdrop (originally pioneered for token airdrops by{" "}
-        <HyperLink
-          href="https://github.com/Uniswap/merkle-distributor"
-          underline="none"
-        >
-          Uniswap
-        </HyperLink>
-        {" "}and ported to Solana by{WHITESPACE}
-        <HyperLink
-          href="https://github.com/saber-hq/merkle-distributor"
-          underline="none"
-        >
-          Saber
-        </HyperLink>) solves both these issues by building a space-efficient hash
-        structure (the merkle tree) such that an on-chain program can validate
-        whether the user is part of a whitelist. Moreover, Gumdrop
-        allows creators to directly send whitelisted users an airdrop reclamation
-        link by building the tree with off-chain handles (e.g email, discord,
-        etc) and allowing the user to redeem into any wallet.
-      </div>
     </Stack>
   );
 
   const create = (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/create`}>
+      <Link to={`/entanglement/create`}>
         CREATION
       </Link>
 
       <div>
-        Creation builds a whitelist of users that can claim either existing
-        fungible tokens or directly mint from a pre-sale candy-machine.
+        Creation builds a new token entanglement between two mints: MintA and MintB. MintB will be removed from the wallet.
+        MintA does not need to be in the wallet or owned.
       </div>
 
-      <div>
-        Creators must choose a mint or a candy-machine config and UUID, an
-        off-chain notification method (based on the handles supplied below, e.g
-        email, discord, etc), and supply a list of recipients and balances with
-        the following JSON schema{WHITESPACE}
+    </Stack>
+  );
 
-      </div>
-
-      <pre style={{ fontSize: 14 }}>{`
-[
-  {
-    "handle": "<DISTRIBUTION-SPECIFIC-HANDLE>"
-    "amount": <#-TOKENS-OR-CANDY-MINTS>
-  },
-  ...
-]`}</pre>
+  const show = (
+    <Stack spacing={1}>
+      <Link to={`/entanglement/show`}>
+        SHOW
+      </Link>
 
       <div>
-        NB: When a candy-machine is supplied, update authority for the
-        candy-machine will be transferred to the Gumdrop state. This can
-        be reclaimed by closing the Gumdrop.
+        Show the information about a token entanglement stored on chain.
       </div>
     </Stack>
   );
 
-  const claim = (
+  const swap = (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/claim`}>
-        CLAIMS
+      <Link to={`/entanglement/swap`}>
+        SWAP
       </Link>
 
       <div>
-        Claims are redeemed through a URL with query parameters holding
-        claim-specific keys. Claimants will need to verify ownership of the
-        specified handle by answering a OTP challenge and pay the rent and
-        minting fees if applicable.
+        Swap NFTs
       </div>
+
     </Stack>
   );
 
-  const close = (
+  const search = (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/close`}>
-        CLOSING
+      <Link to={`/entanglement/search`}>
+        SEARCH
       </Link>
 
       <div>
-        Closing the Gumdrop cleans up the on-chain state and allows
-        creators to recycle any lamports held for rent-exemption after the
-        airdrop is complete.
+        Search performs a search on the chain for token entanglements of a given mint and given entanglement authority.
       </div>
 
+    </Stack>
+  );
+
+  const wizard = (
+    <Stack spacing={1}>
+      <Link to={`/entanglement/wizard`}>
+        WIZARD
+      </Link>
+
       <div>
-        When closing a candy-machine-integrated distributor, update authority
-        will be transferred back to the wallet owner.
+        Searches for entanglements from a whitelisted authority of the NFTs owned by the connected wallet.
+        To define the whitelisted authority, the user must define an environment variable named: REACT_APP_WHITELISTED_AUTHORITY!
       </div>
+
     </Stack>
   );
 
   const steps = [
     { name: "summary", inner: summary },
     { name: "create", inner: create },
-    { name: "claim", inner: claim },
-    { name: "close", inner: close },
+    { name: "show", inner: show },
+    { name: "swap", inner: swap },
+    { name: "search", inner: search },
+    { name: "wizard", inner: wizard },
   ];
   return (
     <Stack
@@ -239,7 +193,7 @@ function App() {
               <Route path="/entanglement/swap" component={Swap} />
               <Route path="/entanglement/search" component={Search} />
               <Route path="/entanglement/wizard" component={Wizard} />
-              <Route path="/entanglement/" component= {About} />
+              <Route path="/entanglement/" component={About} />
             </Switch>
             <Box height="80px" />
           </Box>

@@ -13,7 +13,7 @@ import * as anchor from '@project-serum/anchor';
 import {
     useConnection,
 } from "../contexts";
-import { createEntanglement, loadTokenEntanglementProgram } from "../utils/entangler";
+import { createEntanglement } from "../utils/entangler";
 
 export const Create = () => {
     const connection = useConnection();
@@ -38,17 +38,15 @@ export const Create = () => {
     const [mintA, setMintA] = React.useState(localStorage.getItem("mintA") || "");
     const [mintB, setMintB] = React.useState(localStorage.getItem("mintB") || "");
     const [price, setPrice] = React.useState(localStorage.getItem("price") || "");
+    const [paysEveryTime, setPaysEveryTime] = React.useState(false);
+    const [authority, setAuthority] = React.useState(localStorage.getItem("authority") || "");
 
     useEffect(() => {
         (async () => {
             if (!anchorWallet) {
                 return;
             }
-            const anchorProgram = loadTokenEntanglementProgram(
-                anchorWallet,
-                connection,
-            );
-            console.log(anchorProgram);
+            setAuthority(anchorWallet.publicKey.toString())
 
         })()
     }, [
@@ -62,12 +60,12 @@ export const Create = () => {
         if (!anchorWallet) {
             return;
         }
-        const res = await createEntanglement(anchorWallet, connection, null, null, false, price, mintA, mintB);
+        const res = await createEntanglement(anchorWallet, connection, null, authority, paysEveryTime, price, mintA, mintB);
         console.log(res);
     };
 
     const isEnable = (mintA: string, mintB: string, price: string): boolean => {
-        return ( 
+        return (
             // eslint-disable-next-line no-extra-boolean-cast
             !!mintA && !!mintB && !!price
         )
@@ -77,7 +75,7 @@ export const Create = () => {
         <React.Fragment>
             <h1>Create Entanglement</h1>
             <p>
-                Create an entanglement between two NFT.
+                Create an entanglement between two NFTs. Using connected wallet as entanglement authority.
             </p>
 
             <Box
@@ -112,6 +110,17 @@ export const Create = () => {
                 />
                 <TextField
                     required
+                    id="authority-text-field"
+                    label="Authority"
+                    helperText="Entanglement Authority"
+                    value={authority}
+                    onChange={(e) => {
+                        localStorage.setItem("authority", e.target.value);
+                        setAuthority(e.target.value);
+                    }}
+                />
+                <TextField
+                    required
                     id="price-text-field"
                     helperText="Price for a swap"
                     label="Price"
@@ -122,14 +131,14 @@ export const Create = () => {
                     }}
                 />
                 <FormGroup>
-                    <FormControlLabel control={<Checkbox defaultChecked />} label="Pay the swapping fee each swap" />
+                    <FormControlLabel control={<Checkbox checked={paysEveryTime} onChange={(e) => { setPaysEveryTime(e.target.checked) }} />} label="Pay the swapping fee each swap" />
                 </FormGroup>
                 <FormGroup>
-                    <Button 
-                      variant="contained" 
-                      onClick={async (e) => await handleSubmit(e)} 
-                      endIcon={<SendIcon />}
-                      disabled={!isEnable(mintA, mintB, price)}
+                    <Button
+                        variant="contained"
+                        onClick={async (e) => await handleSubmit(e)}
+                        endIcon={<SendIcon />}
+                        disabled={!isEnable(mintA, mintB, price)}
                     >
                         Entangle
                     </Button>

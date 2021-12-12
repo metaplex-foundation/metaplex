@@ -1,5 +1,5 @@
 import { Box, Button, FormGroup, TextField } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
 import SearchIcon from '@mui/icons-material/Search';
 import {
     useConnection,
@@ -35,21 +35,35 @@ export const Search = () => {
             signTransaction: wallet.signTransaction,
         } as anchor.Wallet;
     }, [wallet]);
+
+    useEffect(() => {
+        (async () => {
+            if (!anchorWallet) {
+                return;
+            }
+            setAuthority(anchorWallet.publicKey.toString())
+
+        })()
+    }, [
+        anchorWallet,
+    ]);
+
     const handleSubmit = async (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
         if (!anchorWallet) {
             return;
         }
-        const foundEntanglements = await searchEntanglements(anchorWallet, connection, mintA);
+        const foundEntanglements = await searchEntanglements(anchorWallet, connection, mintA, authority);
         setEntanglements([...foundEntanglements]);
         console.log(entanglements)
     }
 
     const [mintA, setMintA] = React.useState(localStorage.getItem("mintA") || "");
+    const [authority, setAuthority] = React.useState(localStorage.getItem("authority") || "");
     return (
         <React.Fragment>
             <h1>Search Entanglements</h1>
-            <p>Search for entanglements by mint address</p>
+            <p>Search for entanglements by mint address and authority</p>
 
             <Box
                 component="form"
@@ -68,8 +82,17 @@ export const Search = () => {
                         setMintA(e.target.value);
                     }}
                 />
+                <TextField
+                    id="mintA-text-field"
+                    label="Authority"
+                    value={authority}
+                    onChange={(e) => {
+                        localStorage.setItem("authority", e.target.value);
+                        setAuthority(e.target.value);
+                    }}
+                />
                 <FormGroup>
-                    <Button variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
+                    <Button disabled={!authority || !mintA} variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
                         Search Entanglements
                     </Button>
                 </FormGroup>

@@ -477,6 +477,7 @@ export const searchEntanglements = async (
   anchorWallet: anchor.Wallet,
   connection: Connection,
   mint: string,
+  authority: string,
 ) => {
   const anchorProgram = await loadTokenEntanglementProgram(
     anchorWallet,
@@ -484,6 +485,8 @@ export const searchEntanglements = async (
   );
 
   const searchMint = new PublicKey(mint);
+  const searchAuthority = new PublicKey(authority);
+
 
   const searchMintAAccounts =
     await anchorProgram.provider.connection.getProgramAccounts(
@@ -497,6 +500,12 @@ export const searchEntanglements = async (
               bytes: searchMint.toString(),
             },
           },
+          {
+            memcmp: {
+              offset: 8 + 160,
+              bytes: searchAuthority.toString(),
+            },
+          }
         ],
       },
     );
@@ -512,6 +521,12 @@ export const searchEntanglements = async (
               bytes: searchMint.toString(),
             },
           },
+          {
+            memcmp: {
+              offset: 8 + 160,
+              bytes: searchAuthority.toString(),
+            },
+          }
         ],
       },
     );

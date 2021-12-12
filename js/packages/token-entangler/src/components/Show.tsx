@@ -7,7 +7,7 @@ import {
 } from "@solana/wallet-adapter-react";
 import { useMemo, useEffect } from 'react';
 import * as anchor from '@project-serum/anchor';
-import { loadTokenEntanglementProgram, showEntanglement } from "../utils/entangler";
+import { showEntanglement } from "../utils/entangler";
 import { Box, Button, FormGroup, TextField } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
 
@@ -43,11 +43,6 @@ export const Show = () => {
             if (!anchorWallet) {
                 return;
             }
-            const anchorProgram = loadTokenEntanglementProgram(
-                anchorWallet,
-                connection,
-            );
-            console.log(anchorProgram);
 
         })()
     }, [
@@ -91,16 +86,19 @@ export const Show = () => {
     };
 
     const isEnable = (mintA: string, mintB: string, entangledPair: string): boolean => {
-        return ( 
+        return (
             // eslint-disable-next-line no-extra-boolean-cast
-            (!!mintA && !!mintB  && !(!!entangledPair)) ||
-            (!(!!mintA || !!mintB) && !!entangledPair )
+            (!!mintA && !!mintB && !(!!entangledPair)) ||
+            (!(!!mintA || !!mintB) && !!entangledPair)
         )
     }
 
     return (
         <React.Fragment>
             <h1>Show Entanglement</h1>
+            <p>
+                Enter MintA and MintB or Entangled Pair.
+            </p>
 
             <Box
                 component="form"
@@ -139,17 +137,17 @@ export const Show = () => {
                     }}
                 />
                 <FormGroup>
-                    <Button 
-                      variant="contained" 
-                      onClick={async (e) => await handleSubmit(e)} 
-                      endIcon={<SendIcon />}
-                      disabled={!isEnable(mintA, mintB, entangledPair)}
+                    <Button
+                        variant="contained"
+                        onClick={async (e) => await handleSubmit(e)}
+                        endIcon={<SendIcon />}
+                        disabled={!isEnable(mintA, mintB, entangledPair)}
                     >
                         Show Entanglement
                     </Button>
                 </FormGroup>
             </Box>
-            <Box sx={{ maxWidth: 'md', display:'block', marginTop: '2rem' }}>
+            <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
                 <TextField
                     multiline
                     fullWidth

@@ -7,7 +7,7 @@ import {
 } from "@solana/wallet-adapter-react";
 import { useMemo, useEffect } from 'react';
 import * as anchor from '@project-serum/anchor';
-import { loadTokenEntanglementProgram, swapEntanglement } from "../utils/entangler";
+import { swapEntanglement } from "../utils/entangler";
 import { Box, Button, FormGroup, TextField } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
 
@@ -42,11 +42,6 @@ export const Swap = () => {
             if (!anchorWallet) {
                 return;
             }
-            const anchorProgram = loadTokenEntanglementProgram(
-                anchorWallet,
-                connection,
-            );
-            console.log(anchorProgram);
 
         })()
     }, [
@@ -63,10 +58,10 @@ export const Swap = () => {
     }
 
     const isEnable = (mintA: string, mintB: string, entangledPair: string): boolean => {
-        return ( 
+        return (
             // eslint-disable-next-line no-extra-boolean-cast
-            (!!mintA && !!mintB  && !(!!entangledPair)) ||
-            (!(!!mintA || !!mintB) && !!entangledPair )
+            (!!mintA && !!mintB && !(!!entangledPair)) ||
+            (!(!!mintA || !!mintB) && !!entangledPair)
         )
     }
 
@@ -74,6 +69,9 @@ export const Swap = () => {
     return (
         <React.Fragment>
             <h1>Swap Entanglement</h1>
+            <p>
+                Enter MintA and MintB or Entangled Pair.
+            </p>
 
             <Box
                 component="form"
@@ -111,21 +109,21 @@ export const Swap = () => {
                         setEntangledPair(e.target.value);
                     }}
                 />
-                
+
                 <FormGroup>
-                    <Button 
-                     variant="contained" 
-                     onClick={async (e) => await handleSubmit(e)} 
-                     endIcon={<SendIcon />}
-                     disabled={!isEnable(mintA, mintB, entangledPair)}
+                    <Button
+                        variant="contained"
+                        onClick={async (e) => await handleSubmit(e)}
+                        endIcon={<SendIcon />}
+                        disabled={!isEnable(mintA, mintB, entangledPair)}
                     >
                         Swap
                     </Button>
                 </FormGroup>
             </Box>
-            
-            <Box component="span" sx={{ display: 'block' , marginTop: '2rem'}}>
-                { !entangledPair ? "" :  <h2>Entangled Pair</h2> }
+
+            <Box component="span" sx={{ display: 'block', marginTop: '2rem' }}>
+                {!entangledPair ? "" : <h2>Entangled Pair</h2>}
                 <p>{entangledPair}</p>
             </Box>
 

@@ -1,11 +1,10 @@
 import { Box, Button, FormGroup, LinearProgress } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import SearchIcon from '@mui/icons-material/Search';
 import {
     useConnection,
 } from "../contexts";
 
-import { useMemo } from 'react';
 import {
     useWallet,
 } from "@solana/wallet-adapter-react";
@@ -43,6 +42,8 @@ export const Wizard = () => {
 
     const handleSubmit = async (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
+        console.log(process.env)
+        const authority = process.env.REACT_APP_WHITELISTED_AUTHORITY!;
         if (!anchorWallet) {
             return;
         }
@@ -51,7 +52,7 @@ export const Wizard = () => {
         const res = await getOwnedNFTMints(anchorWallet, connection);
         const walletNFTMints = res.map((token) => (token.info.mint));
         const allEntanglementsMap = Promise.all(walletNFTMints.map(async (mint) => {
-            return { mint: mint, entanglements: await searchEntanglements(anchorWallet, connection, mint) };
+            return { mint: mint, entanglements: await searchEntanglements(anchorWallet, connection, mint, authority) };
         }));
         setEntanglements([... await allEntanglementsMap]);
         setLoading(false);
