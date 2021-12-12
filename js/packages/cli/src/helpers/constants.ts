@@ -111,5 +111,5 @@ export const CACHE_PATH = './.cache';
 
 export const DEFAULT_TIMEOUT = 15000;
 
-export const EXTENSION_PNG = '.png';
+export const EXTENSION_PNG = '.jpg';
 export const EXTENSION_JSON = '.json';

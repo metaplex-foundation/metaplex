@@ -8,7 +8,10 @@ import {
 } from './connection';
 
 import {
+  CIVIC,
   getAtaForMint,
+  getNetworkExpire,
+  getNetworkToken,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
 } from './utils';
 
@@ -185,10 +188,10 @@ export const getCandyMachineState = async (
       goLiveDate: state.data.goLiveDate,
       treasury: state.wallet,
       tokenMint: state.tokenMint,
-      gatekeeper: state.gatekeeper,
-      endSettings: state.endSettings,
-      whitelistMintSettings: state.whitelistMintSettings,
-      hiddenSettings: state.hiddenSettings,
+      gatekeeper: state.data.gatekeeper,
+      endSettings: state.data.endSettings,
+      whitelistMintSettings: state.data.whitelistMintSettings,
+      hiddenSettings: state.data.hiddenSettings,
       price: state.data.price,
     },
   };
@@ -286,6 +289,34 @@ export const mintOneToken = async (
     ),
   ];
 
+  if (candyMachine.state.gatekeeper) {
+    remainingAccounts.push({
+      pubkey: (
+        await getNetworkToken(
+          payer,
+          candyMachine.state.gatekeeper.gatekeeperNetwork,
+        )
+      )[0],
+      isWritable: true,
+      isSigner: false,
+    });
+    if (candyMachine.state.gatekeeper.expireOnUse) {
+      remainingAccounts.push({
+        pubkey: CIVIC,
+        isWritable: false,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: (
+          await getNetworkExpire(
+            candyMachine.state.gatekeeper.gatekeeperNetwork,
+          )
+        )[0],
+        isWritable: false,
+        isSigner: false,
+      });
+    }
+  }
   if (candyMachine.state.whitelistMintSettings) {
     const mint = new anchor.web3.PublicKey(
       candyMachine.state.whitelistMintSettings.mint,

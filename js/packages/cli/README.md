@@ -4,16 +4,28 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 ## Settings examples
 
+### Captcha Settings (Gateway)
+
+Want captcha? Add this for gatekeeper value and you are done:
+
+```
+{
+    "gatekeeperNetwork": "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6",
+    "expireOnUse": true
+  }
+```
+
 ### Hidden Settings
 
 If you plan to do a mint larger than 20k, consider this option. With this, none of the arweave URIs actually go on Solana. You just provide the following in the config for hiddenSettings:
 
 ```
 {
-    "name": "Billy Bob ",
-    "uri": "https://arweave.net/w_yuIHAmS10B4VFGVGqdSig3fYqZ5_SwR_DUCll1o3c",
-    "hash": "44kiGWWsSgdqPMvmqYgTS78Mx2BKCWzd"
-  }
+"name": "Billy Bob ",
+"uri": "https://arweave.net/w_yuIHAmS10B4VFGVGqdSig3fYqZ5_SwR_DUCll1o3c",
+"hash": "44kiGWWsSgdqPMvmqYgTS78Mx2BKCWzd"
+}
+
 ```
 
 And it will mint the same URI and name (plus #45 or whatever, notice the space I left in there)
@@ -29,11 +41,12 @@ Stop a mint at a date
 
 ````
 {
-    "endSettingType": { "date": true },
-    "value": "11 Dec 2021 13:30:00 CST"
-  }```
+"endSettingType": { "date": true },
+"value": "11 Dec 2021 13:30:00 CST"
+}```
 
 Stop a mint after a certain amount have sold
+
 ````
 
 {
@@ -210,7 +223,7 @@ The following file will be generated (based off of `example-traits`):
   "width": 1000,
   "height": 1000
 }
-````
+```
 
 3. Go through and customize the fields in the `traits-configuration.json`, such as `name`, `symbol`, `description`, , `creators`, `collection`, `width`, and `height`.
 4. After you have adjusted the configurations to your heart's content, you can run the following command to generate the JSON files along with the images.
@@ -378,3 +391,4 @@ ts-node cli sign_candy_machine_metadata -k ~/.config/solana/id.json
 metaplex sign_candy_machine_metadata -k ~/.config/solana/id.json --cndy CANDY_MACHINE_ADDRESS_HERE
 ts-node cli sign_candy_machine_metadata -k ~/.config/solana/id.json --cndy CANDY_MACHINE_ADDRESS_HERE
 ```
+````

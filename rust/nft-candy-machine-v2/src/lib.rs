@@ -27,7 +27,7 @@ use {
     spl_token::state::Mint,
     std::{cell::RefMut, ops::Deref},
 };
-anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
+anchor_lang::declare_id!("Ch3qpQYqr7AvLP6Eph9xxbtneAbzovzuEexAGh48URHS");
 
 const PREFIX: &str = "candy_machine";
 #[program]
@@ -67,7 +67,7 @@ pub mod nft_candy_machine_v2 {
         }
 
         let mut remaining_accounts_counter: usize = 0;
-        /*if let Some(gatekeeper) = &candy_machine.data.gatekeeper {
+        if let Some(gatekeeper) = &candy_machine.data.gatekeeper {
             if ctx.remaining_accounts.len() <= remaining_accounts_counter {
                 return Err(ErrorCode::GatewayTokenMissing.into());
             }
@@ -75,13 +75,19 @@ pub mod nft_candy_machine_v2 {
             remaining_accounts_counter += 1;
             if gatekeeper.expire_on_use {
                 if ctx.remaining_accounts.len() <= remaining_accounts_counter {
+                    return Err(ErrorCode::GatewayAppMissing.into());
+                }
+                let gateway_app = &ctx.remaining_accounts[remaining_accounts_counter];
+                remaining_accounts_counter += 1;
+                if ctx.remaining_accounts.len() <= remaining_accounts_counter {
                     return Err(ErrorCode::NetworkExpireFeatureMissing.into());
                 }
                 let network_expire_feature = &ctx.remaining_accounts[remaining_accounts_counter];
                 remaining_accounts_counter += 1;
                 ::solana_gateway::Gateway::verify_and_expire_token(
+                    gateway_app.clone(),
                     gateway_token.clone(),
-                    wallet.deref().clone(),
+                    payer.deref().clone(),
                     &gatekeeper.gatekeeper_network,
                     network_expire_feature.clone(),
                     None,
@@ -89,11 +95,11 @@ pub mod nft_candy_machine_v2 {
             } else {
                 ::solana_gateway::Gateway::verify_gateway_token_account_info(
                     gateway_token,
-                    &wallet.key(),
+                    &payer.key(),
                     &gatekeeper.gatekeeper_network,
                 )?;
             }
-        }*/
+        }
 
         if let Some(ws) = &candy_machine.data.whitelist_mint_settings {
             let whitelist_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
@@ -650,8 +656,10 @@ pub struct MintNFT<'info> {
     recent_blockhashes: UncheckedAccount<'info>,
     #[account(address = sysvar::instructions::id())]
     instruction_sysvar_account: UncheckedAccount<'info>,
+    // > Only needed if candy machine has a gatekeeper
     // gateway_token
     // > Only needed if candy machine has a gatekeeper and it has expire_on_use set to true:
+    // gateway program
     // network_expire_feature
     // > Only needed if candy machine has whitelist_mint_settings
     // whitelist_token_account
@@ -716,16 +724,14 @@ pub struct CandyMachineData {
     pub max_supply: u64,
     pub is_mutable: bool,
     pub retain_authority: bool,
-    pub use_captcha: bool,
     pub go_live_date: Option<i64>,
     pub end_settings: Option<EndSettings>,
     pub creators: Vec<Creator>,
     pub hidden_settings: Option<HiddenSettings>,
     pub whitelist_mint_settings: Option<WhitelistMintSettings>,
-
-    /// If [`Some`] requires gateway tokens on mint
-    //pub gatekeeper: Option<GatekeeperConfig>,
     pub items_available: u64,
+    /// If [`Some`] requires gateway tokens on mint
+    pub gatekeeper: Option<GatekeeperConfig>,
 }
 
 /// Configurations options for the gatekeeper
@@ -988,6 +994,8 @@ pub enum ErrorCode {
     NoWhitelistToken,
     #[msg("Token burn failed")]
     TokenBurnFailed,
+    #[msg("Missing gateway app when required")]
+    GatewayAppMissing,
     #[msg("Missing gateway token when required")]
     GatewayTokenMissing,
     #[msg("Missing gateway network expire feature when required")]

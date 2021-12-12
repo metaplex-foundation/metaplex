@@ -628,7 +628,18 @@ programCommand('show')
           );
         }
       } else {
-        log.info('No end settings detectred');
+        log.info('No end settings detected');
+      }
+
+      if (machine.data.gatekeeper) {
+        log.info('Captcha settings:');
+        log.info(
+          'Gatekeeper:',
+          machine.data.gatekeeper.gatekeeperNetwork.toBase58(),
+        );
+        log.info('Expires on use:', machine.data.gatekeeper.expireOnUse);
+      } else {
+        log.info('No captcha for this candy machine');
       }
 
       if (machine.data.whitelistMintSettings) {

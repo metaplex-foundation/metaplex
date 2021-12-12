@@ -21,7 +21,7 @@ import Alert from '@material-ui/lab/Alert';
 
 import * as anchor from '@project-serum/anchor';
 
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
@@ -29,6 +29,7 @@ import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
 import {
   awaitTransactionSignatureConfirmation,
   CandyMachineAccount,
+  CANDY_MACHINE_PROGRAM,
   getCandyMachineState,
   mintOneToken,
 } from './candy-machine';
@@ -41,9 +42,10 @@ import {
 } from './fair-launch';
 
 import { AlertState, formatNumber, getAtaForMint, toDate } from './utils';
-import { MintButton } from './MintButton';
+import { CTAButton, MintButton } from './MintButton';
 import { AntiRug } from './AntiRug';
 import { getPhase, Phase, PhaseHeader } from './PhaseHeader';
+import { GatewayProvider } from '@civic/solana-gateway-react';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -186,6 +188,7 @@ const Home = (props: HomeProps) => {
   const onMint = async () => {
     try {
       setIsMinting(true);
+      document.getElementById('#identity')?.click();
       if (wallet.connected && candyMachine?.program && wallet.publicKey) {
         if (fairLaunch?.ticket.data?.state.unpunched && isWinner(fairLaunch)) {
           await onPunchTicket();
@@ -639,7 +642,7 @@ const Home = (props: HomeProps) => {
               <div>
                 {[Phase.SetPrice, Phase.GracePeriod].includes(phase) && (
                   <>
-                    <MintButton
+                    <CTAButton
                       onClick={onDeposit}
                       variant="contained"
                       disabled={
@@ -657,14 +660,14 @@ const Home = (props: HomeProps) => {
                         'Change bid'
                       )}
                       {}
-                    </MintButton>
+                    </CTAButton>
                   </>
                 )}
 
                 {[Phase.RaffleFinished].includes(phase) && (
                   <>
                     {isWinner(fairLaunch) && (
-                      <MintButton
+                      <CTAButton
                         onClick={onPunchTicket}
                         variant="contained"
                         disabled={
@@ -672,11 +675,11 @@ const Home = (props: HomeProps) => {
                         }
                       >
                         {isMinting ? <CircularProgress /> : 'Punch Ticket'}
-                      </MintButton>
+                      </CTAButton>
                     )}
 
                     {!isWinner(fairLaunch) && (
-                      <MintButton
+                      <CTAButton
                         onClick={onRefundTicket}
                         variant="contained"
                         disabled={
@@ -686,7 +689,7 @@ const Home = (props: HomeProps) => {
                         }
                       >
                         {isMinting ? <CircularProgress /> : 'Withdraw'}
-                      </MintButton>
+                      </CTAButton>
                     )}
                   </>
                 )}
@@ -697,28 +700,43 @@ const Home = (props: HomeProps) => {
                       isWinner(fairLaunch) ||
                       fairLaunchBalance > 0) && (
                       <MintContainer>
-                        <MintButton
-                          disabled={
-                            candyMachine?.state.isSoldOut ||
-                            isMinting ||
-                            !candyMachine?.state.isActive ||
-                            (fairLaunch?.ticket?.data?.state.punched &&
-                              fairLaunchBalance === 0)
-                          }
-                          onClick={onMint}
-                          variant="contained"
-                        >
-                          {fairLaunch?.ticket?.data?.state.punched &&
-                          fairLaunchBalance === 0 ? (
-                            'MINTED'
-                          ) : candyMachine?.state.isSoldOut ? (
-                            'SOLD OUT'
-                          ) : isMinting ? (
-                            <CircularProgress />
-                          ) : (
-                            'MINT'
-                          )}
-                        </MintButton>
+                        {candyMachine?.state.isActive &&
+                        candyMachine?.state.gatekeeper &&
+                        wallet.publicKey &&
+                        wallet.signTransaction ? (
+                          <GatewayProvider
+                            wallet={{
+                              publicKey:
+                                wallet.publicKey ||
+                                new PublicKey(CANDY_MACHINE_PROGRAM),
+                              //@ts-ignore
+                              signTransaction: wallet.signTransaction,
+                            }}
+                            // // Replace with following when added
+                            // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
+                            gatekeeperNetwork={
+                              candyMachine?.state?.gatekeeper?.gatekeeperNetwork
+                            } // This is the ignite (captcha) network
+                            /// Don't need this for mainnet
+                            clusterUrl={rpcUrl}
+                          >
+                            <MintButton
+                              candyMachine={candyMachine}
+                              fairLaunch={fairLaunch}
+                              isMinting={isMinting}
+                              fairLaunchBalance={fairLaunchBalance}
+                              onMint={onMint}
+                            />
+                          </GatewayProvider>
+                        ) : (
+                          <MintButton
+                            candyMachine={candyMachine}
+                            fairLaunch={fairLaunch}
+                            isMinting={isMinting}
+                            fairLaunchBalance={fairLaunchBalance}
+                            onMint={onMint}
+                          />
+                        )}
                       </MintContainer>
                     )}
 
@@ -727,7 +745,7 @@ const Home = (props: HomeProps) => {
                       isWinner(fairLaunch) ||
                       fairLaunchBalance > 0
                     ) && (
-                      <MintButton
+                      <CTAButton
                         onClick={onRefundTicket}
                         variant="contained"
                         disabled={
@@ -737,7 +755,7 @@ const Home = (props: HomeProps) => {
                         }
                       >
                         {isMinting ? <CircularProgress /> : 'Withdraw'}
-                      </MintButton>
+                      </CTAButton>
                     )}
                   </>
                 )}

@@ -29,11 +29,11 @@ export function getPhase(
   candyMachine: CandyMachineAccount | undefined,
 ): Phase {
   const curr = new Date().getTime();
-
   const phaseOne = toDate(fairLaunch?.state.data.phaseOneStart)?.getTime();
   const phaseOneEnd = toDate(fairLaunch?.state.data.phaseOneEnd)?.getTime();
   const phaseTwoEnd = toDate(fairLaunch?.state.data.phaseTwoEnd)?.getTime();
   const candyMachineGoLive = toDate(candyMachine?.state.goLiveDate)?.getTime();
+
   if (phaseOne && curr < phaseOne) {
     return Phase.AnticipationPhase;
   } else if (phaseOneEnd && curr <= phaseOneEnd) {
@@ -106,6 +106,7 @@ export const PhaseHeader = ({
   rpcUrl,
 }: PhaseHeaderProps) => {
   const wallet = useWallet();
+  console.log('D', candyMachine);
 
   return (
     <>
@@ -174,31 +175,6 @@ export const PhaseHeader = ({
           status="LIVE"
         />
       )}
-      {
-        // TODO: Add network when added to machine state
-        // candyMachine?.state.isActive &&
-        // candyMachine.state.gatekeeper_network && // Do network check here
-        candyMachine?.state.isActive &&
-          candyMachine?.state.gatekeeper &&
-          wallet.publicKey &&
-          wallet.signTransaction && (
-            <GatewayProvider
-              wallet={{
-                publicKey: wallet.publicKey,
-                signTransaction: wallet.signTransaction,
-              }}
-              // // Replace with following when added
-              // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
-              gatekeeperNetwork={
-                candyMachine.state.gatekeeper.gatekeeperNetwork
-              } // This is the ignite (captcha) network
-              /// Don't need this for mainnet
-              clusterUrl={rpcUrl}
-            >
-              <IdentityButton mode={ButtonMode.DARK} />
-            </GatewayProvider>
-          )
-      }
     </>
   );
 };
