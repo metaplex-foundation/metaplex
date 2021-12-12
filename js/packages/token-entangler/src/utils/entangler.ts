@@ -521,11 +521,11 @@ export const searchEntanglements = async (
     ...searchMintBAccounts,
   ];
   const entanglements = entanglementsAccounts.map(
-    async account =>
-      await anchorProgram.account.entangledPair
+    account =>
+      anchorProgram.account.entangledPair
         .fetch(account.pubkey)
-        .then(epObj => epObj),
   );
+  // console.log('Found', mint, entanglements.length, 'entanglements');
   return Promise.all(entanglements);
 };
 
@@ -538,14 +538,12 @@ export const getOwnedNFTMints = async (
     connection,
   );
 
-  //const searchMint = new PublicKey(mint);
-
   const TokenAccounts =
     await anchorProgram.provider.connection.getParsedTokenAccountsByOwner(
       anchorWallet.publicKey,
       { programId: TOKEN_PROGRAM_ID },
     );
-  const NFTMints = TokenAccounts.value.map(val => val.account.data.parsed).filter(val => val.info.tokenAmount.decimals === 0);
+  const NFTMints = TokenAccounts.value.map(val => val.account.data.parsed).filter(val => val.info.tokenAmount.amount != 0 && val.info.tokenAmount.decimals === 0);
 
   return NFTMints;
 };

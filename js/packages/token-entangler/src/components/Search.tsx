@@ -18,6 +18,7 @@ export const Search = () => {
     const connection = useConnection();
     console.log(connection);
     const wallet = useWallet();
+    const [entanglements, setEntanglements] = React.useState<Array<object>>([]);
     const anchorWallet = useMemo(() => {
         if (
             !wallet ||
@@ -39,9 +40,10 @@ export const Search = () => {
         if (!anchorWallet) {
             return;
         }
-        const res = await searchEntanglements(anchorWallet, connection, mintA);
-        console.log(res);
-    };
+        const foundEntanglements = await searchEntanglements(anchorWallet, connection, mintA);
+        setEntanglements([...foundEntanglements]);
+        console.log(entanglements)
+    }
 
     const [mintA, setMintA] = React.useState(localStorage.getItem("mintA") || "");
     return (
@@ -71,8 +73,12 @@ export const Search = () => {
                         Search Entanglements
                     </Button>
                 </FormGroup>
-
+                <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
+                    <h2>Entanglements</h2>
+                    {/* {entanglements.map((entanglement) => (<li key={getTokenEntanglement(entanglement?.mintA, entanglement?.mintB)}>{mint}</li>))} */}
+                </Box>
             </Box>
+
         </React.Fragment>
     );
 

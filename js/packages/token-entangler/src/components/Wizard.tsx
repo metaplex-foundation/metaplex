@@ -11,14 +11,13 @@ import {
 } from "@solana/wallet-adapter-react";
 
 import * as anchor from '@project-serum/anchor';
-import { getOwnedNFTMints } from "../utils/entangler";
+import { getOwnedNFTMints, searchEntanglements } from "../utils/entangler";
 
 
 export const Wizard = () => {
     const connection = useConnection();
-    console.log(connection);
     const wallet = useWallet();
-    const [mints, setMints] = React.useState<Array<string>>([]);
+    const [entanglements, setEntanglements] = React.useState<Array<object>>([]);
 
     const anchorWallet = useMemo(() => {
         if (
@@ -43,14 +42,17 @@ export const Wizard = () => {
             return;
         }
         const res = await getOwnedNFTMints(anchorWallet, connection);
-        const mintsFounded = res.map((token) => (token.info.mint));
-        setMints([...mintsFounded]);
+        const walletNFTMints = res.map((token) => (token.info.mint));
+        const allEntanglementsMap = Promise.all(walletNFTMints.map(async (mint) => {
+            return { mint: mint, entanglements: await searchEntanglements(anchorWallet, connection, mint) };
+        }));
+        setEntanglements([... await allEntanglementsMap]);
     };
 
 
     return (
         <React.Fragment>
-            <h1>Search my mints</h1>
+            <h1>Search NFT Entanglements</h1>
             <p>Search for entanglements by owner address</p>
 
             <Box
@@ -69,8 +71,19 @@ export const Wizard = () => {
 
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
-                <h2>Mint List</h2>
-                {mints.map((mint) => (<li key={mint}>{mint}</li>))}
+                <h2>My NFT mints:</h2>
+                {//@ts-ignore
+                    entanglements.map((e) => (<li key={e.mint}>{e.mint}{e.entanglements.length > 0 &&
+                        <p>
+                            You have {//@ts-ignore
+                                e.entanglements.length} entanglements
+                            <ul>
+                                {//@ts-ignore 
+                                    e.entanglements.map((e) => (<li key={e.mintA.toString()}>{`Mints: ${e.mintA.toString()} - ${e.mintB.toString()} \n -- Price: ${e.price.toString()} -- Pays Every Time: ${e.paysEveryTime}`} </li>))}.
+                            </ul>
+                        </p>
+
+                    } </li>))}
             </Box>
         </React.Fragment>
     );
