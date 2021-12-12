@@ -148,6 +148,7 @@ const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
 const Home = (props: HomeProps) => {
   const [fairLaunchBalance, setFairLaunchBalance] = useState<number>(0);
   const [yourSOLBalance, setYourSOLBalance] = useState<number | null>(null);
+  const rpcUrl = props.rpcHost;
 
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
@@ -489,6 +490,7 @@ const Home = (props: HomeProps) => {
               phase={phase}
               fairLaunch={fairLaunch}
               candyMachine={candyMachine}
+              rpcUrl={rpcUrl}
               candyMachinePredatesFairLaunch={!!candyMachinePredatesFairLaunch}
             />
             {fairLaunch && (

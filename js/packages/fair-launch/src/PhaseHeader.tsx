@@ -1,13 +1,17 @@
 import * as anchor from '@project-serum/anchor';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import {PhaseCountdown} from './countdown';
-import {toDate} from './utils';
-import {FairLaunchAccount} from './fair-launch';
-import {CandyMachineAccount} from './candy-machine';
-import {ButtonMode, GatewayProvider, IdentityButton} from '@civic/solana-gateway-react';
-import {useWallet} from '@solana/wallet-adapter-react';
-import {PublicKey} from '@solana/web3.js';
+import { PhaseCountdown } from './countdown';
+import { toDate } from './utils';
+import { FairLaunchAccount } from './fair-launch';
+import { CandyMachineAccount } from './candy-machine';
+import {
+  ButtonMode,
+  GatewayProvider,
+  IdentityButton,
+} from '@civic/solana-gateway-react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 
 export enum Phase {
   AnticipationPhase, // FL, AKA Phase 0
@@ -44,12 +48,12 @@ export function getPhase(
     return Phase.Lottery;
   } else if (
     (!fairLaunch || fairLaunch?.state.phaseThreeStarted) &&
-      candyMachineGoLive &&
-      curr > candyMachineGoLive
+    candyMachineGoLive &&
+    curr > candyMachineGoLive
   ) {
     return Phase.Phase4;
   } else if (fairLaunch?.state.phaseThreeStarted) {
-    if (!candyMachine){
+    if (!candyMachine) {
       return Phase.RaffleFinished;
     } else {
       return Phase.WaitForCM;
@@ -57,7 +61,6 @@ export function getPhase(
   }
   return Phase.Unknown;
 }
-
 
 const Header = (props: {
   phaseName: string;
@@ -88,108 +91,114 @@ const Header = (props: {
 };
 
 type PhaseHeaderProps = {
-  phase: Phase,
-  fairLaunch?: FairLaunchAccount,
-  candyMachine?: CandyMachineAccount,
-  candyMachinePredatesFairLaunch: boolean,
-}
+  phase: Phase;
+  fairLaunch?: FairLaunchAccount;
+  candyMachine?: CandyMachineAccount;
+  candyMachinePredatesFairLaunch: boolean;
+  rpcUrl: string;
+};
 
-export const PhaseHeader = (
-  {
-    phase,
-    fairLaunch,
-    candyMachine,
-    candyMachinePredatesFairLaunch,
-  }: PhaseHeaderProps) => {
+export const PhaseHeader = ({
+  phase,
+  fairLaunch,
+  candyMachine,
+  candyMachinePredatesFairLaunch,
+  rpcUrl,
+}: PhaseHeaderProps) => {
   const wallet = useWallet();
 
-  return <>
-    {phase === Phase.AnticipationPhase && (
-      <Header
-        phaseName={'Phase 0'}
-        desc={'Anticipation Phase'}
-        date={fairLaunch?.state.data.phaseOneStart}
-      />
-    )}
-    {phase === Phase.SetPrice && (
-      <Header
-        phaseName={'Phase 1'}
-        desc={'Set price phase'}
-        date={fairLaunch?.state.data.phaseOneEnd}
-      />
-    )}
+  return (
+    <>
+      {phase === Phase.AnticipationPhase && (
+        <Header
+          phaseName={'Phase 0'}
+          desc={'Anticipation Phase'}
+          date={fairLaunch?.state.data.phaseOneStart}
+        />
+      )}
+      {phase === Phase.SetPrice && (
+        <Header
+          phaseName={'Phase 1'}
+          desc={'Set price phase'}
+          date={fairLaunch?.state.data.phaseOneEnd}
+        />
+      )}
 
-    {phase === Phase.GracePeriod && (
-      <Header
-        phaseName={'Phase 2'}
-        desc={'Grace period'}
-        date={fairLaunch?.state.data.phaseTwoEnd}
-      />
-    )}
+      {phase === Phase.GracePeriod && (
+        <Header
+          phaseName={'Phase 2'}
+          desc={'Grace period'}
+          date={fairLaunch?.state.data.phaseTwoEnd}
+        />
+      )}
 
-    {phase === Phase.Lottery && (
-      <Header
-        phaseName={'Phase 3'}
-        desc={'Raffle in progress'}
-        date={fairLaunch?.state.data.phaseTwoEnd.add(
-          fairLaunch?.state.data.lotteryDuration,
-        )}
-      />
-    )}
+      {phase === Phase.Lottery && (
+        <Header
+          phaseName={'Phase 3'}
+          desc={'Raffle in progress'}
+          date={fairLaunch?.state.data.phaseTwoEnd.add(
+            fairLaunch?.state.data.lotteryDuration,
+          )}
+        />
+      )}
 
-    {phase === Phase.RaffleFinished && (
-      <Header
-        phaseName={'Phase 3'}
-        desc={'Raffle finished!'}
-        date={fairLaunch?.state.data.phaseTwoEnd}
-      />
-    )}
+      {phase === Phase.RaffleFinished && (
+        <Header
+          phaseName={'Phase 3'}
+          desc={'Raffle finished!'}
+          date={fairLaunch?.state.data.phaseTwoEnd}
+        />
+      )}
 
-    {phase === Phase.WaitForCM && (
-      <Header
-        phaseName={'Phase 3'}
-        desc={'Minting starts in...'}
-        date={candyMachine?.state.goLiveDate}
-      />
-    )}
+      {phase === Phase.WaitForCM && (
+        <Header
+          phaseName={'Phase 3'}
+          desc={'Minting starts in...'}
+          date={candyMachine?.state.goLiveDate}
+        />
+      )}
 
-    {phase === Phase.Unknown && !candyMachine && (
-      <Header
-        phaseName={'Loading...'}
-        desc={'Waiting for you to connect your wallet.'}
-        date={undefined}
-      />
-    )}
+      {phase === Phase.Unknown && !candyMachine && (
+        <Header
+          phaseName={'Loading...'}
+          desc={'Waiting for you to connect your wallet.'}
+          date={undefined}
+        />
+      )}
 
-    {phase === Phase.Phase4 && (
-      <Header
-        phaseName={
-          candyMachinePredatesFairLaunch ? 'Phase 3' : 'Phase 4'
-        }
-        desc={'Candy Time 🍬 🍬 🍬'}
-        date={candyMachine?.state.goLiveDate}
-        status="LIVE"
-      />
-    )}
-    {
-      // TODO: Add network when added to machine state
-      // candyMachine?.state.isActive &&
+      {phase === Phase.Phase4 && (
+        <Header
+          phaseName={candyMachinePredatesFairLaunch ? 'Phase 3' : 'Phase 4'}
+          desc={'Candy Time 🍬 🍬 🍬'}
+          date={candyMachine?.state.goLiveDate}
+          status="LIVE"
+        />
+      )}
+      {
+        // TODO: Add network when added to machine state
+        // candyMachine?.state.isActive &&
         // candyMachine.state.gatekeeper_network && // Do network check here
-        wallet.publicKey &&
-        wallet.signTransaction &&
-        <GatewayProvider
-            wallet={{
-              publicKey: wallet.publicKey,
-              signTransaction: wallet.signTransaction,
-            }}
-            // // Replace with following when added
-            // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
-            gatekeeperNetwork={new PublicKey("ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6")} // This is the ignite (captcha) network
-            /// Don't need this for mainnet
-            clusterUrl={"https://api.devnet.solana.com"}
-        >
-            <IdentityButton mode={ButtonMode.DARK}/>
-        </GatewayProvider>
-    }
-  </>
-}
+        candyMachine?.state.isActive &&
+          candyMachine?.state.gatekeeper &&
+          wallet.publicKey &&
+          wallet.signTransaction && (
+            <GatewayProvider
+              wallet={{
+                publicKey: wallet.publicKey,
+                signTransaction: wallet.signTransaction,
+              }}
+              // // Replace with following when added
+              // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
+              gatekeeperNetwork={
+                candyMachine.state.gatekeeper.gatekeeperNetwork
+              } // This is the ignite (captcha) network
+              /// Don't need this for mainnet
+              clusterUrl={rpcUrl}
+            >
+              <IdentityButton mode={ButtonMode.DARK} />
+            </GatewayProvider>
+          )
+      }
+    </>
+  );
+};
