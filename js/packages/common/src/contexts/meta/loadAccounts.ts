@@ -293,26 +293,25 @@ export const loadAccounts = async (
     );
 
     const readyMetadata = auctionCaches.reduce((memo, auctionCache) => {
-      const setMetadata = [auctionCache.info.metadata[0]].map(
-        async metadataKey => {
-          const metadata = state.metadataByMetadata[metadataKey];
+      const setMetadata = auctionCache.info.metadata.map(async metadataKey => {
+        const metadata = state.metadataByMetadata[metadataKey];
 
-          let auctionMetadata =
-            state.metadataByAuction[auctionCache.info.auction];
+        let auctionMetadata =
+          state.metadataByAuction[auctionCache.info.auction];
 
-          auctionMetadata =
-            auctionMetadata || ([] as ParsedAccount<Metadata>[]);
+        auctionMetadata = auctionMetadata || ([] as ParsedAccount<Metadata>[]);
 
-          await metadata.info.init();
-          updateState('metadataByMint', metadata.info.mint, metadata);
-          updateState('metadata', '', metadata);
+        await metadata.info.init();
+        updateState('metadataByMint', metadata.info.mint, metadata);
+        updateState('metadata', '', metadata);
 
-          state.metadataByAuction[auctionCache.info.auction] = [
-            ...auctionMetadata,
-            metadata,
-          ];
-        },
-      );
+        const priorMetadata =
+          state.metadataByAuction[auctionCache.info.auction];
+
+        state.metadataByAuction[auctionCache.info.auction] = priorMetadata
+          ? [...priorMetadata, ...auctionMetadata, metadata]
+          : [...auctionMetadata, metadata];
+      });
 
       return [...memo, ...setMetadata];
     }, [] as Promise<void>[]);
