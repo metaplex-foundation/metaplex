@@ -363,7 +363,7 @@ export async function upload({
               );
               const manifest = getAssetManifest(
                 dirname,
-                `${assetKey.index}.json`,
+                `${assetKey.index}`,
               );
               const manifestBuffer = Buffer.from(JSON.stringify(manifest));
               if (i >= lastPrinted + tick || i === 0) {
