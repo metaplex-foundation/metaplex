@@ -64,6 +64,7 @@ const App = () => {
                 connection={connection}
                 startDate={startDateSeed}
                 txTimeout={txTimeout}
+                rpcHost={rpcHost}
               />
             </ConfettiProvider>
           </WalletDialogProvider>

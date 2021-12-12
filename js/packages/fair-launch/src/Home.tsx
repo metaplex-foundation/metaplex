@@ -114,6 +114,7 @@ export interface HomeProps {
   connection: anchor.web3.Connection;
   startDate: number;
   txTimeout: number;
+  rpcHost: string;
 }
 
 const FAIR_LAUNCH_LOTTERY_SIZE =
