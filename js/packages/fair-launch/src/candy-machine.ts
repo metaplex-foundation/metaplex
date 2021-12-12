@@ -244,12 +244,11 @@ export const mintOneToken = async (
     await getAtaForMint(mint.publicKey, payer)
   )[0];
 
-  const userPayingAccountAddress = (
-    await getAtaForMint(candyMachine.state.tokenMint, payer)
-  )[0];
+  const userPayingAccountAddress = candyMachine.state.tokenMint
+    ? (await getAtaForMint(candyMachine.state.tokenMint, payer))[0]
+    : payer;
 
   const candyMachineAddress = candyMachine.id;
-
   const remainingAccounts = [];
   const signers: anchor.web3.Keypair[] = [mint];
   const cleanupInstructions = [];

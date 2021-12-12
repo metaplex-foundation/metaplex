@@ -202,7 +202,7 @@ const Home = (props: HomeProps) => {
             props.txTimeout,
             props.connection,
             'singleGossip',
-            false,
+            true,
           );
         }
 
@@ -722,7 +722,11 @@ const Home = (props: HomeProps) => {
                       </MintContainer>
                     )}
 
-                    {!isWinner(fairLaunch) && (
+                    {!(
+                      !fairLaunch ||
+                      isWinner(fairLaunch) ||
+                      fairLaunchBalance > 0
+                    ) && (
                       <MintButton
                         onClick={onRefundTicket}
                         variant="contained"
