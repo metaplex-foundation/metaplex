@@ -1,5 +1,5 @@
-import { Box, Button, FormGroup } from "@mui/material";
-import React from "react";
+import { Box, Button, FormGroup, LinearProgress } from "@mui/material";
+import React, { useState } from "react";
 import SearchIcon from '@mui/icons-material/Search';
 import {
     useConnection,
@@ -21,6 +21,8 @@ export const Wizard = () => {
     const history = useHistory();
 
     const [entanglements, setEntanglements] = React.useState<Array<object>>([]);
+    const [loading, setLoading] = useState(false);
+
 
     const anchorWallet = useMemo(() => {
         if (
@@ -44,12 +46,15 @@ export const Wizard = () => {
         if (!anchorWallet) {
             return;
         }
+        setLoading(true);
+        setEntanglements([])
         const res = await getOwnedNFTMints(anchorWallet, connection);
         const walletNFTMints = res.map((token) => (token.info.mint));
         const allEntanglementsMap = Promise.all(walletNFTMints.map(async (mint) => {
             return { mint: mint, entanglements: await searchEntanglements(anchorWallet, connection, mint) };
         }));
         setEntanglements([... await allEntanglementsMap]);
+        setLoading(false);
     };
 
     const handleEntanglementClick = async (event: React.MouseEvent<HTMLElement>, entanglement: any) => {
@@ -64,7 +69,7 @@ export const Wizard = () => {
     return (
         <React.Fragment>
             <h1>Search NFT Entanglements</h1>
-            <p>Search for entanglements by owner address</p>
+            <p>Searches entanglements of your NFTs</p>
 
             <Box
                 component="form"
@@ -75,19 +80,18 @@ export const Wizard = () => {
                 autoComplete="off"
             >
                 <FormGroup>
-                    <Button disabled={!anchorWallet} variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
-                        Search Tokens
+                    <Button disabled={!anchorWallet || loading} variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
+                        Search Entanglements
                     </Button>
                 </FormGroup>
 
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
                 <h2>My NFT mints:</h2>
+                {loading && <LinearProgress />}
                 {//@ts-ignore
                     entanglements.map((e) => (<li key={e.mint}>{e.mint}{e.entanglements.length > 0 &&
                         <p>
-                            You have {//@ts-ignore
-                                e.entanglements.length} entanglements
                             <ul>
                                 {//@ts-ignore 
                                     e.entanglements.map((e) => (<li key={e.mintA.toString()}> <Button onClick={(event) => handleEntanglementClick(event, e)} variant="contained" startIcon={<SwapHorizIcon />}>
