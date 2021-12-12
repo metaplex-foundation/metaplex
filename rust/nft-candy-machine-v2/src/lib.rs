@@ -27,7 +27,7 @@ use {
     spl_token::state::Mint,
     std::{cell::RefMut, ops::Deref},
 };
-anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
+anchor_lang::declare_id!("Ch3qpQYqr7AvLP6Eph9xxbtneAbzovzuEexAGh48URHS");
 
 const PREFIX: &str = "candy_machine";
 #[program]

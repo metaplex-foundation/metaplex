@@ -40,10 +40,10 @@ import {
   purchaseTicket,
 } from './fair-launch';
 
-import {AlertState, formatNumber, getAtaForMint, toDate} from './utils';
-import {MintButton} from './MintButton';
-import {AntiRug} from './AntiRug';
-import {getPhase, Phase, PhaseHeader} from './PhaseHeader';
+import { AlertState, formatNumber, getAtaForMint, toDate } from './utils';
+import { MintButton } from './MintButton';
+import { AntiRug } from './AntiRug';
+import { getPhase, Phase, PhaseHeader } from './PhaseHeader';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -189,15 +189,20 @@ const Home = (props: HomeProps) => {
           await onPunchTicket();
         }
 
-        const mintTxId = await mintOneToken(candyMachine, wallet.publicKey);
+        const mintTxId = (
+          await mintOneToken(candyMachine, wallet.publicKey)
+        )[0];
 
-        const status = await awaitTransactionSignatureConfirmation(
-          mintTxId,
-          props.txTimeout,
-          props.connection,
-          'singleGossip',
-          false,
-        );
+        let status: any = { err: true };
+        if (mintTxId) {
+          status = await awaitTransactionSignatureConfirmation(
+            mintTxId,
+            props.txTimeout,
+            props.connection,
+            'singleGossip',
+            false,
+          );
+        }
 
         if (!status?.err) {
           setAlertState({
@@ -256,7 +261,7 @@ const Home = (props: HomeProps) => {
         );
         setYourSOLBalance(balance);
 
-        if(props.fairLaunchId) {
+        if (props.fairLaunchId) {
           const state = await getFairLaunchState(
             anchorWallet,
             props.fairLaunchId,
@@ -298,7 +303,7 @@ const Home = (props: HomeProps) => {
               setContributed(
                 (state.state.data.priceRangeStart.toNumber() +
                   randomTick * state.state.data.tickSize.toNumber()) /
-                LAMPORTS_PER_SOL,
+                  LAMPORTS_PER_SOL,
               );
             } else {
               setContributed(
@@ -467,7 +472,13 @@ const Home = (props: HomeProps) => {
 
   return (
     <Container style={{ marginTop: 100 }}>
-      {fairLaunch && <AntiRug fairLaunch={fairLaunch} isMinting={[isMinting, setIsMinting]} setAlertState={setAlertState}/>}
+      {fairLaunch && (
+        <AntiRug
+          fairLaunch={fairLaunch}
+          isMinting={[isMinting, setIsMinting]}
+          setAlertState={setAlertState}
+        />
+      )}
       <Container maxWidth="xs" style={{ position: 'relative' }}>
         <Paper
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
@@ -504,7 +515,9 @@ const Home = (props: HomeProps) => {
                       SOL
                     </Typography>
                   </>
-                ) : [Phase.AnticipationPhase, Phase.SetPrice].includes(phase) ? (
+                ) : [Phase.AnticipationPhase, Phase.SetPrice].includes(
+                    phase,
+                  ) ? (
                   <Typography>
                     You haven't entered this raffle yet. <br />
                     {fairLaunch?.state?.data?.fee && (
@@ -628,7 +641,8 @@ const Home = (props: HomeProps) => {
                       variant="contained"
                       disabled={
                         isMinting ||
-                        (!fairLaunch?.ticket.data && phase === Phase.GracePeriod) ||
+                        (!fairLaunch?.ticket.data &&
+                          phase === Phase.GracePeriod) ||
                         notEnoughSOL
                       }
                     >
@@ -957,7 +971,5 @@ const Home = (props: HomeProps) => {
     </Container>
   );
 };
-
-
 
 export default Home;

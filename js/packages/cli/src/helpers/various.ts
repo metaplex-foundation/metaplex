@@ -26,7 +26,10 @@ export async function getCandyMachineV2Config(
   price: BN;
   treasuryWallet: web3.PublicKey;
   splToken: web3.PublicKey | null;
-  useCaptcha: boolean;
+  gatekeeper: null | {
+    expireOnUse: boolean;
+    gatekeeperNetwork: web3.PublicKey;
+  };
   endSettings: null | [number, BN];
   whitelistMintSettings: null | {
     mode: any;
@@ -60,7 +63,7 @@ export async function getCandyMachineV2Config(
     splToken,
     splTokenAccount,
     solTreasuryAccount,
-    useCaptcha,
+    gatekeeper,
     endSettings,
     hiddenSettings,
     whitelistMintSettings,
@@ -148,6 +151,12 @@ export async function getCandyMachineV2Config(
     hiddenSettings.hash = utf8Encode.encode(hiddenSettings.hash);
   }
 
+  if (gatekeeper) {
+    gatekeeper.gatekeeperNetwork = new web3.PublicKey(
+      gatekeeper.gatekeeperNetwork,
+    );
+  }
+
   return {
     storage,
     ipfsInfuraProjectId,
@@ -160,7 +169,7 @@ export async function getCandyMachineV2Config(
     price: new BN(parsedPrice),
     treasuryWallet: wallet,
     splToken: splToken ? new web3.PublicKey(splToken) : null,
-    useCaptcha,
+    gatekeeper,
     endSettings,
     hiddenSettings,
     whitelistMintSettings,

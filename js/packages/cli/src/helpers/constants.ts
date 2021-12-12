@@ -20,7 +20,8 @@ export const CANDY_MACHINE_PROGRAM_ID = new PublicKey(
 );
 
 export const CANDY_MACHINE_PROGRAM_V2_ID = new PublicKey(
-  'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+  //'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+  'Ch3qpQYqr7AvLP6Eph9xxbtneAbzovzuEexAGh48URHS',
 );
 export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
@@ -98,7 +99,10 @@ export const CONFIG_ARRAY_START_V2 =
   1 + // allow presale
   1 + // use captcha
   9 + // discount price
-  32; // mint key for whitelist
+  32 + // mint key for whitelist
+  1 +
+  32 +
+  1; // gatekeeper
 
 export const CONFIG_LINE_SIZE_V2 = 4 + 32 + 4 + 200;
 export const CONFIG_LINE_SIZE = 4 + 32 + 4 + 200;

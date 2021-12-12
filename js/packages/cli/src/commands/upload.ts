@@ -36,7 +36,7 @@ export async function uploadV2({
   price,
   treasuryWallet,
   splToken,
-  useCaptcha,
+  gatekeeper,
   goLiveDate,
   endSettings,
   whitelistMintSettings,
@@ -60,7 +60,10 @@ export async function uploadV2({
   price: BN;
   treasuryWallet: PublicKey;
   splToken: PublicKey;
-  useCaptcha: boolean;
+  gatekeeper: null | {
+    expireOnUse: boolean;
+    gatekeeperNetwork: web3.PublicKey;
+  };
   goLiveDate: null | BN;
   endSettings: null | [number, BN];
   whitelistMintSettings: null | {
@@ -176,7 +179,7 @@ export async function uploadV2({
                     isMutable: mutable,
                     maxSupply: new BN(0),
                     retainAuthority: retainAuthority,
-                    useCaptcha,
+                    gatekeeper,
                     goLiveDate,
                     price,
                     endSettings,

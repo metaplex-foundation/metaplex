@@ -335,7 +335,8 @@ export async function mintV2(
         recentBlockhashes: anchor.web3.SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
         instructionSysvarAccount: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
       },
-      remainingAccounts,
+      remainingAccounts:
+        remainingAccounts.length > 0 ? remainingAccounts : undefined,
     }),
   );
 

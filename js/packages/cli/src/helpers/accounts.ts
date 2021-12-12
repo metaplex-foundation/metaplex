@@ -88,7 +88,10 @@ export interface CandyMachineData {
   maxSupply: anchor.BN;
   price: anchor.BN;
   retainAuthority: boolean;
-  useCaptcha: boolean;
+  gatekeeper: null | {
+    expireOnUse: boolean;
+    gatekeeperNetwork: web3.PublicKey;
+  };
   goLiveDate: null | anchor.BN;
   endSettings: null | [number, anchor.BN];
   whitelistMintSettings: null | {
