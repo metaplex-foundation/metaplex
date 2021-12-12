@@ -12,11 +12,14 @@ import {
 
 import * as anchor from '@project-serum/anchor';
 import { getOwnedNFTMints, searchEntanglements } from "../utils/entangler";
-
+import { useHistory } from "react-router-dom";
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 export const Wizard = () => {
     const connection = useConnection();
     const wallet = useWallet();
+    const history = useHistory();
+
     const [entanglements, setEntanglements] = React.useState<Array<object>>([]);
 
     const anchorWallet = useMemo(() => {
@@ -49,6 +52,14 @@ export const Wizard = () => {
         setEntanglements([... await allEntanglementsMap]);
     };
 
+    const handleEntanglementClick = async (event: React.MouseEvent<HTMLElement>, entanglement: any) => {
+        event.preventDefault();
+
+        localStorage.setItem('mintA', entanglement.mintA.toString());
+        localStorage.setItem('mintB', entanglement.mintB.toString());
+        localStorage.setItem('entanglement', "");
+        history.push(`swap/`);
+    };
 
     return (
         <React.Fragment>
@@ -64,7 +75,7 @@ export const Wizard = () => {
                 autoComplete="off"
             >
                 <FormGroup>
-                    <Button variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
+                    <Button disabled={!anchorWallet} variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
                         Search Tokens
                     </Button>
                 </FormGroup>
@@ -79,7 +90,9 @@ export const Wizard = () => {
                                 e.entanglements.length} entanglements
                             <ul>
                                 {//@ts-ignore 
-                                    e.entanglements.map((e) => (<li key={e.mintA.toString()}>{`Mints: ${e.mintA.toString()} - ${e.mintB.toString()} \n -- Price: ${e.price.toString()} -- Pays Every Time: ${e.paysEveryTime}`} </li>))}.
+                                    e.entanglements.map((e) => (<li key={e.mintA.toString()}> <Button onClick={(event) => handleEntanglementClick(event, e)} variant="contained" startIcon={<SwapHorizIcon />}>
+                                        SWAP
+                                    </Button> {`Mints: ${e.mintA.toString()} - ${e.mintB.toString()} \n -- Price: ${e.price.toString()} -- Pays Every Time: ${e.paysEveryTime}`} </li>))}.
                             </ul>
                         </p>
 
