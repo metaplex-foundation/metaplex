@@ -66,8 +66,12 @@
     border: 1px solid @grey-50;
     border-radius: 25px;
 
+    .percentage-mobile {
+      display: none;
+    }
+
     p {
-      white-space: pre-wrap;
+      white-space: nowrap;
       display: flex;
       font-size: 14px;
       line-height: 17px;
@@ -77,7 +81,11 @@
 
   @media (max-width: @mobile-xs-max) {
     &__percentage {
-      p p {
+      .percentage-mobile {
+        display: flex;
+      }
+
+      .percentage-desktop {
         display: none;
       }
     }

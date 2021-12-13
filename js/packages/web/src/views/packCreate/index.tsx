@@ -37,6 +37,7 @@ export const PackCreateView = (): ReactElement => {
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const items = useUserArts();
   const { step, goToNextStep, resetStep } = useStep();
@@ -148,6 +149,7 @@ export const PackCreateView = (): ReactElement => {
       !!Object.values(selectedVouchers).length;
 
     if (canSubmit) {
+      setIsLoading(true);
       try {
         await sendCreatePack({
           wallet,
@@ -161,6 +163,7 @@ export const PackCreateView = (): ReactElement => {
         console.log(e);
       }
     }
+    setIsLoading(false);
   }, [wallet, connection, accountByMint, attributes]);
 
   const handleFinish = useCallback(() => {
@@ -177,6 +180,7 @@ export const PackCreateView = (): ReactElement => {
         setStep={goToNextStep}
         isValidStep={isValidStep}
         submit={handleSubmit}
+        buttonLoading={isLoading}
       />
       <div className="content-wrapper">
         <Header step={step} />
