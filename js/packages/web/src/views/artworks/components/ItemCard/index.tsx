@@ -14,7 +14,7 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
       pubkey,
       cardsRedeemed,
       edition,
-      info: { authority, allowedAmountToRedeem },
+      info: { authority, allowedAmountToRedeem, uri },
       provingProcessKey,
       voucherMetadataKey,
     } = item;
@@ -31,6 +31,7 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
           authority={authority}
           cardsRedeemed={cardsRedeemed}
           allowedAmountToRedeem={allowedAmountToRedeem}
+          uri={uri}
           artView
         />
       </Link>
