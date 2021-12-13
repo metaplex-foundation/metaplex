@@ -21,7 +21,7 @@ export type AuctionStatus =
 
 interface AuctionStatusLabels {
   status: AuctionStatus;
-  amount: string | number;
+  amount: number;
 }
 
 export const getHumanStatus = (status: AuctionStatus): string => {
