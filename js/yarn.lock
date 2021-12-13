@@ -3078,21 +3078,6 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
-<<<<<<< HEAD
-"@civic/solana-gateway-react@^0.4.2":
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.2.tgz#c82e0ecf43d9cf75617435e768ea1412e89118d8"
-  integrity sha512-xNb0xFPYtLUZ35zwCD2VWeLoMFywzsnF6fdNkPep+JLpCVbz69bT3L3QoKzo6vRjaaGyinC0gQMIhYKWMlK3tg==
-  dependencies:
-    "@identity.com/prove-solana-wallet" "^0.2.3"
-    "@identity.com/solana-gateway-ts" "^0.3.3"
-    "@solana/web3.js" "^1.20.0"
-    "@types/styled-components" "^5.1.15"
-    fetch-retry-ts "^1.1.24"
-    iframe-resizer-react "^1.1.0"
-    ramda "^0.27.1"
-    styled-components "^5.3.1"
-=======
 "@bundlr-network/client@^0.2.4":
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/@bundlr-network/client/-/client-0.2.4.tgz#f8564ba6d984c9de698a9d7d0c1643717592350a"
@@ -3112,7 +3097,20 @@
     redstone-api "^0.4.6"
     tslib "^2.3.1"
     typescript "^4.4.3"
->>>>>>> 0aadf14cd614e0208adee4ee179b63aed8233fdd
+
+"@civic/solana-gateway-react@^0.4.6":
+  version "0.4.6"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.6.tgz#b137bdba547d3516af72b1238d1e931f93117203"
+  integrity sha512-Mk1YXS7TS6X8jebKT7I/Vzfm+l9WnMZMMw3PvNQ5NpQI6MoOF39DcBac+gyZEsbeWazSCTb4M6CvuZPycMLtlw==
+  dependencies:
+    "@identity.com/prove-solana-wallet" "^0.2.3"
+    "@identity.com/solana-gateway-ts" "^0.4.0"
+    "@solana/web3.js" "^1.20.0"
+    "@types/styled-components" "^5.1.15"
+    fetch-retry-ts "^1.1.24"
+    iframe-resizer-react "^1.1.0"
+    ramda "^0.27.1"
+    styled-components "^5.3.1"
 
 "@cloudflare/stream-react@^1.1.0":
   version "1.1.0"
@@ -3763,15 +3761,6 @@
     elliptic "6.5.4"
     hash.js "1.1.7"
 
-"@ethersproject/sha2@^5.5.0":
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/@ethersproject/sha2/-/sha2-5.5.0.tgz#a40a054c61f98fd9eee99af2c3cc6ff57ec24db7"
-  integrity sha512-B5UBoglbCiHamRVPLA110J+2uqsifpZaTmid2/7W5rbtYVz6gus6/hSDieIU/6gaKIDcOj12WnOdiymEUHIAOA==
-  dependencies:
-    "@ethersproject/bytes" "^5.5.0"
-    "@ethersproject/logger" "^5.5.0"
-    hash.js "1.1.7"
-
 "@ethersproject/signing-key@^5.4.0":
   version "5.4.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/signing-key/-/signing-key-5.4.0.tgz#2f05120984e81cf89a3d5f6dec5c68ee0894fbec"
@@ -4071,10 +4060,10 @@
     "@solana/web3.js" "^1.22.0"
     bs58 "^4.0.1"
 
-"@identity.com/solana-gateway-ts@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.3.3.tgz#bb9ab03c57d39cd10f4a1f0a214e9b230f21cb91"
-  integrity sha512-lpFQZ8WDbPecorA0iNrsGVwPkkp1F4j56r51qKHEfARNKpeeRcNnutBfDxVVIWpV6oKL9yRPsbpwpa41tQ8YcQ==
+"@identity.com/solana-gateway-ts@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.4.0.tgz#5f4a04a8524ad57f068139400960d9e7885cc2c8"
+  integrity sha512-IVCsZ7H4Ha+LwngviiaoND0bMihg+nEZC62bCDnDlQhdfB77bN5CqR+m7wEBQeiXVxM5WNq6ov5+akXnBovzKQ==
   dependencies:
     "@solana/web3.js" "^1.22.0"
     bn.js "^5.2.0"
@@ -7061,7 +7050,7 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
-"@solana/web3.js@^1.20.0", "@solana/web3.js@^1.31.0":
+"@solana/web3.js@^1.20.0", "@solana/web3.js@^1.30.2", "@solana/web3.js@^1.31.0":
   version "1.31.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.31.0.tgz#7a313d4c1a90b77f27ddbfe845a10d6883e06452"
   integrity sha512-7nHHx1JNFnrt15e9y8m38I/EJCbaB+bFC3KZVM1+QhybCikFxGMtGA5r7PDC3GEL1R2RZA8yKoLkDKo3vzzqnw==
@@ -7094,26 +7083,6 @@
     buffer "6.0.1"
     cross-fetch "^3.1.4"
     crypto-hash "^1.2.2"
-    jayson "^3.4.4"
-    js-sha3 "^0.8.0"
-    rpc-websockets "^7.4.2"
-    secp256k1 "^4.0.2"
-    superstruct "^0.14.2"
-    tweetnacl "^1.0.0"
-
-"@solana/web3.js@^1.30.2":
-  version "1.31.0"
-  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.31.0.tgz#7a313d4c1a90b77f27ddbfe845a10d6883e06452"
-  integrity sha512-7nHHx1JNFnrt15e9y8m38I/EJCbaB+bFC3KZVM1+QhybCikFxGMtGA5r7PDC3GEL1R2RZA8yKoLkDKo3vzzqnw==
-  dependencies:
-    "@babel/runtime" "^7.12.5"
-    "@ethersproject/sha2" "^5.5.0"
-    "@solana/buffer-layout" "^3.0.0"
-    bn.js "^5.0.0"
-    borsh "^0.4.0"
-    bs58 "^4.0.1"
-    buffer "6.0.1"
-    cross-fetch "^3.1.4"
     jayson "^3.4.4"
     js-sha3 "^0.8.0"
     rpc-websockets "^7.4.2"

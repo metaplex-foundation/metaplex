@@ -719,6 +719,7 @@ const Home = (props: HomeProps) => {
                             } // This is the ignite (captcha) network
                             /// Don't need this for mainnet
                             clusterUrl={rpcUrl}
+                            options={{ autoShowModal: false }}
                           >
                             <MintButton
                               candyMachine={candyMachine}
