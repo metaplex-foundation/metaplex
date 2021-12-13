@@ -13,14 +13,14 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
     const {
       pubkey,
       cardsRedeemed,
-      edition,
+      mint,
       info: { authority, allowedAmountToRedeem, uri },
       provingProcessKey,
       voucherMetadataKey,
     } = item;
 
-    const search = edition
-      ? `voucherEditionKey=${edition}`
+    const search = mint
+      ? `voucherMint=${mint}`
       : `provingProcessKey=${provingProcessKey}`;
 
     return (

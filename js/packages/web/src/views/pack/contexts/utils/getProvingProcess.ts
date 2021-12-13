@@ -1,6 +1,9 @@
 import {
+  decodeEdition,
   findProvingProcessProgramAddress,
+  getEdition,
   ParsedAccount,
+  StringPublicKey,
   toPublicKey,
 } from '@oyster/common';
 import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
@@ -15,28 +18,52 @@ import { fetchProvingProcessWithRetry } from './fetchProvingProcessWithRetry';
 
 export const getProvingProcess = async ({
   pack,
-  provingProcessKey,
-  voucherTokenAccount,
-  voucherKey,
-  editionKey,
-  editionMint,
+  provingProcess,
+  voucherMint,
+  vouchers,
+  accountByMint,
   connection,
   wallet,
 }: GetProvingProcessParams): Promise<ParsedAccount<ProvingProcess>> => {
-  // ToDo: This will be executed even if not all the cards are requested.
-  if (provingProcessKey) {
-    return fetchProvingProcessWithRetry({
-      provingProcessKey,
-      connection,
-    });
+  let editionMint: StringPublicKey;
+
+  if (provingProcess) {
+    editionMint = provingProcess.info.voucherMint;
+  } else if (voucherMint) {
+    editionMint = voucherMint;
+  } else {
+    throw new Error('No voucher and proving process');
   }
 
-  if (!voucherKey) {
+  const editionKey = await getEdition(editionMint);
+  const editionData = await connection.getAccountInfo(toPublicKey(editionKey));
+
+  if (!editionData) {
+    throw new Error('No edition for voucher mint');
+  }
+
+  const edition = decodeEdition(editionData.data);
+  const voucher = Object.values(vouchers).find(
+    ({ info }) => info.master === edition.parent,
+  );
+
+  if (!voucher) {
     throw new Error('Voucher is missing');
+  }
+
+  const voucherKey = voucher.pubkey;
+
+  const voucherTokenAccount = accountByMint.get(editionMint);
+  const cardsLeftToOpen =
+    pack.info.allowedAmountToRedeem - (provingProcess?.info.cardsRedeemed || 0);
+
+  if (cardsLeftToOpen === 0 && provingProcess) {
+    return provingProcess;
   }
 
   return requestCardsUsingVoucher({
     pack,
+    cardsLeftToOpen,
     voucherTokenAccount,
     voucherKey,
     editionKey,
@@ -48,6 +75,7 @@ export const getProvingProcess = async ({
 
 const requestCardsUsingVoucher = async ({
   pack,
+  cardsLeftToOpen,
   voucherTokenAccount,
   voucherKey,
   editionKey,
@@ -59,8 +87,6 @@ const requestCardsUsingVoucher = async ({
     throw new WalletNotConnectedError();
   }
 
-  const cardsLeftToOpen = pack.info.allowedAmountToRedeem;
-
   await requestCards({
     pack,
     voucherKey,
@@ -69,7 +95,7 @@ const requestCardsUsingVoucher = async ({
     connection,
     wallet,
     cardsLeftToOpen,
-    tokenAccount: voucherTokenAccount.pubkey,
+    tokenAccount: voucherTokenAccount?.pubkey,
   });
 
   const provingProcessKey = await findProvingProcessProgramAddress(

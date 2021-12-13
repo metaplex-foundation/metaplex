@@ -5,12 +5,13 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 
 import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
+import { VoucherByKey } from '../../../types/packs';
 import { PackMetadataByPackCard } from './hooks/useMetadataByPackCard';
 
 export type PackContextProps = {
   isLoading: boolean;
   packKey: StringPublicKey;
-  voucherEditionKey: StringPublicKey;
+  voucherMint: StringPublicKey;
   openedMetadata: SafetyDepositDraft[];
   metadataByPackCard: PackMetadataByPackCard;
   handleOpenPack: () => Promise<void>;
@@ -20,15 +21,20 @@ export type PackContextProps = {
   provingProcess?: ParsedAccount<ProvingProcess>;
 };
 
-export interface GetProvingProcessParams
-  extends Omit<RequestCardsUsingVoucherParams, 'voucherKey'> {
-  voucherKey?: StringPublicKey;
-  provingProcessKey?: StringPublicKey;
+export interface GetProvingProcessParams {
+  pack: ParsedAccount<PackSet>;
+  voucherMint?: StringPublicKey;
+  provingProcess?: ParsedAccount<ProvingProcess>;
+  vouchers: VoucherByKey;
+  accountByMint: Map<string, TokenAccount>;
+  connection: Connection;
+  wallet: WalletContextState;
 }
 
 export interface RequestCardsUsingVoucherParams {
   pack: ParsedAccount<PackSet>;
-  voucherTokenAccount: TokenAccount;
+  cardsLeftToOpen: number;
+  voucherTokenAccount?: TokenAccount;
   voucherKey: StringPublicKey;
   editionKey: StringPublicKey;
   editionMint: StringPublicKey;

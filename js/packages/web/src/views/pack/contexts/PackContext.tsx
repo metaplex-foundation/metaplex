@@ -10,7 +10,6 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, useLocation } from 'react-router';
 
-import { useUserVouchersByEdition } from './hooks/useUserVouchersByEdition';
 import { claimPackCards } from '../transactions/claimPackCards';
 
 import { getProvingProcess } from './utils/getProvingProcess';
@@ -27,7 +26,7 @@ import { useListenForTokenAccounts } from './hooks/useListenForTokenAccounts';
 export const PackContext = React.createContext<PackContextProps>({
   isLoading: false,
   packKey: '',
-  voucherEditionKey: '',
+  voucherMint: '',
   openedMetadata: [],
   metadataByPackCard: {},
   handleOpenPack: () => Promise.resolve(),
@@ -39,7 +38,7 @@ export const PackProvider: React.FC = ({ children }) => {
   const connection = useConnection();
   const { packKey }: { packKey: string } = useParams();
   const { search } = useLocation();
-  const { voucherEditionKey, provingProcessKey } = getSearchParams(search);
+  const { voucherMint, provingProcessKey } = getSearchParams(search);
 
   useListenForTokenAccounts();
 
@@ -53,7 +52,6 @@ export const PackProvider: React.FC = ({ children }) => {
     vouchers,
   } = useMeta();
   const { accountByMint, userAccounts } = useUserAccounts();
-  const userVouchers = useUserVouchersByEdition();
   const metadataByPackCard = useMetadataByPackCard(packKey);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -65,8 +63,8 @@ export const PackProvider: React.FC = ({ children }) => {
   const [redeemModalMetadata, setRedeemModalMetadata] = useState<string[]>([]);
 
   const voucherMetadata = useMemo(
-    () => metadata.find(meta => meta?.info?.edition === voucherEditionKey),
-    [metadata, voucherEditionKey],
+    () => metadata.find(meta => meta?.info?.mint === voucherMint),
+    [metadata, voucherMint],
   );
   const voucher = useMemo(
     () =>
@@ -88,28 +86,19 @@ export const PackProvider: React.FC = ({ children }) => {
   );
 
   const handleOpenPack = async () => {
-    const { mint: editionMint, pubkey: voucherKey } =
-      userVouchers[voucherEditionKey];
-
-    const voucherTokenAccount = accountByMint.get(editionMint);
-    if (!voucherTokenAccount?.pubkey) {
-      throw new Error('Voucher token account is missing');
-    }
-
     const newProvingProcess = await getProvingProcess({
       pack,
-      provingProcessKey,
-      voucherTokenAccount,
-      voucherKey,
-      editionKey: voucherEditionKey,
-      editionMint,
+      provingProcess,
+      voucherMint,
+      vouchers,
+      accountByMint,
       connection,
       wallet,
     });
     setProvingProcess(newProvingProcess);
 
     const {
-      info: { cardsToRedeem, voucherMint },
+      info: { cardsToRedeem },
       pubkey,
     } = newProvingProcess;
 
@@ -126,7 +115,7 @@ export const PackProvider: React.FC = ({ children }) => {
     await claimPackCards({
       wallet,
       connection,
-      voucherMint,
+      voucherMint: newProvingProcess.info.voucherMint,
       cardsToRedeem,
       metadataByPackCard,
       packCards,
@@ -177,7 +166,7 @@ export const PackProvider: React.FC = ({ children }) => {
       value={{
         isLoading,
         packKey,
-        voucherEditionKey,
+        voucherMint,
         voucherMetadataKey,
         openedMetadata,
         pack,
