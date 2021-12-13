@@ -87,11 +87,9 @@ code {
   overflow: hidden;
   .ant-image-img,
   video {
-    height: 300px;
     object-fit: cover;
   }
   iframe {
-    height: 300px;
     object-fit: cover;
     border: none;
   }
@@ -299,6 +297,19 @@ model-viewer {
   }
 }
 
+.artwork-grid {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  & > a,
+  & > div {
+    margin: 10px;
+    flex: calc(25% - 20px);
+    max-width: calc(25% - 20px);
+    align-self: stretch;
+  }
+}
+
 .my-masonry-grid {
   display: flex;
   width: 100%;
@@ -314,7 +325,48 @@ model-viewer {
 
 .my-masonry-grid_column > div {
   /* change div to reference your elements you put in <Masonry> */
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+}
+
+.ant-tabs-nav-list {
+  align-items: center;
+}
+
+.refresh-button {
+  margin: 5px;
+  padding: 16px 36px;
+  border: none;
+  background: @grey-70 !important;
+  box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
+  border-radius: 8px;
+  cursor: pointer !important;
+  width: fit-content;
+
+  .refresh-overlay {
+    border-radius: 8px;
+  }
+  button {
+    &:not(.ant-btn-icon-only) {
+      padding-right: 0;
+    }
+    border: none;
+  }
+
+  & > span {
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .artwork-grid {
+    & > a,
+    & > div {
+      flex: calc(33% - 20px);
+      max-width: calc(33% - 20px);
+    }
+  }
 }
 
 .ant-tabs-nav-list {
@@ -340,6 +392,13 @@ model-viewer {
 
 /* Optional, different gutter size on mobile */
 @media (max-width: 800px) {
+  .artwork-grid {
+    & > a,
+    & > div {
+      flex: calc(50% - 20px);
+      max-width: calc(50% - 20px);
+    }
+  }
   .my-masonry-grid {
     margin-left: -15px; /* gutter size offset */
   }
@@ -348,5 +407,15 @@ model-viewer {
   }
   .my-masonry-grid_column > div {
     margin-bottom: 15px; /* space between items */
+  }
+}
+
+@media (max-width: 540px) {
+  .artwork-grid {
+    & > a,
+    & > div {
+      flex: calc(100% - 20px);
+      max-width: calc(100% - 20px);
+    }
   }
 }

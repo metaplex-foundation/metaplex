@@ -8,6 +8,7 @@ import {
   verifyConsistentShares,
   verifyCreatorCollation,
 } from '../index';
+import { EXTENSION_PNG } from '../../../helpers/constants';
 
 const getFiles = rootDir => {
   const assets = fs.readdirSync(rootDir).map(file => path.join(rootDir, file));
@@ -38,7 +39,7 @@ describe('`metaplex verify_token_metadata`', () => {
     it(`invalidates ${path.relative(__dirname, invalidSchema)}`, () => {
       expect(() =>
         verifyTokenMetadata({
-          files: [invalidSchema, invalidSchema.replace('.json', '.png')],
+          files: [invalidSchema, invalidSchema.replace('.json', EXTENSION_PNG)],
         }),
       ).toThrowErrorMatchingSnapshot();
     });

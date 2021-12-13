@@ -11,6 +11,7 @@ import {
   useUserAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useHistory } from 'react-router-dom';
 
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 import { useExtendedArt, useUserArts } from '../../hooks';
@@ -18,7 +19,8 @@ import { useExtendedArt, useUserArts } from '../../hooks';
 import { PackState } from './interface';
 import { INITIAL_PACK_STATE } from './data';
 import { CreatePackSteps } from './types';
-import { packItemsFilter, vouchersFilter } from './utils';
+import { packItemsFilter, vouchersFilter, exceededPacksCountNotification } from './utils';
+import { MAX_PACKS_CREATION_COUNT } from '../../constants';
 import useStep from './hooks/useStep';
 
 import Header from './components/Header';
@@ -31,9 +33,11 @@ import SuccessModal from './components/SuccessModal';
 import { useValidation } from './hooks/useValidation';
 
 export const PackCreateView = (): ReactElement => {
+  const history = useHistory();
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const items = useUserArts();
   const { step, goToNextStep, resetStep } = useStep();
@@ -98,6 +102,10 @@ export const PackCreateView = (): ReactElement => {
         delete updatedSelectedItems[metadata.pubkey];
       } else {
         updatedSelectedItems[metadata.pubkey] = item;
+        if(Object.keys(updatedSelectedItems).length > MAX_PACKS_CREATION_COUNT) {
+          exceededPacksCountNotification();
+          return;
+        }
       }
 
       const isUnlimitedSupply = masterEdition?.info.maxSupply === undefined;
@@ -141,6 +149,7 @@ export const PackCreateView = (): ReactElement => {
       !!Object.values(selectedVouchers).length;
 
     if (canSubmit) {
+      setIsLoading(true);
       try {
         await sendCreatePack({
           wallet,
@@ -154,12 +163,14 @@ export const PackCreateView = (): ReactElement => {
         console.log(e);
       }
     }
+    setIsLoading(false);
   }, [wallet, connection, accountByMint, attributes]);
 
   const handleFinish = useCallback(() => {
     setAttributes(INITIAL_PACK_STATE);
     resetStep();
     setShouldShowSuccessModal(false);
+    history.push('/artworks');
   }, []);
 
   return (
@@ -169,6 +180,7 @@ export const PackCreateView = (): ReactElement => {
         setStep={goToNextStep}
         isValidStep={isValidStep}
         submit={handleSubmit}
+        buttonLoading={isLoading}
       />
       <div className="content-wrapper">
         <Header step={step} />

@@ -1,9 +1,8 @@
 import React from 'react';
 import { Card, CardProps, Button, Badge } from 'antd';
 import { MetadataCategory, StringPublicKey } from '@oyster/common';
-import { ArtContent } from './../ArtContent';
+import { ArtContent } from '../ArtContent';
 import { useArt } from '../../hooks';
-import { PublicKey } from '@solana/web3.js';
 import { Artist, ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
 
@@ -23,9 +22,10 @@ export interface ArtCardProps extends CardProps {
   creators?: Artist[];
   preview?: boolean;
   small?: boolean;
-  close?: () => void;
+  onClose?: () => void;
 
   height?: number;
+  artView?: boolean;
   width?: number;
 
   count?: string;
@@ -42,9 +42,10 @@ export const ArtCard = (props: ArtCardProps) => {
     preview,
     creators,
     description,
-    close,
+    onClose,
     pubkey,
     height,
+    artView,
     width,
     count,
     ...rest
@@ -66,39 +67,41 @@ export const ArtCard = (props: ArtCardProps) => {
     <Card
       hoverable={true}
       className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
-      cover={
-        <>
-          {close && (
-            <Button
-              className="card-close-button"
-              shape="circle"
-              onClick={e => {
-                e.stopPropagation();
-                e.preventDefault();
-                close && close();
-              }}
-            >
-              X
-            </Button>
-          )}
-          <ArtContent
-            pubkey={pubkey}
-            uri={image}
-            animationURL={animationURL}
-            category={category}
-            preview={preview}
-            height={height}
-            width={width}
-          />
-        </>
-      }
       {...rest}
     >
+      {onClose && (
+        <Button
+          className="card-close-button"
+          shape="circle"
+          onClick={e => {
+            e.stopPropagation();
+            e.preventDefault();
+            onClose && onClose();
+          }}
+        >
+          X
+        </Button>
+      )}
+      <div className="art-card__header">
+        <MetaAvatar creators={creators} size={32} />
+        <div className="edition-badge">{badge}</div>
+      </div>
+      <div className="art-content__wrapper">
+        <ArtContent
+          pubkey={pubkey}
+          uri={image}
+          animationURL={animationURL}
+          category={category}
+          preview={preview}
+          height={height}
+          width={width}
+          artView={artView}
+        />
+      </div>
       <Meta
         title={`${name}`}
         description={
           <>
-            <MetaAvatar creators={creators} size={32} />
             {/* {art.type === ArtType.Master && (
               <>
                 <br />
@@ -110,7 +113,7 @@ export const ArtCard = (props: ArtCardProps) => {
                 )}
               </>
             )} */}
-            <div className="edition-badge">{badge}</div>
+
             {count && (
               <div className="edition-badge">Selected count: {count}</div>
             )}

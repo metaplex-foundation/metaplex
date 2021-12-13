@@ -32,8 +32,6 @@ interface BlockhashAndFeeCalculator {
 
 export type ENDPOINT_NAME =
   | 'mainnet-beta'
-  | 'mainnet-beta-solana'
-  | 'mainnet-beta-serum'
   | 'testnet'
   | 'devnet'
   | 'localnet'
@@ -51,18 +49,6 @@ export const ENDPOINTS: Array<Endpoint> = [
     name: 'mainnet-beta',
     label: 'mainnet-beta',
     url: 'https://api.metaplex.solana.com/',
-    chainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'mainnet-beta-solana',
-    label: 'mainnet-beta (Solana)',
-    url: 'https://api.mainnet-beta.solana.com',
-    chainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'mainnet-beta-serum',
-    label: 'mainnet-beta (Serum)',
-    url: 'https://solana-api.projectserum.com/',
     chainId: ChainId.MainnetBeta,
   },
   {
