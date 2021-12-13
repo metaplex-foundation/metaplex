@@ -1,6 +1,6 @@
 {
   "price": 0.01,
-  "number": null,
+  "number": 10000,
   "gatekeeper": {
     "gatekeeperNetwork": "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6",
     "expireOnUse": true

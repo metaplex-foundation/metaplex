@@ -767,17 +767,19 @@ const Home = (props: HomeProps) => {
               justifyContent="space-between"
               color="textSecondary"
             >
-              <Link
-                component="button"
-                variant="body2"
-                color="textSecondary"
-                align="left"
-                onClick={() => {
-                  setHowToOpen(true);
-                }}
-              >
-                How this raffle works
-              </Link>
+              {fairLaunch && (
+                <Link
+                  component="button"
+                  variant="body2"
+                  color="textSecondary"
+                  align="left"
+                  onClick={() => {
+                    setHowToOpen(true);
+                  }}
+                >
+                  How this raffle works
+                </Link>
+              )}
               {fairLaunch?.ticket.data && (
                 <Link
                   component="button"
