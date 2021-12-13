@@ -18,7 +18,7 @@ export const Search = () => {
     const connection = useConnection();
     console.log(connection);
     const wallet = useWallet();
-    const [entanglements, setEntanglements] = React.useState<Array<object>>([]);
+    const [entangledPairInfo, setEntangledPairInfo] = React.useState<string>("");
     const anchorWallet = useMemo(() => {
         if (
             !wallet ||
@@ -49,13 +49,37 @@ export const Search = () => {
     ]);
 
     const handleSubmit = async (event: React.MouseEvent<HTMLElement>) => {
+        let info = "";
         event.preventDefault();
         if (!anchorWallet) {
             return;
         }
         const foundEntanglements = await searchEntanglements(anchorWallet, connection, mintA, authority);
-        setEntanglements([...foundEntanglements]);
-        console.log(entanglements)
+        foundEntanglements.forEach((entanglement) => {
+
+                info += ('-----\n');
+                //@ts-ignore
+                info += 'Mint: ' + `${entanglement.treasuryMint.toBase58()}\n`;
+                //@ts-ignore
+                info += 'Authority: ' + `${entanglement.authority.toBase58()}\n`;
+                //@ts-ignore
+                info += 'Mint A: ' + `${entanglement.mintA.toBase58()}\n`;
+                //@ts-ignore
+                info += 'Mint B: ' + `${entanglement.mintB.toBase58()}\n`;
+                //@ts-ignore
+                info += 'Token A Escrow: ' + `${entanglement.tokenAEscrow.toBase58()}\n`;
+                //@ts-ignore
+                info += 'Token B Escrow: ' + `${entanglement.tokenBEscrow.toBase58()}\n`;
+                //@ts-ignore
+                info += 'Price: ' + `${entanglement.price.toNumber()}\n`;
+                //@ts-ignore
+                info += 'Paid At Least Once: ' + `${entanglement.paid}\n`;
+                //@ts-ignore
+                info += 'Pays Every Time: ' + `${entanglement.paysEveryTime}\n`;
+                //@ts-ignore
+                info += 'Bump: ' + `${entanglement.bump}\n`;
+        });
+        setEntangledPairInfo(info);
     }
 
     const [mintA, setMintA] = React.useState(localStorage.getItem("mintA") || "");
@@ -98,8 +122,21 @@ export const Search = () => {
                 </FormGroup>
                 <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
                     <h2>Entanglements</h2>
-                    {/* {entanglements.map((entanglement) => (<li key={getTokenEntanglement(entanglement?.mintA, entanglement?.mintB)}>{mint}</li>))} */}
                 </Box>
+            </Box>
+            <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
+                <TextField
+                    multiline
+                    fullWidth
+                    rows={20}
+                    id="price-text-field"
+                    label="Entanglement Info"
+                    value={entangledPairInfo}
+                    InputProps={{
+                        readOnly: true,
+                    }}
+
+                />
             </Box>
 
         </React.Fragment>
