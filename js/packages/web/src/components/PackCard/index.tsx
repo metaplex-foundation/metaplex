@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useMemo } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import { Button, Card } from 'antd';
 import { shortenAddress, useMeta } from '@oyster/common';
 
@@ -10,6 +10,7 @@ import { ArtType } from '../../types';
 
 interface Props {
   voucherMetadata: string;
+  uri: string;
   name: string;
   authority: string;
   cardsRedeemed?: number;
@@ -20,6 +21,7 @@ interface Props {
 
 const PackCard = ({
   voucherMetadata,
+  uri,
   name,
   authority,
   cardsRedeemed,
@@ -81,7 +83,7 @@ const PackCard = ({
             )}
           </div>
           <div className="art-content-wrapper">
-            <ArtContent pubkey={voucherMetadata} preview={false} />
+            <ArtContent uri={uri} preview={false} />
           </div>
           <div className="art-name">{name}</div>
         </div>

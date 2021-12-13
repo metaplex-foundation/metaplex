@@ -1,17 +1,17 @@
 import { shortenAddress, royalty, pubkeyToString } from '@oyster/common';
 import React from 'react';
 import { Skeleton, Divider } from 'antd';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 import { MetaAvatar } from '../../../../components/MetaAvatar';
 import { ArtContent } from '../../../../components/ArtContent';
 import { ViewOn } from '../../../../components/ViewOn';
 import { useArt } from '../../../../hooks';
 import { usePack } from '../../contexts/PackContext';
-import { useWallet } from '@solana/wallet-adapter-react';
-import OpenPackButton from '../OpenPackButtom';
+import OpenPackButton from '../OpenPackButton';
 
 interface IPropsPackSidebar {
-  onOpenPack: () => void,
+  onOpenPack: () => void;
 }
 
 const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
@@ -19,6 +19,7 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
 
   const metadataPubkey = voucherMetadataKey || '';
   const art = useArt(metadataPubkey);
+  const uri = pack?.info.uri;
   const { publicKey } = useWallet();
   const userWallet = pubkeyToString(publicKey);
   const isExhausted = provingProcess?.info.isExhausted;
@@ -33,21 +34,16 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
             <span className="item-name">
               {creator.name || shortenAddress(creator?.address || '')}
             </span>
-            {
-              userWallet === creator.address &&
-              <div className="you-label">
-                You
-              </div>
-            }
+            {userWallet === creator.address && (
+              <div className="you-label">You</div>
+            )}
           </div>
         ))}
       </div>
       <Divider className="divider" />
       <div className="pack-view__art-preview">
-        {metadataPubkey && (
-          <ArtContent pubkey={metadataPubkey} active allowMeshRender artView />
-        )}
-        {!metadataPubkey && <Skeleton.Image />}
+        {uri && <ArtContent uri={uri} active allowMeshRender artView />}
+        {!uri && <Skeleton.Image />}
       </div>
       <h4 className="pack-view__name">
         {pack?.info?.name || <Skeleton paragraph={{ rows: 1 }} />}
@@ -70,10 +66,8 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
         </div>
       </div>
       <Divider className="divider" />
-      {
-        !isExhausted && <OpenPackButton onClick={onOpenPack} />
-      }
-      <Divider className="divider"/>
+      {!isExhausted && <OpenPackButton onClick={onOpenPack} />}
+      <Divider className="divider" />
       <div className="pack-view__description-block">
         <p className="pack-view__title">DETAILS</p>
         <p className="pack-view__text">
@@ -84,7 +78,7 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
         <div className="info-item">
           <ViewOn id={metadataPubkey} />
         </div>
-        <Divider className="divider"/>
+        <Divider className="divider" />
       </div>
     </div>
   );

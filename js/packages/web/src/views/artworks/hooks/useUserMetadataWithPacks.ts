@@ -63,7 +63,7 @@ const getMetadataWithPacks = ({
         ...packs[voucher.info.packSet],
         voucher: voucher.pubkey,
         voucherMetadataKey: metadata.metadata.pubkey,
-        edition: metadata.edition.pubkey,
+        mint: metadata.metadata.info.mint,
       },
     ];
   }, []);

@@ -374,6 +374,78 @@ export const sendTransactions = async (
   return signedTxns.length;
 };
 
+export const sendTransactionsWithRecentBlock = async (
+  connection: Connection,
+  wallet: WalletSigner,
+  instructionSet: TransactionInstruction[][],
+  signersSet: Keypair[][],
+  commitment: Commitment = 'singleGossip',
+): Promise<number> => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const unsignedTxns: Transaction[] = [];
+
+  for (let i = 0; i < instructionSet.length; i++) {
+    const instructions = instructionSet[i];
+    const signers = signersSet[i];
+
+    if (instructions.length === 0) {
+      continue;
+    }
+
+    const block = await connection.getRecentBlockhash(commitment);
+    await sleep(1200);
+
+    const transaction = new Transaction();
+    instructions.forEach(instruction => transaction.add(instruction));
+    transaction.recentBlockhash = block.blockhash;
+    transaction.setSigners(
+      // fee payed by the wallet owner
+      wallet.publicKey,
+      ...signers.map(s => s.publicKey),
+    );
+
+    if (signers.length > 0) {
+      transaction.partialSign(...signers);
+    }
+
+    unsignedTxns.push(transaction);
+  }
+
+  const signedTxns = await wallet.signAllTransactions(unsignedTxns);
+
+  const breakEarlyObject = { breakEarly: false, i: 0 };
+  console.log(
+    'Signed txns length',
+    signedTxns.length,
+    'vs handed in length',
+    instructionSet.length,
+  );
+  for (let i = 0; i < signedTxns.length; i++) {
+    const signedTxnPromise = sendSignedTransaction({
+      connection,
+      signedTransaction: signedTxns[i],
+    });
+
+    signedTxnPromise.catch(() => {
+      breakEarlyObject.breakEarly = true;
+      breakEarlyObject.i = i;
+    });
+
+    try {
+      await signedTxnPromise;
+    } catch (e) {
+      console.log('Caught failure', e);
+      if (breakEarlyObject.breakEarly) {
+        console.log('Died on ', breakEarlyObject.i);
+        return breakEarlyObject.i; // Return the txn we failed on by index
+      }
+    }
+  }
+
+  return signedTxns.length;
+};
+
 export const sendTransaction = async (
   connection: Connection,
   wallet: WalletSigner,
