@@ -42,7 +42,6 @@ export const Wizard = () => {
 
     const handleSubmit = async (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
-        console.log(process.env)
         const authority = process.env.REACT_APP_WHITELISTED_AUTHORITY!;
         if (!anchorWallet) {
             return;
