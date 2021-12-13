@@ -158,7 +158,7 @@ const HTMLContent = ({
   backdrop: string;
 }) => {
   if (!artView) {
-    return <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} square />;
+    return <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />;
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
