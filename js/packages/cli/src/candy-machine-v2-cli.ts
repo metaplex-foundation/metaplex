@@ -326,17 +326,18 @@ programCommand('verify')
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
     const candyMachine = await anchorProgram.provider.connection.getAccountInfo(
-      cacheContent.program.candyMachine,
+      new PublicKey(cacheContent.program.candyMachine),
     );
 
-    const candyMachineObj = await anchorProgram.account.candyMachie.fetch(
-      cacheContent.program.candyMachine,
+    const candyMachineObj = await anchorProgram.account.candyMachine.fetch(
+      new PublicKey(cacheContent.program.candyMachine),
     );
     let allGood = true;
 
     const keys = Object.keys(cacheContent.items).filter(
       k => !cacheContent.items[k].verifyRun,
     );
+    console.log('Key ize', keys.length);
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 500).map(
         async allIndexesInSlice => {
@@ -355,16 +356,16 @@ programCommand('verify')
                 4 +
                 CONFIG_LINE_SIZE_V2 * (allIndexesInSlice[i] + 1),
             );
-            const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
+            const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
             const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
             const cacheItem = cacheContent.items[key];
             if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
               //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-              // log.info(
-              //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
-              //   `and (${cacheItem.link}). marking to rerun for image`,
-              //   key,
-              // );
+              /*log.info(
+                `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
+                  `and (${cacheItem.link}). marking to rerun for image`,
+                key,
+              );*/
               cacheItem.onChain = false;
               allGood = false;
             } else {

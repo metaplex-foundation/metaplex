@@ -80,7 +80,6 @@ export const CONFIG_ARRAY_START_V2 =
   4 +
   MAX_SYMBOL_LENGTH + // u32 len + symbol
   2 + // seller fee basis points
-  1 +
   4 +
   MAX_CREATOR_LIMIT * MAX_CREATOR_LEN + // optional + u32 len + actual vec
   8 + //max supply
@@ -97,7 +96,6 @@ export const CONFIG_ARRAY_START_V2 =
   1 + // whitelist option
   1 + // whitelist mint mode
   1 + // allow presale
-  1 + // use captcha
   9 + // discount price
   32 + // mint key for whitelist
   1 +
