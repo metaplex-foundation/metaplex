@@ -1,4 +1,4 @@
-import React, { ReactElement, useMemo, useCallback } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import { Button, Card } from 'antd';
 import { shortenAddress, useMeta } from '@oyster/common';
 
@@ -39,6 +39,7 @@ const PackCard = ({
 
   const packStatusTitle = cardsRedeemed ? 'Opened' : 'Sealed';
   const headingTitle = artView ? packStatusTitle : 'Pack';
+  const badge = art.type === ArtType.Print && `${art.edition} of ${art.supply}`;
   const numberOfCardsLeft =
     allowedAmountToRedeem && cardsRedeemed
       ? allowedAmountToRedeem - cardsRedeemed
@@ -50,17 +51,6 @@ const PackCard = ({
       ? `${numberOfCardsLeft} NFT reveal left`
       : 'All revealed';
   }, [artView, numberOfCardsLeft]);
-
-  const showBadge = useCallback(() => {
-    switch (art.type) {
-      case ArtType.NFT:
-        return 'Unique';
-      case ArtType.Master:
-        return 'NFT 0';
-      case ArtType.Print:
-        return `${art.edition} of ${art.supply}`;
-    }
-  }, [art]);
 
   return (
     <Card hoverable className="auction-render-card" bordered={false}>
@@ -86,9 +76,11 @@ const PackCard = ({
                 {creator.name || shortenAddress(creator?.address || '')}
               </span>
             </div>
-            <div className="card-artist-info__subtitle">
-              <p className="info-message__main">{showBadge()}</p>
-            </div>
+            {badge && (
+              <div className="card-artist-info__subtitle">
+                <p className="info-message__main">{badge}</p>
+              </div>
+            )}
           </div>
           <div className="art-content-wrapper">
             <ArtContent uri={uri} preview={false} />

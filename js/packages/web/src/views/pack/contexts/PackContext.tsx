@@ -138,6 +138,8 @@ export const PackProvider: React.FC = ({ children }) => {
   const handleFetch = async () => {
     setIsLoading(true);
 
+    setRedeemModalMetadata([]);
+
     await pullPackPage(userAccounts, packKey);
 
     const initialProvingProcess = getInitialProvingProcess({
@@ -148,6 +150,8 @@ export const PackProvider: React.FC = ({ children }) => {
 
     if (initialProvingProcess) {
       setProvingProcess(initialProvingProcess);
+    } else {
+      setProvingProcess(undefined);
     }
 
     setIsLoading(false);
