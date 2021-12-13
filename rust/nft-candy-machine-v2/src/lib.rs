@@ -218,13 +218,7 @@ pub mod nft_candy_machine_v2 {
 
         let index = u64::from_le_bytes(*most_recent);
         let modded: usize = index
-            .checked_rem(
-                candy_machine
-                    .data
-                    .items_available
-                    .checked_sub(candy_machine.items_redeemed)
-                    .ok_or(ErrorCode::NumericalOverflowError)?,
-            )
+            .checked_rem(candy_machine.data.items_available)
             .ok_or(ErrorCode::NumericalOverflowError)? as usize;
 
         let config_line = get_config_line(&candy_machine, modded, candy_machine.items_redeemed)?;
