@@ -1,6 +1,10 @@
+/* eslint-disable no-extra-boolean-cast */
 import { Box, Button, FormGroup, LinearProgress } from "@mui/material";
 import React, { useState, useMemo } from "react";
 import SearchIcon from '@mui/icons-material/Search';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+
 import {
     useConnection,
 } from "../contexts";
@@ -22,6 +26,8 @@ export const Wizard = () => {
     const [entanglements, setEntanglements] = React.useState<Array<object>>([]);
     const [loading, setLoading] = useState(false);
 
+    const authority = process.env.REACT_APP_WHITELISTED_AUTHORITY!;
+    
 
     const anchorWallet = useMemo(() => {
         if (
@@ -42,7 +48,6 @@ export const Wizard = () => {
 
     const handleSubmit = async (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
-        const authority = process.env.REACT_APP_WHITELISTED_AUTHORITY!;
         if (!anchorWallet) {
             return;
         }
@@ -66,6 +71,7 @@ export const Wizard = () => {
         history.push(`swap/`);
     };
 
+   
     return (
         <React.Fragment>
             <h1>Search NFT Entanglements</h1>
@@ -80,9 +86,17 @@ export const Wizard = () => {
                 autoComplete="off"
             >
                 <FormGroup>
-                    <Button disabled={!anchorWallet || loading} variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
+                    
+                    <Button disabled={!anchorWallet || loading || !(!!authority) } variant="contained" onClick={async (e) => await handleSubmit(e)} endIcon={<SearchIcon />}>
                         Search Entanglements
                     </Button>
+                    { !(!!authority) && 
+                        <Alert severity="error" style={{marginTop: "1rem"}}>
+                            <AlertTitle>Error</AlertTitle>
+                            Please set the whitelisted entanglement authority in the environment variable REACT_APP_WHITELISTED_AUTHORITY.
+                            
+                        </Alert>
+                    }
                 </FormGroup>
 
             </Box>
@@ -91,14 +105,12 @@ export const Wizard = () => {
                 {loading && <LinearProgress />}
                 {//@ts-ignore
                     entanglements.map((e) => (<li key={e.mint}>{e.mint}{e.entanglements.length > 0 &&
-                        <p>
                             <ul>
                                 {//@ts-ignore 
                                     e.entanglements.map((e) => (<li key={e.mintA.toString()}> <Button onClick={(event) => handleEntanglementClick(event, e)} variant="contained" startIcon={<SwapHorizIcon />}>
                                         SWAP
                                     </Button> {`Mints: ${e.mintA.toString()} - ${e.mintB.toString()} \n -- Price: ${e.price.toString()} -- Pays Every Time: ${e.paysEveryTime}`} </li>))}.
                             </ul>
-                        </p>
 
                     } </li>))}
             </Box>
