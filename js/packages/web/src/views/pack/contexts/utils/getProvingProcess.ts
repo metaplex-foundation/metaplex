@@ -16,9 +16,10 @@ import { fetchProvingProcessWithRetry } from './fetchProvingProcessWithRetry';
 export const getProvingProcess = async ({
   pack,
   provingProcessKey,
-  voucherEditionKey,
-  userVouchers,
-  accountByMint,
+  voucherTokenAccount,
+  voucherKey,
+  editionKey,
+  editionMint,
   connection,
   wallet,
 }: GetProvingProcessParams): Promise<ParsedAccount<ProvingProcess>> => {
@@ -30,15 +31,16 @@ export const getProvingProcess = async ({
     });
   }
 
-  if (!voucherEditionKey || !userVouchers[voucherEditionKey]) {
+  if (!voucherKey) {
     throw new Error('Voucher is missing');
   }
 
   return requestCardsUsingVoucher({
     pack,
-    voucherEditionKey,
-    userVouchers,
-    accountByMint,
+    voucherTokenAccount,
+    voucherKey,
+    editionKey,
+    editionMint,
     connection,
     wallet,
   });
@@ -46,9 +48,10 @@ export const getProvingProcess = async ({
 
 const requestCardsUsingVoucher = async ({
   pack,
-  voucherEditionKey,
-  userVouchers,
-  accountByMint,
+  voucherTokenAccount,
+  voucherKey,
+  editionKey,
+  editionMint,
   connection,
   wallet,
 }: RequestCardsUsingVoucherParams): Promise<ParsedAccount<ProvingProcess>> => {
@@ -56,19 +59,13 @@ const requestCardsUsingVoucher = async ({
     throw new WalletNotConnectedError();
   }
 
-  const { mint: voucherMint } = userVouchers[voucherEditionKey];
-
-  const voucherTokenAccount = accountByMint.get(voucherMint);
-  if (!voucherTokenAccount?.pubkey) {
-    throw new Error('Voucher token account is missing');
-  }
-
   const cardsLeftToOpen = pack.info.allowedAmountToRedeem;
 
   await requestCards({
-    userVouchers,
     pack,
-    voucherEditionKey,
+    voucherKey,
+    editionKey,
+    editionMint,
     connection,
     wallet,
     cardsLeftToOpen,
@@ -78,7 +75,7 @@ const requestCardsUsingVoucher = async ({
   const provingProcessKey = await findProvingProcessProgramAddress(
     toPublicKey(pack.pubkey),
     toPublicKey(wallet.publicKey),
-    toPublicKey(voucherMint),
+    toPublicKey(editionMint),
   );
 
   return fetchProvingProcessWithRetry({

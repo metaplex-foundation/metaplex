@@ -88,12 +88,21 @@ export const PackProvider: React.FC = ({ children }) => {
   );
 
   const handleOpenPack = async () => {
+    const { mint: editionMint, pubkey: voucherKey } =
+      userVouchers[voucherEditionKey];
+
+    const voucherTokenAccount = accountByMint.get(editionMint);
+    if (!voucherTokenAccount?.pubkey) {
+      throw new Error('Voucher token account is missing');
+    }
+
     const newProvingProcess = await getProvingProcess({
       pack,
-      voucherEditionKey,
       provingProcessKey,
-      userVouchers,
-      accountByMint,
+      voucherTokenAccount,
+      voucherKey,
+      editionKey: voucherEditionKey,
+      editionMint,
       connection,
       wallet,
     });
