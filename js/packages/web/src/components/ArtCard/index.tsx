@@ -70,6 +70,7 @@ export const ArtCard = ({
             </Button>
           )}
           <ArtContent
+            square
             pubkey={pubkey}
             uri={image}
             animationURL={animationURL}

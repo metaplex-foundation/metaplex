@@ -1,13 +1,4 @@
 .metaplex-art-content {
-  position: relative;
-  overflow: hidden;
-  margin: 0 auto;
-  &:after {
-    content: '';
-    display: block;
-    padding-bottom: 100%;
-  }
-
     .ant-image-placeholder {
       > div {
         position: absolute;
@@ -35,28 +26,48 @@
         }
       }
     }
-    
-  .ant-image, .metaplex-video-content, .metaplex-html-content, .metaplex-mesh-art-content {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
 
-    .ant-image-img, video, iframe, .metaplex-3d-viewer {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+  
+  .metaplex-image {
+    img { 
+      display: block;
     }
-
-    &.metaplex-image {
-      img { 
+    &.metaplex-image-loading {
+      img {
         display: none;
       }
-      &.metaplex-image-loaded {
-        img {
-          display: block;
-        }
+    }
+  }
+
+  .ant-image {
+    display: block;
+  }
+
+  &.metaplex-square-aspect {
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+    &:after {
+      content: '';
+      display: block;
+      padding-bottom: 100%;
+    }
+
+    .ant-image, .metaplex-video-content, .metaplex-html-content, .metaplex-mesh-art-content {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      video, iframe, .metaplex-3d-viewer {
+        width: 100%;
+        height: 100%;
+      }
+
+      .ant-image-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
     }
   }
