@@ -35,6 +35,7 @@ export const MintButton = ({
 
   useEffect(() => {
     if (gatewayStatus == GatewayStatus.ACTIVE && clicked) {
+      console.log('Minting');
       onMint();
       setClicked(false);
     }
@@ -49,13 +50,13 @@ export const MintButton = ({
       }
       onClick={async () => {
         setClicked(true);
-        if (
-          candyMachine?.state.isActive &&
-          candyMachine?.state.gatekeeper &&
-          gatewayStatus != GatewayStatus.ACTIVE
-        )
-          await requestGatewayToken();
-        else {
+        if (candyMachine?.state.isActive && candyMachine?.state.gatekeeper) {
+          if (gatewayStatus === GatewayStatus.ACTIVE) {
+            setClicked(true);
+          } else {
+            await requestGatewayToken();
+          }
+        } else {
           await onMint();
           setClicked(false);
         }

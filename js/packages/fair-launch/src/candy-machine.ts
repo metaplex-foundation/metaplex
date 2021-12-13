@@ -3,6 +3,7 @@ import * as anchor from '@project-serum/anchor';
 import { MintLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { SystemProgram } from '@solana/web3.js';
 import {
+  sendTransactions,
   sendTransactionsWithManualRetry,
   sendTransactionWithRetry,
 } from './connection';
@@ -439,12 +440,14 @@ export const mintOneToken = async (
   );
 
   try {
-    return await sendTransactionsWithManualRetry(
-      candyMachine.program.provider.connection,
-      candyMachine.program.provider.wallet,
-      [instructions, cleanupInstructions],
-      [signers, []],
-    );
+    return (
+      await sendTransactions(
+        candyMachine.program.provider.connection,
+        candyMachine.program.provider.wallet,
+        [instructions, cleanupInstructions],
+        [signers, []],
+      )
+    ).txs.map(t => t.txid);
   } catch (e) {
     console.log(e);
   }
