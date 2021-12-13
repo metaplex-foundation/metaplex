@@ -2,6 +2,7 @@ import { PackDistributionType } from '@oyster/common';
 import React, { memo, ReactElement } from 'react';
 import { Input, Tooltip } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import classNames from 'classnames';
 
 import ItemRow from '../ItemRow';
 import SelectCard from '../SelectCard';
@@ -44,7 +45,11 @@ const AdjustQuantitiesStep = ({
     const number = Number(value);
     const pubKey = item.metadata.pubkey;
 
-    if (inputType === InputType.weight && number <= 100) {
+    if (inputType === InputType.weight && number > 100) {
+      return
+    }
+
+    if (inputType === InputType.weight) {
       return setPackState({
         weightByMetadataKey: {
           ...weightByMetadataKey,
@@ -54,15 +59,13 @@ const AdjustQuantitiesStep = ({
     }
 
     const maxSupply = item.masterEdition?.info.maxSupply?.toNumber();
-    if (inputType === InputType.maxSupply) {
-      setPackState({
-        supplyByMetadataKey: {
-          ...supplyByMetadataKey,
-          [pubKey]:
-            maxSupply !== undefined && number > maxSupply ? maxSupply : number,
-        },
-      });
-    }
+    setPackState({
+      supplyByMetadataKey: {
+        ...supplyByMetadataKey,
+        [pubKey]:
+          maxSupply !== undefined && number > maxSupply ? maxSupply : number,
+      },
+    });
   };
 
   const handleDistributionTypeChange = (type: PackDistributionType): void => {
@@ -117,7 +120,7 @@ const AdjustQuantitiesStep = ({
                   type="number"
                   min={0}
                   max={item.masterEdition?.info.maxSupply?.toNumber()}
-                  className={!supplyByMetadataKey[item.metadata.pubkey] ? 'ant-error-input' : ''}
+                  className={classNames({ 'ant-error-input': !supplyByMetadataKey[item.metadata.pubkey] })}
                   value={supplyByMetadataKey[item.metadata.pubkey]}
                   onChange={({ target: { value } }) =>
                     handleDistributionChange(item, value, InputType.maxSupply)
@@ -136,7 +139,9 @@ const AdjustQuantitiesStep = ({
                     onChange={({ target: { value } }) =>
                       handleDistributionChange(item, value, InputType.weight)
                     }
-                    className={!weightByMetadataKey[item.metadata.pubkey] ? 'ant-error-input error-redeem' : ''}
+                    className={
+                      classNames({ 'ant-error-input error-redeem': !weightByMetadataKey[item.metadata.pubkey] })
+                    }
                   />
                   {
                     !weightByMetadataKey[item.metadata.pubkey] && (
