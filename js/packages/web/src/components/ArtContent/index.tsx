@@ -3,7 +3,7 @@ import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import Loading from 'react-loading';
 import { Image } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { ReactElement, useCallback, useEffect, useState } from 'react';
 import cx from 'classnames';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { getLast } from '../../utils/utils';
@@ -28,14 +28,16 @@ const MeshArtContent = ({
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
-    return <CachedImageContent backdrop={backdrop} uri={uri} preview={false} />;
+    return <CachedImageContent
+      backdrop={backdrop}
+      uri={uri}
+      preview={false}
+    />;
   }
 
   return (
-    <div className="metaplex-art-content">
-      <div className="metaplex-mesh-art-content">
-        <MeshViewer url={renderURL} />
-      </div>
+    <div className="metaplex-mesh-art-content">
+      <MeshViewer url={renderURL} />
     </div>
   );
 };
@@ -49,16 +51,22 @@ const CachedImageContent = ({
   preview?: boolean;
   backdrop: string;
 }) => {
-  const { cachedBlob } = useCachedImage(uri || '');
-  const [loaded, setLoaded] = useState(false);
+  const { cachedBlob, isLoading } = useCachedImage(uri || '');
 
   return (
     <Image
       preview={preview}
       src={cachedBlob}
-      wrapperClassName={(cx("metaplex-image", `metaplex-loader-${backdrop}`, { "metaplex-image-loaded": loaded }))}
+      wrapperClassName={
+        cx(
+          "metaplex-image",
+          `metaplex-loader-${backdrop}`,
+          {
+            "metaplex-image-loading": isLoading,
+          }
+        )
+      }
       loading="lazy"
-      onLoad={() => { setLoaded(true) }}
       placeholder={<Loading type="bars" color="inherit" />}
     />
   );
@@ -150,7 +158,7 @@ const HTMLContent = ({
   backdrop: string;
 }) => {
   if (!artView) {
-    return <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />;
+    return <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} square />;
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
@@ -179,6 +187,7 @@ export const ArtContent = ({
   files,
   artView,
   backdrop,
+  square,
 }: {
   category?: MetadataCategory;
   preview?: boolean;
@@ -190,6 +199,7 @@ export const ArtContent = ({
   files?: (MetadataFile | string)[];
   artView?: boolean;
   backdrop: "dark" | "light";
+  square: boolean;
 }) => {
   const id = pubkeyToString(pubkey);
 
@@ -207,44 +217,69 @@ export const ArtContent = ({
 
   animationURL = animationURL || '';
 
+  const squareAspect = square || animationURL !== '';
+
   const animationUrlExt = new URLSearchParams(
     getLast(animationURL.split('?')),
   ).get('ext');
 
-  if (
-    allowMeshRender &&
-    (category === 'vr' ||
-      animationUrlExt === 'glb' ||
-      animationUrlExt === 'gltf')
-  ) {
-    return (
-      <MeshArtContent backdrop={backdrop} uri={uri} animationUrl={animationURL} files={files} />
-    );
-  }
+  let content: ReactElement;
 
-  const content =
-    category === 'video' || category === 'audio' ? (
+  if (category === 'video' || category === 'audio') {
+    content = (
       <VideoArtContent
         files={files}
         uri={uri}
         animationURL={animationURL}
         active={active}
       />
-    ) : category === 'html' || animationUrlExt === 'html' ? (
+    );
+  } else if (category === 'html' || animationUrlExt === 'html') {
+    content = (
       <HTMLContent
+      uri={uri}
+      animationUrl={animationURL}
+      preview={preview}
+      files={files}
+      artView={artView}
+      backdrop={backdrop}
+    />
+    )
+  } else if (allowMeshRender &&
+    (category === 'vr' ||
+      animationUrlExt === 'glb' ||
+      animationUrlExt === 'gltf')) {
+        content = (
+          <MeshArtContent
+        backdrop={backdrop}
         uri={uri}
         animationUrl={animationURL}
-        preview={preview}
         files={files}
-        artView={artView}
-        backdrop={backdrop}
       />
-    ) : (
-      <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />
+        );
+  } else {
+    content = (
+      <CachedImageContent
+          backdrop={backdrop}
+          uri={uri}
+          preview={preview}
+        />
+
     );
+  }
 
   return (
-    <div className="metaplex-art-content" ref={ref}>
+    <div
+      className={
+        cx(
+          "metaplex-art-content",
+          {
+            "metaplex-square-aspect": squareAspect,
+          }
+        )
+      }
+      ref={ref}
+    >
       {content}
     </div>
   );
