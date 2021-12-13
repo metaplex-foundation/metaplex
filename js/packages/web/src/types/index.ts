@@ -39,9 +39,3 @@ export interface Art {
   supply?: number;
   maxSupply?: number;
 }
-
-export interface Presale {
-  targetPricePerShare?: number;
-  pricePerShare?: number;
-  marketCap?: number;
-}
