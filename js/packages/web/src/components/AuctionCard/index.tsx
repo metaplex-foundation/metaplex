@@ -289,8 +289,9 @@ export const AuctionCard = ({
   const tickSizeInvalid = !!(
     tickSize &&
     value &&
-    (value * LAMPORTS_PER_SOL) % tickSize.toNumber() != 0
+    value % fromLamports(tickSize) != 0
   );
+
 
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
   const isAuctionManagerAuthorityNotWalletOwner =
@@ -321,6 +322,8 @@ export const AuctionCard = ({
     }
   }
 
+  const belowMinBid = value && (minBid && value < minBid) 
+
   const biddingPower = balance.balance + (auctionView.myBidderMetadata && !auctionView.myBidderMetadata.info.cancelled ? (auctionView.myBidderMetadata.info.lastBid.toNumber() / LAMPORTS_PER_SOL) : 0);
 
   const notEnoughFundsToBid = !!value && (value > biddingPower);
@@ -331,7 +334,7 @@ export const AuctionCard = ({
     !myPayingAccount ||
     value === undefined ||
     value * LAMPORTS_PER_SOL < priceFloor ||
-    (minBid && value < minBid) ||
+    belowMinBid ||
     loading ||
     !accountByMint.get(QUOTE_MINT.toBase58());
 
@@ -771,12 +774,12 @@ export const AuctionCard = ({
           <InputNumber<number>
             decimalSeparator='.'
             className="metaplex-fullwidth"
-            step="0.0001"
+            step="0.01"
             autoFocus
             onChange={setValue}
-            precision={4}
+            precision={2}
             formatter={value =>
-              value ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''
+              value ? `◎ ${value}` : ''
             }
             placeholder={`Bid ${minBid} SOL or more`}
           />
@@ -839,12 +842,12 @@ export const AuctionCard = ({
                   You do not have enough funds to fulfill the bid. Your current bidding power is {biddingPower} SOL.
                 </Text>
               )}
-              {tickSizeInvalid && tickSize && (
+              {value && tickSizeInvalid && tickSize && (
                 <Text type="danger">
                   Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
                 </Text>
               )}
-              {value !== undefined && invalidBid && (
+              {value !== undefined && belowMinBid && (
                 <Text type="danger">The bid must be at least {minBid} SOL.</Text>
               )}
               {gapBidInvalid && (

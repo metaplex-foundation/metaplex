@@ -75,7 +75,7 @@ export const AuctionNumbers = (props: {
             <AmountLabel
               displaySOL={props.displaySOL}
               title="Highest bid"
-              amount={(find(bids, (bid) => !bid.info.cancelled)?.info.lastBid.toNumber() || 0)}
+              amount={fromLamports(find(bids, (bid) => !bid.info.cancelled)?.info.lastBid.toNumber() || 0)}
             />
           )}
         </>

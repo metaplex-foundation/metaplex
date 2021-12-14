@@ -77,8 +77,9 @@ export const useAuctionStatus = (
     const soldOut =
       bids.length === auctionView.auctionManager.numWinners.toNumber();
 
-    amount =
-      auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber() || 0;
+    amount = fromLamports(
+      auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber() || 0,
+    );
 
     return {
       status: { isInstantSale: true, isLive, soldOut },
