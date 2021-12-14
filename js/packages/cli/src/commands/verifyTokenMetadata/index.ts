@@ -13,7 +13,7 @@ type TokenMetadata = {
 };
 
 export const verifyAssets = ({ files, uploadElementsCount }) => {
-  const pngFileCount = files.filter(it => {
+  const imgFileCount = files.filter(it => {
     return !it.endsWith(EXTENSION_JSON);
   }).length;
   const jsonFileCount = files.filter(it => {
@@ -21,21 +21,21 @@ export const verifyAssets = ({ files, uploadElementsCount }) => {
   }).length;
 
   const parsedNumber = parseInt(uploadElementsCount, 10);
-  const elemCount = parsedNumber ?? pngFileCount;
+  const elemCount = parsedNumber ?? imgFileCount;
 
-  if (pngFileCount !== jsonFileCount) {
+  if (imgFileCount !== jsonFileCount) {
     throw new Error(
-      `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+      `number of img files (${imgFileCount}) is different than the number of json files (${jsonFileCount})`,
     );
   }
 
-  if (elemCount < pngFileCount) {
+  if (elemCount < imgFileCount) {
     throw new Error(
-      `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+      `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imgFileCount})`,
     );
   }
 
-  log.info(`Verifying token metadata for ${pngFileCount} (png+json) pairs`);
+  log.info(`Verifying token metadata for ${imgFileCount} (img+json) pairs`);
 };
 
 export const verifyAggregateShare = (
