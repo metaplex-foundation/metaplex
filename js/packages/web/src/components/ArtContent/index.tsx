@@ -109,13 +109,16 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
+          // @ts-ignore
           streamRef={(e: any) => playerRef(e)}
           src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
           loop={true}
+          // @ts-ignore
           height={600}
+          // @ts-ignore
           width={600}
           controls={false}
           videoDimensions={{
@@ -257,7 +260,7 @@ export const ArtContent = ({
 }) => {
   const [uriState, setUriState] = useState<string | undefined>();
   const [animationURLState, setAnimationURLState] = useState<string | undefined>();
-  const [filesState, setFilesState] = useState<(MetadataFile|string)[] | undefined>();
+  const [filesState, setFilesState] = useState<(MetadataFile | string)[] | undefined>();
   const [categoryState, setCategoryState] = useState<MetadataCategory | undefined>();
 
   const id = pubkeyToString(pubkey);

@@ -2035,6 +2035,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "nft-candy-machine-v2"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "arrayref",
+ "metaplex-token-metadata 0.0.1",
+ "solana-gateway",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
 name = "nix"
 version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3037,6 +3050,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sol-did"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2546d424d6898908c205d99d3af07ad42e2e8aec8f0d459235dc0bd4e9866fe"
+dependencies = [
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
 name = "solana-account-decoder"
 version = "1.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3288,6 +3314,20 @@ dependencies = [
  "quote 1.0.9",
  "rustc_version 0.2.3",
  "syn 1.0.75",
+]
+
+[[package]]
+name = "solana-gateway"
+version = "0.0.3"
+source = "git+https://github.com/identity-com/on-chain-identity-gateway?rev=9a45ab40cd0c5abe1fd149c8dae7d6b6c4edb9d6#9a45ab40cd0c5abe1fd149c8dae7d6b6c4edb9d6"
+dependencies = [
+ "bitflags",
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "sol-did",
+ "solana-program",
+ "thiserror",
 ]
 
 [[package]]

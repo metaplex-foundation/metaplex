@@ -1,25 +1,409 @@
-import fs from 'fs';
 import { readFile } from 'fs/promises';
 import path from 'path';
-
-import { PublicKey } from '@solana/web3.js';
-import { BN } from '@project-serum/anchor';
-
 import log from 'loglevel';
-
 import {
+  createCandyMachineV2,
   createConfig,
   loadCandyProgram,
   loadWalletKey,
 } from '../helpers/accounts';
+import { PublicKey } from '@solana/web3.js';
+import fs from 'fs';
+import { BN, Program, web3 } from '@project-serum/anchor';
+
 import { loadCache, saveCache } from '../helpers/cache';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+
 import { StorageType } from '../helpers/storage-type';
-import { chunks } from '../helpers/various';
 import { AssetKey } from '../types';
+import { chunks } from '../helpers/various';
+
+export async function uploadV2({
+  files,
+  cacheName,
+  env,
+  totalNFTs,
+  storage,
+  retainAuthority,
+  mutable,
+  ipfsCredentials,
+  awsS3Bucket,
+  batchSize,
+  price,
+  treasuryWallet,
+  splToken,
+  gatekeeper,
+  goLiveDate,
+  endSettings,
+  whitelistMintSettings,
+  hiddenSettings,
+  uuid,
+  walletKeyPair,
+  anchorProgram,
+  arweaveJwk,
+}: {
+  files: string[];
+  cacheName: string;
+  env: string;
+  totalNFTs: number;
+  storage: string;
+  retainAuthority: boolean;
+  mutable: boolean;
+  ipfsCredentials: ipfsCreds;
+  awsS3Bucket: string;
+  batchSize: number;
+  price: BN;
+  treasuryWallet: PublicKey;
+  splToken: PublicKey;
+  gatekeeper: null | {
+    expireOnUse: boolean;
+    gatekeeperNetwork: web3.PublicKey;
+  };
+  goLiveDate: null | BN;
+  endSettings: null | [number, BN];
+  whitelistMintSettings: null | {
+    mode: any;
+    mint: PublicKey;
+    presale: boolean;
+    discountPrice: null | BN;
+  };
+  hiddenSettings: null | {
+    name: string;
+    uri: string;
+    hash: Uint8Array;
+  };
+  uuid: string;
+  walletKeyPair: web3.Keypair;
+  anchorProgram: Program;
+  arweaveJwk: string;
+}): Promise<boolean> {
+  let uploadSuccessful = true;
+  const savedContent = loadCache(cacheName, env);
+  const cacheContent = savedContent || {};
+
+  if (!cacheContent.program) {
+    cacheContent.program = {};
+  }
+
+  let existingInCache = [];
+  if (!cacheContent.items) {
+    cacheContent.items = {};
+  } else {
+    existingInCache = Object.keys(cacheContent.items);
+  }
+  const dedupedAssetKeys = getAssetKeysNeedingUpload(existingInCache, files);
+  const SIZE = dedupedAssetKeys.length;
+  let candyMachine = cacheContent.program.candyMachine
+    ? new PublicKey(cacheContent.program.candyMachine)
+    : undefined;
+  const dirname = path.dirname(files[0]);
+
+  const tick = SIZE / 100; //print every one percent
+  let lastPrinted = 0;
+
+  if (
+    storage === StorageType.ArweaveBundle ||
+    storage === StorageType.ArweaveSol
+  ) {
+    const assetKey = dedupedAssetKeys[0];
+    const manifest = getAssetManifest(
+      dirname,
+      assetKey.index.includes('json')
+        ? assetKey.index
+        : `${assetKey.index}.json`,
+    );
+    if (!cacheContent.program.uuid) {
+      try {
+        const remainingAccounts = [];
+
+        if (splToken) {
+          const splTokenKey = new PublicKey(splToken);
+
+          remainingAccounts.push({
+            pubkey: splTokenKey,
+            isWritable: false,
+            isSigner: false,
+          });
+        }
+
+        // initialize candy
+        log.info(`initializing candy machine`);
+        const res = await createCandyMachineV2(
+          anchorProgram,
+          walletKeyPair,
+          treasuryWallet,
+          splToken,
+          {
+            itemsAvailable: new BN(totalNFTs),
+            uuid,
+            symbol: manifest.symbol,
+            sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+            isMutable: mutable,
+            maxSupply: new BN(0),
+            retainAuthority: retainAuthority,
+            gatekeeper,
+            goLiveDate,
+            price,
+            endSettings,
+            whitelistMintSettings,
+            hiddenSettings,
+            creators: manifest.properties.creators.map(creator => {
+              return {
+                address: new PublicKey(creator.address),
+                verified: true,
+                share: creator.share,
+              };
+            }),
+          },
+        );
+        cacheContent.program.uuid = res.uuid;
+        cacheContent.program.candyMachine = res.candyMachine.toBase58();
+        candyMachine = res.candyMachine;
+        log.info(
+          `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+        );
+
+        saveCache(cacheName, env, cacheContent);
+      } catch (exx) {
+        log.error('Error deploying config to Solana network.', exx);
+        throw exx;
+      }
+    }
+    // Initialize the Arweave Bundle Upload Generator.
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
+    const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(
+      storage,
+      dirname,
+      dedupedAssetKeys,
+      storage === StorageType.ArweaveBundle
+        ? JSON.parse((await readFile(arweaveJwk)).toString())
+        : undefined,
+      storage === StorageType.ArweaveSol ? walletKeyPair : undefined,
+    );
+
+    let result = arweaveBundleUploadGenerator.next();
+    // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
+    // and save the results to the Cache object, persist it to the Cache file.
+    while (!result.done) {
+      const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
+        await result.value;
+      updateCacheAfterUpload(
+        cacheContent,
+        cacheKeys,
+        arweavePathManifestLinks,
+        updatedManifests,
+      );
+      saveCache(cacheName, env, cacheContent);
+      log.info('Saved bundle upload result to cache.');
+      result = arweaveBundleUploadGenerator.next();
+    }
+    log.info('Upload done.');
+  } else {
+    await Promise.all(
+      chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
+        async allIndexesInSlice => {
+          for (let i = 0; i < allIndexesInSlice.length; i++) {
+            const assetKey = dedupedAssetKeys[i];
+            const image = path.join(
+              dirname,
+              `${assetKey.index}${assetKey.mediaExt}`,
+            );
+            const manifest = getAssetManifest(
+              dirname,
+              assetKey.index.includes('json')
+                ? assetKey.index
+                : `${assetKey.index}.json`,
+            );
+            const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+            if (i >= lastPrinted + tick || i === 0) {
+              lastPrinted = i;
+              log.info(`Processing asset: ${assetKey}`);
+            }
+
+            if (i === 0 && !cacheContent.program.uuid) {
+              try {
+                const remainingAccounts = [];
+
+                if (splToken) {
+                  const splTokenKey = new PublicKey(splToken);
+
+                  remainingAccounts.push({
+                    pubkey: splTokenKey,
+                    isWritable: false,
+                    isSigner: false,
+                  });
+                }
+
+                // initialize candy
+                log.info(`initializing candy machine`);
+                const res = await createCandyMachineV2(
+                  anchorProgram,
+                  walletKeyPair,
+                  treasuryWallet,
+                  splToken,
+                  {
+                    itemsAvailable: new BN(totalNFTs),
+                    uuid,
+                    symbol: manifest.symbol,
+                    sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+                    isMutable: mutable,
+                    maxSupply: new BN(0),
+                    retainAuthority: retainAuthority,
+                    gatekeeper,
+                    goLiveDate,
+                    price,
+                    endSettings,
+                    whitelistMintSettings,
+                    hiddenSettings,
+                    creators: manifest.properties.creators.map(creator => {
+                      return {
+                        address: new PublicKey(creator.address),
+                        verified: true,
+                        share: creator.share,
+                      };
+                    }),
+                  },
+                );
+                cacheContent.program.uuid = res.uuid;
+                cacheContent.program.candyMachine = res.candyMachine.toBase58();
+                candyMachine = res.candyMachine;
+                log.info(
+                  `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+                );
+
+                saveCache(cacheName, env, cacheContent);
+              } catch (exx) {
+                log.error('Error deploying config to Solana network.', exx);
+                throw exx;
+              }
+            }
+
+            if (i >= lastPrinted + tick || i === 0) {
+              lastPrinted = i;
+              log.info(`Processing asset: ${assetKey}`);
+            }
+
+            let link, imageLink;
+            try {
+              switch (storage) {
+                case StorageType.Ipfs:
+                  [link, imageLink] = await ipfsUpload(
+                    ipfsCredentials,
+                    image,
+                    manifestBuffer,
+                  );
+                  break;
+                case StorageType.Aws:
+                  [link, imageLink] = await awsUpload(
+                    awsS3Bucket,
+                    image,
+                    manifestBuffer,
+                  );
+                  break;
+                case StorageType.Arweave:
+                default:
+                  [link, imageLink] = await arweaveUpload(
+                    walletKeyPair,
+                    anchorProgram,
+                    env,
+                    image,
+                    manifestBuffer,
+                    manifest,
+                    i,
+                  );
+              }
+              if (link && imageLink) {
+                log.debug('Updating cache for ', assetKey);
+                cacheContent.items[assetKey.index] = {
+                  link,
+                  imageLink,
+                  name: manifest.name,
+                  onChain: false,
+                };
+                saveCache(cacheName, env, cacheContent);
+              }
+            } catch (err) {
+              log.error(`Error uploading file ${assetKey}`, err);
+              throw err;
+            }
+          }
+        },
+      ),
+    );
+  }
+  saveCache(cacheName, env, cacheContent);
+  const keys = Object.keys(cacheContent.items);
+  if (hiddenSettings) {
+    log.info('Skipping upload to chain as this is a hidden Candy Machine');
+  } else {
+    try {
+      await Promise.all(
+        chunks(Array.from(Array(keys.length).keys()), 1000).map(
+          async allIndexesInSlice => {
+            for (
+              let offset = 0;
+              offset < allIndexesInSlice.length;
+              offset += 10
+            ) {
+              const indexes = allIndexesInSlice.slice(offset, offset + 10);
+              const onChain = indexes.filter(i => {
+                const index = keys[i];
+                return cacheContent.items[index]?.onChain || false;
+              });
+              const ind = keys[indexes[0]];
+
+              if (onChain.length != indexes.length) {
+                log.info(
+                  `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
+                );
+                try {
+                  await anchorProgram.rpc.addConfigLines(
+                    ind,
+                    indexes.map(i => ({
+                      uri: cacheContent.items[keys[i]].link,
+                      name: cacheContent.items[keys[i]].name,
+                    })),
+                    {
+                      accounts: {
+                        candyMachine,
+                        authority: walletKeyPair.publicKey,
+                      },
+                      signers: [walletKeyPair],
+                    },
+                  );
+                  indexes.forEach(i => {
+                    cacheContent.items[keys[i]] = {
+                      ...cacheContent.items[keys[i]],
+                      onChain: true,
+                    };
+                  });
+                  saveCache(cacheName, env, cacheContent);
+                } catch (e) {
+                  log.error(
+                    `saving config line ${ind}-${
+                      keys[indexes[indexes.length - 1]]
+                    } failed`,
+                    e,
+                  );
+                  uploadSuccessful = false;
+                }
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      log.error(e);
+    } finally {
+      saveCache(cacheName, env, cacheContent);
+    }
+  }
+  console.log(`Done. Successful = ${uploadSuccessful}.`);
+  return uploadSuccessful;
+}
 
 /**
  * The Cache object, represented in its minimal form.
@@ -77,7 +461,6 @@ function getAssetKeysNeedingUpload(
         keyMap[key] = true;
         acc.push({ mediaExt: ext, index: key });
       }
-      console.log(acc);
       return acc;
     }, [])
     .sort((a, b) => Number.parseInt(a.key, 10) - Number.parseInt(b.key, 10));
