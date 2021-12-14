@@ -543,15 +543,10 @@ export const AuctionCreateView = () => {
 
   const categoryStep = (
     <CategoryStep
-      confirm={(category: AuctionCategory) => {
-        if (category !== attributes.category) {
-          setAttributes({
-            ...freshAttributes,
-            category,
-          });
-        }
-        gotoNextStep();
-      }}
+      confirm={() => gotoNextStep()}
+      attributes={attributes}
+      freshAttributes={freshAttributes}
+      setAttributes={setAttributes}
     />
   );
 
