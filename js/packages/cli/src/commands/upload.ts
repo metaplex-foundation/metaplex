@@ -220,10 +220,10 @@ export async function uploadV2({
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));
             if (i >= lastPrinted + tick || i === 0) {
               lastPrinted = i;
-              log.info(`Processing asset: ${assetKey}`);
+              log.info(`Processing asset: ${allIndexesInSlice[i]}`);
             }
 
-            if (i === 0 && !cacheContent.program.uuid) {
+            if (allIndexesInSlice[i] === 0 && !cacheContent.program.uuid) {
               try {
                 const remainingAccounts = [];
 
@@ -283,7 +283,7 @@ export async function uploadV2({
 
             if (i >= lastPrinted + tick || i === 0) {
               lastPrinted = i;
-              log.info(`Processing asset: ${assetKey}`);
+              log.info(`Processing asset: ${allIndexesInSlice[i]}`);
             }
 
             let link, imageLink;
@@ -316,7 +316,7 @@ export async function uploadV2({
                   );
               }
               if (link && imageLink) {
-                log.debug('Updating cache for ', assetKey);
+                log.debug('Updating cache for ', allIndexesInSlice[i]);
                 cacheContent.items[assetKey.index] = {
                   link,
                   imageLink,
