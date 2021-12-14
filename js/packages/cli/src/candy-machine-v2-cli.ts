@@ -43,6 +43,7 @@ import { createGenerativeArt } from './commands/createArt';
 import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
+import { getType } from 'mime';
 program.version('0.0.2');
 const supportedImageTypes = {
   'image/png': 1,
