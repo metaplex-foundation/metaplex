@@ -94,10 +94,17 @@ pub fn create_auction(
     // The data must be large enough to hold at least the number of winners.
     let auction_size = match args.winners {
         WinnerLimit::Capped(n) => {
+            // not instance sale 
             if instant_sale_price.is_none() {
                 mem::size_of::<Bid>() * BidState::max_array_size_for(n) + BASE_AUCTION_DATA_SIZE
             } else {
-                BASE_AUCTION_DATA_SIZE
+                // if we have instant sale auction with only one token we allocate size for 1 bid
+                if n == 1 {
+                    BASE_AUCTION_DATA_SIZE + mem::size_of::<Bid>()
+                }
+                else {
+                    BASE_AUCTION_DATA_SIZE
+                }
             }
         }
         WinnerLimit::Unlimited(_) => BASE_AUCTION_DATA_SIZE,

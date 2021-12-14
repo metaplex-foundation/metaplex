@@ -377,6 +377,7 @@ impl AuctionData {
         gap_tick_size_percentage: Option<u8>,
         now: UnixTimestamp,
         instant_sale_price: Option<u64>,
+        is_only_one_token: bool,
     ) -> Result<(), ProgramError> {
         let gap_val = match self.ended_at {
             Some(end) => {
@@ -402,6 +403,7 @@ impl AuctionData {
             minimum,
             instant_sale_price,
             &mut self.state,
+            is_only_one_token,
         )?;
 
         Ok(())
@@ -535,6 +537,7 @@ impl BidState {
         minimum: u64,
         instant_sale_price: Option<u64>,
         auction_state: &mut AuctionState,
+        is_only_one_token: bool,
     ) -> Result<(), ProgramError> {
         msg!("Placing bid {:?}", &bid.1.to_string());
         BidState::assert_valid_tick_size_bid(&bid, tick_size)?;
@@ -550,7 +553,13 @@ impl BidState {
             } => {
                 // check for instance sale auction
                 if instant_sale_price.is_some() {
-                    if *max > 0 {
+                    // if auction was created with only one token for sale
+                    if is_only_one_token{
+                        bids.push(bid);
+                        Ok(())
+                    }
+                    // other instant sales 
+                    else if *max > 0 {
                         *max = max.checked_sub(1).ok_or(AuctionError::NumericalOverflowError)?;
                         msg!("Decrement max supply for limited instant sale auction");
                         Ok(())

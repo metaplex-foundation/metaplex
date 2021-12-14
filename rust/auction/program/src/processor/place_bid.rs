@@ -25,7 +25,7 @@ use crate::{
     EXTENDED, PREFIX,
 };
 
-use super::BIDDER_METADATA_LEN;
+use super::{BIDDER_METADATA_LEN, BID_LENGTH, BASE_AUCTION_DATA_SIZE};
 
 use {
     borsh::{BorshDeserialize, BorshSerialize},
@@ -129,6 +129,9 @@ pub fn place_bid<'r, 'b: 'r>(
 ) -> ProgramResult {
     msg!("+ Processing PlaceBid");
     let accounts = parse_accounts(program_id, accounts)?;
+
+    // check if we have account with size for only one bid
+    let is_only_one_token: bool = accounts.auction.data_len() == (BASE_AUCTION_DATA_SIZE + BID_LENGTH);
 
     // Load the auction and verify this bid is valid.
     let mut auction = AuctionData::from_account_info(accounts.auction)?;
@@ -319,6 +322,7 @@ pub fn place_bid<'r, 'b: 'r>(
         auction_extended.gap_tick_size_percentage,
         clock.unix_timestamp,
         auction_extended.instant_sale_price,
+        is_only_one_token,
     )?;
     auction.serialize(&mut *accounts.auction.data.borrow_mut())?;
 

@@ -221,12 +221,27 @@ export const AuctionCreateView = () => {
     } else if (attributes.category === AuctionCategory.InstantSale) {
       const { items, editions, instantSalePrice } = attributes;
 
+      // set up WinningConfigType
       if (items.length > 0) {
-        items[0].winningConfigType = WinningConfigType.Participation;
-        items[0].participationConfig = new ParticipationConfigV2({
-          winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
-          nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
-          fixedPrice: new BN(toLamports(instantSalePrice, mint)),})
+        if (!editions) {
+          items[0].winningConfigType =
+          items[0].metadata.info.updateAuthority ===
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              ? WinningConfigType.FullRightsTransfer
+              : WinningConfigType.TokenOnlyTransfer;
+          items[0].amountRanges = [
+            new AmountRange({
+              amount: new BN(1),
+              length: new BN(editions || 1),
+            }),
+          ];
+        } else {
+          items[0].winningConfigType = WinningConfigType.Participation;
+          items[0].participationConfig = new ParticipationConfigV2({
+            winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
+            nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
+            fixedPrice: new BN(toLamports(instantSalePrice, mint)),})
+        }
       }
 
       winnerLimit = new WinnerLimit({
@@ -489,9 +504,12 @@ export const AuctionCreateView = () => {
       name: null,
     };
 
-    const isOpenEdition =
-      attributes.category === AuctionCategory.Open ||
-      attributes.category === AuctionCategory.InstantSale;
+    // not open if instance_sale and FullRightsTransfer/TokenOnlyTransfer config
+    const isOpenEdition = attributes.category === AuctionCategory.Open || 
+      (attributes.category === AuctionCategory.InstantSale && 
+        (attributes.items[0].winningConfigType != WinningConfigType.FullRightsTransfer && 
+          attributes.items[0].winningConfigType != WinningConfigType.TokenOnlyTransfer));
+
     const safetyDepositDrafts = isOpenEdition
       ? []
       : attributes.category !== AuctionCategory.Tiered
