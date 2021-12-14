@@ -5,6 +5,7 @@ import path from 'path';
 import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { StorageType } from './storage-type';
+import { getAtaForMint } from './accounts';
 
 const { readFile } = fs.promises;
 
@@ -73,7 +74,16 @@ export async function getCandyMachineV2Config(
 
   let wallet;
   let parsedPrice = price;
-  if (splToken || splTokenAccount) {
+
+  const splTokenAccountFigured = splTokenAccount
+    ? splTokenAccount
+    : (
+        await getAtaForMint(
+          new web3.PublicKey(splToken),
+          walletKeyPair.publicKey,
+        )
+      )[0];
+  if (splToken) {
     if (solTreasuryAccount) {
       throw new Error(
         'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
@@ -85,8 +95,8 @@ export async function getCandyMachineV2Config(
       );
     }
     const splTokenKey = new web3.PublicKey(splToken);
-    const splTokenAccountKey = new web3.PublicKey(splTokenAccount);
-    if (!splTokenAccount) {
+    const splTokenAccountKey = new web3.PublicKey(splTokenAccountFigured);
+    if (!splTokenAccountFigured) {
       throw new Error(
         'If spl-token is set, spl-token-account must also be set',
       );
