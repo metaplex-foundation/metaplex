@@ -20,6 +20,8 @@
       "es2019"
     ],
     "types": [
+      "jest",
+      "node",
       "webgl2",
       "offscreencanvas"
     ],
