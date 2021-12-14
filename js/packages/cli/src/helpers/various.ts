@@ -4,18 +4,16 @@ import weighted from 'weighted';
 import path from 'path';
 import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { getBalance } from './accounts';
+import { StorageType } from './storage-type';
 
 const { readFile } = fs.promises;
 
 export async function getCandyMachineV2Config(
   walletKeyPair: web3.Keypair,
   anchorProgram: Program,
-  env: string,
-  rpcUrl: string,
   configPath: any,
 ): Promise<{
-  storage: string;
+  storage: StorageType;
   ipfsInfuraProjectId: string;
   number: number;
   ipfsInfuraSecret: string;
@@ -44,11 +42,12 @@ export async function getCandyMachineV2Config(
   };
   goLiveDate: BN | null;
   uuid: string;
+  arweaveJwk: string;
 }> {
   const configString = fs.readFileSync(configPath);
 
   //@ts-ignore
-  let config = JSON.parse(configString);
+  const config = JSON.parse(configString);
 
   const {
     storage,
@@ -69,6 +68,7 @@ export async function getCandyMachineV2Config(
     whitelistMintSettings,
     goLiveDate,
     uuid,
+    arweaveJwk,
   } = config;
 
   let wallet;
@@ -147,7 +147,7 @@ export async function getCandyMachineV2Config(
   }
 
   if (hiddenSettings) {
-    let utf8Encode = new TextEncoder();
+    const utf8Encode = new TextEncoder();
     hiddenSettings.hash = utf8Encode.encode(hiddenSettings.hash);
   }
 
@@ -175,6 +175,7 @@ export async function getCandyMachineV2Config(
     whitelistMintSettings,
     goLiveDate: goLiveDate ? new BN(parseDate(goLiveDate)) : null,
     uuid,
+    arweaveJwk,
   };
 }
 export async function readJsonFile(fileName: string) {

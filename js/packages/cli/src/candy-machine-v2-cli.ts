@@ -9,36 +9,29 @@ import {
   chunks,
   fromUTF8Array,
   getCandyMachineV2Config,
-  parseDate,
   parsePrice,
   shuffle,
 } from './helpers/various';
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   CACHE_PATH,
-  CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE_V2,
   EXTENSION_JSON,
-  EXTENSION_PNG,
-  CANDY_MACHINE_PROGRAM_ID,
   CANDY_MACHINE_PROGRAM_V2_ID,
   CONFIG_ARRAY_START_V2,
 } from './helpers/constants';
 import {
-  getBalance,
-  getCandyMachineAddress,
   getProgramAccounts,
   loadCandyProgramV2,
   loadWalletKey,
   AccountAndPubkey,
 } from './helpers/accounts';
-import { Config } from './types';
-import { upload, uploadV2 } from './commands/upload';
+
+import { uploadV2 } from './commands/upload';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
-import { mint, mintV2 } from './commands/mint';
+import { mintV2 } from './commands/mint';
 import { signMetadata } from './commands/sign';
 import {
   getAccountsByCreatorAddress,
@@ -47,9 +40,15 @@ import {
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
-import { withdraw, withdrawV2 } from './commands/withdraw';
+import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
+import { StorageType } from './helpers/storage-type';
 program.version('0.0.2');
+const supportedImageTypes = {
+  'image/png': 1,
+  'image/gif': 1,
+  'image/jpeg': 1,
+};
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
@@ -82,6 +81,7 @@ programCommand('upload')
       ipfsInfuraProjectId,
       number,
       ipfsInfuraSecret,
+      arweaveJwk,
       awsS3Bucket,
       retainAuthority,
       mutable,
@@ -95,27 +95,49 @@ programCommand('upload')
       whitelistMintSettings,
       goLiveDate,
       uuid,
-    } = await getCandyMachineV2Config(
-      walletKeyPair,
-      anchorProgram,
-      env,
-      rpcUrl,
-      configPath,
-    );
+    } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
 
-    if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
+    if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
+      throw new Error(
+        'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
+      );
+    }
+
+    if (storage === StorageType.ArweaveBundle && env !== 'mainnet-beta') {
+      throw new Error(
+        'The arweave-bundle storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
+      );
+    }
+
+    if (storage === StorageType.Arweave) {
+      log.warn(
+        'WARNING: The "arweave" storage option will be going away soon. Please migrate to arweave-bundle or arweave-sol for mainnet.\n',
+      );
+    }
+
+    if (storage === StorageType.ArweaveBundle && !arweaveJwk) {
+      throw new Error(
+        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundle',
+      );
+    }
+    if (
+      storage === StorageType.Ipfs &&
+      (!ipfsInfuraProjectId || !ipfsInfuraSecret)
+    ) {
       throw new Error(
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
-    if (storage === 'aws' && !awsS3Bucket) {
+    if (storage === StorageType.Aws && !awsS3Bucket) {
       throw new Error(
         'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
       );
     }
-    if (!(storage === 'arweave' || storage === 'ipfs' || storage === 'aws')) {
+    if (!Object.values(StorageType).includes(storage)) {
       throw new Error(
-        "Storage option must either be 'arweave', 'ipfs', or 'aws'.",
+        `Storage option must either be ${Object.values(StorageType).join(
+          ', ',
+        )}. Got: ${storage}`,
       );
     }
     const ipfsCredentials = {
@@ -123,24 +145,32 @@ programCommand('upload')
       secretKey: ipfsInfuraSecret,
     };
 
-    const pngFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_PNG);
-    }).length;
+    const imageFiles = files.filter(it => {
+      return !it.endsWith(EXTENSION_JSON);
+    });
+    const imageFileCount = imageFiles.length;
+
+    imageFiles.forEach(it => {
+      if (!supportedImageTypes[getType(it)]) {
+        throw new Error(`The file ${it} is not a supported file type.`);
+      }
+    });
+
     const jsonFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_JSON);
     }).length;
 
-    const elemCount = number ? number : pngFileCount;
+    const elemCount = number ? number : imageFileCount;
 
-    if (pngFileCount !== jsonFileCount) {
+    if (imageFileCount !== jsonFileCount) {
       throw new Error(
-        `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+        `number of img files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
     }
 
-    if (elemCount < pngFileCount) {
+    if (elemCount < imageFileCount) {
       throw new Error(
-        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
       );
     }
 
@@ -148,19 +178,16 @@ programCommand('upload')
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
-    let warn = false;
-    for (;;) {
-      const successful = await uploadV2({
+    try {
+      await uploadV2({
         files,
         cacheName,
         env,
-        keypair,
         totalNFTs: elemCount,
         gatekeeper,
         storage,
         retainAuthority,
         mutable,
-        rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
         batchSize,
@@ -174,24 +201,16 @@ programCommand('upload')
         whitelistMintSettings,
         goLiveDate,
         uuid,
+        arweaveJwk,
       });
-
-      if (successful) {
-        warn = false;
-        break;
-      } else {
-        warn = true;
-        log.warn('upload was not successful, rerunning');
-      }
+    } catch (err) {
+      log.warn('upload was not successful, please re-run.', err);
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
       `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
-    if (warn) {
-      log.info('not all images have been uploaded, rerun this step.');
-    }
   });
 
 programCommand('withdraw')
@@ -705,13 +724,7 @@ programCommand('update_candy_machine')
       whitelistMintSettings,
       goLiveDate,
       uuid,
-    } = await getCandyMachineV2Config(
-      walletKeyPair,
-      anchorProgram,
-      env,
-      rpcUrl,
-      configPath,
-    );
+    } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
 
     const newSettings = {
       itemsAvailable: number

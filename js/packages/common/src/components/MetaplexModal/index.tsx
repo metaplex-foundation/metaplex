@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal } from 'antd';
 
 export const MetaplexModal = (props: any) => {
-  const { children, bodyStyle, ...rest } = props;
+  const { children, bodyStyle, className, ...rest } = props;
 
   return (
     <Modal
@@ -14,7 +14,7 @@ export const MetaplexModal = (props: any) => {
 
         ...bodyStyle,
       }}
-      className={'modal-box small-modal'}
+      className={`modal-box small-modal ${className}`}
       footer={null}
       width={500}
       {...rest}

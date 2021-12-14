@@ -1,6 +1,6 @@
 {
   "price": 0.01,
-  "number": 10000,
+  "number": 3,
   "gatekeeper": {
     "gatekeeperNetwork": "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6",
     "expireOnUse": true
@@ -8,11 +8,11 @@
   "solTreasuryAccount": null,
   "splTokenAccount": null,
   "splToken": null,
-  "goLiveDate": "11 Dec 2021 13:00:00 CST",
+  "goLiveDate": null,
   "endSettings": null,
   "whitelistMintSettings": null,
   "hiddenSettings": null,
-  "storage": "arweave",
+  "storage": "arweave-sol",
   "ipfsInfuraProjectId": null,
   "ipfsInfuraSecret": null,
   "awsS3Bucket": null,

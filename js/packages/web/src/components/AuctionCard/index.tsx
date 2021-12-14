@@ -63,6 +63,7 @@ import { useActionButtonContent } from './hooks/useActionButtonContent';
 import { endSale } from './utils/endSale';
 import { useInstantSaleState } from './hooks/useInstantSaleState';
 import { useTokenList } from '../../contexts/tokenList';
+import { FundsIssueModal } from "../FundsIssueModal";
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -228,6 +229,7 @@ export const AuctionCard = ({
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [purchaseFinished, setPurchaseFinished] = useState<boolean>(false);
+  const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -245,12 +247,15 @@ export const AuctionCard = ({
     ? 'SOL'
     : 'CUSTOM';
 
-
-  const LAMPORTS_PER_MINT = tokenInfo? Math.ceil(10 ** tokenInfo.decimals): LAMPORTS_PER_SOL;
-
+  const LAMPORTS_PER_MINT = tokenInfo
+    ? Math.ceil(10 ** tokenInfo.decimals)
+    : LAMPORTS_PER_SOL;
 
   //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
+  const instantSalePrice = useMemo(() =>
+    auctionView.auctionDataExtended?.info.instantSalePrice
+    , [auctionView.auctionDataExtended]);
   let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
@@ -282,7 +287,13 @@ export const AuctionCard = ({
     (value * LAMPORTS_PER_MINT) % tickSize.toNumber() != 0
   );
 
-  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView, LAMPORTS_PER_MINT);
+  const gapBidInvalid = useGapTickCheck(
+    value,
+    gapTick,
+    gapTime,
+    auctionView,
+    LAMPORTS_PER_MINT,
+  );
 
   const isAuctionManagerAuthorityNotWalletOwner =
     auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
@@ -349,6 +360,12 @@ export const AuctionCard = ({
     setLoading(false);
   };
   const instantSaleAction = () => {
+    const isNotEnoughLamports = balance.balanceLamports < (instantSalePrice?.toNumber()  || 0)
+    if (isNotEnoughLamports) {
+      setShowFundsIssueModal(true);
+      return;
+    }
+
     if (canEndInstantSale) {
       return endInstantSale();
     }
@@ -358,8 +375,6 @@ export const AuctionCard = ({
 
   const instantSale = async () => {
     setLoading(true);
-    const instantSalePrice =
-      auctionView.auctionDataExtended?.info.instantSalePrice;
     const winningConfigType =
       auctionView.participationItem?.winningConfigType ||
       auctionView.items[0][0].winningConfigType;
@@ -387,6 +402,8 @@ export const AuctionCard = ({
           auctionView,
           accountByMint,
           instantSalePrice,
+          // make sure all accounts are created
+          'finalized',
         );
         setLastBid(bid);
       } catch (e) {
@@ -442,10 +459,9 @@ export const AuctionCard = ({
         prizeTrackingTickets,
         bidRedemptions,
         bids,
-      ).then(async () => {
-        await update();
-        setShowRedeemedBidModal(true);
-      });
+      );
+      await update();
+      setShowRedeemedBidModal(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
@@ -770,17 +786,25 @@ export const AuctionCard = ({
             <Spin />
           ) : (
             auctionView.isInstantSale &&
-            !isAlreadyBought && !purchaseFinished && (
-              <Button
-                type="primary"
-                size="large"
-                className="ant-btn secondary-btn"
-                disabled={loading}
-                onClick={instantSaleAction}
-                style={{ marginTop: 20, width: '100%' }}
-              >
-                {actionButtonContent}
+            !isAlreadyBought && !purchaseFinished && (<>
+                <FundsIssueModal
+                  message={"Price"}
+                  minimumFunds={fromLamports(instantSalePrice?.toNumber(), mintInfo)}
+                  currentFunds={balance.balance}
+                  isModalVisible={showFundsIssueModal}
+                  onClose={() => setShowFundsIssueModal(false)}
+                />
+                <Button
+                  type="primary"
+                  size="large"
+                  className="ant-btn secondary-btn"
+                  disabled={loading}
+                  onClick={instantSaleAction}
+                  style={{ marginTop: 20, width: '100%' }}
+                >
+                  {actionButtonContent}
               </Button>
+              </>
             )
           ))}
         {!hideDefaultAction && !wallet.connected && (

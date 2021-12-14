@@ -4,6 +4,30 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 ## Settings examples
 
+{
+  "price": 0.01,
+  "number": 10000,
+  "gatekeeper": {
+    "gatekeeperNetwork": "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6",
+    "expireOnUse": true
+  },
+  "solTreasuryAccount": null,
+  "splTokenAccount": null,
+  "splToken": null,
+  "goLiveDate": "11 Dec 2021 13:00:00 CST",
+  "endSettings": null,
+  "whitelistMintSettings": null,
+  "hiddenSettings": null,
+  "storage": "arweave",
+  "ipfsInfuraProjectId": null,
+  "ipfsInfuraSecret": null,
+  "awsS3Bucket": null,
+  "noRetainAuthority": false,
+  "noMutable": false
+}
+
+See example-candy-machine-upload-config.json
+
 ### Captcha Settings (Gateway)
 
 Want captcha? Add this for gatekeeper value and you are done:
