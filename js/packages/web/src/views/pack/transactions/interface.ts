@@ -4,7 +4,6 @@ import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 
-import { ExtendedVoucherByKey } from '../../../types/packs';
 import { PackMetadataByPackCard } from '../contexts/hooks/useMetadataByPackCard';
 
 export interface GenerateTransactionsResponse {
@@ -49,34 +48,29 @@ export interface NewMintParams {
   connection: Connection;
 }
 
-export interface RequestCardParams {
-  index: number;
-  packSetKey: StringPublicKey;
-  randomOracle: StringPublicKey;
-  edition: StringPublicKey;
-  editionMint: StringPublicKey;
-  tokenAccount: StringPublicKey;
-  packVoucher: StringPublicKey;
-  wallet: WalletContextState;
-}
-
 export interface RequestCardsParams {
   pack: ParsedAccount<PackSet>;
-  userVouchers: ExtendedVoucherByKey;
-  voucherEditionKey: StringPublicKey;
-  tokenAccount: StringPublicKey;
+  tokenAccount?: StringPublicKey;
   wallet: WalletContextState;
   connection: Connection;
   cardsLeftToOpen: number;
+  voucherKey: StringPublicKey;
+  editionKey: StringPublicKey;
+  editionMint: StringPublicKey;
 }
 
-export interface RequestCardsInstructionsParams {
+export interface RequestCardsInstructionsParams
+  extends Omit<RequestCardParams, 'index'> {
   cardsLeftToOpen: number;
+}
+
+export interface RequestCardParams {
+  index: number;
   packSetKey: StringPublicKey;
-  edition: StringPublicKey;
+  voucherKey: StringPublicKey;
+  editionKey: StringPublicKey;
   editionMint: StringPublicKey;
-  tokenAccount: StringPublicKey;
-  packVoucher: StringPublicKey;
+  tokenAccount?: StringPublicKey;
   wallet: WalletContextState;
   randomOracle: StringPublicKey;
 }

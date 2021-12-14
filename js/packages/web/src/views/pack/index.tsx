@@ -26,9 +26,9 @@ const PackView: React.FC = () => {
       <Row>
         <Col md={16}>
           <div className="pack-view__list">
-            {cards.map(index => {
-              return <ArtCard key={index} index={index} />;
-            })}
+            {cards.map(index => (
+              <ArtCard key={index} index={index} isModalOpened={openModal} />
+            ))}
           </div>
         </Col>
         <Col md={8} className="pack-view__sidebar-container">

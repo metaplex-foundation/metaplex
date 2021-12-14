@@ -417,7 +417,7 @@ export function* makeArweaveBundleUploadGenerator(
           walletKeyPair.secretKey,
         );
         const bytes = dataItems.reduce((c, d) => c + d.data.length, 0);
-        const cost = await bundlr.utils.getStorageCost('solana', bytes);
+        const cost = await bundlr.utils.getPrice('solana', bytes);
         log.info(`${cost.toNumber() / LAMPORTS} SOL to upload`);
         await bundlr.fund(cost.toNumber());
         for (const d of dataItems) {
