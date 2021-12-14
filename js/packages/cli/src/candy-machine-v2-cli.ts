@@ -175,7 +175,7 @@ programCommand('upload')
       );
     }
 
-    log.info(`Beginning the upload for ${elemCount} (png+json) pairs`);
+    log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());

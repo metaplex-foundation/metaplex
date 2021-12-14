@@ -461,7 +461,6 @@ function getAssetKeysNeedingUpload(
         keyMap[key] = true;
         acc.push({ mediaExt: ext, index: key });
       }
-      console.log(acc);
       return acc;
     }, [])
     .sort((a, b) => Number.parseInt(a.key, 10) - Number.parseInt(b.key, 10));

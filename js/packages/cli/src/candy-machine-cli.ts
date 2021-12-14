@@ -76,7 +76,7 @@ programCommand('upload')
   .option(
     '-s, --storage <string>',
     `Database to use for storage (${Object.values(StorageType).join(', ')})`,
-    'arweave-sol',
+    'arweave',
   )
   .option(
     '--ipfs-infura-project-id <string>',
