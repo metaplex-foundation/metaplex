@@ -5,7 +5,7 @@ import { useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
 
 interface IAmountLabel {
-  amount: number | string;
+  amount: number;
   displayUSD?: boolean;
   displaySOL?: boolean;
   title?: string;
@@ -14,13 +14,12 @@ interface IAmountLabel {
 
 export const AmountLabel = (props: IAmountLabel) => {
   const {
-    amount: _amount,
+    amount,
     displayUSD = true,
     displaySOL = false,
     title = '',
     customPrefix,
   } = props;
-  const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
 
   const solPrice = useSolPrice();
 
@@ -38,7 +37,7 @@ export const AmountLabel = (props: IAmountLabel) => {
       <Space direction="horizontal" align="baseline">
         {PriceNaN === false && (
           <Statistic
-            value={`${amount}${displaySOL ? ' SOL' : ''}`}
+            value={`${amount.toLocaleString()}${displaySOL ? ' SOL' : ''}`}
             prefix={customPrefix || <SolCircle />}
           />
         )}
