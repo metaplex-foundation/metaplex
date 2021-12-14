@@ -34,12 +34,12 @@ export const MintButton = ({
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
-    if (gatewayStatus == GatewayStatus.ACTIVE && clicked) {
+    if (gatewayStatus === GatewayStatus.ACTIVE && clicked) {
       console.log('Minting');
       onMint();
       setClicked(false);
     }
-  }, [gatewayStatus, clicked, setClicked]);
+  }, [gatewayStatus, clicked, setClicked, onMint]);
   return (
     <CTAButton
       disabled={

@@ -5,13 +5,7 @@ import { PhaseCountdown } from './countdown';
 import { toDate } from './utils';
 import { FairLaunchAccount } from './fair-launch';
 import { CandyMachineAccount } from './candy-machine';
-import {
-  ButtonMode,
-  GatewayProvider,
-  IdentityButton,
-} from '@civic/solana-gateway-react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
 
 export enum Phase {
   AnticipationPhase, // FL, AKA Phase 0

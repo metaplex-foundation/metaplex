@@ -95,7 +95,7 @@ export async function sendTransactionsWithManualRetry(
         ids.push(id.txid);
         stopPoint = 1;
       } else {
-        const { txs, number } = await sendTransactions(
+        const { txs } = await sendTransactions(
           connection,
           wallet,
           instructions,
@@ -129,7 +129,7 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = (txid, ind) => {},
+  successCallback: (txid: string, ind: number) => void = (txid, ind) => { },
   failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<{ number: number; txs: { txid: string; slot: number }[] }> => {
@@ -402,7 +402,7 @@ export async function sendSignedTransaction({
       simulateResult = (
         await simulateTransaction(connection, signedTransaction, 'single')
       ).value;
-    } catch (e) {}
+    } catch (e) { }
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
         for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
