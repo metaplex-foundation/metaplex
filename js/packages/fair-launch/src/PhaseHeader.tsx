@@ -101,6 +101,7 @@ export const PhaseHeader = ({
 }: PhaseHeaderProps) => {
   const wallet = useWallet();
   console.log('D', candyMachine);
+  console.log('Wallet', wallet);
 
   return (
     <>
