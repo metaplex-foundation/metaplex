@@ -76,8 +76,9 @@ export const Wizard = () => {
    
     return (
         <React.Fragment>
-            <h1>Search NFT Entanglements</h1>
-            <p>Searches entanglements of your NFTs</p>
+            <Typography variant="h4" color="text.primary" gutterBottom>Search NFT Entanglements </Typography>
+            
+            <p>Searches entanglements of your NFT </p>
 
             <Box
                 component="form"
@@ -103,7 +104,7 @@ export const Wizard = () => {
 
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
-                <h2>My NFT mints:</h2>
+                <Typography variant="h5" color="text.primary" gutterBottom>My NFT mints: </Typography>
                 {loading && <LinearProgress />}
                 
                 {//@ts-ignore

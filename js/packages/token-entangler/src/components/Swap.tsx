@@ -9,7 +9,10 @@ import { useMemo, useEffect } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { swapEntanglement } from "../utils/entangler";
 import { Box, Button, FormGroup, TextField } from "@mui/material";
+import Typography from '@mui/material/Typography';
 import SendIcon from '@mui/icons-material/Send';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 
 export const Swap = () => {
     const connection = useConnection();
@@ -68,7 +71,7 @@ export const Swap = () => {
 
     return (
         <React.Fragment>
-            <h1>Swap Entanglement</h1>
+            <Typography variant="h4" color="text.primary" gutterBottom >Swap Entanglement</Typography>
             <p>
                 Enter MintA and MintB or Entangled Pair.
             </p>
@@ -120,10 +123,17 @@ export const Swap = () => {
                         Swap
                     </Button>
                 </FormGroup>
+                { !isEnable(mintA, mintB, entangledPair) && 
+                        <Alert severity="warning" style={{marginTop: "1rem"}}>
+                            <AlertTitle>Warning</AlertTitle>
+                            The three inpust are filled. You should enter MintA and MintB or Entangled Pair.
+                            
+                        </Alert>
+                }
             </Box>
 
             <Box component="span" sx={{ display: 'block', marginTop: '2rem' }}>
-                {!entangledPair ? "" : <h2>Entangled Pair</h2>}
+                {!entangledPair ? "" : <Typography variant="h5" color="text.primary" gutterBottom>Entangled Pair</Typography>}
                 <p>{entangledPair}</p>
             </Box>
 

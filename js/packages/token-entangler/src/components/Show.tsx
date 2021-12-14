@@ -9,7 +9,10 @@ import { useMemo, useEffect } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { showEntanglement } from "../utils/entangler";
 import { Box, Button, FormGroup, TextField } from "@mui/material";
+import Typography from '@mui/material/Typography';
 import SendIcon from '@mui/icons-material/Send';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 
 export const Show = () => {
     const connection = useConnection();
@@ -95,7 +98,7 @@ export const Show = () => {
 
     return (
         <React.Fragment>
-            <h1>Show Entanglement</h1>
+            <Typography variant="h4" color="text.primary" gutterBottom>Show Entanglement</Typography>
             <p>
                 Enter MintA and MintB or Entangled Pair.
             </p>
@@ -146,6 +149,12 @@ export const Show = () => {
                         Show Entanglement
                     </Button>
                 </FormGroup>
+                { !isEnable(mintA, mintB, entangledPair) && 
+                    <Alert severity="warning" style={{ marginTop: "1rem" }}>
+                        <AlertTitle>Warning</AlertTitle>
+                        The three inpust are filled. You should enter MintA and MintB or Entangled Pair.
+                    </Alert>
+                }
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
                 <TextField

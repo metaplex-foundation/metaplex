@@ -12,6 +12,8 @@ import {
 
 import * as anchor from '@project-serum/anchor';
 import { searchEntanglements } from "../utils/entangler";
+import Typography from '@mui/material/Typography';
+
 
 
 export const Search = () => {
@@ -86,7 +88,7 @@ export const Search = () => {
     const [authority, setAuthority] = React.useState(localStorage.getItem("authority") || "");
     return (
         <React.Fragment>
-            <h1>Search Entanglements</h1>
+            <Typography variant="h4" color="text.primary" gutterBottom>Search Entanglements</Typography>
             <p>Search for entanglements by mint address and authority</p>
 
             <Box
@@ -121,7 +123,7 @@ export const Search = () => {
                     </Button>
                 </FormGroup>
                 <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
-                    <h2>Entanglements</h2>
+                    <Typography variant="h5" color="text.primary" gutterBottom>Entanglements</Typography>
                 </Box>
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>

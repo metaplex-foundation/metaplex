@@ -1,6 +1,9 @@
 import { Button, Checkbox, FormControlLabel, FormGroup, TextField } from "@mui/material";
 import Box from '@mui/material/Box';
 import SendIcon from '@mui/icons-material/Send';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import { useMemo, useEffect } from 'react';
 
 
@@ -64,16 +67,16 @@ export const Create = () => {
         console.log(res);
     };
 
-    const isEnable = (mintA: string, mintB: string, price: string): boolean => {
+    const isEnable = (mintA: string, mintB: string, authority: string, price: string): boolean => {
         return (
             // eslint-disable-next-line no-extra-boolean-cast
-            !!mintA && !!mintB && !!price
+            !!mintA && !!mintB && !!price && !!authority
         )
     }
 
     return (
         <React.Fragment>
-            <h1>Create Entanglement</h1>
+            <Typography variant="h4" color="text.primary" gutterBottom >Create Entanglement</Typography>
             <p>
                 Create an entanglement between two NFTs. Using connected wallet as entanglement authority.
             </p>
@@ -138,11 +141,18 @@ export const Create = () => {
                         variant="contained"
                         onClick={async (e) => await handleSubmit(e)}
                         endIcon={<SendIcon />}
-                        disabled={!isEnable(mintA, mintB, price)}
+                        disabled={!isEnable(mintA, mintB, price, authority)}
                     >
                         Entangle
                     </Button>
                 </FormGroup>
+                { !isEnable(mintA, mintB, price, authority) && 
+                    <Alert severity="warning" style={{ marginTop: "1rem" }}>
+                        <AlertTitle>Warning</AlertTitle>
+                        You should fill the four inputs.
+                    </Alert>
+                }
+
             </Box>
 
 

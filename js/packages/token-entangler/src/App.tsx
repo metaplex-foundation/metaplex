@@ -12,6 +12,7 @@ import {
   Box,
   Stack,
 } from "@mui/material";
+import Typography from '@mui/material/Typography';
 
 // import "./App.css";
 import {
@@ -29,7 +30,7 @@ const About = () => {
   const summary = (
     <Stack spacing={1}>
       <div>
-        <h1>Token Entangler</h1>
+        <Typography variant="h4" color="text.primary" gutterBottom>Token Entangler</Typography>
       </div>
 
 
