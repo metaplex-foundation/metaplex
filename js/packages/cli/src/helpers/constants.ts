@@ -112,5 +112,4 @@ export const DEFAULT_TIMEOUT = 15000;
 export const EXTENSION_PNG = '.png';
 export const EXTENSION_JPG = '.jpg';
 export const EXTENSION_GIF = '.gif';
-
 export const EXTENSION_JSON = '.json';

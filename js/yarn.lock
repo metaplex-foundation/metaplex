@@ -2254,6 +2254,7 @@
     tslib "^2.3.1"
     typescript "^4.4.3"
 
+<<<<<<< HEAD
 "@bundlr-network/client@^0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@bundlr-network/client/-/client-0.3.2.tgz#1210bd93d127532692d78365c4c7e02016136f87"
@@ -2276,6 +2277,9 @@
     typescript "^4.4.3"
 
 "@civic/solana-gateway-react@^0.4.2":
+=======
+"@civic/solana-gateway-react@^0.4.6":
+>>>>>>> 5b78eb3c1c297c495befe5afb6744d17797f22cb
   version "0.4.6"
   resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.6.tgz#b137bdba547d3516af72b1238d1e931f93117203"
   integrity sha512-Mk1YXS7TS6X8jebKT7I/Vzfm+l9WnMZMMw3PvNQ5NpQI6MoOF39DcBac+gyZEsbeWazSCTb4M6CvuZPycMLtlw==
@@ -2869,6 +2873,21 @@
     elliptic "6.5.4"
     hash.js "1.1.7"
 
+<<<<<<< HEAD
+=======
+"@ethersproject/signing-key@^5.4.0":
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/@ethersproject/signing-key/-/signing-key-5.4.0.tgz#2f05120984e81cf89a3d5f6dec5c68ee0894fbec"
+  integrity sha512-q8POUeywx6AKg2/jX9qBYZIAmKSB4ubGXdQ88l40hmATj29JnG5pp331nAWwwxPn2Qao4JpWHNZsQN+bPiSW9A==
+  dependencies:
+    "@ethersproject/bytes" "^5.4.0"
+    "@ethersproject/logger" "^5.4.0"
+    "@ethersproject/properties" "^5.4.0"
+    bn.js "^4.11.9"
+    elliptic "6.5.4"
+    hash.js "1.1.7"
+
+>>>>>>> 5b78eb3c1c297c495befe5afb6744d17797f22cb
 "@ethersproject/solidity@5.5.0":
   version "5.5.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/solidity/-/solidity-5.5.0.tgz#2662eb3e5da471b85a20531e420054278362f93f"
@@ -6098,6 +6117,62 @@
     "@solana/wallet-adapter-solong" "^0.7.0"
     "@solana/wallet-adapter-tokenpocket" "^0.2.0"
     "@solana/wallet-adapter-torus" "^0.8.0"
+<<<<<<< HEAD
+=======
+
+"@solana/wallet-adapter-wallets@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-wallets/-/wallet-adapter-wallets-0.6.1.tgz#e1afb5b7ebeba460384e9be5a378e165b76d61d5"
+  integrity sha512-BoejyJXuIJt89nRzQJdTEjG26q0tIyw0Cr3woIyCWTEIylmfGO9Oiedj5LsK9IvhP+5PGaXf/IfMhgmLtjyn1w==
+  dependencies:
+    "@solana/wallet-adapter-ledger" "^0.4.1"
+    "@solana/wallet-adapter-mathwallet" "^0.4.1"
+    "@solana/wallet-adapter-phantom" "^0.4.1"
+    "@solana/wallet-adapter-solflare" "^0.1.0"
+    "@solana/wallet-adapter-sollet" "^0.4.1"
+    "@solana/wallet-adapter-solong" "^0.4.1"
+    "@solana/wallet-adapter-torus" "^0.5.0"
+
+"@solana/web3.js@^1.12.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0":
+  version "1.21.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.21.0.tgz#4f98edea38d4cb3ae4d2ea49a050b0ec09508023"
+  integrity sha512-x1NXlF92tEjxuTxS0u4n9JV17UKk0Dn2L+qSWGvKOb4iWhzApDj6wicJsrGdSbGdxnZ7eciQ/SNn3zB4ydUllA==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@solana/buffer-layout" "^3.0.0"
+    bn.js "^5.0.0"
+    borsh "^0.4.0"
+    bs58 "^4.0.1"
+    buffer "6.0.1"
+    crypto-hash "^1.2.2"
+    jayson "^3.4.4"
+    js-sha3 "^0.8.0"
+    node-fetch "^2.6.1"
+    rpc-websockets "^7.4.2"
+    secp256k1 "^4.0.2"
+    superstruct "^0.14.2"
+    tweetnacl "^1.0.0"
+
+"@solana/web3.js@^1.20.0", "@solana/web3.js@^1.30.2", "@solana/web3.js@^1.31.0":
+  version "1.31.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.31.0.tgz#7a313d4c1a90b77f27ddbfe845a10d6883e06452"
+  integrity sha512-7nHHx1JNFnrt15e9y8m38I/EJCbaB+bFC3KZVM1+QhybCikFxGMtGA5r7PDC3GEL1R2RZA8yKoLkDKo3vzzqnw==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@ethersproject/sha2" "^5.5.0"
+    "@solana/buffer-layout" "^3.0.0"
+    bn.js "^5.0.0"
+    borsh "^0.4.0"
+    bs58 "^4.0.1"
+    buffer "6.0.1"
+    cross-fetch "^3.1.4"
+    jayson "^3.4.4"
+    js-sha3 "^0.8.0"
+    rpc-websockets "^7.4.2"
+    secp256k1 "^4.0.2"
+    superstruct "^0.14.2"
+    tweetnacl "^1.0.0"
+>>>>>>> 5b78eb3c1c297c495befe5afb6744d17797f22cb
 
 "@solana/wallet-adapter-wallets@^0.6.1":
   version "0.6.2"
@@ -6113,6 +6188,7 @@
     "@solana/wallet-adapter-solong" "^0.4.1"
     "@solana/wallet-adapter-torus" "^0.5.0"
 
+<<<<<<< HEAD
 "@solana/web3.js@^1.12.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.20.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.22.0", "@solana/web3.js@^1.24.1", "@solana/web3.js@^1.30.2", "@solana/web3.js@^1.31.0":
   version "1.31.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.31.0.tgz#7a313d4c1a90b77f27ddbfe845a10d6883e06452"
@@ -6133,6 +6209,8 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
+=======
+>>>>>>> 5b78eb3c1c297c495befe5afb6744d17797f22cb
 "@surma/rollup-plugin-off-main-thread@^1.1.1":
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/@surma/rollup-plugin-off-main-thread/-/rollup-plugin-off-main-thread-1.4.2.tgz#e6786b6af5799f82f7ab3a82e53f6182d2b91a58"
