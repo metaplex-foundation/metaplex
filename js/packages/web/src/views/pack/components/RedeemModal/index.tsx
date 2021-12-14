@@ -65,6 +65,9 @@ const RedeemModal = ({
 
   const isModalClosable = modalState === openState.Initial;
   const isClaiming = modalState === openState.Claiming;
+  const isLoadingMetadata =
+    Object.values(metadataByPackCard || {}).length !==
+    (pack?.info.packCards || 0);
 
   return (
     <Modal
@@ -88,6 +91,7 @@ const RedeemModal = ({
                 numberOfAttempts={numberOfAttempts}
                 numberOfNFTs={numberOfNFTs}
                 creators={creators}
+                isLoadingMetadata={isLoadingMetadata}
               />
             )}
             {modalState === openState.TransactionApproval && (
@@ -100,7 +104,11 @@ const RedeemModal = ({
                 Once opened, a Pack cannot be resealed.
               </p>
 
-              <button className="modal-redeem__open-nft" onClick={onClickOpen}>
+              <button
+                className="modal-redeem__open-nft"
+                disabled={isLoadingMetadata}
+                onClick={onClickOpen}
+              >
                 <span>
                   {provingProcess ? 'Resume Opening Pack' : 'Open Pack'}
                 </span>

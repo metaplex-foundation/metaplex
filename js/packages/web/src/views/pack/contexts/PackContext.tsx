@@ -62,16 +62,11 @@ export const PackProvider: React.FC = ({ children }) => {
     useState<ParsedAccount<ProvingProcess>>();
   const [redeemModalMetadata, setRedeemModalMetadata] = useState<string[]>([]);
 
-  const voucherMetadata = useMemo(
-    () => metadata.find(meta => meta?.info?.mint === voucherMint),
-    [metadata, voucherMint],
+  const voucherMetadata = metadata.find(
+    meta => meta?.info?.mint === voucherMint,
   );
-  const voucher = useMemo(
-    () =>
-      Object.values(vouchers).find(
-        voucher => voucher?.info?.packSet === packKey,
-      ),
-    [vouchers, packKey],
+  const voucher = Object.values(vouchers).find(
+    voucher => voucher?.info?.packSet === packKey,
   );
 
   const cardsRedeemed = provingProcess?.info?.cardsRedeemed || 0;
