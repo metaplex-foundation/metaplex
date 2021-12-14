@@ -77,12 +77,14 @@ export async function getCandyMachineV2Config(
 
   const splTokenAccountFigured = splTokenAccount
     ? splTokenAccount
-    : (
+    : splToken
+    ? (
         await getAtaForMint(
           new web3.PublicKey(splToken),
           walletKeyPair.publicKey,
         )
-      )[0];
+      )[0]
+    : null;
   if (splToken) {
     if (solTreasuryAccount) {
       throw new Error(

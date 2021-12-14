@@ -96,6 +96,7 @@ export async function uploadV2({
   }
   const dedupedAssetKeys = getAssetKeysNeedingUpload(existingInCache, files);
   const SIZE = dedupedAssetKeys.length;
+  console.log('Size', SIZE);
   let candyMachine = cacheContent.program.candyMachine
     ? new PublicKey(cacheContent.program.candyMachine)
     : undefined;
@@ -206,7 +207,7 @@ export async function uploadV2({
       chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
         async allIndexesInSlice => {
           for (let i = 0; i < allIndexesInSlice.length; i++) {
-            const assetKey = dedupedAssetKeys[i];
+            const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
             const image = path.join(
               dirname,
               `${assetKey.index}${assetKey.mediaExt}`,
