@@ -59,7 +59,7 @@ export const Show = () => {
             let info = "";
             info += ('-----\n');
             //@ts-ignore
-            info += 'Mint: ' + `${epObj.treasuryMint.toBase58()}\n`;
+            info += 'Treasury Mint: ' + `${epObj.treasuryMint.toBase58()}\n`;
             //@ts-ignore
             info += 'Authority: ' + `${epObj.authority.toBase58()}\n`;
             //@ts-ignore
