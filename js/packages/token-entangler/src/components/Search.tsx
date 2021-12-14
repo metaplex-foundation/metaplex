@@ -13,6 +13,8 @@ import {
 import * as anchor from '@project-serum/anchor';
 import { searchEntanglements } from "../utils/entangler";
 import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 
 
 
@@ -20,7 +22,9 @@ export const Search = () => {
     const connection = useConnection();
     console.log(connection);
     const wallet = useWallet();
-    const [entangledPairInfo, setEntangledPairInfo] = React.useState<string>("");
+    const [entangledPairs, setEntangledPairs] = React.useState<Array<any>>([]);
+
+
     const anchorWallet = useMemo(() => {
         if (
             !wallet ||
@@ -50,42 +54,64 @@ export const Search = () => {
         anchorWallet,
     ]);
 
+    const displayEntanglements = (e: any) => {
+        return (
+            <Card sx={{ minWidth: 275, boxShadow: 3, mb: 3 }} key={e.mintA.toString()}>
+                <CardContent>
+                    <Typography sx={{fontSize: 19 }} component="div" gutterBottom>
+                        <strong>{e.mintB}</strong>
+                    </Typography>
+                    {displayEntangledPairContent(e)}
+                </CardContent>
+            </Card>
+        )
+    }
+
+
+    const displayEntangledPairContent = (e: any) => {
+        return (
+                <Typography variant="body2" color="text.secondary" key={e.mintB.toString()} gutterBottom>
+                    <strong>Treasury Mint</strong> : {e.treasuryMint} <br/>
+                    <strong>Authority</strong> : {e.authority} <br/>
+                    <strong>Mint A</strong> : {e.mintA} <br/>
+                    <strong>Mint B</strong> : {e.mintB} <br/>
+                    <strong>Token A Escrow</strong> : {e.tokenAEscrow} <br/>
+                    <strong>Token B Escrow</strong> : {e.tokenBEscrow} <br/>
+                    <strong>Price</strong> : {e.price} <br/>
+                    <strong>Paid At Least Once</strong> : {e.paid} <br/>
+                    <strong>Paid Every Time</strong> : {e.paysEveryTime} <br/>
+                    <strong>Bump</strong> : {e.bump} <br/>
+
+                </Typography>
+        )
+    }
+
     const handleSubmit = async (event: React.MouseEvent<HTMLElement>) => {
-        let info = "";
         event.preventDefault();
         if (!anchorWallet) {
             return;
         }
         const foundEntanglements = await searchEntanglements(anchorWallet, connection, mintA, authority);
-        foundEntanglements.forEach((entanglement) => {
-
-            info += ('-----\n');
-            //@ts-ignore
-            info += 'Treasury Mint: ' + `${entanglement.treasuryMint.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Authority: ' + `${entanglement.authority.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Mint A: ' + `${entanglement.mintA.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Mint B: ' + `${entanglement.mintB.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Token A Escrow: ' + `${entanglement.tokenAEscrow.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Token B Escrow: ' + `${entanglement.tokenBEscrow.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Price: ' + `${entanglement.price.toNumber()}\n`;
-            //@ts-ignore
-            info += 'Paid At Least Once: ' + `${entanglement.paid}\n`;
-            //@ts-ignore
-            info += 'Pays Every Time: ' + `${entanglement.paysEveryTime}\n`;
-            //@ts-ignore
-            info += 'Bump: ' + `${entanglement.bump}\n`;
-        });
-        setEntangledPairInfo(info);
+        const entanglements = foundEntanglements.map((entanglement: any) => ({
+            'treasuryMint':  entanglement.treasuryMint.toBase58(),
+            'authority':   entanglement.authority.toBase58(),
+            'mintA':   entanglement.mintA.toBase58(),
+            'mintB':   entanglement.mintB.toBase58(),
+            'tokenAEscrow':   entanglement.tokenAEscrow.toBase58(),
+            'tokenBEscrow':  entanglement.tokenBEscrow.toBase58(),
+            'price':   entanglement.price.toNumber(),
+            'paid':  entanglement.paid.toString(),
+            'paysEveryTime':   entanglement.paysEveryTime.toString(),
+            'bump':  entanglement.bump,
+        }));
+        setEntangledPairs(entanglements);
     }
 
     const [mintA, setMintA] = React.useState(localStorage.getItem("mintA") || "");
     const [authority, setAuthority] = React.useState(localStorage.getItem("authority") || "");
+
+
+
     return (
         <React.Fragment>
             <Typography variant="h4" color="text.primary" gutterBottom>Search Entanglements</Typography>
@@ -127,20 +153,8 @@ export const Search = () => {
                 </Box>
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
-                <TextField
-                    multiline
-                    fullWidth
-                    rows={20}
-                    id="price-text-field"
-                    label="Entanglement Info"
-                    value={entangledPairInfo}
-                    InputProps={{
-                        readOnly: true,
-                    }}
-
-                />
+                { entangledPairs.map((e: any) => displayEntanglements(e)) }
             </Box>
-
         </React.Fragment>
     );
 

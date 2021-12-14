@@ -13,6 +13,8 @@ import Typography from '@mui/material/Typography';
 import SendIcon from '@mui/icons-material/Send';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 
 export const Show = () => {
     const connection = useConnection();
@@ -21,7 +23,7 @@ export const Show = () => {
     const [mintA, setMintA] = React.useState(localStorage.getItem("mintA") || "");
     const [mintB, setMintB] = React.useState(localStorage.getItem("mintB") || "");
     const [entangledPair, setEntangledPair] = React.useState(localStorage.getItem("entangledPair") || "");
-    const [entangledPairInfo, setEntangledPairInfo] = React.useState(localStorage.getItem("entangledPairInfo") || "");
+    const [entangledPairInfo, setEntangledPairInfo] = React.useState({});
 
     const anchorWallet = useMemo(() => {
         if (
@@ -52,35 +54,57 @@ export const Show = () => {
         anchorWallet,
     ]);
 
+    const displayEntanglement = (e: any) => {
+        return (
+            <Card sx={{ minWidth: 275, boxShadow: 3, mb: 3 }} key={e.mintA.toString()}>
+                <CardContent>
+                    <Typography sx={{fontSize: 19 }} component="div" gutterBottom>
+                        <strong>Entanglement Info</strong>
+                    </Typography>
+                    {displayEntanglementContent(e)}
+                </CardContent>
+            </Card>
+        )
+    }
+
+
+    const displayEntanglementContent = (e: any) => {
+        return (
+                <Typography variant="body2" color="text.secondary" key={e.mintB.toString()} gutterBottom>
+                    <strong>Treasury Mint</strong> : {e.treasuryMint} <br/>
+                    <strong>Authority</strong> : {e.authority} <br/>
+                    <strong>Mint A</strong> : {e.mintA} <br/>
+                    <strong>Mint B</strong> : {e.mintB} <br/>
+                    <strong>Token A Escrow</strong> : {e.tokenAEscrow} <br/>
+                    <strong>Token B Escrow</strong> : {e.tokenBEscrow} <br/>
+                    <strong>Price</strong> : {e.price} <br/>
+                    <strong>Paid At Least Once</strong> : {e.paid} <br/>
+                    <strong>Paid Every Time</strong> : {e.paysEveryTime} <br/>
+                    <strong>Bump</strong> : {e.bump} <br/>
+                </Typography>
+        )
+    }
+
     const handleSubmit = async (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
         if (!anchorWallet) {
             return;
         }
         try {
-            const epObj = await showEntanglement(anchorWallet, connection, entangledPair, mintA, mintB);
-            let info = "";
-            info += ('-----\n');
-            //@ts-ignore
-            info += 'Treasury Mint: ' + `${epObj.treasuryMint.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Authority: ' + `${epObj.authority.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Mint A: ' + `${epObj.mintA.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Mint B: ' + `${epObj.mintB.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Token A Escrow: ' + `${epObj.tokenAEscrow.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Token B Escrow: ' + `${epObj.tokenBEscrow.toBase58()}\n`;
-            //@ts-ignore
-            info += 'Price: ' + `${epObj.price.toNumber()}\n`;
-            //@ts-ignore
-            info += 'Paid At Least Once: ' + `${epObj.paid}\n`;
-            //@ts-ignore
-            info += 'Pays Every Time: ' + `${epObj.paysEveryTime}\n`;
-            //@ts-ignore
-            info += 'Bump: ' + `${epObj.bump}\n`;
+            const epObj: any = await showEntanglement(anchorWallet, connection, entangledPair, mintA, mintB);
+            const info = {
+                'treasuryMint':  epObj.treasuryMint.toBase58(),
+                'authority':   epObj.authority.toBase58(),
+                'mintA':   epObj.mintA.toBase58(),
+                'mintB':   epObj.mintB.toBase58(),
+                'tokenAEscrow':   epObj.tokenAEscrow.toBase58(),
+                'tokenBEscrow':  epObj.tokenBEscrow.toBase58(),
+                'price':   epObj.price.toNumber(),
+                'paid':  epObj.paid.toString(),
+                'paysEveryTime':   epObj.paysEveryTime.toString(),
+                'bump':  epObj.bump,
+            }
+
             setEntangledPairInfo(info);
         } catch (e) {
             // TODO Show Error  
@@ -157,18 +181,7 @@ export const Show = () => {
                 }
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
-                <TextField
-                    multiline
-                    fullWidth
-                    rows={20}
-                    id="price-text-field"
-                    label="Entanglement Info"
-                    value={entangledPairInfo}
-                    InputProps={{
-                        readOnly: true,
-                    }}
-
-                />
+                { Object.keys(entangledPairInfo).length>0 && displayEntanglement(entangledPairInfo) }
             </Box>
 
 
