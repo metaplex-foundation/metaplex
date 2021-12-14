@@ -57,27 +57,27 @@ export const Search = () => {
         const foundEntanglements = await searchEntanglements(anchorWallet, connection, mintA, authority);
         foundEntanglements.forEach((entanglement) => {
 
-                info += ('-----\n');
-                //@ts-ignore
-                info += 'Mint: ' + `${entanglement.treasuryMint.toBase58()}\n`;
-                //@ts-ignore
-                info += 'Authority: ' + `${entanglement.authority.toBase58()}\n`;
-                //@ts-ignore
-                info += 'Mint A: ' + `${entanglement.mintA.toBase58()}\n`;
-                //@ts-ignore
-                info += 'Mint B: ' + `${entanglement.mintB.toBase58()}\n`;
-                //@ts-ignore
-                info += 'Token A Escrow: ' + `${entanglement.tokenAEscrow.toBase58()}\n`;
-                //@ts-ignore
-                info += 'Token B Escrow: ' + `${entanglement.tokenBEscrow.toBase58()}\n`;
-                //@ts-ignore
-                info += 'Price: ' + `${entanglement.price.toNumber()}\n`;
-                //@ts-ignore
-                info += 'Paid At Least Once: ' + `${entanglement.paid}\n`;
-                //@ts-ignore
-                info += 'Pays Every Time: ' + `${entanglement.paysEveryTime}\n`;
-                //@ts-ignore
-                info += 'Bump: ' + `${entanglement.bump}\n`;
+            info += ('-----\n');
+            //@ts-ignore
+            info += 'Treasury Mint: ' + `${entanglement.treasuryMint.toBase58()}\n`;
+            //@ts-ignore
+            info += 'Authority: ' + `${entanglement.authority.toBase58()}\n`;
+            //@ts-ignore
+            info += 'Mint A: ' + `${entanglement.mintA.toBase58()}\n`;
+            //@ts-ignore
+            info += 'Mint B: ' + `${entanglement.mintB.toBase58()}\n`;
+            //@ts-ignore
+            info += 'Token A Escrow: ' + `${entanglement.tokenAEscrow.toBase58()}\n`;
+            //@ts-ignore
+            info += 'Token B Escrow: ' + `${entanglement.tokenBEscrow.toBase58()}\n`;
+            //@ts-ignore
+            info += 'Price: ' + `${entanglement.price.toNumber()}\n`;
+            //@ts-ignore
+            info += 'Paid At Least Once: ' + `${entanglement.paid}\n`;
+            //@ts-ignore
+            info += 'Pays Every Time: ' + `${entanglement.paysEveryTime}\n`;
+            //@ts-ignore
+            info += 'Bump: ' + `${entanglement.bump}\n`;
         });
         setEntangledPairInfo(info);
     }
