@@ -125,19 +125,19 @@ programCommand('upload')
 
     if (storage === StorageType.ArweaveBundle && env !== 'mainnet-beta') {
       throw new Error(
-        'The arweave-bundl storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
+        'The arweave-bundle storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
       );
     }
 
     if (storage === StorageType.Arweave) {
       log.warn(
-        'WARNING: The "arweave" storage option will be going away soon. Please migrate to arweave-bundl or arweave-sol for mainnet.\n',
+        'WARNING: The "arweave" storage option will be going away soon. Please migrate to arweave-bundle or arweave-sol for mainnet.\n',
       );
     }
 
     if (storage === StorageType.ArweaveBundle && !arweaveJwk) {
       throw new Error(
-        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundl',
+        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundle',
       );
     }
 
