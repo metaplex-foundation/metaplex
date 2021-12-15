@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { shortenAddress, useMeta } from '@oyster/common';
 
 import { getCreator } from '../../../../../../components/PackCard/utils';
@@ -17,10 +17,11 @@ interface ClaimingStepProps {
 }
 
 // Delay between switching cards on the slider
-const DELAY_BETWEEN_CARDS_CHANGE = 2000;
+const DELAY_BETWEEN_CARDS_CHANGE = 4000;
 
 const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
   const [currentCardIndex, setCurrentCardIndex] = useState<number>(-1);
+  const [showNotification, setShowNotification] = useState<boolean>(false);
 
   const { pack, voucherMetadataKey, provingProcess, redeemModalMetadata } =
     usePack();
@@ -63,6 +64,14 @@ const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
     isClaiming ? DELAY_BETWEEN_CARDS_CHANGE : null,
   );
 
+  useEffect(() => {
+    if(currentCardIndex < 0) return;
+    setShowNotification(true);
+    setTimeout(() => {
+      setShowNotification(false);
+    }, 2000);
+  }, [currentCardIndex]);
+
   return (
     <div className="claiming-step">
       <span className="claiming-step__title">{titleText}</span>
@@ -76,12 +85,26 @@ const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
             <GhostCard key={index} index={index} />
           ))}
         </div>
+        <div className="next-card-container">
         <ArtContent
-          key={currentCardIndex}
-          className="claiming-step__art-content"
-          pubkey={currentMetadataToShow}
+          key={currentCardIndex + 1}
+          className="claiming-step__art-content-next"
+          pubkey={redeemModalMetadata[currentCardIndex + 1]}
           preview={false}
         />
+        </div>
+        <div className="current-card-container">
+          <ArtContent
+            key={currentCardIndex}
+            className="claiming-step__art-content"
+            pubkey={currentMetadataToShow}
+            preview={false}
+          />
+        </div>
+        {
+          showNotification &&
+          <div className="added-label"> <img src="check-mark.svg" /> Added to wallet </div>
+        }
       </div>
       {isClaiming && (
         <div className="claiming-step__notes">
