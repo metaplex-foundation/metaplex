@@ -15,7 +15,7 @@ import {
   Checkbox,
 } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
-import { QUOTE_MINT } from './../../constants';
+import { MINIMUM_SAFE_FEE_AUCTION_CREATION, QUOTE_MINT } from './../../constants';
 import { Confetti } from './../../components/Confetti';
 import { ArtSelector } from './artSelector';
 import {
@@ -33,6 +33,7 @@ import {
   StringPublicKey,
   WRAPPED_SOL_MINT,
   shortenAddress,
+  useNativeAccount,
 } from '@oyster/common';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -42,9 +43,6 @@ import { capitalize } from 'lodash';
 import {
   WinningConfigType,
   AmountRange,
-  ParticipationConfigV2,
-  WinningConstraint,
-  NonWinningConstraint,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import moment from 'moment';
 import {
@@ -62,7 +60,8 @@ import { SystemProgram } from '@solana/web3.js';
 import TokenDialog, { TokenButton } from '../../components/TokenDialog';
 import { useTokenList } from '../../contexts/tokenList';
 import { mintTo } from '@project-serum/serum/lib/token-instructions';
-import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenInfo } from '@solana/spl-token-registry'
+import { FundsIssueModal } from "../../components/FundsIssueModal";
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -219,29 +218,24 @@ export const AuctionCreateView = () => {
         usize: ZERO,
       });
     } else if (attributes.category === AuctionCategory.InstantSale) {
-      const { items, editions, instantSalePrice } = attributes;
+      const { items, editions } = attributes;
 
-      // set up WinningConfigType
       if (items.length > 0) {
+        const item = items[0];
         if (!editions) {
-          items[0].winningConfigType =
-          items[0].metadata.info.updateAuthority ===
+          item.winningConfigType =
+            item.metadata.info.updateAuthority ===
             (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
-          items[0].amountRanges = [
-            new AmountRange({
-              amount: new BN(1),
-              length: new BN(editions || 1),
-            }),
-          ];
-        } else {
-          items[0].winningConfigType = WinningConfigType.Participation;
-          items[0].participationConfig = new ParticipationConfigV2({
-            winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
-            nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
-            fixedPrice: new BN(toLamports(instantSalePrice, mint)),})
         }
+
+        item.amountRanges = [
+          new AmountRange({
+            amount: new BN(1),
+            length: new BN(editions || 1),
+          }),
+        ];
       }
 
       winnerLimit = new WinnerLimit({
@@ -504,12 +498,9 @@ export const AuctionCreateView = () => {
       name: null,
     };
 
-    // not open if instance_sale and FullRightsTransfer/TokenOnlyTransfer config
-    const isOpenEdition = attributes.category === AuctionCategory.Open || 
-      (attributes.category === AuctionCategory.InstantSale && 
-        (attributes.items[0].winningConfigType != WinningConfigType.FullRightsTransfer && 
-          attributes.items[0].winningConfigType != WinningConfigType.TokenOnlyTransfer));
-
+    const isOpenEdition =
+      attributes.category === AuctionCategory.Open ||
+      attributes.instantSaleType === InstantSaleType.Open;
     const safetyDepositDrafts = isOpenEdition
       ? []
       : attributes.category !== AuctionCategory.Tiered
@@ -822,7 +813,11 @@ const InstantSaleStep = ({
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
   // give default value to mint
-  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+
+  const { hasOtherTokens, tokenMap} = useTokenList()
+
+  // give default value to mint
+  const mintInfo = tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
 
   attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
 
@@ -914,18 +909,19 @@ const InstantSaleStep = ({
               )}
             </label>
           )}
-          <label className="action-field">
-            <span className="field-title">Auction mint</span>
-            <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
-            <TokenDialog
-              setMint={setMint}
-              open={showTokenDialog}
-              onClose={() => {
-                setShowTokenDialog(false);
-              }}
-            />
-          </label>
-
+          {hasOtherTokens && (
+            <label className="action-field">
+              <span className="field-title">Auction mint</span>
+              <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+              <TokenDialog
+                setMint={setMint}
+                open={showTokenDialog}
+                onClose={() => {
+                  setShowTokenDialog(false);
+                }}
+              />
+            </label>
+          )}
           <label className="action-field">
             <span className="field-title">Price</span>
             <span className="field-info">
@@ -973,8 +969,10 @@ const CopiesStep = (props: {
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+  const { hasOtherTokens, tokenMap } = useTokenList()
+
   // give default value to mint
-  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+  const mintInfo = tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
 
   props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
 
@@ -1021,18 +1019,19 @@ const CopiesStep = (props: {
           >
             Select NFT
           </ArtSelector>
-
-          <label className="action-field">
-            <span className="field-title">Auction mint</span>
-            <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
-            <TokenDialog
-              setMint={setMint}
-              open={showTokenDialog}
-              onClose={() => {
-                setShowTokenDialog(false);
-              }}
-            />
-          </label>
+          {hasOtherTokens && (
+            <label className="action-field">
+              <span className="field-title">Auction mint</span>
+              <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+              <TokenDialog
+                setMint={setMint}
+                open={showTokenDialog}
+                onClose={() => {
+                  setShowTokenDialog(false);
+                }}
+              />
+            </label>
+          )}
           {props.attributes.category === AuctionCategory.Limited && (
             <label className="action-field">
               <span className="field-title">
@@ -1080,8 +1079,10 @@ const NumberOfWinnersStep = (props: {
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+  const { hasOtherTokens, tokenMap} = useTokenList()
+
   // give default value to mint
-  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+  const mintInfo = tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
 
   props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
 
@@ -1118,21 +1119,22 @@ const NumberOfWinnersStep = (props: {
               }
             />
           </label>
-
-              <label className="action-field">
-                <span className="field-title">Auction mint</span>
-                <span className="field-info">
-                  This will be the quote mint for your auction.
-                </span>
-                <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
-                <TokenDialog
-                  setMint={setMint}
-                  open={showTokenDialog}
-                  onClose={() => {
-                    setShowTokenDialog(false);
-                  }}
-                />
-              </label>
+          {hasOtherTokens && (
+            <label className="action-field">
+              <span className="field-title">Auction mint</span>
+              <span className="field-info">
+                This will be the quote mint for your auction.
+              </span>
+              <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+              <TokenDialog
+                setMint={setMint}
+                open={showTokenDialog}
+                onClose={() => {
+                  setShowTokenDialog(false);
+                }}
+              />
+            </label>
+          )}
         </Col>
       </Row>
       <Row>
@@ -1902,7 +1904,9 @@ const ReviewStep = (props: {
   setAttributes: Function;
   connection: Connection;
 }) => {
+  const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
   const [cost, setCost] = useState(0);
+  const { account } = useNativeAccount();
   useEffect(() => {
     const rentCall = Promise.all([
       props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
@@ -1911,7 +1915,18 @@ const ReviewStep = (props: {
     // TODO: add
   }, [setCost]);
 
+  const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
+
   let item = props.attributes.items?.[0];
+
+  const handleConfirm = () => {
+    props.setAttributes({
+      ...props.attributes,
+      startListTS: props.attributes.startListTS || moment().unix(),
+      startSaleTS: props.attributes.startSaleTS || moment().unix(),
+    });
+    props.confirm();
+  }
 
   return (
     <>
@@ -1983,12 +1998,11 @@ const ReviewStep = (props: {
           type="primary"
           size="large"
           onClick={() => {
-            props.setAttributes({
-              ...props.attributes,
-              startListTS: props.attributes.startListTS || moment().unix(),
-              startSaleTS: props.attributes.startSaleTS || moment().unix(),
-            });
-            props.confirm();
+            if (balance < MINIMUM_SAFE_FEE_AUCTION_CREATION) {
+              setShowFundsIssueModal(true)
+            } else {
+              handleConfirm()
+            }
           }}
           className="action-btn"
         >
@@ -1996,6 +2010,12 @@ const ReviewStep = (props: {
             ? 'List for Sale'
             : 'Publish Auction'}
         </Button>
+        <FundsIssueModal
+          minimumFunds={0.06}
+          currentFunds={balance}
+          isModalVisible={showFundsIssueModal}
+          onClose={() => setShowFundsIssueModal(false)}
+        />
       </Row>
     </>
   );

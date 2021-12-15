@@ -106,9 +106,7 @@ export async function arweaveUpload(
   const metadataFile = result.messages?.find(
     m => m.filename === 'manifest.json',
   );
-  const imageFile = result.messages?.find(
-    m => m.filename === 'image.png',
-  );
+  const imageFile = result.messages?.find(m => m.filename === 'image.png');
   if (metadataFile?.transactionId) {
     const link = `https://arweave.net/${metadataFile.transactionId}`;
     const imageLink = `https://arweave.net/${imageFile.transactionId}?ext=png`;

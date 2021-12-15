@@ -13,7 +13,7 @@
   "scripts": {
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build",
-    "build-CI-without-gumdrop": "lerna run build --ignore gumdrop",
+    "build-web": "lerna run build --stream --scope @oyster/common --scope web",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
     "lint": "prettier -c 'packages/*/{src,test}/**/*.ts' && npm run lint:eslint",
     "lint:eslint": "eslint 'packages/*/{src,test}/**/*.ts'",
