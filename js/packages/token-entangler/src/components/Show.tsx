@@ -107,9 +107,9 @@ export const Show = () => {
 
             setEntangledPairInfo(info);
         } catch (e) {
-            // TODO Show Error 
+            // TODO Show Error
             if (e instanceof Error) {
-                setEntangledPairInfo(e.message);
+                console.error(e.message);
             }
         }
     };
