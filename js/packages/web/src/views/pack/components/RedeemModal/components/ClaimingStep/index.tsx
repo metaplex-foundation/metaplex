@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { shortenAddress, useMeta } from '@oyster/common';
 import { SwitchTransition, CSSTransition } from 'react-transition-group';
 
@@ -19,11 +19,9 @@ interface ClaimingStepProps {
 
 // Delay between switching cards on the slider
 const DELAY_BETWEEN_CARDS_CHANGE = 4000;
-const NOTIFICATION_TIMEOUT = 2000;
 
 const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
   const [currentCardIndex, setCurrentCardIndex] = useState<number>(-1);
-  const [showNotification, setShowNotification] = useState<boolean>(false);
 
   const { pack, voucherMetadataKey, provingProcess, redeemModalMetadata } =
     usePack();
@@ -66,16 +64,6 @@ const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
     isClaiming ? DELAY_BETWEEN_CARDS_CHANGE : null,
   );
 
-  useEffect(() => {
-    if (currentCardIndex < 0) return;
-
-    setShowNotification(true);
-
-    setTimeout(() => {
-      setShowNotification(false);
-    }, NOTIFICATION_TIMEOUT);
-  }, [currentCardIndex]);
-
   return (
     <div className="claiming-step">
       <span className="claiming-step__title">{titleText}</span>
@@ -106,12 +94,6 @@ const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
             </CSSTransition>
           </SwitchTransition>
         </div>
-        {showNotification && (
-          <div className="added-label">
-            {' '}
-            <img src="check-mark.svg" /> Added to wallet{' '}
-          </div>
-        )}
       </div>
       {isClaiming && (
         <div className="claiming-step__notes">

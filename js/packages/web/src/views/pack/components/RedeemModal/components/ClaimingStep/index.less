@@ -74,27 +74,6 @@
     }
   }
 
-  .added-label {
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    padding: 10px 16px;
-    border: 1px solid @grey-50;
-    box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
-    border-radius: 36px;
-    color: @black-100;
-    background: @accent-color;
-    font-weight: 600;
-    position: absolute;
-    opacity: 0;
-    bottom: 24px;
-    animation: label 2s linear;
-
-    img {
-      margin-right: 10px;
-    }
-  }
-
   .current-card-container {
     width: @card-container-size;
     height: @card-container-size;
@@ -192,18 +171,6 @@
   }
   100% {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes label {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
   }
 }
 
