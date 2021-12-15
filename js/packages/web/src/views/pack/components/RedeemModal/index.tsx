@@ -34,6 +34,8 @@ const RedeemModal = ({
 
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
+  const shouldEnableRedeem =
+    process.env.NEXT_ENABLE_NFT_PACKS_REDEEM === 'true';
 
   const art = useArt(voucherMetadataKey);
   const creators = (art.creators || []).map(
@@ -65,6 +67,9 @@ const RedeemModal = ({
 
   const isModalClosable = modalState === openState.Initial;
   const isClaiming = modalState === openState.Claiming;
+  const isLoadingMetadata =
+    Object.values(metadataByPackCard || {}).length !==
+    (pack?.info.packCards || 0);
 
   return (
     <Modal
@@ -88,6 +93,7 @@ const RedeemModal = ({
                 numberOfAttempts={numberOfAttempts}
                 numberOfNFTs={numberOfNFTs}
                 creators={creators}
+                isLoadingMetadata={isLoadingMetadata}
               />
             )}
             {modalState === openState.TransactionApproval && (
@@ -95,17 +101,23 @@ const RedeemModal = ({
                 goBack={() => setModalState(openState.Claiming)}
               />
             )}
-            <div className="modal-redeem__footer">
-              <p className="general-desc">
-                Once opened, a Pack cannot be resealed.
-              </p>
+            {shouldEnableRedeem && (
+              <div className="modal-redeem__footer">
+                <p className="general-desc">
+                  Once opened, a Pack cannot be resealed.
+                </p>
 
-              <button className="modal-redeem__open-nft" onClick={onClickOpen}>
-                <span>
-                  {provingProcess ? 'Resume Opening Pack' : 'Open Pack'}
-                </span>
-              </button>
-            </div>
+                <button
+                  className="modal-redeem__open-nft"
+                  disabled={isLoadingMetadata}
+                  onClick={onClickOpen}
+                >
+                  <span>
+                    {provingProcess ? 'Resume Opening Pack' : 'Open Pack'}
+                  </span>
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
