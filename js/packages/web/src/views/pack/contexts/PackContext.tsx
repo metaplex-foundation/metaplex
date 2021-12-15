@@ -7,7 +7,7 @@ import {
 } from '@oyster/common';
 import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
 import { useWallet } from '@solana/wallet-adapter-react';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router';
 
 import { claimPackCards } from '../transactions/claimPackCards';
@@ -21,7 +21,6 @@ import { useOpenedMetadata } from './hooks/useOpenedMetadata';
 import { PackContextProps } from './interface';
 import { useListenForProvingProcess } from './hooks/useListenForProvingProcess';
 import { fetchProvingProcessWithRetry } from './utils/fetchProvingProcessWithRetry';
-import { useListenForTokenAccounts } from './hooks/useListenForTokenAccounts';
 
 export const PackContext = React.createContext<PackContextProps>({
   isLoading: false,
@@ -39,8 +38,6 @@ export const PackProvider: React.FC = ({ children }) => {
   const { packKey }: { packKey: string } = useParams();
   const { search } = useLocation();
   const { voucherMint, provingProcessKey } = getSearchParams(search);
-
-  useListenForTokenAccounts();
 
   const {
     packs,
