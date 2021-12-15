@@ -5,6 +5,12 @@ header.ant-layout-header.App-Bar {
   justify-content: center;
   height: fit-content;
   z-index: 10;
+
+  @media (max-width: @mobile-xs-max) {
+    max-height: 64px;
+    position: sticky;
+    background: @black-100;
+  }
 }
 
 footer.ant-layout-footer {

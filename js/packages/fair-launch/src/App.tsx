@@ -31,9 +31,9 @@ const candyMachineId = process.env.REACT_APP_CANDY_MACHINE_ID
   ? new anchor.web3.PublicKey(process.env.REACT_APP_CANDY_MACHINE_ID)
   : undefined;
 
-const fairLaunchId = new anchor.web3.PublicKey(
-  process.env.REACT_APP_FAIR_LAUNCH_ID!,
-);
+const fairLaunchId = process.env.REACT_APP_FAIR_LAUNCH_ID
+  ? new anchor.web3.PublicKey(process.env.REACT_APP_FAIR_LAUNCH_ID)
+  : undefined;
 
 const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
 
@@ -64,6 +64,7 @@ const App = () => {
                 connection={connection}
                 startDate={startDateSeed}
                 txTimeout={txTimeout}
+                rpcHost={rpcHost}
               />
             </ConfettiProvider>
           </WalletDialogProvider>
