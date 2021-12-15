@@ -58,7 +58,7 @@ export const Show = () => {
         return (
             <Card sx={{ minWidth: 275, boxShadow: 3, mb: 3 }} key={e.mintA.toString()}>
                 <CardContent>
-                    <Typography sx={{fontSize: 19 }} component="div" gutterBottom>
+                    <Typography sx={{ fontSize: 19 }} component="div" gutterBottom>
                         <strong>Entanglement Info</strong>
                     </Typography>
                     {displayEntanglementContent(e)}
@@ -70,18 +70,18 @@ export const Show = () => {
 
     const displayEntanglementContent = (e: any) => {
         return (
-                <Typography variant="body2" color="text.secondary" key={e.mintB.toString()} gutterBottom>
-                    <strong>Treasury Mint</strong> : {e.treasuryMint} <br/>
-                    <strong>Authority</strong> : {e.authority} <br/>
-                    <strong>Mint A</strong> : {e.mintA} <br/>
-                    <strong>Mint B</strong> : {e.mintB} <br/>
-                    <strong>Token A Escrow</strong> : {e.tokenAEscrow} <br/>
-                    <strong>Token B Escrow</strong> : {e.tokenBEscrow} <br/>
-                    <strong>Price</strong> : {e.price} <br/>
-                    <strong>Paid At Least Once</strong> : {e.paid} <br/>
-                    <strong>Paid Every Time</strong> : {e.paysEveryTime} <br/>
-                    <strong>Bump</strong> : {e.bump} <br/>
-                </Typography>
+            <Typography variant="body2" color="text.secondary" key={e.mintB.toString()} gutterBottom>
+                <strong>Treasury Mint</strong> : {e.treasuryMint} <br />
+                <strong>Authority</strong> : {e.authority} <br />
+                <strong>Mint A</strong> : {e.mintA} <br />
+                <strong>Mint B</strong> : {e.mintB} <br />
+                <strong>Token A Escrow</strong> : {e.tokenAEscrow} <br />
+                <strong>Token B Escrow</strong> : {e.tokenBEscrow} <br />
+                <strong>Price</strong> : {e.price} <br />
+                <strong>Paid At Least Once</strong> : {e.paid} <br />
+                <strong>Paid Every Time</strong> : {e.paysEveryTime} <br />
+                <strong>Bump</strong> : {e.bump} <br />
+            </Typography>
         )
     }
 
@@ -93,22 +93,24 @@ export const Show = () => {
         try {
             const epObj: any = await showEntanglement(anchorWallet, connection, entangledPair, mintA, mintB);
             const info = {
-                'treasuryMint':  epObj.treasuryMint.toBase58(),
-                'authority':   epObj.authority.toBase58(),
-                'mintA':   epObj.mintA.toBase58(),
-                'mintB':   epObj.mintB.toBase58(),
-                'tokenAEscrow':   epObj.tokenAEscrow.toBase58(),
-                'tokenBEscrow':  epObj.tokenBEscrow.toBase58(),
-                'price':   epObj.price.toNumber(),
-                'paid':  epObj.paid.toString(),
-                'paysEveryTime':   epObj.paysEveryTime.toString(),
-                'bump':  epObj.bump,
+                'treasuryMint': epObj.treasuryMint.toBase58(),
+                'authority': epObj.authority.toBase58(),
+                'mintA': epObj.mintA.toBase58(),
+                'mintB': epObj.mintB.toBase58(),
+                'tokenAEscrow': epObj.tokenAEscrow.toBase58(),
+                'tokenBEscrow': epObj.tokenBEscrow.toBase58(),
+                'price': epObj.price.toNumber(),
+                'paid': epObj.paid.toString(),
+                'paysEveryTime': epObj.paysEveryTime.toString(),
+                'bump': epObj.bump,
             }
 
             setEntangledPairInfo(info);
         } catch (e) {
-            // TODO Show Error  
-            setEntangledPairInfo(e.message);
+            // TODO Show Error 
+            if (e instanceof Error) {
+                setEntangledPairInfo(e.message);
+            }
         }
     };
 
@@ -173,7 +175,7 @@ export const Show = () => {
                         Show Entanglement
                     </Button>
                 </FormGroup>
-                { !isEnable(mintA, mintB, entangledPair) && 
+                {!isEnable(mintA, mintB, entangledPair) &&
                     <Alert severity="warning" style={{ marginTop: "1rem" }}>
                         <AlertTitle>Warning</AlertTitle>
                         The three inpust are filled. You should enter MintA and MintB or Entangled Pair.
@@ -181,7 +183,7 @@ export const Show = () => {
                 }
             </Box>
             <Box sx={{ maxWidth: 'md', display: 'block', marginTop: '2rem' }}>
-                { Object.keys(entangledPairInfo).length>0 && displayEntanglement(entangledPairInfo) }
+                {Object.keys(entangledPairInfo).length > 0 && displayEntanglement(entangledPairInfo)}
             </Box>
 
 
