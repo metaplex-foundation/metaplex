@@ -1,3 +1,5 @@
+@card-container-size: 356px;
+
 .ant-modal-body {
   border-radius: 12px;
   background: transparent;
@@ -58,19 +60,18 @@
   }
 
   &__art-content {
-    width: 100%;
-    z-index: 10;
-    height: fit-content !important;
     opacity: 0;
-    animation: card 4s linear;
-  }
+    z-index: 10;
+    width: 100%;
 
-  &__art-content-next {
-    width: 100%;
-    z-index: 10;
-    height: fit-content !important;
-    opacity: 0;
-    animation: next-card 4s linear;
+    .ant-image {
+      filter: drop-shadow(0px 4px 24px rgba(0, 0, 0, 0.2));
+
+      img {
+        max-width: 240px;
+        width: 100%;
+      }
+    }
   }
 
   .added-label {
@@ -94,22 +95,21 @@
     }
   }
 
-  .next-card-container {
-    position: absolute;
-    bottom: 0;
-    width: 356px;
-    height: 356px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   .current-card-container {
-    width: 356px;
-    height: 356px;
+    width: @card-container-size;
+    height: @card-container-size;
+    max-width: @card-container-size;
+    max-height: @card-container-size;
     display: flex;
     align-items: center;
     justify-content: center;
+
+    background-color: @grey-60;
+    border-radius: 12px;
+    min-height: 65%;
+    overflow: hidden;
+    padding: 18px;
+    z-index: 10;
   }
 
   &__notes {
@@ -207,32 +207,19 @@
   }
 }
 
-@keyframes card {
-  0% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+.fade-enter {
+  opacity: 0;
 }
-
-@keyframes next-card {
-  0% {
-    opacity: 0;
-    width: 308px;
-    bottom: 20px;
-  }
-  90% {
-    opacity: 0;
-    width: 308px;
-    bottom: 20px;
-  }
-  100% {
-    opacity: 1;
-    width: 356px;
-    bottom: 0;
-  }
+.fade-exit {
+  opacity: 1;
+}
+.fade-enter-active {
+  opacity: 1;
+}
+.fade-exit-active {
+  opacity: 0;
+}
+.fade-enter-active,
+.fade-exit-active {
+  transition: opacity 500ms;
 }
