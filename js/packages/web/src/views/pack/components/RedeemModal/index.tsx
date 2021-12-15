@@ -98,7 +98,7 @@ const RedeemModal = ({
             )}
             {modalState === openState.TransactionApproval && (
               <TransactionApprovalStep
-                goBack={() => setModalState(openState.Claiming)}
+                goBack={() => setModalState(openState.Initial)}
               />
             )}
             {shouldEnableRedeem && (
