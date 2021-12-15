@@ -15,7 +15,7 @@ const ArtCard = ({ index, isModalOpened }: ArtCardProps) => {
 
   const isOpenedCard = index < cardsRedeemed;
   const metadata = openedMetadata[index];
-  const pubkey = (isOpenedCard && metadata?.metadata.pubkey) || '';
+  const pubkey = metadata?.metadata.pubkey || '';
 
   const { ref, data } = useExtendedArt(pubkey);
 

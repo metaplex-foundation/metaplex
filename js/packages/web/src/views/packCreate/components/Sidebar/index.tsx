@@ -12,13 +12,20 @@ import { SidebarProps } from './interface';
 
 const { Step } = Steps;
 
-const Sidebar = ({ step, setStep, submit, isValidStep, buttonLoading }: SidebarProps) => {
+const Sidebar = ({
+  step,
+  setStep,
+  submit,
+  isValidStep,
+  buttonLoading,
+}: SidebarProps) => {
   const { connected } = useWallet();
   const { isLoading } = useMeta();
   const { width } = useWindowDimensions();
 
   const isFinalStep = step === CreatePackSteps.ReviewAndMint;
-  const shouldDisable = !isValidStep || !connected || isLoading;
+  const shouldDisable =
+    !isValidStep || !connected || isLoading || buttonLoading;
 
   const handleContinue = (): void => {
     if (isFinalStep) {

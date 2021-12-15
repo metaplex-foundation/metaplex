@@ -92,6 +92,7 @@ export interface MetaState {
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
+  isLoadingMetadata: boolean;
   update: (
     auctionAddress?: any,
     bidderAddress?: any,
