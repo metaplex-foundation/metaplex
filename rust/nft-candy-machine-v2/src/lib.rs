@@ -11,7 +11,7 @@ use {
         solana_program::{
             log::sol_log_compute_units,
             program::{invoke, invoke_signed},
-            serialize_utils::read_u16,
+            serialize_utils::{read_pubkey, read_u16},
             system_instruction, sysvar,
         },
         AnchorDeserialize, AnchorSerialize, Discriminator, Key,
@@ -25,7 +25,7 @@ use {
         },
     },
     spl_token::state::Mint,
-    std::{cell::RefMut, ops::Deref},
+    std::{cell::RefMut, ops::Deref, str::FromStr},
 };
 anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
@@ -341,15 +341,33 @@ pub mod nft_candy_machine_v2 {
         let instruction_sysvar_account_info = instruction_sysvar_account.to_account_info();
 
         let instruction_sysvar = instruction_sysvar_account_info.data.borrow();
-        let current_instruction = sysvar::instructions::load_current_index(&instruction_sysvar);
+
         let mut idx = 0;
         let num_instructions = read_u16(&mut idx, &instruction_sysvar)
             .map_err(|_| ProgramError::InvalidAccountData)?;
 
-        if current_instruction < num_instructions - 1 {
-            msg!("This must be the last instruction in the transaction");
-            return Err(ErrorCode::SuspiciousTransaction.into());
+        let associated_token =
+            Pubkey::from_str("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").unwrap();
+
+        for index in 0..num_instructions {
+            let mut current = 2 + (index * 2) as usize;
+            let start = read_u16(&mut current, &instruction_sysvar).unwrap();
+
+            current = start as usize;
+            let num_accounts = read_u16(&mut current, &instruction_sysvar).unwrap();
+            current += (num_accounts as usize) * (1 + 32);
+            let program_id = read_pubkey(&mut current, &instruction_sysvar).unwrap();
+
+            if program_id != nft_candy_machine_v2::id()
+                && program_id != spl_token::id()
+                && program_id != anchor_lang::solana_program::system_program::ID
+                && program_id != associated_token
+            {
+                msg!("Transaction had ix with program id {}", program_id);
+                return Err(ErrorCode::SuspiciousTransaction.into());
+            }
         }
+
         msg!("At the end");
         sol_log_compute_units();
         Ok(())
