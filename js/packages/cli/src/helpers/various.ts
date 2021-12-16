@@ -6,6 +6,7 @@ import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { StorageType } from './storage-type';
 import { getAtaForMint } from './accounts';
+import { CLUSTERS, DEFAULT_CLUSTER } from './constants';
 
 const { readFile } = fs.promises;
 
@@ -495,3 +496,12 @@ export const getPriceWithMantissa = async (
 
   return Math.ceil(price * mantissa);
 };
+
+export function getCluster(name: string): string {
+  for (const cluster of CLUSTERS) {
+    if (cluster.name === name) {
+      return cluster.url;
+    }
+  }
+  return DEFAULT_CLUSTER.url;
+}

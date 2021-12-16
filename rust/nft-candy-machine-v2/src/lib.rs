@@ -90,7 +90,6 @@ pub mod nft_candy_machine_v2 {
                     payer.deref().clone(),
                     &gatekeeper.gatekeeper_network,
                     network_expire_feature.clone(),
-                    None,
                 )?;
             } else {
                 ::solana_gateway::Gateway::verify_gateway_token_account_info(
