@@ -50,7 +50,7 @@ const RedeemModal = ({
 
     try {
       await handleOpenPack();
-    } catch(e) {
+    } catch(e: any) {
       setModalState(openState.Error);
       setError(e?.message || '');
     }
