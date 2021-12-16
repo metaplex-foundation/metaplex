@@ -21,4 +21,4 @@ spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 metaplex-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
 spl-associated-token-account = {version = "1.0.3", features = ["no-entrypoint"]}
 anchor-spl = "0.17.0"
-solana-gateway ={git = "https://github.com/identity-com/on-chain-identity-gateway", rev = "9a45ab40cd0c5abe1fd149c8dae7d6b6c4edb9d6"}
+solana-gateway = { git = "https://github.com/identity-com/on-chain-identity-gateway", rev = "2d195dcd33bcd1a26b09d79ee90cc6f7282c87aa" }

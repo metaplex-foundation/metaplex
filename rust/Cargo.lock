@@ -3318,8 +3318,8 @@ dependencies = [
 
 [[package]]
 name = "solana-gateway"
-version = "0.0.3"
-source = "git+https://github.com/identity-com/on-chain-identity-gateway?rev=9a45ab40cd0c5abe1fd149c8dae7d6b6c4edb9d6#9a45ab40cd0c5abe1fd149c8dae7d6b6c4edb9d6"
+version = "0.0.4"
+source = "git+https://github.com/identity-com/on-chain-identity-gateway?rev=2d195dcd33bcd1a26b09d79ee90cc6f7282c87aa#2d195dcd33bcd1a26b09d79ee90cc6f7282c87aa"
 dependencies = [
  "bitflags",
  "borsh",
