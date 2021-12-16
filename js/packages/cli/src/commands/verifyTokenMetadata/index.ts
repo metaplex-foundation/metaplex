@@ -89,8 +89,10 @@ export const verifyCreatorCollation = (
 };
 
 export const verifyImageURL = (image, files, manifestFile) => {
+  // The image is expected to have the same name as the index
+  const fileIndex = manifestFile.split('/').pop().split('.')[0];
   const ext = path.extname(image);
-  const expectedImagePath = `image${ext}`;
+  const expectedImagePath = `${fileIndex}${ext}`;
   if (image !== expectedImagePath) {
     // We _could_ match against this in the JSON schema validation, but it is totally valid to have arbitrary URLs to images here.
     // The downside, though, is that those images will not get uploaded to Arweave since they're not on-disk.
@@ -132,6 +134,7 @@ export const verifyMetadataManifests = ({ files }) => {
 
   // Do manifest-specific stuff here
   for (const manifestFile of manifestFiles) {
+    log.info(`Checking maanifest file: ${manifestFile}`);
     // Check the overall schema shape. This is a non-exhaustive check, but guarantees the bare minimum needed for the rest of the commands to succeed.
     const tokenMetadata = require(manifestFile) as TokenMetadata;
     validate(tokenMetadata, tokenMetadataJsonSchema, { throwError: true });
