@@ -806,36 +806,36 @@ export async function upload({
         ),
       );
     }
-
-    const {
-      properties: { creators },
-      seller_fee_basis_points: sellerFeeBasisPoints,
-      symbol,
-    } = getAssetManifest(dirname, '0');
-
-    const config = cache.program.config
-      ? new PublicKey(cache.program.config)
-      : await initConfig(anchorProgram, walletKeyPair, {
-          totalNFTs,
-          mutable,
-          retainAuthority,
-          sellerFeeBasisPoints,
-          symbol,
-          creators,
-          env,
-          cache,
-          cacheName,
-        });
-
-    setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
-
-    return writeIndices({
-      anchorProgram,
-      cache,
-      cacheName,
-      env,
-      config,
-      walletKeyPair,
-    });
   }
+
+  const {
+    properties: { creators },
+    seller_fee_basis_points: sellerFeeBasisPoints,
+    symbol,
+  } = getAssetManifest(dirname, '0');
+
+  const config = cache.program.config
+    ? new PublicKey(cache.program.config)
+    : await initConfig(anchorProgram, walletKeyPair, {
+        totalNFTs,
+        mutable,
+        retainAuthority,
+        sellerFeeBasisPoints,
+        symbol,
+        creators,
+        env,
+        cache,
+        cacheName,
+      });
+
+  setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
+
+  return writeIndices({
+    anchorProgram,
+    cache,
+    cacheName,
+    env,
+    config,
+    walletKeyPair,
+  });
 }
