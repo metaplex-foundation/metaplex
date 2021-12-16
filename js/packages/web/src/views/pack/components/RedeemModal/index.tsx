@@ -7,6 +7,7 @@ import TransactionApprovalStep from './components/TransactionApprovalStep';
 import { useArt } from '../../../../hooks';
 import { usePack } from '../../contexts/PackContext';
 import ClaimingStep from './components/ClaimingStep';
+import ClaimingError from "./components/ClaimingStep/ClaimingError";
 
 interface RedeemModalProps {
   isModalVisible: boolean;
@@ -17,6 +18,7 @@ enum openState {
   Initial,
   TransactionApproval,
   Claiming,
+  Error,
 }
 
 const RedeemModal = ({
@@ -31,6 +33,7 @@ const RedeemModal = ({
     provingProcess,
   } = usePack();
   const [modalState, setModalState] = useState<openState>(openState.Initial);
+  const [error, setError] = useState('');
 
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
@@ -47,8 +50,9 @@ const RedeemModal = ({
 
     try {
       await handleOpenPack();
-    } catch {
-      setModalState(openState.Initial);
+    } catch(e) {
+      setModalState(openState.Error);
+      setError(e?.message || '');
     }
   };
 
@@ -67,6 +71,7 @@ const RedeemModal = ({
 
   const isModalClosable = modalState === openState.Initial;
   const isClaiming = modalState === openState.Claiming;
+  const isClaimingError = modalState === openState.Error;
   const isLoadingMetadata =
     Object.values(metadataByPackCard || {}).length !==
     (pack?.info.packCards || 0);
@@ -101,7 +106,15 @@ const RedeemModal = ({
                 goBack={() => setModalState(openState.Initial)}
               />
             )}
-            {shouldEnableRedeem && (
+            {
+              isClaimingError && (
+                <ClaimingError
+                  onDismiss={() => setModalState(openState.Initial)}
+                  error={error}
+                />
+              )
+            }
+            {shouldEnableRedeem && !isClaimingError && (
               <div className="modal-redeem__footer">
                 <p className="general-desc">
                   Once opened, a Pack cannot be resealed.
