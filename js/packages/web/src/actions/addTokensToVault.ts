@@ -7,7 +7,7 @@ import {
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
-import { SafetyDepositConfig } from '@oyster/common/dist/lib/models/metaplex/index';
+import { SafetyDepositConfigV2 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { approve } from '@oyster/common/dist/lib/models/account';
 import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 import {
@@ -27,7 +27,7 @@ export interface SafetyDepositInstructionTemplate {
     amount: BN;
   };
   draft: SafetyDepositDraft;
-  config: SafetyDepositConfig;
+  config: SafetyDepositConfigV2;
 }
 
 const BATCH_SIZE = 1;

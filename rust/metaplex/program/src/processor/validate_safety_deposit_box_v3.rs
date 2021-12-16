@@ -3,7 +3,7 @@ use {
         error::MetaplexError,
         state::{
             AuctionManager, AuctionManagerStatus, AuctionManagerV2, AuctionWinnerTokenTypeTracker,
-            Key, OriginalAuthorityLookup, SafetyDepositConfig, SafetyDepositConfigV1, Store, WinningConfigType,
+            Key, OriginalAuthorityLookup, SafetyDepositConfig, SafetyDepositConfigV2, Store, WinningConfigType,
             MAX_AUTHORITY_LOOKUP_SIZE, PREFIX, TOTALS,
         },
         utils::{
@@ -26,7 +26,6 @@ use {
     },
     spl_token::state::{Account, Mint},
 };
-
 pub fn make_safety_deposit_config<'a>(
     program_id: &Pubkey,
     auction_manager_info: &AccountInfo<'a>,
@@ -35,7 +34,8 @@ pub fn make_safety_deposit_config<'a>(
     payer_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
     system_info: &AccountInfo<'a>,
-    safety_deposit_config: &SafetyDepositConfigV1,
+    safety_deposit_config: &SafetyDepositConfigV2,
+    primary_sale_happened_from_metadata: bool,
 ) -> ProgramResult {
     let bump = assert_derivation(
         program_id,
@@ -64,11 +64,14 @@ pub fn make_safety_deposit_config<'a>(
         ],
     )?;
 
-    safety_deposit_config.create(safety_deposit_config_info, auction_manager_info.key)?;
+    safety_deposit_config.create(
+        safety_deposit_config_info,
+         auction_manager_info.key,
+          primary_sale_happened_from_metadata
+    )?;
 
     Ok(())
 }
-
 pub struct CommonCheckArgs<'a, 'b> {
     pub program_id: &'a Pubkey,
     pub auction_manager_info: &'a AccountInfo<'a>,
@@ -184,7 +187,6 @@ pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
 
     Ok(())
 }
-
 pub struct SupplyLogicCheckArgs<'a, 'b> {
     pub program_id: &'a Pubkey,
     pub auction_manager_info: &'a AccountInfo<'a>,
@@ -383,10 +385,10 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
     Ok(())
 }
 
-pub fn process_validate_safety_deposit_box_v2<'a>(
+pub fn process_validate_safety_deposit_box_v3<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
-    safety_deposit_config: SafetyDepositConfigV1,
+    safety_deposit_config: SafetyDepositConfigV2,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let safety_deposit_config_info = next_account_info(account_info_iter)?;
@@ -531,6 +533,7 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
         rent_info,
         system_info,
         &safety_deposit_config,
+        metadata.primary_sale_happened,
     )?;
     Ok(())
 }

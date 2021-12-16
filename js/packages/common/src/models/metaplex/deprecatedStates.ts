@@ -1,10 +1,14 @@
 import BN from 'bn.js';
 import {
+  AmountRange,
   AuctionManagerStatus,
   BidRedemptionTicket,
   MetaplexKey,
   METAPLEX_PREFIX,
   NonWinningConstraint,
+  ParticipationConfigV2,
+  ParticipationStateV2,
+  SafetyDepositConfigV1,
   WinningConfigType,
   WinningConstraint,
 } from '.';
@@ -333,6 +337,26 @@ export const DEPRECATED_SCHEMA = new Map<any, any>([
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    SafetyDepositConfigV1,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['auctionManager', 'pubkeyAsString'],
+        ['order', 'u64'],
+        ['winningConfigType', 'u8'],
+        ['amountType', 'u8'],
+        ['lengthType', 'u8'],
+        ['amountRanges', [AmountRange]],
+        [
+          'participationConfig',
+          { kind: 'option', type: ParticipationConfigV2 },
+        ],
+        ['participationState', { kind: 'option', type: ParticipationStateV2 }],
+      ],
     },
   ],
 ]);

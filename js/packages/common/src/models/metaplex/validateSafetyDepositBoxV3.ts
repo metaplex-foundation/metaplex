@@ -10,13 +10,13 @@ import {
   getAuctionWinnerTokenTypeTracker,
   getOriginalAuthority,
   getSafetyDepositConfig,
-  SafetyDepositConfig,
+  SafetyDepositConfigV2,
   SCHEMA,
-  ValidateSafetyDepositBoxV2Args,
+  ValidateSafetyDepositBoxV3Args,
 } from '.';
 import { programIds, toPublicKey, StringPublicKey } from '../../utils';
 
-export async function validateSafetyDepositBoxV2(
+export async function validateSafetyDepositBoxV3(
   vault: StringPublicKey,
   metadata: StringPublicKey,
   safetyDepositBox: StringPublicKey,
@@ -29,7 +29,7 @@ export async function validateSafetyDepositBoxV2(
   edition: StringPublicKey,
   whitelistedCreator: StringPublicKey | undefined,
   store: StringPublicKey,
-  safetyDepositConfig: SafetyDepositConfig,
+  safetyDepositConfig: SafetyDepositConfigV2,
 ) {
   const PROGRAM_IDS = programIds();
 
@@ -49,7 +49,7 @@ export async function validateSafetyDepositBoxV2(
     auctionManagerKey,
   );
 
-  const value = new ValidateSafetyDepositBoxV2Args(safetyDepositConfig);
+  const value = new ValidateSafetyDepositBoxV3Args(safetyDepositConfig);
   const data = Buffer.from(serialize(SCHEMA, value));
 
   const keys = [

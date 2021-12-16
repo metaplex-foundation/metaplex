@@ -26,7 +26,7 @@ import {
   BidRedemptionTicketV2,
   getBidderKeys,
   MetaplexKey,
-  SafetyDepositConfig,
+  SafetyDepositConfigV2,
   WinningConfigType,
   AuctionViewItem,
 } from '@oyster/common/dist/lib/models/metaplex/index';
@@ -255,7 +255,7 @@ export function processAccountsIntoAuctionView(
   vaults: Record<string, ParsedAccount<Vault>>,
   safetyDepositConfigsByAuctionManagerAndIndex: Record<
     string,
-    ParsedAccount<SafetyDepositConfig>
+    ParsedAccount<SafetyDepositConfigV2>
   >,
   masterEditionsByPrintingMint: Record<string, ParsedAccount<MasterEditionV1>>,
   masterEditionsByOneTimeAuthMint: Record<
@@ -310,7 +310,7 @@ export function processAccountsIntoAuctionView(
     const vault = vaults[auctionManagerInstance.info.vault];
     const auctionManagerKey = auctionManagerInstance.pubkey;
 
-    const safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[] =
+    const safetyDepositConfigs: ParsedAccount<SafetyDepositConfigV2>[] =
       buildListWhileNonZero(
         safetyDepositConfigsByAuctionManagerAndIndex,
         auctionManagerKey,

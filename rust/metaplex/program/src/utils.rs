@@ -494,7 +494,8 @@ pub fn assert_safety_deposit_config_valid(
                 ],
             )?;
 
-            if config.data.borrow()[0] != Key::SafetyDepositConfigV1 as u8 {
+            let key = config.data.borrow()[0];
+            if key != Key::SafetyDepositConfigV1 as u8 && key != Key::SafetyDepositConfigV2 as u8 {
                 return Err(MetaplexError::DataTypeMismatch.into());
             }
         }

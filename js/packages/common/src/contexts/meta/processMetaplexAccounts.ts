@@ -16,12 +16,14 @@ import {
   PrizeTrackingTicket,
   decodePrizeTrackingTicket,
   BidRedemptionTicketV2,
-  decodeSafetyDepositConfig,
-  SafetyDepositConfig,
+  decodeSafetyDepositConfigV2,
+  SafetyDepositConfigV2,
   decodeAuctionCache,
   AuctionCache,
   decodeStoreIndexer,
   StoreIndexer,
+  decodeSafetyDepositConfigV1,
+  SafetyDepositConfigV1,
 } from '../../models';
 import { ProcessAccountsFunc } from './types';
 import { METAPLEX_ID, programIds, pubkeyToString } from '../../utils';
@@ -140,9 +142,23 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       }
     }
 
+    if (isSafetyDepositConfigV2Account(account)) {
+      const config = decodeSafetyDepositConfigV2(account.data);
+      const parsedAccount: ParsedAccount<SafetyDepositConfigV2> = {
+        pubkey,
+        account,
+        info: config,
+      };
+      setter(
+        'safetyDepositConfigsByAuctionManagerAndIndex',
+        config.auctionManager + '-' + config.order.toNumber(),
+        parsedAccount,
+      );
+    }
+
     if (isSafetyDepositConfigV1Account(account)) {
-      const config = decodeSafetyDepositConfig(account.data);
-      const parsedAccount: ParsedAccount<SafetyDepositConfig> = {
+      const config = decodeSafetyDepositConfigV1(account.data);
+      const parsedAccount: ParsedAccount<SafetyDepositConfigV1> = {
         pubkey,
         account,
         info: config,
@@ -212,6 +228,9 @@ const isPrizeTrackingTicketV1Account = (account: AccountInfo<Buffer>) =>
 
 const isStoreV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.StoreV1;
+
+const isSafetyDepositConfigV2Account = (account: AccountInfo<Buffer>) =>
+  account.data[0] === MetaplexKey.SafetyDepositConfigV2;
 
 const isSafetyDepositConfigV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.SafetyDepositConfigV1;

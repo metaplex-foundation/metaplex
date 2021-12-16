@@ -38,7 +38,7 @@ import {
   AmountRange,
   ParticipationConfigV2,
   TupleNumericType,
-  SafetyDepositConfig,
+  SafetyDepositConfigV2,
   ParticipationStateV2,
   StoreIndexer,
 } from '@oyster/common/dist/lib/models/metaplex/index';
@@ -56,7 +56,7 @@ import { deprecatedCreateReservationListForTokens } from './deprecatedCreateRese
 import { deprecatedPopulatePrintingTokens } from './deprecatedPopulatePrintingTokens';
 import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
 import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
-import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV2';
+import { validateSafetyDepositBoxV3 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV3';
 import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2';
 import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
 
@@ -420,7 +420,7 @@ async function buildSafetyDepositArray(
                 ),
               ),
       },
-      config: new SafetyDepositConfig({
+      config: new SafetyDepositConfigV2({
         directArgs: {
           auctionManager: SystemProgram.programId.toBase58(),
           order: new BN(i),
@@ -434,6 +434,7 @@ async function buildSafetyDepositArray(
           winningConfigType: s.winningConfigType,
           participationConfig: null,
           participationState: null,
+          primarySaleHappened: false,
         },
       }),
       draft: s,
@@ -454,7 +455,7 @@ async function buildSafetyDepositArray(
     ]
       .sort()
       .reverse()[0];
-    const config = new SafetyDepositConfig({
+    const config = new SafetyDepositConfigV2({
       directArgs: {
         auctionManager: SystemProgram.programId.toBase58(),
         order: new BN(safetyDeposits.length),
@@ -471,6 +472,7 @@ async function buildSafetyDepositArray(
         participationState: new ParticipationStateV2({
           collectedToAcceptPayment: new BN(0),
         }),
+        primarySaleHappened: false,
       },
     });
 
@@ -737,7 +739,7 @@ async function validateBoxes(
         )
       : undefined;
 
-    await validateSafetyDepositBoxV2(
+    await validateSafetyDepositBoxV3(
       vault,
       safetyDeposits[i].draft.metadata.pubkey,
       safetyDepositBox,
