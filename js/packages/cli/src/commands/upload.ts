@@ -219,7 +219,10 @@ export async function uploadV2({
                 : `${assetKey.index}.json`,
             );
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-            if (i >= lastPrinted + tick || i === 0) {
+            if (
+              allIndexesInSlice[i] >= lastPrinted + tick ||
+              allIndexesInSlice[i] === 0
+            ) {
               lastPrinted = i;
               log.info(`Processing asset: ${allIndexesInSlice[i]}`);
             }
@@ -282,8 +285,11 @@ export async function uploadV2({
               }
             }
 
-            if (i >= lastPrinted + tick || i === 0) {
-              lastPrinted = i;
+            if (
+              allIndexesInSlice[i] >= lastPrinted + tick ||
+              allIndexesInSlice[i] === 0
+            ) {
+              lastPrinted = allIndexesInSlice[i];
               log.info(`Processing asset: ${allIndexesInSlice[i]}`);
             }
 
@@ -313,7 +319,7 @@ export async function uploadV2({
                     image,
                     manifestBuffer,
                     manifest,
-                    allIndexesInSlice[i],
+                    assetKey.index,
                   );
               }
               if (link && imageLink) {
