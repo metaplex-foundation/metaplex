@@ -313,7 +313,7 @@ export async function uploadV2({
                     image,
                     manifestBuffer,
                     manifest,
-                    i,
+                    allIndexesInSlice[i],
                   );
               }
               if (link && imageLink) {

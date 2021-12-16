@@ -66,7 +66,7 @@ export async function arweaveUpload(
   const imageExt = path.extname(image);
   const fsStat = await stat(image);
   const estimatedManifestSize = estimateManifestSize([
-    `image${imageExt}`,
+    `${index}${imageExt}`,
     'metadata.json',
   ]);
   const storageCost = await fetchAssetCostToStore([
