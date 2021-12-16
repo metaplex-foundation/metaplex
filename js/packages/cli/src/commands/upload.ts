@@ -334,7 +334,7 @@ export async function uploadV2({
               }
             } catch (err) {
               log.error(`Error uploading file ${assetKey}`, err);
-              throw err;
+              i--;
             }
           }
         },
