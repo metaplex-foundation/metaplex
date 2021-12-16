@@ -86,7 +86,8 @@ pub struct SetStoreIndexArgs {
 }
 
 /// Instructions supported by the Fraction program.
-#[derive(BorshSerialize, BorshDeserialize, Clone)]pub enum MetaplexInstruction {
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub enum MetaplexInstruction {
     /// Initializes an Auction Manager V1
     ///
     ///   0. `[writable]` Uninitialized, unallocated auction manager account with pda of ['metaplex', auction_key from auction referenced below]
