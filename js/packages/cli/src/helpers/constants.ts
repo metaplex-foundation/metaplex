@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, clusterApiUrl } from '@solana/web3.js';
 export const CANDY_MACHINE = 'candy_machine';
 export const AUCTION_HOUSE = 'auction_house';
 export const TOKEN_ENTANGLER = 'token_entangler';
@@ -113,3 +113,23 @@ export const EXTENSION_PNG = '.png';
 export const EXTENSION_JPG = '.jpg';
 export const EXTENSION_GIF = '.gif';
 export const EXTENSION_JSON = '.json';
+
+type Cluster = {
+  name: string;
+  url: string;
+};
+export const CLUSTERS: Cluster[] = [
+  {
+    name: 'mainnet-beta',
+    url: 'https://api.metaplex.solana.com/',
+  },
+  {
+    name: 'testnet',
+    url: clusterApiUrl('testnet'),
+  },
+  {
+    name: 'devnet',
+    url: clusterApiUrl('devnet'),
+  },
+];
+export const DEFAULT_CLUSTER = CLUSTERS[2];
