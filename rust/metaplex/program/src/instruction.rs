@@ -1,7 +1,7 @@
 use {
     crate::{
         deprecated_state::AuctionManagerSettingsV1,
-        state::{SafetyDepositConfigV1, TupleNumericType, PREFIX},
+        state::{SafetyDepositConfigV1, SafetyDepositConfigV2, TupleNumericType, PREFIX},
     },
     borsh::{BorshDeserialize, BorshSerialize},
     metaplex_token_metadata::state::EDITION_MARKER_BIT_SIZE,
