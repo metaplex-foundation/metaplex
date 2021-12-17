@@ -4,6 +4,7 @@ import { Button, Col, Form, Input, InputNumber, Row, Space } from 'antd';
 import React from 'react';
 import { useArtworkFiles } from '.';
 import { ArtCard } from '../../components/ArtCard';
+import { useState } from 'react';
 
 export const InfoStep = (props: {
   attributes: IMetadataExtension;
@@ -17,6 +18,8 @@ export const InfoStep = (props: {
   );
   const [form] = Form.useForm();
 
+  const [values, setValues] = useState<IMetadataExtension>(props.attributes);
+
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
       <>
@@ -27,95 +30,104 @@ export const InfoStep = (props: {
         </p>
       </>
 
-      <Row justify="space-between" align="middle" wrap={false}>
-        <Col span={6}>
-          {props.attributes.image && (
-            <ArtCard
-              image={image}
-              animationURL={animation_url}
-              category={props.attributes.properties?.category}
-              name={props.attributes.name}
-              symbol={props.attributes.symbol}
-              small={true}
-            />
-          )}
-        </Col>
-        <Col span={16}>
-          <Space className="metaplex-fullwidth" direction="vertical">
-            <label>
-              <h3>Name</h3>
-              <Input
-                autoFocus
-                placeholder="Max 20 characters (fewer if using emojis)"
-                allowClear
-                value={props.attributes.name}
-                onChange={info => {
-                  props.setAttributes({
-                    ...props.attributes,
-                    name: info.target.value,
-                  });
-                  if (Buffer.from(info.target.value).length > 28) {
-                    info.target.value = info.target.value.substring(
-                      0,
-                      info.target.value.length - 1,
-                    );
-                  }
-                }}
-                maxLength={20}
-              />
-            </label>
-            {/* <label>
-            <span>Symbol</span>
-            <Input
-             
-              placeholder="Max 10 characters"
-              allowClear
-              value={props.attributes.symbol}
-              onChange={info =>
-                props.setAttributes({
-                  ...props.attributes,
-                  symbol: info.target.value,
-                })
-              }
-            />
-          </label> */}
+      <Form
+        name="dynamic_attributes"
+        form={form}
+        autoComplete="off"
+        onValuesChange={field => {
+          setValues({ ...values, ...field });
+        }}
+        initialValues={props.attributes}
+        onFinish={x => {
+          const nftAttributes = x.attributes;
+          // value is number if possible
+          for (const nftAttribute of nftAttributes || []) {
+            const newValue = Number(nftAttribute.value);
+            if (!isNaN(newValue)) {
+              nftAttribute.value = newValue;
+            }
+          }
+          console.log('Adding NFT attributes:', nftAttributes);
+          props.setAttributes({
+            ...props.attributes,
+            ...x,
+            attributes: nftAttributes,
+          });
 
-            <label>
-              <h3>Description</h3>
-              <Input.TextArea
-                size="large"
-                placeholder="Max 500 characters"
-                value={props.attributes.description}
-                onChange={info =>
-                  props.setAttributes({
-                    ...props.attributes,
-                    description: info.target.value,
-                  })
-                }
-                allowClear
+          props.confirm();
+        }}
+      >
+        <Row justify="space-between" align="middle" wrap={false}>
+          <Col span={6}>
+            {props.attributes.image && (
+              <ArtCard
+                image={image}
+                animationURL={animation_url}
+                category={props.attributes.properties?.category}
+                name={values.name}
+                small={true}
               />
-            </label>
+            )}
+          </Col>
+          <Col span={16}>
+            <Space className="metaplex-fullwidth" direction="vertical">
+              <label>
+                <h3>Name</h3>
 
-            <label>
-              <h3>Maximum Supply</h3>
-              <InputNumber
-                className="metaplex-fullwidth"
-                placeholder="Quantity"
-                onChange={(val: number) => {
-                  props.setAttributes({
-                    ...props.attributes,
-                    properties: {
-                      ...props.attributes.properties,
-                      maxSupply: val,
+                <Form.Item
+                  name="name"
+                  rules={[
+                    {
+                      validator: async (_, info) => {
+                        if (!(Buffer.from(info).length > 32)) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(
+                          'Needs to be fewer than 32 bytes',
+                        );
+                      },
                     },
-                  });
-                }}
-              />
-            </label>
-            <label>
-              <h3>Attributes</h3>
-            </label>
-            <Form name="dynamic_attributes" form={form} autoComplete="off">
+                  ]}
+                >
+                  <Input
+                    autoFocus
+                    placeholder="Max 32 characters (fewer if using non-latin characters)"
+                    allowClear
+                  />
+                </Form.Item>
+              </label>
+
+              <label>
+                <h3>Description</h3>
+                <Form.Item
+                  name="description"
+                  rules={[
+                    {
+                      max: 500,
+                    },
+                  ]}
+                >
+                  <Input.TextArea
+                    size="large"
+                    placeholder="Max 500 characters"
+                    allowClear
+                  />
+                </Form.Item>
+              </label>
+
+              <label>
+                <h3>Maximum Supply</h3>
+                <Form.Item name={['properties', 'maxSupply']}>
+                  <InputNumber
+                    className="metaplex-fullwidth"
+                    placeholder="Quantity"
+                  />
+                </Form.Item>
+              </label>
+              <label>
+                <h3>Attributes</h3>
+              </label>
+
               <Form.List name="attributes">
                 {(fields, { add, remove }) => (
                   <>
@@ -161,37 +173,21 @@ export const InfoStep = (props: {
                   </>
                 )}
               </Form.List>
-            </Form>
-          </Space>
-        </Col>
-      </Row>
+            </Space>
+          </Col>
+        </Row>
 
-      <Button
-        className="metaplex-fullwidth"
-        type="primary"
-        size="large"
-        onClick={() => {
-          form.validateFields().then(values => {
-            const nftAttributes = values.attributes;
-            // value is number if possible
-            for (const nftAttribute of nftAttributes || []) {
-              const newValue = Number(nftAttribute.value);
-              if (!isNaN(newValue)) {
-                nftAttribute.value = newValue;
-              }
-            }
-            console.log('Adding NFT attributes:', nftAttributes);
-            props.setAttributes({
-              ...props.attributes,
-              attributes: nftAttributes,
-            });
-
-            props.confirm();
-          });
-        }}
-      >
-        Continue to royalties
-      </Button>
+        <Form.Item>
+          <Button
+            className="metaplex-fullwidth"
+            type="primary"
+            size="large"
+            htmlType="submit"
+          >
+            Continue to royalties
+          </Button>
+        </Form.Item>
+      </Form>
     </Space>
   );
 };
