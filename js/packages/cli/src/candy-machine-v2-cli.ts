@@ -49,7 +49,6 @@ const supportedImageTypes = {
   'image/png': 1,
   'image/gif': 1,
   'image/jpeg': 1,
-  'video/mp4': 1,
 };
 
 if (!fs.existsSync(CACHE_PATH)) {
