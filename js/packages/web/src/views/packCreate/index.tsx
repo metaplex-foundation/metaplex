@@ -27,6 +27,7 @@ import Sidebar from './components/Sidebar';
 import SelectItemsStep from './components/SelectItemsStep';
 import AdjustQuantitiesStep from './components/AdjustQuantitiesStep';
 import ReviewAndMintStep from './components/ReviewAndMintStep';
+import TransactionErrorModal from '../../components/TransactionErrorModal';
 import { sendCreatePack } from './transactions/createPack';
 import SuccessModal from './components/SuccessModal';
 import { useValidation } from './hooks/useValidation';
@@ -37,6 +38,8 @@ export const PackCreateView = (): ReactElement => {
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
+  const [showErrorModal, setShowErrorModal] =
+    useState<{error: string, display: boolean}>({error: '', display: false});
   const [isCreating, setIsCreating] = useState<boolean>(false);
 
   const items = useUserArts();
@@ -151,7 +154,7 @@ export const PackCreateView = (): ReactElement => {
 
         setShouldShowSuccessModal(true);
       } catch (e) {
-        console.log(e);
+        setShowErrorModal({ error: e?.message, display: true });
       }
     }
     setIsCreating(false);
@@ -228,8 +231,12 @@ export const PackCreateView = (): ReactElement => {
           />
         )}
       </div>
-
-      <SuccessModal shouldShow={shouldShowSuccessModal} hide={handleFinish} />
+      <TransactionErrorModal
+        open={showErrorModal.display}
+        onDismiss={() => setShowErrorModal({ error: '', display: false })}
+        error={showErrorModal.error}
+      />
+      <SuccessModal shouldShow={shouldShowSuccessModal && !showErrorModal.display} hide={handleFinish} />
     </div>
   );
 };
