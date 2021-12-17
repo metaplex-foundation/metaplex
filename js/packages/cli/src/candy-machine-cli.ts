@@ -450,6 +450,9 @@ programCommand('verify')
                 try {
                   json = await fetch(cacheItem.link);
                 } catch (error) {
+                  log.info(
+                    `Error with item ${key} - Json link: "${cacheItem.link}"`,
+                  );
                   log.info(error.type, 'Error while fetching', cacheItem.link);
                   log.info('Error Number:', error.errno, 'Code:', error.code);
                   await new Promise(f => setTimeout(f, 1000));
@@ -486,6 +489,9 @@ programCommand('verify')
                     try {
                       check = await fetch(parsed.image);
                     } catch (error) {
+                      log.info(
+                        `Error with item ${key} - Json link: "${cacheItem.link}"`,
+                      );
                       log.info(
                         error.type,
                         'Error while fetching',
