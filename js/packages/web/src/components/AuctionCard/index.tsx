@@ -286,10 +286,13 @@ export const AuctionCard = ({
     ? auctionExtended.info.gapTickSizePercentage
     : 0;
   const tickSize = auctionExtended ? auctionExtended.info.tickSize : 0;
+  // JS MODULO OPERATOR DOES NOT WORK HOW YOU EXPECT IT TO
+  // BREAKS WITH FLOATS, MULTIPLY AWAY ALL FLOATS
+  // see this for some info https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript
   const tickSizeInvalid = !!(
     tickSize &&
     value &&
-    value % fromLamports(tickSize) != 0
+    (value * 100) % (fromLamports(tickSize) * 100) != 0
   );
 
 
