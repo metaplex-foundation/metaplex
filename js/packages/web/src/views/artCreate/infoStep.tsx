@@ -46,22 +46,17 @@ export const InfoStep = (props: {
               <h3>Name</h3>
               <Input
                 autoFocus
-                placeholder="Max 20 characters (fewer if using emojis)"
+                placeholder="Max 32 characters (fewer if using non-latin characters)"
                 allowClear
                 value={props.attributes.name}
                 onChange={info => {
-                  props.setAttributes({
-                    ...props.attributes,
-                    name: info.target.value,
-                  });
-                  if (Buffer.from(info.target.value).length > 28) {
-                    info.target.value = info.target.value.substring(
-                      0,
-                      info.target.value.length - 1,
-                    );
+                  if (!(Buffer.from(info.target.value).length > 32)) {
+                    props.setAttributes({
+                      ...props.attributes,
+                      name: info.target.value,
+                    });
                   }
                 }}
-                maxLength={20}
               />
             </label>
             {/* <label>
