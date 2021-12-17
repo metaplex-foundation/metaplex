@@ -305,10 +305,12 @@ export const loadAccounts = async (
         updateState('metadataByMint', metadata.info.mint, metadata);
         updateState('metadata', '', metadata);
 
-        state.metadataByAuction[auctionCache.info.auction] = [
-          ...auctionMetadata,
-          metadata,
-        ];
+        const priorMetadata =
+          state.metadataByAuction[auctionCache.info.auction];
+
+        state.metadataByAuction[auctionCache.info.auction] = priorMetadata
+          ? [...priorMetadata, ...auctionMetadata, metadata]
+          : [...auctionMetadata, metadata];
       });
 
       return [...memo, ...setMetadata];
