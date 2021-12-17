@@ -537,7 +537,7 @@ async function initConfig(
  * to its manifest, if the asset was not already written according to the
  * value of `onChain` property in the Cache object, for said asset.
  */
-export async function writeIndices({
+async function writeIndices({
   anchorProgram,
   cache,
   cacheName,

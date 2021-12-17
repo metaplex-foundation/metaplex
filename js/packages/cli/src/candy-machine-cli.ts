@@ -30,7 +30,7 @@ import {
   AccountAndPubkey,
 } from './helpers/accounts';
 import { Config } from './types';
-import { upload, writeIndices } from './commands/upload';
+import { upload } from './commands/upload';
 import { updateFromCache } from './commands/updateFromCache';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { generateConfigurations } from './commands/generateConfigurations';
@@ -58,7 +58,6 @@ if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
 log.setLevel(log.levels.INFO);
-
 programCommand('upload')
   .argument(
     '<directory>',
