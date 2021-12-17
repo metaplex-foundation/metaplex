@@ -66,7 +66,7 @@ export async function arweaveUpload(
   const imageExt = path.extname(image);
   const fsStat = await stat(image);
   const estimatedManifestSize = estimateManifestSize([
-    `image${imageExt}`,
+    `${index}${imageExt}`,
     'metadata.json',
   ]);
   const storageCost = await fetchAssetCostToStore([
@@ -97,7 +97,7 @@ export async function arweaveUpload(
   data.append('transaction', tx['txid']);
   data.append('env', env);
   data.append('file[]', fs.createReadStream(image), {
-    filename: `image${imageExt}`,
+    filename: `${index}${imageExt}`,
     contentType: `image/${imageExt.replace('.', '')}`,
   });
   data.append('file[]', manifestBuffer, 'metadata.json');
@@ -108,7 +108,7 @@ export async function arweaveUpload(
     m => m.filename === 'manifest.json',
   );
   const imageFile = result.messages?.find(
-    m => m.filename === `image${imageExt}`,
+    m => m.filename === `${index}${imageExt}`,
   );
   if (metadataFile?.transactionId) {
     const link = `https://arweave.net/${metadataFile.transactionId}`;
