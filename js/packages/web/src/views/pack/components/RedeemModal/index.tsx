@@ -75,7 +75,7 @@ const RedeemModal = ({
     <Modal
       className="modal-redeem-wr"
       centered
-      width={500}
+      width={575}
       mask={false}
       visible={isModalVisible}
       onCancel={handleClose}
