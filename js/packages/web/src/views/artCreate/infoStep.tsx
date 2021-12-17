@@ -18,7 +18,7 @@ export const InfoStep = (props: {
   );
   const [form] = Form.useForm();
 
-  const [values, setValues] = useState<IMetadataExtension>({});
+  const [values, setValues] = useState<IMetadataExtension>(props.attributes);
 
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
