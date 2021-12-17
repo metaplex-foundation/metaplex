@@ -191,7 +191,7 @@ export const createConfig = async function (
   const uuid = uuidFromConfigPubkey(configAccount.publicKey);
 
   if (!configData.creators || configData.creators.length === 0) {
-    throw new Error(`Invalid config, there must be at least one creator.`);
+    throw new Error(`194 Invalid config, there must be at least one creator.`);
   }
 
   const totalShare = (configData.creators || []).reduce(

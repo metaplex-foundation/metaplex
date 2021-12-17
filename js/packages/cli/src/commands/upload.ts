@@ -537,7 +537,7 @@ async function initConfig(
  * to its manifest, if the asset was not already written according to the
  * value of `onChain` property in the Cache object, for said asset.
  */
-async function writeIndices({
+export async function writeIndices({
   anchorProgram,
   cache,
   cacheName,
@@ -553,9 +553,9 @@ async function writeIndices({
           for (
             let offset = 0;
             offset < allIndexesInSlice.length;
-            offset += 10
+            offset += 5
           ) {
-            const indexes = allIndexesInSlice.slice(offset, offset + 10);
+            const indexes = allIndexesInSlice.slice(offset, offset + 5);
             const onChain = indexes.filter(i => {
               const index = keys[i];
               return cache.items[index]?.onChain || false;
@@ -651,6 +651,7 @@ type UploadParams = {
   awsS3Bucket: string;
   arweaveJwk: string;
   batchSize: number;
+  uploadFiles?: boolean;
 };
 export async function upload({
   files,
@@ -666,6 +667,7 @@ export async function upload({
   awsS3Bucket,
   arweaveJwk,
   batchSize,
+  uploadFiles = true
 }: UploadParams): Promise<void> {
   // Read the content of the Cache file into the Cache object, initialize it
   // otherwise.
@@ -691,7 +693,7 @@ export async function upload({
   const walletKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
   // Some assets need to be uploaded.
-  if (dedupedAssetKeys.length) {
+  if (dedupedAssetKeys.length || !uploadFiles) {
     // Arweave Native storage leverages Arweave Bundles.
     // It allows to ncapsulate multiple independent data transactions
     // into a single top level transaction,
@@ -699,8 +701,8 @@ export async function upload({
     // https://github.com/Bundlr-Network/arbundles
     // Each bundle consists of one or multiple asset filepair (PNG + JSON).
     if (
-      storage === StorageType.ArweaveBundle ||
-      storage === StorageType.ArweaveSol
+      (storage === StorageType.ArweaveBundle ||
+      storage === StorageType.ArweaveSol) && uploadFiles
     ) {
       // Initialize the Arweave Bundle Upload Generator.
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
@@ -731,7 +733,7 @@ export async function upload({
         result = arweaveBundleUploadGenerator.next();
       }
       log.info('Upload done.');
-    } else {
+    } else if (uploadFiles) {
       // For other storage methods, we upload the files individually.
       const SIZE = dedupedAssetKeys.length;
       const tick = SIZE / 100; // print every one percent
@@ -755,7 +757,7 @@ export async function upload({
               const manifestBuffer = Buffer.from(JSON.stringify(manifest));
               if (i >= lastPrinted + tick || i === 0) {
                 lastPrinted = i;
-                log.info(`Processing asset: ${assetKey}`);
+                log.info("Processing asset assetkey: ", assetKey);
               }
 
               let link, imageLink;
@@ -826,7 +828,6 @@ export async function upload({
           cache,
           cacheName,
         });
-
     setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
 
     return writeIndices({

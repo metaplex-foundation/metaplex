@@ -30,7 +30,7 @@ import {
   AccountAndPubkey,
 } from './helpers/accounts';
 import { Config } from './types';
-import { upload } from './commands/upload';
+import { upload, writeIndices } from './commands/upload';
 import { updateFromCache } from './commands/updateFromCache';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { generateConfigurations } from './commands/generateConfigurations';
@@ -51,6 +51,7 @@ const supportedImageTypes = {
   'image/png': 1,
   'image/gif': 1,
   'image/jpeg': 1,
+  'video/mp4': 1,
 };
 program.version('0.0.2');
 
@@ -58,6 +59,7 @@ if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
 log.setLevel(log.levels.INFO);
+
 programCommand('upload')
   .argument(
     '<directory>',
@@ -96,6 +98,7 @@ programCommand('upload')
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .option('--no-mutable', 'Metadata will not be editable')
+  .option('--no-upload-files', 'Do not retain authority to update metadata')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -115,6 +118,7 @@ programCommand('upload')
       rpcUrl,
       arweaveJwk,
       batchSize,
+      uploadFiles,
     } = cmd.opts();
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
@@ -183,8 +187,11 @@ programCommand('upload')
     }).length;
 
     const parsedNumber = parseInt(number);
-    const elemCount = parsedNumber ? parsedNumber : imageFileCount;
-
+    let elemCount = parsedNumber ? parsedNumber : imageFileCount;
+    if (!uploadFiles) {
+      if (!number) throw new Error(`-n  is not specified`);
+      elemCount = number;
+    }
     if (imageFileCount !== jsonFileCount) {
       throw new Error(
         `number of image files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
@@ -216,6 +223,7 @@ programCommand('upload')
         awsS3Bucket,
         arweaveJwk,
         batchSize,
+        uploadFiles,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
@@ -368,7 +376,6 @@ programCommand('verify')
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
-
     const configAddress = new PublicKey(cacheContent.program.config);
     const config = await anchorProgram.provider.connection.getAccountInfo(
       configAddress,
