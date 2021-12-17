@@ -68,6 +68,11 @@ export const AuctionItem = ({
 
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
+
+  if (!id) {
+    return <></>;
+  }
+
   const { loading, auction } = useAuction(id);
   const connection = useConnection();
   const { patchState } = useMeta();
@@ -180,7 +185,7 @@ export const AuctionView = () => {
         <Row justify="space-between">
           <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
           {wallet.publicKey?.toBase58() === auction?.auctionManager.authority && (
-            <Link to={`/auction/${id}/billing`}>
+            <Link to={`/listings/${id}/billing`}>
               <Button type="ghost">
                 Billing
               </Button>

@@ -1,7 +1,7 @@
 import { ArrowButton, StringPublicKey } from '@oyster/common';
 import { Space } from 'antd';
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Confetti } from '../../components/Confetti';
 
 export const Congrats = (props: {
@@ -11,14 +11,14 @@ export const Congrats = (props: {
     auctionManager: StringPublicKey;
   };
 }) => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const newTweetURL = () => {
     const params = {
       text: "I've listed an NFT on my @Holaplex store, check it out!",
       url: `${
         window.location.origin
-      }/#/auction/${props.auction?.auction.toString()}`,
+      }/#/listings/${props.auction?.auction.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
@@ -44,10 +44,10 @@ export const Congrats = (props: {
           size="large"
           type="primary"
           onClick={() =>
-            history.push(`/auction/${props.auction?.auction.toString()}`)
+            navigate(`/listings/${props.auction?.auction.toString()}`)
           }
         >
-          See it in your auctions
+          View Listing
         </ArrowButton>
       </Space>
       <Confetti />

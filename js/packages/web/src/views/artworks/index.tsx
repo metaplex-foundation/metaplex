@@ -47,7 +47,7 @@ export const ArtworksView = () => {
     <>
       <Row justify="space-between" align="middle">
         <h2>Owned Artwork</h2>
-        <Link to="/auction/create/0">
+        <Link to="/listings/new/0">
           <Button size="large" type="primary">Sell NFT</Button>
         </Link>
       </Row>
@@ -56,8 +56,14 @@ export const ArtworksView = () => {
           <MetaplexMasonry>
             {ownedMetadata.map(m => {
               const id = m.metadata.pubkey;
+              const creators = m.metadata.info.data.creators;
+              let address: string = '';
+
+              if (creators) {
+                address = creators[0].address;
+              }
               return (
-                <Link to={`/artworks/${id}`} key={id}>
+                <Link to={`/creators/${address}/nfts/${id}`} key={id}>
                   <ArtCard
                     key={id}
                     pubkey={m.metadata.pubkey}

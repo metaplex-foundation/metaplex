@@ -32,10 +32,6 @@ import {
   WinningConstraint,
   METAPLEX_ID,
   processMetaplexAccounts,
-  AUCTION_ID,
-  processAuctions,
-  VAULT_ID,
-  processVaultData,
   subscribeProgramChanges
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -49,6 +45,11 @@ const { Text } = Typography;
 
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
+
+  if (!id) {
+    return <></>;
+  }
+  
   const { auction, loading } = useAuction(id);
   const connection = useConnection();
   const wallet = useWallet();

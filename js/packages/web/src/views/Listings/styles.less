@@ -1,0 +1,26 @@
+.metaplex-menu-pills {
+  padding: 12px 0;
+  &.ant-menu-horizontal:not(.ant-menu-dark) {
+    > .ant-menu-item {
+      border-radius: 8px;
+      margin: 0 12px 0 0;
+      &:last-child {
+        margin: 0;
+      }
+      &::after {
+        border-bottom: none;
+      }
+      &:hover, &.ant-menu-item-selected {
+        background-color: @theme-color-base-bold;
+        &::after {
+          border-bottom: none;
+        }
+      }
+      &.ant-menu-item-active {
+        &::after {
+          border-bottom: none;
+        }
+      }
+    }
+  }
+}

@@ -28,7 +28,7 @@ import { LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js';
 import { Button, Col, Row, Space, Steps } from 'antd';
 import BN from 'bn.js';
 import React, { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   createAuctionManager,
   SafetyDepositDraft,
@@ -129,8 +129,9 @@ export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
   const { whitelistedCreatorsByCreator, storeIndexer, patchState } = useMeta();
-  const { step_param }: { step_param: string } = useParams();
-  const history = useHistory();
+  const { step_param } = useParams<{ step_param: string }>();
+
+  const navigate = useNavigate();
   const { track } = useAnalytics();
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
@@ -188,7 +189,7 @@ export const AuctionCreateView = () => {
 
   const gotoNextStep = (_step?: number) => {
     const nextStep = _step === undefined ? step + 1 : _step;
-    history.push(`/auction/create/${nextStep.toString()}`);
+    navigate(`/listings/new/${nextStep.toString()}`);
   };
 
   const createAuction = async () => {
