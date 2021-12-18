@@ -137,7 +137,7 @@ export const AuctionCreateView = () => {
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
   const [percentComplete, setPercentComplete] = useState(0);
-  let [rejection, setRejection] = useState<SendAndConfirmError | undefined>();
+  const [rejection, setRejection] = useState<SendAndConfirmError | undefined>();
   const [step, setStep] = useState<number>(1);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [auctionObj, setAuctionObj] = useState<
@@ -508,41 +508,21 @@ export const AuctionCreateView = () => {
       ? attributes.items[0]
       : attributes.participationNFT;
 
-    const txid = prompt('Txid?') ?? '';
-    const tx = await connection.getTransaction(txid, { commitment: 'confirmed' });
-
-    console.log({ txid, tx });
-
-    if (tx?.meta?.err) {
-      rejection = { type: 'tx-error', inner: tx.meta.err, txid };
-    } else {
-      rejection = {
-        type: 'misc-error',
-        inner: tx?.transaction.message ?? 'transaction had no error',
-      };
-    }
-
-    rejection = rejection ?? { type: 'misc-error', inner: 'frick' };
-    setRejection(rejection);
-
     try {
-      if (false as boolean) {
-        auctionInfo = await createAuctionManager(
-          connection,
-          wallet,
-          setPercentComplete,
-          setRejection,
-          whitelistedCreatorsByCreator,
-          auctionSettings,
-          safetyDepositDrafts,
-          participationSafetyDepositDraft,
-          QUOTE_MINT.toBase58(),
-          storeIndexer,
-        );
-      }
+      auctionInfo = await createAuctionManager(
+        connection,
+        wallet,
+        setPercentComplete,
+        setRejection,
+        whitelistedCreatorsByCreator,
+        auctionSettings,
+        safetyDepositDrafts,
+        participationSafetyDepositDraft,
+        QUOTE_MINT.toBase58(),
+        storeIndexer,
+      );
     } catch (e: any) {
       setRejection(r => r ?? { type: 'misc-error', inner: e });
-      Bugsnag.notify(e);
     }
 
     if (rejection) {
