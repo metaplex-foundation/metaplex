@@ -5,9 +5,9 @@ import {
   WhitelistedCreator,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Card, Row, Col } from 'antd';
+import { Button, Card, Row, Col, Space } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { SetupVariables } from '../../components/SetupVariables';
 import { useMeta } from '../../contexts';
@@ -17,7 +17,7 @@ export const SetupView = () => {
   const connection = useConnection();
   const { store } = useMeta();
   const { setStoreForOwner } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
   const connect = useCallback(
@@ -59,33 +59,29 @@ export const SetupView = () => {
     await setStoreForOwner(undefined);
     await setStoreForOwner(wallet.publicKey.toBase58());
 
-    history.push('/admin');
+    navigate('/admin');
   };
 
   return (
     <Row justify="center">
       <Col xs={24} md={18} lg={14}>
         <Card>
-          <Row justify="center">
-            <Col>
-              {!wallet.connected && (
-                <p>
-                  <Button type="primary" onClick={connect}>
-                    Connect
-                  </Button>{' '}
-                  to configure store.
-                </p>
-              )}
-              {wallet.connected && !store && (
-                <>
-                  <p>Store is not initialized yet</p>
-                  <p>There must be some ◎ SOL in the wallet before initialization.</p>
+          <Row>
+            <Col xs={24}>
+              <Space direction="horizontal">
+                {!wallet.connected && (
                   <p>
-                    After initialization, you will be able to manage the list of
-                    creators
+                    <Button type="primary" onClick={connect}>
+                      Connect
+                    </Button>{' '}
+                    to configure store.
                   </p>
+                )}
+                {wallet.connected && !store && (
+                  <>
+                    <h3>Store is not initialized yet</h3>
+                    <p>There must be some ◎ SOL in the wallet before initialization. After initialization, you will be able to manage the list of creators.</p>
 
-                  <p>
                     <Button
                       type="primary"
                       loading={isInitalizingStore}
@@ -93,21 +89,21 @@ export const SetupView = () => {
                     >
                       Init Store
                     </Button>
-                  </p>
-                </>
-              )}
-              {wallet.connected && store && (
-                <>
-                  <p>
-                    To finish initialization please copy config below into{' '}
-                    <b>packages/web/.env</b> and restart yarn or redeploy
-                  </p>
-                  <SetupVariables
-                    storeAddress={storeAddress}
-                    storeOwnerAddress={wallet.publicKey?.toBase58()}
-                  />
-                </>
-              )}
+                  </>
+                )}
+                {wallet.connected && store && (
+                  <>
+                    <p>
+                      To finish initialization please copy config below into{' '}
+                      <b>packages/web/.env</b> and restart yarn or redeploy
+                    </p>
+                    <SetupVariables
+                      storeAddress={storeAddress}
+                      storeOwnerAddress={wallet.publicKey?.toBase58()}
+                    />
+                  </>
+                )}
+              </Space>
             </Col>
           </Row>
         </Card>

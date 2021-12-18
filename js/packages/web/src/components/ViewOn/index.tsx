@@ -4,7 +4,7 @@ import { useArt } from '../../hooks';
 import { useConnectionConfig } from '@oyster/common';
 import { Art } from '../../types';
 
-type ViewOnProps = { id: string; art?: undefined } | { art: Art };
+type ViewOnProps = { id?: string; art?: undefined } | { art: Art };
 const { Text } = Typography;
 
 export const ViewOn = (props: ViewOnProps) => {

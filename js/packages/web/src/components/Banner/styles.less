@@ -6,17 +6,23 @@
   position: relative;
 }
 
+.banner-wrapper {
+  --ratio-denom: 5;
+
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
 #metaplex-banner-backdrop {
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
   width: 100%;
-  max-height: 258px;
   object-position: center;
   object-fit: cover;
-  margin-bottom: 30px;
-  border-radius: 8px;
 }
 
 #metaplex-banner-hero {

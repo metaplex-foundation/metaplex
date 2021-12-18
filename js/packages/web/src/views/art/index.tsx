@@ -20,14 +20,14 @@ import { ArtType } from '../../types';
 const { Text } = Typography;
 
 export const ArtView = () => {
-  const { id } = useParams<{ id: string }>();
+  const { nft } = useParams<{ nft: string }>();
   const wallet = useWallet();
   const { patchState, whitelistedCreatorsByCreator } = useMeta();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
   const [validating, setValidating] = useState(false);
 
   const connection = useConnection();
-  const art = useArt(id);
+  const art = useArt(nft);
 
   let badge = '';
   let maxSupply = '';
@@ -43,14 +43,18 @@ export const ArtView = () => {
   } else if (art.type === ArtType.Print) {
     badge = `${art.edition} of ${art.supply}`;
   }
-  const { ref, data } = useExtendedArt(id);
+  const { ref, data } = useExtendedArt(nft);
 
   useEffect(() => {
     (async () => {
+      if (!nft) {
+        return;
+      }
+
       const artState = await loadArtwork(
         connection,
         whitelistedCreatorsByCreator,
-        id,
+        nft,
       );
 
       patchState(artState);
@@ -88,7 +92,7 @@ export const ArtView = () => {
         <Row>
           <Col xs={{ span: 24 }}>
             <ArtContent
-              pubkey={id}
+              pubkey={nft}
               active={true}
               allowMeshRender={true}
               artView={true}
@@ -142,7 +146,7 @@ export const ArtView = () => {
               </div>
             </Col>
             <Col span={12}>
-              <ViewOn id={id} />
+              <ViewOn id={nft} />
             </Col>
           </Row>
           <Space direction="vertical">
@@ -162,8 +166,12 @@ export const ArtView = () => {
                             onClick={async () => {
                               setValidating(true);
 
+                              if(!nft) {
+                                return;
+                              }
+
                               try {
-                                const txid = await sendSignMetadata(connection, wallet, id);
+                                const txid = await sendSignMetadata(connection, wallet, nft);
 
                                 const tx = await connection.getTransaction(txid, {
                                   commitment: 'confirmed',
@@ -236,7 +244,7 @@ export const ArtView = () => {
 
           {/* TODO: Add conversion of MasterEditionV1 to MasterEditionV2 */}
           <ArtMinting
-            id={id}
+            id={nft}
             key={remountArtMinting}
             onMint={async () => await setRemountArtMinting(prev => prev + 1)}
           />

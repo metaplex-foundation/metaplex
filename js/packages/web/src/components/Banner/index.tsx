@@ -23,7 +23,11 @@ export const Banner = ({
 
   return (
     <div id="metaplex-banner">
-      {src && <img id="metaplex-banner-backdrop" src={src} />}
+      {src && (
+        <div className="banner-wrapper">
+          <img id="metaplex-banner-backdrop" src={src} />
+        </div>
+      )}
 
       <div id="metaplex-banner-hero">
         <h1>{headingText}</h1>

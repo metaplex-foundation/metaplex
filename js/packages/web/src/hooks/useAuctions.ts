@@ -31,7 +31,7 @@ import {
   WinningConfigType,
   AuctionViewItem,
 } from '@oyster/common';
-import { merge, take, drop } from 'lodash';
+import { merge, take, drop, some, map } from 'lodash';
 import { Connection } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
@@ -143,7 +143,7 @@ export function useCachedRedemptionKeysByWallet() {
   return cachedRedemptionKeys;
 }
 
-export const useInfiniteScrollAuctions = () => {
+export const useInfiniteScrollAuctions = (view: string) => {
   const connection = useConnection();
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
@@ -161,9 +161,35 @@ export const useInfiniteScrollAuctions = () => {
     auctions,
     auctionCachesByAuctionManager,
     whitelistedCreatorsByCreator,
+    metadataByMetadata,
     patchState,
     ...metaState
   } = useMeta();
+
+  const isActiveSale =
+    (sale: boolean) =>
+    (a: ParsedAccount<AuctionData>): boolean => {
+      const active = a.info.state === 1;
+
+      const auctionManager = auctionManagersByAuction[a.pubkey];
+      const cache = auctionCachesByAuctionManager[auctionManager.pubkey];
+
+      if (!cache) {
+        return active;
+      }
+
+      const metadata = map(
+        cache.info.metadata,
+        pubkey => metadataByMetadata[pubkey],
+      );
+
+      const secondarySale = some(metadata, [
+        ['info', 'primarySaleHappened'],
+        sale ? 1 : 0,
+      ]);
+
+      return active && secondarySale;
+    };
 
   const fetchAuctionsState = async (
     connection: Connection,
@@ -252,6 +278,7 @@ export const useInfiniteScrollAuctions = () => {
     }
 
     (async () => {
+      setInitLoading(true);
       const storeAuctionManagers = Object.values(
         auctionManagersByAuction,
       ).filter(
@@ -260,15 +287,26 @@ export const useInfiniteScrollAuctions = () => {
       const initializedAuctions = storeAuctionManagers
         .map(am => auctions[am.info.auction])
         .filter(a => a.info.state > 0);
-      const startedAuctions = initializedAuctions
-        .filter(a => a.info.state === 1)
-        .sort(sortByEndingSoon);
 
-      const endedAuctions = initializedAuctions
-        .filter(a => a.info.state === 2)
-        .sort(sortByRecentlyEnded);
+      let auctionDisplayOrder: ParsedAccount<AuctionData>[] = [];
 
-      const auctionDisplayOrder = [...startedAuctions, ...endedAuctions];
+      switch (view) {
+        case 'live':
+          auctionDisplayOrder = initializedAuctions
+            .filter(isActiveSale(false))
+            .sort(sortByEndingSoon);
+          break;
+        case 'ended':
+          auctionDisplayOrder = initializedAuctions
+            .filter(a => a.info.state === 2)
+            .sort(sortByRecentlyEnded);
+          break;
+        case 'resale':
+          auctionDisplayOrder = initializedAuctions
+            .filter(isActiveSale(true))
+            .sort(sortByRecentlyEnded);
+          break;
+      }
 
       const auctionManagers = auctionDisplayOrder.map(
         auction => auctionManagersByAuction[auction.pubkey],
@@ -290,7 +328,7 @@ export const useInfiniteScrollAuctions = () => {
       setAuctionViews(views);
       setInitLoading(false);
     })();
-  }, [isLoading]);
+  }, [isLoading, view]);
 
   const loadMoreAuctions = () => {
     const needLoading = [...auctionManagersToQuery];
@@ -322,88 +360,6 @@ export const useInfiniteScrollAuctions = () => {
     loadMore: loadMoreAuctions,
     hasNextPage: auctionManagersToQuery.length > 0,
   };
-};
-
-export const useAuctions = (state?: AuctionViewState) => {
-  const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
-  const { publicKey } = useWallet();
-  const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
-  const auctions = useStoreAuctionsList();
-
-  const {
-    auctionManagersByAuction,
-    safetyDepositBoxesByVaultAndIndex,
-    metadataByMint,
-    bidderMetadataByAuctionAndBidder,
-    bidderPotsByAuctionAndBidder,
-    vaults,
-    masterEditions,
-    masterEditionsByPrintingMint,
-    masterEditionsByOneTimeAuthMint,
-    metadataByMasterEdition,
-    safetyDepositConfigsByAuctionManagerAndIndex,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
-    auctionDataExtended,
-    metadataByAuction,
-  } = useMeta();
-
-  useEffect(() => {
-    (async () => {
-      const auctionViews: AuctionView[] = [];
-
-      await createPipelineExecutor(
-        auctions.values(),
-        auction => {
-          const auctionView = processAccountsIntoAuctionView(
-            publicKey?.toBase58(),
-            auction,
-            auctionDataExtended,
-            auctionManagersByAuction,
-            safetyDepositBoxesByVaultAndIndex,
-            metadataByMint,
-            bidderMetadataByAuctionAndBidder,
-            bidderPotsByAuctionAndBidder,
-            bidRedemptionV2sByAuctionManagerAndWinningIndex,
-            masterEditions,
-            vaults,
-            safetyDepositConfigsByAuctionManagerAndIndex,
-            masterEditionsByPrintingMint,
-            masterEditionsByOneTimeAuthMint,
-            metadataByMasterEdition,
-            cachedRedemptionKeys,
-            metadataByAuction,
-            state,
-          );
-          if (auctionView) {
-            auctionViews.push(auctionView);
-          }
-        },
-        { delay: 1, sequence: 2 },
-      );
-      setAuctionViews(auctionViews);
-    })();
-  }, [
-    state,
-    auctions,
-    auctionDataExtended,
-    auctionManagersByAuction,
-    safetyDepositBoxesByVaultAndIndex,
-    metadataByMint,
-    bidderMetadataByAuctionAndBidder,
-    bidderPotsByAuctionAndBidder,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
-    vaults,
-    safetyDepositConfigsByAuctionManagerAndIndex,
-    masterEditions,
-    masterEditionsByPrintingMint,
-    masterEditionsByOneTimeAuthMint,
-    metadataByMasterEdition,
-    publicKey,
-    cachedRedemptionKeys,
-    setAuctionViews,
-  ]);
-
-  return auctionViews;
 };
 
 function sortByEndingSoon(

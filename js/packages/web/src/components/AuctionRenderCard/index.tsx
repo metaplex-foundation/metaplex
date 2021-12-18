@@ -14,7 +14,6 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const { auctionView } = props;
   const id = auctionView.thumbnail.metadata.pubkey;
   const art = useArt(id);
-  const creators = useCreators(auctionView);
   const name = art?.title || ' ';
 
   const { status, amount } = useAuctionStatus(auctionView);
@@ -23,12 +22,6 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const card = (
     <Card hoverable bordered={false}>
       <Space direction="vertical" className="metaplex-fullwidth">
-        <Space direction="horizontal">
-          <MetaAvatar creators={[creators[0]]} />
-          <span>
-            {creators[0]?.name || creators[0]?.address?.substr(0, 6)}...
-          </span>
-        </Space>
 
         <ArtContent
           square

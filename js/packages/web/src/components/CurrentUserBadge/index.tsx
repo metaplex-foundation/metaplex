@@ -43,7 +43,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
         (props.mobile ? (
           <div>
             {canCreate && (
-              <Link to="/artworks/new">
+              <Link to="/nfts/new/0">
                 <Button
                   onClick={() => {
                     props.onClick ? props.onClick() : null;
@@ -58,7 +58,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
           <div>
             {canCreate && (
               <>
-                <Link to="/artworks/new">
+                <Link to="/nfts/new/0">
                   <Button>Create</Button>
                 </Link>
                 &nbsp;&nbsp;

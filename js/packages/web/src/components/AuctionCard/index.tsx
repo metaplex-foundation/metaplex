@@ -27,7 +27,7 @@ import {
 } from '@oyster/common';
 import { last } from 'lodash';
 import Bugsnag from '@bugsnag/browser';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -237,7 +237,7 @@ export const AuctionCard = ({
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
     [wallet.wallet, wallet.connect, setVisible],
   );
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
@@ -390,7 +390,7 @@ export const AuctionCard = ({
           </Space>
         ),
         onClick: () => {
-          history.push('/owned');
+          navigate('/owned');
         },
       })
     } finally {
@@ -518,7 +518,7 @@ export const AuctionCard = ({
             </Space>
           ),
           onClick: () => {
-            history.push("/owned");
+            navigate("/owned");
           }
         })
       } catch (e: any) {
@@ -623,7 +623,7 @@ export const AuctionCard = ({
                   </Space>
                 ),
                 onClick: () => {
-                  history.push('/owned');
+                  navigate('/owned');
                 }
               });
             } catch (e: any) {
