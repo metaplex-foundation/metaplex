@@ -10,17 +10,9 @@
   --ratio-denom: 5;
 
   width: 100%;
-  max-height: calc(
-    calc(100vw - calc(@content-padding * 2)) / var(--ratio-denom)
-  );
   overflow: hidden;
   border-radius: 8px;
   margin-bottom: 30px;
-
-  // min-width media query set to: (max-content-width + (content-padding * 2))
-  @media screen and (min-width: 1504px) {
-    max-height: calc(@content-max-width / var(--ratio-denom));
-  }
 }
 
 #metaplex-banner-backdrop {
