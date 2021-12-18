@@ -5,5 +5,5 @@ export { ArtistView } from './artist';
 export { AuctionView } from './auction';
 export { AuctionCreateView } from './auctionCreate';
 export { ArtworksView } from './artworks';
-export { AnalyticsView } from './analytics';
-export { StaticPageView } from './staticPage';
+export { SetupView } from './Setup';
+export { Listings } from './Listings';

@@ -1,71 +1,49 @@
 import { ConnectButton, useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Menu, Row, Space } from 'antd';
-import React, { ReactNode, useMemo } from 'react';
-import { Link, matchPath, useLocation } from 'react-router-dom';
+import React, { ReactElement, ReactNode, useMemo } from 'react';
+import { Link, useLocation, useResolvedPath, useMatch } from 'react-router-dom';
 import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
 import { HowToBuyModal } from '../HowToBuyModal';
 import { Notifications } from '../Notifications';
+import cx from 'classnames';
 type P = {
   logo: string;
 };
 
+interface NavMenuItemProps {
+  to: string;
+  key: string;
+  group?: string;
+  children: string | ReactElement;
+}
+
+const NavMenuItem = ({ to, children, key, group }: NavMenuItemProps) => {
+  const resolved = useResolvedPath(group || to);
+  const match = useMatch({ path: resolved.pathname, end: false });
+
+  return (
+    <Menu.Item key={key} className={cx({ "ant-menu-item-selected": match })}>
+      <Link to={to}>{children}</Link>
+    </Menu.Item>
+  )
+}
+
 export const AppBar = (props: P) => {
   const { connected, publicKey } = useWallet();
-  const location = useLocation();
-  const locationPath = location.pathname.toLowerCase();
   const { ownerAddress } = useStore();
 
-  // Array of menu item descriptions
-  const menuInfo: {
-    /** The React iterator key prop for this item */
-    key: string;
-    /** The content of this item */
-    title: ReactNode;
-    /**
-     * The link target for this item.
-     *
-     * Any routes matching this link (and, if `exact` is false, any child
-     * routes) will cause the menu item to appear highlighted.
-     */
-    link: string;
-    /** Whether child routes should match against the value of `link` */
-    exact: boolean;
-    /**
-     * Zero or more alternate routes to check against for highlighting this
-     * item.
-     *
-     * The item will never link to these routes, but they will be queried for
-     * highlighting similar to the `link` property.
-     */
-    alt: {
-      /**
-       * An alternate route path or prefix to match against.
-       *
-       * See the `link` property for more info.
-       */
-      path: string;
-      /** Whether child routes should match against the value of `path` */
-      exact: boolean;
-    }[];
-  }[] = useMemo(() => {
     let menu = [
       {
-        key: 'listings',
+        key: 'auctions',
         title: 'Listings',
-        link: '/',
-        exact: true,
-        alt: [{ path: '/auction', exact: false }],
+        link: '/listings?views=live',
       },
       {
-        key: 'artists',
-        title: 'Artists',
-        link: `/artists/${ownerAddress}`,
-        exact: true,
-        alt: [
-          { path: '/artists', exact: false },
-          { path: '/artworks', exact: false },
-        ],
+        key: 'creators',
+        title: 'Creators',
+        link: `/creators/${ownerAddress}`,
+        group: '/creators',
       },
     ];
 
@@ -76,11 +54,9 @@ export const AppBar = (props: P) => {
           key: 'owned',
           title: 'Owned',
           link: '/owned',
-          exact: true,
-          alt: [],
         },
       ];
-    }
+    };;
 
     if (publicKey?.toBase58() === ownerAddress) {
       menu = [
@@ -89,36 +65,9 @@ export const AppBar = (props: P) => {
           key: 'admin',
           title: 'Admin',
           link: '/admin',
-          exact: true,
-          alt: [],
         },
       ];
     }
-
-    return menu;
-  }, [connected]);
-
-  const menuItems = useMemo(
-    () =>
-      menuInfo.map(({ key, link, title }) => (
-        <Menu.Item key={key}>
-          <Link to={link}>{title}</Link>
-        </Menu.Item>
-      )),
-    [menuInfo],
-  );
-
-  const activeItems = useMemo(
-    () =>
-      menuInfo
-        .filter(({ link, alt, exact }) =>
-          [{ path: link, exact }, ...alt].find(({ path, exact }) =>
-            matchPath(locationPath, { path, exact }),
-          ),
-        )
-        .map(({ key }) => key),
-    [locationPath, menuInfo],
-  );
 
   return (
     <>
@@ -129,8 +78,14 @@ export const AppBar = (props: P) => {
           </Link>
         </Col>
         <Col flex="1 0 0" style={{ overflow: 'hidden' }}>
-          <Menu theme="dark" mode="horizontal" selectedKeys={activeItems}>
-            {menuItems}
+          <Menu theme="dark" mode="horizontal" selectedKeys={[]}>
+            {menu.map(({ key, link, title, group }) => {
+                return (
+                  <NavMenuItem to={link} key={key} group={group}>
+                    {title}
+                  </NavMenuItem>
+                )
+              })}
           </Menu>
         </Col>
         <Col flex="0 1 auto">

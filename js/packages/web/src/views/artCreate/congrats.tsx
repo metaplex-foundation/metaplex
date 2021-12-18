@@ -1,7 +1,8 @@
 import { ArrowButton, StringPublicKey } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, Space } from 'antd';
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Confetti } from '../../components/Confetti';
 
 export const Congrats = (props: {
@@ -10,14 +11,15 @@ export const Congrats = (props: {
   };
   alert?: string;
 }) => {
-  const history = useHistory();
+  const navigate = useNavigate();
+  const wallet = useWallet();
+
+  const path = `/creators/${wallet.publicKey?.toBase58()}/nfts/${props.nft?.metadataAccount.toString()}`;
 
   const newTweetURL = () => {
     const params = {
       text: 'I created a new NFT artwork, check it out!',
-      url: `${
-        window.location.origin
-      }/#/artworks/${props.nft?.metadataAccount.toString()}`,
+      url: `${window.location.origin}${path}`,
       hashtags: 'NFT,Crypto,Metaplex,Holaplex',
       related: 'Metaplex,Solana,Holaplex',
     };
@@ -33,7 +35,7 @@ export const Congrats = (props: {
           <h2>Sorry, there was an error!</h2>
           <p>{props.alert}</p>
         </div>
-        <Button type="primary" onClick={() => history.push('/artworks/new')}>
+        <Button type="primary" onClick={() => navigate('/nfts/new')}>
           Back to Create NFT
         </Button>
       </Space>
@@ -56,9 +58,9 @@ export const Congrats = (props: {
           className="metaplex-fullwidth"
           size="large"
           type="primary"
-          onClick={() =>
-            history.push(`/artworks/${props.nft?.metadataAccount.toString()}`)
-          }
+          onClick={() => {
+            navigate(path);
+          }}
         >
           See it in your collection
         </ArrowButton>

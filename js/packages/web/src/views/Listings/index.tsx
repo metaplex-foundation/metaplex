@@ -1,28 +1,35 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { useStore } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Alert, Button, Spin } from 'antd';
-import React from 'react';
-import useInfiniteScroll from 'react-infinite-scroll-hook';
+import React, { useEffect } from 'react';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Alert, Button, Spin, Anchor, Menu, Row, Col, Space, Typography } from 'antd';
 import { Link } from 'react-router-dom';
-import { AuctionRenderCard } from '../../components/AuctionRenderCard';
-import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useWallet } from '@solana/wallet-adapter-react';
 import {
   useAuctionManagersToCache,
+} from '../../hooks';
+import { Banner } from './../../components/Banner';
+import { AuctionRenderCard } from '../../components/AuctionRenderCard';
+import { MetaplexMasonry } from './../../components/MetaplexMasonry';
+import useInfiniteScroll from 'react-infinite-scroll-hook';
+import { useSearchParams } from 'react-router-dom';
+import {
   useInfiniteScrollAuctions,
 } from '../../hooks';
-import { Banner } from '../../components/Banner';
 
-export enum LiveAuctionViewState {
-  All = '0',
-  Participated = '1',
-  Ended = '2',
-  Resale = '3',
-}
+export const Listings = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
 
-export const AuctionListView = () => {
+  const view = searchParams.get("view") as string;
+  const { ownerAddress, storefront } = useStore();
+  const wallet = useWallet();
+  const { auctionManagerTotal, auctionCacheTotal } =
+    useAuctionManagersToCache();
+  const isStoreOwner = ownerAddress === wallet.publicKey?.toBase58();
+  const notAllAuctionsCached = auctionManagerTotal !== auctionCacheTotal;
+  const showCacheAuctionsAlert = isStoreOwner && notAllAuctionsCached;
+
   const { auctions, loading, initLoading, hasNextPage, loadMore } =
-    useInfiniteScrollAuctions();
+    useInfiniteScrollAuctions(view);
 
   const [sentryRef] = useInfiniteScroll({
     loading,
@@ -31,13 +38,11 @@ export const AuctionListView = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
-  const { ownerAddress, storefront } = useStore();
-  const wallet = useWallet();
-  const { auctionManagerTotal, auctionCacheTotal } =
-    useAuctionManagersToCache();
-  const isStoreOwner = ownerAddress === wallet.publicKey?.toBase58();
-  const notAllAuctionsCached = auctionManagerTotal !== auctionCacheTotal;
-  const showCacheAuctionsAlert = isStoreOwner && notAllAuctionsCached;
+  useEffect(() => {
+    if (!view) {
+      setSearchParams({ view: "live" });
+    }
+  }, [view]);
 
   return initLoading ? (
     <div className="app-section--loading">
@@ -80,18 +85,38 @@ export const AuctionListView = () => {
         headingText={storefront.meta.title}
         subHeadingText={storefront.meta.description}
       />
+      <Anchor showInkInFixed={false}>
+        <Menu
+          className="metaplex-menu-pills"
+          onClick={(e: any) => {
+            setSearchParams({ view: e.key });
+          }}
+          selectedKeys={[view]}
+          mode="horizontal"
+        >
+          <Menu.Item key="live">
+            Live
+          </Menu.Item>
+          <Menu.Item key="resale">
+            Secondary Listings
+          </Menu.Item>
+          <Menu.Item key="ended">
+            Ended
+          </Menu.Item>
+        </Menu>
+      </Anchor>
       <MetaplexMasonry>
-        {auctions.map((m, idx) => {
+        {auctions.map((m) => {
           const id = m.auction.pubkey;
           return (
-            <Link to={`/auction/${id}`} key={idx}>
+            <Link to={`/listings/${id}`} key={id}>
               <AuctionRenderCard key={id} auctionView={m} />
             </Link>
           );
         })}
       </MetaplexMasonry>
       {hasNextPage && (
-        <div className="app-section--loading" ref={sentryRef}>
+        <div key="more" className="app-section--loading" ref={sentryRef}>
           <Spin indicator={<LoadingOutlined />} />
         </div>
       )}
