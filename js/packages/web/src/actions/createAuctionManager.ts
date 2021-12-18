@@ -25,6 +25,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  SendAndConfirmError,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -106,7 +107,7 @@ export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
   progressCallback: Dispatch<SetStateAction<number>>,
-  failureCallback: Dispatch<SetStateAction<string | undefined>>,
+  failureCallback: Dispatch<SetStateAction<SendAndConfirmError | undefined>>,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -335,7 +336,7 @@ export async function createAuctionManager(
   });
 
   const filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
-  let rejection: string | undefined;
+  let rejection: SendAndConfirmError | undefined;
 
   if (instructions.length === 1) {
     await sendTransactionWithRetry(
@@ -359,7 +360,7 @@ export async function createAuctionManager(
 
         progressCallback(Math.round((step / total) * 100));
       },
-      (reason: any) => {
+      reason => {
         rejection = reason;
         return false;
       },
@@ -367,7 +368,8 @@ export async function createAuctionManager(
   }
 
   if (rejection) {
-    throw new Error(rejection);
+    failureCallback(rejection);
+    throw new Error(`Failed to create auction manager: ${rejection.type}`);
   }
 
   return { vault, auction, auctionManager };
