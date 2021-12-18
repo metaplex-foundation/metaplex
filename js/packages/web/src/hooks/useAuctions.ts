@@ -173,10 +173,16 @@ export const useInfiniteScrollAuctions = (view: string) => {
 
       const auctionManager = auctionManagersByAuction[a.pubkey];
       const cache = auctionCachesByAuctionManager[auctionManager.pubkey];
+
+      if (!cache) {
+        return active;
+      }
+
       const metadata = map(
         cache.info.metadata,
         pubkey => metadataByMetadata[pubkey],
       );
+
       const secondarySale = some(metadata, [
         ['info', 'primarySaleHappened'],
         sale ? 1 : 0,
@@ -272,6 +278,7 @@ export const useInfiniteScrollAuctions = (view: string) => {
     }
 
     (async () => {
+      setInitLoading(true);
       const storeAuctionManagers = Object.values(
         auctionManagersByAuction,
       ).filter(

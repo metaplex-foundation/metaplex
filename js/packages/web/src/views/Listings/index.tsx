@@ -28,7 +28,7 @@ export const Listings = () => {
   const notAllAuctionsCached = auctionManagerTotal !== auctionCacheTotal;
   const showCacheAuctionsAlert = isStoreOwner && notAllAuctionsCached;
 
-  const { auctions, loading, initLoading, hasNextPage, loadMore } =
+  const { auctions, loading, hasNextPage, initLoading, loadMore } =
     useInfiniteScrollAuctions(view);
 
   const [sentryRef] = useInfiniteScroll({
@@ -44,11 +44,7 @@ export const Listings = () => {
     }
   }, [view]);
 
-  return initLoading ? (
-    <div className="app-section--loading">
-      <Spin indicator={<LoadingOutlined />} />
-    </div>
-  ) : (
+  return (
     <>
       {showCacheAuctionsAlert && (
         <Alert
@@ -105,20 +101,28 @@ export const Listings = () => {
           </Menu.Item>
         </Menu>
       </Anchor>
-      <MetaplexMasonry>
-        {auctions.map((m) => {
-          const id = m.auction.pubkey;
-          return (
-            <Link to={`/listings/${id}`} key={id}>
-              <AuctionRenderCard key={id} auctionView={m} />
-            </Link>
-          );
-        })}
-      </MetaplexMasonry>
-      {hasNextPage && (
-        <div key="more" className="app-section--loading" ref={sentryRef}>
+      {initLoading ? (
+        <div className="app-section--loading">
           <Spin indicator={<LoadingOutlined />} />
         </div>
+      ) : (
+        <>
+          <MetaplexMasonry>
+            {auctions.map((m) => {
+              const id = m.auction.pubkey;
+              return (
+                <Link to={`/listings/${id}`} key={id}>
+                  <AuctionRenderCard key={id} auctionView={m} />
+                </Link>
+              );
+            })}
+          </MetaplexMasonry>
+          {hasNextPage && (
+            <div key="more" className="app-section--loading" ref={sentryRef}>
+              <Spin indicator={<LoadingOutlined />} />
+            </div>
+          )}
+        </>
       )}
     </>
   );
