@@ -4,6 +4,7 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 ## Settings examples
 
+```json
 {
   "price": 0.01,
   "number": 10000,
@@ -25,6 +26,7 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
   "noRetainAuthority": false,
   "noMutable": false
 }
+```
 
 See example-candy-machine-upload-config.json
 
@@ -63,16 +65,16 @@ file itself so that the order can be verified by others after the mint is comple
 
 Stop a mint at a date
 
-````
+```
 {
 "endSettingType": { "date": true },
 "value": "11 Dec 2021 13:30:00 CST"
-}```
+}
+```
 
 Stop a mint after a certain amount have sold
 
-````
-
+```
 {
 "endSettingType": { "amount": true },
 "value": 10
@@ -164,7 +166,7 @@ applied to all.
 metaplex generate_art_configurations <directory>
 ts-node cli generate_art_configurations <directory>
 
-````
+```
 
 The following file will be generated (based off of `example-traits`):
 
@@ -415,4 +417,3 @@ ts-node cli sign_candy_machine_metadata -k ~/.config/solana/id.json
 metaplex sign_candy_machine_metadata -k ~/.config/solana/id.json --cndy CANDY_MACHINE_ADDRESS_HERE
 ts-node cli sign_candy_machine_metadata -k ~/.config/solana/id.json --cndy CANDY_MACHINE_ADDRESS_HERE
 ```
-````
