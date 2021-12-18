@@ -1,8 +1,8 @@
 import { ConnectButton, useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Menu, Row, Space } from 'antd';
-import React, { ReactElement, ReactNode, useMemo } from 'react';
-import { Link, useLocation, useResolvedPath, useMatch } from 'react-router-dom';
+import React, { ReactElement } from 'react';
+import { Link, useResolvedPath, useMatch } from 'react-router-dom';
 import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
 import { HowToBuyModal } from '../HowToBuyModal';
 import { Notifications } from '../Notifications';
@@ -77,7 +77,7 @@ export const AppBar = (props: P) => {
             <img src={props.logo} />
           </Link>
         </Col>
-        <Col flex="1 0 0" style={{ overflow: 'hidden' }}>
+        <Col flex="1 0 0">
           <Menu theme="dark" mode="horizontal" selectedKeys={[]}>
             {menu.map(({ key, link, title, group }) => {
                 return (
