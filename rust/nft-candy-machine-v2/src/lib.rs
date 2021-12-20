@@ -12,7 +12,10 @@ use {
             log::sol_log_compute_units,
             program::{invoke, invoke_signed},
             serialize_utils::{read_pubkey, read_u16},
-            system_instruction, sysvar,
+            system_instruction, sysvar::{
+                self,
+                instructions::load_current_index
+            }
         },
         AnchorDeserialize, AnchorSerialize, Discriminator, Key,
     },
@@ -348,7 +351,19 @@ pub mod nft_candy_machine_v2 {
         let associated_token =
             Pubkey::from_str("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").unwrap();
 
-        for index in 0..num_instructions {
+        // replace with load_current_index_checked when using solana 1.9
+        // Note - this is not a security risk as the program ID
+        // of the instruction sysvar is checked in the anchor guard macro.
+        let current_instruction = load_current_index(&instruction_sysvar);
+
+        // If there are more instructions in the transaction,
+        // verify that they belong to expected programs
+        // (spl-token, system-program or the associated-token program)
+        // If not, they could be attempting to circumvent the randomness of the candymachine
+        // by performing post-checks on the minted NFT.
+        // Note - instructions before the mint instruction are allowed.
+        let next_instruction = current_instruction + 1;
+        for index in next_instruction..num_instructions {
             let mut current = 2 + (index * 2) as usize;
             let start = read_u16(&mut current, &instruction_sysvar).unwrap();
 
