@@ -107,7 +107,7 @@ export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
   progressCallback: Dispatch<SetStateAction<number>>,
-  failureCallback: Dispatch<SetStateAction<SendAndConfirmError | undefined>>,
+  failureCallback: (err: SendAndConfirmError) => void,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -369,7 +369,9 @@ export async function createAuctionManager(
 
   if (rejection) {
     failureCallback(rejection);
-    throw new Error(`Failed to create auction manager: ${rejection.type}`);
+    throw new Error(
+      `Failed to create auction manager: ${JSON.stringify(rejection)}`,
+    );
   }
 
   return { vault, auction, auctionManager };

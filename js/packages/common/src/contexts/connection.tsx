@@ -325,9 +325,9 @@ export const sendTransactions = async (
 
   const signedTxns = await wallet.signAllTransactions(unsignedTxns);
 
-  const pendingTxns: Promise<SendSignedTransactionResult>[] = [];
+  const pendingTxns: Promise<void>[] = [];
 
-  const breakEarlyObject = { breakEarly: false, i: 0 };
+  const cancelToken = { idx: undefined as number | undefined };
   console.log(
     'Signed txns length',
     signedTxns.length,
@@ -338,25 +338,23 @@ export const sendTransactions = async (
     const signedTxnPromise = sendSignedTransaction({
       connection,
       signedTransaction: signedTxns[i],
-    });
-
-    signedTxnPromise
-      .then(res => {
+    }).then(res => {
         if (res.err) {
           failCallback(res.err, i);
-          throw new Error(`Instructions set ${i} failed: ${res.err.type}`);
+          throw new Error(`Instructions set ${i} failed: ${JSON.stringify(res.err)}`);
         }
 
         const { txid } = res;
         console.log(`Instructions set ${i} succeeded. Transaction Id ${txid}`);
         successCallback(txid, i);
       })
-      .catch(() => {
-        console.log(`Instructions set ${i} failed.`);
+      .catch((e) => {
+        console.error(e);
         if (sequenceType === SequenceType.StopOnFailure) {
-          breakEarlyObject.breakEarly = true;
-          breakEarlyObject.i = i;
+          cancelToken.idx ??= i;
         }
+
+        throw e;
       });
 
     if (sequenceType !== SequenceType.Parallel) {
@@ -364,9 +362,9 @@ export const sendTransactions = async (
         await signedTxnPromise;
       } catch (e) {
         console.log('Caught failure', e);
-        if (breakEarlyObject.breakEarly) {
-          console.log('Died on ', breakEarlyObject.i);
-          return breakEarlyObject.i; // Return the txn we failed on by index
+        if (cancelToken.idx !== undefined) {
+          console.log('Cancel requested after ', cancelToken.idx);
+          return cancelToken.idx; // Return the txn we failed on by index
         }
       }
     } else {
