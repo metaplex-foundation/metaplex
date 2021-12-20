@@ -46,7 +46,7 @@ export function getPhase(
     curr > candyMachineGoLive
   ) {
     return Phase.Phase4;
-  } else if (fairLaunch?.state.phaseThreeStarted) {
+  } else if (!fairLaunch || fairLaunch?.state.phaseThreeStarted) {
     if (!candyMachine) {
       return Phase.RaffleFinished;
     } else {
