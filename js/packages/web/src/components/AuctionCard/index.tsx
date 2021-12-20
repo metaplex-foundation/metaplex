@@ -281,7 +281,7 @@ export const AuctionCard = ({
   const isAuctioneer = wallet?.publicKey && auctionView.auctionManager.authority === wallet.publicKey.toBase58()
 
   const eligibleForAnything = winnerIndex !== null || eligibleForOpenEdition;
-  const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
+  const gapTime = (auctionView.cache.info.metadatauction.info.auctionGap?.toNumber() || 0) / 60;
   const gapTick = auctionExtended
     ? auctionExtended.info.gapTickSizePercentage
     : 0;

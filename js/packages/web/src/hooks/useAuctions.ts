@@ -174,7 +174,7 @@ export const useInfiniteScrollAuctions = (view: string) => {
       const auctionManager = auctionManagersByAuction[a.pubkey];
       const cache = auctionCachesByAuctionManager[auctionManager.pubkey];
       const metadata = map(
-        cache.info.metadata,
+        cache?.info?.metadata || [],
         pubkey => metadataByMetadata[pubkey],
       );
       const secondarySale = some(metadata, [
