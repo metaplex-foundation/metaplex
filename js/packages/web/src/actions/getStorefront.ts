@@ -7,11 +7,7 @@ import { createClient } from 'redis';
 import { maybeCDN } from '../utils/cdn';
 
 const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
-const client = createClient({
-  url:
-    process.env.REDIS_ARWEAVE_CACHE ||
-    'redis://redistogo:678eb81e1004e9959c979640a6b4c7a6@sole.redistogo.com:10402',
-});
+const client = createClient({ url: process.env.REDIS_URL || '' });
 
 const getStorefrontFromCache = async (subdomain: string) => {
   return await client.get(subdomain);
