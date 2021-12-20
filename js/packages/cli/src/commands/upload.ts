@@ -87,6 +87,9 @@ export async function uploadV2({
   if (!cacheContent.program) {
     cacheContent.program = {};
   }
+  if (!cacheContent.items) {
+    cacheContent.items = {};
+  }
 
   const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
   const SIZE = dedupedAssetKeys.length;
