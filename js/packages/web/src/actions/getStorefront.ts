@@ -96,7 +96,13 @@ export const getStorefront = async (
 ): Promise<Storefront | null> => {
   let cached: Storefront | undefined = undefined;
 
-  const client = createClient({ url: REDIS_URL });
+  const client = createClient({
+    url: REDIS_URL,
+    socket: {
+      tls: true,
+      rejectUnauthorized: false,
+    },
+  });
 
   await client.connect();
 
@@ -127,6 +133,8 @@ export const getStorefront = async (
       .set(`${subdomain}-timestamp`, now.format())
       .exec();
   }
+
+  await client.quit();
 
   return source;
 };
