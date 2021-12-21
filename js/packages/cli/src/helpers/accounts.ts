@@ -22,6 +22,7 @@ import {
   B,
   A,
   CANDY_MACHINE_PROGRAM_V2_ID,
+  GUMDROP_DISTRIBUTOR_ID,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
@@ -691,6 +692,29 @@ export async function loadTokenEntanglementProgream(
   );
 
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
+}
+
+export async function loadGumdropProgram(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || getCluster(env),
+  );
+
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(GUMDROP_DISTRIBUTOR_ID, provider);
+  const program = new anchor.Program(idl, GUMDROP_DISTRIBUTOR_ID, provider);
+  log.debug('program id from anchor', program.programId.toBase58());
+  return program;
 }
 
 export async function getTokenAmount(

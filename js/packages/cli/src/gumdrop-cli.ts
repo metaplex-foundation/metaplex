@@ -16,6 +16,7 @@ import {
   Connection as RPCConnection,
   Keypair,
   PublicKey,
+  SystemProgram,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
@@ -47,7 +48,12 @@ import {
 import {
   GUMDROP_TEMPORAL_SIGNER,
   GUMDROP_DISTRIBUTOR_ID,
+  TOKEN_METADATA_PROGRAM_ID,
 } from './helpers/constants';
+import {
+  getMetadata,
+  loadGumdropProgram,
+} from './helpers/accounts';
 import { sendSignedTransaction } from './helpers/transactions';
 
 program.version('0.0.1');
@@ -397,6 +403,71 @@ programCommand('close')
       console.log(
         'gumdrop close succeeded',
         `https://explorer.solana.com/tx/${closeResult.txid}?cluster=${options.env}`,
+      );
+    }
+  });
+
+programCommand('recover_update_authority')
+  .option('--base <path>', 'gumdrop authority generated on create')
+  .option('--mint <string-pubkey>', 'mint for metadata to recover update authority')
+  .option('--new-update-authority <string-pubkey>', 'new update authority')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    const wallet = loadWalletKey(options.keypair);
+    const base = loadWalletKey(options.base);
+    const anchorProgram = await loadGumdropProgram(wallet, options.env);
+
+    const mintKey = new PublicKey(options.mint);
+    const metadataKey = await getMetadata(mintKey);
+    const newUpdateAuthorityKey = new PublicKey(options.newUpdateAuthority);
+
+    const [distributorKey, dbump] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("MerkleDistributor"),
+        base.publicKey.toBuffer(),
+      ],
+      GUMDROP_DISTRIBUTOR_ID);
+
+    const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("Wallet"),
+        distributorKey.toBuffer(),
+      ],
+      GUMDROP_DISTRIBUTOR_ID
+    );
+
+    const recoverIx = await anchorProgram.instruction.recoverUpdateAuthority(
+      dbump,
+      wbump,
+      {
+        accounts: {
+          base: base.publicKey,
+          distributor: distributorKey,
+          distributorWallet: distributorWalletKey,
+          newUpdateAuthority: newUpdateAuthorityKey,
+          metadata: metadataKey,
+          systemProgram: SystemProgram.programId,
+          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        }
+      }
+    );
+
+    const recoverResult = await sendTransactionWithRetry(
+      anchorProgram.provider.connection,
+      wallet,
+      [recoverIx],
+      [base],
+    );
+
+    console.log(recoverResult);
+    if (typeof recoverResult === 'string') {
+      throw new Error(recoverResult);
+    } else {
+      console.log(
+        'gumdrop recover succeeded',
+        `https://explorer.solana.com/tx/${recoverResult.txid}?cluster=${options.env}`,
       );
     }
   });
