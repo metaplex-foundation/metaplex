@@ -27,11 +27,11 @@ case "$Input" in
 	2) ENV_URL="mainnet-beta" ;;
 esac
 
-STORAGE="arweave-bundle"
+STORAGE="arweave-sol"
 echo ""
 echo "Storage type:"
-echo "1. arweave-bundle (default)"
-echo "2. arweave-sol"
+echo "1. arweave-bundle"
+echo "2. arweave-sol (default)"
 echo "3. arweave (devnet only)"
 echo "4. ipfs"
 echo "5. aws"
@@ -44,6 +44,33 @@ case "$Input" in
 	4) STORAGE="ipfs" ;;
 	5) STORAGE="aws" ;;
 esac
+
+ARWEAVE_JWK="null"
+
+if [ "$STORAGE" = "arweave-bundle" ]
+then
+    echo -n "Arweave JWK wallet file: "
+    read ARWEAVE_JWK
+fi
+
+INFURA_ID="null"
+INFURA_SECRET="null"
+
+if [ "$STORAGE" = "ipfs" ]
+then
+    echo -n "Infura Project ID: "
+    read INFURA_ID
+    echo -n "Infura Secret: "
+    read INFURA_SECRET
+fi
+
+AWS_BUCKET="null"
+
+if [ "$STORAGE" = "aws" ]
+then
+    echo -n "AWS bucket name: "
+    read AWS_BUCKET
+fi
 
 echo ""
 echo -n "Number of items [10]: "
@@ -96,7 +123,6 @@ if [ ! -d $ASSETS_DIR ]
 then
     mkdir $ASSETS_DIR
     curl -s $IMAGE > "$ASSETS_DIR/template.png"
-    SIZE=`wc -c "$ASSETS_DIR/template.png" | cut -d t -f 1 | xargs`
     SIZE=$(wc -c "$ASSETS_DIR/template.png" | grep -oE '[0-9]+' | head -n 1)
 
     if [ $SIZE -eq 0 ]
@@ -131,9 +157,10 @@ cat > $CONFIG_FILE <<- EOM
     "whitelistMintSettings": null,
     "hiddenSettings": null,
     "storage": "${STORAGE}",
-    "ipfsInfuraProjectId": null,
-    "ipfsInfuraSecret": null,
-    "awsS3Bucket": null,
+    "arweaveJwk": "${ARWEAVE_JWK}",
+    "ipfsInfuraProjectId": "${INFURA_ID}",
+    "ipfsInfuraSecret": "${INFURA_SECRET}",
+    "awsS3Bucket": "${AWS_BUCKET}",
     "noRetainAuthority": false,
     "noMutable": false
 }
