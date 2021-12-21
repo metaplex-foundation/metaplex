@@ -226,6 +226,7 @@ export async function loadTokenEntanglementProgram(
     TOKEN_ENTANGLEMENT_PROGRAM_ID,
     provider,
   );
+  //@ts-ignore
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
