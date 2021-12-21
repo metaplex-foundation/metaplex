@@ -1,6 +1,13 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+
 import { queryExtendedMetadata } from './queryExtendedMetadata';
-import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
@@ -17,13 +24,15 @@ import {
   pullPage,
   pullPayoutTickets,
   pullStoreMetadata,
+  pullPacks,
+  pullPack,
 } from '.';
 import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
-import { timeStart } from '../../utils';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
   isLoading: false,
+  isLoadingMetadata: false,
   // @ts-ignore
   update: () => [AuctionData, BidderMetadata, BidderPot],
 });
@@ -31,14 +40,17 @@ const MetaContext = React.createContext<MetaContextState>({
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
   const { isReady, storeAddress } = useStore();
+  const wallet = useWallet();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
   const [page, setPage] = useState(0);
-  const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [lastLength, setLastLength] = useState(0);
   const { userAccounts } = useUserAccounts();
 
   const [isLoading, setIsLoading] = useState(true);
+
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
+  const loadedMetadataLength = useRef(0);
 
   const updateMints = useCallback(
     async metadataByMint => {
@@ -69,7 +81,9 @@ export function MetaProvider({ children = null as any }) {
       setIsLoading(true);
     }
     setIsLoading(true);
+
     const nextState = await pullStoreMetadata(connection, state);
+
     setIsLoading(false);
     setState(nextState);
     await updateMints(nextState.metadataByMint);
@@ -120,6 +134,68 @@ export function MetaProvider({ children = null as any }) {
     return nextState;
   }
 
+  async function pullItemsPage(
+    userTokenAccounts: TokenAccount[],
+  ): Promise<void> {
+    if (isLoading) {
+      return;
+    }
+    if (!storeAddress) {
+      return setIsLoading(false);
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+
+    const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+    const packsState = shouldEnableNftPacks
+      ? await pullPacks(connection, state, wallet?.publicKey)
+      : state;
+
+    await pullUserMetadata(userTokenAccounts, packsState);
+  }
+
+  async function pullPackPage(
+    userTokenAccounts: TokenAccount[],
+    packSetKey: StringPublicKey,
+  ): Promise<void> {
+    if (isLoading) {
+      return;
+    }
+
+    if (!storeAddress && isReady) {
+      return setIsLoading(false);
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+
+    const packState = await pullPack({
+      connection,
+      state,
+      packSetKey,
+      walletKey: wallet?.publicKey,
+    });
+
+    await pullUserMetadata(userTokenAccounts, packState);
+  }
+
+  async function pullUserMetadata(
+    userTokenAccounts: TokenAccount[],
+    tempState?: MetaState,
+  ): Promise<void> {
+    setIsLoadingMetadata(true);
+    loadedMetadataLength.current = userTokenAccounts.length;
+
+    const nextState = await pullYourMetadata(
+      connection,
+      userTokenAccounts,
+      tempState || state,
+    );
+    await updateMints(nextState.metadataByMint);
+
+    setState(nextState);
+    setIsLoadingMetadata(false);
+  }
+
   async function pullAllSiteData() {
     if (isLoading) return state;
     if (!storeAddress) {
@@ -130,21 +206,18 @@ export function MetaProvider({ children = null as any }) {
     } else if (!state.store) {
       setIsLoading(true);
     }
+    console.log('------->Query started');
 
-    const done = timeStart('pullAllSiteData');
     const nextState = await loadAccounts(connection);
-    done();
+
+    console.log('------->Query finished');
 
     setState(nextState);
     await updateMints(nextState.metadataByMint);
     return;
   }
 
-  async function update(
-    auctionAddress?: any,
-    bidderAddress?: any,
-    userTokenAccounts?: TokenAccount[],
-  ) {
+  async function update(auctionAddress?: any, bidderAddress?: any) {
     if (!storeAddress) {
       if (isReady) {
         //@ts-ignore
@@ -158,17 +231,21 @@ export function MetaProvider({ children = null as any }) {
       setIsLoading(true);
     }
 
-    const doneQuery = timeStart('MetaProvider#update#Query');
-    const donePullPage = timeStart('MetaProvider#update#pullPage');
-    let nextState = await pullPage(connection, page, state);
-    donePullPage();
+    const shouldFetchNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+    let nextState = await pullPage(
+      connection,
+      page,
+      state,
+      wallet?.publicKey,
+      shouldFetchNftPacks,
+    );
+    console.log('-----> Query started');
 
     if (nextState.storeIndexer.length) {
       if (USE_SPEED_RUN) {
-        const done = timeStart('MetaProvider#update#limitedLoadAccounts');
         nextState = await limitedLoadAccounts(connection);
-        done();
-        doneQuery();
+
+        console.log('------->Query finished');
 
         setState(nextState);
 
@@ -178,44 +255,24 @@ export function MetaProvider({ children = null as any }) {
       } else {
         console.log('------->Pagination detected, pulling page', page);
 
-        // Ensures we get the latest so beat race conditions and avoid double pulls.
-        let currMetadataLoaded = false;
-        setMetadataLoaded(loaded => {
-          currMetadataLoaded = loaded;
-          return loaded;
-        });
-        if (
-          userTokenAccounts &&
-          userTokenAccounts.length &&
-          !currMetadataLoaded
-        ) {
-          setMetadataLoaded(true);
-          const done = timeStart('MetaProvider#update#pullYourMetadata');
-          nextState = await pullYourMetadata(
-            connection,
-            userTokenAccounts,
-            nextState,
-          );
-          done();
-        }
-
         const auction = window.location.href.match(/#\/auction\/(\w+)/);
         const billing = window.location.href.match(
           /#\/auction\/(\w+)\/billing/,
         );
         if (auction && page == 0) {
-          const done = timeStart('MetaProvider#update#pullAuctionSubaccounts');
+          console.log(
+            '---------->Loading auction page on initial load, pulling sub accounts',
+          );
+
           nextState = await pullAuctionSubaccounts(
             connection,
             auction[1],
             nextState,
           );
-          done();
 
           if (billing) {
-            const done = timeStart('MetaProvider#update#pullPayoutTickets');
+            console.log('-----> Pulling all payout tickets');
             await pullPayoutTickets(connection, nextState);
-            done();
           }
         }
 
@@ -236,17 +293,11 @@ export function MetaProvider({ children = null as any }) {
       }
     } else {
       console.log('------->No pagination detected');
-      if (!USE_SPEED_RUN) {
-        const done = timeStart('MetaProvider#update#loadAccounts');
-        nextState = await loadAccounts(connection);
-        done();
-      } else {
-        const done = timeStart('MetaProvider#update#limitedLoadAccounts');
-        nextState = await limitedLoadAccounts(connection);
-        done();
-      }
+      nextState = !USE_SPEED_RUN
+        ? await loadAccounts(connection)
+        : await limitedLoadAccounts(connection);
 
-      doneQuery();
+      console.log('------->Query finished');
 
       setState(nextState);
 
@@ -257,18 +308,12 @@ export function MetaProvider({ children = null as any }) {
 
     console.log('------->set finished');
 
-    const done = timeStart('MetaProvider#update#updateMints');
-    await updateMints(nextState.metadataByMint);
-    done();
-
     if (auctionAddress && bidderAddress) {
-      const done = timeStart('MetaProvider#update#pullAuctionSubaccounts');
       nextState = await pullAuctionSubaccounts(
         connection,
         auctionAddress,
         nextState,
       );
-      done();
       setState(nextState);
 
       const auctionBidderKey = auctionAddress + '-' + bidderAddress;
@@ -290,59 +335,32 @@ export function MetaProvider({ children = null as any }) {
           console.log('not running queued update right now, still loading');
         } else {
           console.log('running queued update');
-          update(undefined, undefined, userAccounts);
+          update(undefined, undefined);
           clearInterval(interval);
         }
       }, 3000);
     } else {
       console.log('no update is running, updating.');
-      update(undefined, undefined, userAccounts);
+      update(undefined, undefined);
+    }
+  }, [connection, setState, updateMints, storeAddress, isReady, page]);
+
+  // Fetch metadata on userAccounts change
+  useEffect(() => {
+    const shouldFetch =
+      !isLoading &&
+      !isLoadingMetadata &&
+      loadedMetadataLength.current !== userAccounts.length;
+
+    if (shouldFetch) {
+      pullUserMetadata(userAccounts);
     }
   }, [
-    connection,
-    setState,
-    updateMints,
-    storeAddress,
-    isReady,
-    page,
-    userAccounts.length > 0,
+    isLoading,
+    isLoadingMetadata,
+    loadedMetadataLength.current,
+    userAccounts.length,
   ]);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    return subscribeAccountsChange(connection, () => state, setState);
-  }, [connection, setState, isLoading, state]);
-
-  // TODO: fetch names dynamically
-  // TODO: get names for creators
-  // useEffect(() => {
-  //   (async () => {
-  //     const twitterHandles = await connection.getProgramAccounts(NAME_PROGRAM_ID, {
-  //      filters: [
-  //        {
-  //           dataSize: TWITTER_ACCOUNT_LENGTH,
-  //        },
-  //        {
-  //          memcmp: {
-  //           offset: VERIFICATION_AUTHORITY_OFFSET,
-  //           bytes: TWITTER_VERIFICATION_AUTHORITY.toBase58()
-  //          }
-  //        }
-  //      ]
-  //     });
-
-  //     const handles = twitterHandles.map(t => {
-  //       const owner = new PublicKey(t.account.data.slice(32, 64));
-  //       const name = t.account.data.slice(96, 114).toString();
-  //     });
-
-  //     console.log(handles);
-
-  //   })();
-  // }, [whitelistedCreatorsByCreator]);
 
   return (
     <MetaContext.Provider
@@ -355,7 +373,11 @@ export function MetaProvider({ children = null as any }) {
         pullBillingPage,
         // @ts-ignore
         pullAllSiteData,
+        pullItemsPage,
+        pullPackPage,
+        pullUserMetadata,
         isLoading,
+        isLoadingMetadata,
       }}
     >
       {children}

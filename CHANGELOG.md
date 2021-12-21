@@ -13,6 +13,7 @@ incremented for features.
 
 ### Features
 
+- Candy Machine now supports GIF, PNG and JPEG
 - Added Token Entangler smart contract and CLI
 - Add update authority command for candy machine
 - Implemented NFT Packs Creation and Viewing Flow
@@ -38,9 +39,14 @@ incremented for features.
 - Ability to use PSD instead of PNGs in the candy machine CLI
 - Parallelize with batchSize command the candy machine CLI uploader
 - Add ability for a candy machine owner to update existing candies using an old and new cache file
-- Adds a minumum auction funds modal to prevent people from making bad auctions
+- Adds a minimum auction funds modal to prevent people from making bad auctions
+- Implement NFT Packs Redeem
+- Remove Websockets for useMeta
+- Redirect to home and reload on auction creation
+- Refresh metadata loads user metadata with dropdown menu
 
 ### Fixes
+
 - Fixes - Hides spl token list if no tokens configured
 - Fixes #840 - Claim button visible after claim.
 - Improve Candy Machine CLI `create_generative_art` command performance. (@0xCryptoSheik in #899)
@@ -61,6 +67,11 @@ incremented for features.
 - Remove unneeded code from Packs creation admin
 - Fix issue where ata is not detected during ticket punching in FLP
 - Fix issue where random shuffled array is not using in image generation
+- Fix NFT Packs creation transaction failing when adding multiple items
+- Fix layout on token selection
+- Fix type of sale and edition number for non master edition NFTs
+- Fix not allowing to buy a sale without enough balance
+- Added placeholder for images on create pack flow
 
 ### Breaking
 

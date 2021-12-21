@@ -1,4 +1,4 @@
-import { initPackSet } from '@oyster/common/dist/lib/models/packs/instructions/initPackSet';
+import { initPackSet } from '@oyster/common';
 import { TransactionInstruction } from '@solana/web3.js';
 import { BN } from 'bn.js';
 

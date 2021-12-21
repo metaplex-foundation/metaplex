@@ -162,6 +162,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
             cancelButtonProps={{ disabled: isLoading }}
             onOk={mint}
             onCancel={() => setShowMintModal(false)}
+            className="art-minting-modal"
           >
             <Form.Item
               style={{

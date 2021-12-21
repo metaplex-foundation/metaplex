@@ -1,42 +1,31 @@
+import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
-import { ArtCard } from '../../components/ArtCard';
-import { Layout, Row, Col, Tabs, Button } from 'antd';
-import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
-import { useCreatorArts, useUserArts } from '../../hooks';
+import { Layout, Row, Col, Tabs, Button, Dropdown, Menu } from 'antd';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
-import { useWallet } from '@solana/wallet-adapter-react';
+
+import { ArtworkViewState } from './types';
+import { useItems } from './hooks/useItems';
+import ItemCard from './components/ItemCard';
+import { useUserAccounts } from '@oyster/common';
+import { DownOutlined } from "@ant-design/icons";
+import { isMetadata, isPack } from './utils';
 
 const { TabPane } = Tabs;
-
 const { Content } = Layout;
 
-export enum ArtworkViewState {
-  Metaplex = '0',
-  Owned = '1',
-  Created = '2',
-}
-
 export const ArtworksView = () => {
-  const { connected, publicKey } = useWallet();
-  const ownedMetadata = useUserArts();
-  const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
-  const { metadata, isLoading, pullAllMetadata, storeIndexer } = useMeta();
-  const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
+  const { connected } = useWallet();
+  const { isLoading, pullAllMetadata, storeIndexer, pullItemsPage } = useMeta();
+  const { userAccounts } = useUserAccounts();
 
-  const items =
-    activeKey === ArtworkViewState.Owned
-      ? ownedMetadata.map(m => m.metadata)
-      : activeKey === ArtworkViewState.Created
-      ? createdMetadata
-      : metadata;
+  const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
+
+  const userItems = useItems({ activeKey });
+
+  useEffect(() => {
+    pullItemsPage(userAccounts);
+  }, []);
 
   useEffect(() => {
     if (connected) {
@@ -47,33 +36,36 @@ export const ArtworksView = () => {
   }, [connected, setActiveKey]);
 
   const artworkGrid = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
-    >
-      {!isLoading
-        ? items.map((m, idx) => {
-            const id = m.pubkey;
-            return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard
-                  key={id}
-                  pubkey={m.pubkey}
-                  preview={false}
-                  height={250}
-                  width={250}
-                  artView
-                />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-    </Masonry>
+    <div className="artwork-grid">
+      {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+      {!isLoading &&
+        userItems.map(item => {
+          const pubkey = isMetadata(item)
+            ? item.pubkey
+            : isPack(item)
+            ? item.provingProcessKey
+            : item.edition?.pubkey || item.metadata.pubkey;
+
+          return <ItemCard item={item} key={pubkey} />;
+        })}
+    </div>
   );
 
-  const refreshButton = connected && storeIndexer.length !== 0 &&
-  <Button className="refresh-button" onClick={() => pullAllMetadata()}>Refresh</Button>
+  const refreshButton = connected && storeIndexer.length !== 0 && (
+    <Dropdown.Button
+      className={"refresh-button padding0"}
+      onClick={() => pullItemsPage(userAccounts)}
+      icon={<DownOutlined />}
+      overlayClassName={"refresh-overlay"}
+      overlay={
+        <Menu className={'gray-dropdown'}>
+          <Menu.Item onClick={() => pullAllMetadata()}>Load All Metadata</Menu.Item>
+        </Menu>
+      }
+    >
+      Refresh
+    </Dropdown.Button>
+  );
 
   return (
     <Layout style={{ margin: 0, marginTop: 30 }}>

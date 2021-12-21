@@ -7,6 +7,12 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 
+export interface AlertState {
+  open: boolean;
+  message: string;
+  severity: 'success' | 'info' | 'warning' | 'error' | undefined;
+}
+
 export const FAIR_LAUNCH_PROGRAM_ID = new anchor.web3.PublicKey(
   'faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j',
 );
@@ -45,6 +51,9 @@ export const formatNumber = {
 export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID =
   new anchor.web3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
+export const CIVIC = new anchor.web3.PublicKey(
+  'gatem74V238djXdzWnJf94Wo1DcnuGkfijbf3AuBhfs',
+);
 export const getFairLaunchTicketSeqLookup = async (
   tokenMint: anchor.web3.PublicKey,
   seq: anchor.BN,
@@ -66,6 +75,30 @@ export const getAtaForMint = async (
   return await anchor.web3.PublicKey.findProgramAddress(
     [buyer.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
     SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  );
+};
+
+export const getNetworkExpire = async (
+  gatekeeperNetwork: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [gatekeeperNetwork.toBuffer(), Buffer.from('expire')],
+    CIVIC,
+  );
+};
+
+export const getNetworkToken = async (
+  wallet: anchor.web3.PublicKey,
+  gatekeeperNetwork: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      wallet.toBuffer(),
+      Buffer.from('gateway'),
+      Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]),
+      gatekeeperNetwork.toBuffer(),
+    ],
+    CIVIC,
   );
 };
 
