@@ -88,13 +88,15 @@ export async function uploadV2({
     cacheContent.program = {};
   }
 
+  let existingInCache = [];
   if (!cacheContent.items) {
     cacheContent.items = {};
+  } else {
+    existingInCache = Object.keys(cacheContent.items);
   }
-
-  const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
+  const dedupedAssetKeys = getAssetKeysNeedingUpload(existingInCache, files);
   const SIZE = dedupedAssetKeys.length;
-  console.log('Size', SIZE, dedupedAssetKeys[0]);
+  console.log('Size', SIZE);
   let candyMachine = cacheContent.program.candyMachine
     ? new PublicKey(cacheContent.program.candyMachine)
     : undefined;
@@ -462,7 +464,6 @@ function getAssetKeysNeedingUpload(
     .reduce((acc, assetKey) => {
       const ext = path.extname(assetKey);
       const key = path.basename(assetKey, ext);
-
       if (!items[key]?.link && !keyMap[key]) {
         keyMap[key] = true;
         acc.push({ mediaExt: ext, index: key });
@@ -655,6 +656,7 @@ type UploadParams = {
   ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
   arweaveJwk: string;
+  customApi: string;
   batchSize: number;
 };
 export async function upload({
@@ -670,6 +672,7 @@ export async function upload({
   ipfsCredentials,
   awsS3Bucket,
   arweaveJwk,
+  customApi,
   batchSize,
 }: UploadParams): Promise<void> {
   // Read the content of the Cache file into the Cache object, initialize it
@@ -791,6 +794,12 @@ export async function upload({
                       manifest,
                       i,
                     );
+                    break;
+                  case StorageType.Custom:
+                    [link, imageLink] = [
+                      `${customApi}/${assetKey.index}`,
+                      `${customApi}/image/${assetKey.index}`,
+                    ];
                 }
                 if (link && imageLink) {
                   log.debug('Updating cache for ', assetKey);

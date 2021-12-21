@@ -94,6 +94,7 @@ programCommand('upload')
     '--arweave-jwk <string>',
     'Path to Arweave wallet file (required if using Arweave Bundles (--storage arweave-bundle)',
   )
+  .option('--custom-api <string>', 'Custom api url')
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .option('--no-mutable', 'Metadata will not be editable')
   .option(
@@ -114,6 +115,7 @@ programCommand('upload')
       mutable,
       rpcUrl,
       arweaveJwk,
+      customApi,
       batchSize,
     } = cmd.opts();
 
@@ -215,6 +217,7 @@ programCommand('upload')
         ipfsCredentials,
         awsS3Bucket,
         arweaveJwk,
+        customApi,
         batchSize,
       });
     } catch (err) {

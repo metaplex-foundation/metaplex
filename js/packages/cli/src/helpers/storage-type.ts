@@ -4,4 +4,5 @@ export enum StorageType {
   Arweave = 'arweave',
   Ipfs = 'ipfs',
   Aws = 'aws',
+  Custom = 'custom',
 }
