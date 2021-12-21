@@ -32,7 +32,9 @@ import {
 } from '@solana/web3.js';
 import log from 'loglevel';
 
-export const createMetadata = async (metadataLink: string): Promise<Data> => {
+export const createMetadata = async (
+  metadataLink: string,
+): Promise<Data | undefined> => {
   // Metadata
   let metadata;
   try {
@@ -43,7 +45,16 @@ export const createMetadata = async (metadataLink: string): Promise<Data> => {
     return;
   }
 
-  // Validate metadata
+  return validateMetadata({ metadata, uri: metadataLink });
+};
+
+export const validateMetadata = ({
+  metadata,
+  uri,
+}: {
+  metadata: Record<string, any>;
+  uri: string;
+}): Data | undefined => {
   if (
     !metadata.name ||
     !metadata.image ||
@@ -76,7 +87,7 @@ export const createMetadata = async (metadataLink: string): Promise<Data> => {
   return new Data({
     symbol: metadata.symbol,
     name: metadata.name,
-    uri: metadataLink,
+    uri,
     sellerFeeBasisPoints: metadata.seller_fee_basis_points,
     creators: creators,
   });
@@ -244,5 +255,47 @@ export const updateMetadata = async (
     signers,
   );
   console.log('Metadata updated', txid);
+  return metadataAccount;
+};
+
+export const createMetadataAccount = async ({
+  connection,
+  data,
+  mintKey,
+  walletKeypair,
+}: {
+  connection: Connection;
+  data: Data;
+  mintKey: PublicKey;
+  walletKeypair: Keypair;
+}): Promise<PublicKey | void> => {
+  // Retrieve metadata
+  const metadataAccount = await getMetadata(mintKey);
+  const signers: anchor.web3.Keypair[] = [];
+  const value = new CreateMetadataArgs({
+    data,
+    isMutable: true,
+  });
+  const txnData = Buffer.from(serialize(METADATA_SCHEMA, value));
+
+  const instructions = [
+    createMetadataInstruction(
+      metadataAccount,
+      mintKey,
+      walletKeypair.publicKey,
+      walletKeypair.publicKey,
+      walletKeypair.publicKey,
+      txnData,
+    ),
+  ];
+
+  // Execute transaction
+  const txid = await sendTransactionWithRetryWithKeypair(
+    connection,
+    walletKeypair,
+    instructions,
+    signers,
+  );
+  console.log('Metadata created', txid);
   return metadataAccount;
 };
