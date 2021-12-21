@@ -23,6 +23,7 @@ import {
 import { BN } from '@project-serum/anchor';
 import { getEdition, getMetadata, getTokenAmount } from './accounts';
 import mints from './valid_mints.json';
+import { extendBorsh } from './borsh';
 export const TOKEN_ENTANGLER = 'token_entangler';
 export const ESCROW = 'escrow';
 export const A = 'A';
@@ -144,6 +145,8 @@ export const METADATA_SCHEMA = new Map<any, any>([
     },
   ],
 ]);
+
+extendBorsh();
 
 // eslint-disable-next-line no-control-regex
 const METADATA_REPLACE = new RegExp('\u0000', 'g');
