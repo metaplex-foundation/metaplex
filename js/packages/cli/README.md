@@ -41,6 +41,8 @@ Want captcha? Add this for gatekeeper value and you are done:
   }
 ```
 
+By using captcha, you agree to [Civic’s Terms](https://docs.civic.com/candy-machine-integration/adding-captcha-to-candy-machine-v2#terms-and-conditions)
+
 ### Hidden Settings
 
 If you plan to do a mint larger than 20k, consider this option. With this, none of the arweave URIs actually go on Solana. You just provide the following in the config for hiddenSettings:
