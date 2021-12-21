@@ -8,6 +8,8 @@ import {
   verifyConsistentShares,
   verifyCreatorCollation,
 } from '../index';
+import { EXTENSION_PNG } from '../../../helpers/constants';
+import { jest } from '@jest/globals';
 
 const getFiles = rootDir => {
   const assets = fs.readdirSync(rootDir).map(file => path.join(rootDir, file));
@@ -27,7 +29,7 @@ describe('`metaplex verify_token_metadata`', () => {
     expect(() =>
       verifyTokenMetadata({ files: mismatchedAssets }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `"number of png files (0) is different than the number of json files (1)"`,
+      `"number of img files (0) is different than the number of json files (1)"`,
     );
   });
 
@@ -38,7 +40,7 @@ describe('`metaplex verify_token_metadata`', () => {
     it(`invalidates ${path.relative(__dirname, invalidSchema)}`, () => {
       expect(() =>
         verifyTokenMetadata({
-          files: [invalidSchema, invalidSchema.replace('.json', '.png')],
+          files: [invalidSchema, invalidSchema.replace('.json', EXTENSION_PNG)],
         }),
       ).toThrowErrorMatchingSnapshot();
     });

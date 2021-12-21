@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://metaplex.com">
-    <img alt="Metaplex" src="https://metaplex.com/static/logos/metaplex.svg" width="250" />
+    <img alt="Metaplex" src="js/packages/web/public/metaplex-logo.svg" style="background: black; padding: 10px" width="250" />
   </a>
 </p>
 
@@ -14,7 +14,7 @@ Metaplex is comprised of two core components: an on-chain program, and a self-ho
 
 ## Important NOTE
 
-Metaplex now follows a release versioning process called semantic versioning. If you are make a new market place, launching a candy machine or any live project that will handle real money, we recommend using a release tag. Using a release tag will ensure that new changes don't break your UI.
+Metaplex now follows a release versioning process called semantic versioning. If you are making a new market place, launching a candy machine or any live project that will handle real money, we recommend using a release tag. Using a release tag will ensure that new changes don't break your UI.
 
 https://github.com/metaplex-foundation/metaplex/releases
 
@@ -205,3 +205,7 @@ solana airdrop 4 NEW_WALLET_ADDRESS
 # Create a new store
 # Test your program changes
 ```
+
+## Reporting security issues
+
+To report a security issue, please follow the guidance on the [SECURITY](.github/SECURITY.md) page.

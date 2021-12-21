@@ -3,6 +3,7 @@ import {
   Connection,
   TransactionInstruction,
   PublicKey,
+  Commitment,
 } from '@solana/web3.js';
 import {
   sendTransactionWithRetry,
@@ -37,6 +38,7 @@ export async function sendPlaceBid(
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
   amount: number | BN,
+  commitment?: Commitment,
 ) {
   const signers: Keypair[][] = [];
   const instructions: TransactionInstruction[][] = [];
@@ -51,13 +53,17 @@ export async function sendPlaceBid(
     signers,
   );
 
-  await sendTransactionWithRetry(
+  const { txid } = await sendTransactionWithRetry(
     connection,
     wallet,
     instructions[0],
     signers[0],
-    'single',
+    commitment,
   );
+
+  if (commitment) {
+    await connection.confirmTransaction(txid, commitment);
+  }
 
   return {
     amount: bid,

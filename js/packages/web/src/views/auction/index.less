@@ -6,7 +6,7 @@
   font-size: 48px;
   line-height: 48px;
   @media (max-width: 375px) {
-    margin-top: 0px;
+    margin-top: 0;
     font-size: 2.8rem;
   }
   letter-spacing: -0.02em;
@@ -159,6 +159,11 @@ h6.info-title {
   border-radius: 20px;
   margin: 0 5px;
   border-color: transparent;
+
+  @media (max-width: @mobile-xs-max) {
+    border-color: @grey-50;
+    margin: 0 8px 0 0;
+  }
 }
 
 .pr-4 {

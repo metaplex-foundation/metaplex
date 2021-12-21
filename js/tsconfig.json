@@ -3,7 +3,12 @@
     "moduleResolution": "node",
     "target": "es6",
     "module": "es2015",
-    "lib": ["es2015", "es2016", "es2017", "dom"],
+    "lib": [
+      "es2015",
+      "es2016",
+      "es2017",
+      "dom"
+    ],
     "strict": true,
     "sourceMap": true,
     "declaration": true,
@@ -11,7 +16,12 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "noImplicitAny": true,
-    "typeRoots": ["types", "node_modules/@types"]
+    "typeRoots": [
+      "types",
+      "node_modules/@types"
+    ]
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*"
+  ]
 }

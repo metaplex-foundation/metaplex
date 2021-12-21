@@ -1,3 +1,5 @@
+use crate::processor::set_store::process_set_store_v2;
+
 use {
     crate::instruction::MetaplexInstruction,
     borsh::BorshDeserialize,
@@ -93,6 +95,10 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::SetStore(args) => {
             msg!("Instruction: Set Store");
             process_set_store(program_id, accounts, args.public)
+        }
+        MetaplexInstruction::SetStoreV2(args) => {
+            msg!("Instruction: Set Store V2");
+            process_set_store_v2(program_id, accounts, args.public, args.settings_uri)
         }
         MetaplexInstruction::SetWhitelistedCreator(args) => {
             msg!("Instruction: Set Whitelisted Creator");
