@@ -335,7 +335,7 @@ export const swapEntanglement = async (
   const tokenBEscrow = result[2];
   const transferAuthority = Keypair.generate();
   const paymentTransferAuthority = Keypair.generate();
-  const tokenMetadata = await getMetadata(tokenMint);
+  const replacementTokenMetadata = await getMetadata(replacementTokenMint);
   const signers = [transferAuthority];
 
   //@ts-ignore
@@ -345,13 +345,13 @@ export const swapEntanglement = async (
   const paymentAccount = isNative
     ? anchorWallet.publicKey
     : //@ts-ignore
-    (await getAtaForMint(epObj.treasuryMint, anchorWallet.publicKey))[0];
+      (await getAtaForMint(epObj.treasuryMint, anchorWallet.publicKey))[0];
 
   if (!isNative) signers.push(paymentTransferAuthority);
   const remainingAccounts = [];
 
   const metadataObj = await anchorProgram.provider.connection.getAccountInfo(
-    tokenMetadata,
+    replacementTokenMetadata,
   );
   const metadataDecoded: Metadata = decodeMetadata(
     //@ts-ignore
@@ -394,7 +394,7 @@ export const swapEntanglement = async (
       transferAuthority: transferAuthority.publicKey,
       paymentTransferAuthority: paymentTransferAuthority.publicKey,
       token,
-      tokenMetadata,
+      replacementTokenMetadata,
       replacementToken,
       replacementTokenMint,
       tokenAEscrow,
@@ -425,16 +425,16 @@ export const swapEntanglement = async (
     ),
     ...(!isNative
       ? [
-        Token.createApproveInstruction(
-          TOKEN_PROGRAM_ID,
-          paymentAccount,
-          paymentTransferAuthority.publicKey,
-          anchorWallet.publicKey,
-          [],
-          //@ts-ignore
-          epObj.price.toNumber(),
-        ),
-      ]
+          Token.createApproveInstruction(
+            TOKEN_PROGRAM_ID,
+            paymentAccount,
+            paymentTransferAuthority.publicKey,
+            anchorWallet.publicKey,
+            [],
+            //@ts-ignore
+            epObj.price.toNumber(),
+          ),
+        ]
       : []),
     instruction,
     Token.createRevokeInstruction(
@@ -445,13 +445,13 @@ export const swapEntanglement = async (
     ),
     ...(!isNative
       ? [
-        Token.createRevokeInstruction(
-          TOKEN_PROGRAM_ID,
-          paymentAccount,
-          anchorWallet.publicKey,
-          [],
-        ),
-      ]
+          Token.createRevokeInstruction(
+            TOKEN_PROGRAM_ID,
+            paymentAccount,
+            anchorWallet.publicKey,
+            [],
+          ),
+        ]
       : []),
   ];
   const txnResult = await ContextConnection.sendTransactionWithRetry(
@@ -487,7 +487,6 @@ export const searchEntanglements = async (
   const searchMint = new PublicKey(mint);
   const searchAuthority = new PublicKey(authority);
 
-
   const searchMintAAccounts =
     await anchorProgram.provider.connection.getProgramAccounts(
       TOKEN_ENTANGLEMENT_PROGRAM_ID,
@@ -505,7 +504,7 @@ export const searchEntanglements = async (
               offset: 8 + 160,
               bytes: searchAuthority.toString(),
             },
-          }
+          },
         ],
       },
     );
@@ -526,7 +525,7 @@ export const searchEntanglements = async (
               offset: 8 + 160,
               bytes: searchAuthority.toString(),
             },
-          }
+          },
         ],
       },
     );
@@ -535,10 +534,8 @@ export const searchEntanglements = async (
     ...searchMintAAccounts,
     ...searchMintBAccounts,
   ];
-  const entanglements = entanglementsAccounts.map(
-    account =>
-      anchorProgram.account.entangledPair
-        .fetch(account.pubkey)
+  const entanglements = entanglementsAccounts.map(account =>
+    anchorProgram.account.entangledPair.fetch(account.pubkey),
   );
   // console.log('Found', mint, entanglements.length, 'entanglements');
   return Promise.all(entanglements);
@@ -558,7 +555,12 @@ export const getOwnedNFTMints = async (
       anchorWallet.publicKey,
       { programId: TOKEN_PROGRAM_ID },
     );
-  const NFTMints = TokenAccounts.value.map(val => val.account.data.parsed).filter(val => val.info.tokenAmount.amount != 0 && val.info.tokenAmount.decimals === 0);
+  const NFTMints = TokenAccounts.value
+    .map(val => val.account.data.parsed)
+    .filter(
+      val =>
+        val.info.tokenAmount.amount != 0 && val.info.tokenAmount.decimals === 0,
+    );
 
   return NFTMints;
 };
