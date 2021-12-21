@@ -11,7 +11,6 @@
     "@fontsource/sora": "^4.5.0",
     "@mui/icons-material": "^5.0.1",
     "@mui/material": "^5.0.2",
-    "@oyster/common": "0.0.2",
     "@solana/spl-token": "^0.1.8",
     "@solana/spl-token-registry": "0.2.202",
     "@solana/wallet-adapter-base": "0.4.1",
