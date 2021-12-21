@@ -165,7 +165,7 @@ echo ""
 echo "1. Uploading assests and creating the candy machine"
 echo ""
 echo ">>>"
-$CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR -c $CACHE_NAME
+$CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME
 EXIT_CODE=$?
 echo "<<<"
 echo ""
@@ -179,7 +179,7 @@ fi
 echo "2. Verifying assests"
 echo ""
 echo ">>>"
-$CMD_CMV2 verify -cp ${CONFIG_FILE} --keypair $WALLET_KEY -c $CACHE_NAME
+$CMD_CMV2 verify -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
 EXIT_CODE=$?
 echo "<<<"
 
@@ -193,7 +193,7 @@ echo ""
 echo "3. Minting one toke"
 echo ""
 echo ">>>"
-$CMD_CMV2 mint_one_token -cp ${CONFIG_FILE} --keypair $WALLET_KEY -c $CACHE_NAME
+$CMD_CMV2 mint_one_token -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
 EXIT_CODE=$?
 echo "<<<"
 
