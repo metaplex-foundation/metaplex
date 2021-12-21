@@ -63,7 +63,7 @@ import { useActionButtonContent } from './hooks/useActionButtonContent';
 import { endSale } from './utils/endSale';
 import { useInstantSaleState } from './hooks/useInstantSaleState';
 import { useTokenList } from '../../contexts/tokenList';
-import { FundsIssueModal } from '../FundsIssueModal';
+import { FundsIssueModal } from "../FundsIssueModal";
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -229,7 +229,7 @@ export const AuctionCard = ({
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [purchaseFinished, setPurchaseFinished] = useState<boolean>(false);
-  const [showFundsIssueModal, setShowFundsIssueModal] = useState(false);
+  const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -253,10 +253,9 @@ export const AuctionCard = ({
 
   //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
-  const instantSalePrice = useMemo(
-    () => auctionView.auctionDataExtended?.info.instantSalePrice,
-    [auctionView.auctionDataExtended],
-  );
+  const instantSalePrice = useMemo(() =>
+    auctionView.auctionDataExtended?.info.instantSalePrice
+    , [auctionView.auctionDataExtended]);
   let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
@@ -361,8 +360,7 @@ export const AuctionCard = ({
     setLoading(false);
   };
   const instantSaleAction = () => {
-    const isNotEnoughLamports =
-      balance.balanceLamports < (instantSalePrice?.toNumber() || 0);
+    const isNotEnoughLamports = balance.balanceLamports < (instantSalePrice?.toNumber()  || 0)
     if (isNotEnoughLamports) {
       setShowFundsIssueModal(true);
       return;
@@ -788,15 +786,10 @@ export const AuctionCard = ({
             <Spin />
           ) : (
             auctionView.isInstantSale &&
-            !isAlreadyBought &&
-            !purchaseFinished && (
-              <>
+            !isAlreadyBought && !purchaseFinished && (<>
                 <FundsIssueModal
-                  message={'Price'}
-                  minimumFunds={fromLamports(
-                    instantSalePrice?.toNumber(),
-                    mintInfo,
-                  )}
+                  message={"Price"}
+                  minimumFunds={fromLamports(instantSalePrice?.toNumber(), mintInfo)}
                   currentFunds={balance.balance}
                   isModalVisible={showFundsIssueModal}
                   onClose={() => setShowFundsIssueModal(false)}
@@ -810,7 +803,7 @@ export const AuctionCard = ({
                   style={{ marginTop: 20, width: '100%' }}
                 >
                   {actionButtonContent}
-                </Button>
+              </Button>
               </>
             )
           ))}
