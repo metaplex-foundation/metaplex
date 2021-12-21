@@ -38,8 +38,8 @@ export const InfoStep = (props: {
           setValues({ ...values, ...field });
         }}
         initialValues={props.attributes}
-        onFinish={x => {
-          const nftAttributes = x.attributes;
+        onFinish={formState => {
+          const nftAttributes = formState.attributes;
           // value is number if possible
           for (const nftAttribute of nftAttributes || []) {
             const newValue = Number(nftAttribute.value);
@@ -50,7 +50,11 @@ export const InfoStep = (props: {
           console.log('Adding NFT attributes:', nftAttributes);
           props.setAttributes({
             ...props.attributes,
-            ...x,
+            ...formState,
+            properties: {
+              ...props.attributes.properties,
+              ...formState.properties,
+            },
             attributes: nftAttributes,
           });
 
