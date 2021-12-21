@@ -89,8 +89,12 @@ echo -n "Remove previous cache and assets [Y/n]: "
 read Reset
 
 echo ""
+echo -n "Close candy machine and withdraw funds at the end [Y/n]: "
+read Close
 
-if [ "$Reset" = "Y" ]
+echo ""
+
+if [ "${Reset^^}" = "Y" ]
 then
     echo "[`date "+%T"`] Removing previous cache and assets"
     rm $CONFIG_FILE 2> /dev/null
@@ -174,7 +178,7 @@ CACHE_NAME="test"
 # COMMAND EXECUTION                         #
 #-------------------------------------------#
 
-# remove temporarily files 
+# remove temporary files 
 function clean_up
 {
     rm $CONFIG_FILE
@@ -189,7 +193,7 @@ function success
 
 echo "[`date "+%T"`] Testing started using ${STORAGE} storage"
 echo ""
-echo "1. Uploading assests and creating the candy machine"
+echo "1. Uploading assets and creating the candy machine"
 echo ""
 echo ">>>"
 $CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME
@@ -203,7 +207,7 @@ then
     exit 1
 fi
 
-echo "2. Verifying assests"
+echo "2. Verifying assets"
 echo ""
 echo ">>>"
 $CMD_CMV2 verify -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
@@ -217,7 +221,7 @@ then
 fi
 
 echo ""
-echo "3. Minting one toke"
+echo "3. Minting one token"
 echo ""
 echo ">>>"
 $CMD_CMV2 mint_one_token -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
@@ -228,6 +232,22 @@ if [ ! $EXIT_CODE -eq 0 ]
 then
     echo "[`date "+%T"`] Aborting: mint failed"
     exit 1
+fi
+
+if [ ${Close^^} == "Y" ]
+then
+    echo ""
+    echo "4. Clean up. Withdrawing cm funds."
+    echo ""
+    echo ">>>"
+    $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
+    EXIT_CODE=$?
+
+    if [ ! $EXIT_CODE -eq 0 ]
+    then
+        echo "[`date "+%T"`] Aborting: withdraw failed"
+        exit 1
+    fi
 fi
 
 success
