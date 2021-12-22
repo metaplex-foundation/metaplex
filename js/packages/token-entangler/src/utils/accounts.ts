@@ -113,7 +113,9 @@ export const fetchCoder = async (
   address: anchor.Address,
   connection: Connection,
 ): Promise<anchor.Coder | null> => {
+  //@ts-ignore
   return new anchor.Coder(
+    //@ts-ignore
     await anchor.Program.fetchIdl(address, {
       connection: connection,
     } as anchor.Provider),
@@ -162,6 +164,7 @@ export async function loadTokenEntanglementProgram(
     TOKEN_ENTANGLEMENT_PROGRAM_ID,
     provider,
   );
+  //@ts-ignore
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
