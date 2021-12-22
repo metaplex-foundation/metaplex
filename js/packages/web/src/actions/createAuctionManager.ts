@@ -147,7 +147,7 @@ export async function createAuctionManager(
   let bidStateDataSigners: Keypair[] = [];
   let bidStateDataAccount;
 
-  if (auctionSettings.winners.usize > new BN(80)) {
+  if (auctionSettings.winners.usize.toNumber() > 80) {
     const {
       bidStateDataAccount: account,
       instructions,
