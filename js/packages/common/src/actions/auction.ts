@@ -643,7 +643,7 @@ export async function createAuction(
   settings: CreateAuctionArgs,
   creator: StringPublicKey,
   instructions: TransactionInstruction[],
-  bidStateDataKey?: StringPublicKey,
+  bidStateDataPubkey?: StringPublicKey,
 ) {
   const auctionProgramId = programIds().auction;
 
@@ -693,9 +693,9 @@ export async function createAuction(
     },
   ];
 
-  if (bidStateDataKey) {
+  if (bidStateDataPubkey) {
     keys.push({
-      pubkey: toPublicKey(bidStateDataKey),
+      pubkey: toPublicKey(bidStateDataPubkey),
       isSigner: false,
       isWritable: true,
     });
@@ -998,8 +998,8 @@ export async function cancelBid(
   bidderPotTokenPubkey: StringPublicKey,
   tokenMintPubkey: StringPublicKey,
   resource: StringPublicKey,
-  bidStateData: StringPublicKey,
   instructions: TransactionInstruction[],
+  bidStateDataPubkey?: StringPublicKey,
 ) {
   const auctionProgramId = programIds().auction;
 
@@ -1107,9 +1107,9 @@ export async function cancelBid(
     },
   ];
 
-  if (bidStateData.length != 0) {
+  if (bidStateDataPubkey) {
     keys.push({
-      pubkey: toPublicKey(bidStateData),
+      pubkey: toPublicKey(bidStateDataPubkey),
       isSigner: false,
       isWritable: true,
     });

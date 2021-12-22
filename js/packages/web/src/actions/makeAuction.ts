@@ -19,7 +19,7 @@ export async function makeAuction(
   wallet: WalletSigner,
   vault: StringPublicKey,
   auctionSettings: IPartialCreateAuctionArgs,
-  bidStateDataKey?: StringPublicKey,
+  bidStateDataPubkey?: StringPublicKey,
 ): Promise<{
   auction: StringPublicKey;
   instructions: TransactionInstruction[];
@@ -52,7 +52,7 @@ export async function makeAuction(
     fullSettings,
     wallet.publicKey.toBase58(),
     instructions,
-    bidStateDataKey,
+    bidStateDataPubkey,
   );
 
   return { instructions, signers, auction: auctionKey };
