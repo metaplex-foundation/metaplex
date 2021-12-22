@@ -157,10 +157,7 @@ export async function setupPlaceBid(
 
   signers.push(transferAuthority);
 
-  let bidStateData = '';
-  if (auctionView.auctionDataExtended != undefined) {
-    bidStateData = auctionView.auctionDataExtended.info.bidStateData ?? '';
-  }
+  const bidStateDataPubkey = auctionView.auctionDataExtended?.info.bidStateData;
 
   const bid = new BN(lamports - accountRentExempt);
   await placeBid(
@@ -171,9 +168,9 @@ export async function setupPlaceBid(
     transferAuthority.publicKey.toBase58(),
     wallet.publicKey.toBase58(),
     auctionView.auctionManager.vault,
-    bidStateData,
     bid,
     instructions,
+    bidStateDataPubkey,
   );
 
   overallInstructions.push([...instructions, ...cleanupInstructions]);

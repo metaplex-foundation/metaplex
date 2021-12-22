@@ -11,6 +11,7 @@ import {
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
+import BN from 'bn.js';
 
 const MIN_BID_STATE_DATA_ACCOUNT_SIZE: number = 32 + 24;
 const BID_SIZE: number = 32 + 8;
@@ -19,7 +20,7 @@ const BID_SIZE: number = 32 + 8;
 export async function createBidStateDataAccount(
   connection: Connection,
   wallet: WalletSigner,
-  bids: number,
+  bids: BN,
 ): Promise<{
   bidStateDataAccount: StringPublicKey;
   instructions: TransactionInstruction[];
@@ -33,27 +34,27 @@ export async function createBidStateDataAccount(
   const instructions: TransactionInstruction[] = [];
 
   const actualBidStateDataAccountSize =
-    MIN_BID_STATE_DATA_ACCOUNT_SIZE + BID_SIZE * (bids * 2);
+    MIN_BID_STATE_DATA_ACCOUNT_SIZE + BID_SIZE * (bids.toNumber() * 2);
 
   const bsdaRentExempt = await connection.getMinimumBalanceForRentExemption(
     actualBidStateDataAccountSize,
   );
 
   const bidStateDataAccount = Keypair.generate();
-  const key = bidStateDataAccount.publicKey.toBase58();
 
-  const uninitializedBSDA = SystemProgram.createAccount({
+  const instruction = SystemProgram.createAccount({
     fromPubkey: wallet.publicKey,
     newAccountPubkey: bidStateDataAccount.publicKey,
     lamports: bsdaRentExempt,
     space: actualBidStateDataAccountSize,
     programId: toPublicKey(PROGRAM_IDS.auction),
   });
-  instructions.push(uninitializedBSDA);
+
+  instructions.push(instruction);
   signers.push(bidStateDataAccount);
 
   return {
-    bidStateDataAccount: key,
+    bidStateDataAccount: bidStateDataAccount.publicKey.toBase58(),
     instructions,
     signers,
   };

@@ -209,8 +209,8 @@ export async function sendRedeemBid(
         auctionView.myBidderPot?.info.bidderPot,
         auctionView.vault.pubkey,
         auctionView.auction.info.tokenMint,
-        auctionView.auctionDataExtended?.info.bidStateData ?? '',
         claimInstructions,
+        auctionView.auctionDataExtended?.info.bidStateData,
       );
     }
   } else {

@@ -5,6 +5,7 @@ import {
   programIds,
   toPublicKey,
   SCHEMA,
+  StringPublicKey,
 } from '@oyster/common';
 import {
   PublicKey,
@@ -16,8 +17,8 @@ import { serialize } from 'borsh';
 export async function endAuction(
   vault: PublicKey,
   auctionManagerAuthority: PublicKey,
-  bidStateData: string,
   instructions: TransactionInstruction[],
+  bidStateDataPubkey?: StringPublicKey,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -73,9 +74,9 @@ export async function endAuction(
     },
   ];
 
-  if (bidStateData.length != 0) {
+  if (bidStateDataPubkey) {
     keys.push({
-      pubkey: toPublicKey(bidStateData),
+      pubkey: toPublicKey(bidStateDataPubkey),
       isSigner: false,
       isWritable: false,
     });

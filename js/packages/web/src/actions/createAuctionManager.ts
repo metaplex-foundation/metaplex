@@ -145,7 +145,7 @@ export async function createAuctionManager(
   // If there are more bids, move BidState to BidStateData account
   let bidStateDataInstructions: TransactionInstruction[] = [];
   let bidStateDataSigners: Keypair[] = [];
-  let bidStateDataAccount: string = '';
+  let bidStateDataAccount;
 
   if (auctionSettings.winners.usize > new BN(80)) {
     const {
@@ -167,7 +167,7 @@ export async function createAuctionManager(
     instructions: makeAuctionInstructions,
     signers: makeAuctionSigners,
     auction,
-  } = await makeAuction(wallet, vault, bidStateDataAccount, auctionSettings);
+  } = await makeAuction(wallet, vault, auctionSettings, bidStateDataAccount);
 
   const safetyDepositConfigsWithPotentiallyUnsetTokens =
     await buildSafetyDepositArray(
@@ -244,13 +244,12 @@ export async function createAuctionManager(
       instructions: createReservationInstructions,
       signers: createReservationSigners,
     },
-    bidStateData:
-      bidStateDataAccount.length != 0
-        ? {
-            instructions: bidStateDataInstructions,
-            signers: bidStateDataSigners,
-          }
-        : undefined,
+    bidStateData: bidStateDataAccount
+      ? {
+          instructions: bidStateDataInstructions,
+          signers: bidStateDataSigners,
+        }
+      : undefined,
     makeAuction: {
       instructions: makeAuctionInstructions,
       signers: makeAuctionSigners,

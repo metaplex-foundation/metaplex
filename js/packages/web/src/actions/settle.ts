@@ -235,8 +235,8 @@ async function claimAllBids(
       bid.info.bidderPot,
       auctionView.vault.pubkey,
       auctionView.auction.info.tokenMint,
-      auctionView.auctionDataExtended?.info.bidStateData ?? '',
       claimBidInstructions,
+      auctionView.auctionDataExtended?.info.bidStateData,
     );
 
     if (claimBidInstructions.length === CLAIM_TRANSACTION_SIZE) {

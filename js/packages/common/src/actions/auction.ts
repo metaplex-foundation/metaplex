@@ -642,8 +642,8 @@ export const decodeAuctionData = (buffer: Buffer) => {
 export async function createAuction(
   settings: CreateAuctionArgs,
   creator: StringPublicKey,
-  bidStateData: StringPublicKey,
   instructions: TransactionInstruction[],
+  bidStateDataKey?: StringPublicKey,
 ) {
   const auctionProgramId = programIds().auction;
 
@@ -693,9 +693,9 @@ export async function createAuction(
     },
   ];
 
-  if (bidStateData.length != 0) {
+  if (bidStateDataKey) {
     keys.push({
-      pubkey: toPublicKey(bidStateData),
+      pubkey: toPublicKey(bidStateDataKey),
       isSigner: false,
       isWritable: true,
     });
@@ -808,9 +808,9 @@ export async function placeBid(
   transferAuthority: StringPublicKey,
   payer: StringPublicKey,
   resource: StringPublicKey,
-  bidStateData: StringPublicKey,
   amount: BN,
   instructions: TransactionInstruction[],
+  bidStateDataPubkey?: StringPublicKey,
 ) {
   const auctionProgramId = programIds().auction;
 
@@ -929,9 +929,9 @@ export async function placeBid(
     },
   ];
 
-  if (bidStateData.length != 0) {
+  if (bidStateDataPubkey) {
     keys.push({
-      pubkey: toPublicKey(bidStateData),
+      pubkey: toPublicKey(bidStateDataPubkey),
       isSigner: false,
       isWritable: true,
     });
