@@ -30,6 +30,7 @@ import ReviewAndMintStep from './components/ReviewAndMintStep';
 import { sendCreatePack } from './transactions/createPack';
 import SuccessModal from './components/SuccessModal';
 import { useValidation } from './hooks/useValidation';
+import { Button } from 'antd';
 
 // ToDo: Refactor state to a react context
 export const PackCreateView = (): ReactElement => {
@@ -38,13 +39,14 @@ export const PackCreateView = (): ReactElement => {
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const { pullUserMetadata } = useMeta();
 
   const items = useUserArts();
   const { step, goToNextStep, resetStep } = useStep();
   const wallet = useWallet();
   const connection = useConnection();
   const { isLoadingMetadata, isLoading: isLoadingSiteState } = useMeta();
-  const { accountByMint } = useUserAccounts();
+  const { accountByMint, userAccounts } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
   const isLoading = isCreating || isLoadingSiteState || isLoadingMetadata;
@@ -174,6 +176,10 @@ export const PackCreateView = (): ReactElement => {
     });
   }, [data]);
 
+  const RefreshButton = ((step === CreatePackSteps.SelectItems || step === CreatePackSteps.SelectVoucher) &&
+    <Button onClick={() => pullUserMetadata(userAccounts)}>Refresh</Button>
+  )
+
   return (
     <div className="pack-create-wrapper" ref={ref}>
       <Sidebar
@@ -184,7 +190,7 @@ export const PackCreateView = (): ReactElement => {
         buttonLoading={isLoading}
       />
       <div className="content-wrapper">
-        <Header step={step} />
+        <Header step={step} extraContent={RefreshButton}/>
 
         {step === CreatePackSteps.SelectItems && (
           <SelectItemsStep
