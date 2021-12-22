@@ -356,7 +356,7 @@ programCommand('verify')
     const keys = Object.keys(cacheContent.items).filter(
       k => !cacheContent.items[k].verifyRun,
     );
-    console.log('Key ize', keys.length);
+    console.log('Key size', keys.length);
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 500).map(
         async allIndexesInSlice => {
