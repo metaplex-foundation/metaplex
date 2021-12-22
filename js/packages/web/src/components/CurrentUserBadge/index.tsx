@@ -70,7 +70,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
   );
 };
 
-const AddFundsModal = (props: {
+export const AddFundsModal = (props: {
   showAddFundsModal: boolean;
   setShowAddFundsModal: Dispatch<SetStateAction<boolean>>;
   balance: number;
