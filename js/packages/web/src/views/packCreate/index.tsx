@@ -176,9 +176,7 @@ export const PackCreateView = (): ReactElement => {
     });
   }, [data]);
 
-  const RefreshButton = ((step === CreatePackSteps.SelectItems || step === CreatePackSteps.SelectVoucher) &&
-    <Button onClick={() => pullUserMetadata(userAccounts)}>Refresh</Button>
-  )
+  const shouldRenderRefresh = step === CreatePackSteps.SelectItems || step === CreatePackSteps.SelectVoucher;
 
   return (
     <div className="pack-create-wrapper" ref={ref}>
@@ -190,7 +188,11 @@ export const PackCreateView = (): ReactElement => {
         buttonLoading={isLoading}
       />
       <div className="content-wrapper">
-        <Header step={step} extraContent={RefreshButton}/>
+        <Header step={step}>
+          {shouldRenderRefresh && (
+            <Button onClick={() => pullUserMetadata(userAccounts)}>Refresh</Button>
+          )}
+        </Header>
 
         {step === CreatePackSteps.SelectItems && (
           <SelectItemsStep
