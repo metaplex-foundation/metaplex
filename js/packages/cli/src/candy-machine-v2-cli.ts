@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
-import fetch from 'node-fetch';
 
 import {
   chunks,

@@ -464,10 +464,10 @@ export const swapEntanglement = async (
   const aAta = (await getAtaForMint(mintAKey, anchorWallet.publicKey))[0];
   const bAta = (await getAtaForMint(mintBKey, anchorWallet.publicKey))[0];
   const currABal = await getTokenAmount(anchorProgram, aAta, mintAKey);
-  const token = currABal == 1 ? aAta : bAta,
-    replacementToken = currABal == 1 ? bAta : aAta;
-  const tokenMint = currABal == 1 ? mintAKey : mintBKey,
-    replacementTokenMint = currABal == 1 ? mintBKey : mintAKey;
+  const token = currABal === 1 ? aAta : bAta,
+    replacementToken = currABal === 1 ? bAta : aAta;
+  const tokenMint = currABal === 1 ? mintAKey : mintBKey,
+    replacementTokenMint = currABal === 1 ? mintBKey : mintAKey;
   const result = await getTokenEntanglementEscrows(mintAKey, mintBKey);
 
   const tokenAEscrow = result[0];
@@ -827,7 +827,7 @@ export const getOwnedNFTMints = async (
     .map(val => val.account.data.parsed)
     .filter(
       val =>
-        val.info.tokenAmount.amount != 0 &&
+        val.info.tokenAmount.amount !== 0 &&
         val.info.tokenAmount.decimals === 0 &&
         mints.includes(val.info.mint),
     );
