@@ -510,7 +510,7 @@ const pullAuctionExtended = async ({
   auctionExtKey: StringPublicKey;
   tempCache: MetaState;
   updateTemp: UpdateStateValueFunc<MetaState>;
-}) => {
+}): Promise<void> => {
   // pull auction data extended
   const auctionExtendedAccount = await connection.getAccountInfo(
     toPublicKey(auctionExtKey),
