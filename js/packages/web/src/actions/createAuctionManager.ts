@@ -25,6 +25,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  MAX_AUCTION_BIDS,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -147,7 +148,7 @@ export async function createAuctionManager(
   let bidStateDataSigners: Keypair[] = [];
   let bidStateDataAccount;
 
-  if (auctionSettings.winners.usize.toNumber() > 80) {
+  if (auctionSettings.winners.usize.toNumber() > MAX_AUCTION_BIDS) {
     const {
       bidStateDataAccount: account,
       instructions,
