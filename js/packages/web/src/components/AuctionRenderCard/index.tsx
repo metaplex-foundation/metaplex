@@ -32,7 +32,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
             <span className={'artist-name'}>
               {creators[0]?.name ||
                 creators[0]?.address?.substr(0, 6) ||
-                'Go to auction'}
+              (auctionView.isInstantSale ? 'Go to sale' : 'Go to auction')}
               ...
             </span>
           </div>
@@ -45,10 +45,13 @@ export const AuctionRenderCard = (props: AuctionCard) => {
             />
           </div>
           <div className={'art-name'}>{name}</div>
-          <div className="auction-info-container">
-            <div className={'info-message'}>ENDING IN</div>
-            <AuctionCountdown auctionView={auctionView} labels={false} />
-          </div>
+          { !auctionView.isInstantSale && (
+              <div className="auction-info-container">
+                <div className={'info-message'}>ENDING IN</div>
+                <AuctionCountdown auctionView={auctionView} labels={false} />
+              </div>
+            )
+          }
         </div>
       </div>
       <div className="card-bid-info">
