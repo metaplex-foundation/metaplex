@@ -20,6 +20,7 @@ export const getEmptyMetaState = (): MetaState => ({
   whitelistedCreatorsByCreator: {},
   bidderMetadataByAuctionAndBidder: {},
   bidderPotsByAuctionAndBidder: {},
+  bidStateDataByAuction: {},
   safetyDepositBoxesByVaultAndIndex: {},
   prizeTrackingTickets: {},
   safetyDepositConfigsByAuctionManagerAndIndex: {},

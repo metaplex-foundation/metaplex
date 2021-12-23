@@ -58,6 +58,7 @@ import { getCardsByPackSet } from '../../models/packs/accounts/PackCard';
 import { processPackCards } from './processPackCards';
 import { getProvingProcessByPackSetAndWallet } from '../../models/packs/accounts/ProvingProcess';
 import { processProvingProcess } from './processProvingProcess';
+import { processBidStateData } from './processBidStateData';
 
 const MULTIPLE_ACCOUNT_BATCH_SIZE = 100;
 
@@ -395,6 +396,14 @@ export const pullAuctionSubaccounts = async (
     auctionProgramId: AUCTION_ID,
     resource: cache.vault,
   });
+
+  await pullAuctionExtended({
+    connection,
+    auctionExtKey,
+    tempCache,
+    updateTemp,
+  });
+
   const promises = [
     // pull editions
     pullEditions(
@@ -403,14 +412,6 @@ export const pullAuctionSubaccounts = async (
       tempCache,
       cache.metadata.map(m => tempCache.metadataByMetadata[m]),
     ),
-    // pull auction data ext
-    connection
-      .getAccountInfo(toPublicKey(auctionExtKey))
-      .then(a =>
-        a
-          ? processAuctions({ pubkey: auctionExtKey, account: a }, updateTemp)
-          : null,
-      ),
     // bidder metadata pull
     getProgramAccounts(connection, AUCTION_ID, {
       filters: [
@@ -422,7 +423,6 @@ export const pullAuctionSubaccounts = async (
         },
       ],
     }).then(forEach(processAuctions)),
-
     // bidder pot pull
     getProgramAccounts(connection, AUCTION_ID, {
       filters: [
@@ -445,7 +445,6 @@ export const pullAuctionSubaccounts = async (
         },
       ],
     }).then(forEach(processVaultData)),
-
     // bid redemptions
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
@@ -499,6 +498,46 @@ export const pullAuctionSubaccounts = async (
   console.log('---------->Pulled sub accounts for auction', auction);
 
   return tempCache;
+};
+
+const pullAuctionExtended = async ({
+  connection,
+  auctionExtKey,
+  tempCache,
+  updateTemp,
+}: {
+  connection: Connection;
+  auctionExtKey: StringPublicKey;
+  tempCache: MetaState;
+  updateTemp: UpdateStateValueFunc<MetaState>;
+}) => {
+  // pull auction data extended
+  const auctionExtendedAccount = await connection.getAccountInfo(
+    toPublicKey(auctionExtKey),
+  );
+
+  if (auctionExtendedAccount) {
+    processAuctions(
+      { pubkey: auctionExtKey, account: auctionExtendedAccount },
+      updateTemp,
+    );
+
+    const bidStateDataKey =
+      tempCache.auctionDataExtended[auctionExtKey]?.info.bidStateData;
+
+    if (bidStateDataKey) {
+      const bidStateDataAccount = await connection.getAccountInfo(
+        toPublicKey(bidStateDataKey),
+      );
+
+      if (bidStateDataAccount) {
+        processBidStateData(
+          { pubkey: bidStateDataKey, account: bidStateDataAccount },
+          updateTemp,
+        );
+      }
+    }
+  }
 };
 
 export const pullPages = async (

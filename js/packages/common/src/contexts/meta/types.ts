@@ -11,6 +11,7 @@ import {
   Metadata,
   SafetyDepositBox,
   Vault,
+  BidStateData,
 } from '../../actions';
 import {
   AuctionCache,
@@ -76,6 +77,7 @@ export interface MetaState {
   >;
   bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>;
   bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>;
+  bidStateDataByAuction: Record<string, ParsedAccount<BidStateData>>;
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>

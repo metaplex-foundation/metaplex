@@ -109,6 +109,23 @@ export const decodeBidderPot = (buffer: Buffer) => {
   return deserializeUnchecked(AUCTION_SCHEMA, BidderPot, buffer) as BidderPot;
 };
 
+export const BidStateDataParser: AccountParser = (
+  pubkey: StringPublicKey,
+  account: AccountInfo<Buffer>,
+) => ({
+  pubkey,
+  account,
+  info: decodeBidStateData(account.data),
+});
+
+export const decodeBidStateData = (buffer: Buffer): BidStateData => {
+  return deserializeUnchecked(
+    AUCTION_SCHEMA,
+    BidStateData,
+    buffer,
+  ) as BidStateData;
+};
+
 export const AuctionDataExtendedParser: AccountParser = (
   pubkey: StringPublicKey,
   account: AccountInfo<Buffer>,
@@ -349,6 +366,16 @@ export class BidderPot {
     this.bidderAct = args.bidderAct;
     this.auctionAct = args.auctionAct;
     this.emptied = args.emptied;
+  }
+}
+
+export class BidStateData {
+  auctionKey: StringPublicKey;
+  bidState: BidState;
+
+  constructor(args: { auctionKey: StringPublicKey; bidState: BidState }) {
+    this.auctionKey = args.auctionKey;
+    this.bidState = args.bidState;
   }
 }
 
@@ -629,6 +656,16 @@ export const AUCTION_SCHEMA = new Map<any, any>([
       ],
     },
   ],
+  [
+    BidStateData,
+    {
+      kind: 'struct',
+      fields: [
+        ['auctionKey', 'pubkeyAsString'],
+        ['bidState', BidState],
+      ],
+    },
+  ],
 ]);
 
 export const decodeAuctionData = (buffer: Buffer) => {
@@ -699,7 +736,6 @@ export async function createAuction(
       isSigner: false,
       isWritable: true,
     });
-    console.log('MAKE MAKE MAKE!');
   }
 
   instructions.push(

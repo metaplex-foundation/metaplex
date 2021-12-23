@@ -12,6 +12,7 @@ import {
   StringPublicKey,
   AuctionDataExtended,
   createPipelineExecutor,
+  BidStateData,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
@@ -137,6 +138,7 @@ export const useAuctions = (state?: AuctionViewState) => {
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
     auctionDataExtended,
     metadataByAuction,
+    bidStateDataByAuction,
   } = useMeta();
 
   useEffect(() => {
@@ -161,6 +163,7 @@ export const useAuctions = (state?: AuctionViewState) => {
         cachedRedemptionKeys,
         metadataByAuction,
         state,
+        bidStateDataByAuction,
       );
       if (auctionView) {
         auctionViews.push(auctionView);
@@ -269,6 +272,7 @@ export function processAccountsIntoAuctionView(
   >,
   metadataByAuction: Record<string, ParsedAccount<Metadata>[]>,
   desiredState: AuctionViewState | undefined,
+  bidStateDataByAuction?: Record<string, ParsedAccount<BidStateData>>,
 ): AuctionView | undefined {
   let state: AuctionViewState;
   if (auction.info.ended()) {
@@ -383,6 +387,11 @@ export function processAccountsIntoAuctionView(
           (participationMetadata.info.masterEdition &&
             masterEditions[participationMetadata.info.masterEdition]);
       }
+    }
+
+    if (bidStateDataByAuction?.[auction.pubkey]) {
+      auction.info.bidState =
+        bidStateDataByAuction[auction.pubkey].info.bidState;
     }
 
     const view: Partial<AuctionView> = {
