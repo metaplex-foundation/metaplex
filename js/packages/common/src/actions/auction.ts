@@ -847,7 +847,7 @@ export async function placeBid(
   resource: StringPublicKey,
   amount: BN,
   instructions: TransactionInstruction[],
-  bidStateDataPubkey?: StringPublicKey,
+  bidStateDataPubkey?: StringPublicKey | null,
 ) {
   const auctionProgramId = programIds().auction;
 
@@ -1036,7 +1036,7 @@ export async function cancelBid(
   tokenMintPubkey: StringPublicKey,
   resource: StringPublicKey,
   instructions: TransactionInstruction[],
-  bidStateDataPubkey?: StringPublicKey,
+  bidStateDataPubkey?: StringPublicKey | null,
 ) {
   const auctionProgramId = programIds().auction;
 

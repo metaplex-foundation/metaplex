@@ -18,7 +18,7 @@ export async function endAuction(
   vault: PublicKey,
   auctionManagerAuthority: PublicKey,
   instructions: TransactionInstruction[],
-  bidStateDataPubkey?: StringPublicKey,
+  bidStateDataPubkey?: StringPublicKey | null,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;

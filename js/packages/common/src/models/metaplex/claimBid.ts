@@ -12,7 +12,7 @@ export async function claimBid(
   vault: StringPublicKey,
   tokenMint: StringPublicKey,
   instructions: TransactionInstruction[],
-  bidStateDataPubkey?: StringPublicKey,
+  bidStateDataPubkey?: StringPublicKey | null,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
