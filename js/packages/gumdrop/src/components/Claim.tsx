@@ -1,5 +1,5 @@
 import React from "react";
-import { RouteComponentProps, } from "react-router-dom";
+import { RouteComponentProps, useHistory} from "react-router-dom";
 import queryString from 'query-string';
 
 import {
@@ -17,7 +17,7 @@ import {
   Stepper,
   TextField,
 } from "@mui/material";
-
+import _find from "lodash/find";
 import {
   useWallet,
 } from "@solana/wallet-adapter-react";
@@ -70,6 +70,7 @@ import {
   chunk,
 } from "../utils/claimant";
 import { coder } from "../utils/merkleDistributor";
+import distributionList from "../dist-list.json";
 
 const walletKeyOrPda = async (
   walletKey : PublicKey,
@@ -624,6 +625,19 @@ export const Claim = (
   const connection = useConnection();
   const wallet = useWallet();
 
+  const history = useHistory();
+
+  React.useEffect(() => {
+    const match: any = _find(distributionList, {
+      handle: wallet?.publicKey?.toBase58(),
+    });
+
+    if (match?.url) {
+      const params = match?.url.split("?")[1];
+      history.push(`/claim?${params}`);
+    }
+  }, [wallet.publicKey]);
+  
   let query = props.location.search;
   if (query && query.length > 0) {
     localStorage.setItem("claimQuery", query);
