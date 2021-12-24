@@ -14,7 +14,10 @@ class UploadConfig:
         self.splToken = None
         self.goLiveDate = None
         self.endSettings = None
+
         self.whitelistMintSettings = None
+        self.whitelistMintSettings_discountPrice = None
+        
         self.hiddenSettings = None
         self.storage = "arweave"
         self.ipfsInfuraProjectId = None
@@ -27,20 +30,20 @@ class UploadConfig:
         res = {}
         res["price"] = self.price
         res["number"] = self.number
-        if self.gatekeeper:
-            res["gatekeeper"] = {
-                    "gatekeeperNetwork": self.gatekeeperNetwork,
-                    "expireOnUse": self.gatekeeperExpireOnUse
-                }
-        else:
-            res["gatekeeper"] = None
+        
+        res["gatekeeper"] = self.gatekeeperGestion()
+
         res["solTreasuryAccount"] = self.solTreasuryAccount
         res["splTokenAccount"] = self.splTokenAccount
         res["splToken"] = self.splToken
         res["goLiveDate"] = self.goLiveDate
-        res["endSettings"] = self.endSettings
-        res["whitelistMintSettings"] = self.whitelistMintSettings
-        res["hiddenSettings"] = self.hiddenSettings
+
+        res["endSettings"] = self.endSettingsGestion()
+
+        res["whitelistMintSettings"] = self.whitelistMintSettingsGestion()
+
+        res["hiddenSettings"] = self.hiddenSettingsGestion()
+
         res["storage"] = self.storage
         res["ipfsInfuraProjectId"] = self.ipfsInfuraProjectId
         res["ipfsInfuraSecret"] = self.ipfsInfuraSecret
@@ -53,6 +56,44 @@ class UploadConfig:
     def generate_file_config(self):
         with open(self.output_file,'w') as f:
             f.write(self.generate_json())
+
+    def endSettingsGestion(self):
+        if (self.endSettings):
+            return {
+                    "endSettingType": { self.endSettings_type : True },
+                    "value": self.endSettings_value
+                }
+        else:
+            return None
+    def gatekeeperGestion(self):
+        if self.gatekeeper:
+            return {
+                    "gatekeeperNetwork": self.gatekeeperNetwork,
+                    "expireOnUse": self.gatekeeperExpireOnUse
+                }
+        else:
+            return None
+    def hiddenSettingsGestion(self):
+        if (self.hiddenSettings):
+            return {
+                    "name": self.hiddenSettings_name,
+                    "uri": self.hiddenSettings_uri,
+                    "hash": self.hiddenSettings_hash
+                }
+        else:
+            return None
+    def whitelistMintSettingsGestion(self):
+        if (self.whitelistMintSettings):
+            burnChoices = ["burnEveryTime", "neverBurn"]
+            burnMode = burnChoices[0] if self.whitelistMintSettings_mode else burnChoices[1]
+            return {
+                    "mode": { burnMode: True },
+                    "mint": self.whitelistMintSettings_mint,
+                    "presale": self.whitelistMintSettings_presale,
+                    "discountPrice": self.whitelistMintSettings_discountPrice
+                }
+        else:
+            return None
 
 
 # Class that manages the user inputs in a secure way
@@ -81,6 +122,8 @@ class SecureInput:
         got_input = False
         if default != "":
             prompt += ("(Y/n) " if default else "(y/N) ")
+        else:
+            prompt += "(y/n) "
         while not got_input:
             res = input(prompt).upper()
 
@@ -121,7 +164,7 @@ class SecureInput:
 
     def date_input(self, prompt):
         got_input = False
-        
+        prompt += "(Eg: 23 Dec 2021 21:00:00 GMT) "
         while not got_input:
             try:
                 res = input(prompt)
@@ -129,10 +172,12 @@ class SecureInput:
                 got_input = True
             except ValueError:
                 print("Incorrect data format, should be: DD MMM YYYY HH:MM:SS [UTC, GMT]")
-                print("Eg: 23 Dec 2021 21:00:00 GMT")
 
 
         return res
+
+def newLine():
+    print("\n")
 
 ### Main Part of the Program
 if __name__ == "__main__":
@@ -147,27 +192,41 @@ if __name__ == "__main__":
     uploadConfig.price = secureInput.float_number_input("At what price do you want to sell an item (in SOL)? ")
     uploadConfig.number = secureInput.int_number_input("How many items do you have in your collection? ")
     
+    newLine()
     uploadConfig.gatekeeper = secureInput.boolean_input("Do you want Captcha Settings? ", True)
     if (uploadConfig.gatekeeper):
         uploadConfig.gatekeeperNetwork = secureInput.string_input("Gatekeeper Network address :", "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6")
         uploadConfig.gatekeeperExpireOnUse = secureInput.boolean_input("Do you want the Captcha to expire on use? ", True)
     
+    newLine()
     if (secureInput.boolean_input("Do you want to set a SOL Treasury Account? ")):
         uploadConfig.solTreasuryAccount = secureInput.string_input("Enter your SOL Treasury Account: ")
     elif (secureInput.boolean_input("Do you want to set a SPL Token? ")):
         uploadConfig.splToken = secureInput.string_input("Enter your SPL Token: ")
         uploadConfig.splTokenAccount = secureInput.string_input("Enter your SPL Token Account: ")
-        
+    
+    newLine()
     uploadConfig.goLiveDate = secureInput.date_input("Enter the mint date: ")
 
-    uploadConfig.endSettings = secureInput.boolean_input("Do you want to set an end settings? ")
+    newLine()
+    uploadConfig.endSettings = secureInput.boolean_input("Do you want to set End Settings? ")
     if (uploadConfig.endSettings):
         uploadConfig.endSettings_type = secureInput.input_among_choices("Do you want your mint to end after: ", ["date", "amount"])
         if (uploadConfig.endSettings_type == "date"):
             uploadConfig.endSettings_value = secureInput.date_input("On what date do you want your mint to end: ")
         else:
             uploadConfig.endSettings_value = secureInput.int_number_input("After how many mint do you want your mint to end: ")
+    
+    newLine()
+    uploadConfig.whitelistMintSettings = secureInput.boolean_input("Do you want whitelist? ")
+    if (uploadConfig.whitelistMintSettings):
+        uploadConfig.whitelistMintSettings_mode = secureInput.boolean_input("Does the whitelist token need to be burned after usage: ")
+        uploadConfig.whitelistMintSettings_mint = secureInput.string_input("Enter the mint address: ")
+        uploadConfig.whitelistMintSettings_presale = secureInput.boolean_input("Do you want your whitelist to be used only for presale? ")
+        if (secureInput.boolean_input("Does the whitelist give a discount on the price? ")):
+            uploadConfig.whitelistMintSettings_discountPrice = secureInput.float_number_input("What is the value of the discount (in SOL)? ")
 
+    newLine()
     should_consider_hiddenSettings = False if uploadConfig.number < 20000 else True
     uploadConfig.hiddenSettings = secureInput.boolean_input("Do you want to set hidden settings: ", should_consider_hiddenSettings)
     if (uploadConfig.hiddenSettings):
@@ -175,18 +234,21 @@ if __name__ == "__main__":
         uploadConfig.hiddenSettings_uri = secureInput.string_input("Enter the uri: ")
         uploadConfig.hiddenSettings_hash = secureInput.string_input("Enter the hash: ")
 
-
+    newLine()
     uploadConfig.storage = secureInput.input_among_choices("What type of storage do you want to use? ", ["arweave", "aws", "ipfs"])
     if uploadConfig.storage == "aws":
-        uploadConfig.storage = secureInput.string_input("Enter your AWS Bucket: ")
+        uploadConfig.awsS3Bucket = secureInput.string_input("Enter your AWS Bucket: ")
     elif uploadConfig.storage == "ipfs":
         uploadConfig.ipfsInfuraProjectId = secureInput.string_input("Enter your IPFS Project ID: ")
         uploadConfig.ipfsInfuraSecret = secureInput.string_input("Enter your IPFS Infura Secret: ")
 
+    newLine()
     uploadConfig.noRetainAuthority = not secureInput.boolean_input("Do you want any Retain Authority? ")
     uploadConfig.noMutable = not secureInput.boolean_input("Do you want your NFTs mutable? ", True)
 
     
     # Generate the config file
     uploadConfig.generate_file_config()
+    newLine()
+    print(f'You can find your upload config in the file "{uploadConfig.output_file}"')
     

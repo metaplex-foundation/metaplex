@@ -30,6 +30,10 @@ https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-
 
 See example-candy-machine-upload-config.json
 
+### Create custom config
+
+You can create your custom config by running the python script "upload-config-generator.py".
+
 ### Captcha Settings (Gateway)
 
 Want captcha? Add this for gatekeeper value and you are done:
