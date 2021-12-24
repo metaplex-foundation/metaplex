@@ -47,8 +47,8 @@ export const InfoStep = (props: {
               nftAttribute.value = newValue;
             }
           }
-          console.log('Adding NFT attributes:', nftAttributes);
-          props.setAttributes({
+
+          const results = {
             ...props.attributes,
             ...formState,
             properties: {
@@ -56,7 +56,13 @@ export const InfoStep = (props: {
               ...formState.properties,
             },
             attributes: nftAttributes,
-          });
+          };
+
+          if (results.properties.maxSupply === null) {
+            results.properties.maxSupply = undefined;
+          }
+
+          props.setAttributes(results);
 
           props.confirm();
         }}
@@ -95,7 +101,7 @@ export const InfoStep = (props: {
                 >
                   <Input
                     autoFocus
-                    placeholder="Max 32 characters (fewer if using non-latin characters)"
+                    placeholder="Max 32 characters (maybe fewer for non-latin characters)"
                     allowClear
                   />
                 </Form.Item>
