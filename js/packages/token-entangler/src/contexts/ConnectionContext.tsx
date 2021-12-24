@@ -88,7 +88,7 @@ export function useLocalStorageState<T>(
         }
       }
     },
-    [state, key],
+    [state, key, localStorage],
   );
 
   return [state, setLocalStorageState];
