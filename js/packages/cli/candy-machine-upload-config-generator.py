@@ -144,14 +144,38 @@ if __name__ == "__main__":
     uploadConfig = UploadConfig("config.json")
     secureInput = SecureInput()
 
-    uploadConfig.number = secureInput.int_number_input("How many items do you have in your collection? ")
     uploadConfig.price = secureInput.float_number_input("At what price do you want to sell an item (in SOL)? ")
+    uploadConfig.number = secureInput.int_number_input("How many items do you have in your collection? ")
     
     uploadConfig.gatekeeper = secureInput.boolean_input("Do you want Captcha Settings? ", True)
     if (uploadConfig.gatekeeper):
         uploadConfig.gatekeeperNetwork = secureInput.string_input("Gatekeeper Network address :", "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6")
         uploadConfig.gatekeeperExpireOnUse = secureInput.boolean_input("Do you want the Captcha to expire on use? ", True)
     
+    if (secureInput.boolean_input("Do you want to set a SOL Treasury Account? ")):
+        uploadConfig.solTreasuryAccount = secureInput.string_input("Enter your SOL Treasury Account: ")
+    elif (secureInput.boolean_input("Do you want to set a SPL Token? ")):
+        uploadConfig.splToken = secureInput.string_input("Enter your SPL Token: ")
+        uploadConfig.splTokenAccount = secureInput.string_input("Enter your SPL Token Account: ")
+        
+    uploadConfig.goLiveDate = secureInput.date_input("Enter the mint date: ")
+
+    uploadConfig.endSettings = secureInput.boolean_input("Do you want to set an end settings? ")
+    if (uploadConfig.endSettings):
+        uploadConfig.endSettings_type = secureInput.input_among_choices("Do you want your mint to end after: ", ["date", "amount"])
+        if (uploadConfig.endSettings_type == "date"):
+            uploadConfig.endSettings_value = secureInput.date_input("On what date do you want your mint to end: ")
+        else:
+            uploadConfig.endSettings_value = secureInput.int_number_input("After how many mint do you want your mint to end: ")
+
+    should_consider_hiddenSettings = False if uploadConfig.number < 20000 else True
+    uploadConfig.hiddenSettings = secureInput.boolean_input("Do you want to set hidden settings: ", should_consider_hiddenSettings)
+    if (uploadConfig.hiddenSettings):
+        uploadConfig.hiddenSettings_name = secureInput.string_input("Enter the name: ")
+        uploadConfig.hiddenSettings_uri = secureInput.string_input("Enter the uri: ")
+        uploadConfig.hiddenSettings_hash = secureInput.string_input("Enter the hash: ")
+
+
     uploadConfig.storage = secureInput.input_among_choices("What type of storage do you want to use? ", ["arweave", "aws", "ipfs"])
     if uploadConfig.storage == "aws":
         uploadConfig.storage = secureInput.string_input("Enter your AWS Bucket: ")
@@ -162,13 +186,6 @@ if __name__ == "__main__":
     uploadConfig.noRetainAuthority = not secureInput.boolean_input("Do you want any Retain Authority? ")
     uploadConfig.noMutable = not secureInput.boolean_input("Do you want your NFTs mutable? ", True)
 
-    if (secureInput.boolean_input("Do you want to set a SOL Treasury Account? ")):
-        uploadConfig.solTreasuryAccount = secureInput.string_input("Enter your SOL Treasury Account: ")
-    elif (secureInput.boolean_input("Do you want to set a SPL Token? ")):
-        uploadConfig.splToken = secureInput.string_input("Enter your SPL Token: ")
-        uploadConfig.splTokenAccount = secureInput.string_input("Enter your SPL Token Account: ")
-        
-    uploadConfig.goLiveDate = secureInput.date_input("Enter the mint date: ")
     
     # Generate the config file
     uploadConfig.generate_file_config()
