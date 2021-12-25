@@ -25,7 +25,7 @@ The on-chain Token Metadata program is written in Rust and available on crates.i
 [metaplex-token-metadata](https://crates.io/crates/metaplex-token-metadata) and
 [docs.rs](https://docs.rs/metaplex-token-metadata).
 
-The crate provides four instructions, `create_metadata_accounts()`, `update_metadata_account()`, `create_master_edition()`, `mint_new_edition_from_master_edition_via_token(),` to easily create instructions for the program.
+The crate provides four instructions, `create_metadata_account()`, `update_metadata_account()`, `create_master_edition()`, `mint_new_edition_from_master_edition_via_token(),` to easily create instructions for the program.
 
 ## Operational overview
 
