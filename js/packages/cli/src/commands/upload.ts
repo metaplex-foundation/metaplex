@@ -440,8 +440,6 @@ type Manifest = {
   };
 };
 
-
-
 /**
  * From the Cache object & a list of file paths, return a list of asset keys
  * (filenames without extension nor path) that should be uploaded, sorted numerically in ascending order.
@@ -484,7 +482,7 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
     dirname,
     `${assetIndex}.json`,
   );
-  let manifest: Manifest = JSON.parse(fs.readFileSync(manifestPath).toString());
+  const manifest: Manifest = JSON.parse(fs.readFileSync(manifestPath).toString());
   manifest.image = manifest.image.replace('image', assetIndex);
   manifest.properties.files[0].uri = manifest.properties.files[0].uri.replace('image', assetIndex);
   return manifest;
