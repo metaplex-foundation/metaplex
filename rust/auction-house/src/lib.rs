@@ -545,18 +545,41 @@ pub mod auction_house {
             .ok_or(ErrorCode::NumericalOverflow)?;
 
         if token_account.owner == wallet.key() && wallet.is_signer {
+            // Jank stuff. Without this code, cancellation will fail when wallet
+            // is signer.
+            // https://discord.com/channels/889577356681945098/889577399308656662/909082157471907901
+            let mut instruction = revoke(
+                &token_program.key(),
+                &token_account.key(),
+                &wallet.key(),
+                &[],
+            )
+            .unwrap();
+
+            instruction
+                .accounts
+                .push(anchor_lang::solana_program::instruction::AccountMeta {
+                    pubkey: trade_state.key(),
+                    is_signer: false,
+                    is_writable: false,
+                });
+
+            instruction
+                .accounts
+                .push(anchor_lang::solana_program::instruction::AccountMeta {
+                    pubkey: fee_payer.key(),
+                    is_signer: false,
+                    is_writable: false,
+                });
+
             invoke(
-                &revoke(
-                    &token_program.key(),
-                    &token_account.key(),
-                    &wallet.key(),
-                    &[],
-                )
-                .unwrap(),
+                &instruction,
                 &[
                     token_program.to_account_info(),
                     token_account.to_account_info(),
                     wallet.to_account_info(),
+                    trade_state.to_account_info(),
+                    fee_payer.to_account_info(),
                 ],
             )?;
         }
