@@ -1101,6 +1101,7 @@ export const makeSetter =
         a.info.page.sub(b.info.page).toNumber(),
       );
     } else {
+      // @ts-ignore
       state[prop][key] = value;
     }
     return state;
