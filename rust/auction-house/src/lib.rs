@@ -810,16 +810,19 @@ pub mod auction_house {
         ];
 
         invoke_signed(
-            &spl_token::instruction::transfer(
+            &spl_token::instruction::transfer_checked(
                 token_program.key,
                 &token_account.key(),
+                &token_mint.key(),
                 &buyer_receipt_token_account.key(),
                 &program_as_signer.key(),
                 &[],
                 token_size,
+                0,
             )?,
             &[
                 token_account.to_account_info(),
+                token_mint.to_account_info(),
                 buyer_receipt_clone,
                 program_as_signer.to_account_info(),
                 token_clone,
