@@ -95,13 +95,13 @@ export const Listings = () => {
           mode="horizontal"
         >
           <Menu.Item key={View.live}>
-            Live <span className="auctions-count">{showCount(View.live)}</span>
+            Live <span className="auctions-count"> | {showCount(View.live)}</span>
           </Menu.Item>
           <Menu.Item key={View.resale}>
-            Secondary Listings <span className="auctions-count">{showCount(View.resale)}</span>
+            Secondary Listings <span className="auctions-count"> | {showCount(View.resale)}</span>
           </Menu.Item>
           <Menu.Item key={View.ended}>
-            Ended <span className="auctions-count">{showCount(View.ended)}</span>
+            Ended <span className="auctions-count"> | {showCount(View.ended)}</span>
           </Menu.Item>
         </Menu>
       </Anchor>
