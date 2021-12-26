@@ -15,6 +15,7 @@ import {
   AuctionCache,
   AuctionManagerV1,
   AuctionManagerV2,
+  AuctionsCount,
   BidRedemptionTicket,
   BidRedemptionTicketV2,
   PayoutTicket,
@@ -57,6 +58,7 @@ export interface MetaState {
     ParsedAccount<BidRedemptionTicketV2>
   >;
   auctions: Record<string, ParsedAccount<AuctionData>>;
+  auctionsCount: AuctionsCount;
   auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>;
   vaults: Record<string, ParsedAccount<Vault>>;
   store: ParsedAccount<Store> | null;

@@ -14,6 +14,7 @@ export const getEmptyMetaState = (): MetaState => ({
   bidRedemptions: {},
   auctions: {},
   auctionDataExtended: {},
+  auctionsCount: { resale: null, live: null, ended: null },
   vaults: {},
   payoutTickets: {},
   store: null,
