@@ -27,9 +27,11 @@ import {
   BidRedemptionTicketV2,
   getBidderKeys,
   MetaplexKey,
+  View,
   SafetyDepositConfig,
   WinningConfigType,
   AuctionViewItem,
+  AuctionsCount,
 } from '@oyster/common';
 import { merge, take, drop, some, map } from 'lodash';
 import { Connection } from '@solana/web3.js';
@@ -143,9 +145,14 @@ export function useCachedRedemptionKeysByWallet() {
   return cachedRedemptionKeys;
 }
 
-export const useInfiniteScrollAuctions = (view: string) => {
+export const useInfiniteScrollAuctions = (view: View) => {
   const connection = useConnection();
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
+  const [auctionsCount, setAuctionsCount] = useState<AuctionsCount>({
+    live: null,
+    resale: null,
+    ended: null,
+  });
   const { publicKey } = useWallet();
   const [initLoading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -288,27 +295,25 @@ export const useInfiniteScrollAuctions = (view: string) => {
         .map(am => auctions[am.info.auction])
         .filter(a => a.info.state > 0);
 
-      let auctionDisplayOrder: ParsedAccount<AuctionData>[] = [];
+      const auctionDisplayOrders = {
+        live: initializedAuctions
+          .filter(isActiveSale(false))
+          .sort(sortByEndingSoon),
+        ended: initializedAuctions
+          .filter(a => a.info.state === 2)
+          .sort(sortByRecentlyEnded),
+        resale: initializedAuctions
+          .filter(isActiveSale(true))
+          .sort(sortByRecentlyEnded),
+      };
 
-      switch (view) {
-        case 'live':
-          auctionDisplayOrder = initializedAuctions
-            .filter(isActiveSale(false))
-            .sort(sortByEndingSoon);
-          break;
-        case 'ended':
-          auctionDisplayOrder = initializedAuctions
-            .filter(a => a.info.state === 2)
-            .sort(sortByRecentlyEnded);
-          break;
-        case 'resale':
-          auctionDisplayOrder = initializedAuctions
-            .filter(isActiveSale(true))
-            .sort(sortByRecentlyEnded);
-          break;
-      }
+      setAuctionsCount({
+        live: auctionDisplayOrders[View.live].length,
+        resale: auctionDisplayOrders[View.resale].length,
+        ended: auctionDisplayOrders[View.ended].length,
+      });
 
-      const auctionManagers = auctionDisplayOrder.map(
+      const auctionManagers = auctionDisplayOrders[view].map(
         auction => auctionManagersByAuction[auction.pubkey],
       );
 
@@ -357,6 +362,7 @@ export const useInfiniteScrollAuctions = (view: string) => {
     loading,
     initLoading,
     auctions: auctionViews,
+    auctionsCount,
     loadMore: loadMoreAuctions,
     hasNextPage: auctionManagersToQuery.length > 0,
   };
