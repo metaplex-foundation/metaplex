@@ -66,7 +66,7 @@ export const useAuctionStatus = (
 
     amount = formatTokenAmount(
       auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber(),
-      mintInfo
+      mintInfo,
     );
 
     return {
@@ -75,8 +75,8 @@ export const useAuctionStatus = (
     };
   }
 
-  if (bids.length > 0 && !isOpen) {
-    amount = formatTokenAmount(winningBid.info.lastBid);
+  if ((bids.length > 0 && !isOpen) || ended) {
+    amount = formatTokenAmount(winningBid?.info.lastBid);
     status = 'Current Bid';
   }
 

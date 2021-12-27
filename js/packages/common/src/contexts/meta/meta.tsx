@@ -12,6 +12,7 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
   loadAccounts,
+  pullAuctionData,
   pullYourMetadata,
   USE_SPEED_RUN,
 } from './loadAccounts';
@@ -112,6 +113,17 @@ export function MetaProvider({ children = null as any }) {
     setState(nextState);
     await updateMints(nextState.metadataByMint);
     return [];
+  }
+
+  async function pullAuctionListData(auctionAddress: StringPublicKey) {
+    const nextState = await pullAuctionData(
+      connection,
+      auctionAddress,
+      state,
+    );
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return nextState;
   }
 
   async function pullAuctionPage(auctionAddress: StringPublicKey) {
@@ -376,6 +388,7 @@ export function MetaProvider({ children = null as any }) {
         pullItemsPage,
         pullPackPage,
         pullUserMetadata,
+        pullAuctionListData,
         isLoading,
         isLoadingMetadata,
       }}
