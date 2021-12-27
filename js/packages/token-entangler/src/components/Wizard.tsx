@@ -162,7 +162,7 @@ export const Wizard = () => {
                             style={{
                               display: 'flex',
                               flexDirection: myNFTs.find(
-                                (d: any) => d == m.mintA.toBase58(),
+                                (d: any) => d === m.mintA.toBase58(),
                               )
                                 ? 'row'
                                 : 'row-reverse',
@@ -171,6 +171,7 @@ export const Wizard = () => {
                             }}
                           >
                             <img
+                            alt="Mint A Icon"
                               style={{ width: '100px', height: '100px' }}
                               src={
                                 e.metadata.find(d => d.mint.equals(m.mintA))
@@ -179,6 +180,7 @@ export const Wizard = () => {
                             />
                             <p>becomes</p>
                             <img
+                             alt="Mint B Icon"
                               style={{ width: '100px', height: '100px' }}
                               src={
                                 e.metadata.find(d => d.mint.equals(m.mintB))
