@@ -24,5 +24,9 @@ metaplex-token-metadata = { path = "../../token-metadata/program", features = [ 
 thiserror = "1.0"
 borsh = "0.9.1"
 
+[dev-dependencies]
+solana-sdk = "1.7.11"
+solana-program-test = "1.7.11"
+
 [lib]
 crate-type = ["cdylib", "lib"]

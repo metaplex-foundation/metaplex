@@ -17,29 +17,28 @@
   margin-top: 30px;
 }
 
-.edition-badge {
-  background: #3E3E3E;
-  border-radius: 8px;
-  margin: 24px 0px 24px 20px;
-  color: #FFFFFF;
-  padding: 4px 8px;
-  text-align: center;
-  display: inline-block;
-}
-
 .art-card {
   min-width: 200px;
+  width: 100%;
+  height: 100%;
   filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.1));
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 20px;
 
-  .ant-card-body {
+  &__header {
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
-    padding: 0;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .ant-card-body {
+    padding: 16px;
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 
     /* gradients/metal */
     background: #282828;
@@ -47,33 +46,69 @@
     border-radius: 0px 0px 8px 8px;
   }
 
+  .edition-badge {
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    height: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    margin: 0;
+    color: @grey-20;
+    background-color: transparent;
+  }
+
   .ant-card-meta-title {
-    font-size: 20px;
+    color: @accent-color;
+    font-size: 24px;
     font-weight: 600;
-    padding: 24px 24px 0 24px;
+    margin-top: 20px;
     min-height: 55px;
-  }
-
-  .ant-avatar.ant-avatar-circle {
-    margin-left: 24px;
-  }
-
-
-  .ant-card-meta-description {
-    // padding-bottom: 10px;
+    max-width: 270px;
   }
 
   .ant-card-meta {
     width: 100%;
+    flex-grow: 2;
+    display: flex;
+    align-items: flex-end;
   }
 
   .ant-image {
     display: block;
   }
+
+  .art-content {
+    &__wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: @grey-60;
+      border-radius: 12px;
+      width: 100%;
+      min-height: 65%;
+      overflow: hidden;
+      padding: 18px;
+
+      .ant-image {
+        filter: drop-shadow(0px 4px 24px rgba(0, 0, 0, 0.2));
+
+        img {
+          max-width: 240px;
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+.art-card-for-selector,
+.art-create-card {
+  height: auto;
 }
 
 .small {
-  max-width: 300px;
+  width: 300px;
   margin-left: auto;
   margin-right: auto;
 }

@@ -52,8 +52,6 @@ export const useValidation = ({
       return Object.values(selectedVouchers).length > 0;
     case CreatePackSteps.AdjustQuantities:
       return isValidQuantities(attributes);
-    // case CreatePackSteps.DesignAndInfo:
-    //   return !!(name && description && uri);
     default:
       return true;
   }

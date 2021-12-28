@@ -14,6 +14,8 @@ export async function generateConfigurations(
     symbol: '',
     description: '',
     creators: [],
+    dnp: {},
+    premadeCustoms: [],
     collection: {},
     breakdown: {},
     order: traits,
@@ -29,7 +31,7 @@ export async function generateConfigurations(
         const tmp = {};
 
         attributes.forEach((attr, i) => {
-          tmp[attr] = randoms[i] / 100;
+          tmp[attr] = randoms[i];
         });
 
         configs['breakdown'][trait] = tmp;

@@ -19,6 +19,7 @@ const PREFIX: &str = "token_entangler";
 const ESCROW: &str = "escrow";
 const A_NAME: &str = "A";
 const B_NAME: &str = "B";
+#[program]
 pub mod token_entangler {
     use super::*;
 
@@ -153,7 +154,7 @@ pub mod token_entangler {
         let payment_account = &ctx.accounts.payment_account;
         let payment_transfer_authority = &ctx.accounts.payment_transfer_authority;
         let token = &ctx.accounts.token;
-        let token_metadata = &ctx.accounts.token_metadata;
+        let replacement_token_metadata = &ctx.accounts.replacement_token_metadata;
         let replacement_token = &ctx.accounts.replacement_token;
         let replacement_token_mint = &ctx.accounts.replacement_token_mint;
         let transfer_authority = &ctx.accounts.transfer_authority;
@@ -201,11 +202,11 @@ pub mod token_entangler {
         if token.mint == entangled_pair.mint_a {
             swap_from_escrow = token_a_escrow;
             swap_to_escrow = token_b_escrow;
-            assert_metadata_valid(token_metadata, None, &entangled_pair.mint_a)?;
+            assert_metadata_valid(replacement_token_metadata, None, &entangled_pair.mint_b)?;
         } else if token.mint == entangled_pair.mint_b {
             swap_from_escrow = token_b_escrow;
             swap_to_escrow = token_a_escrow;
-            assert_metadata_valid(token_metadata, None, &entangled_pair.mint_b)?;
+            assert_metadata_valid(replacement_token_metadata, None, &entangled_pair.mint_a)?;
         } else {
             return Err(ErrorCode::InvalidMint.into());
         }
@@ -256,7 +257,7 @@ pub mod token_entangler {
         if !entangled_pair.paid || entangled_pair.pays_every_time {
             pay_creator_fees(
                 &mut ctx.remaining_accounts.iter(),
-                &token_metadata,
+                &replacement_token_metadata,
                 &payment_account,
                 &payment_transfer_authority,
                 &payer,
@@ -323,7 +324,7 @@ pub struct Swap<'info> {
     payment_transfer_authority: UncheckedAccount<'info>,
     #[account(mut)]
     token: Account<'info, TokenAccount>,
-    token_metadata: UncheckedAccount<'info>,
+    replacement_token_metadata: UncheckedAccount<'info>,
     /// Set to unchecked to avoid stack size limits
     replacement_token_mint: UncheckedAccount<'info>,
     #[account(mut)]
