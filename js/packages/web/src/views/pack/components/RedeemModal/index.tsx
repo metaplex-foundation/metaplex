@@ -29,6 +29,7 @@ const RedeemModal = ({
     metadataByPackCard,
     voucherMetadataKey,
     provingProcess,
+    isLoading,
   } = usePack();
   const [modalState, setModalState] = useState<openState>(openState.Initial);
 
@@ -68,8 +69,9 @@ const RedeemModal = ({
   const isModalClosable = modalState === openState.Initial;
   const isClaiming = modalState === openState.Claiming;
   const isLoadingMetadata =
+    isLoading ||
     Object.values(metadataByPackCard || {}).length !==
-    (pack?.info.packCards || 0);
+      (pack?.info.packCards || 0);
 
   return (
     <Modal
@@ -81,6 +83,7 @@ const RedeemModal = ({
       onCancel={handleClose}
       footer={null}
       closable={isModalClosable}
+      maskClosable={false}
     >
       <div className="modal-redeem">
         {isClaiming && <ClaimingStep onClose={handleClose} />}

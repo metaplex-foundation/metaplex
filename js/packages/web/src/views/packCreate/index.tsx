@@ -43,11 +43,11 @@ export const PackCreateView = (): ReactElement => {
   const { step, goToNextStep, resetStep } = useStep();
   const wallet = useWallet();
   const connection = useConnection();
-  const { isLoadingMetadata, isLoading: isLoadingSiteState } = useMeta();
+  const { isFetching } = useMeta();
   const { accountByMint } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
-  const isLoading = isCreating || isLoadingSiteState || isLoadingMetadata;
+  const isLoading = isCreating || isFetching;
 
   const {
     selectedItems,
