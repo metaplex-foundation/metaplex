@@ -5,7 +5,9 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 ASSETS_DIR=$SCRIPT_DIR/assets
 SRC_DIR=$PARENT_DIR/src
 CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
-IMAGE="https://rm5fm2cz5z4kww2gbyjwhyfekgcc3qjmz43cw53g6qhwhgcofoyq.arweave.net/izpWaFnueKtbRg4TY-CkUYQtwSzPNit3ZvQPY5hOK7E/?ext=png"
+PNG="https://rm5fm2cz5z4kww2gbyjwhyfekgcc3qjmz43cw53g6qhwhgcofoyq.arweave.net/izpWaFnueKtbRg4TY-CkUYQtwSzPNit3ZvQPY5hOK7E/?ext=png"
+GIF="https://3shhjbznlupbi4gldnfdzpvulcexrek5fovdtzpo37bxde6au5va.arweave.net/3I50hy1dHhRwyxtKPL60WIl4kV0rqjnl7t_DcZPAp2o/?ext=gif"
+JPG="https://7cvkvtes5uh4h3ud42bi3nl2ivtmnbpqppqmau7pk2p2qykkmbya.arweave.net/-KqqzJLtD8Pug-aCjbV6RWbGhfB74MBT71afqGFKYHA/?ext=jpg"
 
 #-------------------------------------------#
 # SETUP                                     #
@@ -72,6 +74,26 @@ then
     read AWS_BUCKET
 fi
 
+
+IMAGE=$PNG
+EXT="png"
+echo ""
+echo "File type:"
+echo "1. PNG (default)"
+echo "2. JPG"
+echo "3. GIF"
+echo -n "Select the file type [1-3]: "
+read Input
+case "$Input" in
+	1) IMAGE=$PNG 
+        EXT="png";;
+	2) IMAGE=$JPG 
+        EXT="jpg";;
+	3) IMAGE=$GIF 
+        EXT="gif";;
+esac
+
+
 echo ""
 echo -n "Number of items [10]: "
 read Number
@@ -94,7 +116,7 @@ read Close
 
 echo ""
 
-if [ "${Reset^^}" = "Y" ]
+if [ "${Reset}" = "Y" ]
 then
     echo "[`date "+%T"`] Removing previous cache and assets"
     rm $CONFIG_FILE 2> /dev/null
@@ -109,7 +131,7 @@ read -r -d '' METADATA  <<-EOM
     "symbol": "TEST",
     "description": "Candy Machine CLI Test #%s",
     "seller_fee_basis_points": 500,
-    "image": "%s.png",
+    "image": "%s.%s",
     "attributes": [{"trait_type": "Background", "value": "True"}],
     "properties": {
         "creators": [
@@ -117,17 +139,17 @@ read -r -d '' METADATA  <<-EOM
             "address": "`solana address`",
             "share": 100
         }],
-        "files": [{"uri":"%s.png", "type":"image/png"}]
+        "files": [{"uri":"%s.%s", "type":"image/%s"}]
     },
-    "collection": {"name": "Candy Machine CLI", "family": "Candy Machine CLI"}
+    "collection": { "name": "Candy Machine CLI", "family": "Candy Machine CLI"}
 }
 EOM
 
 if [ ! -d $ASSETS_DIR ]
 then
     mkdir $ASSETS_DIR
-    curl -s $IMAGE > "$ASSETS_DIR/template.png"
-    SIZE=$(wc -c "$ASSETS_DIR/template.png" | grep -oE '[0-9]+' | head -n 1)
+    curl -s $IMAGE > "$ASSETS_DIR/template.$EXT"
+    SIZE=$(wc -c "$ASSETS_DIR/template.$EXT" | grep -oE '[0-9]+' | head -n 1)
 
     if [ $SIZE -eq 0 ]
     then
@@ -139,10 +161,10 @@ then
     # initialises the assets - this will be multiple copies of the same image/json pair
     for (( i=0; i<$ITEMS; i++ ))
     do
-        printf "$METADATA" $i $i $i $i > "$ASSETS_DIR/$i.json"
-        cp "$ASSETS_DIR/template.png" "$ASSETS_DIR/$i.png"
+        printf "$METADATA" $i $i $i $EXT $i $EXT $EXT > "$ASSETS_DIR/$i.json"
+        cp "$ASSETS_DIR/template.$EXT" "$ASSETS_DIR/$i.$EXT"
     done
-    rm "$ASSETS_DIR/template.png"
+    rm "$ASSETS_DIR/template.$EXT"
 fi
 
 # Candy Machine configuration
@@ -234,7 +256,7 @@ then
     exit 1
 fi
 
-if [ ${Close^^} == "Y" ]
+if [ ${Close} == "Y" ]
 then
     echo ""
     echo "4. Clean up. Withdrawing cm funds."
