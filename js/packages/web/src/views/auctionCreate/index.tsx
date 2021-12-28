@@ -509,7 +509,8 @@ export const AuctionCreateView = () => {
       : attributes.participationNFT;
 
     // Track useState updates across this callback for rejection
-    let tmpRejection = rejection;
+    let tmpRejection = undefined;
+    setRejection(undefined);
 
     try {
       auctionInfo = await createAuctionManager(
@@ -517,8 +518,8 @@ export const AuctionCreateView = () => {
         wallet,
         setPercentComplete,
         rej => {
-          setRejection(rej);
-          tmpRejection = rej;
+          setRejection(r => r ?? rej);
+          tmpRejection ??= rej;
         },
         whitelistedCreatorsByCreator,
         auctionSettings,

@@ -5,9 +5,11 @@ import {
   Row,
   Col,
   Divider,
+  Input,
   Spin,
   Space,
   Progress,
+  Tooltip,
   Typography,
 } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -15,9 +17,11 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import {
   SendAndConfirmError,
   useConnection,
-} from '../../../../common/dist/lib';
+  useConnectionConfig,
+} from '@oyster/common';
+import { ClickToCopy } from '../../components/ClickToCopy';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const hasMessage = (e: object): e is { message: unknown } => 'message' in e;
 
@@ -46,6 +50,7 @@ export const WaitingStep = (props: {
   rejection?: SendAndConfirmError | undefined;
 }) => {
   const connection = useConnection();
+  const { endpoint } = useConnectionConfig();
   const [rejectedTx, setRejectedTx] = useState<TransactionResponse | undefined>(
     undefined,
   );
@@ -74,7 +79,7 @@ export const WaitingStep = (props: {
   let status: 'normal' | 'exception' = 'normal';
 
   if (props.rejection) {
-    title = 'Issue Listing with Metaplex!';
+    title = 'Transaction failed';
     status = 'exception';
 
     const { txid } = props.rejection;
@@ -105,7 +110,7 @@ export const WaitingStep = (props: {
           descriptionInner = (
             <>
               <p>An unexpected Solana error occurred:</p>
-              <pre>{JSON.stringify(err)}</pre>
+              <code>{JSON.stringify(err)}</code>
             </>
           );
         }
@@ -126,8 +131,8 @@ export const WaitingStep = (props: {
 
         descriptionInner = (
           <>
-            An unexpected error occurred:
-            <pre>{msg}</pre>
+            <p>An unexpected error occurred:</p>
+            <code>{msg}</code>
           </>
         );
 
@@ -135,16 +140,19 @@ export const WaitingStep = (props: {
       }
     }
 
-    const solscanLink = txid && `https://solscan.io/tx/${txid}`;
+    // Kind of a hack, but it's not critical that this works correctly
+    const isDevnet = /devnet/i.test(endpoint);
+
+    const solscanLink =
+      txid &&
+      `https://solscan.io/tx/${txid}${isDevnet ? '?cluster=devnet' : ''}`;
 
     description = (
       <>
-        <h3>Transaction failed</h3>
         {txid && (
-          <p>
-            Signature:{' '}
-            <code style={{ overflowWrap: 'break-word' }}>{txid}</code>
-          </p>
+          <a href={solscanLink} target="_blank" rel="noopener noreferrer">
+            View failed transaction
+          </a>
         )}
         {txid && !rejectedTx && (
           <Row justify="center">
@@ -156,42 +164,68 @@ export const WaitingStep = (props: {
         {descriptionInner}
         {solscanLink && (
           <>
-            <p>
-              Solscan link:
-              <br />
-              <a
-                href={solscanLink}
+            <Divider />
+            <Space direction="vertical" size={16}>
+              <Text>
+                Check that the wallet you are using has sufficient funds and try
+                again. If the error occurs again, get help on{' '}
+                <a
+                  href="https://discord.gg/e463A53qWj"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  our Discord server
+                </a>{' '}
+                or{' '}
+                <a
+                  href="https://holaplex-support.zendesk.com/hc/en-us"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  submit a support request
+                </a>
+                . Please provide the link to the transaction on Solscan when
+                making your request:
+              </Text>
+              <Input.Group
+                compact
                 style={{
-                  textOverflow: 'ellipsis',
-                  maxWidth: '100%',
-                  display: 'inline-block',
-                  overflow: 'hidden',
+                  display: 'flex',
+                  flexFlow: 'row nowrap',
+                  alignItems: 'stretch',
                 }}
               >
-                {solscanLink}
-              </a>
-              <br />
-              <Button
-                type="primary"
-                size="large"
-                onClick={() => {
-                  navigator.clipboard.writeText(solscanLink);
-                }}
-              >
-                Copy Solscan link
-              </Button>
-            </p>
-          </>
-        )}
-        {rejectedTx?.meta?.logMessages && (
-          <>
-            <p>Transaction log:</p>
-            {rejectedTx.meta.logMessages.map((m, i) => (
-              <div key={i}>
-                {i > 0 && <Divider />}
-                <code style={{ whiteSpace: 'pre-wrap' }}>{m}</code>
-              </div>
-            ))}
+                <Input
+                  style={{ flex: '1 0 0' }}
+                  defaultValue={solscanLink}
+                  readOnly
+                  onClick={e => {
+                    const input = e.target as HTMLInputElement;
+                    input.setSelectionRange(0, input.value.length);
+                  }}
+                />
+                <ClickToCopy
+                  copyText={solscanLink}
+                  render={(icon, click) => (
+                    <Tooltip style={{ flex: '0 0 auto' }} title="Copy">
+                      <Button
+                        type="text"
+                        style={{
+                          width: 'auto',
+                          height: 'auto',
+                          padding: '0 4px',
+                          display: 'flex',
+                          flexFlow: 'column nowrap',
+                          justifyContent: 'center',
+                        }}
+                        icon={icon}
+                        onClick={click}
+                      />
+                    </Tooltip>
+                  )}
+                />
+              </Input.Group>
+            </Space>
           </>
         )}
       </>
