@@ -296,6 +296,10 @@ export const loadAccounts = async (
       const setMetadata = auctionCache.info.metadata.map(async metadataKey => {
         const metadata = state.metadataByMetadata[metadataKey];
 
+        if (!metadata) {
+          return Promise.resolve();
+        }
+
         let auctionMetadata =
           state.metadataByAuction[auctionCache.info.auction];
 

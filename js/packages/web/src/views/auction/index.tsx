@@ -78,8 +78,8 @@ export const AuctionView = () => {
   const connection = useConnection();
   const { patchState } = useMeta();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const art = useArt(auction?.thumbnail.metadata.pubkey);
-  const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
+  const art = useArt(auction?.thumbnail?.metadata?.pubkey);
+  const { ref, data } = useExtendedArt(auction?.thumbnail?.metadata?.pubkey);
   const creators = useCreators(auction);
   const wallet = useWallet();
   let edition = '';
