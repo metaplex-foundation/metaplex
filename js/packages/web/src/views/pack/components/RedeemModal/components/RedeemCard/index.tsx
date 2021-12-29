@@ -26,9 +26,17 @@ const RedeemCard = ({
           <Tooltip title={info.data.name}>
             <p className="info__title">{info.data.name}</p>
           </Tooltip>
-          <Tooltip title={creators?.map(creator => " " + (creator.name || shortenAddress(creator.address || '')))}>
+          <Tooltip
+            title={creators?.map(
+              creator =>
+                ' ' + (creator.name || shortenAddress(creator.address || '')),
+            )}
+          >
             <p className="info__creators">
-              {creators?.map(creator => " " + (creator.name || shortenAddress(creator.address || '')))}
+              {creators?.map(
+                creator =>
+                  ' ' + (creator.name || shortenAddress(creator.address || '')),
+              )}
             </p>
           </Tooltip>
         </div>
@@ -39,6 +47,6 @@ const RedeemCard = ({
       </div>
     </div>
   );
-}
+};
 
 export default RedeemCard;
