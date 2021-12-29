@@ -19,7 +19,7 @@
     "lint:eslint": "eslint 'packages/*/{src,test}/**/*.ts'",
     "lint:fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && eslint --fix 'packages/*/{src,test}/**/*.ts'",
     "format:fix": "lerna run format:fix",
-    "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
+    "deploy": "gh-pages -d ../../build/web --repo https://github.com/richschreiber10/metaplex",
     "deploy:docs": "lerna run docs",
     "deploy:apps": "lerna run deploy:app",
     "test": "lerna run test --concurrency 1 --stream"
