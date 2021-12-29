@@ -110,6 +110,7 @@ export const pullYourMetadata = async (
   let currBatch: string[] = [];
   let batches = [];
   const editions = [];
+
   for (let i = 0; i < userTokenAccounts.length; i++) {
     if (userTokenAccounts[i].info.amount.toNumber() == 1) {
       const edition = await getEdition(
