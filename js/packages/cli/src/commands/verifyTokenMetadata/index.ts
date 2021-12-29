@@ -134,7 +134,7 @@ export const verifyMetadataManifests = ({ files }) => {
 
   // Do manifest-specific stuff here
   for (const manifestFile of manifestFiles) {
-    log.info(`Checking maanifest file: ${manifestFile}`);
+    log.info(`Checking manifest file: ${manifestFile}`);
     // Check the overall schema shape. This is a non-exhaustive check, but guarantees the bare minimum needed for the rest of the commands to succeed.
     const tokenMetadata = require(manifestFile) as TokenMetadata;
     validate(tokenMetadata, tokenMetadataJsonSchema, { throwError: true });
