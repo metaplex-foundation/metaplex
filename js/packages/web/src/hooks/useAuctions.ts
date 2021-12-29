@@ -313,7 +313,7 @@ export const useInfiniteScrollAuctions = (view: View) => {
         ended: auctionDisplayOrders[View.ended].length,
       });
 
-      const auctionManagers = auctionDisplayOrders[view].map(
+      const auctionManagers = auctionDisplayOrders[view]?.map(
         auction => auctionManagersByAuction[auction.pubkey],
       );
 

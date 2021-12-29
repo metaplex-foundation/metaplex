@@ -3,7 +3,7 @@ import { Layout, notification } from 'antd';
 import React, { ReactNode, useEffect } from 'react';
 import { AppBar } from '../AppBar';
 
-const { Header, Content } = Layout;
+const { Content } = Layout;
 
 export const AppLayout = React.memo(function AppLayout(props: {
   children?: ReactNode;
@@ -20,9 +20,7 @@ export const AppLayout = React.memo(function AppLayout(props: {
   return (
     <>
       <Layout>
-        <Header>
-          <AppBar logo={props.storefront?.theme?.logo || ''} />
-        </Header>
+        <AppBar logo={props.storefront?.theme?.logo || ''} />
         <Content id="metaplex-layout-content">{props.children}</Content>
       </Layout>
     </>

@@ -1,35 +1,34 @@
 .metaplex-art-content {
+  .ant-image-placeholder {
+    > div {
+      position: absolute;
+      top: 50%;
+      right: 50%;
+      width: 80px;
+      height: 80px;
+      margin: -40px -40px 0 0;
+    }
+  }
+
+  .metaplex-loader-light {
     .ant-image-placeholder {
       > div {
-        position: absolute;
-        top: 50%;
-        right: 50%;
-        width: 80px;
-        height: 80px;
-        margin: -40px -40px 0 0;
+        fill: @theme-color-base-faint !important;
+        color: @theme-color-base-faint;
       }
     }
-    
-    .metaplex-loader-light {
-      .ant-image-placeholder {
-        > div {
-          fill: @theme-color-base-faint !important;
-          color: @theme-color-base-faint;
-        }
+  }
+  .metaplex-loader-dark {
+    .ant-image-placeholder {
+      > div {
+        fill: @theme-color-base-bold !important;
+        color: @theme-color-base-bold;
       }
     }
-    .metaplex-loader-dark {
-      .ant-image-placeholder {
-        > div {
-          fill: @theme-color-base-bold !important;
-          color: @theme-color-base-bold;
-        }
-      }
-    }
+  }
 
-  
   .metaplex-image {
-    img { 
+    img {
       display: block;
     }
     &.metaplex-image-loading {
@@ -54,13 +53,18 @@
       padding-bottom: 100%;
     }
 
-    .ant-image, .metaplex-video-content, .metaplex-html-content, .metaplex-mesh-art-content {
+    .ant-image,
+    .metaplex-video-content,
+    .metaplex-html-content,
+    .metaplex-mesh-art-content {
       position: absolute;
       top: 0;
       bottom: 0;
       left: 0;
       right: 0;
-      video, iframe, .metaplex-3d-viewer {
+      video,
+      iframe,
+      .metaplex-3d-viewer {
         width: 100%;
         height: 100%;
       }
@@ -71,5 +75,8 @@
         object-fit: cover;
       }
     }
+  }
+  .ant-image-img {
+    border-radius: 5px;
   }
 }

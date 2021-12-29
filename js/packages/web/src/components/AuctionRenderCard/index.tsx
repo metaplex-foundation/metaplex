@@ -1,10 +1,9 @@
-import { Card, CardProps, Divider, Space } from 'antd';
+import { Card, CardProps, Space, Divider } from 'antd';
 import React from 'react';
-import { AuctionView, useArt, useCreators } from '../../hooks';
+import { AuctionView, useArt } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { ArtContent } from '../ArtContent';
 import { AuctionCountdown } from '../AuctionNumbers';
-import { MetaAvatar } from '../MetaAvatar';
 import { getHumanStatus, useAuctionStatus } from './hooks/useAuctionStatus';
 export interface AuctionCard extends CardProps {
   auctionView: AuctionView;
@@ -20,9 +19,8 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const humanStatus = getHumanStatus(status);
 
   const card = (
-    <Card hoverable bordered={false}>
+    <Card hoverable bordered={false} style={{ borderRadius: '5px' }}>
       <Space direction="vertical" className="metaplex-fullwidth">
-
         <ArtContent
           square
           backdrop="light"
@@ -30,11 +28,13 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           pubkey={id}
           allowMeshRender={false}
         />
-        <h3>{name}</h3>
+        <h3 style={{ margin: '1rem 0 0.5rem' }}>{name}</h3>
 
         {!status.isInstantSale && status.isLive && (
           <div>
-            <h5>ENDING IN</h5>
+            <p style={{ fontSize: '0.9rem', margin: '0.5rem 0 0.35rem' }}>
+              Ending in
+            </p>
             <AuctionCountdown auctionView={auctionView} labels={false} />
           </div>
         )}

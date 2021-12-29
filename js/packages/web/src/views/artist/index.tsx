@@ -1,7 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { loadMetadataForCreator, useConnection, useMeta, useStore } from '@oyster/common';
+import { loadMetadataForCreator, useConnection, useMeta } from '@oyster/common';
 import { Col, Divider, Row, Spin } from 'antd';
-import { useRouter } from 'next/dist/client/router';
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
@@ -10,7 +9,7 @@ import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { useCreatorArts } from '../../hooks';
 
 export const ArtistView = () => {
-  const { creator } = useParams<{ creator: string; }>();
+  const { creator } = useParams<{ creator: string }>();
   const { whitelistedCreatorsByCreator, patchState } = useMeta();
   const [loadingArt, setLoadingArt] = useState(true);
   const artwork = useCreatorArts(creator);
@@ -31,7 +30,6 @@ export const ArtistView = () => {
         active,
       );
 
-
       patchState(artistMetadataState);
       setLoadingArt(false);
     })();
@@ -40,7 +38,7 @@ export const ArtistView = () => {
   return (
     <Row>
       <Col span={24}>
-        <h2>Creators</h2>
+        <h2 style={{ margin: '1rem 0' }}>Creators</h2>
         <MetaplexMasonry>
           {creators.map((m, idx) => {
             const current = m.info.address;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Row, Col } from 'antd';
+import { Card } from 'antd';
 
 import { Artist } from '../../types';
 
@@ -27,17 +27,13 @@ export const ArtistCard = ({
         </div>
       }
       bordered={false}
+      style={{ borderRadius: '5px' }}
     >
-      <Row align="middle">
-        <Col flex="0 0 auto">
-          <MetaAvatar creators={[artist]} size={64} />
-        </Col>
-        <Col flex="0 0 32px" />
-        <Col flex="1 0 0">
-          <h4>{artist.name || shortenAddress(artist.address || '')}</h4>
-          {artist.about && <div>{artist.about}</div>}
-        </Col>
-      </Row>
+      <div className="content-wrapper">
+        <MetaAvatar creators={[artist]} size={40} />
+        {artist.name || shortenAddress(artist.address || '')}
+      </div>
+      {artist.about && <div className="about">{artist.about}</div>}
     </Card>
   );
 };

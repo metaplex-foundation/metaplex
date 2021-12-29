@@ -1,7 +1,101 @@
+nav {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 1rem 2rem;
+  gap: 1rem;
+
+  @media (max-width: 800px) {
+    flex-direction: column;
+  }
+  @media screen and (max-width: 600px) {
+    margin: 0.65rem;
+  }
+}
+
+.nav-menu-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+
+  @media (max-width: 800px) {
+    margin-top: 0.3rem;
+    justify-content: center;
+
+    &.secondary {
+      justify-content: flex-start;
+    }
+  }
+
+  @media screen and (max-width: 450px) {
+    margin-top: 0.5rem;
+  }
+}
+
+.nav-menu-item {
+  padding: 0.65rem 1rem;
+  border-radius: 5px;
+  border: 3px solid transparent;
+  font-size: 0.95rem;
+  color: var(--text-color);
+  line-height: 1;
+  transition: ease all 0.07s;
+  cursor: pointer;
+  background-color: transparent;
+
+  &:hover,
+  &.active {
+    background-color: #7773;
+    color: var(--text-color);
+  }
+  &:focus {
+    border: 3px solid #7775;
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+
+  @media screen and (max-width: 450px) {
+    font-size: 0.9rem;
+    padding: 0.43rem 0.7rem;
+  }
+}
+
 #metaplex-header-logo {
-  margin-right: 32px;
+  margin: 0 auto;
+  transition: ease all 0.07s;
   img {
     object-fit: contain;
     width: 50px;
+    border-radius: 5px;
+    @media (max-width: 800px) {
+      width: auto;
+      max-width: 100px;
+      margin: 1rem auto 0.5rem;
+    }
   }
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.nav-right {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  @media (max-width: 800px) {
+    flex-direction: column-reverse;
+    width: 100%;
+  }
+}
+
+.wallet-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
