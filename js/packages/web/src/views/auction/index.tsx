@@ -328,6 +328,7 @@ const BidLine = (props: {
           'auction-bid-line-item-is-canceled':
             isCancelled && publicKey?.toBase58() === bidder,
         })}
+        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
       >
         {isme && <CheckOutlined />}
         <AmountLabel
