@@ -3,6 +3,10 @@
   "workspaces": {
     "packages": [
       "packages/*"
+    ],
+    "nohoist": [
+      "**/candy-machine-mint/**",
+      "**/token-entangler/**"
     ]
   },
   "keywords": [],
