@@ -10,6 +10,8 @@ interface CongratulationsProps {
   buttonText?: string,
   onClickOk?: () => void,
   onClose: () => void,
+  extraButtonText?: string | null,
+  onClickExtraButton?: () => void,
 }
 
 const CongratulationsContent: React.FC<CongratulationsProps> = (
@@ -19,6 +21,8 @@ const CongratulationsContent: React.FC<CongratulationsProps> = (
     buttonText,
     onClickOk,
     onClose,
+    extraButtonText,
+    onClickExtraButton
   }) => {
 
   const handleClickOk = () => {
@@ -33,7 +37,11 @@ const CongratulationsContent: React.FC<CongratulationsProps> = (
       </div>
       <span className="title">{title || 'Congratulations'}</span>
       <span className="content">{content}</span>
-      <Button className="reload-button" onClick={handleClickOk}>{buttonText || 'Ok'}</Button>
+      <Button className="ok-button" onClick={handleClickOk}>{buttonText || 'Ok'}</Button>
+      {
+        !!extraButtonText &&
+        <Button className="extra-button" onClick={onClickExtraButton}>{extraButtonText}</Button>
+      }
     </div>
   )
 }

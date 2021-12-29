@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, InputNumber, Spin } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import {
   useConnection,
@@ -26,16 +26,17 @@ import {
   WRAPPED_SOL_MINT,
   Bid,
   BidderPot,
+  shortenAddress,
 } from '@oyster/common';
 import {
   AuctionView,
   AuctionViewState,
   useBidsForAuction,
+  useCreators,
   useUserBalance,
 } from '../../hooks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
-// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import {
   sendRedeemBid,
@@ -203,6 +204,7 @@ export const AuctionCard = ({
   hideDefaultAction?: boolean;
   action?: JSX.Element;
 }) => {
+  const history = useHistory();
   const connection = useConnection();
   const { update } = useMeta();
 
@@ -216,6 +218,7 @@ export const AuctionCard = ({
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
   const bids = useBidsForAuction(auctionView.auction.pubkey);
+  const creators = useCreators(auctionView);
 
   const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -229,7 +232,8 @@ export const AuctionCard = ({
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
-  const [isOpenCongratulations, setIsOpenCongratulations] = useState<boolean>(false);
+  const [isOpenPurchase, setIsOpenPurchase] = useState<boolean>(false);
+  const [isOpenClaim, setIsOpenClaim] = useState<boolean>(false);
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -459,10 +463,10 @@ export const AuctionCard = ({
         prizeTrackingTickets,
         bidRedemptions,
         bids,
-      )
-        await update();
-        if (canClaimPurchasedItem) setShowRedeemedBidModal(true);
-        else setIsOpenCongratulations(true);
+      );
+      await update();
+      if (canClaimPurchasedItem) setIsOpenClaim(true);
+      else setIsOpenPurchase(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
@@ -937,11 +941,19 @@ export const AuctionCard = ({
         </h3>
       </MetaplexModal>
       <CongratulationsModal
-        isModalVisible={isOpenCongratulations}
-        onClose={() => setIsOpenCongratulations(false)}
+        isModalVisible={isOpenPurchase}
+        onClose={() => setIsOpenPurchase(false)}
         onClickOk={() => window.location.reload()}
         buttonText='Reload'
         content='Reload the page and click claim to receive your NFT. Then check your wallet to confirm it has arrived. It may take a few minutes to process.'
+      />
+      <CongratulationsModal
+        isModalVisible={isOpenClaim}
+        onClose={() => setIsOpenClaim(false)}
+        buttonText='Got it'
+        content={`You have claimed your item from ${creators.map(item => ' ' + (item.name || shortenAddress(item.address || '')))}!`}
+        extraButtonText='View My Items'
+        onClickExtraButton={() => history.push('/artworks')}
       />
     </div>
   );
