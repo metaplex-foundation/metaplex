@@ -170,7 +170,7 @@ programCommand('upload')
 
     if (elemCount < imageFileCount) {
       throw new Error(
-        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
+        `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
       );
     }
 
@@ -205,12 +205,14 @@ programCommand('upload')
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
+      process.exit(1);
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
       `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
+    process.exit(0);
   });
 
 programCommand('withdraw')
