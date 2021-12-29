@@ -840,12 +840,16 @@ pub fn get_good_index(
             let eight_remainder = 8 - index_to_use
                 .checked_rem(8)
                 .ok_or(ErrorCode::NumericalOverflowError)?;
-            if eight_remainder != 0 {
+            let reversed = 8 - eight_remainder + 1;
+            if (eight_remainder != 0 && pos) || (reversed != 0 && !pos)  {
                 //msg!("Moving by {}", eight_remainder);
                 if pos {
                     index_to_use += eight_remainder;
                 } else {
-                    index_to_use -= eight_remainder;
+                    if index_to_use < 8 {
+                        break;
+                    }
+                    index_to_use -= reversed;
                 }
             } else {
                 //msg!("Moving by 8");
