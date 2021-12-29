@@ -87,16 +87,17 @@ export async function uploadV2({
   if (!cacheContent.program) {
     cacheContent.program = {};
   }
-
-  let existingInCache = [];
   if (!cacheContent.items) {
     cacheContent.items = {};
-  } else {
-    existingInCache = Object.keys(cacheContent.items);
   }
-  const dedupedAssetKeys = getAssetKeysNeedingUpload(existingInCache, files);
+
+  if (!cacheContent.items) {
+    cacheContent.items = {};
+  }
+
+  const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
   const SIZE = dedupedAssetKeys.length;
-  console.log('Size', SIZE);
+  console.log('Size', SIZE, dedupedAssetKeys[0]);
   let candyMachine = cacheContent.program.candyMachine
     ? new PublicKey(cacheContent.program.candyMachine)
     : undefined;
@@ -219,7 +220,10 @@ export async function uploadV2({
                 : `${assetKey.index}.json`,
             );
             const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-            if (i >= lastPrinted + tick || i === 0) {
+            if (
+              allIndexesInSlice[i] >= lastPrinted + tick ||
+              allIndexesInSlice[i] === 0
+            ) {
               lastPrinted = i;
               log.info(`Processing asset: ${allIndexesInSlice[i]}`);
             }
@@ -282,8 +286,11 @@ export async function uploadV2({
               }
             }
 
-            if (i >= lastPrinted + tick || i === 0) {
-              lastPrinted = i;
+            if (
+              allIndexesInSlice[i] >= lastPrinted + tick ||
+              allIndexesInSlice[i] === 0
+            ) {
+              lastPrinted = allIndexesInSlice[i];
               log.info(`Processing asset: ${allIndexesInSlice[i]}`);
             }
 
@@ -313,7 +320,7 @@ export async function uploadV2({
                     image,
                     manifestBuffer,
                     manifest,
-                    i,
+                    assetKey.index,
                   );
               }
               if (link && imageLink) {
@@ -328,7 +335,7 @@ export async function uploadV2({
               }
             } catch (err) {
               log.error(`Error uploading file ${assetKey}`, err);
-              throw err;
+              i--;
             }
           }
         },
@@ -436,6 +443,7 @@ type Manifest = {
     }>;
   };
 };
+
 /**
  * From the Cache object & a list of file paths, return a list of asset keys
  * (filenames without extension nor path) that should be uploaded, sorted numerically in ascending order.
@@ -458,6 +466,7 @@ function getAssetKeysNeedingUpload(
     .reduce((acc, assetKey) => {
       const ext = path.extname(assetKey);
       const key = path.basename(assetKey, ext);
+
       if (!items[key]?.link && !keyMap[key]) {
         keyMap[key] = true;
         acc.push({ mediaExt: ext, index: key });
@@ -468,17 +477,23 @@ function getAssetKeysNeedingUpload(
 }
 
 /**
- * From the Cache object & a list of file paths, return a list of asset keys
- * (filenames without extension nor path) that should be uploaded.
- * Assets which should be uploaded either are not present in the Cache object,
- * or do not truthy value for the `link` property.
+ * Returns a Manifest from a path and an assetKey
+ * Replaces image.ext => index.ext
  */
 function getAssetManifest(dirname: string, assetKey: string): Manifest {
-  const manifestPath = path.join(
-    dirname,
-    assetKey.includes('json') ? assetKey : `${assetKey}.json`,
+  const assetIndex = assetKey.includes('.json')
+    ? assetKey.substring(0, assetKey.length - 5)
+    : assetKey;
+  const manifestPath = path.join(dirname, `${assetIndex}.json`);
+  const manifest: Manifest = JSON.parse(
+    fs.readFileSync(manifestPath).toString(),
   );
-  return JSON.parse(fs.readFileSync(manifestPath).toString());
+  manifest.image = manifest.image.replace('image', assetIndex);
+  manifest.properties.files[0].uri = manifest.properties.files[0].uri.replace(
+    'image',
+    assetIndex,
+  );
+  return manifest;
 }
 
 /**
