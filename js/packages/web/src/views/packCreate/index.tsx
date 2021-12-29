@@ -38,7 +38,7 @@ export const PackCreateView = (): ReactElement => {
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
-  const [showErrorModal, setShowErrorModal] =
+  const [errorModal, setErrorModal] =
     useState<{error: string, display: boolean}>({error: '', display: false});
   const [isCreating, setIsCreating] = useState<boolean>(false);
 
@@ -153,8 +153,8 @@ export const PackCreateView = (): ReactElement => {
         });
 
         setShouldShowSuccessModal(true);
-      } catch (e) {
-        setShowErrorModal({ error: e?.message, display: true });
+      } catch (e: any) {
+        setErrorModal({ error: e?.message, display: true });
       }
     }
     setIsCreating(false);
@@ -176,7 +176,7 @@ export const PackCreateView = (): ReactElement => {
       description: data.description,
     });
   }, [data]);
-
+  const shouldRenderSuccessModal = shouldShowSuccessModal && !errorModal.display
   return (
     <div className="pack-create-wrapper" ref={ref}>
       <Sidebar
@@ -232,11 +232,11 @@ export const PackCreateView = (): ReactElement => {
         )}
       </div>
       <TransactionErrorModal
-        open={showErrorModal.display}
-        onDismiss={() => setShowErrorModal({ error: '', display: false })}
-        error={showErrorModal.error}
+        open={errorModal.display}
+        onDismiss={() => setErrorModal({ error: '', display: false })}
+        error={errorModal.error}
       />
-      <SuccessModal shouldShow={shouldShowSuccessModal && !showErrorModal.display} hide={handleFinish} />
+      <SuccessModal shouldShow={shouldRenderSuccessModal} hide={handleFinish} />
     </div>
   );
 };

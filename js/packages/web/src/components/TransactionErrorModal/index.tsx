@@ -13,7 +13,7 @@ const TransactionErrorModal = ({ error = '', onDismiss, open, modalView = true }
   const modalBody = (
     <div className="error-modal-content">
       <div className="warning-icon">
-        <ExclamationCircleOutlined width="20px" height="20px" />
+        <ExclamationCircleOutlined width={20} height={20} />
       </div>
       <h4>Transaction error</h4>
       <div className="error-text">
