@@ -1,6 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
-import { Layout, Row, Col, Tabs, Button, Dropdown, Menu } from 'antd';
+import { Layout, Row, Col, Tabs, Dropdown, Menu } from 'antd';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
 
@@ -43,10 +43,12 @@ export const ArtworksView = () => {
     }
   }, [connected, setActiveKey]);
 
+  const isDataLoading = isLoading || isFetching;
+
   const artworkGrid = (
     <div className="artwork-grid">
-      {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-      {!isLoading &&
+      {isDataLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+      {!isDataLoading &&
         userItems.map(item => {
           const pubkey = isMetadata(item)
             ? item.pubkey
