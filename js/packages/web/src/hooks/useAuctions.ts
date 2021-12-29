@@ -181,7 +181,9 @@ export const useInfiniteScrollAuctions = (view: View) => {
       const auctionManager = auctionManagersByAuction[a.pubkey];
       const cache = auctionCachesByAuctionManager[auctionManager.pubkey];
 
-      if (!cache) {
+      if (sale && !cache) {
+        return false;
+      } else if (!cache) {
         return active;
       }
 
@@ -289,8 +291,12 @@ export const useInfiniteScrollAuctions = (view: View) => {
       const storeAuctionManagers = Object.values(
         auctionManagersByAuction,
       ).filter(
-        am => am.info.store === storeAddress && auctions[am.info.auction],
+        am =>
+          am.info.store === storeAddress &&
+          auctions[am.info.auction] &&
+          am.info.key === MetaplexKey.AuctionManagerV2,
       );
+
       const initializedAuctions = storeAuctionManagers
         .map(am => auctions[am.info.auction])
         .filter(a => a.info.state > 0);
@@ -313,7 +319,7 @@ export const useInfiniteScrollAuctions = (view: View) => {
         ended: auctionDisplayOrders[View.ended].length,
       });
 
-      const auctionManagers = auctionDisplayOrders[view].map(
+      const auctionManagers = (auctionDisplayOrders[view] || []).map(
         auction => auctionManagersByAuction[auction.pubkey],
       );
 
@@ -618,11 +624,6 @@ export function processAccountsIntoAuctionView(
           view.participationItem)) &&
       view.vault
     );
-    if (
-      (!view.thumbnail || !view.thumbnail.metadata) &&
-      desiredState != AuctionViewState.Defective
-    )
-      return undefined;
 
     return view as AuctionView;
   }

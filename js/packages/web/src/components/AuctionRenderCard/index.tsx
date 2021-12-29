@@ -12,7 +12,7 @@ export interface AuctionCard extends CardProps {
 
 export const AuctionRenderCard = (props: AuctionCard) => {
   const { auctionView } = props;
-  const id = auctionView.thumbnail.metadata.pubkey;
+  const id = auctionView.thumbnail?.metadata?.pubkey;
   const art = useArt(id);
   const name = art?.title || ' ';
 
