@@ -31,6 +31,7 @@ import TransactionErrorModal from '../../components/TransactionErrorModal';
 import { sendCreatePack } from './transactions/createPack';
 import SuccessModal from './components/SuccessModal';
 import { useValidation } from './hooks/useValidation';
+import { Button } from 'antd';
 
 // ToDo: Refactor state to a react context
 export const PackCreateView = (): ReactElement => {
@@ -41,16 +42,17 @@ export const PackCreateView = (): ReactElement => {
   const [errorModal, setErrorModal] =
     useState<{error: string, display: boolean}>({error: '', display: false});
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const { pullUserMetadata } = useMeta();
 
   const items = useUserArts();
   const { step, goToNextStep, resetStep } = useStep();
   const wallet = useWallet();
   const connection = useConnection();
-  const { isLoadingMetadata, isLoading: isLoadingSiteState } = useMeta();
-  const { accountByMint } = useUserAccounts();
+  const { isFetching } = useMeta();
+  const { accountByMint, userAccounts } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
-  const isLoading = isCreating || isLoadingSiteState || isLoadingMetadata;
+  const isLoading = isCreating || isFetching;
 
   const {
     selectedItems,
@@ -177,6 +179,11 @@ export const PackCreateView = (): ReactElement => {
     });
   }, [data]);
   const shouldRenderSuccessModal = shouldShowSuccessModal && !errorModal.display
+
+  const shouldRenderRefresh =
+    step === CreatePackSteps.SelectItems ||
+    step === CreatePackSteps.SelectVoucher;
+
   return (
     <div className="pack-create-wrapper" ref={ref}>
       <Sidebar
@@ -187,7 +194,13 @@ export const PackCreateView = (): ReactElement => {
         buttonLoading={isLoading}
       />
       <div className="content-wrapper">
-        <Header step={step} />
+        <Header step={step}>
+          {shouldRenderRefresh && (
+            <Button onClick={() => pullUserMetadata(userAccounts)}>
+              Refresh
+            </Button>
+          )}
+        </Header>
 
         {step === CreatePackSteps.SelectItems && (
           <SelectItemsStep

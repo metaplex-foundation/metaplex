@@ -74,7 +74,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         onOk={confirm}
         width={1100}
         footer={null}
-        className={"modalp-40"}
+        className={'modalp-40'}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
           <h2>Select the NFT you want to sell</h2>
@@ -111,7 +111,14 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                 }
               };
 
-              return <AuctionItemCard key={id} isSelected={isSelected} current={m} onSelect={onSelect} />;
+              return (
+                <AuctionItemCard
+                  key={id}
+                  isSelected={isSelected}
+                  current={m}
+                  onSelect={onSelect}
+                />
+              );
             })}
           </div>
         </Row>
