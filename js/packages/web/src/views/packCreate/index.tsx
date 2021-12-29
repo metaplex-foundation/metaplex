@@ -45,7 +45,7 @@ export const PackCreateView = (): ReactElement => {
   const { step, goToNextStep, resetStep } = useStep();
   const wallet = useWallet();
   const connection = useConnection();
-  const { isFetching, isLoadingMetadata, isLoading: isLoadingSiteState } = useMeta();
+  const { isFetching } = useMeta();
   const { accountByMint, userAccounts } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
@@ -176,7 +176,9 @@ export const PackCreateView = (): ReactElement => {
     });
   }, [data]);
 
-  const shouldRenderRefresh = step === CreatePackSteps.SelectItems || step === CreatePackSteps.SelectVoucher;
+  const shouldRenderRefresh =
+    step === CreatePackSteps.SelectItems ||
+    step === CreatePackSteps.SelectVoucher;
 
   return (
     <div className="pack-create-wrapper" ref={ref}>
@@ -190,7 +192,9 @@ export const PackCreateView = (): ReactElement => {
       <div className="content-wrapper">
         <Header step={step}>
           {shouldRenderRefresh && (
-            <Button onClick={() => pullUserMetadata(userAccounts)}>Refresh</Button>
+            <Button onClick={() => pullUserMetadata(userAccounts)}>
+              Refresh
+            </Button>
           )}
         </Header>
 

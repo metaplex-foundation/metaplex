@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
-import { ArrowLeftOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 interface IClaimingError {
   error: string;
@@ -16,12 +16,13 @@ const ClaimingError = ({ error = '', onDismiss }: IClaimingError) => {
         </div>
         <h4>Transaction error</h4>
         <div className="error-text">
-          Your transaction was not completed for {error ? error : 'an unknown reason. Please try again.'}
+          Your transaction was not completed for{' '}
+          {error ? error : 'an unknown reason. Please try again.'}
         </div>
         <Button onClick={onDismiss}>Dismiss</Button>
       </div>
     </div>
-  )
+  );
 };
 
 export default ClaimingError;

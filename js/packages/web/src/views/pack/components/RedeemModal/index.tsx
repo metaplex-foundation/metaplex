@@ -7,7 +7,7 @@ import TransactionApprovalStep from './components/TransactionApprovalStep';
 import { useArt } from '../../../../hooks';
 import { usePack } from '../../contexts/PackContext';
 import ClaimingStep from './components/ClaimingStep';
-import ClaimingError from "./components/ClaimingStep/ClaimingError";
+import ClaimingError from './components/ClaimingStep/ClaimingError';
 
 interface RedeemModalProps {
   isModalVisible: boolean;
@@ -51,7 +51,7 @@ const RedeemModal = ({
 
     try {
       await handleOpenPack();
-    } catch(e: any) {
+    } catch (e: any) {
       setModalState(openState.Error);
       setError(e?.message || '');
     }
@@ -109,14 +109,12 @@ const RedeemModal = ({
                 goBack={() => setModalState(openState.Initial)}
               />
             )}
-            {
-              isClaimingError && (
-                <ClaimingError
-                  onDismiss={() => setModalState(openState.Initial)}
-                  error={error}
-                />
-              )
-            }
+            {isClaimingError && (
+              <ClaimingError
+                onDismiss={() => setModalState(openState.Initial)}
+                error={error}
+              />
+            )}
             {shouldEnableRedeem && !isClaimingError && (
               <div className="modal-redeem__footer">
                 <p className="general-desc">
