@@ -27,6 +27,7 @@ import Sidebar from './components/Sidebar';
 import SelectItemsStep from './components/SelectItemsStep';
 import AdjustQuantitiesStep from './components/AdjustQuantitiesStep';
 import ReviewAndMintStep from './components/ReviewAndMintStep';
+import TransactionErrorModal from '../../components/TransactionErrorModal';
 import { sendCreatePack } from './transactions/createPack';
 import SuccessModal from './components/SuccessModal';
 import { useValidation } from './hooks/useValidation';
@@ -38,6 +39,8 @@ export const PackCreateView = (): ReactElement => {
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
+  const [errorModal, setErrorModal] =
+    useState<{error: string, display: boolean}>({error: '', display: false});
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const { pullUserMetadata } = useMeta();
 
@@ -152,8 +155,8 @@ export const PackCreateView = (): ReactElement => {
         });
 
         setShouldShowSuccessModal(true);
-      } catch (e) {
-        console.log(e);
+      } catch (e: any) {
+        setErrorModal({ error: e?.message, display: true });
       }
     }
     setIsCreating(false);
@@ -175,6 +178,7 @@ export const PackCreateView = (): ReactElement => {
       description: data.description,
     });
   }, [data]);
+  const shouldRenderSuccessModal = shouldShowSuccessModal && !errorModal.display
 
   const shouldRenderRefresh =
     step === CreatePackSteps.SelectItems ||
@@ -240,8 +244,12 @@ export const PackCreateView = (): ReactElement => {
           />
         )}
       </div>
-
-      <SuccessModal shouldShow={shouldShowSuccessModal} hide={handleFinish} />
+      <TransactionErrorModal
+        open={errorModal.display}
+        onDismiss={() => setErrorModal({ error: '', display: false })}
+        error={errorModal.error}
+      />
+      <SuccessModal shouldShow={shouldRenderSuccessModal} hide={handleFinish} />
     </div>
   );
 };
