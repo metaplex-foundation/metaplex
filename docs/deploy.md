@@ -7,7 +7,7 @@ Primarily you need to specify your repo in `js/packages/web/package.json` file
 Pay attention to these two lines:
 
 ```json
-"deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
+"deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/richschreiber10/metaplex -t true",
 "deploy": "cross-env ASSET_PREFIX=/metaplex/ yarn build && yarn deploy:gh",
 ```
 

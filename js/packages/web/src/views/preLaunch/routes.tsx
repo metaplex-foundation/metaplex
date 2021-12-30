@@ -7,7 +7,7 @@ import { PreLaunchView } from './';
 export function Routes() {
   return (
     <>
-      <HashRouter basename={'/'}>
+      <HashRouter basename={'/React'}>
         <Providers>
           <Switch>
             <Route path="/" component={() => <PreLaunchView />} />

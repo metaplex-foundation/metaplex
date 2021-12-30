@@ -1,6 +1,5 @@
 {
   "name": "candy-machine-mint",
-  "homepage": "http://richschreiber.com/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

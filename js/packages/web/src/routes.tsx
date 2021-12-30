@@ -22,7 +22,7 @@ export function Routes() {
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
   return (
     <>
-      <HashRouter basename={'/'}>
+      <HashRouter basename={'/React'}>
         <Providers>
           <Switch>
             {shouldEnableNftPacks && (
