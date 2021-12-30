@@ -87,9 +87,6 @@ export async function uploadV2({
   if (!cacheContent.program) {
     cacheContent.program = {};
   }
-  if (!cacheContent.items) {
-    cacheContent.items = {};
-  }
 
   if (!cacheContent.items) {
     cacheContent.items = {};
