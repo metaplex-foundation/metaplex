@@ -25,7 +25,7 @@ export const AppBar = (props: P) => {
       key: 'creators',
       title: 'Creators',
       link: `/creators/${ownerAddress}`,
-      group: '/creators',
+      isMatch: useMatch('/creators/:item'),
     },
   ];
 
@@ -59,15 +59,14 @@ export const AppBar = (props: P) => {
         </Link>
         <div className="nav-right">
           <div className="nav-menu-wrapper">
-            {menu.map(({ key, link, title, group }) => {
-              const match = useMatch(group + '/:item');
+            {menu.map(({ key, link, title, isMatch }) => {
               return (
                 <Link
                   to={link}
                   key={key}
                   className={
                     'nav-menu-item' +
-                    (match || link.startsWith(useLocation().pathname)
+                    (isMatch || link.startsWith(useLocation().pathname)
                       ? ' active'
                       : '')
                   }
