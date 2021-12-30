@@ -5,7 +5,6 @@ import {
   BidderMetadata,
   BidRedemptionTicket,
   BidStateType,
-  formatAmount,
   formatTokenAmount,
   fromLamports,
   getAuctionExtended,

@@ -56,7 +56,7 @@ export const AppBar = (props: P) => {
           link: '/owned',
         },
       ];
-    };;
+    }
 
     if (publicKey?.toBase58() === ownerAddress) {
       menu = [
