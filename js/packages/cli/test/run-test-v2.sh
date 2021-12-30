@@ -5,6 +5,8 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 ASSETS_DIR=$SCRIPT_DIR/assets
 SRC_DIR=$PARENT_DIR/src
 CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
+
+# Remote files to test the upload
 PNG="https://rm5fm2cz5z4kww2gbyjwhyfekgcc3qjmz43cw53g6qhwhgcofoyq.arweave.net/izpWaFnueKtbRg4TY-CkUYQtwSzPNit3ZvQPY5hOK7E/?ext=png"
 GIF="https://3shhjbznlupbi4gldnfdzpvulcexrek5fovdtzpo37bxde6au5va.arweave.net/3I50hy1dHhRwyxtKPL60WIl4kV0rqjnl7t_DcZPAp2o/?ext=gif"
 JPG="https://7cvkvtes5uh4h3ud42bi3nl2ivtmnbpqppqmau7pk2p2qykkmbya.arweave.net/-KqqzJLtD8Pug-aCjbV6RWbGhfB74MBT71afqGFKYHA/?ext=jpg"
@@ -12,6 +14,8 @@ JPG="https://7cvkvtes5uh4h3ud42bi3nl2ivtmnbpqppqmau7pk2p2qykkmbya.arweave.net/-K
 #-------------------------------------------#
 # SETUP                                     #
 #-------------------------------------------#
+
+# Environment
 
 ENV_URL="devnet"
 
@@ -29,12 +33,27 @@ case "$Input" in
 	2) ENV_URL="mainnet-beta" ;;
 esac
 
+# RPC server can be specified from the command-line with the flag "-r"
+# Otherwise the default public one will be used
+
+RPC="https://api.${ENV_URL}.solana.com"
+
+while getopts r: flag
+do
+    case "${flag}" in
+        r) RPC=${OPTARG} ;;
+    esac
+done
+
+# Storage
+
 STORAGE="arweave-sol"
+
 echo ""
 echo "Storage type:"
 echo "1. arweave-bundle"
 echo "2. arweave-sol (default)"
-echo "3. arweave (devnet only)"
+echo "3. arweave"
 echo "4. ipfs"
 echo "5. aws"
 echo -n "Select the storage type [1-5]: "
@@ -74,11 +93,12 @@ then
     read AWS_BUCKET
 fi
 
+# Asset type
 
 IMAGE=$PNG
 EXT="png"
 echo ""
-echo "File type:"
+echo "Asset type:"
 echo "1. PNG (default)"
 echo "2. JPG"
 echo "3. GIF"
@@ -93,6 +113,7 @@ case "$Input" in
         EXT="gif";;
 esac
 
+# Collection size
 
 echo ""
 echo -n "Number of items [10]: "
@@ -105,6 +126,8 @@ else
     # make sure we are dealing with a number
     ITEMS=$(($Number+0))
 fi
+
+# Clean up
 
 echo ""
 echo -n "Remove previous cache and assets [Y/n]: "
@@ -123,6 +146,9 @@ then
     rm -rf $ASSETS_DIR 2> /dev/null
     rm -rf .cache 2> /dev/null
 fi
+
+# Creation of the collection. This will generate ITEMS x (json, image)
+# files in the ASSETS_DIR
 
 # preparing the assets to upload
 read -r -d '' METADATA  <<-EOM
@@ -154,11 +180,11 @@ then
     if [ $SIZE -eq 0 ]
     then
         echo "[`date "+%T"`] Aborting: could not download sample image"
-        clean_up
         exit 1
     fi
 
-    # initialises the assets - this will be multiple copies of the same image/json pair
+    # initialises the assets - this will be multiple copies of the same
+    # image/json pair with a new index
     for (( i=0; i<$ITEMS; i++ ))
     do
         printf "$METADATA" $i $i $i $EXT $i $EXT $EXT > "$ASSETS_DIR/$i.json"
@@ -168,6 +194,7 @@ then
 fi
 
 # Candy Machine configuration
+
 CONFIG_FILE="config.json"
 
 cat > $CONFIG_FILE <<- EOM
@@ -193,6 +220,7 @@ cat > $CONFIG_FILE <<- EOM
 EOM
 
 # Wallet keypair file
+
 WALLET_KEY="`solana config get keypair | cut -d : -f 2`"
 CACHE_NAME="test"
 
@@ -214,11 +242,12 @@ function success
 }
 
 echo "[`date "+%T"`] Testing started using ${STORAGE} storage"
+echo "[`date "+%T"`] RPC URL: ${RPC}"
 echo ""
 echo "1. Uploading assets and creating the candy machine"
 echo ""
 echo ">>>"
-$CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME
+$CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
 echo "<<<"
 echo ""
@@ -232,7 +261,7 @@ fi
 echo "2. Verifying assets"
 echo ""
 echo ">>>"
-$CMD_CMV2 verify -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
+$CMD_CMV2 verify --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
 echo "<<<"
 
@@ -246,7 +275,7 @@ echo ""
 echo "3. Minting one token"
 echo ""
 echo ">>>"
-$CMD_CMV2 mint_one_token -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
+$CMD_CMV2 mint_one_token --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
 echo "<<<"
 
@@ -259,10 +288,10 @@ fi
 if [ ${Close} == "Y" ]
 then
     echo ""
-    echo "4. Clean up. Withdrawing cm funds."
+    echo "4. Clean up: withdrawing CM funds."
     echo ""
     echo ">>>"
-    $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME
+    $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
     EXIT_CODE=$?
 
     if [ ! $EXIT_CODE -eq 0 ]
