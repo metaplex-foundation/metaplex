@@ -1,9 +1,12 @@
 nav {
+  padding: 0 @content-padding;
+  margin: 3rem auto 4rem;
   display: flex;
+  justify-content: space-between;
   width: 100%;
+  max-width: (@content-max-width + 2 * @content-padding);
   align-items: center;
   flex-wrap: wrap;
-  margin: 1rem 2rem;
   gap: 1rem;
 
   @media (max-width: 800px) {
@@ -17,8 +20,10 @@ nav {
 .nav-menu-wrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
   padding: 0;
+  margin: 2rem 0;
+  border-bottom: 1px solid #7772;
+  gap: 2rem;
 
   @media (max-width: 800px) {
     margin-top: 0.3rem;
@@ -35,26 +40,28 @@ nav {
 }
 
 .nav-menu-item {
-  padding: 0.65rem 1rem;
-  border-radius: 5px;
-  border: 3px solid transparent;
+  padding: 1rem 0;
   font-size: 0.95rem;
   color: var(--text-color);
   line-height: 1;
   transition: ease all 0.07s;
+  text-align: center;
   cursor: pointer;
   background-color: transparent;
+  margin-bottom: -1px;
+  border-bottom: 3px solid transparent;
+  opacity: 0.8;
 
-  &:hover,
-  &.active {
-    background-color: #7773;
+  &:hover {
     color: var(--text-color);
+    opacity: 0.9;
   }
-  &:focus {
-    border: 3px solid #7775;
+  &.active {
+    border-bottom: 3px solid #777;
+    opacity: 1;
   }
   &:active {
-    transform: scale(0.97);
+    opacity: 0.7;
   }
 
   @media screen and (max-width: 450px) {
@@ -63,21 +70,38 @@ nav {
   }
 }
 
-#metaplex-header-logo {
-  margin: 0 auto;
-  transition: ease all 0.07s;
-  img {
-    object-fit: contain;
-    width: 50px;
-    border-radius: 5px;
-    @media (max-width: 800px) {
-      width: auto;
-      max-width: 100px;
-      margin: 1rem auto 0.5rem;
+.logo-wrapper {
+  --size: 150px;
+  width: 100%;
+  height: var(--size);
+  max-width: @content-max-width;
+  margin-top: calc((var(--size) / 1.5) * -1);
+  display: flex;
+  padding: 0 @content-padding;
+
+  #metaplex-header-logo {
+    display: block;
+    position: relative;
+    height: 200px;
+    .circle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      border: 8px solid white;
+    }
+
+    img {
+      object-fit: contain;
+      width: calc(var(--size) - 4px);
+      margin: 2px 0 0 2px;
+      border-radius: 50%;
     }
   }
-  &:active {
-    transform: scale(0.97);
+  @media screen and (max-width: 800px) {
+    justify-content: center;
   }
 }
 

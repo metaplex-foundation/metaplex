@@ -2,6 +2,7 @@ import React from 'react';
 import { Space, Typography } from 'antd';
 import { useStore } from '@oyster/common';
 const { Text } = Typography;
+import { Link } from 'react-router-dom';
 
 export const Banner = ({
   src,
@@ -9,12 +10,14 @@ export const Banner = ({
   subHeadingText,
   actionComponent,
   children,
+  logo,
 }: {
   src?: string;
   headingText: string;
   subHeadingText?: string;
   actionComponent?: JSX.Element;
   children?: React.ReactNode;
+  logo: string;
 }) => {
   const { storefront } = useStore();
   const social = storefront.social;
@@ -23,11 +26,14 @@ export const Banner = ({
 
   return (
     <div id="metaplex-banner">
-      {src && (
-        <div className="banner-wrapper">
-          <img id="metaplex-banner-backdrop" src={src} />
-        </div>
-      )}
+      {src && <img id="metaplex-banner-backdrop" src={src} />}
+
+      <div className="logo-wrapper">
+        <Link to="/" id="metaplex-header-logo">
+          <img src={logo || ''} />
+          <div className="circle"></div>
+        </Link>
+      </div>
 
       <div id="metaplex-banner-hero">
         <h1>{headingText}</h1>

@@ -6,15 +6,6 @@
   position: relative;
 }
 
-.banner-wrapper {
-  --ratio-denom: 5;
-
-  width: 100%;
-  overflow: hidden;
-  border-radius: 5px;
-  margin-bottom: 30px;
-}
-
 #metaplex-banner-backdrop {
   left: 0;
   top: 0;
@@ -23,29 +14,38 @@
   width: 100%;
   object-position: center;
   object-fit: cover;
+  height: 280px;
+
+  @media screen and (max-width: 800px) {
+    height: 176px;
+  }
 }
 
 #metaplex-banner-hero {
   display: flex;
   position: relative;
   flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 2rem;
+  width: 100%;
+  max-width: @content-max-width;
+  padding: @content-padding;
 
   h1 {
     font-size: 40px;
     font-weight: 900;
     line-height: 48px;
     max-width: 900px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
 
   .ant-typography {
     font-weight: 16px;
     font-weight: 400;
     max-width: 900px;
+  }
+
+  @media screen and (max-width: 800px) {
+    width: auto;
+    justify-content: center;
   }
 }
 #metaplex-banner-hero-social {

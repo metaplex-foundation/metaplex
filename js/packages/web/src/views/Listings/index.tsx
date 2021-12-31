@@ -5,7 +5,6 @@ import { Alert, Button, Spin, Anchor } from 'antd';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAuctionManagersToCache } from '../../hooks';
-import { Banner } from './../../components/Banner';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { MetaplexMasonry } from './../../components/MetaplexMasonry';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
@@ -16,7 +15,7 @@ export const Listings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const view = searchParams.get('view') as View;
-  const { ownerAddress, storefront } = useStore();
+  const { ownerAddress } = useStore();
   const wallet = useWallet();
   const { auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
@@ -98,11 +97,7 @@ export const Listings = () => {
           }
         />
       )}
-      <Banner
-        src={storefront.theme.banner}
-        headingText={storefront.meta.title}
-        subHeadingText={storefront.meta.description}
-      />
+
       <Anchor
         showInkInFixed={false}
         style={{

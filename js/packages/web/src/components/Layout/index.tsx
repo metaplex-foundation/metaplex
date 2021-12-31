@@ -2,6 +2,9 @@ import { Storefront } from '@oyster/common';
 import { Layout, notification } from 'antd';
 import React, { ReactNode, useEffect } from 'react';
 import { AppBar } from '../AppBar';
+import { MainMenu } from '../MainMenu/MainMenu';
+import { Banner } from './../../components/Banner';
+import { useStore } from '@oyster/common';
 
 const { Content } = Layout;
 
@@ -17,11 +20,23 @@ export const AppLayout = React.memo(function AppLayout(props: {
     });
   }, []);
 
+  const { storefront } = useStore();
+
   return (
     <>
       <Layout>
-        <AppBar logo={props.storefront?.theme?.logo || ''} />
-        <Content id="metaplex-layout-content">{props.children}</Content>
+        <Banner
+          src={storefront.theme.banner}
+          headingText={storefront.meta.title}
+          subHeadingText={storefront.meta.description}
+          logo={props.storefront?.theme?.logo || ''}
+        />
+
+        <AppBar />
+        <Content id="metaplex-layout-content">
+          <MainMenu />
+          {props.children}
+        </Content>
       </Layout>
     </>
   );
