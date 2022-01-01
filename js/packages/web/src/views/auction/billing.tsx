@@ -32,7 +32,7 @@ import {
   WinningConstraint,
   METAPLEX_ID,
   processMetaplexAccounts,
-  subscribeProgramChanges
+  subscribeProgramChanges,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
@@ -49,7 +49,7 @@ export const BillingView = () => {
   if (!id) {
     return <></>;
   }
-  
+
   const { auction, loading } = useAuction(id);
   const connection = useConnection();
   const wallet = useWallet();
@@ -67,14 +67,10 @@ export const BillingView = () => {
   }, [loadingBilling]);
 
   useEffect(() => {
-    return subscribeProgramChanges(
-      connection,
-      patchState,
-      {
-        programId: METAPLEX_ID,
-        processAccount: processMetaplexAccounts,
-      },
-    );
+    return subscribeProgramChanges(connection, patchState, {
+      programId: METAPLEX_ID,
+      processAccount: processMetaplexAccounts,
+    });
   }, [connection]);
 
   return loading ||
@@ -461,11 +457,14 @@ export const InnerBillingView = ({
   return (
     <Content>
       <Col>
-        <Row
-          style={{ margin: '0 30px', textAlign: 'left' }}
-        >
+        <Row className="metaplex-margin-x-8 metaplex-text-align-left">
           <Col span={12}>
-            <ArtContent pubkey={id} backdrop="dark" allowMeshRender square={false} />
+            <ArtContent
+              pubkey={id}
+              backdrop="dark"
+              allowMeshRender
+              square={false}
+            />
           </Col>
           <Col span={12}>
             <h1>{art.title}</h1>

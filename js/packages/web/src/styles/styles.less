@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600&display=swap');
-
 * {
   font-family: 'Inter', sans-serif !important;
 }
@@ -21,26 +20,102 @@
 
 // Global utility classes
 .metaplex {
-  &-spacing {
-    &-bottom {
-      &-md {
-        margin-bottom: @margin-md;
-      }
-      &-lg {
-        margin-bottom: @margin-lg;
-      }
+  &-text-align {
+    &-left {
+      text-align: left;
     }
   }
-  &-align {
+  &-reduced-font-size {
+    font-size: 90%;
+  }
+  &-opacity-5 {
+    opacity: 0.5;
+  }
+  &-round-corners {
+    border-radius: @border-radius;
+  }
+  &-flex {
+    display: flex;
+    &-column {
+      flex-direction: column;
+    }
+  }
+  &-justify-content-sb {
+    justify-content: space-between;
+  }
+  &-flex-wrap {
+    flex-wrap: wrap;
+  }
+  &-align-items {
     &-center {
-      text-align: center;
+      align-items: center;
     }
   }
 }
 
-.metaplex-text-align {
-  &-center {
-    text-align: center;
+// TODO -- Dry this up as much as possible.
+
+.metaplex-margin {
+  &-x {
+    &-8 {
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+  }
+  &-y {
+    &-4 {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+  }
+  &-top {
+    &-2 {
+      margin-top: 0.5rem;
+    }
+    &-4 {
+      margin-top: 1rem;
+    }
+  }
+  &-bottom {
+    &-1 {
+      margin-bottom: 0.25rem;
+    }
+    &-2 {
+      margin-bottom: 0.5rem;
+    }
+    &-4 {
+      margin-bottom: 1rem;
+    }
+    &-7 {
+      margin-bottom: 1.75rem;
+    }
+    &-8 {
+      margin-bottom: 2rem;
+    }
+  }
+}
+
+.metaplex-padding {
+  &-x {
+    &-4 {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+  }
+  &-y {
+    &-8 {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+  }
+}
+
+.metaplex-gap {
+  &-2 {
+    gap: 0.5rem;
+  }
+  &-4 {
+    gap: 1rem;
   }
 }
 
@@ -99,6 +174,12 @@
 .ant-btn.metaplex-button-appbar {
   display: block;
   line-height: 0;
+}
+
+.metaplex-anchor {
+  padding: 0.5rem 0 0.75rem;
+  background-color: var(--color-base);
+  margin: 0 0 0 -2px;
 }
 
 :root,

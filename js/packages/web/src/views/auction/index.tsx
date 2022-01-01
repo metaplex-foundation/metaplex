@@ -161,7 +161,7 @@ export const AuctionView = () => {
   const getArt = (className: string) => (
     <div className={className}>
       <Carousel
-        className="metaplex-spacing-bottom-md"
+        className="metaplex-margin-bottom-8"
         autoplay={false}
         afterChange={index => setCurrentIndex(index)}
       >
@@ -215,7 +215,7 @@ export const AuctionView = () => {
 
         {wallet.publicKey?.toBase58() === auction?.auctionManager.authority && (
           <Link to={`/listings/${id}/billing`}>
-            <Button type="ghost" style={{ marginBottom: '2rem' }}>
+            <Button type="ghost" className="metaplex-margin-bottom-8">
               Billing / Settlement
             </Button>
           </Link>
@@ -266,7 +266,7 @@ export const AuctionView = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '1.75rem' }}>
+        <div className="margin-bottom-7">
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
           {auction && (
             <AuctionCard auctionView={auction} hideDefaultAction={false} />
@@ -324,11 +324,15 @@ const BidLine = (props: {
       )}
     >
       <div
-        className={cx({
-          'auction-bid-line-item-is-canceled':
-            isCancelled && publicKey?.toBase58() === bidder,
-        })}
-        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        className={cx(
+          'metaplex-flex',
+          'metaplex-align-items-center',
+          'metaplex-gap-2',
+          {
+            'auction-bid-line-item-is-canceled':
+              isCancelled && publicKey?.toBase58() === bidder,
+          },
+        )}
       >
         {isme && <CheckOutlined />}
         <AmountLabel
@@ -342,7 +346,7 @@ const BidLine = (props: {
         {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem' }}>
+      <div className="metaplex-flex metaplex-gap-4">
         <Identicon size={24} address={bidder} />
         {bidderTwitterHandle ? (
           <a
@@ -423,7 +427,7 @@ export const AuctionBids = ({
   return (
     <div>
       <div>
-        <p style={{ marginBottom: '1rem' }}>Bid History</p>
+        <p className="metaplex-margin-bottom-4">Bid History</p>
         {auctionRunning &&
           auctionView.myBidderMetadata &&
           !auctionView.myBidderMetadata.info.cancelled && (

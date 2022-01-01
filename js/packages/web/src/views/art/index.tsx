@@ -103,7 +103,7 @@ export const ArtView = () => {
       <div className="item-page-left">
         {getArt('art-desktop')}
         {art.creators?.find(c => !c.verified) && unverified}
-        <p style={{ padding: '1rem 8px' }} className="art-desktop">
+        <p className="art-desktop metaplex-padding-y-8 metaplex-padding-x-4">
           {description}
         </p>
         {attributes && (

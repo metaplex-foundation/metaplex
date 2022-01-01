@@ -851,7 +851,7 @@ export const AuctionCard = ({
             Submit Bid
           </Button>
         </Col>
-        <div style={{ marginTop: '1rem' }}>
+        <div className="metaplex-margin-top-4">
           {!loading && (
             <>
               {notEnoughFundsToBid && (
@@ -893,7 +893,7 @@ export const AuctionCard = ({
     <div>
       <Card
         bordered={false}
-        className="metaplex-spacing-bottom-md auction-card"
+        className="metaplex-margin-bottom-4 auction-card"
         title={
           auctionView.isInstantSale ? undefined : isAuctionOver(auctionView) ? (
             'Auction has ended'
@@ -909,15 +909,8 @@ export const AuctionCard = ({
           className="metaplex-fullwidth metaplex-space-align-stretch"
           direction="vertical"
         >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '1rem',
-              }}
-            >
+          <div className="metaplex-flex-column">
+            <div className="metaplex-flex metaplex-justify-content-sb metaplex-flex-wrap metaplex-gap-4">
               <AuctionNumbers
                 auctionView={auctionView}
                 showAsRow={true}
@@ -954,11 +947,10 @@ export const AuctionCard = ({
               : auctionView.isInstantSale && instantSaleBtn)}
           {!hideDefaultAction && !wallet.connected && (
             <Button
-              className="metaplex-fullwidth"
+              className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
               type="primary"
               size="large"
               onClick={connect}
-              style={{ marginTop: '1rem', borderRadius: '5px' }}
             >
               Connect wallet to{' '}
               {auctionView.isInstantSale ? 'purchase' : 'place bid'}

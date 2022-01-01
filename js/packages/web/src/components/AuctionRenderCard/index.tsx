@@ -19,7 +19,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const humanStatus = getHumanStatus(status);
 
   const card = (
-    <Card hoverable bordered={false} style={{ borderRadius: '5px' }}>
+    <Card hoverable bordered={false} className="metaplex-round-corners">
       <Space direction="vertical" className="metaplex-fullwidth">
         <ArtContent
           square
@@ -28,11 +28,13 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           pubkey={id}
           allowMeshRender={false}
         />
-        <h3 style={{ margin: '1rem 0 0.5rem' }}>{name}</h3>
+        <h3 className="metaplex-margin-top-4 metaplex-margin-bottom-2">
+          {name}
+        </h3>
 
         {!status.isInstantSale && status.isLive && (
           <div>
-            <p style={{ fontSize: '0.9rem', margin: '0.5rem 0 0.35rem' }}>
+            <p className="metaplex-margin-top-2 metaplex-margin-bottom-1 metaplex-reduced-font-size">
               Ending in
             </p>
             <AuctionCountdown auctionView={auctionView} labels={false} />

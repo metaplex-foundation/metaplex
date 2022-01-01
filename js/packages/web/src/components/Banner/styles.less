@@ -3,7 +3,7 @@
   flex-flow: column nowrap;
   justify-content: space-between;
   align-items: center;
-  position: relative;
+  width: 100vw;
 }
 
 #metaplex-banner-backdrop {
@@ -14,10 +14,14 @@
   width: 100%;
   object-position: center;
   object-fit: cover;
-  height: 280px;
+  height: 300px;
+
+  @media screen and (max-width: 1100px) {
+    height: 240px;
+  }
 
   @media screen and (max-width: 800px) {
-    height: 176px;
+    height: 200px;
   }
 }
 
@@ -25,9 +29,9 @@
   display: flex;
   position: relative;
   flex-flow: column nowrap;
-  width: 100%;
+  width: calc(100vw - @content-padding * 2);
   max-width: @content-max-width;
-  padding: @content-padding;
+  margin: 2rem 0;
 
   h1 {
     font-size: 40px;

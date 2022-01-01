@@ -1,8 +1,6 @@
 import React from 'react';
 import { Card } from 'antd';
-
 import { Artist } from '../../types';
-
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../MetaAvatar';
 
@@ -15,6 +13,7 @@ export const ArtistCard = ({
 }) => {
   return (
     <Card
+      className="metaplex-round-corners"
       hoverable
       cover={
         <div className="metaplex-artist-card-cover">
@@ -27,7 +26,6 @@ export const ArtistCard = ({
         </div>
       }
       bordered={false}
-      style={{ borderRadius: '5px' }}
     >
       <div className="content-wrapper">
         <MetaAvatar creators={[artist]} size={40} />

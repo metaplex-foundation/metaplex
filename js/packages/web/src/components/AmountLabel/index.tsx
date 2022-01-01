@@ -3,6 +3,7 @@ import { Statistic } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
+import styled from 'styled-components';
 
 interface IAmountLabel {
   amount: number;
@@ -25,8 +26,13 @@ export const AmountLabel = (props: IAmountLabel) => {
 
   const PriceNaN = isNaN(amount);
 
+  const StyledOuterWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+  `;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <StyledOuterWrapper>
       <div className="amount-label-wrapper">
         {PriceNaN === false && (
           <Statistic
@@ -35,7 +41,7 @@ export const AmountLabel = (props: IAmountLabel) => {
             prefix={customPrefix || <SolCircle />}
           />
         )}
-        {displayUSD && <span style={{ opacity: '0.5' }}>|</span>}
+        {displayUSD && <span className="metaplex-opacity-5">|</span>}
         {displayUSD && (
           <div>
             {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
@@ -43,6 +49,6 @@ export const AmountLabel = (props: IAmountLabel) => {
         )}
       </div>
       <p className="auction-status">{title}</p>
-    </div>
+    </StyledOuterWrapper>
   );
 };

@@ -70,7 +70,7 @@ export const Listings = () => {
       {showCacheAuctionsAlert && (
         <Alert
           message="Attention Store Owner"
-          className="app-alert-banner metaplex-spacing-bottom-lg"
+          className="app-alert-banner metaplex-margin-bottom-8"
           description={
             <p>
               Make your storefront faster by enabling listing caches.{' '}
@@ -98,14 +98,7 @@ export const Listings = () => {
         />
       )}
 
-      <Anchor
-        showInkInFixed={false}
-        style={{
-          padding: '0.5rem 0 0.75rem',
-          backgroundColor: 'var(--color-base',
-          margin: '0 0 0 -2px',
-        }}
-      >
+      <Anchor showInkInFixed={false} className="metaplex-anchor">
         <div className="nav-menu-wrapper secondary">
           {views
             .filter(({ count }) => count() > 0)

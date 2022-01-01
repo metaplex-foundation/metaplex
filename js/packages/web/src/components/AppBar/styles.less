@@ -1,33 +1,16 @@
-nav {
-  padding: 0 @content-padding;
-  margin: 3rem auto 4rem;
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: (@content-max-width + 2 * @content-padding);
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-
-  @media (max-width: 800px) {
-    flex-direction: column;
-  }
-  @media screen and (max-width: 600px) {
-    margin: 0.65rem;
-  }
-}
-
 .nav-menu-wrapper {
   display: flex;
   flex-wrap: wrap;
-  padding: 0;
-  margin: 2rem 0;
   border-bottom: 1px solid #7772;
   gap: 2rem;
+  width: calc(100vw - @content-padding * 2);
+  max-width: @content-max-width;
+  margin: 1rem 0 8rem;
 
   @media (max-width: 800px) {
     margin-top: 0.3rem;
     justify-content: center;
+    width: auto;
 
     &.secondary {
       justify-content: flex-start;
@@ -66,38 +49,37 @@ nav {
 
   @media screen and (max-width: 450px) {
     font-size: 0.9rem;
-    padding: 0.43rem 0.7rem;
   }
 }
 
 .logo-wrapper {
-  --size: 150px;
-  width: 100%;
+  --size: 120px;
   height: var(--size);
-  max-width: @content-max-width;
   margin-top: calc((var(--size) / 1.5) * -1);
   display: flex;
-  padding: 0 @content-padding;
+  width: calc(100vw - @content-padding * 2);
+  max-width: @content-max-width;
 
   #metaplex-header-logo {
     display: block;
     position: relative;
-    height: 200px;
-    .circle {
+    width: var(--size);
+    height: var(--size);
+    .logo-border {
       position: absolute;
       top: 0;
       left: 0;
       width: var(--size);
       height: var(--size);
-      border-radius: 50%;
-      border: 8px solid white;
+      border-radius: 10%;
+      background: #000;
     }
 
     img {
       object-fit: contain;
-      width: calc(var(--size) - 4px);
-      margin: 2px 0 0 2px;
-      border-radius: 50%;
+      width: calc(var(--size) - 12px);
+      margin: 6px 0 0 6px;
+      border-radius: 8%;
     }
   }
   @media screen and (max-width: 800px) {
@@ -122,4 +104,15 @@ nav {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  position: absolute;
+  top: 2rem;
+  right: 3rem;
+  background-color: #111c;
+  padding: 0.5rem;
+  border-radius: 2rem;
+
+  @media screen and (max-width: 800px) {
+    right: inherit;
+    margin: 0 auto;
+  }
 }

@@ -38,7 +38,7 @@ export const ArtistView = () => {
   return (
     <Row>
       <Col span={24}>
-        <h2 style={{ margin: '1rem 0' }}>Creators</h2>
+        <h2 className="metaplex-margin-y-4">Creators</h2>
         <MetaplexMasonry>
           {creators.map((m, idx) => {
             const current = m.info.address;
