@@ -260,6 +260,15 @@ export const getCandyMachineAddress = async (
   );
 };
 
+export const deriveCandyMachineV2ProgramAddress = async (
+  candyMachineId: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await PublicKey.findProgramAddress(
+    [Buffer.from(CANDY_MACHINE), candyMachineId.toBuffer()],
+    CANDY_MACHINE_PROGRAM_V2_ID,
+  );
+};
+
 export const getConfig = async (
   authority: anchor.web3.PublicKey,
   uuid: string,

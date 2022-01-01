@@ -24,6 +24,7 @@ import {
   loadCandyProgramV2,
   loadWalletKey,
   AccountAndPubkey,
+  deriveCandyMachineV2ProgramAddress,
 } from './helpers/accounts';
 
 import { uploadV2 } from './commands/upload';
@@ -873,8 +874,13 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   const walletKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
 
+  const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+  const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+    candyMachineId,
+  );
+
   const accountsByCreatorAddress = await getAccountsByCreatorAddress(
-    cacheContent.program.candyMachine,
+    candyMachineAddr.toBase58(),
     anchorProgram.provider.connection,
   );
   const addresses = accountsByCreatorAddress.map(it => {
