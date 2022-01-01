@@ -1,7 +1,7 @@
 .nav-menu-wrapper {
   display: flex;
   flex-wrap: wrap;
-  border-bottom: 1px solid #7772;
+  border-bottom: 1px solid @theme-neutral-gray-very-transparent;
   gap: 2rem;
   width: calc(100vw - @content-padding * 2);
   max-width: @content-max-width;
@@ -40,7 +40,7 @@
     opacity: 0.9;
   }
   &.active {
-    border-bottom: 3px solid #777;
+    border-bottom: 3px solid @theme-neutral-gray;
     opacity: 1;
   }
   &:active {
