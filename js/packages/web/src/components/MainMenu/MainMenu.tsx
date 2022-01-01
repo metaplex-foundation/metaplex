@@ -12,7 +12,7 @@ export const MainMenu = () => {
     return {
       key,
       title: title || key[0].toUpperCase() + key.substring(1),
-      link: `/${key + linkAppend || ''}`,
+      link: `/${key + (linkAppend ? linkAppend : '')}`,
       group: `/${key}`,
     };
   };
@@ -30,14 +30,14 @@ export const MainMenu = () => {
     menu = [...menu, getMenuItem('admin')];
   }
 
-  interface NavMenuItemProps {
+  interface MainMenuItemProps {
     to: string;
     key: string;
     group?: string;
     title: string;
   }
 
-  const NavMenuItem = ({ to, title, key, group }: NavMenuItemProps) => {
+  const MainMenuItem = ({ to, title, key, group }: MainMenuItemProps) => {
     const resolved = useResolvedPath(group || to);
     const match = useMatch({ path: resolved.pathname, end: false });
 
@@ -45,7 +45,7 @@ export const MainMenu = () => {
       <Link
         to={to}
         key={key}
-        className={cx('nav-menu-item', {
+        className={cx('main-menu-item', {
           active: match,
         })}
       >
@@ -55,9 +55,9 @@ export const MainMenu = () => {
   };
 
   return (
-    <div className="nav-menu-wrapper">
+    <div className="main-menu-wrapper">
       {menu.map(({ key, title, link, group }) => (
-        <NavMenuItem to={link} key={key} group={group} title={title} />
+        <MainMenuItem to={link} key={key} group={group} title={title} />
       ))}
     </div>
   );

@@ -55,3 +55,38 @@
 #metaplex-banner-hero-social {
   margin-top: 20px;
 }
+
+.logo-wrapper {
+  --size: 120px;
+  height: var(--size);
+  margin-top: calc((var(--size) / 1.5) * -1);
+  display: flex;
+  width: calc(100vw - @content-padding * 2);
+  max-width: @content-max-width;
+
+  #metaplex-header-logo {
+    display: block;
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    .logo-border {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 10%;
+      background: #000; // todo, use theme color
+    }
+
+    img {
+      object-fit: contain;
+      width: calc(var(--size) - 12px);
+      margin: 6px 0 0 6px;
+      border-radius: 8%;
+    }
+  }
+  @media screen and (max-width: 800px) {
+    justify-content: center;
+  }
+}

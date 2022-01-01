@@ -198,7 +198,8 @@ export function Notifications({
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          A whitelisted creator wants you to approve a collaboration. See artwork <Link to={`/artworks/${m.pubkey}`}>here</Link>.
+          A whitelisted creator wants you to approve a collaboration. See
+          artwork <Link to={`/artworks/${m.pubkey}`}>here</Link>.
         </span>
       ),
       action: async () => {
@@ -213,7 +214,15 @@ export function Notifications({
     });
   });
 
-  const activeNotifications = notifications.length > 0 ? notifications.slice(0, 10) : [{ title: "No Notifications", description: "You have no notifications that need attending." }] as NotificationCard[];
+  const activeNotifications =
+    notifications.length > 0
+      ? notifications.slice(0, 10)
+      : ([
+          {
+            title: 'No Notifications',
+            description: 'You have no notifications that need attending.',
+          },
+        ] as NotificationCard[]);
 
   const content = (
     <List
@@ -242,19 +251,15 @@ export function Notifications({
             </>
           }
         >
-          <List.Item.Meta
-            title={item.title}
-            description={item.description}
-          />
+          <List.Item.Meta title={item.title} description={item.description} />
         </List.Item>
       )}
     />
   );
 
-
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
-      <Button className="metaplex-button-appbar" type={buttonType}>
+      <Button className="metaplex-button-FloatingMenu" type={buttonType}>
         <BellSvg />
       </Button>
     </Popover>

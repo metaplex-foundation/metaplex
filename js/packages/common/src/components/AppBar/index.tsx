@@ -7,7 +7,7 @@ import { LABELS } from '../../constants/labels';
 import { ConnectButton } from '..';
 import { useWallet } from '@solana/wallet-adapter-react';
 
-export const AppBar = (props: {
+export const FloatingMenu = (props: {
   left?: JSX.Element;
   right?: JSX.Element;
   useWalletBadge?: boolean;
