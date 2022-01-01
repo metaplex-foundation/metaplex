@@ -107,99 +107,102 @@ export async function uploadV2({
     storage === StorageType.ArweaveBundle ||
     storage === StorageType.ArweaveSol
   ) {
-    const assetKey = dedupedAssetKeys[0];
-    const manifest = getAssetManifest(
-      dirname,
-      assetKey.index.includes('json')
-        ? assetKey.index
-        : `${assetKey.index}.json`,
-    );
-    if (!cacheContent.program.uuid) {
-      try {
-        const remainingAccounts = [];
 
-        if (splToken) {
-          const splTokenKey = new PublicKey(splToken);
-
-          remainingAccounts.push({
-            pubkey: splTokenKey,
-            isWritable: false,
-            isSigner: false,
-          });
-        }
-
-        // initialize candy
-        log.info(`initializing candy machine`);
-        const res = await createCandyMachineV2(
-          anchorProgram,
-          walletKeyPair,
-          treasuryWallet,
-          splToken,
-          {
-            itemsAvailable: new BN(totalNFTs),
-            uuid,
-            symbol: manifest.symbol,
-            sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-            isMutable: mutable,
-            maxSupply: new BN(0),
-            retainAuthority: retainAuthority,
-            gatekeeper,
-            goLiveDate,
-            price,
-            endSettings,
-            whitelistMintSettings,
-            hiddenSettings,
-            creators: manifest.properties.creators.map(creator => {
-              return {
-                address: new PublicKey(creator.address),
-                verified: true,
-                share: creator.share,
-              };
-            }),
-          },
-        );
-        cacheContent.program.uuid = res.uuid;
-        cacheContent.program.candyMachine = res.candyMachine.toBase58();
-        candyMachine = res.candyMachine;
-        log.info(
-          `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
-        );
-
-        saveCache(cacheName, env, cacheContent);
-      } catch (exx) {
-        log.error('Error deploying config to Solana network.', exx);
-        throw exx;
-      }
-    }
-    // Initialize the Arweave Bundle Upload Generator.
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
-    const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(
-      storage,
-      dirname,
-      dedupedAssetKeys,
-      storage === StorageType.ArweaveBundle
-        ? JSON.parse((await readFile(arweaveJwk)).toString())
-        : undefined,
-      storage === StorageType.ArweaveSol ? walletKeyPair : undefined,
-    );
-
-    let result = arweaveBundleUploadGenerator.next();
-    // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
-    // and save the results to the Cache object, persist it to the Cache file.
-    while (!result.done) {
-      const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
-        await result.value;
-      updateCacheAfterUpload(
-        cacheContent,
-        cacheKeys,
-        arweavePathManifestLinks,
-        updatedManifests,
+   if (dedupedAssetKeys.length) {
+      const assetKey = dedupedAssetKeys[0];
+      const manifest = getAssetManifest(
+        dirname,
+        assetKey.index.includes('json')
+          ? assetKey.index
+          : `${assetKey.index}.json`,
       );
-      saveCache(cacheName, env, cacheContent);
-      log.info('Saved bundle upload result to cache.');
-      result = arweaveBundleUploadGenerator.next();
-    }
-    log.info('Upload done.');
+      if (!cacheContent.program.uuid) {
+        try {
+          const remainingAccounts = [];
+
+          if (splToken) {
+            const splTokenKey = new PublicKey(splToken);
+
+            remainingAccounts.push({
+              pubkey: splTokenKey,
+              isWritable: false,
+              isSigner: false,
+            });
+          }
+
+          // initialize candy
+          log.info(`initializing candy machine`);
+          const res = await createCandyMachineV2(
+            anchorProgram,
+            walletKeyPair,
+            treasuryWallet,
+            splToken,
+            {
+              itemsAvailable: new BN(totalNFTs),
+              uuid,
+              symbol: manifest.symbol,
+              sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+              isMutable: mutable,
+              maxSupply: new BN(0),
+              retainAuthority: retainAuthority,
+              gatekeeper,
+              goLiveDate,
+              price,
+              endSettings,
+              whitelistMintSettings,
+              hiddenSettings,
+              creators: manifest.properties.creators.map(creator => {
+                return {
+                  address: new PublicKey(creator.address),
+                  verified: true,
+                  share: creator.share,
+                };
+              }),
+            },
+          );
+          cacheContent.program.uuid = res.uuid;
+          cacheContent.program.candyMachine = res.candyMachine.toBase58();
+          candyMachine = res.candyMachine;
+          log.info(
+            `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+          );
+
+          saveCache(cacheName, env, cacheContent);
+        } catch (exx) {
+          log.error('Error deploying config to Solana network.', exx);
+          throw exx;
+        }
+      }
+      // Initialize the Arweave Bundle Upload Generator.
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
+      const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(
+        storage,
+        dirname,
+        dedupedAssetKeys,
+        storage === StorageType.ArweaveBundle
+          ? JSON.parse((await readFile(arweaveJwk)).toString())
+          : undefined,
+        storage === StorageType.ArweaveSol ? walletKeyPair : undefined,
+      );
+
+      let result = arweaveBundleUploadGenerator.next();
+      // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
+      // and save the results to the Cache object, persist it to the Cache file.
+      while (!result.done) {
+        const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
+          await result.value;
+        updateCacheAfterUpload(
+          cacheContent,
+          cacheKeys,
+          arweavePathManifestLinks,
+          updatedManifests,
+        );
+        saveCache(cacheName, env, cacheContent);
+        log.info('Saved bundle upload result to cache.');
+        result = arweaveBundleUploadGenerator.next();
+      }
+      log.info('Upload done.');
+   }
   } else {
     await Promise.all(
       chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
