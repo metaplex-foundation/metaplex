@@ -13,10 +13,12 @@ import {
   useHighestBidForAuction,
 } from '../../../hooks';
 import { BN } from 'bn.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 interface AuctionStatusLabels {
   status: string;
   amount: string | number;
+  temp: string;
 }
 
 export const useAuctionStatus = (
@@ -34,8 +36,14 @@ export const useAuctionStatus = (
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
 
-  let status = 'Starting Bid';
-
+  let status = 'Price';
+  const wallet = useWallet();
+  const tempp =
+    auctionView.auctionManager.authority === wallet?.publicKey?.toBase58();
+  let temp = '';
+  if (tempp) {
+    temp = 'you';
+  }
   let amount: string | number = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
     mintInfo,
@@ -66,12 +74,13 @@ export const useAuctionStatus = (
 
     amount = formatTokenAmount(
       auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber(),
-      mintInfo
+      mintInfo,
     );
 
     return {
       status,
       amount,
+      temp,
     };
   }
 
@@ -85,17 +94,20 @@ export const useAuctionStatus = (
       return {
         status: 'Ended',
         amount,
+        temp,
       };
     }
 
     return {
       status: 'Winning Bid',
       amount,
+      temp,
     };
   }
 
   return {
     status,
     amount,
+    temp,
   };
 };

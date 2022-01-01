@@ -13,15 +13,15 @@ export const ArtistCard = ({ artist }: { artist: Artist }) => {
       className={`artist-card`}
       cover={
         <div className="header-container">
-          {artist.background ? <img src={artist.background} /> : null}
+          <img src="/diamond.jpg" /> 
         </div>
       }
       bordered={false}
     >
       <>
-        <MetaAvatar creators={[artist]} size={64} />
+        
         <div className="artist-card-name">
-          {artist.name || shortenAddress(artist.address || '')}
+          My NFT Space
         </div>
         <div className="artist-card-description">{artist.about}</div>
       </>

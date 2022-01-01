@@ -1,0 +1,130 @@
+header.ant-layout-header.App-Bar {
+  width: 100%;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  height: fit-content;
+  z-index: 10;
+
+  @media (max-width: @mobile-xs-max) {
+    max-height: 64px;
+    position: sticky;
+    background: @black-100;
+  }
+}
+
+footer.ant-layout-footer {
+  padding: 10px 0;
+  width: 100%;
+}
+
+.ant-layout-sider {
+  background-color: unset;
+}
+
+a:link {
+  color: #b480eb;
+}
+a:visited {
+  color: #b480eb;
+}
+a:hover {
+  color: #b480eb;
+}
+a:active {
+  color: #b480eb;
+}
+
+.masonry-grid {
+  display: flex;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-left: -32px !important;
+}
+
+.masonry-grid_column {
+  padding-left: 32px !important; /* gutter size */
+  background-clip: padding-box;
+}
+
+.masonry-grid_column > div {
+  /* change div to reference your elements you put in <Masonry> */
+  margin-bottom: 30px;
+}
+.ant-tabs-ink-bar {
+  display: none;
+}
+.ant-tabs-top > .ant-tabs-nav::before,
+.ant-tabs-top > div > .ant-tabs-nav::before {
+  display: none;
+}
+.ant-tabs-top > .ant-tabs-nav,
+.ant-tabs-bottom > .ant-tabs-nav,
+.ant-tabs-top > div > .ant-tabs-nav,
+.ant-tabs-bottom > div > .ant-tabs-nav {
+  margin-bottom: 24px;
+}
+.ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 8px;
+}
+.ant-tabs-tab {
+  /* Auto Layout */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: 600;
+  height: 40px;
+  opacity: 0.8;
+  &.ant-tabs-tab-active {
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
+    border-radius: 8px;
+    opacity: 1;
+
+    .ant-tabs-tab-btn {
+      color: white;
+    }
+  }
+
+  .ant-tabs-tab-btn {
+    display: flex;
+    align-items: center;
+  }
+  span.live {
+    width: 8px;
+    height: 8px;
+    border-radius: 5px;
+
+    background: @metaplex-primary-color;
+    box-shadow: 0px 0px 12px @metaplex-primary-color;
+
+    /* Inside Auto Layout */
+
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    margin-right: 12px;
+  }
+}
+
+/* Optional, different gutter size on mobile */
+@media (max-width: 800px) {
+  .masonry-grid {
+    margin-left: -15px; /* gutter size offset */
+  }
+  .masonry-grid_column {
+    padding-left: 15px; /* gutter size offset */
+  }
+  .masonry-grid_column > div {
+    margin-bottom: 15px; /* space between items */
+  }
+}
+
+.ant-card-body {
+  padding: 0;
+}

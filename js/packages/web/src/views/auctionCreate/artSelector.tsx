@@ -63,7 +63,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
             style={{ width: 200, height: 300, display: 'flex' }}
             onClick={open}
           >
-            <span className="text-center">Add an NFT</span>
+            <span className="text-center">Select an NFT</span>
           </div>
         )}
       </div>
@@ -77,10 +77,8 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         className={"modalp-40"}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
-          <h2>Select the NFT you want to sell</h2>
-          <p style={{ fontSize: '1.2rem' }}>
-            Select the NFT that you want to sell copy/copies of.
-          </p>
+          <h2>Select an NFT</h2>
+         
         </Row>
         <Row
           className="content-action"
@@ -122,7 +120,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
             onClick={confirm}
             className="action-btn"
           >
-            Confirm
+           Okay
           </Button>
         </Row>
       </Modal>

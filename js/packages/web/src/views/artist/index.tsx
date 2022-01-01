@@ -1,14 +1,42 @@
-import { Col, Divider, Row } from 'antd';
-import React from 'react';
+import { Col, Divider, Row,Layout, Tabs } from 'antd';
+
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
 import { CardLoader } from '../../components/MyLoader';
 import { useCreator, useCreatorArts } from '../../hooks';
+import React, { useState } from 'react';
+
+
+//extra
+import { useAuctionsList } from './hooks/useAuctionsList';
+import { useMeta } from '../../contexts';
+import { AuctionRenderCard } from '../../components/AuctionRenderCard';
+
+const { TabPane } = Tabs;
+const { Content } = Layout;
+
+export enum LiveAuctionViewState {
+  All = '0',
+  Participated = '1',
+  Ended = '2',
+  Resale = '3',
+}
+
+
+
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
   const creator = useCreator(id);
   const artwork = useCreatorArts(id);
+
+  
+
+  //extra
+  const { isLoading } = useMeta();
+  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
+  const { auctions, hasResaleAuctions } = useAuctionsList(activeKey);
+
 
   const artworkGrid = (
     <div className="artwork-grid">
@@ -34,15 +62,26 @@ export const ArtistView = () => {
         >
           <Col span={24}>
             <h2>
-              {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
-              {creator?.info.name || creator?.info.address}
+            My NFT Space
             </h2>
             <br />
-            <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{creator?.info.description}</div>
+            <div className="info-header">ABOUT THE COLLECTION</div>
+            <p>A collection of 1,111 Solana NFTs with 4 different variants. Each variant has it's own set of benefits. Every “MY NFT Space Badge” yields certain amount of $NSPACE Token a day for the next 10 years.</p>
             <br />
-            <div className="info-header">Art Created</div>
-            {artworkGrid}
+            <div className="info-header"></div>
+            <div className="artwork-grid">
+                {isLoading &&
+                  [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+                {!isLoading &&
+                  auctions.map(auction => (
+                    <Link
+                      key={auction.auction.pubkey}
+                      to={`/auction/${auction.auction.pubkey}`}
+                    >
+                      <AuctionRenderCard auctionView={auction} />
+                    </Link>
+                  ))}
+              </div>
           </Col>
         </Row>
       </Col>

@@ -117,75 +117,11 @@ export const ArtView = () => {
                   {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
                 </div>
               </Col>
-              <Col span={12}>
-                <ViewOn id={id} />
-              </Col>
+             
             </Row>
-            <Row>
-              <Col>
-                <h6 style={{ marginTop: 5 }}>Created By</h6>
-                <div className="creators">
-                  {(art.creators || []).map((creator, idx) => {
-                    return (
-                      <div
-                        key={idx}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          marginBottom: 5,
-                        }}
-                      >
-                        <MetaAvatar creators={[creator]} size={64} />
-                        <div>
-                          <span className="creator-name">
-                            {creator.name ||
-                              shortenAddress(creator.address || '')}
-                          </span>
-                          <div style={{ marginLeft: 10 }}>
-                            {!creator.verified &&
-                              (creator.address === pubkey ? (
-                                <Button
-                                  onClick={async () => {
-                                    try {
-                                      await sendSignMetadata(
-                                        connection,
-                                        wallet,
-                                        id,
-                                      );
-                                    } catch (e) {
-                                      console.error(e);
-                                      return false;
-                                    }
-                                    return true;
-                                  }}
-                                >
-                                  Approve
-                                </Button>
-                              ) : (
-                                tag
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <h6 style={{ marginTop: 5 }}>Edition</h6>
-                <div className="art-edition">{badge}</div>
-              </Col>
-            </Row>
-            {art.type === ArtType.Master && (
-              <Row>
-                <Col>
-                  <h6 style={{ marginTop: 5 }}>Max Supply</h6>
-                  <div className="art-edition">{maxSupply}</div>
-                </Col>
-              </Row>
-            )}
+          
+           
+            
             {/* <Button
                   onClick={async () => {
                     if(!art.mint) {

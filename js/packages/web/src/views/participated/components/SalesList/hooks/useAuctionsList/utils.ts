@@ -16,8 +16,10 @@ const participatedAuctionsFilter = (
   auction: AuctionView,
   bidderPublicKey?: PublicKey | null,
 ): boolean =>
-  auction.state === AuctionViewState.Live &&
-  auction.auctionManager.authority === bidderPublicKey?.toBase58();
+  auction.state !== AuctionViewState.Defective &&
+  auction.auction.info.bidState.bids.some(
+    b => b.key == bidderPublicKey?.toBase58(),
+  );
 
 export const resaleAuctionsFilter = (auction: AuctionView): boolean =>
   auction.state === AuctionViewState.Live && checkPrimarySale(auction);

@@ -10,6 +10,7 @@ import ItemCard from './components/ItemCard';
 import { useUserAccounts } from '@oyster/common';
 import { DownOutlined } from "@ant-design/icons";
 import { isMetadata, isPack } from './utils';
+import { Link } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -59,11 +60,12 @@ export const ArtworksView = () => {
       overlayClassName={"refresh-overlay"}
       overlay={
         <Menu className={'gray-dropdown'}>
-          <Menu.Item onClick={() => pullAllMetadata()}>Load All Metadata</Menu.Item>
+          <Link to={`/auction/create/0`}> <Menu.Item >Sell</Menu.Item> </Link>
+          <Menu.Item onClick={() => pullAllMetadata()}>Refresh Wallet</Menu.Item>
         </Menu>
       }
     >
-      Refresh
+      Menu
     </Dropdown.Button>
   );
 
@@ -77,28 +79,16 @@ export const ArtworksView = () => {
               onTabClick={key => setActiveKey(key as ArtworkViewState)}
               tabBarExtraContent={refreshButton}
             >
-              <TabPane
-                tab={<span className="tab-title">All</span>}
-                key={ArtworkViewState.Metaplex}
-              >
-                {artworkGrid}
-              </TabPane>
+             
               {connected && (
                 <TabPane
-                  tab={<span className="tab-title">Owned</span>}
+                  tab={<span className="tab-title">Verified NFTs</span>}
                   key={ArtworkViewState.Owned}
                 >
                   {artworkGrid}
                 </TabPane>
               )}
-              {connected && (
-                <TabPane
-                  tab={<span className="tab-title">Created</span>}
-                  key={ArtworkViewState.Created}
-                >
-                  {artworkGrid}
-                </TabPane>
-              )}
+             
             </Tabs>
           </Row>
         </Col>

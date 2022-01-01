@@ -21,19 +21,29 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const name = art?.title || ' ';
 
   const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == auctionView.auction.info.tokenMint)[0]
-  const { status, amount } = useAuctionStatus(auctionView);
+  const { status, amount , temp} = useAuctionStatus(auctionView);
+  function getArtistName()
+  {
+   return temp;
+  
+    if(creators[0]?.address=="4ZMAfu75f4RAHCy8M6f4Kx3GaiMbBfBgmTV34cKSK22P")
+    return "Galactic Geckos";
+   
+   return (creators[0]?.name ||
+   creators[0]?.address ||
+   'My NFT SPACE')
+  
+  }
 
   const card = (
     <Card hoverable={true} className={`auction-render-card`} bordered={false}>
       <div className={'card-art-info'}>
         <div className="auction-gray-wrapper">
           <div className={'card-artist-info'}>
-            <MetaAvatar creators={creators.length ? [creators[0]] : undefined} />
+          
             <span className={'artist-name'}>
-              {creators[0]?.name ||
-                creators[0]?.address?.substr(0, 6) ||
-                'Go to auction'}
-              ...
+            {getArtistName()}
+          
             </span>
           </div>
           <div className={'art-content-wrapper'}>
@@ -45,10 +55,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
             />
           </div>
           <div className={'art-name'}>{name}</div>
-          <div className="auction-info-container">
-            <div className={'info-message'}>ENDING IN</div>
-            <AuctionCountdown auctionView={auctionView} labels={false} />
-          </div>
+          
         </div>
       </div>
       <div className="card-bid-info">

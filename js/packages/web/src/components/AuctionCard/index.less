@@ -1,5 +1,5 @@
 .auction-container {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(207, 96, 96, 0.425);
   border-radius: 12px;
   margin: 30px 0;
   max-width: 100%;
@@ -37,7 +37,7 @@
       .show-place-bid{
         flex-grow: 1;
         margin-left: 30px;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 1px solid rgba(175, 84, 84, 0.452);
         padding-left: 30px;
         @media (max-width: @screen-sm-min) {
           margin-left: 0;
@@ -57,7 +57,7 @@
     }
     padding: 24px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(204, 14, 14, 0.473);
     display: flex;
     flex-direction: column;
 
@@ -84,22 +84,23 @@
 
 .ant-modal-body {
   border-radius: 12px 12px 0 0;
-  background: #212121;
+  background: #8a4747;
 }
 
 .ant-modal-content {
-  background-color: #212121;
+  background-color: #ac4949;
 }
 
 .ant-modal-footer {
   border-radius: 0 0 12px 12px;
-  background: #212121;
+  background: #b14747;
   border: none;
 
   .ant-btn:not(.ant-btn-primary){
     border: none;
     color: white;
     border-radius: 8px;
+    background: #5300ff;
 
     &:hover {
       border: 1px solid white;
@@ -107,11 +108,11 @@
   }
 
   .ant-btn-primary {
-     background: linear-gradient(180deg, #768bf9 0%, #5870ee 100%);
+    background: #5300ff;
      border-radius: 8px;
 
       &:hover, &:focus {
-      background: transparent;
+      background: red;
       border-color: #FFFFFF;
       color: #FFFFFF;
     }
@@ -174,6 +175,7 @@
 
   .bid-buttons{
     display: flex;
+   
     @media(max-width: 768px){
       flex-direction: row;
       justify-content: space-between;

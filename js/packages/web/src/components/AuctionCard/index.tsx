@@ -598,19 +598,7 @@ export const AuctionCard = ({
             )}
           {showPlaceBid ? (
             <div className="show-place-bid">
-              <AmountLabel
-                title="in your wallet"
-                displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
-                style={{ marginBottom: 0 }}
-                amount={balance.balance}
-                tokenInfo={tokenInfo}
-                customPrefix={
-                  <Identicon
-                    address={wallet?.publicKey?.toBase58()}
-                    style={{ width: 36 }}
-                  />
-                }
-              />
+           
             </div>
           ) : (
             <div className="actions-place-bid">
@@ -886,15 +874,11 @@ export const AuctionCard = ({
             fontSize: '2rem',
           }}
         >
-          Your sale has been ended please view your NFTs in{' '}
-          <Link to="/artworks">My Items</Link>.
+          Your sale has been cancelled <Link to="/wallet">( My Wallet )</Link>
+          
         </p>
-        <Button
-          onClick={() => setShowEndingBidModal(false)}
-          className="overlay-btn"
-        >
-          Got it
-        </Button>
+
+       
       </MetaplexOverlay>
 
       <MetaplexOverlay visible={showRedeemedBidModal}>
@@ -915,16 +899,10 @@ export const AuctionCard = ({
             fontSize: '2rem',
           }}
         >
-          Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
-          redeemed please view your NFTs in <Link to="/artworks">My Items</Link>
+         Please view your NFTs in <Link to="/wallet">My Wallet</Link>
           .
         </p>
-        <Button
-          onClick={() => setShowRedeemedBidModal(false)}
-          className="overlay-btn"
-        >
-          Got it
-        </Button>
+       
       </MetaplexOverlay>
 
       <MetaplexModal

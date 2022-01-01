@@ -193,10 +193,11 @@ export const useAuctions = (state?: AuctionViewState) => {
   return auctionViews;
 };
 
+//sort by min price
 function sortByEnded(a: AuctionView, b: AuctionView) {
   return (
-    (b.auction.info.endedAt?.toNumber() || 0) -
-    (a.auction.info.endedAt?.toNumber() || 0)
+    (a.auction.info.priceFloor.minPrice?.toNumber() || 0) -
+    (b.auction.info.priceFloor.minPrice?.toNumber() || 0)
   );
 }
 

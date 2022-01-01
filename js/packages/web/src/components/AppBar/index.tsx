@@ -6,6 +6,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { HowToBuyModal } from '../HowToBuyModal';
+import { SearchBox } from '../AppBar/searchBox';
 import {
   Cog,
   CurrentUserBadge,
@@ -19,12 +20,13 @@ const getDefaultLinkActions = (connected: boolean) => {
     <Link to={`/`} key={'explore'}>
       <Button className="app-btn">Explore</Button>
     </Link>,
-    <Link to={`/artworks`} key={'artwork'}>
-      <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
-    </Link>,
-    <Link to={`/artists`} key={'artists'}>
-      <Button className="app-btn">Creators</Button>
-    </Link>,
+    <Link to={`/collections`} key={'artists'}>
+    <Button className="app-btn">Collections</Button>
+  </Link>,
+   <Link to={`/`} key={'explore'}>
+   <Button className="app-btn">Auction</Button>
+ </Link>,
+ 
   ];
 };
 
@@ -110,8 +112,8 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/metaplex-logo.svg'} />
-    </Link>
+    <Button className="logo-text">MY NFT SPACE</Button>
+  </Link>
   );
 };
 
@@ -127,9 +129,13 @@ export const AppBar = () => {
           <MetaplexMenu />
         </div>
         <div className="app-right">
-          {!connected && (
-            <HowToBuyModal buttonClassName="modal-button-default" />
-          )}
+        <SearchBox/>
+        <Link to={`/wallet`} key={'artwork'}>
+      <Button className="app-btn">{connected ? 'My Wallet' : ''}</Button>
+    </Link>
+        <Link to={`/purchases`} key={'artists'}>
+    <Button className="app-btn">{connected ? 'My Purchases' : ''}</Button>
+  </Link>
           {!connected && (
             <ConnectButton style={{ height: 48 }} allowWalletChange />
           )}

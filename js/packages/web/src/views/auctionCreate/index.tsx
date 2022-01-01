@@ -675,27 +675,7 @@ export const AuctionCreateView = () => {
   return (
     <>
       <Row className="creator-base-page" style={{ paddingTop: 50 }}>
-        {stepsVisible && (
-          <Col span={24} md={4}>
-            <Steps
-              progressDot
-              direction={width < 768 ? 'horizontal' : 'vertical'}
-              current={step}
-              style={{
-                width: 'fit-content',
-                margin: '0 auto 30px auto',
-                overflowX: 'auto',
-                maxWidth: '100%',
-              }}
-            >
-              {stepsByCategory[attributes.category]
-                .filter(_ => !!_[0])
-                .map((step, idx) => (
-                  <Step title={step[0]} key={idx} />
-                ))}
-            </Steps>
-          </Col>
-        )}
+      
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
           {stepsByCategory[attributes.category][step][1]}
           {0 < step && stepsVisible && (
@@ -716,85 +696,44 @@ const CategoryStep = (props: {
   return (
     <>
       <Row className="call-to-action">
-        <h2>List an item</h2>
-        <p>
-          First time listing on Metaplex? <a>Read our sellers' guide.</a>
-        </p>
+        <h2>List your NFT for sale</h2>
+       
       </Row>
       <Row justify={width < 768 ? 'center' : 'start'}>
         <Col>
           <Row>
+          <div className="sell-button" style={{  margin:'20px' ,background: '#EA4C89' }} >
+           
             <Button
-              className="type-btn"
+             style={{ width:'460px' ,height: '80px', padding: '20px'}}
+             className="custom-btn"
               size="large"
               onClick={() => props.confirm(AuctionCategory.InstantSale)}
             >
               <div>
-                <div>Instant Sale</div>
-                <div className="type-btn-description">
-                  At a fixed price, sell a single Master NFT or copies of it
-                </div>
+                <div>List at fixed Price</div>
+               
               </div>
             </Button>
+            </div>
           </Row>
           <Row>
-            <Button
-              className="type-btn"
+          <div className="sell-button" style={{  margin:'20px' ,background: '#EA4C89' }} >
+           
+          <Button
+             style={{ width:'460px' ,height: '80px', padding: '20px'}}
+             className="custom-btn"
               size="large"
-              onClick={() => props.confirm(AuctionCategory.Limited)}
+             
             >
               <div>
-                <div>Limited Edition</div>
-                <div className="type-btn-description">
-                  Sell a limited copy or copies of a single Master NFT
-                </div>
+                <div>Auction (Coming soon)</div>
+               
               </div>
             </Button>
+            </div>
           </Row>
-          <Row>
-            <Button
-              className="type-btn"
-              size="large"
-              onClick={() => props.confirm(AuctionCategory.Open)}
-            >
-              <div>
-                <div>Open Edition</div>
-                <div className="type-btn-description">
-                  Sell unlimited copies of a single Master NFT
-                </div>
-              </div>
-            </Button>
-          </Row>
-          <Row>
-            <Button
-              className="type-btn"
-              size="large"
-              onClick={() => props.confirm(AuctionCategory.Tiered)}
-            >
-              <div>
-                <div>Tiered Auction</div>
-                <div className="type-btn-description">
-                  Participants get unique rewards based on their leaderboard
-                  rank
-                </div>
-              </div>
-            </Button>
-          </Row>
-          <Row>
-            <Button
-              className="type-btn"
-              size="large"
-              onClick={() => props.confirm(AuctionCategory.Single)}
-            >
-              <div>
-                <div>Sell an Existing Item</div>
-                <div className="type-btn-description">
-                  Sell an existing item in your NFT collection, including Master
-                  NFTs
-                </div>
-              </div>
-            </Button>
-          </Row>
+         
         </Col>
       </Row>
     </>
@@ -848,7 +787,7 @@ const InstantSaleStep = ({
   return (
     <>
       <Row className="call-to-action" style={{ marginBottom: 0 }}>
-        <h2>Select which item to sell:</h2>
+        <h2> </h2>
       </Row>
 
       <Row className="content-action">
@@ -877,19 +816,8 @@ const InstantSaleStep = ({
                   })
                 }
               >
-                <Option value={InstantSaleType.Single}>
-                  Sell unique token
-                </Option>
-                {copiesEnabled && (
-                  <Option value={InstantSaleType.Limited}>
-                    Sell limited number of copies
-                  </Option>
-                )}
-                {!copiesEnabled && isMasterEdition && (
-                  <Option value={InstantSaleType.Open}>
-                    Sell unlimited number of copies
-                  </Option>
-                )}
+               
+             
               </Select>
               {isLimitedEdition && (
                 <>
@@ -914,7 +842,7 @@ const InstantSaleStep = ({
           )}
           {hasOtherTokens && (
             <label className="action-field">
-              <span className="field-title">Auction mint</span>
+              <span className="field-title">Select Token</span>
               <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
               <TokenDialog
                 setMint={setMint}
@@ -927,16 +855,14 @@ const InstantSaleStep = ({
           )}
           <label className="action-field">
             <span className="field-title">Price</span>
-            <span className="field-info">
-              This is the instant sale price for your item.
-            </span>
+            
             <Input
               type="number"
               min={0}
               autoFocus
               className="input"
               placeholder="Price"
-              prefix="◎"
+              prefix=""
               suffix={mintInfo?.symbol || "CUSTOM"}
               onChange={info =>
                 setAttributes({
@@ -958,7 +884,7 @@ const InstantSaleStep = ({
           }}
           className="action-btn"
         >
-          Continue
+          Next
         </Button>
       </Row>
     </>
@@ -1934,8 +1860,8 @@ const ReviewStep = (props: {
   return (
     <>
       <Row className="call-to-action">
-        <h2>Review and list</h2>
-        <p>Review your listing before publishing.</p>
+        <h2>Review</h2>
+       
       </Row>
       <Row className="content-action">
         <Col xl={12}>
@@ -1944,15 +1870,7 @@ const ReviewStep = (props: {
           )}
         </Col>
         <Col className="section" xl={12}>
-          <Statistic
-            className="create-statistic"
-            title="Copies"
-            value={
-              props.attributes.editions === undefined
-                ? 'Unique'
-                : props.attributes.editions
-            }
-          />
+        
           {cost ? (
             <AmountLabel title="Cost to Create" amount={cost} tokenInfo={useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString())}/>
           ) : (
@@ -1962,39 +1880,11 @@ const ReviewStep = (props: {
       </Row>
       <Row style={{ display: 'block' }}>
         <Divider />
-        <Statistic
-          className="create-statistic"
-          title="Start date"
-          value={
-            props.attributes.startSaleTS
-              ? moment
-                  .unix(props.attributes.startSaleTS as number)
-                  .format('dddd, MMMM Do YYYY, h:mm a')
-              : 'Right after successfully published'
-          }
-        />
+       
         <br />
-        {props.attributes.startListTS && (
-          <Statistic
-            className="create-statistic"
-            title="Listing go live date"
-            value={moment
-              .unix(props.attributes.startListTS as number)
-              .format('dddd, MMMM Do YYYY, h:mm a')}
-          />
-        )}
+        
         <Divider />
-        <Statistic
-          className="create-statistic"
-          title="Sale ends"
-          value={
-            props.attributes.endTS
-              ? moment
-                  .unix(props.attributes.endTS as number)
-                  .format('dddd, MMMM Do YYYY, h:mm a')
-              : 'Until sold'
-          }
-        />
+       
       </Row>
       <Row>
         <Button
@@ -2010,7 +1900,7 @@ const ReviewStep = (props: {
           className="action-btn"
         >
           {props.attributes.category === AuctionCategory.InstantSale
-            ? 'List for Sale'
+            ? 'List'
             : 'Publish Auction'}
         </Button>
         <FundsIssueModal
@@ -2055,9 +1945,9 @@ const WaitingStep = (props: {
     >
       <Progress type="circle" percent={progress} />
       <div className="waiting-title">
-        Your creation is being listed with Metaplex...
+        Listing...
       </div>
-      <div className="waiting-subtitle">This can take up to 30 seconds.</div>
+      <div className="waiting-subtitle">Please do not refresh the page.</div>
     </div>
   );
 };
@@ -2073,7 +1963,7 @@ const Congrats = (props: {
 
   const newTweetURL = () => {
     const params = {
-      text: "I've created a new NFT auction on Metaplex, check it out!",
+      text: "I've created a new NFT auction on My NFT Space, check it out!",
       url: `${
         window.location.origin
       }/#/auction/${props.auction?.auction.toString()}`,
@@ -2096,16 +1986,10 @@ const Congrats = (props: {
         }}
       >
         <div className="waiting-title">
-          Congratulations! Your auction is now live.
+          Congratulations! Your sale is now live.
         </div>
         <div className="congrats-button-container">
-          <Button
-            className="metaplex-button"
-            onClick={_ => window.open(newTweetURL(), '_blank')}
-          >
-            <span>Share it on Twitter</span>
-            <span>&gt;</span>
-          </Button>
+         
           <Button
             className="metaplex-button"
             onClick={() => {
@@ -2114,7 +1998,7 @@ const Congrats = (props: {
               }
             }
           >
-            <span>See it in your auctions</span>
+            <span>Go to the homepage and refresh</span>
             <span>&gt;</span>
           </Button>
         </div>

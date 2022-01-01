@@ -8,7 +8,7 @@ export const useActionButtonContent = (auctionView: AuctionView): string => {
     canClaimPurchasedItem,
     canEndInstantSale,
   } = useInstantSaleState(auctionView);
-
+  //old was place bid
   if (!isInstantSale) {
     return 'Place Bid';
   }
@@ -22,8 +22,8 @@ export const useActionButtonContent = (auctionView: AuctionView): string => {
   }
 
   if (canEndInstantSale) {
-    return 'End sale & claim item';
+    return 'Cancel Listing ';
   }
 
-  return 'Buy now';
+  return 'Buy';
 };

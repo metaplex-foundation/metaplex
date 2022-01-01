@@ -26,6 +26,8 @@ export const ArtistsView = () => {
     >
       {items.map((m, idx) => {
         const id = m.info.address;
+       if (m.info.address=="DGHNVi4sk6hY1fhtkEBsopxQdwrwosQxy8Nnr5iEc7P9")
+        {
         return (
           <Link to={`/artists/${id}`} key={idx}>
             <ArtistCard
@@ -40,13 +42,14 @@ export const ArtistsView = () => {
             />
           </Link>
         );
+            }
       })}
     </Masonry>
   );
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30 }}>
-      <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
+    <Layout style={{ margin: 0, marginTop: 30,}}>
+      <Content style={{ display: 'flex', flexWrap: 'wrap', }}>
         <Col style={{ width: '100%', marginTop: 10 }}>{artistGrid}</Col>
       </Content>
     </Layout>

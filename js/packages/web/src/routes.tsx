@@ -11,20 +11,23 @@ import {
   AuctionCreateView,
   AuctionView,
   HomeView,
+  ParticipatedView,
   StaticPageView,
+
 } from './views';
 import { AdminView } from './views/admin';
-import PackView from './views/pack';
+
 import { PackCreateView } from './views/packCreate';
 import { BillingView } from './views/auction/billing';
 
 export function Routes() {
-  const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+  const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS;
   return (
     <>
       <HashRouter basename={'/'}>
         <Providers>
           <Switch>
+            <Route exact path="/pxadmen" component={() => <AdminView />} />
             {shouldEnableNftPacks && (
               <Route
                 exact
@@ -32,18 +35,15 @@ export function Routes() {
                 component={() => <PackCreateView />}
               />
             )}
-            {shouldEnableNftPacks && (
-              <Route
-                exact
-                path="/pack/:packKey"
-                component={() => <PackView />}
-              />
-            )}
-            <Route exact path="/admin" component={() => <AdminView />} />
             <Route
               exact
               path="/analytics"
               component={() => <AnalyticsView />}
+            />
+             <Route
+              exact
+              path="/purchases"
+              component={() => <ParticipatedView />}
             />
             <Route
               exact
@@ -52,13 +52,14 @@ export function Routes() {
             />
             <Route
               exact
-              path="/artworks/:id?"
+              path="/wallet/:id?"
               component={() => <ArtworksView />}
             />
             <Route exact path="/art/:id" component={() => <ArtView />} />
             <Route exact path="/artists/:id" component={() => <ArtistView />} />
-            <Route exact path="/artists" component={() => <ArtistsView />} />
+            <Route exact path="/collections" component={() => <ArtistsView />} />
 
+          
             <Route
               exact
               path="/auction/create/:step_param?"
@@ -74,7 +75,7 @@ export function Routes() {
               path="/auction/:id/billing"
               component={() => <BillingView />}
             />
-            <Route path="/about" component={() => <StaticPageView />} />
+            <Route path="/abouterds" component={() => <StaticPageView />} />
             <Route path="/" component={() => <HomeView />} />
           </Switch>
         </Providers>

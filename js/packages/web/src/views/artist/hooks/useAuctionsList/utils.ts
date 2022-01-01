@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { AuctionViewState, AuctionView } from '../../../../../../hooks';
+import { AuctionViewState, AuctionView } from '../../../../hooks';
 
 import { LiveAuctionViewState } from '../..';
 
