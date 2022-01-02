@@ -1,11 +1,8 @@
 import {
-  BidderMetadata,
   CountdownState,
-  formatTokenAmount,
   fromLamports,
   PriceFloorType,
   useMint,
-  ParsedAccount,
 } from '@oyster/common';
 import { find } from 'lodash';
 import { Col, Row, Typography } from 'antd';

@@ -6,7 +6,7 @@ import {
   loadMultipleAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Col, Divider, List, Row, Skeleton, Space, Tag, Typography, Card } from 'antd';
+import { Button, Col, Divider, List, Row, Skeleton, Space, Tag, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';

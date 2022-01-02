@@ -1,10 +1,9 @@
 import { Card, CardProps, Divider, Space } from 'antd';
 import React from 'react';
-import { AuctionView, useArt, useCreators } from '../../hooks';
+import { AuctionView, useArt } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { ArtContent } from '../ArtContent';
 import { AuctionCountdown } from '../AuctionNumbers';
-import { MetaAvatar } from '../MetaAvatar';
 import { getHumanStatus, useAuctionStatus } from './hooks/useAuctionStatus';
 export interface AuctionCard extends CardProps {
   auctionView: AuctionView;

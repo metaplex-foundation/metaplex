@@ -1,7 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { loadMetadataForCreator, useConnection, useMeta, useStore } from '@oyster/common';
+import { loadMetadataForCreator, useConnection, useMeta } from '@oyster/common';
 import { Col, Divider, Row, Spin } from 'antd';
-import { useRouter } from 'next/dist/client/router';
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';

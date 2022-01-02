@@ -7,6 +7,8 @@ import { maybeCDN } from '../utils/cdn';
 
 const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 
+const pubkeyDenyList = ['Fy8GCo5pyaMmUS6BqydzYnHBYeQN5BnKijCV2x2pRc3n'];
+
 export const getStorefront = async (
   subdomain: string,
 ): Promise<Storefront | null> => {
@@ -52,6 +54,10 @@ export const getStorefront = async (
 
       return acc;
     }, {});
+
+    if (pubkeyDenyList.includes(values['solana:pubkey'])) {
+      return null;
+    }
 
     return {
       subdomain,
