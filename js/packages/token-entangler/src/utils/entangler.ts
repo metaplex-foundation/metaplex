@@ -829,6 +829,7 @@ export const getOwnedNFTMints = async (
       val =>
         val.info.tokenAmount.amount !== 0 &&
         val.info.tokenAmount.decimals === 0 &&
+        //@ts-ignore
         mints.includes(val.info.mint),
     );
 

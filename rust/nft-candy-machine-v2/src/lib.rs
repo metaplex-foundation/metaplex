@@ -611,7 +611,7 @@ fn get_space_for_candy(data: CandyMachineData) -> core::result::Result<usize, Pr
 #[derive(Accounts)]
 #[instruction(data: CandyMachineData)]
 pub struct InitializeCandyMachine<'info> {
-    #[account(mut, constraint= candy_machine.to_account_info().owner == program_id && candy_machine.to_account_info().data_len() >= get_space_for_candy(data)?)]
+    #[account(zero, constraint= candy_machine.to_account_info().owner == program_id && candy_machine.to_account_info().data_len() >= get_space_for_candy(data)?)]
     candy_machine: UncheckedAccount<'info>,
     wallet: UncheckedAccount<'info>,
     authority: UncheckedAccount<'info>,
@@ -841,7 +841,7 @@ pub fn get_good_index(
                 .checked_rem(8)
                 .ok_or(ErrorCode::NumericalOverflowError)?;
             let reversed = 8 - eight_remainder + 1;
-            if (eight_remainder != 0 && pos) || (reversed != 0 && !pos)  {
+            if (eight_remainder != 0 && pos) || (reversed != 0 && !pos) {
                 //msg!("Moving by {}", eight_remainder);
                 if pos {
                     index_to_use += eight_remainder;
