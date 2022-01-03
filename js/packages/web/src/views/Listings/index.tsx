@@ -88,7 +88,9 @@ export const Listings = () => {
         src={storefront.theme.banner}
         headingText={storefront.meta.title}
         subHeadingText={storefront.meta.description}
-        storefrontPubkey={storefront.pubkey}
+        twitterVerification={storefront.integrations?.twitterVerification}
+        social={storefront.social}
+        ownerAddress={storefront.pubkey}
       />
       <Anchor showInkInFixed={false}>
         <Menu
