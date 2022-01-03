@@ -29,7 +29,6 @@ use {
 };
 anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
-const EXPIRE_OFFSET: i64 = 10 * 60;
 const PREFIX: &str = "candy_machine";
 #[program]
 pub mod nft_candy_machine_v2 {
@@ -106,8 +105,9 @@ pub mod nft_candy_machine_v2 {
 
             match candy_machine.data.go_live_date {
                 Some(val) => {
-                    if expire_time - EXPIRE_OFFSET < val {
-                        msg!("Invalid gateway token expire time: {}", expire_time);
+                    // Civic f-ed up - expire time is actually the time it was made...
+                    if expire_time < val {
+                        msg!("Invalid gateway token expire time: {} compared with go live of {}", expire_time, val);
                         return Err(ErrorCode::GatewayTokenExpireTimeInvalid.into());
                     }
                 }
