@@ -41,7 +41,11 @@ export const Listings = () => {
   });
 
   const showCount = (view: View) =>
-    auctionsCount[view] != null ? auctionsCount[view] : <Spin size="small" indicator={<LoadingOutlined />}  />;
+    auctionsCount[view] != null ? (
+      auctionsCount[view]
+    ) : (
+      <Spin size="small" indicator={<LoadingOutlined />} />
+    );
   useEffect(() => {
     if (!view) {
       setSearchParams({ view: View.live });
@@ -84,6 +88,7 @@ export const Listings = () => {
         src={storefront.theme.banner}
         headingText={storefront.meta.title}
         subHeadingText={storefront.meta.description}
+        storefrontPubkey={storefront.pubkey}
       />
       <Anchor showInkInFixed={false}>
         <Menu
@@ -95,13 +100,16 @@ export const Listings = () => {
           mode="horizontal"
         >
           <Menu.Item key={View.live}>
-            Live <span className="auctions-count"> | {showCount(View.live)}</span>
+            Live{' '}
+            <span className="auctions-count"> | {showCount(View.live)}</span>
           </Menu.Item>
           <Menu.Item key={View.resale}>
-            Secondary Listings <span className="auctions-count"> | {showCount(View.resale)}</span>
+            Secondary Listings{' '}
+            <span className="auctions-count"> | {showCount(View.resale)}</span>
           </Menu.Item>
           <Menu.Item key={View.ended}>
-            Ended <span className="auctions-count"> | {showCount(View.ended)}</span>
+            Ended{' '}
+            <span className="auctions-count"> | {showCount(View.ended)}</span>
           </Menu.Item>
         </Menu>
       </Anchor>
