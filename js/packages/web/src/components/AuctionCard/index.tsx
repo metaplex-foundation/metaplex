@@ -542,7 +542,7 @@ export const AuctionCard = ({
     ? Boolean(auctionView.myBidderPot?.info.emptied)
     : true;
   const doesInstantSaleHasNoItems =
-    isBidderPotEmpty && auctionView?.myBidderMetadata?.info.cancelled &&
+    isBidderPotEmpty &&
     auctionView.auctionManager.numWinners.toNumber() === bids.length;
 
   const shouldHideInstantSale =
