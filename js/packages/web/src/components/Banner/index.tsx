@@ -1,18 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Space, Typography } from 'antd';
-import { useStore } from '@oyster/common';
+import {
+  useConnection,
+  useStore,
+  StringPublicKey,
+  toPublicKey,
+} from '@oyster/common';
+import { Connection } from '@solana/web3.js';
+import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 const { Text } = Typography;
 
 export const Banner = ({
   src,
   headingText,
   subHeadingText,
+  storefrontPubkey,
   actionComponent,
   children,
 }: {
   src?: string;
   headingText: string;
   subHeadingText?: string;
+  storefrontPubkey: string;
   actionComponent?: JSX.Element;
   children?: React.ReactNode;
 }) => {
@@ -20,6 +29,28 @@ export const Banner = ({
   const social = storefront.social;
 
   const hasSocial = Object.values(social || {}).some(link => link);
+  const connection = useConnection();
+
+  const [storeTwitterHandle, setStoreTwitterHandle] = useState('');
+
+  useEffect(() => {
+    const getTwitterHandle = async (
+      connection: Connection,
+      pubkey: StringPublicKey,
+    ): Promise<string | undefined> => {
+      try {
+        const [twitterHandle] = await getHandleAndRegistryKey(
+          connection,
+          toPublicKey(pubkey),
+        );
+        setStoreTwitterHandle(twitterHandle);
+      } catch (err) {
+        console.warn(`err`);
+        return undefined;
+      }
+    };
+    getTwitterHandle(connection, storefrontPubkey);
+  }, [storeTwitterHandle]);
 
   return (
     <div id="metaplex-banner">
@@ -32,6 +63,15 @@ export const Banner = ({
       <div id="metaplex-banner-hero">
         <h1>{headingText}</h1>
         {subHeadingText && <Text>{subHeadingText}</Text>}
+        {storeTwitterHandle && (
+          <a
+            href={'https://twitter.com/' + storeTwitterHandle}
+            target="_blank"
+            rel="noreferrer"
+          >
+            @{storeTwitterHandle}
+          </a>
+        )}
 
         {hasSocial && (
           <Space
