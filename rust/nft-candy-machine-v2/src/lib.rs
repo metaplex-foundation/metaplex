@@ -29,6 +29,7 @@ use {
 };
 anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
+const EXPIRE_OFFSET: i64 = 10 * 60;
 const PREFIX: &str = "candy_machine";
 #[program]
 pub mod nft_candy_machine_v2 {
@@ -71,7 +72,7 @@ pub mod nft_candy_machine_v2 {
             if ctx.remaining_accounts.len() <= remaining_accounts_counter {
                 return Err(ErrorCode::GatewayTokenMissing.into());
             }
-            let gateway_token = &ctx.remaining_accounts[remaining_accounts_counter];
+            let gateway_token_info = &ctx.remaining_accounts[remaining_accounts_counter];
             remaining_accounts_counter += 1;
             if gatekeeper.expire_on_use {
                 if ctx.remaining_accounts.len() <= remaining_accounts_counter {
@@ -86,17 +87,31 @@ pub mod nft_candy_machine_v2 {
                 remaining_accounts_counter += 1;
                 ::solana_gateway::Gateway::verify_and_expire_token(
                     gateway_app.clone(),
-                    gateway_token.clone(),
+                    gateway_token_info.clone(),
                     payer.deref().clone(),
                     &gatekeeper.gatekeeper_network,
                     network_expire_feature.clone(),
                 )?;
             } else {
                 ::solana_gateway::Gateway::verify_gateway_token_account_info(
-                    gateway_token,
+                    gateway_token_info,
                     &payer.key(),
                     &gatekeeper.gatekeeper_network,
                 )?;
+            }
+            // verifies that the gatway token was not created before the candy
+            // machine go_live_date (avoids pre-solving the captcha)
+            let gateway_token = ::solana_gateway::borsh::try_from_slice_incomplete::<::solana_gateway::state::GatewayToken>(*gateway_token_info.data.borrow())?;
+            let expire_time = gateway_token.expire_time.ok_or(ErrorCode::GatewayTokenExpireTimeInvalid)? as i64;
+
+            match candy_machine.data.go_live_date {
+                Some(val) => {
+                    if expire_time - EXPIRE_OFFSET < val {
+                        msg!("Invalid gateway token expire time: {}", expire_time);
+                        return Err(ErrorCode::GatewayTokenExpireTimeInvalid.into());
+                    }
+                }
+                None => {}
             }
         }
 
@@ -104,8 +119,8 @@ pub mod nft_candy_machine_v2 {
             let whitelist_token_account = &ctx.remaining_accounts[remaining_accounts_counter];
             remaining_accounts_counter += 1;
             // If the user has not actually made this account,
-            // this explodes and wej ust check normal dates.
-            // If they have, we check amount, if it's > 0 we let them use the lkogic
+            // this explodes and we just check normal dates.
+            // If they have, we check amount, if it's > 0 we let them use the logic
             // if 0, check normal dates.
             match assert_is_ata(whitelist_token_account, &payer.key(), &ws.mint) {
                 Ok(wta) => {
@@ -1013,6 +1028,8 @@ pub enum ErrorCode {
     GatewayAppMissing,
     #[msg("Missing gateway token when required")]
     GatewayTokenMissing,
+    #[msg("Invalid gateway token expire time")]
+    GatewayTokenExpireTimeInvalid,
     #[msg("Missing gateway network expire feature when required")]
     NetworkExpireFeatureMissing,
     #[msg("Unable to find an unused config line near your random number index")]
