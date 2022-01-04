@@ -1,5 +1,5 @@
 import React from 'react';
-import { Space, Typography, Button, Alert, Row, Col } from 'antd';
+import { Space, Typography, Button, Alert } from 'antd';
 import { TwitterOutlined } from '@ant-design/icons';
 import {
   StorefrontSocialInfo,
@@ -33,51 +33,49 @@ export const Banner = ({
           <img id="metaplex-banner-backdrop" src={src} />
         </div>
       )}
-      <Row justify="center">
-        <Space direction="vertical" size="small" className="metaplex-text-align-center">
+      <Space direction="vertical" size="small" className="metaplex-text-align-center">
+        <div className="metaplex-page-readable">
           <h1>{headingText}</h1>
-          <Space direction="vertical" size="middle">
-            <Col span={24}>
-              {subHeadingText && <Text className="metaplex-text-align-center metaplex-display-block">{subHeadingText}</Text>}
-            </Col>
-            {twitterVerification ? (
-              <a
-                href={'https://twitter.com/' + twitterVerification}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Button shape="round" icon={<TwitterOutlined />}>@{twitterVerification}</Button>
-              </a>
-            ) : (ownerAddress === wallet.publicKey?.toBase58() && (
-              <Alert
-                className="metaplex-flex-align-items-center metaplex-align-left"
-                message="Connect your Twitter account"
-                description={<>Help protect collectors by connecting your store to a Twitter page on <a href="https://naming.bonfida.org/#/twitter-registration" rel="noreferrer" target="_blank">Bonfida</a></>}
-                icon={<TwitterOutlined />}
-                showIcon
-              />
-            ))}
-            {hasSocial && (
-              <Space
-                align="center"
-                direction="horizontal"
-                id="metaplex-banner-hero-social"
-              >
-                {social?.discord && (
-                  <a href={social.discord}>
-                    <DiscordIcon />
-                  </a>
-                )}
-                {social?.website && (
-                  <a href={social.website}>
-                    <WebIcon />
-                  </a>
-                )}
-              </Space>
-            )}
-          </Space>
+          {subHeadingText && <Text className="metaplex-text-align-center metaplex-display-block">{subHeadingText}</Text>}
+        </div>
+        <Space direction="vertical" size="middle">
+          {twitterVerification ? (
+            <a
+              href={'https://twitter.com/' + twitterVerification}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Button shape="round" icon={<TwitterOutlined />}>@{twitterVerification}</Button>
+            </a>
+          ) : (ownerAddress === wallet.publicKey?.toBase58() && (
+            <Alert
+              className="metaplex-flex-align-items-center metaplex-align-left"
+              message="Connect your Twitter account"
+              description={<>Help protect collectors by connecting your store to a Twitter page on <a href="https://naming.bonfida.org/#/twitter-registration" rel="noreferrer" target="_blank">Bonfida</a></>}
+              icon={<TwitterOutlined />}
+              showIcon
+            />
+          ))}
+          {hasSocial && (
+            <Space
+              align="center"
+              direction="horizontal"
+              id="metaplex-banner-hero-social"
+            >
+              {social?.discord && (
+                <a href={social.discord}>
+                  <DiscordIcon />
+                </a>
+              )}
+              {social?.website && (
+                <a href={social.website}>
+                  <WebIcon />
+                </a>
+              )}
+            </Space>
+          )}
         </Space>
-      </Row>
+      </Space>
     </div>
   );
 };
