@@ -4,7 +4,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 ASSETS_DIR=$SCRIPT_DIR/assets
 SRC_DIR=$PARENT_DIR/src
-CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
+CMD_CMV1="ts-node ${SRC_DIR}/candy-machine-cli.ts"
 
 # Remote files to test the upload
 PNG="https://rm5fm2cz5z4kww2gbyjwhyfekgcc3qjmz43cw53g6qhwhgcofoyq.arweave.net/izpWaFnueKtbRg4TY-CkUYQtwSzPNit3ZvQPY5hOK7E/?ext=png"
@@ -20,7 +20,7 @@ JPG="https://7cvkvtes5uh4h3ud42bi3nl2ivtmnbpqppqmau7pk2p2qykkmbya.arweave.net/-K
 ENV_URL="devnet"
 
 echo ""
-echo "Candy Machine CLI - Automated Test"
+echo "Candy Machine CLI V1 - Automated Test"
 echo "----------------------------------"
 echo ""
 echo "Environment:"
@@ -141,16 +141,24 @@ fi
 echo ""
 echo -n "Close candy machine and withdraw funds at the end [Y/n]: "
 read Close
-echo ""
 if [ -z "$Close" ]
 then
     Close="Y"
 fi
 
+echo ""
+echo -n "Skip verification [Y/n]: "
+read SkipV
+echo ""
+if [ -z "$SkipV" ]
+then
+    SkipV="Y"
+fi
+
+
 if [ "${Reset}" = "Y" ]
 then
     echo "[`date "+%T"`] Removing previous cache and assets"
-    rm $CONFIG_FILE 2> /dev/null
     rm -rf $ASSETS_DIR 2> /dev/null
     rm -rf .cache 2> /dev/null
 fi
@@ -163,7 +171,7 @@ read -r -d '' METADATA  <<-EOM
 {
     "name": "Test #%s",
     "symbol": "TEST",
-    "description": "Candy Machine CLI Test #%s",
+    "description": "Candy Machine CLI V1 Test #%s",
     "seller_fee_basis_points": 500,
     "image": "%s.%s",
     "attributes": [{"trait_type": "Background", "value": "True"}],
@@ -175,7 +183,7 @@ read -r -d '' METADATA  <<-EOM
         }],
         "files": [{"uri":"%s.%s", "type":"image/%s"}]
     },
-    "collection": { "name": "Candy Machine CLI", "family": "Candy Machine CLI"}
+    "collection": { "name": "Candy Machine CLI V1", "family": "Candy Machine CLI"}
 }
 EOM
 
@@ -201,31 +209,6 @@ then
     rm "$ASSETS_DIR/template.$EXT"
 fi
 
-# Candy Machine configuration
-
-CONFIG_FILE="config.json"
-
-cat > $CONFIG_FILE <<- EOM
-{
-    "price": 0.1,
-    "number": $ITEMS,
-    "gatekeeper": null,
-    "solTreasuryAccount": "`solana address`",
-    "splTokenAccount": null,
-    "splToken": null,
-    "goLiveDate": "`date "+%d %b %Y %T %Z"`",
-    "endSettings": null,
-    "whitelistMintSettings": null,
-    "hiddenSettings": null,
-    "storage": "${STORAGE}",
-    "arweaveJwk": "${ARWEAVE_JWK}",
-    "ipfsInfuraProjectId": "${INFURA_ID}",
-    "ipfsInfuraSecret": "${INFURA_SECRET}",
-    "awsS3Bucket": "${AWS_BUCKET}",
-    "noRetainAuthority": false,
-    "noMutable": false
-}
-EOM
 
 # Wallet keypair file
 
@@ -239,7 +222,6 @@ CACHE_NAME="test"
 # remove temporary files 
 function clean_up
 {
-    rm $CONFIG_FILE
     rm -rf $ASSETS_DIR
 }
 
@@ -252,10 +234,10 @@ function success
 echo "[`date "+%T"`] Testing started using ${STORAGE} storage"
 echo "[`date "+%T"`] RPC URL: ${RPC}"
 echo ""
-echo "1. Uploading assets and creating the candy machine"
+echo "1. Uploading assets"
 echo ""
 echo ">>>"
-$CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME -r $RPC
+$CMD_CMV1 upload --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME -r $RPC -s $STORAGE
 EXIT_CODE=$?
 echo "<<<"
 echo ""
@@ -266,24 +248,58 @@ then
     exit 1
 fi
 
+if [ ! "${SkipV}" = "Y"]
+then 
 echo "2. Verifying assets"
 echo ""
 echo ">>>"
-$CMD_CMV2 verify --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
+$CMD_CMV1 verify --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
 echo "<<<"
-
 if [ ! $EXIT_CODE -eq 0 ]
 then
     echo "[`date "+%T"`] Aborting: verification failed"
     exit 1
 fi
-
+else 
+echo "2. Skipping Verify assets"
 echo ""
-echo "3. Minting one token"
+fi
+
+
+echo "3. Creating candy machine"
 echo ""
 echo ">>>"
-$CMD_CMV2 mint_one_token --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
+$CMD_CMV1 create_candy_machine --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -p 1
+EXIT_CODE=$?
+echo "<<<"
+echo ""
+
+if [ ! $EXIT_CODE -eq 0 ]
+then
+    echo "[`date "+%T"`] Aborting: create candy machine failed"
+    exit 1
+fi
+
+echo "4. Updating candy machine"
+echo ""
+echo ">>>"
+$CMD_CMV1 update_candy_machine --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME -r $RPC -p 0.1 -d "now"
+EXIT_CODE=$?
+echo "<<<"
+echo ""
+
+if [ ! $EXIT_CODE -eq 0 ]
+then
+    echo "[`date "+%T"`] Aborting: updating candy machine failed"
+    exit 1
+fi
+
+echo ""
+echo "5. Minting one token"
+echo ""
+echo ">>>"
+$CMD_CMV1 mint_one_token --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
 echo "<<<"
 
@@ -294,26 +310,26 @@ then
 fi
 
 echo ""
-echo "4. Minting multiple tokens"
+echo "6. Minting multiple tokens"
 echo ""
 echo ">>>"
-$CMD_CMV2 mint_multiple_tokens --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -n 3
+$CMD_CMV1 mint_multiple_tokens --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -n 3
 EXIT_CODE=$?
 echo "<<<"
 
 if [ ! $EXIT_CODE -eq 0 ]
 then
-    echo "[`date "+%T"`] Aborting: mint multiple tokens failed"
+    echo "[`date "+%T"`] Aborting: mint failed"
     exit 1
 fi
 
-if [ ${Close} = "Y" ]
+if [ "${Close}" = "Y" ]
 then
     echo ""
-    echo "5. Clean up: withdrawing CM funds."
+    echo "7. Clean up: withdrawing CM funds."
     echo ""
     echo ">>>"
-    $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
+    $CMD_CMV1 withdraw --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
     EXIT_CODE=$?
 
     if [ ! $EXIT_CODE -eq 0 ]
