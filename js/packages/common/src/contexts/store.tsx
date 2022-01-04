@@ -7,7 +7,9 @@ import React, {
   useMemo,
 } from 'react';
 import { getStoreID, setProgramIds, StringPublicKey } from '../utils';
+import { getTwitterHandle } from '../actions';
 import { useQuerySearch } from '../hooks';
+import { useConnection } from '../contexts/connection';
 
 export interface StorefrontMeta {
   title: string;
@@ -32,7 +34,6 @@ export interface StorefrontTheme {
 export interface StorefrontSocialInfo {
   instagram?: string;
   discord?: string;
-  twitter?: string;
   website?: string;
 }
 
@@ -98,6 +99,8 @@ interface StoreConfig {
   ownerAddress?: StringPublicKey;
 
   storefront: Storefront;
+
+  loadingStore: boolean;
 }
 
 export const StoreContext = createContext<StoreConfig>(null!);
@@ -109,6 +112,9 @@ export const StoreProvider: FC<{
   const ownerAddress = storefront.pubkey;
   const searchParams = useQuerySearch();
   const ownerAddressFromQuery = searchParams.get('store');
+  const [loadingStore, setLoadingStore] = useState(true);
+  const [twitterHandle, setTwitterHandle] = useState<string>();
+  const connection = useConnection();
 
   const initOwnerAddress = ownerAddressFromQuery || ownerAddress;
   const initStoreAddress = !ownerAddressFromQuery ? storeAddress : undefined;
@@ -123,8 +129,12 @@ export const StoreProvider: FC<{
 
   const setStoreForOwner = useMemo(
     () => async (ownerAddress?: string) => {
+      setLoadingStore(true);
       const storeAddress = await getStoreID(ownerAddress);
+      const twitterHandle = await getTwitterHandle(connection, ownerAddress as string);
+
       setProgramIds(storeAddress); // fallback
+      setTwitterHandle(twitterHandle);
       setStore({ storeAddress, isReady: true });
       console.log(`CUSTOM STORE: ${storeAddress}`);
       return storeAddress;
@@ -140,6 +150,8 @@ export const StoreProvider: FC<{
       setProgramIds(initStoreAddress); // fallback
       console.log(`CUSTOM STORE FROM ENV: ${initStoreAddress}`);
     }
+
+    setLoadingStore(false);
   }, [initOwnerAddress]);
 
   return (
@@ -149,7 +161,14 @@ export const StoreProvider: FC<{
         setStoreForOwner,
         isConfigured,
         ownerAddress,
-        storefront,
+        storefront: {
+          ...storefront,
+          integrations: {
+            ...storefront.integrations,
+            twitterVerification: twitterHandle,
+          }
+        },
+        loadingStore,
       }}
     >
       {children}
