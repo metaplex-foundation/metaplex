@@ -541,6 +541,35 @@ programCommand('get_contact')
     }
   });
 
+programCommand('fetch_program')
+  .addHelpText(
+    'before',
+    'Utility to fetch the gumdrop program executable data. Useful for doing a diff against a local build. Bytes are formatted for easy comparison to `xxd` output')
+  .action(async (options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    const connection = new anchor.web3.Connection(
+      //@ts-ignore
+      options.rpcUrl || anchor.web3.clusterApiUrl(options.env),
+    );
+
+    const programPointer = await connection.getAccountInfo(GUMDROP_DISTRIBUTOR_ID);
+    const executableBufferKey = new PublicKey(programPointer.data.slice(4));
+
+    const programBuffer = await connection.getAccountInfo(executableBufferKey);
+    const programData = programBuffer.data.slice(0x30 - 3); // by inspection lol...
+
+    for (let row = 0; row * 0x10 < programData.length; ++row) {
+      let str = `${(row * 0x10).toString(16).padStart(8, '0')}: `;
+      for (let chunk = 0; chunk < 8; ++chunk) {
+        str += programData[row * 0x10 + chunk * 2 + 0].toString(16).padStart(2, '0');
+        str += programData[row * 0x10 + chunk * 2 + 1].toString(16).padStart(2, '0');
+        str += ' ';
+      }
+      console.log(str);
+    }
+  });
+
 function programCommand(name: string) {
   return program
     .command(name)
