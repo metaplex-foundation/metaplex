@@ -66,6 +66,11 @@ export async function initPackSet({
       isWritable: false,
     },
     {
+      pubkey: PROGRAM_IDS.oracle,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
       pubkey: toPublicKey(SYSVAR_RENT_PUBKEY),
       isSigner: false,
       isWritable: false,

@@ -431,7 +431,6 @@ pub mod auction_house {
             FEE_PAYER.as_bytes(),
             &[auction_house.fee_payer_bump],
         ];
-        let auction_house_key = auction_house.key();
         let wallet_key = wallet.key();
 
         let escrow_signer_seeds = [
@@ -466,7 +465,7 @@ pub mod auction_house {
 
         if !is_native {
             assert_is_ata(payment_account, &wallet.key(), &treasury_mint.key())?;
-            invoke_signed(
+            invoke(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     &payment_account.key(),
@@ -481,11 +480,10 @@ pub mod auction_house {
                     token_program.to_account_info(),
                     transfer_authority.to_account_info(),
                 ],
-                &[],
             )?;
         } else {
             assert_keys_equal(payment_account.key(), wallet.key())?;
-            invoke_signed(
+            invoke(
                 &system_instruction::transfer(
                     &payment_account.key(),
                     &escrow_payment_account.key(),
@@ -496,7 +494,6 @@ pub mod auction_house {
                     payment_account.to_account_info(),
                     system_program.to_account_info(),
                 ],
-                &[],
             )?;
         }
 
@@ -548,7 +545,7 @@ pub mod auction_house {
             .ok_or(ErrorCode::NumericalOverflow)?;
 
         if token_account.owner == wallet.key() && wallet.is_signer {
-            invoke_signed(
+            invoke(
                 &revoke(
                     &token_program.key(),
                     &token_account.key(),
@@ -561,7 +558,6 @@ pub mod auction_house {
                     token_account.to_account_info(),
                     wallet.to_account_info(),
                 ],
-                &[],
             )?;
         }
 
@@ -925,7 +921,7 @@ pub mod auction_house {
         }
 
         if wallet.is_signer {
-            invoke_signed(
+            invoke(
                 &approve(
                     &token_program.key(),
                     &token_account.key(),
@@ -941,7 +937,6 @@ pub mod auction_house {
                     program_as_signer.to_account_info(),
                     wallet.to_account_info(),
                 ],
-                &[],
             )?;
         }
 
@@ -1047,7 +1042,7 @@ pub mod auction_house {
                 let diff = buyer_price
                     .checked_sub(escrow_payment_account.lamports())
                     .ok_or(ErrorCode::NumericalOverflow)?;
-                invoke_signed(
+                invoke(
                     &system_instruction::transfer(
                         &payment_account.key(),
                         &escrow_payment_account.key(),
@@ -1058,7 +1053,6 @@ pub mod auction_house {
                         escrow_payment_account.to_account_info(),
                         system_program.to_account_info(),
                     ],
-                    &[],
                 )?;
             }
         } else {
@@ -1345,12 +1339,13 @@ pub const AUCTION_HOUSE_SIZE: usize = 8 + //key
 32 + //treasury mint
 32 + //authority
 32 + // creator
-8 + // bump
-8 + // treasury_bump
-8 + // fee_payer_bump
+1 + // bump
+1 + // treasury_bump
+1 + // fee_payer_bump
 2 + // seller fee basis points
 1 + // requires sign off
-200; //padding
+1 + // can change sale price
+220; //padding
 
 #[account]
 pub struct AuctionHouse {

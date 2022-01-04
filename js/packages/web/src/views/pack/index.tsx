@@ -1,41 +1,50 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Row, Col } from 'antd';
 
-import Card from './components/Card';
 import RedeemModal from './components/RedeemModal';
 import PackSidebar from './components/PackSidebar';
-import { useMeta } from '@oyster/common';
-import { useParams } from 'react-router';
+import ArtCard from './components/ArtCard';
+import { PackProvider, usePack } from './contexts/PackContext';
 
-export const PackView = () => {
+const PackView: React.FC = () => {
   const [openModal, setOpenModal] = useState(false);
-  const { id }: { id: string } = useParams();
+  const { provingProcess, pack } = usePack();
 
-  const { packs } = useMeta();
-  const pack = packs[id];
+  const cardsRedeemed = provingProcess?.info.cardsRedeemed || 0;
+  const packSize = pack?.info.allowedAmountToRedeem || 0;
+  const cards = useMemo(
+    () => Array.from({ length: packSize }, (_, i) => i),
+    [packSize, cardsRedeemed],
+  );
 
-  const total = pack?.info?.allowedAmountToRedeem || 0;
-  const mockBlocks = Array.from({ length: total }, (v, i) => i);
+  const handleToggleModal = useCallback(async () => {
+    setOpenModal(!openModal);
+  }, [openModal]);
 
   return (
     <div className="pack-view">
       <Row>
         <Col md={16}>
           <div className="pack-view__list">
-            {mockBlocks.map((block, i) => (
-              <Card key={i} value={i} />
+            {cards.map(index => (
+              <ArtCard key={index} index={index} isModalOpened={openModal} />
             ))}
           </div>
         </Col>
-        <Col md={8}>
-          <PackSidebar pack={pack} />
+        <Col md={8} className="pack-view__sidebar-container">
+          <PackSidebar onOpenPack={handleToggleModal} />
         </Col>
       </Row>
 
-      <RedeemModal
-        isModalVisible={openModal}
-        onClose={() => setOpenModal(false)}
-      />
+      <RedeemModal isModalVisible={openModal} onClose={handleToggleModal} />
     </div>
   );
 };
+
+const PackViewWithContext: React.FC = () => (
+  <PackProvider>
+    <PackView />
+  </PackProvider>
+);
+
+export default PackViewWithContext;

@@ -1,0 +1,145 @@
+.ant-modal-body {
+  border-radius: 12px;
+  background: transparent;
+}
+
+.claiming-step {
+  position: relative;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 24px;
+  background: @grey-70;
+  min-height: 600px;
+
+  &__title {
+    font-family: @fontFamilyInter;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 28px;
+    color: @accent-color;
+  }
+
+  &__subtitle {
+    font-family: @fontFamilyInter;
+    font-size: 16px;
+    line-height: 24px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  &__cards-container {
+    overflow: hidden;
+    margin: 24px 0 40px;
+    height: fit-content;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  &__ghost-cards {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  &__card {
+    opacity: 5%;
+    background: @accent-color !important;
+    position: absolute;
+    width: 308px;
+    height: 80px;
+    border-radius: 8px;
+  }
+
+  &__art-content {
+    width: 356px;
+    z-index: 10;
+    height: fit-content !important;
+  }
+
+  &__notes {
+    padding: 16px 27px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+
+    img {
+      margin-right: 27px;
+      width: 18px;
+      height: 18px;
+    }
+
+    span {
+      font-family: @fontFamilyInter;
+      font-size: 16px;
+      line-height: 20px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    outline: none;
+    background: @metaplex-primary-color;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+
+    height: 64px;
+
+    span {
+      display: block;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: @fontFamilyInter;
+      color: @black-100;
+      padding: 0 20px;
+    }
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 18px;
+    position: absolute;
+    top: 100%;
+    background: transparent;
+    font-family: @fontFamilyInter;
+    font-size: 14px;
+    line-height: 17px;
+    color: @accent-color;
+
+    & > div {
+      margin-right: 10px;
+    }
+  }
+
+  &__check {
+    margin-right: 10px;
+  }
+}
+
+.small-loader {
+  svg {
+    animation: infinite linear loader 1s;
+  }
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

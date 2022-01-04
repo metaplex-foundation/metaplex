@@ -81,4 +81,8 @@ export const PACK_CREATE_ID = new PublicKey(
   'packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu',
 );
 
+export const ORACLE_ID = new PublicKey(
+  'rndshKFf48HhGaPbaCd3WQYtgCNKzRgVQ3U2we4Cvf9',
+);
+
 export const SYSTEM = new PublicKey('11111111111111111111111111111111');

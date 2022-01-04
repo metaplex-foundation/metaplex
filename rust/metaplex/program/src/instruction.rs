@@ -15,6 +15,12 @@ use {
 pub struct SetStoreArgs {
     pub public: bool,
 }
+
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct SetStoreV2Args {
+    pub public: bool,
+    pub settings_uri: Option<String>,
+}
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub struct SetWhitelistedCreatorArgs {
     pub activated: bool,
@@ -665,6 +671,21 @@ pub enum MetaplexInstruction {
     ///   7. `[]` Rent sysvar
     ///   8. `[]` Clock sysvar
     SetAuctionCache,
+
+    /// Given a signer wallet, create a store with pda ['metaplex', wallet] (if it does not exist) and/or update it
+    /// (if it already exists). Stores can be set to open (anybody can publish) or closed (publish only via whitelist).
+    ///
+    ///   0. `[writable]` The store key, seed of ['metaplex', admin wallet]
+    ///   1. `[writable]` The store config key, seed of ['metaplex', store key]
+    ///   2. `[signer]`  The admin wallet
+    ///   3. `[signer]`  Payer
+    ///   4. `[]` Token program
+    ///   5. `[]` Token vault program
+    ///   6. `[]` Token metadata program
+    ///   7. `[]` Auction program
+    ///   8. `[]` System
+    ///   8. `[]` Rent sysvar
+    SetStoreV2(SetStoreV2Args),
 }
 
 /// Creates an DeprecatedInitAuctionManager instruction
@@ -1096,6 +1117,40 @@ pub fn create_set_store_instruction(
         data: MetaplexInstruction::SetStore(SetStoreArgs { public })
             .try_to_vec()
             .unwrap(),
+    }
+}
+
+/// Creates an SetStore instruction
+pub fn create_set_store_v2_instruction(
+    program_id: Pubkey,
+    store: Pubkey,
+    config: Pubkey,
+    admin: Pubkey,
+    payer: Pubkey,
+    public: bool,
+    settings_uri: Option<String>,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(store, false),
+        AccountMeta::new(config, false),
+        AccountMeta::new_readonly(admin, true),
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_auction::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+    Instruction {
+        program_id,
+        accounts,
+        data: MetaplexInstruction::SetStoreV2(SetStoreV2Args {
+            public,
+            settings_uri,
+        })
+        .try_to_vec()
+        .unwrap(),
     }
 }
 

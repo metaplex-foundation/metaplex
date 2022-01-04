@@ -13,6 +13,7 @@
   "scripts": {
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build",
+    "build-web": "lerna run build --stream --scope @oyster/common --scope web",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
     "lint": "prettier -c 'packages/*/{src,test}/**/*.ts' && npm run lint:eslint",
     "lint:eslint": "eslint 'packages/*/{src,test}/**/*.ts'",
@@ -62,6 +63,8 @@
     "@types/jest": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
+    "@types/offscreencanvas": "^2019.6.4",
+    "@types/webgl2": "^0.0.6",
     "eslint": "^7.11.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-react": "^7.25.1",

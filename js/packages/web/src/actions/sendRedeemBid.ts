@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  TransactionInstruction,
-  PublicKey,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   ParsedAccount,
   programIds,
@@ -28,7 +23,6 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
-  createAssociatedTokenAccountInstruction,
   pubkeyToString,
   WRAPPED_SOL_MINT,
 } from '@oyster/common';
@@ -786,7 +780,7 @@ export async function setupRedeemParticipationInstructions(
         mintingSigners,
       );
     } else {
-      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
+      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection);
     }
 
     instructions.push(mintingInstructions);
@@ -983,7 +977,11 @@ async function deprecatedSetupRedeemParticipationInstructions(
           winningPrizeSigner,
         );
       } else {
-        receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
+        receivingSolAccountOrAta = await findAta(
+          auctionView,
+          wallet,
+          connection,
+        );
       }
 
       const transferAuthority = approve(
