@@ -8,6 +8,7 @@ import {
   cache,
   ensureWrappedAccount,
   updatePrimarySaleHappenedViaToken,
+  createUpdatePrimarySaleHappenedViaTokenInstructions,
   getMetadata,
   deprecatedGetReservationList,
   AuctionState,
@@ -53,6 +54,7 @@ import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
+import { createEmptyPaymentAccountForAllTokensIX } from './settle';
 
 export function eligibleForParticipationPrizeGivenWinningIndex(
   winnerIndex: number | null,
@@ -124,6 +126,8 @@ export async function sendRedeemBid(
       auctionView.myBidderPot?.info.bidderAct,
     );
 
+  let flipPrimarySaleHappenedFlagIX = null;
+  let flipPrimarySaleHappenedFlagSigner = null;
   if (winnerIndex !== null) {
     // items is a prebuilt array of arrays where each entry represents one
     // winning spot, and each entry in it represents one type of item that can
@@ -166,18 +170,23 @@ export async function sendRedeemBid(
           );
           break;
         case WinningConfigType.FullRightsTransfer:
-          console.log('Redeeming Full Rights');
-          await setupRedeemFullRightsTransferInstructions(
-            auctionView,
-            accountsByMint,
-            accountRentExempt,
-            wallet,
-            safetyDeposit,
-            item,
-            winnerIndex,
-            signers,
-            instructions,
-          );
+          {
+            console.log('Redeeming Full Rights');
+            const { ix, signer } =
+              await setupRedeemFullRightsTransferInstructions(
+                auctionView,
+                accountsByMint,
+                accountRentExempt,
+                wallet,
+                safetyDeposit,
+                item,
+                winnerIndex,
+                signers,
+                instructions,
+              );
+            flipPrimarySaleHappenedFlagIX = ix;
+            flipPrimarySaleHappenedFlagSigner = signer;
+          }
           break;
         case WinningConfigType.TokenOnlyTransfer:
           console.log('Redeeming Token only');
@@ -280,6 +289,27 @@ export async function sendRedeemBid(
     );
   }
 
+  if (flipPrimarySaleHappenedFlagIX !== null) {
+    const result = await createEmptyPaymentAccountForAllTokensIX(
+      connection,
+      wallet,
+      auctionView,
+    );
+    // Adapt output.
+    const emptyPaymentIXs = result.instructions.flatMap(i => i);
+    const emptyPaymentSigners = result.signers.flatMap(i => i);
+    emptyPaymentIXs.forEach(batch => {
+      instructions.push(batch);
+    });
+    emptyPaymentSigners.forEach(batch => {
+      signers.push(batch);
+    });
+    instructions.push([flipPrimarySaleHappenedFlagIX]);
+    if (flipPrimarySaleHappenedFlagSigner) {
+      signers.push(flipPrimarySaleHappenedFlagSigner);
+    }
+  }
+
   await sendTransactionsWithManualRetry(
     connection,
     wallet,
@@ -357,7 +387,7 @@ async function setupRedeemFullRightsTransferInstructions(
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-) {
+): Promise<{ ix: TransactionInstruction | null; signer: Keypair[] }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const winningPrizeSigner: Keypair[] = [];
@@ -398,13 +428,19 @@ async function setupRedeemFullRightsTransferInstructions(
     );
 
     const metadata = await getMetadata(safetyDeposit.info.tokenMint);
-    await updatePrimarySaleHappenedViaToken(
-      metadata,
-      wallet.publicKey.toBase58(),
-      newTokenAccount,
-      winningPrizeInstructions,
-    );
+    return {
+      ix: createUpdatePrimarySaleHappenedViaTokenInstructions(
+        metadata,
+        wallet.publicKey.toBase58(),
+        newTokenAccount,
+      ),
+      signer: winningPrizeSigner,
+    };
   }
+  return {
+    ix: null,
+    signer: winningPrizeSigner,
+  };
 }
 
 export async function setupRedeemPrintingV2Instructions(
@@ -822,7 +858,6 @@ export async function setupRedeemParticipationInstructions(
       const updatePrimarySaleHappenedInstructions: TransactionInstruction[] =
         [];
       const updatePrimarySaleHappenedSigners: Keypair[] = [];
-
       await updatePrimarySaleHappenedViaToken(
         metadata,
         wallet.publicKey.toBase58(),
