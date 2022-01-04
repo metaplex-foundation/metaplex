@@ -129,7 +129,6 @@ export const StoreProvider: FC<{
 
   const setStoreForOwner = useMemo(
     () => async (ownerAddress?: string) => {
-      setLoadingStore(true);
       const storeAddress = await getStoreID(ownerAddress);
       const twitterHandle = await getTwitterHandle(connection, ownerAddress as string);
 
@@ -150,7 +149,7 @@ export const StoreProvider: FC<{
       setProgramIds(initStoreAddress); // fallback
       console.log(`CUSTOM STORE FROM ENV: ${initStoreAddress}`);
     }
-
+    
     setLoadingStore(false);
   }, [initOwnerAddress]);
 
