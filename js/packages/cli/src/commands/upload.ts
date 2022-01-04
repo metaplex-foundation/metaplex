@@ -388,7 +388,8 @@ export async function uploadV2({
                   saveCache(cacheName, env, cacheContent);
                 } catch (e) {
                   log.error(
-                    `saving config line ${ind}-${keys[indexes[indexes.length - 1]]
+                    `saving config line ${ind}-${
+                      keys[indexes[indexes.length - 1]]
                     } failed`,
                     e,
                   );
@@ -477,14 +478,18 @@ function getAssetKeysNeedingUpload(
  * Replaces image.ext => index.ext
  */
 function getAssetManifest(dirname: string, assetKey: string): Manifest {
-  const assetIndex = assetKey.includes('.json') ? assetKey.substring(0, assetKey.length - 5) : assetKey;
-  const manifestPath = path.join(
-    dirname,
-    `${assetIndex}.json`,
+  const assetIndex = assetKey.includes('.json')
+    ? assetKey.substring(0, assetKey.length - 5)
+    : assetKey;
+  const manifestPath = path.join(dirname, `${assetIndex}.json`);
+  const manifest: Manifest = JSON.parse(
+    fs.readFileSync(manifestPath).toString(),
   );
-  const manifest: Manifest = JSON.parse(fs.readFileSync(manifestPath).toString());
   manifest.image = manifest.image.replace('image', assetIndex);
-  manifest.properties.files[0].uri = manifest.properties.files[0].uri.replace('image', assetIndex);
+  manifest.properties.files[0].uri = manifest.properties.files[0].uri.replace(
+    'image',
+    assetIndex,
+  );
   return manifest;
 }
 
@@ -597,7 +602,8 @@ async function writeIndices({
                 saveCache(cacheName, env, cache);
               } catch (err) {
                 log.error(
-                  `Saving config line ${ind}-${keys[indexes[indexes.length - 1]]
+                  `Saving config line ${ind}-${
+                    keys[indexes[indexes.length - 1]]
                   } failed`,
                   err,
                 );
@@ -822,16 +828,16 @@ export async function upload({
     const config = cache.program.config
       ? new PublicKey(cache.program.config)
       : await initConfig(anchorProgram, walletKeyPair, {
-        totalNFTs,
-        mutable,
-        retainAuthority,
-        sellerFeeBasisPoints,
-        symbol,
-        creators,
-        env,
-        cache,
-        cacheName,
-      });
+          totalNFTs,
+          mutable,
+          retainAuthority,
+          sellerFeeBasisPoints,
+          symbol,
+          creators,
+          env,
+          cache,
+          cacheName,
+        });
 
     setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
 

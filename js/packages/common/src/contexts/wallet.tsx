@@ -7,6 +7,7 @@ import {
   getLedgerWallet,
   getMathWallet,
   getPhantomWallet,
+  getSlopeWallet,
   getSolflareWallet,
   getSolletWallet,
   getSolongWallet,
@@ -211,6 +212,7 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     () => [
       getPhantomWallet(),
       getSolflareWallet(),
+      getSlopeWallet(),
       // getTorusWallet({
       //   options: {
       //     // @FIXME: this should be changed for Metaplex, and by each Metaplex storefront
