@@ -310,7 +310,7 @@ programCommand('withdraw')
     }
   });
 
-programCommand('verify_assets')
+programCommand('verify_token_metadata')
   .argument(
     '<directory>',
     'Directory containing images and metadata files named from 0-n',
@@ -335,7 +335,7 @@ programCommand('verify_assets')
     );
   });
 
-programCommand('verify_upload')
+programCommand('verify')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
