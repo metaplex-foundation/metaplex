@@ -338,7 +338,8 @@ programCommand('verify_assets')
 
     const startMs = Date.now();
     log.info(
-      `\n==> Starting verification: ${new Date(startMs).toString().split(' G')[0]
+      `\n==> Starting verification: ${
+        new Date(startMs).toString().split(' G')[0]
       }`,
     );
     verifyTokenMetadata({ files, uploadElementsCount: number });
@@ -381,8 +382,8 @@ programCommand('verify_upload')
             const thisSlice = config.data.slice(
               CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * allIndexesInSlice[i],
               CONFIG_ARRAY_START +
-              4 +
-              CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
+                4 +
+                CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
             );
             const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
             const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
@@ -512,12 +513,14 @@ programCommand('verify_upload')
     );
 
     log.info(
-      `uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines
+      `uploaded (${lineCount.toNumber()}) out of (${
+        configData.data.maxNumberOfLines
       })`,
     );
     if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
       throw new Error(
-        `predefined number of NFTs (${configData.data.maxNumberOfLines
+        `predefined number of NFTs (${
+          configData.data.maxNumberOfLines
         }) is smaller than the uploaded one (${lineCount.toNumber()})`,
       );
     } else {
@@ -557,7 +560,7 @@ programCommand('verify_price')
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     if (!cacheContent.candyMachineAddress) {
-      return log.error("candy machine account not found in cache. To create a new candy machine, please use candy machine v2.");
+      useCandyMachineV2Error();
     }
     const candyAddress = new PublicKey(cacheContent.candyMachineAddress);
 
@@ -634,7 +637,7 @@ programCommand('show')
         //@ts-ignore
         machine.data.goLiveDate
           ? //@ts-ignore
-          new Date(machine.data.goLiveDate * 1000)
+            new Date(machine.data.goLiveDate * 1000)
           : 'N/A',
       );
     } catch (e) {
@@ -667,8 +670,6 @@ programCommand('show')
     log.info('maxNumberOfLines: ', config.data.maxNumberOfLines);
   });
 
-
-
 programCommand('update_candy_machine')
   .option(
     '-d, --date <string>',
@@ -694,7 +695,7 @@ programCommand('update_candy_machine')
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     if (!cacheContent.candyMachineAddress) {
-      return log.error("candy machine account not found in cache. To create a new candy machine, please use candy machine v2.");
+      useCandyMachineV2Error();
     }
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
 
@@ -824,7 +825,7 @@ programCommand('sign_all')
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
     if (!cacheContent.candyMachineAddress) {
-      return log.error("candy machine account not found in cache. To create a new candy machine, please use candy machine v2.");
+      useCandyMachineV2Error();
     }
     const candyAddress = cacheContent.candyMachineAddress;
 
@@ -863,7 +864,7 @@ programCommand('update_existing_nfts_from_latest_cache_file')
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
     if (!cacheContent.candyMachineAddress) {
-      return log.error("candy machine account not found in cache. To create a new candy machine, please use candy machine v2.");
+      useCandyMachineV2Error();
     }
     const candyAddress = cacheContent.candyMachineAddress;
 
@@ -896,7 +897,7 @@ programCommand('randomize_unminted_nfts_in_new_cache_file').action(
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env);
     if (!cacheContent.candyMachineAddress) {
-      return log.error("candy machine account not found in cache. To create a new candy machine, please use candy machine v2.");
+      useCandyMachineV2Error();
     }
     const candyAddress = cacheContent.candyMachineAddress;
 
@@ -939,7 +940,7 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
   if (!cacheContent.candyMachineAddress) {
-    return log.error("candy machine account not found in cache. To create a new candy machine, please use candy machine v2.");
+    useCandyMachineV2Error();
   }
   const accountsByCreatorAddress = await getAccountsByCreatorAddress(
     cacheContent.candyMachineAddress,
@@ -971,23 +972,35 @@ function programCommand(name: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setLogLevel(value, prev) {
-  if (value === undefined || value === null) {
+  if (value == null) {
     return;
   }
   log.info('setting the log value to: ' + value);
   log.setLevel(value);
 }
+
 function errorColor(str) {
   // Add ANSI escape codes to display text in red.
   return `\x1b[31m${str}\x1b[0m`;
 }
-function deprecationWarning(){
-  log.warn(errorColor("Creating new candy machines with v1 has been disabled.\n"
-      + "While you can still update existing candy machines, you can no longer create new ones.\n\n"
-      + "Use candy machine v2 to create a new candy machine.\n"
-      + "Please visit https://docs.metaplex.com to learn more.\n"));
 
+function deprecationWarning() {
+  log.warn(
+    errorColor(
+      'Candy Machine V1 has been deprecated and new instances can no longer be created.\n' +
+        'Although, you can still update existing V1 Candy Machines.\n\n' +
+        'You must use Candy Machine V2 to create a new instance of a Candy Machine.\n' +
+        'For more information about this change, visit https://docs.metaplex.com.\n',
+    ),
+  );
 }
+
+function useCandyMachineV2Error() {
+  return log.error(
+    'Candy Machine account not found in the cache. To create a new instance of a Candy Machine, please use Candy Machine V2.',
+  );
+}
+
 program
   .configureOutput({
     // Visibly override write routines as example!
