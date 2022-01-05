@@ -3,7 +3,6 @@ import path from 'path';
 import log from 'loglevel';
 import {
   createCandyMachineV2,
-  createConfig,
   loadCandyProgram,
   loadWalletKey,
 } from '../helpers/accounts';
@@ -494,56 +493,6 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
 }
 
 /**
- * Initialize & deploy the Candy Machine Custom Program's configuration,
- * then save a reference to this config in the Cache object.
- */
-async function initConfig(
-  anchorProgram,
-  walletKeyPair,
-  {
-    totalNFTs,
-    mutable,
-    symbol,
-    retainAuthority,
-    sellerFeeBasisPoints,
-    creators,
-    env,
-    cache,
-    cacheName,
-  },
-) {
-  log.info('Initializing program config');
-  try {
-    const res = await createConfig(anchorProgram, walletKeyPair, {
-      maxNumberOfLines: new BN(totalNFTs),
-      symbol,
-      sellerFeeBasisPoints,
-      isMutable: mutable,
-      maxSupply: new BN(0),
-      retainAuthority: retainAuthority,
-      creators: creators.map(creator => ({
-        address: new PublicKey(creator.address),
-        verified: true,
-        share: creator.share,
-      })),
-    });
-    cache.program.uuid = res.uuid;
-    cache.program.config = res.config.toBase58();
-    const config = res.config;
-
-    log.info(
-      `Initialized config for a candy machine with publickey: ${config.toBase58()}`,
-    );
-
-    saveCache(cacheName, env, cache);
-    return config;
-  } catch (err) {
-    log.error('Error deploying config to Solana network.', err);
-    throw err;
-  }
-}
-
-/**
  * For each asset present in the Cache object, write to the deployed
  * configuration an additional line with the name of the asset and the link
  * to its manifest, if the asset was not already written according to the
@@ -654,10 +603,7 @@ type UploadParams = {
   cacheName: string;
   env: string;
   keypair: string;
-  totalNFTs: number;
   storage: string;
-  retainAuthority: boolean;
-  mutable: boolean;
   rpcUrl: string;
   ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
@@ -669,10 +615,7 @@ export async function upload({
   cacheName,
   env,
   keypair,
-  totalNFTs,
   storage,
-  retainAuthority,
-  mutable,
   rpcUrl,
   ipfsCredentials,
   awsS3Bucket,
@@ -681,13 +624,23 @@ export async function upload({
 }: UploadParams): Promise<void> {
   // Read the content of the Cache file into the Cache object, initialize it
   // otherwise.
-  const cache: Cache = loadCache(cacheName, env) || {
-    program: {},
-    items: {},
-  };
+  const cache: Cache | undefined = loadCache(cacheName, env);
+  if (cache === undefined) {
+    log.error(
+      'Existing cache not found. To create a new candy machine, please use candy machine v2.',
+    );
+    throw new Error('Existing cache not found');
+  }
 
-  // Normalize the Cache object in case the Cache file was incomplete.
-  cache.program = cache.program || {};
+  // Make sure config exists in cache
+  if (!cache.program?.config) {
+    log.error(
+      'existing config account not found in cache. To create a new candy machine, please use candy machine v2.',
+    );
+    throw new Error('config account not found in cache');
+  }
+  const config = new PublicKey(cache.program.config);
+
   cache.items = cache.items || {};
 
   // Retrieve the directory path where the assets are located.
@@ -818,26 +771,6 @@ export async function upload({
         ),
       );
     }
-
-    const {
-      properties: { creators },
-      seller_fee_basis_points: sellerFeeBasisPoints,
-      symbol,
-    } = getAssetManifest(dirname, '0');
-
-    const config = cache.program.config
-      ? new PublicKey(cache.program.config)
-      : await initConfig(anchorProgram, walletKeyPair, {
-          totalNFTs,
-          mutable,
-          retainAuthority,
-          sellerFeeBasisPoints,
-          symbol,
-          creators,
-          env,
-          cache,
-          cacheName,
-        });
 
     setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
 
