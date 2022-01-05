@@ -406,7 +406,7 @@ export const AuctionBids = ({
         <BidLine
           bid={bid}
           index={activeBidIndex}
-          key={index}
+          key={bid.pubkey}
           mint={mint}
           isLastWinner={index + 1 === winners.length}
           isCancelled={isCancelled}
