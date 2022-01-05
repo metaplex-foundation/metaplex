@@ -189,17 +189,21 @@ export async function sendRedeemBid(
           }
           break;
         case WinningConfigType.TokenOnlyTransfer:
-          console.log('Redeeming Token only');
-          await setupRedeemInstructions(
-            auctionView,
-            accountsByMint,
-            accountRentExempt,
-            wallet,
-            safetyDeposit,
-            winnerIndex,
-            signers,
-            instructions,
-          );
+          {
+            console.log('Redeeming Token only');
+            const { ix, signer } = await setupRedeemInstructions(
+              auctionView,
+              accountsByMint,
+              accountRentExempt,
+              wallet,
+              safetyDeposit,
+              winnerIndex,
+              signers,
+              instructions,
+            );
+            flipPrimarySaleHappenedFlagIX = ix;
+            flipPrimarySaleHappenedFlagSigner = signer;
+          }
           break;
       }
     }
@@ -327,7 +331,7 @@ async function setupRedeemInstructions(
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-) {
+): Promise<CreatedInstruction> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const winningPrizeSigner: Keypair[] = [];
@@ -368,14 +372,26 @@ async function setupRedeemInstructions(
     );
 
     const metadata = await getMetadata(safetyDeposit.info.tokenMint);
-    await updatePrimarySaleHappenedViaToken(
+    const ix = createUpdatePrimarySaleHappenedViaTokenInstructions(
       metadata,
       wallet.publicKey.toBase58(),
       newTokenAccount,
-      winningPrizeInstructions,
     );
+    return {
+      ix,
+      signer: winningPrizeSigner,
+    };
   }
+  return {
+    ix: null,
+    signer: winningPrizeSigner,
+  };
 }
+
+type CreatedInstruction = {
+  ix: TransactionInstruction | null;
+  signer: Keypair[];
+};
 
 async function setupRedeemFullRightsTransferInstructions(
   auctionView: AuctionView,
@@ -387,7 +403,7 @@ async function setupRedeemFullRightsTransferInstructions(
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-): Promise<{ ix: TransactionInstruction | null; signer: Keypair[] }> {
+): Promise<CreatedInstruction> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const winningPrizeSigner: Keypair[] = [];
