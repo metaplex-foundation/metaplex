@@ -146,22 +146,22 @@ programCommand('upload')
       secretKey: ipfsInfuraSecret,
     };
 
-    const imageFiles = files.filter(it => {
-      return !it.endsWith(EXTENSION_JSON);
-    });
-    const imageFileCount = imageFiles.length;
+    let imageFileCount = 0;
+    let jsonFileCount = 0;
 
-    imageFiles.forEach(it => {
-      if (!supportedImageTypes[getType(it)]) {
-        throw new Error(`The file ${it} is not a supported file type.`);
+    // Filter out any non-supported file types and find the JSON vs Image file count
+    const supportedFiles = files.filter(it => {
+      if (supportedImageTypes[getType(it)]) {
+        imageFileCount++;
+      } else if (it.endsWith(EXTENSION_JSON)) {
+        jsonFileCount++;
+      } else {
+        log.warn(`WARNING: Skipping unsupported file type ${it}`);
+        return false;
       }
+
+      return true;
     });
-
-    const jsonFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_JSON);
-    }).length;
-
-    const elemCount = number ? number : imageFileCount;
 
     if (imageFileCount !== jsonFileCount) {
       throw new Error(
@@ -169,6 +169,7 @@ programCommand('upload')
       );
     }
 
+    const elemCount = number ? number : imageFileCount;
     if (elemCount < imageFileCount) {
       throw new Error(
         `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
@@ -181,7 +182,7 @@ programCommand('upload')
     log.info('started at: ' + startMs.toString());
     try {
       await uploadV2({
-        files,
+        files: supportedFiles,
         cacheName,
         env,
         totalNFTs: elemCount,
