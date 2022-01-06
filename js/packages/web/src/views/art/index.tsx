@@ -6,7 +6,7 @@ import {
   loadMultipleAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, List, Skeleton, Tag, Typography } from 'antd';
+import { Button, List, Skeleton, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
@@ -15,8 +15,6 @@ import { ArtMinting } from '../../components/ArtMinting';
 import { ViewOn } from '../../components/ViewOn';
 import { useArt, useExtendedArt } from '../../hooks';
 import { ArtType } from '../../types';
-
-const { Text } = Typography;
 
 export const ArtView = () => {
   const { nft } = useParams<{ nft: string }>();
@@ -42,7 +40,7 @@ export const ArtView = () => {
   } else if (art.type === ArtType.Print) {
     badge = `${art.edition} of ${art.supply}`;
   }
-  const { data } = useExtendedArt(nft);
+  const { ref, data } = useExtendedArt(nft);
 
   useEffect(() => {
     (async () => {
@@ -86,7 +84,7 @@ export const ArtView = () => {
   );
 
   const getArt = (className: string) => (
-    <div className={className}>
+    <div className={className + ' metaplex-margin-bottom-8'}>
       <ArtContent
         pubkey={nft}
         active={true}
@@ -98,31 +96,39 @@ export const ArtView = () => {
     </div>
   );
 
+  const getDescriptionAndAttributes = (className: string) => (
+    <div className={className}>
+      {description && (
+        <>
+          <h3 className="info-header">Description</h3>
+          <p>{description}</p>
+        </>
+      )}
+
+      {attributes && (
+        <div>
+          <h3 className="info-header">Attributes</h3>
+          <List grid={{ column: 4 }}>
+            {attributes.map((attribute, index) => (
+              <List.Item key={`${attribute.value}-${index}`}>
+                <List.Item.Meta
+                  title={attribute.trait_type}
+                  description={attribute.value}
+                />
+              </List.Item>
+            ))}
+          </List>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="item-page-wrapper">
+    <div className="item-page-wrapper" ref={ref}>
       <div className="item-page-left">
         {getArt('art-desktop')}
         {art.creators?.find(c => !c.verified) && unverified}
-        <p className="art-desktop metaplex-padding-y-8 metaplex-padding-x-4">
-          {description}
-        </p>
-        {attributes && (
-          <div>
-            <Text>Attributes</Text>
-            <List grid={{ column: 4 }}>
-              {attributes.map((attribute, i) => {
-                return (
-                  <List.Item key={i}>
-                    <List.Item.Meta
-                      title={attribute.trait_type}
-                      description={attribute.value}
-                    />
-                  </List.Item>
-                );
-              })}
-            </List>
-          </div>
-        )}
+        {getDescriptionAndAttributes('art-desktop')}
       </div>
       <div className="item-page-right">
         <div className="title-row">
@@ -131,6 +137,8 @@ export const ArtView = () => {
         </div>
 
         {getArt('art-mobile')}
+        {art.creators?.find(c => !c.verified) && unverified}
+        {getDescriptionAndAttributes('art-mobile')}
 
         <div className="info-outer-wrapper">
           <div className="info-items-wrapper">
