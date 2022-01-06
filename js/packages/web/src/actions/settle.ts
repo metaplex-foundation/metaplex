@@ -63,7 +63,7 @@ export async function settle(
   await emptyPaymentAccountForAllTokens(connection, wallet, auctionView);
 }
 
-async function emptyPaymentAccountForAllTokens(
+export async function createEmptyPaymentAccountForAllTokensIX(
   connection: Connection,
   wallet: WalletSigner,
   auctionView: AuctionView,
@@ -184,6 +184,20 @@ async function emptyPaymentAccountForAllTokens(
     instructions.push(currInstrBatch);
   }
 
+  return { signers, instructions };
+}
+
+async function emptyPaymentAccountForAllTokens(
+  connection: Connection,
+  wallet: WalletSigner,
+  auctionView: AuctionView,
+) {
+  const { instructions, signers } =
+    await createEmptyPaymentAccountForAllTokensIX(
+      connection,
+      wallet,
+      auctionView,
+    );
   for (let i = 0; i < instructions.length; i++) {
     const instructionBatch = instructions[i];
     const signerBatch = signers[i];
