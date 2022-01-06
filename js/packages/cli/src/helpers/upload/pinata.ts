@@ -19,7 +19,7 @@ export async function pinataUpload(
   data.append("file", fs.createReadStream(image));
 
   const resImage = await fetch(
-    `https://testapi.pinata.cloud/pinning/pinFileToIPFS`,
+    `https://api.pinata.cloud/pinning/pinFileToIPFS`,
     {
       headers: {
         Authorization: `Bearer ${jwt}`,
