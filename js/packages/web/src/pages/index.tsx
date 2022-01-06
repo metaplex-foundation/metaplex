@@ -24,7 +24,9 @@ if (process.env.NEXT_PUBLIC_BUGSNAG_API_KEY) {
 }
 
 const storefrontDenyList = [
-  'solboogle'
+  'solboogle',
+  'childofdice',
+  'cotdnft' // user request
 ]
 
 export async function getServerSideProps(context: NextPageContext) {
