@@ -2,6 +2,12 @@
   display: flex;
   gap: 1rem;
   margin: 0.5rem 0;
+  flex-wrap: wrap;
+
+  @media screen and (max-width: 450px) {
+    gap: 0.5rem;
+    margin: 0.25rem 0 0;
+  }
 }
 
 .listings-menu-item {
@@ -11,6 +17,7 @@
   padding: 0.25rem 0.5rem 0.25rem 0.625rem;
   border-radius: @border-radius;
   cursor: pointer;
+  white-space: nowrap;
 
   &.active {
     background-color: @theme-neutral-gray-very-transparent;
@@ -19,6 +26,10 @@
   &:disabled {
     opacity: 0.5;
     pointer-events: none;
+  }
+
+  @media screen and (max-width: 450px) {
+    font-size: 0.8rem;
   }
 }
 
