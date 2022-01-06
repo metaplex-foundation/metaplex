@@ -58,7 +58,6 @@ export const awaitTransactionSignatureConfirmation = async (
   txid: anchor.web3.TransactionSignature,
   timeout: number,
   connection: anchor.web3.Connection,
-  commitment: anchor.web3.Commitment = 'recent',
   queryStatus = false,
 ): Promise<anchor.web3.SignatureStatus | null | void> => {
   let done = false;
@@ -77,6 +76,7 @@ export const awaitTransactionSignatureConfirmation = async (
       console.log('Rejecting for timeout...');
       reject({ timeout: true });
     }, timeout);
+
     while (!done && queryStatus) {
       // eslint-disable-next-line no-loop-func
       (async () => {
@@ -119,7 +119,7 @@ export const awaitTransactionSignatureConfirmation = async (
   return status;
 };
 
-/* export */ const createAssociatedTokenAccountInstruction = (
+const createAssociatedTokenAccountInstruction = (
   associatedTokenAddress: anchor.web3.PublicKey,
   payer: anchor.web3.PublicKey,
   walletAddress: anchor.web3.PublicKey,

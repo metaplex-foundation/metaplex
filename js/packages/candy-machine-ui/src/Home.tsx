@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import * as anchor from '@project-serum/anchor';
+
 import styled from 'styled-components';
 import { Container, Snackbar } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
-import Grid from '@material-ui/core/Grid';
-
 import Alert from '@material-ui/lab/Alert';
-
-import * as anchor from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
@@ -18,6 +16,7 @@ import {
   mintOneToken,
 } from './candy-machine';
 import { AlertState } from './utils';
+import { Header } from './Header';
 import { MintButton } from './MintButton';
 import { GatewayProvider } from '@civic/solana-gateway-react';
 
@@ -44,6 +43,12 @@ export interface HomeProps {
 
 const Home = (props: HomeProps) => {
   const [isUserMinting, setIsUserMinting] = useState(false);
+  const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
+  const [alertState, setAlertState] = useState<AlertState>({
+    open: false,
+    message: '',
+    severity: undefined,
+  });
 
   const rpcUrl = props.rpcHost;
   const wallet = useWallet();
@@ -65,15 +70,7 @@ const Home = (props: HomeProps) => {
     } as anchor.Wallet;
   }, [wallet]);
 
-  const [alertState, setAlertState] = useState<AlertState>({
-    open: false,
-    message: '',
-    severity: undefined,
-  });
-
-  const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
-
-  const refreshCandyMachineState = () => {
+  const refreshCandyMachineState = useCallback(() => {
     (async () => {
       if (!anchorWallet) {
         return;
@@ -88,14 +85,12 @@ const Home = (props: HomeProps) => {
           );
           setCandyMachine(cndy);
         } catch (e) {
-          console.log('Problem getting candy machine state');
+          console.log('There was a problem fetching Candy Machine state');
           console.log(e);
         }
-      } else {
-        console.log('No candy machine detected in configuration.');
       }
     })();
-  };
+  }, [anchorWallet, props.candyMachineId, props.connection]);
 
   const onMint = async () => {
     try {
@@ -112,7 +107,6 @@ const Home = (props: HomeProps) => {
             mintTxId,
             props.txTimeout,
             props.connection,
-            'singleGossip',
             true,
           );
         }
@@ -158,14 +152,32 @@ const Home = (props: HomeProps) => {
       });
     } finally {
       setIsUserMinting(false);
-      refreshCandyMachineState();
     }
   };
 
-  useEffect(refreshCandyMachineState, [
+  useEffect(() => {
+    // Refresh the UI when there are confirmed on-chain updates
+    if (props.candyMachineId) {
+      const candyMachineStateSub = props.connection.onAccountChange(
+        props.candyMachineId,
+        () => {
+          refreshCandyMachineState();
+        },
+      );
+
+      refreshCandyMachineState();
+
+      return () => {
+        if (candyMachineStateSub) {
+          props.connection.removeAccountChangeListener(candyMachineStateSub);
+        }
+      };
+    }
+  }, [
     anchorWallet,
     props.candyMachineId,
     props.connection,
+    refreshCandyMachineState,
   ]);
 
   return (
@@ -174,49 +186,46 @@ const Home = (props: HomeProps) => {
         <Paper
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
         >
-          <Grid container justifyContent="center" direction="column">
-            {!wallet.connected ? (
-              <ConnectButton>Connect Wallet</ConnectButton>
-            ) : (
-              <div>
-                <>
-                  <MintContainer>
-                    {candyMachine?.state.isActive &&
-                    candyMachine?.state.gatekeeper &&
-                    wallet.publicKey &&
-                    wallet.signTransaction ? (
-                      <GatewayProvider
-                        wallet={{
-                          publicKey:
-                            wallet.publicKey ||
-                            new PublicKey(CANDY_MACHINE_PROGRAM),
-                          //@ts-ignore
-                          signTransaction: wallet.signTransaction,
-                        }}
-                        gatekeeperNetwork={
-                          candyMachine?.state?.gatekeeper?.gatekeeperNetwork
-                        }
-                        clusterUrl={rpcUrl}
-                        options={{ autoShowModal: false }}
-                      >
-                        <MintButton
-                          candyMachine={candyMachine}
-                          isMinting={isUserMinting}
-                          onMint={onMint}
-                        />
-                      </GatewayProvider>
-                    ) : (
-                      <MintButton
-                        candyMachine={candyMachine}
-                        isMinting={isUserMinting}
-                        onMint={onMint}
-                      />
-                    )}
-                  </MintContainer>
-                </>
-              </div>
-            )}
-          </Grid>
+          {!wallet.connected ? (
+            <ConnectButton>Connect Wallet</ConnectButton>
+          ) : (
+            <>
+              <Header candyMachine={candyMachine} />
+              <MintContainer>
+                {candyMachine?.state.isActive &&
+                candyMachine?.state.gatekeeper &&
+                wallet.publicKey &&
+                wallet.signTransaction ? (
+                  <GatewayProvider
+                    wallet={{
+                      publicKey:
+                        wallet.publicKey ||
+                        new PublicKey(CANDY_MACHINE_PROGRAM),
+                      //@ts-ignore
+                      signTransaction: wallet.signTransaction,
+                    }}
+                    gatekeeperNetwork={
+                      candyMachine?.state?.gatekeeper?.gatekeeperNetwork
+                    }
+                    clusterUrl={rpcUrl}
+                    options={{ autoShowModal: false }}
+                  >
+                    <MintButton
+                      candyMachine={candyMachine}
+                      isMinting={isUserMinting}
+                      onMint={onMint}
+                    />
+                  </GatewayProvider>
+                ) : (
+                  <MintButton
+                    candyMachine={candyMachine}
+                    isMinting={isUserMinting}
+                    onMint={onMint}
+                  />
+                )}
+              </MintContainer>
+            </>
+          )}
         </Paper>
       </Container>
 

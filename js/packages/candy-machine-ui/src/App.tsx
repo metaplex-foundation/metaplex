@@ -28,10 +28,19 @@ const theme = createTheme({
   },
 });
 
-const candyMachineId = process.env.REACT_APP_CANDY_MACHINE_ID
-  ? new anchor.web3.PublicKey(process.env.REACT_APP_CANDY_MACHINE_ID)
-  : undefined;
+const getCandyMachineId = (): anchor.web3.PublicKey | undefined => {
+  try {
+    const candyMachineId = new anchor.web3.PublicKey(
+      process.env.REACT_APP_CANDY_MACHINE_ID!,
+    );
 
+    return candyMachineId;
+  } catch {
+    return undefined;
+  }
+};
+
+const candyMachineId = getCandyMachineId();
 const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
 const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST!;
 const connection = new anchor.web3.Connection(rpcHost);
