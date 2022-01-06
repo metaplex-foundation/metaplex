@@ -38,9 +38,7 @@ export const Banner = ({
 
       <div className="logo-wrapper">
         <Link to="/" id="metaplex-header-logo">
-          <div className="logo-border">
-            <img src={logo || ''} />
-          </div>
+          <img src={logo || ''} />
         </Link>
       </div>
 

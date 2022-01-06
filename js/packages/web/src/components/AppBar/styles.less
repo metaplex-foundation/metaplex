@@ -17,16 +17,11 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   height: 1.5rem;
-  padding-left: 0.5rem;
+  margin-top: 0.5rem;
 
   @media (max-width: 800px) {
     justify-content: center;
     width: auto;
-    padding-left: 0;
-
-    &.secondary {
-      justify-content: flex-start;
-    }
   }
 
   @media (max-width: 340px) {
@@ -69,5 +64,41 @@
   @media (max-width: 800px) {
     flex-direction: column-reverse;
     width: 100%;
+  }
+}
+
+.app-bar-left-wrapper {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  padding-left: 0.5rem;
+
+  @media (max-width: 800px) {
+    padding-left: 0;
+  }
+
+  @media (max-width: 450px) {
+    flex-direction: column-reverse;
+  }
+}
+
+.app-bar-logo-wrapper {
+  @media screen and (max-width: 800px) {
+    &.hide {
+      display: none;
+    }
+  }
+}
+
+.app-bar-logo {
+  width: 3rem;
+  height: 3rem;
+  border-radius: @border-radius;
+
+  @media (max-width: 450px) {
+    flex-direction: column-reverse;
+    width: 120px;
+    height: 120px;
+    margin-top: -0.5rem;
   }
 }
