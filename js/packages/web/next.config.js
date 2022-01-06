@@ -40,6 +40,7 @@ module.exports = withPlugins(plugins, {
     NEXT_PUBLIC_BIG_STORE: process.env.REACT_APP_BIG_STORE,
     NEXT_PUBLIC_CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
     NEXT_PUBLIC_IPFS_CDN: process.env.NEXT_PUBLIC_IPFS_CDN || 'https://ipfs.cache.holaplex.com',
+    NEXT_PUBLIC_IPFS_IMAGE_CDN: process.env.NEXT_PUBLIC_IPFS_IMAGE_CDN || 'https://images.holaplex.com',
   },
   async rewrites() {
     return [
