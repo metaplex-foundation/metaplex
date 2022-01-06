@@ -3,8 +3,6 @@ import { Space, Typography } from 'antd';
 import { useStore } from '@oyster/common';
 const { Text } = Typography;
 import { Link } from 'react-router-dom';
-import { FloatingMenu } from '../FloatingMenu';
-import { MainMenu } from '../MainMenu/MainMenu';
 
 export const Banner = ({
   src,
@@ -29,8 +27,6 @@ export const Banner = ({
   return (
     <div id="metaplex-banner">
       {src && <img id="metaplex-banner-backdrop" src={src} />}
-
-      <FloatingMenu />
 
       <div className="logo-wrapper">
         <Link to="/" id="metaplex-header-logo">
@@ -69,7 +65,6 @@ export const Banner = ({
         )}
         {actionComponent}
       </div>
-      <MainMenu />
       {children}
     </div>
   );

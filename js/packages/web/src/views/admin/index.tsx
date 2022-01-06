@@ -48,6 +48,7 @@ import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useAuctionManagersToCache, useNotifications } from '../../hooks';
 import Bugsnag from '@bugsnag/browser';
+import { Cog } from '../../components/CurrentUserBadge';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -75,14 +76,10 @@ export const AdminView = () => {
   }, [store, storeAddress, wallet.publicKey]);
 
   useEffect(() => {
-    return subscribeProgramChanges(
-      connection,
-      patchState,
-      {
-        programId: METAPLEX_ID,
-        processAccount: processMetaplexAccounts,
-      },
-    );
+    return subscribeProgramChanges(connection, patchState, {
+      programId: METAPLEX_ID,
+      processAccount: processMetaplexAccounts,
+    });
   }, [connection]);
 
   useEffect(() => {
@@ -129,6 +126,7 @@ export const AdminView = () => {
         <Spin indicator={<LoadingOutlined />} />
       ) : store && wallet ? (
         <>
+          <Cog buttonType="text" />
           <InnerAdminView
             store={store}
             whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}

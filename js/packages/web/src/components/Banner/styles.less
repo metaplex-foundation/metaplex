@@ -3,25 +3,24 @@
   flex-flow: column nowrap;
   justify-content: space-between;
   align-items: center;
-  width: 100vw;
+  width: 1400px;
+  max-width: 100vw;
+  margin: 0 auto;
 }
 
 #metaplex-banner-backdrop {
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
   object-position: center;
   object-fit: cover;
-  height: 300px;
+  border-radius: @border-radius;
+  aspect-ratio: 4.28 / 1;
 
-  @media screen and (max-width: 1100px) {
-    height: 240px;
+  @media screen and (max-width: 1400px) {
+    border-radius: 0;
   }
 
   @media screen and (max-width: 800px) {
-    height: 200px;
+    visibility: hidden;
   }
 }
 
@@ -37,14 +36,14 @@
     font-size: 40px;
     font-weight: 900;
     line-height: 48px;
-    max-width: 900px;
     margin-bottom: 12px;
+    text-align: center;
   }
 
   .ant-typography {
     font-weight: 16px;
     font-weight: 400;
-    max-width: 900px;
+    text-align: center;
   }
 
   @media screen and (max-width: 800px) {
@@ -59,10 +58,11 @@
 .logo-wrapper {
   --size: 120px;
   height: var(--size);
-  margin-top: calc((var(--size) / 1.5) * -1);
+  margin-top: calc((var(--size) / 2.5) * -1);
   display: flex;
   width: calc(100vw - @content-padding * 2);
   max-width: @content-max-width;
+  justify-content: center;
 
   #metaplex-header-logo {
     display: block;

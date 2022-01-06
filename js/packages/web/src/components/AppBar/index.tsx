@@ -3,8 +3,9 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import React from 'react';
 import { Link, useResolvedPath, useMatch } from 'react-router-dom';
 import cx from 'classnames';
+import { FloatingMenu } from '../FloatingMenu';
 
-export const MainMenu = () => {
+export const AppBar = () => {
   const { connected, publicKey } = useWallet();
   const { ownerAddress } = useStore();
 
@@ -30,14 +31,14 @@ export const MainMenu = () => {
     menu = [...menu, getMenuItem('admin')];
   }
 
-  interface MainMenuItemProps {
+  interface MenuItemProps {
     to: string;
     key: string;
     group?: string;
     title: string;
   }
 
-  const MainMenuItem = ({ to, title, key, group }: MainMenuItemProps) => {
+  const MenuItem = ({ to, title, key, group }: MenuItemProps) => {
     const resolved = useResolvedPath(group || to);
     const match = useMatch({ path: resolved.pathname, end: false });
 
@@ -55,10 +56,13 @@ export const MainMenu = () => {
   };
 
   return (
-    <div className="main-menu-wrapper">
-      {menu.map(({ key, title, link, group }) => (
-        <MainMenuItem to={link} key={key} group={group} title={title} />
-      ))}
+    <div className="app-bar-wrapper">
+      <div className="main-menu-wrapper">
+        {menu.map(({ key, title, link, group }) => (
+          <MenuItem to={link} key={key} group={group} title={title} />
+        ))}
+      </div>
+      <FloatingMenu />
     </div>
   );
 };

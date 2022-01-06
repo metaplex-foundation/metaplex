@@ -3,6 +3,7 @@ import { Layout, notification } from 'antd';
 import React, { ReactNode, useEffect } from 'react';
 import { Banner } from './../../components/Banner';
 import { useStore } from '@oyster/common';
+import { AppBar } from '../AppBar';
 
 const { Content } = Layout;
 
@@ -22,6 +23,7 @@ export const AppLayout = React.memo(function AppLayout(props: {
 
   return (
     <div className="app-wrapper">
+      <AppBar />
       <Banner
         src={storefront.theme.banner}
         headingText={storefront.meta.title}
