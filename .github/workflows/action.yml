@@ -1,7 +1,7 @@
 name: 'Close stale issues and PRs'
 on:
   schedule:
-    - cron: '32 1 * * *'
+    - cron: '0 4 * * *'
 jobs:
   stale:
     runs-on: ubuntu-latest
@@ -10,6 +10,8 @@ jobs:
         with:
           stale-issue-message: 'This Issue has received no activity for 30 days. We will close it in 2 days, please reopen if you are still experiencing this issue.'
           stale-pr-message: 'This PR has received no activity for 30 days. We will close it in 2 days, please reopen if you would still like to get this change in.'
-          days-before-stale: 2
-          days-before-close: 2
+          days-before-stale: 30
+          days-before-close: 30
           exempt-pr-labels: 'wip,reviewing'
+          operations-per-run: 100
+          
