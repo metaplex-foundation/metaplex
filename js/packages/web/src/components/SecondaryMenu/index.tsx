@@ -4,6 +4,7 @@ import React from 'react';
 import { CurrentUserBadge } from '../CurrentUserBadge';
 import { HowToBuyModal } from '../HowToBuyModal';
 import { Notifications } from '../Notifications';
+import { Cog } from '../../components/CurrentUserBadge';
 
 export const SecondaryMenu = () => {
   const { connected } = useWallet();
@@ -13,6 +14,7 @@ export const SecondaryMenu = () => {
       {connected ? (
         <>
           <Notifications buttonType="text" />
+          <Cog buttonType="text" />
           <CurrentUserBadge showAddress={true} buttonType="text" />
         </>
       ) : (

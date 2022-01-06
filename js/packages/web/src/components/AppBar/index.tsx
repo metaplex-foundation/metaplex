@@ -34,19 +34,19 @@ export const AppBar = () => {
 
   interface MenuItemProps {
     to: string;
-    key: string;
+    itemKey: string;
     group?: string;
     title: string;
   }
 
-  const MenuItem = ({ to, title, key, group }: MenuItemProps) => {
+  const MenuItem = ({ to, title, itemKey, group }: MenuItemProps) => {
     const resolved = useResolvedPath(group || to);
     const match = useMatch({ path: resolved.pathname, end: false });
 
     return (
       <Link
         to={to}
-        key={key}
+        key={itemKey}
         className={cx('main-menu-item', {
           active: match,
         })}
@@ -70,7 +70,13 @@ export const AppBar = () => {
           </Link>
           <div className="main-menu-wrapper">
             {menu.map(({ key, title, link, group }) => (
-              <MenuItem to={link} key={key} group={group} title={title} />
+              <MenuItem
+                to={link}
+                key={key}
+                itemKey={key}
+                group={group}
+                title={title}
+              />
             ))}
           </div>
         </div>

@@ -48,7 +48,6 @@ import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useAuctionManagersToCache, useNotifications } from '../../hooks';
 import Bugsnag from '@bugsnag/browser';
-import { Cog } from '../../components/CurrentUserBadge';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -126,9 +125,6 @@ export const AdminView = () => {
         <Spin indicator={<LoadingOutlined />} />
       ) : store && wallet ? (
         <>
-          <div className="metaplex-margin-y-4">
-            <Cog buttonType="text" />
-          </div>
           <InnerAdminView
             store={store}
             whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}

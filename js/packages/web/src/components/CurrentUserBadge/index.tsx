@@ -229,7 +229,7 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
     >
       <Button className="metaplex-button-appbar" type={buttonType}>
         <div className="metaplex-flex metaplex-align-items-center metaplex-gap-2">
-          <CogSvg /> <span>Network and Wallet Options</span>
+          <CogSvg />
         </div>
       </Button>
     </Popover>
