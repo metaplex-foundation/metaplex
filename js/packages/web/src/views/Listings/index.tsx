@@ -47,9 +47,20 @@ export const Listings = () => {
     ) : (
       <Spin size="small" indicator={<LoadingOutlined />} />
     );
+
+  const currentViewIsEmpty = () =>
+    views.filter(x => x.key === view)[0]?.count() === 0;
+
   useEffect(() => {
-    if (!view) {
-      setSearchParams({ view: View.live });
+    // makes sure cards load when switching back to listings from another page
+    setSearchParams({
+      view: view || View.live,
+    });
+    // auto-forwards to first listings view with matching listings
+    if (currentViewIsEmpty()) {
+      setSearchParams({
+        view: views.find(x => x.count() > 0)?.key || View.live,
+      });
     }
   }, [view]);
 
@@ -121,6 +132,7 @@ export const Listings = () => {
                   'listings-menu-item' + (view === key ? ' active' : '')
                 }
                 onClick={() => setSearchParams({ view: key })}
+                disabled={count() === 0}
               >
                 {title} <span className="auctions-count">| {count()}</span>
               </button>
@@ -134,20 +146,16 @@ export const Listings = () => {
         </div>
       ) : (
         <>
-          {auctions.length ? (
-            <MetaplexMasonry>
-              {auctions.map(m => {
-                const id = m.auction.pubkey;
-                return (
-                  <Link to={`/listings/${id}`} key={id}>
-                    <AuctionRenderCard key={id} auctionView={m} />
-                  </Link>
-                );
-              })}
-            </MetaplexMasonry>
-          ) : (
-            'No listings in this category.'
-          )}
+          <MetaplexMasonry>
+            {auctions.map(m => {
+              const id = m.auction.pubkey;
+              return (
+                <Link to={`/listings/${id}`} key={id}>
+                  <AuctionRenderCard key={id} auctionView={m} />
+                </Link>
+              );
+            })}
+          </MetaplexMasonry>
           {hasNextPage && (
             <div key="more" className="app-section--loading" ref={sentryRef}>
               <Spin indicator={<LoadingOutlined />} />

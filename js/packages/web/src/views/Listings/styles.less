@@ -15,6 +15,11 @@
   &.active {
     background-color: @theme-neutral-gray-very-transparent;
   }
+
+  &:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
 
 .auctions-count {
