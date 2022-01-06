@@ -134,7 +134,7 @@ export function AccountsProvider({ children = null as any }) {
       .map(id => cache.get(id))
       .filter(a => a && a.info.owner.toBase58() === walletKey)
       .map(a => a as TokenAccount);
-  }, [walletKey]);
+  }, [walletKey, nativeAccount]);
 
   useEffect(() => {
     const accounts = selectUserAccounts().filter(

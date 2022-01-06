@@ -161,6 +161,7 @@ const VideoArtContent = ({
 const HTMLWrapper = styled.div`
   padding-top: 100%;
   position: relative;
+  width: 100%;
 `;
 
 const HTMLContent = ({
@@ -213,17 +214,13 @@ const HTMLContent = ({
         sandbox="allow-scripts"
         frameBorder="0"
         src={htmlURL}
-        className={className}
+        className={`html-iframe ${className}`}
         onLoad={() => {
           setLoaded(true);
         }}
         style={{
           ...style,
           height: !loaded ? 0 : '100%',
-          width: '100%',
-          top: 0,
-          left: 0,
-          position: 'absolute',
         }}
       ></iframe>
     </HTMLWrapper>
