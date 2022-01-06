@@ -98,8 +98,7 @@ programCommand('upload')
       whitelistMintSettings,
       goLiveDate,
       uuid,
-    } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
-    log.debug("storage: ", storage);
+    } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);    
     if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
       throw new Error(
         'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',

@@ -13,33 +13,7 @@ export async function pinataUpload(
   image: string,
   manifestBuffer: Buffer,
 ) {
-
-  // const mediaHash = await uploadToIpfs(globSource(image, { recursive: true }));
-  // log.debug('mediaHash:', mediaHash);
-  // const mediaUrl = `https://ipfs.io/ipfs/${mediaHash}`;
-  // log.debug('mediaUrl:', mediaUrl);
-  // const authIFPS = Buffer.from(tokenIfps).toString('base64');
-  // await fetch(`https://ipfs.infura.io:5001/api/v0/pin/add?arg=${mediaHash}`, {
-  //   headers: {
-  //     Authorization: `Basic ${authIFPS}`,
-  //   },
-  //   method: 'POST',
-  // });
-  // log.info('uploaded image for file:', image);
-
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  // console.log({ manifestJson, image, jwt });
-  // log.debug({manifestJson});
-  // log.debug({image});
-  // log.debug({jwt});
-  // manifestJson.image = mediaUrl;
-  // manifestJson.properties.files = manifestJson.properties.files.map(f => {
-  //   return { ...f, uri: mediaUrl };
-  // });
-
-  // const manifestHash = await uploadToIpfs(
-  //   Buffer.from(JSON.stringify(manifestJson)),
-  // );
 
   const data = new FormData();
   data.append("file", fs.createReadStream(image));

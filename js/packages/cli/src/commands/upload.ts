@@ -96,8 +96,7 @@ export async function uploadV2({
     cacheContent.items = {};
   }
 
-  const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
-  console.log(dedupedAssetKeys);
+  const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);  
   const SIZE = dedupedAssetKeys.length;
   console.log('Size', SIZE, dedupedAssetKeys[0]);
   let candyMachine = cacheContent.program.candyMachine
