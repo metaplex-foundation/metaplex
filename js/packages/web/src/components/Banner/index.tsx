@@ -26,7 +26,11 @@ export const Banner = ({
 
   return (
     <div id="metaplex-banner">
-      {src && <img id="metaplex-banner-backdrop" src={src} />}
+      {src ? (
+        <img id="metaplex-banner-backdrop" src={src} />
+      ) : (
+        <div className="metaplex-margin-top-12"></div>
+      )}
 
       <div className="logo-wrapper">
         <Link to="/" id="metaplex-header-logo">

@@ -1,34 +1,30 @@
 .app-bar-wrapper {
   max-width: 1400px;
   padding: 0 @content-padding;
-  margin: 2rem auto 1.5rem;
+  margin: 1.5rem auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  // @media screen and (max-width: 1400px) {
-  //   padding: 0 2rem;
-  // }
+  @media screen and (max-width: 700px) {
+    flex-direction: column-reverse;
+    gap: 1rem;
+  }
 }
 
 .main-menu-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
-  height: 1.75rem;
+  height: 1.5rem;
 
   @media (max-width: 800px) {
-    margin-top: 0.3rem;
     justify-content: center;
     width: auto;
 
     &.secondary {
       justify-content: flex-start;
     }
-  }
-
-  @media screen and (max-width: 450px) {
-    margin-top: 0.5rem;
   }
 }
 
@@ -54,10 +50,6 @@
   }
   &:active {
     opacity: 0.7;
-  }
-
-  @media screen and (max-width: 450px) {
-    font-size: 0.9rem;
   }
 }
 

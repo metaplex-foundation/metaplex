@@ -12,8 +12,8 @@ export const FloatingMenu = () => {
     <div className="floating-menu">
       {connected ? (
         <>
-          <CurrentUserBadge showAddress={true} buttonType="text" />
           <Notifications buttonType="text" />
+          <CurrentUserBadge showAddress={true} buttonType="text" />
         </>
       ) : (
         <>
