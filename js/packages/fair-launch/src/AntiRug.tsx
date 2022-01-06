@@ -30,7 +30,7 @@ export const AntiRug = ({
       return;
     }
 
-    console.log('refund2');
+    console.log('refund22');
     try {
       setIsMinting(true);
       await receiveRefund(anchorWallet, fairLaunch);
