@@ -126,7 +126,9 @@ export const AdminView = () => {
         <Spin indicator={<LoadingOutlined />} />
       ) : store && wallet ? (
         <>
-          <Cog buttonType="text" />
+          <div className="metaplex-margin-y-4">
+            <Cog buttonType="text" />
+          </div>
           <InnerAdminView
             store={store}
             whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}

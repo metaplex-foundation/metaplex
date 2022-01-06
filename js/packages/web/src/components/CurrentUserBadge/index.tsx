@@ -178,7 +178,7 @@ export const CurrentUserBadge = (props: {
           />
         }
       >
-        <Button type={props.buttonType}>
+        <Button className="metaplex-button-appbar" type={props.buttonType}>
           <Space direction="horizontal">
             {props.showBalance && (
               <span>
@@ -227,8 +227,10 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
         </Space>
       }
     >
-      <Button type={buttonType}>
-        <CogSvg />
+      <Button className="metaplex-button-appbar" type={buttonType}>
+        <div className="metaplex-flex metaplex-align-items-center metaplex-gap-2">
+          <CogSvg /> <span>Network and Wallet Options</span>
+        </div>
       </Button>
     </Popover>
   );

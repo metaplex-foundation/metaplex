@@ -3,9 +3,7 @@
   flex-flow: column nowrap;
   justify-content: space-between;
   align-items: center;
-  width: 1400px;
-  max-width: 100vw;
-  margin: 0 auto;
+  margin: auto;
 }
 
 #metaplex-banner-backdrop {
@@ -13,11 +11,7 @@
   object-position: center;
   object-fit: cover;
   border-radius: @border-radius;
-  aspect-ratio: 4.28 / 1;
-
-  @media screen and (max-width: 1400px) {
-    border-radius: 0;
-  }
+  aspect-ratio: 4 / 1;
 
   @media screen and (max-width: 800px) {
     visibility: hidden;

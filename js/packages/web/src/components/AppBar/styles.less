@@ -17,14 +17,20 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   height: 1.5rem;
+  padding-left: 0.5rem;
 
   @media (max-width: 800px) {
     justify-content: center;
     width: auto;
+    padding-left: 0;
 
     &.secondary {
       justify-content: flex-start;
     }
+  }
+
+  @media (max-width: 340px) {
+    gap: 1rem;
   }
 }
 

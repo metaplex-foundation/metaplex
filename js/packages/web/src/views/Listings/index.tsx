@@ -10,8 +10,10 @@ import { MetaplexMasonry } from './../../components/MetaplexMasonry';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
 import { useSearchParams } from 'react-router-dom';
 import { useInfiniteScrollAuctions } from '../../hooks';
+import { Banner } from './../../components/Banner';
 
 export const Listings = () => {
+  const { storefront } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const view = searchParams.get('view') as View;
@@ -102,21 +104,28 @@ export const Listings = () => {
         />
       )}
 
+      <Banner
+        src={storefront.theme.banner}
+        headingText={storefront.meta.title}
+        subHeadingText={storefront.meta.description}
+        logo={storefront?.theme?.logo || ''}
+        twitterVerification={storefront.integrations?.twitterVerification}
+      />
       <Anchor showInkInFixed={false} className="metaplex-anchor">
-        <div className="nav-menu-wrapper secondary">
-          {views
-            .filter(({ count }) => count() > 0)
-            .map(({ key, title, count }) => {
-              return (
-                <button
-                  key={key}
-                  className={'nav-menu-item' + (view === key ? ' active' : '')}
-                  onClick={() => setSearchParams({ view: key })}
-                >
-                  {title} <span className="auctions-count">| {count()}</span>
-                </button>
-              );
-            })}
+        <div className="listings-menu-wrapper">
+          {views.map(({ key, title, count }) => {
+            return (
+              <button
+                key={key}
+                className={
+                  'listings-menu-item' + (view === key ? ' active' : '')
+                }
+                onClick={() => setSearchParams({ view: key })}
+              >
+                {title} <span className="auctions-count">| {count()}</span>
+              </button>
+            );
+          })}
         </div>
       </Anchor>
       {initLoading ? (
@@ -125,16 +134,20 @@ export const Listings = () => {
         </div>
       ) : (
         <>
-          <MetaplexMasonry>
-            {auctions.map(m => {
-              const id = m.auction.pubkey;
-              return (
-                <Link to={`/listings/${id}`} key={id}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })}
-          </MetaplexMasonry>
+          {auctions.length ? (
+            <MetaplexMasonry>
+              {auctions.map(m => {
+                const id = m.auction.pubkey;
+                return (
+                  <Link to={`/listings/${id}`} key={id}>
+                    <AuctionRenderCard key={id} auctionView={m} />
+                  </Link>
+                );
+              })}
+            </MetaplexMasonry>
+          ) : (
+            'No listings in this category.'
+          )}
           {hasNextPage && (
             <div key="more" className="app-section--loading" ref={sentryRef}>
               <Spin indicator={<LoadingOutlined />} />

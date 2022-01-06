@@ -259,7 +259,7 @@ export function Notifications({
 
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
-      <Button type={buttonType}>
+      <Button className="metaplex-margin-top-2" type={buttonType}>
         <BellSvg />
       </Button>
     </Popover>
