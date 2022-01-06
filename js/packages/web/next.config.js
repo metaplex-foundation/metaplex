@@ -1,7 +1,7 @@
 const withPlugins = require('next-compose-plugins');
 const withLess = require('next-with-less');
 
-const assetPrefix = process.env.ASSET_PREFIX || '';
+const assetPrefix = process.env.ASSET_PREFIX || '/';
 
 const plugins = [
   [
@@ -12,7 +12,7 @@ const plugins = [
           modifyVars: {
             '@primary-color': '#768BF9',
             '@text-color': 'rgba(255, 255, 255)',
-            '@assetPrefix': assetPrefix || "''",
+            '@assetPrefix': assetPrefix || "'/'",
           },
           javascriptEnabled: true,
         },
