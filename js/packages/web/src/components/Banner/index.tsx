@@ -26,6 +26,8 @@ export const Banner = ({
   ownerAddress?: string;
 }) => {
   const wallet = useWallet();
+
+  console.log('wallet', wallet);
   // const hasSocial = Object.values(social || {}).some(link => link);
 
   return (
@@ -58,6 +60,7 @@ export const Banner = ({
             </Button>
           </a>
         ) : (
+          wallet.connected &&
           ownerAddress === wallet.publicKey?.toBase58() && (
             <Alert
               className="metaplex-flex-align-items-center metaplex-align-left"
