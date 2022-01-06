@@ -15,6 +15,7 @@ import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { pinataUpload } from '../helpers/upload/pinata';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
@@ -29,6 +30,8 @@ export async function uploadV2({
   retainAuthority,
   mutable,
   ipfsCredentials,
+  pinataJwt,
+  pinataGateway,
   awsS3Bucket,
   batchSize,
   price,
@@ -52,6 +55,8 @@ export async function uploadV2({
   retainAuthority: boolean;
   mutable: boolean;
   ipfsCredentials: ipfsCreds;
+  pinataJwt: string;
+  pinataGateway: string;
   awsS3Bucket: string;
   batchSize: number;
   price: BN;
@@ -92,6 +97,7 @@ export async function uploadV2({
   }
 
   const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
+  console.log(dedupedAssetKeys);
   const SIZE = dedupedAssetKeys.length;
   console.log('Size', SIZE, dedupedAssetKeys[0]);
   let candyMachine = cacheContent.program.candyMachine
@@ -300,6 +306,8 @@ export async function uploadV2({
                     manifestBuffer,
                   );
                   break;
+                case StorageType.Pinata: 
+                    [link, imageLink] = await pinataUpload(pinataJwt, pinataGateway, image, manifestBuffer)
                 case StorageType.Aws:
                   [link, imageLink] = await awsUpload(
                     awsS3Bucket,
@@ -617,7 +625,7 @@ export async function upload({
   keypair,
   storage,
   rpcUrl,
-  ipfsCredentials,
+  ipfsCredentials,  
   awsS3Bucket,
   arweaveJwk,
   batchSize,
