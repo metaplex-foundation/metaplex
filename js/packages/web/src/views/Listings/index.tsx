@@ -58,11 +58,12 @@ export const Listings = () => {
     });
     // auto-forwards to first listings view with matching listings
     if (currentViewIsEmpty()) {
+      console.log('current view is empty');
       setSearchParams({
         view: views.find(x => x.count() > 0)?.key || View.live,
       });
     }
-  }, [view]);
+  }, [view, loading, auctionsCount]);
 
   const views = [
     {
