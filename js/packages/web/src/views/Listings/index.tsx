@@ -11,6 +11,7 @@ import useInfiniteScroll from 'react-infinite-scroll-hook';
 import { useSearchParams } from 'react-router-dom';
 import { useInfiniteScrollAuctions } from '../../hooks';
 import { Banner } from './../../components/Banner';
+import cx from 'classnames';
 
 export const Listings = () => {
   const { storefront } = useStore();
@@ -128,9 +129,7 @@ export const Listings = () => {
             return (
               <button
                 key={key}
-                className={
-                  'listings-menu-item' + (view === key ? ' active' : '')
-                }
+                className={cx('listings-menu-item', { active: view === key })}
                 onClick={() => setSearchParams({ view: key })}
                 disabled={count() === 0}
               >

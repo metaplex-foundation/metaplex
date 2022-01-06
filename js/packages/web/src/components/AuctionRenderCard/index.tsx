@@ -28,7 +28,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           pubkey={id}
           allowMeshRender={false}
         />
-        <h3 className="metaplex-margin-top-4 metaplex-margin-bottom-2">
+        <h3 className="metaplex-margin-top-4 metaplex-margin-bottom-2 metaplex-line-height-medium">
           {name}
         </h3>
 

@@ -167,6 +167,8 @@ export const ArtView = () => {
                                   nft,
                                 );
 
+                                console.log('res', res);
+
                                 if (res.err) throw res.err.inner;
 
                                 const { txid } = res;
@@ -219,33 +221,7 @@ export const ArtView = () => {
             )}
           </div>
         </div>
-        {/* <Button
-                  onClick={async () => {
-                    if(!art.mint) {
-                      return;
-                    }
-                    const mint = new PublicKey(art.mint);
-                    
-                    const account = accountByMint.get(art.mint);
-                    if(!account) {
-                      return;
-                    }
-                    
-                    const owner = wallet.publicKey;
-                    
-                    if(!owner) {
-                      return;
-                    }
-                    const instructions: any[] = [];
-                    await updateMetadata(undefined, undefined, true, mint, owner, instructions)
-                    
-                    sendTransaction(connection, wallet, instructions, [], true);
-                  }}
-                  >
-                  Mark as Sold
-                </Button> */}
 
-        {/* TODO: Add conversion of MasterEditionV1 to MasterEditionV2 */}
         <ArtMinting
           id={nft}
           key={remountArtMinting}
