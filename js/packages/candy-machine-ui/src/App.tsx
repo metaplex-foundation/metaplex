@@ -1,3 +1,4 @@
+import './App.css';
 import { useMemo } from 'react';
 import * as anchor from '@project-serum/anchor';
 import Home from './Home';
@@ -19,8 +20,6 @@ import {
 import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
 
 import { ThemeProvider, createTheme } from '@material-ui/core';
-
-import './App.css';
 
 const theme = createTheme({
   palette: {
