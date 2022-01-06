@@ -29,6 +29,7 @@ export const AppLayout = React.memo(function AppLayout(props: {
         headingText={storefront.meta.title}
         subHeadingText={storefront.meta.description}
         logo={props.storefront?.theme?.logo || ''}
+        twitterVerification={storefront.integrations?.twitterVerification}
       />
       <Content id="metaplex-layout-content">{props.children}</Content>
     </div>

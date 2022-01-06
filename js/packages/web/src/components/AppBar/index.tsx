@@ -3,7 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import React from 'react';
 import { Link, useResolvedPath, useMatch } from 'react-router-dom';
 import cx from 'classnames';
-import { FloatingMenu } from '../FloatingMenu';
+import { SecondaryMenu } from '../SecondaryMenu';
 
 export const AppBar = () => {
   const { connected, publicKey } = useWallet();
@@ -62,7 +62,7 @@ export const AppBar = () => {
           <MenuItem to={link} key={key} group={group} title={title} />
         ))}
       </div>
-      <FloatingMenu />
+      <SecondaryMenu />
     </div>
   );
 };

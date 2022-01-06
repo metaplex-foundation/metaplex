@@ -259,7 +259,7 @@ export function Notifications({
 
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
-      <Button className="metaplex-button-FloatingMenu" type={buttonType}>
+      <Button type={buttonType}>
         <BellSvg />
       </Button>
     </Popover>

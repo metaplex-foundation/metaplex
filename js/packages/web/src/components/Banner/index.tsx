@@ -10,7 +10,6 @@ export const Banner = ({
   src,
   headingText,
   subHeadingText,
-  actionComponent,
   children,
   logo,
   twitterVerification,
@@ -20,7 +19,6 @@ export const Banner = ({
   src?: string;
   headingText: string;
   subHeadingText?: string;
-  actionComponent: any; // todo FIX any
   children?: React.ReactNode;
   logo: string;
   twitterVerification?: string;
@@ -54,7 +52,9 @@ export const Banner = ({
             href={'https://twitter.com/' + twitterVerification}
             target="_blank"
             rel="noreferrer"
+            className="twitter-button"
           >
+            {' '}
             <Button shape="round" icon={<TwitterOutlined />}>
               @{twitterVerification}
             </Button>
@@ -103,7 +103,6 @@ export const Banner = ({
             )}
           </Space>
         )}
-        {actionComponent}
       </div>
       {children}
     </div>
