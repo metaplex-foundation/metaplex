@@ -234,51 +234,6 @@ pub mod nft_candy_machine {
 
     pub fn initialize_config(ctx: Context<InitializeConfig>, data: ConfigData) -> ProgramResult {
         return Err(ErrorCode::Deprecated.into());
-
-        let config_info = &mut ctx.accounts.config;
-        if data.uuid.len() != 6 {
-            return Err(ErrorCode::UuidMustBeExactly6Length.into());
-        }
-
-        let mut config = Config {
-            data,
-            authority: *ctx.accounts.authority.key,
-        };
-
-        let mut array_of_zeroes = vec![];
-        while array_of_zeroes.len() < MAX_SYMBOL_LENGTH - config.data.symbol.len() {
-            array_of_zeroes.push(0u8);
-        }
-        let new_symbol =
-            config.data.symbol.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
-        config.data.symbol = new_symbol;
-
-        // - 1 because we are going to be a creator
-        if config.data.creators.len() > MAX_CREATOR_LIMIT - 1 {
-            return Err(ErrorCode::TooManyCreators.into());
-        }
-
-        let mut new_data = Config::discriminator().try_to_vec().unwrap();
-        new_data.append(&mut config.try_to_vec().unwrap());
-        let mut data = config_info.data.borrow_mut();
-        // god forgive me couldnt think of better way to deal with this
-        for i in 0..new_data.len() {
-            data[i] = new_data[i];
-        }
-
-        let vec_start =
-            CONFIG_ARRAY_START + 4 + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE;
-        let as_bytes = (config
-            .data
-            .max_number_of_lines
-            .checked_div(8)
-            .ok_or(ErrorCode::NumericalOverflowError)? as u32)
-            .to_le_bytes();
-        for i in 0..4 {
-            data[vec_start + i] = as_bytes[i]
-        }
-
-        Ok(())
     }
 
     pub fn add_config_lines(
@@ -466,7 +421,7 @@ pub struct InitializeCandyMachine<'info> {
 #[derive(Accounts)]
 #[instruction(data: ConfigData)]
 pub struct InitializeConfig<'info> {
-    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() >= CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
+    #[account(zero, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() >= CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
     config: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
