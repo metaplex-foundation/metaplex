@@ -69,9 +69,10 @@ log.setLevel(log.levels.INFO);
 programCommand('create')
   .option(
     '--claim-integration <method>',
-    'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
+    'Backend for claims. Either `transfer` for token-transfers, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
   )
   .option('--transfer-mint <mint>', 'transfer: public key of mint')
+  .option('--transfer-delegate-only', 'transfer: delegate tokens from KEYPAIR instead of transferring to the gumdrop')
   .option(
     '--candy-config <config>',
     'candy: public key of the candy machine config',
@@ -225,6 +226,8 @@ programCommand('create')
       return;
     }
 
+    const base = Keypair.generate();
+
     let claimInfo;
     switch (options.claimIntegration) {
       case 'transfer': {
@@ -233,6 +236,7 @@ programCommand('create')
           wallet.publicKey,
           claimants,
           options.transferMint,
+          options.transferDelegateOnly ? null : base.publicKey,
         );
         break;
       }
@@ -270,8 +274,6 @@ programCommand('create')
           ? claimInfo.config
           : /* === edition */ claimInfo.masterMint.key;
     });
-
-    const base = Keypair.generate();
 
     const instructions = await buildGumdrop(
       connection,
@@ -323,7 +325,7 @@ programCommand('create')
 programCommand('close')
   .option(
     '--claim-integration <method>',
-    'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
+    'Backend for claims. Either `transfer` for token-transfers, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
   )
   .option('--transfer-mint <mint>', 'transfer: public key of mint')
   .option(

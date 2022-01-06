@@ -238,6 +238,7 @@ export const validateTransferClaims = async (
   walletKey: PublicKey,
   claimants: Claimants,
   mintStr: string,
+  delegateOnly: PublicKey | null,
 ): Promise<ClaimInfo> => {
   claimants.forEach((c, idx) => {
     if (!c.handle) throw new Error(`Claimant ${idx} doesn't have handle`);
@@ -247,12 +248,23 @@ export const validateTransferClaims = async (
 
   const total = claimants.reduce((acc, c) => acc + c.amount, 0);
   const mint = await getMintInfo(connection, mintStr);
-  const source = await getCreatorTokenAccount(
+  let source = await getCreatorTokenAccount(
     walletKey,
     connection,
     mint.key,
     total,
   );
+
+  if (delegateOnly !== null) {
+    source = (await PublicKey.findProgramAddress(
+      [
+        delegateOnly.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mint.key.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    ))[0];
+  }
 
   return {
     total: total,
@@ -597,16 +609,74 @@ export const buildGumdrop = async (
   );
 
   if (claimIntegration === 'transfer') {
-    instructions.push(
-      Token.createApproveInstruction(
-        TOKEN_PROGRAM_ID,
-        claimInfo.source,
-        distributor,
-        walletKey,
-        [],
-        claimInfo.total,
-      ),
+    const [baseATAKey] = await PublicKey.findProgramAddress(
+      [
+        baseKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        claimInfo.mint.key.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
     );
+
+    const [walletATAKey] = await PublicKey.findProgramAddress(
+      [
+        walletKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        claimInfo.mint.key.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    );
+
+    const claimTotal = u64.fromBuffer(Buffer.from(claimInfo.total.toArray('le', 8)));
+    if (claimInfo.source.equals(baseATAKey)) {
+      // transfer tokens to base
+      instructions.push(
+        Token.createAssociatedTokenAccountInstruction(
+          SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          claimInfo.mint.key,
+          claimInfo.source,
+          baseKey,
+          walletKey,
+        ),
+      );
+
+      instructions.push(
+        Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          walletATAKey,
+          claimInfo.source,
+          walletKey,
+          [],
+          claimTotal,
+        ),
+      );
+
+      instructions.push(
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          claimInfo.source,
+          distributor,
+          baseKey,
+          [],
+          claimTotal,
+        ),
+      );
+    } else if (claimInfo.source.equals(walletATAKey)) {
+      // just approve from wallet
+      instructions.push(
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          claimInfo.source,
+          distributor,
+          walletKey,
+          [],
+          claimTotal,
+        ),
+      );
+    } else {
+      throw new Error(`Internal error: transfer ClaimInfo source does not match wallet or base ATA`);
+    }
   } else if (claimIntegration === 'candy') {
     const [distributorWalletKey] = await PublicKey.findProgramAddress(
       [Buffer.from('Wallet'), distributor.toBuffer()],
@@ -693,16 +763,57 @@ export const closeGumdrop = async (
 
   if (claimMethod === 'transfer') {
     const mint = await getMintInfo(connection, transferMint);
-    const source = await getCreatorTokenAccount(
-      walletKey,
-      connection,
-      mint.key,
-      0,
+    const baseKey = base.publicKey;
+    const [baseATAKey] = await PublicKey.findProgramAddress(
+      [
+        baseKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mint.key.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
     );
-    // distributor is about to be closed anyway so this is redundant but...
-    instructions.push(
-      Token.createRevokeInstruction(TOKEN_PROGRAM_ID, source, walletKey, []),
+
+    const [walletATAKey] = await PublicKey.findProgramAddress(
+      [
+        walletKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mint.key.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
     );
+
+    const baseATAInfo = await connection.getAccountInfo(baseATAKey);
+    if (baseATAInfo !== null) {
+      // recover tokens
+      const baseATA = AccountLayout.decode(baseATAInfo.data);
+      instructions.push(
+        Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          baseATAKey,
+          walletATAKey,
+          baseKey,
+          [],
+          u64.fromBuffer(baseATA.amount),
+        ),
+      );
+
+      instructions.push(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          baseATAKey,
+          baseKey, // dest SOL
+          baseKey, // owner
+          [],
+        ),
+      );
+    } else {
+      // distributor is about to be closed anyway so this is redundant but...
+      instructions.push(
+        Token.createRevokeInstruction(
+          TOKEN_PROGRAM_ID, walletATAKey, walletKey, []
+        ),
+      );
+    }
   }
 
   if (claimMethod === 'candy') {
