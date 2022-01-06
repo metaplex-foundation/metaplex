@@ -161,12 +161,15 @@ export const ArtView = () => {
                               }
 
                               try {
-                                const txid = await sendSignMetadata(
+                                const res = await sendSignMetadata(
                                   connection,
                                   wallet,
                                   nft,
                                 );
 
+                                if (res.err) throw res.err.inner;
+
+                                const { txid } = res;
                                 const tx = await connection.getTransaction(
                                   txid,
                                   {

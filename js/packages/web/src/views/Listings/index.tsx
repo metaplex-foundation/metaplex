@@ -40,7 +40,11 @@ export const Listings = () => {
   });
 
   const showCount = (view: View) =>
-    auctionsCount[view] != null ? auctionsCount[view] : <Spin size="small" />;
+    auctionsCount[view] != null ? (
+      auctionsCount[view]
+    ) : (
+      <Spin size="small" indicator={<LoadingOutlined />} />
+    );
   useEffect(() => {
     if (!view) {
       setSearchParams({ view: View.live });

@@ -48,13 +48,17 @@ export async function sendPlaceBid(
     signers,
   );
 
-  const { txid } = await sendTransactionWithRetry(
+  const res = await sendTransactionWithRetry(
     connection,
     wallet,
     instructions[0],
     signers[0],
     commitment,
   );
+
+  if (res.err) throw res.err.inner;
+
+  const { txid } = res;
 
   return {
     amount: bid,
