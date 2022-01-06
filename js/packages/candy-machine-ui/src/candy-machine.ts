@@ -73,7 +73,7 @@ export const awaitTransactionSignatureConfirmation = async (
         return;
       }
       done = true;
-      console.log('Rejecting for timeout...');
+      console.log('Rejecting for timeout....');
       reject({ timeout: true });
     }, timeout);
 
