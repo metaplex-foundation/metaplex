@@ -233,6 +233,8 @@ pub mod nft_candy_machine {
     }
 
     pub fn initialize_config(ctx: Context<InitializeConfig>, data: ConfigData) -> ProgramResult {
+        return Err(ErrorCode::Deprecated.into());
+
         let config_info = &mut ctx.accounts.config;
         if data.uuid.len() != 6 {
             return Err(ErrorCode::UuidMustBeExactly6Length.into());
@@ -372,6 +374,8 @@ pub mod nft_candy_machine {
         bump: u8,
         data: CandyMachineData,
     ) -> ProgramResult {
+
+        return Err(ErrorCode::Deprecated.into());
         let candy_machine = &mut ctx.accounts.candy_machine;
 
         if data.uuid.len() != 6 {
@@ -657,4 +661,6 @@ pub enum ErrorCode {
     CandyMachineNotLiveYet,
     #[msg("Number of config lines must be at least number of items available")]
     ConfigLineMismatch,
+    #[msg("CMv1 is deprecated.")]
+    Deprecated
 }
