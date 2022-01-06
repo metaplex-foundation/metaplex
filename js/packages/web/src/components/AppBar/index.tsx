@@ -57,23 +57,25 @@ export const AppBar = () => {
   };
 
   return (
-    <div className="app-bar-wrapper">
-      <div className="app-bar-left-wrapper">
-        <Link
-          to="/"
-          className={cx('app-bar-logo-wrapper', {
-            hide: useMatch('listings'),
-          })}
-        >
-          <img src={logo || ''} className="app-bar-logo" />
-        </Link>
-        <div className="main-menu-wrapper">
-          {menu.map(({ key, title, link, group }) => (
-            <MenuItem to={link} key={key} group={group} title={title} />
-          ))}
+    <div className="outer-wrapper">
+      <div className="app-bar-wrapper">
+        <div className="app-bar-left-wrapper">
+          <Link
+            to="/"
+            className={cx('app-bar-logo-wrapper', {
+              hide: useMatch('listings'),
+            })}
+          >
+            <img src={logo || ''} className="app-bar-logo" />
+          </Link>
+          <div className="main-menu-wrapper">
+            {menu.map(({ key, title, link, group }) => (
+              <MenuItem to={link} key={key} group={group} title={title} />
+            ))}
+          </div>
         </div>
+        <SecondaryMenu />
       </div>
-      <SecondaryMenu />
     </div>
   );
 };
