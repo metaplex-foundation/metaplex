@@ -95,7 +95,6 @@ export const AuctionView = () => {
   const creators = useCreators(auction);
   const wallet = useWallet();
   let edition = '';
-  console.log(art);
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
   } else if (art.type === ArtType.Master) {

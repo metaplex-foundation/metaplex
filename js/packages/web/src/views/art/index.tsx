@@ -175,8 +175,6 @@ export const ArtView = () => {
                                   nft,
                                 );
 
-                                console.log('res', res);
-
                                 if (res.err) throw res.err.inner;
 
                                 const { txid } = res;
