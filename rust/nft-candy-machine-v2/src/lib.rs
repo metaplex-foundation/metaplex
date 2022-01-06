@@ -105,7 +105,6 @@ pub mod nft_candy_machine_v2 {
 
             match candy_machine.data.go_live_date {
                 Some(val) => {
-
                     // Civic f-ed up - expire time is actually the time it was made...
                     if expire_time < val {
                         msg!("Invalid gateway token expire time: {} compared with go live of {}", expire_time, val);
