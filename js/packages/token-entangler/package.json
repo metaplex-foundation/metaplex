@@ -14,7 +14,7 @@
     "@solana/spl-token": "^0.1.8",
     "@solana/spl-token-registry": "0.2.202",
     "@solana/wallet-adapter-base": "0.4.1",
-    "@solana/wallet-adapter-react": "^0.7.1",
+    "@solana/wallet-adapter-react": "^0.13.1",
     "@solana/wallet-adapter-wallets": "^0.6.1",
     "@solana/web3.js": "^1.24.1",
     "@testing-library/jest-dom": "^5.11.4",
