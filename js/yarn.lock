@@ -2275,13 +2275,13 @@
     tslib "^2.3.1"
     typescript "^4.4.3"
 
-"@civic/solana-gateway-react@^0.4.6":
-  version "0.4.6"
-  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.6.tgz#b137bdba547d3516af72b1238d1e931f93117203"
-  integrity sha512-Mk1YXS7TS6X8jebKT7I/Vzfm+l9WnMZMMw3PvNQ5NpQI6MoOF39DcBac+gyZEsbeWazSCTb4M6CvuZPycMLtlw==
+"@civic/solana-gateway-react@^0.4.7":
+  version "0.4.7"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.7.tgz#67c2f29753e3241bac46da1bc0ad534f6fb1a24d"
+  integrity sha512-te5QGI/5ks8KuhpqSySt29piqeWbkTy/TDH1au2Koz9LQiw7sPLLWEQWlupyClHCmBkoz/IsNVNi0C1Z1ve5XA==
   dependencies:
     "@identity.com/prove-solana-wallet" "^0.2.3"
-    "@identity.com/solana-gateway-ts" "^0.4.0"
+    "@identity.com/solana-gateway-ts" "^0.4.4"
     "@solana/web3.js" "^1.20.0"
     "@types/styled-components" "^5.1.15"
     fetch-retry-ts "^1.1.24"
@@ -3130,14 +3130,16 @@
     "@solana/web3.js" "^1.22.0"
     bs58 "^4.0.1"
 
-"@identity.com/solana-gateway-ts@^0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.4.0.tgz#5f4a04a8524ad57f068139400960d9e7885cc2c8"
-  integrity sha512-IVCsZ7H4Ha+LwngviiaoND0bMihg+nEZC62bCDnDlQhdfB77bN5CqR+m7wEBQeiXVxM5WNq6ov5+akXnBovzKQ==
+"@identity.com/solana-gateway-ts@^0.4.4":
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.4.4.tgz#d201a7ddea26bff1b55a7557d5547e9a02c657ea"
+  integrity sha512-CaP9gdF6cSOUU+mWrCazaUAmgUzfrCwzobUwq68BCWofl2PEMkqiQyWWJhj1zeyChFx88pivSlPET7DVss407g==
   dependencies:
     "@solana/web3.js" "^1.22.0"
+    async-retry "^1.3.3"
     bn.js "^5.2.0"
     borsh "^0.4.0"
+    ramda "^0.27.1"
 
 "@ipld/dag-cbor@^6.0.5":
   version "6.0.15"
@@ -8456,6 +8458,13 @@ async-mutex@^0.2.6:
   integrity sha512-Hs4R+4SPgamu6rSGW8C7cV9gaWUKEHykfzCCvIRuaVv636Ju10ZdeUbvb4TBEW0INuq2DHZqXbK4Nd3yG4RaRw==
   dependencies:
     tslib "^2.0.0"
+
+async-retry@^1.3.3:
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/async-retry/-/async-retry-1.3.3.tgz#0e7f36c04d8478e7a58bdbed80cedf977785f280"
+  integrity sha512-wfr/jstw9xNi/0teMHrRW7dsz3Lt5ARhYNZ2ewpadnhaIp5mbALhOAP+EAdsC7t4Z6wqsDVv9+W6gm1Dk9mEyw==
+  dependencies:
+    retry "0.13.1"
 
 async-sema@^3.1.1:
   version "3.1.1"
@@ -23603,6 +23612,11 @@ retimer@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/retimer/-/retimer-2.0.0.tgz#e8bd68c5e5a8ec2f49ccb5c636db84c04063bbca"
   integrity sha512-KLXY85WkEq2V2bKex/LOO1ViXVn2KGYe4PYysAdYdjmraYIUsVkXu8O4am+8+5UbaaGl1qho4aqAAPHNQ4GSbg==
+
+retry@0.13.1:
+  version "0.13.1"
+  resolved "https://registry.yarnpkg.com/retry/-/retry-0.13.1.tgz#185b1587acf67919d63b357349e03537b2484658"
+  integrity sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==
 
 retry@^0.10.0:
   version "0.10.1"
