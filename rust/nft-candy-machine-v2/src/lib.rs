@@ -106,7 +106,6 @@ pub mod nft_candy_machine_v2 {
                 .expire_time
                 .ok_or(ErrorCode::GatewayTokenExpireTimeInvalid)?
                 as i64;
-
             match candy_machine.data.go_live_date {
                 Some(val) => {
                     // Civic f-ed up - expire time is actually the time it was made...
