@@ -8,7 +8,6 @@ import {
   formatTokenAmount,
   fromLamports,
   getAuctionExtended,
-  Identicon,
   loadMultipleAccounts,
   MAX_EDITION_LEN,
   MAX_METADATA_LEN,
@@ -42,7 +41,13 @@ import {
   notification,
 } from 'antd';
 import moment from 'moment';
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { sendCancelBid } from '../../actions/cancelBid';
 import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -71,19 +76,20 @@ const { Text } = Typography;
 type NotificationMessage = {
   message: string;
   description: string | ReactNode;
-}
+};
 type CancelSuccessMessages = {
   refunded: NotificationMessage;
   redeemed: NotificationMessage;
-}
+};
 
 const cancelBidMessages = {
   refunded: {
-    message: "Bid Refunded",
-    description: "Your bid was refunded. Check your wallet for the transaction history."
+    message: 'Bid Refunded',
+    description:
+      'Your bid was refunded. Check your wallet for the transaction history.',
   },
   redeemed: {
-    message: "NFT Recovered",
+    message: 'NFT Recovered',
     description: (
       <Space direction="vertical">
         <Text>Your NFT was recovered from the listing vault.</Text>
@@ -277,7 +283,9 @@ export const AuctionCard = ({
   );
   const auctionExtended = useAuctionExtended(auctionView);
 
-  const isAuctioneer = wallet?.publicKey && auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+  const isAuctioneer =
+    wallet?.publicKey &&
+    auctionView.auctionManager.authority === wallet.publicKey.toBase58();
 
   const eligibleForAnything = winnerIndex !== null || eligibleForOpenEdition;
   const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
@@ -294,7 +302,6 @@ export const AuctionCard = ({
     (value * 100) % (fromLamports(tickSize) * 100) != 0
   );
 
-
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
   const isAuctionManagerAuthorityNotWalletOwner =
     auctionView.auctionManager.authority !== walletPublickKey;
@@ -309,7 +316,8 @@ export const AuctionCard = ({
     auctionView.auctionManager.numWinners.toNumber() === 0;
 
   const lowestWinner = last(winners);
-  const hasAllWinners = auctionView.auctionManager.numWinners.toNumber() === winners.length;
+  const hasAllWinners =
+    auctionView.auctionManager.numWinners.toNumber() === winners.length;
 
   let minBid = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
@@ -317,18 +325,25 @@ export const AuctionCard = ({
   );
 
   if (isStarted && hasAllWinners) {
-    minBid = parseFloat(formatTokenAmount(lowestWinner?.info.lastBid.toNumber(), mintInfo));
+    minBid = parseFloat(
+      formatTokenAmount(lowestWinner?.info.lastBid.toNumber(), mintInfo),
+    );
 
     if (tickSize) {
       minBid += tickSize.toNumber() / LAMPORTS_PER_SOL;
     }
   }
 
-  const belowMinBid = value && (minBid && value < minBid) 
+  const belowMinBid = value && minBid && value < minBid;
 
-  const biddingPower = balance.balance + (auctionView.myBidderMetadata && !auctionView.myBidderMetadata.info.cancelled ? (auctionView.myBidderMetadata.info.lastBid.toNumber() / LAMPORTS_PER_SOL) : 0);
+  const biddingPower =
+    balance.balance +
+    (auctionView.myBidderMetadata &&
+    !auctionView.myBidderMetadata.info.cancelled
+      ? auctionView.myBidderMetadata.info.lastBid.toNumber() / LAMPORTS_PER_SOL
+      : 0);
 
-  const notEnoughFundsToBid = !!value && (value > biddingPower);
+  const notEnoughFundsToBid = !!value && value > biddingPower;
   const invalidBid =
     notEnoughFundsToBid ||
     gapBidInvalid ||
@@ -365,9 +380,10 @@ export const AuctionCard = ({
         });
       } catch (e: any) {
         notification.error({
-          message: "End Sale Error",
+          message: 'End Sale Error',
           duration: 30,
-          description: "Unable to end the sale an error occured. Please try again or reach out to support."
+          description:
+            'Unable to end the sale as an error occured. Please try again or reach out to support.',
         });
         Bugsnag.notify(e);
         return;
@@ -379,19 +395,19 @@ export const AuctionCard = ({
       });
 
       notification.success({
-        message: "Listing Ended",
+        message: 'Listing Ended',
         description: (
           <Space direction="vertical">
-            <Text>The listing was successfully ended and the NFT reclaimed.</Text>
-            <Button type="primary">
-              View Owned
-            </Button>
+            <Text>
+              The listing was successfully ended and the NFT reclaimed.
+            </Text>
+            <Button type="primary">View Owned</Button>
           </Space>
         ),
         onClick: () => {
           navigate('/owned');
         },
-      })
+      });
     } finally {
       setLoading(false);
     }
@@ -507,30 +523,30 @@ export const AuctionCard = ({
         );
 
         notification.success({
-          message: "Purchase Success",
+          message: 'Purchase Success',
           description: (
             <Space direction="vertical">
-              <Text>Congratulations, your purchase ticket was exchanged for the NFT.</Text>
-              <Button type="primary">
-                View Owned
-              </Button>
+              <Text>
+                Congratulations, your purchase ticket was exchanged for the NFT.
+              </Text>
+              <Button type="primary">View Owned</Button>
             </Space>
           ),
           onClick: () => {
-            navigate("/owned");
-          }
-        })
+            navigate('/owned');
+          },
+        });
       } catch (e: any) {
         Bugsnag.notify(e);
 
         notification.error({
-          message: "Purchase Error",
+          message: 'Purchase Error',
           duration: 20,
-          description: "Your purchase ticket was not redeemed for the NFT. Please try again or wait for support."
-        })
+          description:
+            'Your purchase ticket was not redeemed for the NFT. Please try again or wait for support.',
+        });
         return;
       }
-
     } finally {
       setLoading(false);
     }
@@ -611,26 +627,28 @@ export const AuctionCard = ({
               );
 
               notification.success({
-                message: "Bid Redeemed",
+                message: 'Bid Redeemed',
                 duration: 30,
                 description: (
                   <Space direction="vertical">
-                    <Text>Congratulations, your bid was redeemed for the NFT! See it in your owned tab.</Text>
-                      <Button type="primary">
-                        View Owned
-                      </Button>
+                    <Text>
+                      Congratulations, your bid was redeemed for the NFT! See it
+                      in your owned tab.
+                    </Text>
+                    <Button type="primary">View Owned</Button>
                   </Space>
                 ),
                 onClick: () => {
                   navigate('/owned');
-                }
+                },
               });
             } catch (e: any) {
               Bugsnag.notify(e);
               notification.error({
-                message: "Bid Redemption Error",
+                message: 'Bid Redemption Error',
                 duration: 20,
-                description: "There was an error redeeming your bid. Please try again or reach out to support.",
+                description:
+                  'There was an error redeeming your bid. Please try again or reach out to support.',
               });
             }
           } else {
@@ -646,13 +664,15 @@ export const AuctionCard = ({
                 prizeTrackingTickets,
               );
 
-              const message = cancelBidMessages[isAuctioneer ? "redeemed" : "refunded"];
+              const message =
+                cancelBidMessages[isAuctioneer ? 'redeemed' : 'refunded'];
 
               notification.success(message);
             } catch (e: any) {
               notification.error({
-                message: "Bid Refund Error",
-                description: "There was an error refunding your bid. Please try again or reach out to support.",
+                message: 'Bid Refund Error',
+                description:
+                  'There was an error refunding your bid. Please try again or reach out to support.',
               });
             }
           }
@@ -662,16 +682,13 @@ export const AuctionCard = ({
       }}
     >
       {loading ||
-        auctionView.items.find(i => i.find(it => !it.metadata)) ||
-        !myPayingAccount ? (
+      auctionView.items.find(i => i.find(it => !it.metadata)) ||
+      !myPayingAccount ? (
         <Spin indicator={<LoadingOutlined />} />
       ) : eligibleForAnything ? (
         `Redeem bid`
       ) : (
-        `${isAuctioneer
-          ? 'Reclaim Items'
-          : 'Refund bid'
-        }`
+        `${isAuctioneer ? 'Reclaim Items' : 'Refund bid'}`
       )}
     </Button>
   );
@@ -750,8 +767,8 @@ export const AuctionCard = ({
           ? 'End Sale & Claim Item'
           : 'Claim Item'
         : auctionView.myBidderPot
-          ? 'Claim Purchase'
-          : 'Buy Now'}
+        ? 'Claim Purchase'
+        : 'Buy Now'}
     </Button>
   );
 
@@ -774,15 +791,13 @@ export const AuctionCard = ({
         </Col>
         <Col flex="1 0 auto">
           <InputNumber<number>
-            decimalSeparator='.'
+            decimalSeparator="."
             className="metaplex-fullwidth"
             step="0.01"
             autoFocus
             onChange={setValue}
             precision={2}
-            formatter={value =>
-              value ? `◎ ${value}` : ''
-            }
+            formatter={value => (value ? `◎ ${value}` : '')}
             placeholder={`Bid ${minBid} SOL or more`}
           />
         </Col>
@@ -809,8 +824,9 @@ export const AuctionCard = ({
                 );
 
                 notification.success({
-                  message: "Bid Submitted",
-                  description: "Your bid was accepted by the auctioneer. You may raise your bid at any time."
+                  message: 'Bid Submitted',
+                  description:
+                    'Your bid was accepted by the auctioneer. You may raise your bid at any time.',
                 });
                 setShowPlaceBidUI(false);
                 track('bid_submitted', {
@@ -818,11 +834,11 @@ export const AuctionCard = ({
                   // label: '',
                   sol_value: value,
                 });
-
               } catch (e: any) {
                 notification.error({
-                  message: "Bid Error",
-                  description: "There was an issue placing your bid. The bid was not accepted. Please try again or reach out to support."
+                  message: 'Bid Error',
+                  description:
+                    'There was an issue placing your bid. The bid was not accepted. Please try again or reach out to support.',
                 });
 
                 Bugsnag.notify(e);
@@ -830,50 +846,60 @@ export const AuctionCard = ({
                 setShowPlaceBidUI(false);
                 setLoading(false);
               }
-
             }}
           >
             Submit Bid
           </Button>
         </Col>
-        <Col span={24}>
+        <div className="metaplex-margin-top-4">
           {!loading && (
-            <Space direction="vertical" size="middle">
+            <>
               {notEnoughFundsToBid && (
-                <Text type="danger">
-                  You do not have enough funds to fulfill the bid. Your current bidding power is {biddingPower} SOL.
+                <Text className="danger" type="danger">
+                  You do not have enough funds to fulfill the bid. Your current
+                  bidding power is {biddingPower} SOL.
                 </Text>
               )}
-              {value && tickSizeInvalid && tickSize && (
-                <Text type="danger">
+              {!!value && tickSizeInvalid && tickSize && (
+                <Text className="danger" type="danger">
                   Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
                 </Text>
               )}
-              {value !== undefined && belowMinBid && (
-                <Text type="danger">The bid must be at least {minBid} SOL.</Text>
-              )}
-              {gapBidInvalid && (
-                <Text type="danger">
-                  Your bid needs to be at least {gapTick}% larger than an existing
-                  bid during gap periods to be eligible.
+              {value !== undefined && !!belowMinBid && (
+                <Text className="danger" type="danger">
+                  The bid must be at least {minBid} SOL.
                 </Text>
               )}
-            </Space>
+              {gapBidInvalid && (
+                <Text className="danger" type="danger">
+                  Your bid needs to be at least {gapTick}% larger than an
+                  existing bid during gap periods to be eligible.
+                </Text>
+              )}
+            </>
           )}
-        </Col>
+        </div>
       </Row>
     </Space>
   );
+
+  const isAuctionOver = (x: AuctionView) =>
+    x.auction.info.timeToEnd().days === 0 &&
+    x.auction.info.timeToEnd().hours === 0 &&
+    x.auction.info.timeToEnd().minutes === 0 &&
+    x.auction.info.timeToEnd().seconds === 0;
 
   return (
     <div>
       <Card
         bordered={false}
-        className="metaplex-spacing-bottom-md"
+        className="metaplex-margin-bottom-4 auction-card"
         title={
-          auctionView.isInstantSale ? undefined : (
+          auctionView.isInstantSale ? undefined : isAuctionOver(auctionView) ? (
+            'Auction has ended'
+          ) : (
             <Space direction="horizontal">
-              <span>Auction ends in</span>
+              <span>Ends in</span>
               <AuctionCountdown auctionView={auctionView} labels={false} />
             </Space>
           )
@@ -883,42 +909,33 @@ export const AuctionCard = ({
           className="metaplex-fullwidth metaplex-space-align-stretch"
           direction="vertical"
         >
-          <Row gutter={8} align="middle">
-            <Col span={12}>
+          <div className="metaplex-flex-column">
+            <div className="metaplex-flex metaplex-justify-content-sb metaplex-flex-wrap metaplex-gap-4">
               <AuctionNumbers
                 auctionView={auctionView}
                 showAsRow={true}
                 hideCountdown={true}
                 displaySOL={true}
               />
-            </Col>
-            {showPlaceBidUI ? (
-              <Col span={12}>
+              {showPlaceBidUI && !isAuctionOver(auctionView) && (
                 <AmountLabel
                   title="in your wallet"
                   displaySOL={true}
                   amount={balance.balance}
-                  customPrefix={
-                    <Identicon
-                      size={24}
-                      address={wallet?.publicKey?.toBase58()}
-                    />
-                  }
                 />
-              </Col>
-            ) : (
-              <>
-                <Col flex="1 0 auto">
+              )}
+            </div>
+            {!showPlaceBidUI && (
+              <div className="auction-buttons-wrapper">
+                {!auctionView.isInstantSale && (
                   <HowAuctionsWorkModal buttonBlock buttonSize="large" />
-                </Col>
-                {showStartOrPlaceBidBtns && (
-                  <Col flex="0 0 auto">
-                    {showStartAuctionBtn ? startAuctionBtn : placeBidBtn}
-                  </Col>
                 )}
-              </>
+                {showStartOrPlaceBidBtns && (
+                  <>{showStartAuctionBtn ? startAuctionBtn : placeBidBtn}</>
+                )}
+              </div>
             )}
-          </Row>
+          </div>
 
           {showDefaultNonEndedAction &&
             showPlaceBidUI &&
@@ -930,7 +947,7 @@ export const AuctionCard = ({
               : auctionView.isInstantSale && instantSaleBtn)}
           {!hideDefaultAction && !wallet.connected && (
             <Button
-              className="metaplex-fullwidth"
+              className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
               type="primary"
               size="large"
               onClick={connect}
@@ -943,7 +960,6 @@ export const AuctionCard = ({
           {showRedeemReclaimRefundBtn && redeemReclaimRefundBtn}
 
           {action}
-
         </Space>
       </Card>
 

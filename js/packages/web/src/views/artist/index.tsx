@@ -9,7 +9,7 @@ import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { useCreatorArts } from '../../hooks';
 
 export const ArtistView = () => {
-  const { creator } = useParams<{ creator: string; }>();
+  const { creator } = useParams<{ creator: string }>();
   const { whitelistedCreatorsByCreator, patchState } = useMeta();
   const [loadingArt, setLoadingArt] = useState(true);
   const artwork = useCreatorArts(creator);
@@ -30,7 +30,6 @@ export const ArtistView = () => {
         active,
       );
 
-
       patchState(artistMetadataState);
       setLoadingArt(false);
     })();
@@ -39,7 +38,7 @@ export const ArtistView = () => {
   return (
     <Row>
       <Col span={24}>
-        <h2>Creators</h2>
+        <h2 className="metaplex-margin-y-4">Creators</h2>
         <MetaplexMasonry>
           {creators.map((m, idx) => {
             const current = m.info.address;
