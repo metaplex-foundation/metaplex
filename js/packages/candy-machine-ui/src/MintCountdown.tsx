@@ -1,7 +1,6 @@
 import { Paper } from '@material-ui/core';
 import Countdown from 'react-countdown';
 import { Theme, createStyles, makeStyles } from '@material-ui/core/styles';
-import { useState } from 'react';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -46,16 +45,14 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface PhaseCountdownProps {
+interface MintCountdownProps {
   date: Date | undefined;
   style?: React.CSSProperties;
   status?: string;
   onComplete?: () => void;
-  start?: Date;
-  end?: Date;
 }
 
-interface CountdownRender {
+interface MintCountdownRender {
   days: number;
   hours: number;
   minutes: number;
@@ -63,38 +60,26 @@ interface CountdownRender {
   completed: boolean;
 }
 
-export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
+export const MintCountdown: React.FC<MintCountdownProps> = ({
   date,
   status,
   style,
-  start,
-  end,
   onComplete,
 }) => {
   const classes = useStyles();
-
-  const [isFixed, setIsFixed] = useState(
-    start && end && date ? start.getTime() - Date.now() < 0 : false,
-  );
-
   const renderCountdown = ({
     days,
     hours,
     minutes,
     seconds,
     completed,
-  }: CountdownRender) => {
+  }: MintCountdownRender) => {
     hours += days * 24;
     if (completed) {
       return status ? <span className={classes.done}>{status}</span> : null;
     } else {
       return (
         <div className={classes.root} style={style}>
-          {isFixed && (
-            <Paper elevation={0}>
-              <span className={classes.item}>+</span>
-            </Paper>
-          )}
           <Paper elevation={0}>
             <span className={classes.item}>
               {hours < 10 ? `0${hours}` : hours}
@@ -117,17 +102,6 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
       );
     }
   };
-
-  if (date && start && end) {
-    if (isFixed) {
-      <Countdown
-        date={start}
-        now={() => end.getTime()}
-        onComplete={() => setIsFixed(false)}
-        renderer={renderCountdown}
-      />;
-    }
-  }
 
   if (date) {
     return (
