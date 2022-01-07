@@ -531,7 +531,7 @@ programCommand('verify_upload')
   });
 
 programCommand('verify_price')
-  .option('-p, --price <string>')
+  .requiredOption('-p, --price <string>')
   .option('--cache-path <string>')
   .option(
     '-r, --rpc-url <string>',
@@ -543,7 +543,7 @@ programCommand('verify_price')
     const lamports = parsePrice(price);
 
     if (isNaN(lamports)) {
-      return log.error(`verify_price requires a --price to be set`);
+      return log.error(`verify_price requires a valid --price to be set`);
     }
 
     log.info(`Expected price is: ${lamports}`);
@@ -760,7 +760,7 @@ programCommand('mint_one_token')
   });
 
 programCommand('mint_multiple_tokens')
-  .option('-n, --number <string>', 'Number of tokens')
+  .requiredOption('-n, --number <string>', 'Number of tokens')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -799,7 +799,7 @@ programCommand('mint_multiple_tokens')
 
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  .option('-m, --metadata <string>', 'base58 metadata account id')
+  .requiredOption('-m, --metadata <string>', 'base58 metadata account id')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -961,11 +961,7 @@ function programCommand(name: string) {
       'Solana cluster env name',
       'devnet', //mainnet-beta, testnet, devnet
     )
-    .option(
-      '-k, --keypair <path>',
-      `Solana wallet location`,
-      '--keypair not provided',
-    )
+    .requiredOption('-k, --keypair <path>', `Solana wallet location`)
     .option('-l, --log-level <string>', 'log level', setLogLevel)
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
 }

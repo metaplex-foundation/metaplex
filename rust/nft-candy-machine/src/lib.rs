@@ -3,8 +3,7 @@ pub mod utils;
 use {
     crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams},
     anchor_lang::{
-        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize,
-        Discriminator, Key,
+        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize, Key,
     },
     anchor_spl::token::Token,
     arrayref::array_ref,
@@ -14,7 +13,6 @@ use {
             MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
         },
     },
-    spl_token::state::Mint,
     std::cell::Ref,
 };
 anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
@@ -232,7 +230,7 @@ pub mod nft_candy_machine {
         Ok(())
     }
 
-    pub fn initialize_config(ctx: Context<InitializeConfig>, data: ConfigData) -> ProgramResult {
+    pub fn initialize_config(_ctx: Context<InitializeConfig>, _data: ConfigData) -> ProgramResult {
         return Err(ErrorCode::Deprecated.into());
     }
 
@@ -325,50 +323,11 @@ pub mod nft_candy_machine {
     }
 
     pub fn initialize_candy_machine(
-        ctx: Context<InitializeCandyMachine>,
-        bump: u8,
-        data: CandyMachineData,
+        _ctx: Context<InitializeCandyMachine>,
+        _bump: u8,
+        _data: CandyMachineData,
     ) -> ProgramResult {
-
         return Err(ErrorCode::Deprecated.into());
-        let candy_machine = &mut ctx.accounts.candy_machine;
-
-        if data.uuid.len() != 6 {
-            return Err(ErrorCode::UuidMustBeExactly6Length.into());
-        }
-        candy_machine.data = data;
-        candy_machine.wallet = *ctx.accounts.wallet.key;
-        candy_machine.authority = *ctx.accounts.authority.key;
-        candy_machine.config = ctx.accounts.config.key();
-        candy_machine.bump = bump;
-        if ctx.remaining_accounts.len() > 0 {
-            let token_mint_info = &ctx.remaining_accounts[0];
-            let _token_mint: Mint = assert_initialized(&token_mint_info)?;
-            let token_account: spl_token::state::Account =
-                assert_initialized(&ctx.accounts.wallet)?;
-
-            assert_owned_by(&token_mint_info, &spl_token::id())?;
-            assert_owned_by(&ctx.accounts.wallet, &spl_token::id())?;
-
-            if token_account.mint != *token_mint_info.key {
-                return Err(ErrorCode::MintMismatch.into());
-            }
-
-            candy_machine.token_mint = Some(*token_mint_info.key);
-        }
-
-        if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
-            < candy_machine.data.items_available as usize
-        {
-            return Err(ErrorCode::ConfigLineMismatch.into());
-        }
-
-        let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), 0) {
-            Ok(val) => val,
-            Err(_) => return Err(ErrorCode::ConfigMustHaveAtleastOneEntry.into()),
-        };
-
-        Ok(())
     }
 
     pub fn update_authority(
@@ -617,5 +576,5 @@ pub enum ErrorCode {
     #[msg("Number of config lines must be at least number of items available")]
     ConfigLineMismatch,
     #[msg("CMv1 is deprecated.")]
-    Deprecated
+    Deprecated,
 }

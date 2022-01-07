@@ -44,9 +44,11 @@
     "react-intersection-observer": "^8.32.0",
     "react-masonry-css": "^1.0.16",
     "react-router-dom": "^5.2.0",
+    "react-transition-group": "^4.4.2",
     "react-virtualized": "^9.22.3",
     "three": "^0.128.0",
-    "timeago.js": "^4.0.2"
+    "timeago.js": "^4.0.2",
+    "styled-components": "^5.0.0"
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",

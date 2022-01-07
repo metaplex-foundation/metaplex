@@ -63,7 +63,7 @@ programCommand('upload')
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
-  .option(
+  .requiredOption(
     '-cp, --config-path <string>',
     'JSON file with candy machine settings',
   )
@@ -146,22 +146,22 @@ programCommand('upload')
       secretKey: ipfsInfuraSecret,
     };
 
-    const imageFiles = files.filter(it => {
-      return !it.endsWith(EXTENSION_JSON);
-    });
-    const imageFileCount = imageFiles.length;
+    let imageFileCount = 0;
+    let jsonFileCount = 0;
 
-    imageFiles.forEach(it => {
-      if (!supportedImageTypes[getType(it)]) {
-        throw new Error(`The file ${it} is not a supported file type.`);
+    // Filter out any non-supported file types and find the JSON vs Image file count
+    const supportedFiles = files.filter(it => {
+      if (supportedImageTypes[getType(it)]) {
+        imageFileCount++;
+      } else if (it.endsWith(EXTENSION_JSON)) {
+        jsonFileCount++;
+      } else {
+        log.warn(`WARNING: Skipping unsupported file type ${it}`);
+        return false;
       }
+
+      return true;
     });
-
-    const jsonFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_JSON);
-    }).length;
-
-    const elemCount = number ? number : imageFileCount;
 
     if (imageFileCount !== jsonFileCount) {
       throw new Error(
@@ -169,9 +169,10 @@ programCommand('upload')
       );
     }
 
+    const elemCount = number ? number : imageFileCount;
     if (elemCount < imageFileCount) {
       throw new Error(
-        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
+        `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
       );
     }
 
@@ -181,7 +182,7 @@ programCommand('upload')
     log.info('started at: ' + startMs.toString());
     try {
       await uploadV2({
-        files,
+        files: supportedFiles,
         cacheName,
         env,
         totalNFTs: elemCount,
@@ -206,12 +207,14 @@ programCommand('upload')
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
+      process.exit(1);
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
       `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
+    process.exit(0);
   });
 
 programCommand('withdraw')
@@ -428,7 +431,7 @@ programCommand('verify_upload')
   });
 
 programCommand('verify_price')
-  .option('-p, --price <string>')
+  .requiredOption('-p, --price <string>')
   .option('--cache-path <string>')
   .option(
     '-r, --rpc-url <string>',
@@ -439,7 +442,7 @@ programCommand('verify_price')
     const lamports = parsePrice(price);
 
     if (isNaN(lamports)) {
-      return log.error(`verify_price requires a --price to be set`);
+      return log.error(`verify_price requires a valid --price to be set`);
     }
 
     log.info(`Expected price is: ${lamports}`);
@@ -596,7 +599,7 @@ programCommand('show')
   });
 
 programCommand('update_candy_machine')
-  .option(
+  .requiredOption(
     '-cp, --config-path <string>',
     'JSON file with candy machine settings',
   )
@@ -716,7 +719,7 @@ programCommand('mint_one_token')
   });
 
 programCommand('mint_multiple_tokens')
-  .option('-n, --number <string>', 'Number of tokens')
+  .requiredOption('-n, --number <string>', 'Number of tokens')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -748,7 +751,7 @@ programCommand('mint_multiple_tokens')
 
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  .option('-m, --metadata <string>', 'base58 metadata account id')
+  .requiredOption('-m, --metadata <string>', 'base58 metadata account id')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -771,21 +774,25 @@ programCommand('sign_all')
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
-    const candyAddress = cacheContent.program.candyMachine;
 
     const batchSizeParsed = parseInt(batchSize);
     if (!parseInt(batchSize)) {
       throw new Error('Batch size needs to be an integer!');
     }
 
+    const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+    const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+      candyMachineId,
+    );
+
     log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
     log.debug('Environment: ', env);
-    log.debug('Candy machine address: ', candyAddress);
+    log.debug('Candy machine address: ', cacheContent.program.candyMachine);
     log.debug('Batch Size: ', batchSizeParsed);
     await signAllMetadataFromCandyMachine(
       anchorProgram.provider.connection,
       walletKeyPair,
-      candyAddress,
+      candyMachineAddr.toBase58(),
       batchSizeParsed,
       daemon,
     );
@@ -968,11 +975,7 @@ function programCommand(name: string) {
       'Solana cluster env name',
       'devnet', //mainnet-beta, testnet, devnet
     )
-    .option(
-      '-k, --keypair <path>',
-      `Solana wallet location`,
-      '--keypair not provided',
-    )
+    .requiredOption('-k, --keypair <path>', `Solana wallet location`)
     .option('-l, --log-level <string>', 'log level', setLogLevel)
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
 }
