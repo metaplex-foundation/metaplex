@@ -270,7 +270,8 @@ export async function uploadV2({
                     },
                   );
                   cacheContent.program.uuid = res.uuid;
-                  cacheContent.program.candyMachine = res.candyMachine.toBase58();
+                  cacheContent.program.candyMachine =
+                    res.candyMachine.toBase58();
                   candyMachine = res.candyMachine;
                   log.info(
                     `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
@@ -391,7 +392,8 @@ export async function uploadV2({
                   saveCache(cacheName, env, cacheContent);
                 } catch (e) {
                   log.error(
-                    `saving config line ${ind}-${keys[indexes[indexes.length - 1]]
+                    `saving config line ${ind}-${
+                      keys[indexes[indexes.length - 1]]
                     } failed`,
                     e,
                   );
@@ -554,7 +556,8 @@ async function writeIndices({
                 saveCache(cacheName, env, cache);
               } catch (err) {
                 log.error(
-                  `Saving config line ${ind}-${keys[indexes[indexes.length - 1]]
+                  `Saving config line ${ind}-${
+                    keys[indexes[indexes.length - 1]]
                   } failed`,
                   err,
                 );
