@@ -13,6 +13,8 @@ export async function pinataUpload(
   image: string,
   manifestBuffer: Buffer,
 ) {
+  const gatewayUrl = gateway ? `${gateway}` : `https://ipfs.io`;
+  
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
 
   const data = new FormData();
@@ -30,7 +32,16 @@ export async function pinataUpload(
   );
 
   const imageJson = await resImage.json();
+
   const { IpfsHash: imageHash } = imageJson;
+
+  const mediaUrl = `${gatewayUrl}/ipfs/${imageHash}`;
+  manifestJson.image = mediaUrl;
+  manifestJson.properties.files = manifestJson.properties.files.map(f => {
+    return { ...f, uri: mediaUrl };
+  });
+
+  log.info('uploaded image: ', mediaUrl);
 
   fs.writeFileSync("tempJson.json", JSON.stringify(manifestJson));
 
@@ -38,7 +49,7 @@ export async function pinataUpload(
   jsonData.append("file", fs.createReadStream("tempJson.json"));
 
   const resJson = await fetch(
-    `https://testapi.pinata.cloud/pinning/pinFileToIPFS`,
+    `https://api.pinata.cloud/pinning/pinFileToIPFS`,
     {
       headers: {
         Authorization: `Bearer ${jwt}`,
@@ -52,10 +63,8 @@ export async function pinataUpload(
   const { IpfsHash: jsonHash } = hashJson;
 
   await sleep(500);
-
-  const gatewayUrl = gateway ? `${gateway}` : `https://ipfs.io`;
-  const link = `${gatewayUrl}/ipfs/${jsonHash}`;
-  const mediaUrl = `${gatewayUrl}/ipfs/${imageHash}`;
+  
+  const link = `${gatewayUrl}/ipfs/${jsonHash}`;  
   log.info('uploaded manifest: ', link);
 
   return [link, mediaUrl];
