@@ -773,21 +773,25 @@ programCommand('sign_all')
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
-    const candyAddress = cacheContent.program.candyMachine;
 
     const batchSizeParsed = parseInt(batchSize);
     if (!parseInt(batchSize)) {
       throw new Error('Batch size needs to be an integer!');
     }
 
+    const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+    const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+      candyMachineId,
+    );
+
     log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
     log.debug('Environment: ', env);
-    log.debug('Candy machine address: ', candyAddress);
+    log.debug('Candy machine address: ', cacheContent.program.candyMachine);
     log.debug('Batch Size: ', batchSizeParsed);
     await signAllMetadataFromCandyMachine(
       anchorProgram.provider.connection,
       walletKeyPair,
-      candyAddress,
+      candyMachineAddr.toBase58(),
       batchSizeParsed,
       daemon,
     );
