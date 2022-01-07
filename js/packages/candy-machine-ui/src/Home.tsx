@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import * as anchor from '@project-serum/anchor';
 
 import styled from 'styled-components';
@@ -70,27 +70,25 @@ const Home = (props: HomeProps) => {
     } as anchor.Wallet;
   }, [wallet]);
 
-  const refreshCandyMachineState = () => {
-    (async () => {
-      if (!anchorWallet) {
-        return;
-      }
+  const refreshCandyMachineState = useCallback(async () => {
+    if (!anchorWallet) {
+      return;
+    }
 
-      if (props.candyMachineId) {
-        try {
-          const cndy = await getCandyMachineState(
-            anchorWallet,
-            props.candyMachineId,
-            props.connection,
-          );
-          setCandyMachine(cndy);
-        } catch (e) {
-          console.log('There was a problem fetching Candy Machine state');
-          console.log(e);
-        }
+    if (props.candyMachineId) {
+      try {
+        const cndy = await getCandyMachineState(
+          anchorWallet,
+          props.candyMachineId,
+          props.connection,
+        );
+        setCandyMachine(cndy);
+      } catch (e) {
+        console.log('There was a problem fetching Candy Machine state');
+        console.log(e);
       }
-    })();
-  };
+    }
+  }, [anchorWallet, props.candyMachineId, props.connection]);
 
   const onMint = async () => {
     try {
@@ -154,10 +152,13 @@ const Home = (props: HomeProps) => {
     }
   };
 
-  useEffect(refreshCandyMachineState, [
+  useEffect(() => {
+    refreshCandyMachineState();
+  }, [
     anchorWallet,
     props.candyMachineId,
     props.connection,
+    refreshCandyMachineState,
   ]);
 
   return (
