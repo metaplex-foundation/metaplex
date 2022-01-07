@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as anchor from '@project-serum/anchor';
 
 import styled from 'styled-components';
@@ -70,25 +70,27 @@ const Home = (props: HomeProps) => {
     } as anchor.Wallet;
   }, [wallet]);
 
-  const refreshCandyMachineState = useCallback(async () => {
-    if (!anchorWallet) {
-      return;
-    }
-
-    if (props.candyMachineId) {
-      try {
-        const cndy = await getCandyMachineState(
-          anchorWallet,
-          props.candyMachineId,
-          props.connection,
-        );
-        setCandyMachine(cndy);
-      } catch (e) {
-        console.log('There was a problem fetching Candy Machine state');
-        console.log(e);
+  const refreshCandyMachineState = () => {
+    (async () => {
+      if (!anchorWallet) {
+        return;
       }
-    }
-  }, [anchorWallet, props.candyMachineId, props.connection]);
+
+      if (props.candyMachineId) {
+        try {
+          const cndy = await getCandyMachineState(
+            anchorWallet,
+            props.candyMachineId,
+            props.connection,
+          );
+          setCandyMachine(cndy);
+        } catch (e) {
+          console.log('There was a problem fetching Candy Machine state');
+          console.log(e);
+        }
+      }
+    })();
+  };
 
   const onMint = async () => {
     try {
@@ -152,29 +154,10 @@ const Home = (props: HomeProps) => {
     }
   };
 
-  useEffect(() => {
-    // Refresh the UI when there are confirmed on-chain updates
-    if (props.candyMachineId) {
-      const candyMachineStateSub = props.connection.onAccountChange(
-        props.candyMachineId,
-        () => {
-          refreshCandyMachineState();
-        },
-      );
-
-      refreshCandyMachineState();
-
-      return () => {
-        if (candyMachineStateSub) {
-          props.connection.removeAccountChangeListener(candyMachineStateSub);
-        }
-      };
-    }
-  }, [
+  useEffect(refreshCandyMachineState, [
     anchorWallet,
     props.candyMachineId,
     props.connection,
-    refreshCandyMachineState,
   ]);
 
   return (
