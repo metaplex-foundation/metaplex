@@ -70,26 +70,24 @@ const Home = (props: HomeProps) => {
     } as anchor.Wallet;
   }, [wallet]);
 
-  const refreshCandyMachineState = useCallback(() => {
-    (async () => {
-      if (!anchorWallet) {
-        return;
-      }
+  const refreshCandyMachineState = useCallback(async () => {
+    if (!anchorWallet) {
+      return;
+    }
 
-      if (props.candyMachineId) {
-        try {
-          const cndy = await getCandyMachineState(
-            anchorWallet,
-            props.candyMachineId,
-            props.connection,
-          );
-          setCandyMachine(cndy);
-        } catch (e) {
-          console.log('There was a problem fetching Candy Machine state');
-          console.log(e);
-        }
+    if (props.candyMachineId) {
+      try {
+        const cndy = await getCandyMachineState(
+          anchorWallet,
+          props.candyMachineId,
+          props.connection,
+        );
+        setCandyMachine(cndy);
+      } catch (e) {
+        console.log('There was a problem fetching Candy Machine state');
+        console.log(e);
       }
-    })();
+    }
   }, [anchorWallet, props.candyMachineId, props.connection]);
 
   const onMint = async () => {
@@ -111,7 +109,7 @@ const Home = (props: HomeProps) => {
           );
         }
 
-        if (!status?.err) {
+        if (status && !status.err) {
           setAlertState({
             open: true,
             message: 'Congratulations! Mint succeeded!',
@@ -130,7 +128,6 @@ const Home = (props: HomeProps) => {
       if (!error.msg) {
         if (!error.message) {
           message = 'Transaction Timeout! Please try again.';
-        } else if (error.message.indexOf('0x138')) {
         } else if (error.message.indexOf('0x137')) {
           message = `SOLD OUT!`;
         } else if (error.message.indexOf('0x135')) {

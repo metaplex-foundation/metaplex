@@ -34,7 +34,8 @@ const getCandyMachineId = (): anchor.web3.PublicKey | undefined => {
     );
 
     return candyMachineId;
-  } catch {
+  } catch (e) {
+    console.log('Failed to construct CandyMachineId', e);
     return undefined;
   }
 };
