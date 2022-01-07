@@ -60,6 +60,7 @@
     ]
   },
   "devDependencies": {
+    "@types/canvas-confetti" : "^1.4.2",
     "@types/styled-components": "^5.1.14"
   }
 }
