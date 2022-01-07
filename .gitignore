@@ -22,6 +22,7 @@ yarn-error.log*
 js/.eslintcache
 target
 .env
+.production
 .vscode
 bin
 config.json
@@ -32,6 +33,7 @@ hfuzz_workspace
 **/*.so
 **/.DS_Store
 .cache
-js/packages/web/.env
+js/packages/web/**.production
 traits
 traits-configuration.json
+js/packages/web/**.env
