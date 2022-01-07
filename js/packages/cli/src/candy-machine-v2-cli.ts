@@ -688,6 +688,7 @@ programCommand('update_candy_machine')
         accounts: {
           candyMachine,
           authority: walletKeyPair.publicKey,
+          wallet: treasuryWallet,
         },
       });
 
