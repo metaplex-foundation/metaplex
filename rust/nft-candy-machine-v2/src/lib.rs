@@ -29,6 +29,7 @@ use {
 };
 anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
+const EXPIRE_OFFSET: i64 = 10 * 60;
 const PREFIX: &str = "candy_machine";
 #[program]
 pub mod nft_candy_machine_v2 {
@@ -100,9 +101,11 @@ pub mod nft_candy_machine_v2 {
             }
             // verifies that the gatway token was not created before the candy
             // machine go_live_date (avoids pre-solving the captcha)
-            let gateway_token = ::solana_gateway::borsh::try_from_slice_incomplete::<::solana_gateway::state::GatewayToken>(*gateway_token_info.data.borrow())?;
-            let expire_time = gateway_token.expire_time.ok_or(ErrorCode::GatewayTokenExpireTimeInvalid)? as i64;
-
+            let gateway_token = ::solana_gateway::borsh::try_from_slice_incomplete::<::solana_gateway::state::GatewayToken,>(*gateway_token_info.data.borrow())?;
+            let expire_time = gateway_token
+                .expire_time
+                .ok_or(ErrorCode::GatewayTokenExpireTimeInvalid)?
+                as i64;
             match candy_machine.data.go_live_date {
                 Some(val) => {
                     // Civic f-ed up - expire time is actually the time it was made...
@@ -397,6 +400,13 @@ pub mod nft_candy_machine_v2 {
             && data.hidden_settings.is_none()
         {
             return Err(ErrorCode::CannotChangeNumberOfLines.into());
+        }
+
+        if candy_machine.data.items_available > 0
+            && candy_machine.data.hidden_settings.is_none()
+            && data.hidden_settings.is_some()
+        {
+            return Err(ErrorCode::CannotSwitchToHiddenSettings.into());
         }
 
         candy_machine.wallet = ctx.accounts.wallet.key();
@@ -1038,4 +1048,6 @@ pub enum ErrorCode {
     InvalidString,
     #[msg("Suspicious transaction detected")]
     SuspiciousTransaction,
+    #[msg("Cannot Switch to Hidden Settings after items available is greater than 0")]
+    CannotSwitchToHiddenSettings,
 }

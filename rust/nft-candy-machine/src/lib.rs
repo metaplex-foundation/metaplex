@@ -3,8 +3,7 @@ pub mod utils;
 use {
     crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams},
     anchor_lang::{
-        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize,
-        Discriminator, Key,
+        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize, Key,
     },
     anchor_spl::token::Token,
     arrayref::array_ref,
@@ -14,7 +13,6 @@ use {
             MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
         },
     },
-    spl_token::state::Mint,
     std::cell::Ref,
 };
 anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
@@ -232,51 +230,8 @@ pub mod nft_candy_machine {
         Ok(())
     }
 
-    pub fn initialize_config(ctx: Context<InitializeConfig>, data: ConfigData) -> ProgramResult {
-        let config_info = &mut ctx.accounts.config;
-        if data.uuid.len() != 6 {
-            return Err(ErrorCode::UuidMustBeExactly6Length.into());
-        }
-
-        let mut config = Config {
-            data,
-            authority: *ctx.accounts.authority.key,
-        };
-
-        let mut array_of_zeroes = vec![];
-        while array_of_zeroes.len() < MAX_SYMBOL_LENGTH - config.data.symbol.len() {
-            array_of_zeroes.push(0u8);
-        }
-        let new_symbol =
-            config.data.symbol.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
-        config.data.symbol = new_symbol;
-
-        // - 1 because we are going to be a creator
-        if config.data.creators.len() > MAX_CREATOR_LIMIT - 1 {
-            return Err(ErrorCode::TooManyCreators.into());
-        }
-
-        let mut new_data = Config::discriminator().try_to_vec().unwrap();
-        new_data.append(&mut config.try_to_vec().unwrap());
-        let mut data = config_info.data.borrow_mut();
-        // god forgive me couldnt think of better way to deal with this
-        for i in 0..new_data.len() {
-            data[i] = new_data[i];
-        }
-
-        let vec_start =
-            CONFIG_ARRAY_START + 4 + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE;
-        let as_bytes = (config
-            .data
-            .max_number_of_lines
-            .checked_div(8)
-            .ok_or(ErrorCode::NumericalOverflowError)? as u32)
-            .to_le_bytes();
-        for i in 0..4 {
-            data[vec_start + i] = as_bytes[i]
-        }
-
-        Ok(())
+    pub fn initialize_config(_ctx: Context<InitializeConfig>, _data: ConfigData) -> ProgramResult {
+        return Err(ErrorCode::Deprecated.into());
     }
 
     pub fn add_config_lines(
@@ -368,48 +323,11 @@ pub mod nft_candy_machine {
     }
 
     pub fn initialize_candy_machine(
-        ctx: Context<InitializeCandyMachine>,
-        bump: u8,
-        data: CandyMachineData,
+        _ctx: Context<InitializeCandyMachine>,
+        _bump: u8,
+        _data: CandyMachineData,
     ) -> ProgramResult {
-        let candy_machine = &mut ctx.accounts.candy_machine;
-
-        if data.uuid.len() != 6 {
-            return Err(ErrorCode::UuidMustBeExactly6Length.into());
-        }
-        candy_machine.data = data;
-        candy_machine.wallet = *ctx.accounts.wallet.key;
-        candy_machine.authority = *ctx.accounts.authority.key;
-        candy_machine.config = ctx.accounts.config.key();
-        candy_machine.bump = bump;
-        if ctx.remaining_accounts.len() > 0 {
-            let token_mint_info = &ctx.remaining_accounts[0];
-            let _token_mint: Mint = assert_initialized(&token_mint_info)?;
-            let token_account: spl_token::state::Account =
-                assert_initialized(&ctx.accounts.wallet)?;
-
-            assert_owned_by(&token_mint_info, &spl_token::id())?;
-            assert_owned_by(&ctx.accounts.wallet, &spl_token::id())?;
-
-            if token_account.mint != *token_mint_info.key {
-                return Err(ErrorCode::MintMismatch.into());
-            }
-
-            candy_machine.token_mint = Some(*token_mint_info.key);
-        }
-
-        if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
-            < candy_machine.data.items_available as usize
-        {
-            return Err(ErrorCode::ConfigLineMismatch.into());
-        }
-
-        let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), 0) {
-            Ok(val) => val,
-            Err(_) => return Err(ErrorCode::ConfigMustHaveAtleastOneEntry.into()),
-        };
-
-        Ok(())
+        return Err(ErrorCode::Deprecated.into());
     }
 
     pub fn update_authority(
@@ -462,7 +380,7 @@ pub struct InitializeCandyMachine<'info> {
 #[derive(Accounts)]
 #[instruction(data: ConfigData)]
 pub struct InitializeConfig<'info> {
-    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() >= CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
+    #[account(zero, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() >= CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
     config: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
@@ -657,4 +575,6 @@ pub enum ErrorCode {
     CandyMachineNotLiveYet,
     #[msg("Number of config lines must be at least number of items available")]
     ConfigLineMismatch,
+    #[msg("CMv1 is deprecated.")]
+    Deprecated,
 }
