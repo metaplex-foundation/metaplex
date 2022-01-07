@@ -20,23 +20,28 @@ export const solToUSD = async (): Promise<number> => {
 };
 
 export const altSplToUSD = async (cgTokenName?: string): Promise<number> => {
-  if (!process.env.NEXT_SPL_TOKEN_MINTS || process.env.NEXT_SPL_TOKEN_MINTS.length == 0)
-    return 0
+  if (
+    !process.env.NEXT_SPL_TOKEN_MINTS ||
+    process.env.NEXT_SPL_TOKEN_MINTS.length == 0
+  )
+    return 0;
 
-  const cg_spl_token_id = cgTokenName? cgTokenName.toLowerCase().split(' ').join('-')
-      : process.env.NEXT_CG_SPL_TOKEN_ID || ""
+  const cg_spl_token_id = cgTokenName
+    ? cgTokenName.toLowerCase().split(' ').join('-')
+    : process.env.NEXT_CG_SPL_TOKEN_ID || '';
   const url = `${COINGECKO_COIN_PRICE_API}?ids=${cg_spl_token_id}&vs_currencies=usd`;
   const resp = await window.fetch(url).then(resp => resp.json());
   //console.log("[--P]Processing", cgTokenName, resp)
   return resp[cg_spl_token_id]?.usd;
 };
 
-const CoingeckoContext =
-  React.createContext<CoingeckoContextState | null>(null);
+const CoingeckoContext = React.createContext<CoingeckoContextState | null>(
+  null,
+);
 export function CoingeckoProvider({ children = null as any }) {
   const [solPrice, setSolPrice] = useState<number>(0);
   const [allSplPrices, setAllSplPrices] = useState<AllSplTokens[]>([]);
-  const tokenList = useTokenList().mainnetTokens
+  const tokenList = useTokenList().mainnetTokens;
 
   useEffect(() => {
     let timerId = 0;
@@ -44,27 +49,33 @@ export function CoingeckoProvider({ children = null as any }) {
       const solprice = await solToUSD();
       setSolPrice(solprice);
 
-      const subscribedTokenMints = process.env.NEXT_SPL_TOKEN_MINTS? process.env.NEXT_SPL_TOKEN_MINTS.split(","): []
-      const subscribedTokenIDS = process.env.NEXT_CG_SPL_TOKEN_IDS? process.env.NEXT_CG_SPL_TOKEN_IDS.split(","): []
+      const subscribedTokenMints = process.env.NEXT_SPL_TOKEN_MINTS
+        ? process.env.NEXT_SPL_TOKEN_MINTS.split(',')
+        : [];
+      const subscribedTokenIDS = process.env.NEXT_CG_SPL_TOKEN_IDS
+        ? process.env.NEXT_CG_SPL_TOKEN_IDS.split(',')
+        : [];
 
-      var allSplPrices:AllSplTokens[] = []
-      for (let i=0; i < subscribedTokenMints.length; i++) {
+      var allSplPrices: AllSplTokens[] = [];
+      for (let i = 0; i < subscribedTokenMints.length; i++) {
         try {
-          const splName = subscribedTokenIDS[i]
-          const splMint = subscribedTokenMints[i]
+          const splName = subscribedTokenIDS[i];
+          const splMint = subscribedTokenMints[i];
 
           //console.log("[--P]PROCESSING TOKEN",i,  splName, splMint)
-          const splPrice = await altSplToUSD(splName)
+          const splPrice = await altSplToUSD(splName);
           //console.log("[--P]PRICE", splPrice)
-          allSplPrices[i] = {tokenMint: splMint, tokenName: splName, tokenPrice: splPrice}
-        } catch(e) {
+          allSplPrices[i] = {
+            tokenMint: splMint,
+            tokenName: splName,
+            tokenPrice: splPrice,
+          };
+        } catch (e) {
           //console.log("[--P] error setting", e)
         }
       }
-      setAllSplPrices(allSplPrices)
+      setAllSplPrices(allSplPrices);
       //console.log("[--P]SUBSCRIBED TOKENS", allSplPrices)
-
-      ;
       startTimer();
     };
 

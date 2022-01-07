@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 import {
   Box,
@@ -11,49 +11,43 @@ import {
   Stack,
   Select,
   TextField,
-} from "@mui/material";
+} from '@mui/material';
 
-import {
-  useWallet,
-} from "@solana/wallet-adapter-react";
-import {
-  Keypair,
-} from "@solana/web3.js";
-import {
-  notify,
-} from "@oyster/common";
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Keypair } from '@solana/web3.js';
+import { notify } from '@oyster/common';
 
-import {
-  useConnection,
-  Connection,
-} from "../contexts";
-import {
-  closeGumdrop,
-} from "../utils/claimant";
-import {
-  explorerLinkFor,
-} from "../utils/transactions";
+import { useConnection, Connection } from '../contexts';
+import { closeGumdrop } from '../utils/claimant';
+import { explorerLinkFor } from '../utils/transactions';
 
 export const Close = () => {
   const connection = useConnection();
   const wallet = useWallet();
 
-  const [baseKey, setBaseKey] = React.useState("");
-  const [claimMethod, setClaimMethod] = React.useState(localStorage.getItem("claimMethod") || "transfer");
-  const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
-  const [candyConfig, setCandyConfig] = React.useState(localStorage.getItem("candyConfig") || "");
-  const [candyUUID, setCandyUUID] = React.useState(localStorage.getItem("candyUUID") || "");
-  const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
+  const [baseKey, setBaseKey] = React.useState('');
+  const [claimMethod, setClaimMethod] = React.useState(
+    localStorage.getItem('claimMethod') || 'transfer',
+  );
+  const [mint, setMint] = React.useState(localStorage.getItem('mint') || '');
+  const [candyConfig, setCandyConfig] = React.useState(
+    localStorage.getItem('candyConfig') || '',
+  );
+  const [candyUUID, setCandyUUID] = React.useState(
+    localStorage.getItem('candyUUID') || '',
+  );
+  const [masterMint, setMasterMint] = React.useState(
+    localStorage.getItem('masterMint') || '',
+  );
 
-  const submit = async (e : React.SyntheticEvent) => {
+  const submit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!wallet.connected || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
     }
 
-    const base = Keypair.fromSecretKey(
-      new Uint8Array(JSON.parse(baseKey)));
+    const base = Keypair.fromSecretKey(new Uint8Array(JSON.parse(baseKey)));
 
     const instructions = await closeGumdrop(
       connection,
@@ -70,18 +64,18 @@ export const Close = () => {
       connection,
       wallet,
       instructions,
-      [base]
+      [base],
     );
 
     console.log(closeResult);
-    if (typeof closeResult === "string") {
+    if (typeof closeResult === 'string') {
       notify({
-        message: "Close failed",
+        message: 'Close failed',
         description: closeResult,
       });
     } else {
       notify({
-        message: "Close succeeded",
+        message: 'Close succeeded',
         description: (
           <HyperLink href={explorerLinkFor(closeResult.txid, connection)}>
             View transaction on explorer
@@ -91,8 +85,8 @@ export const Close = () => {
     }
   };
 
-  const claimData = (claimMethod) => {
-    if (claimMethod === "candy") {
+  const claimData = claimMethod => {
+    if (claimMethod === 'candy') {
       return (
         <React.Fragment>
           <TextField
@@ -109,25 +103,25 @@ export const Close = () => {
           />
         </React.Fragment>
       );
-    } else if (claimMethod === "transfer") {
+    } else if (claimMethod === 'transfer') {
       return (
         <React.Fragment>
           <TextField
             id="mint-text-field"
             label="Mint"
             value={mint}
-            onChange={(e) => setMint(e.target.value)}
+            onChange={e => setMint(e.target.value)}
           />
         </React.Fragment>
       );
-    } else if (claimMethod === "edition") {
+    } else if (claimMethod === 'edition') {
       return (
         <React.Fragment>
           <TextField
             id="master-mint-text-field"
             label="Master Mint"
             value={masterMint}
-            onChange={(e) => setMasterMint(e.target.value)}
+            onChange={e => setMasterMint(e.target.value)}
           />
         </React.Fragment>
       );
@@ -153,7 +147,7 @@ export const Close = () => {
         id="base-text-field"
         label="Base Private Key"
         value={baseKey}
-        onChange={(e) => setBaseKey(e.target.value)}
+        onChange={e => setBaseKey(e.target.value)}
       />
       <FormControl fullWidth>
         <InputLabel id="claim-method-label">Claim Method</InputLabel>
@@ -162,43 +156,43 @@ export const Close = () => {
           id="claim-method-select"
           value={claimMethod}
           label="Claim Method"
-          onChange={(e) => {
-            localStorage.setItem("claimMethod", e.target.value);
+          onChange={e => {
+            localStorage.setItem('claimMethod', e.target.value);
             setClaimMethod(e.target.value);
           }}
-          style={{textAlign: "left"}}
+          style={{ textAlign: 'left' }}
         >
-          <MenuItem value={"transfer"}>Token Transfer</MenuItem>
-          <MenuItem value={"candy"}>Candy Machine</MenuItem>
-          <MenuItem value={"edition"}>Limited Edition</MenuItem>
+          <MenuItem value={'transfer'}>Token Transfer</MenuItem>
+          <MenuItem value={'candy'}>Candy Machine</MenuItem>
+          <MenuItem value={'edition'}>Limited Edition</MenuItem>
         </Select>
       </FormControl>
-      {claimMethod !== "" && claimData(claimMethod)}
-      <Box sx={{ position: "relative" }}>
-      <Button
-        disabled={!wallet.connected || !baseKey || loading}
-        variant="contained"
-        style={{ width: "100%" }}
-        onClick={(e) => {
-          setLoading(true);
-          const wrap = async () => {
-            try {
-              await submit(e);
-              setLoading(false);
-            } catch (err) {
-              notify({
-                message: "Close failed",
-                description: `${err}`,
-              });
-              setLoading(false);
-            }
-          };
-          wrap();
-        }}
-      >
-        Close Gumdrop
-      </Button>
-      {loading && loadingProgress()}
+      {claimMethod !== '' && claimData(claimMethod)}
+      <Box sx={{ position: 'relative' }}>
+        <Button
+          disabled={!wallet.connected || !baseKey || loading}
+          variant="contained"
+          style={{ width: '100%' }}
+          onClick={e => {
+            setLoading(true);
+            const wrap = async () => {
+              try {
+                await submit(e);
+                setLoading(false);
+              } catch (err) {
+                notify({
+                  message: 'Close failed',
+                  description: `${err}`,
+                });
+                setLoading(false);
+              }
+            };
+            wrap();
+          }}
+        >
+          Close Gumdrop
+        </Button>
+        {loading && loadingProgress()}
       </Box>
     </Stack>
   );
