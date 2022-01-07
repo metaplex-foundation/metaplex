@@ -76,7 +76,7 @@
     "type": "git",
     "url": "https://github.com/letzLink/letzlink.github.io"
   },
-  "homepage": "https://letzlink.github.io/",
+  "homepage": "https://letzlink.github.io",
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
