@@ -3,51 +3,79 @@
   flex-flow: column nowrap;
   justify-content: space-between;
   align-items: center;
-  position: relative;
-}
-
-.banner-wrapper {
-  --ratio-denom: 5;
-
-  width: 100%;
-  overflow: hidden;
-  border-radius: 8px;
-  margin-bottom: 30px;
+  margin: auto;
 }
 
 #metaplex-banner-backdrop {
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
   object-position: center;
   object-fit: cover;
+  border-radius: @border-radius;
+  aspect-ratio: 4 / 1;
+
+  @media screen and (max-width: 800px) {
+    visibility: hidden;
+    height: 3rem;
+  }
 }
 
 #metaplex-banner-hero {
   display: flex;
   position: relative;
   flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 80px;
+  width: calc(100vw - @content-padding * 2);
+  max-width: 520px;
+  margin: 2rem 0;
 
   h1 {
     font-size: 40px;
     font-weight: 900;
     line-height: 48px;
-    max-width: 900px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    text-align: center;
   }
 
   .ant-typography {
     font-weight: 16px;
     font-weight: 400;
-    max-width: 900px;
+    text-align: center;
+  }
+
+  @media screen and (max-width: 800px) {
+    width: auto;
+    justify-content: center;
   }
 }
 #metaplex-banner-hero-social {
   margin-top: 20px;
+}
+
+.logo-wrapper {
+  --size: 120px;
+  height: var(--size);
+  margin-top: calc((var(--size) / 2.5) * -1);
+  display: flex;
+  width: calc(100vw - @content-padding * 2);
+  max-width: @content-max-width;
+  justify-content: center;
+
+  #metaplex-header-logo {
+    background: @theme-color-base;
+    border-radius: @border-radius * 2;
+    padding: 0.375rem;
+
+    img {
+      object-fit: contain;
+      width: var(--size);
+      height: var(--size);
+      border-radius: @border-radius;
+    }
+  }
+  @media screen and (max-width: 800px) {
+    justify-content: center;
+  }
+}
+
+.twitter-button {
+  margin: 1.5rem auto;
 }

@@ -228,7 +228,9 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
       }
     >
       <Button className="metaplex-button-appbar" type={buttonType}>
-        <CogSvg />
+        <div className="metaplex-flex metaplex-align-items-center metaplex-gap-2">
+          <CogSvg />
+        </div>
       </Button>
     </Popover>
   );
