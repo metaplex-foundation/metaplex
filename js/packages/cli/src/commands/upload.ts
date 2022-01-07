@@ -307,6 +307,7 @@ export async function uploadV2({
                   break;
                 case StorageType.Pinata: 
                     [link, imageLink] = await pinataUpload(pinataJwt, pinataGateway, image, manifestBuffer)
+                    break;
                 case StorageType.Aws:
                   [link, imageLink] = await awsUpload(
                     awsS3Bucket,
