@@ -12,7 +12,6 @@ import {
   parsePrice,
   shuffle,
 } from './helpers/various';
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   CACHE_PATH,
@@ -22,7 +21,6 @@ import {
   CANDY_MACHINE_PROGRAM_ID,
 } from './helpers/constants';
 import {
-  getBalance,
   getCandyMachineAddress,
   getProgramAccounts,
   loadCandyProgram,
@@ -33,7 +31,6 @@ import { Config } from './types';
 import { upload } from './commands/upload';
 import { updateFromCache } from './commands/updateFromCache';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
-import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
@@ -42,8 +39,6 @@ import {
   signAllMetadataFromCandyMachine,
 } from './commands/signAll';
 import log from 'loglevel';
-import { createMetadataFiles } from './helpers/metadata';
-import { createGenerativeArt } from './commands/createArt';
 import { withdraw } from './commands/withdraw';
 import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
@@ -58,7 +53,7 @@ if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
 log.setLevel(log.levels.INFO);
-programCommand('upload')
+programCommand('update_config_account')
   .argument(
     '<directory>',
     'Directory containing images named from 0-n',
@@ -66,8 +61,6 @@ programCommand('upload')
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
-  .option('-n, --number <number>', 'Number of images to upload')
-
   .option(
     '-b, --batchSize <number>',
     'Batch size - defaults to 50. Has no Affect on Bundlr',
@@ -94,8 +87,6 @@ programCommand('upload')
     '--arweave-jwk <string>',
     'Path to Arweave wallet file (required if using Arweave Bundles (--storage arweave-bundle)',
   )
-  .option('--no-retain-authority', 'Do not retain authority to update metadata')
-  .option('--no-mutable', 'Metadata will not be editable')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -110,12 +101,12 @@ programCommand('upload')
       ipfsInfuraProjectId,
       ipfsInfuraSecret,
       awsS3Bucket,
-      retainAuthority,
-      mutable,
       rpcUrl,
       arweaveJwk,
       batchSize,
     } = cmd.opts();
+
+    deprecationWarning();
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
       throw new Error(
@@ -207,10 +198,7 @@ programCommand('upload')
         cacheName,
         env,
         keypair,
-        totalNFTs: elemCount,
         storage,
-        retainAuthority,
-        mutable,
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
@@ -240,6 +228,7 @@ programCommand('withdraw')
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
     if (charityPercent < 0 || charityPercent > 100) {
       log.error('Charity percentage needs to be between 0 and 100');
@@ -332,7 +321,7 @@ programCommand('withdraw')
     }
   });
 
-programCommand('verify_token_metadata')
+programCommand('verify_assets')
   .argument(
     '<directory>',
     'Directory containing images and metadata files named from 0-n',
@@ -344,6 +333,7 @@ programCommand('verify_token_metadata')
   )
   .option('-n, --number <number>', 'Number of images to upload')
   .action((files: string[], options, cmd) => {
+    deprecationWarning();
     const { number } = cmd.opts();
 
     const startMs = Date.now();
@@ -362,12 +352,13 @@ programCommand('verify_token_metadata')
     log.info(`Elapsed time: ${timeTaken}\n`);
   });
 
-programCommand('verify')
+programCommand('verify_upload')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { env, keypair, rpcUrl, cacheName } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
@@ -547,6 +538,7 @@ programCommand('verify_price')
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, price, cacheName, rpcUrl, cachePath } = cmd.opts();
     const lamports = parsePrice(price);
 
@@ -567,6 +559,9 @@ programCommand('verify_price')
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
+    if (!cacheContent.candyMachineAddress) {
+      useCandyMachineV2Error();
+    }
     const candyAddress = new PublicKey(cacheContent.candyMachineAddress);
 
     const machine = await anchorProgram.account.candyMachine.fetch(
@@ -592,6 +587,7 @@ programCommand('show')
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, cacheName, rpcUrl, cachePath } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env, cachePath);
@@ -674,140 +670,6 @@ programCommand('show')
     log.info('maxNumberOfLines: ', config.data.maxNumberOfLines);
   });
 
-programCommand('create_candy_machine')
-  .option(
-    '-p, --price <string>',
-    'Price denominated in SOL or spl-token override',
-    '1',
-  )
-  .option(
-    '-t, --spl-token <string>',
-    'SPL token used to price NFT mint. To use SOL leave this empty.',
-  )
-  .option(
-    '-a, --spl-token-account <string>',
-    'SPL token account that receives mint payments. Only required if spl-token is specified.',
-  )
-  .option(
-    '-s, --sol-treasury-account <string>',
-    'SOL account that receives mint payments. Should have minimum 0.1 sol balance',
-  )
-  .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
-  )
-  .action(async (directory, cmd) => {
-    const {
-      keypair,
-      env,
-      price,
-      cacheName,
-      splToken,
-      splTokenAccount,
-      solTreasuryAccount,
-      rpcUrl,
-    } = cmd.opts();
-
-    let parsedPrice = parsePrice(price);
-    const cacheContent = loadCache(cacheName, env);
-
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
-
-    let wallet = walletKeyPair.publicKey;
-    const remainingAccounts = [];
-    if (splToken || splTokenAccount) {
-      if (solTreasuryAccount) {
-        throw new Error(
-          'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
-        );
-      }
-      if (!splToken) {
-        throw new Error(
-          'If spl-token-account is set, spl-token must also be set',
-        );
-      }
-      const splTokenKey = new PublicKey(splToken);
-      const splTokenAccountKey = new PublicKey(splTokenAccount);
-      if (!splTokenAccount) {
-        throw new Error(
-          'If spl-token is set, spl-token-account must also be set',
-        );
-      }
-
-      const token = new Token(
-        anchorProgram.provider.connection,
-        splTokenKey,
-        TOKEN_PROGRAM_ID,
-        walletKeyPair,
-      );
-
-      const mintInfo = await token.getMintInfo();
-      if (!mintInfo.isInitialized) {
-        throw new Error(`The specified spl-token is not initialized`);
-      }
-      const tokenAccount = await token.getAccountInfo(splTokenAccountKey);
-      if (!tokenAccount.isInitialized) {
-        throw new Error(`The specified spl-token-account is not initialized`);
-      }
-      if (!tokenAccount.mint.equals(splTokenKey)) {
-        throw new Error(
-          `The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`,
-        );
-      }
-
-      wallet = splTokenAccountKey;
-      parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
-      remainingAccounts.push({
-        pubkey: splTokenKey,
-        isWritable: false,
-        isSigner: false,
-      });
-    }
-
-    if (solTreasuryAccount) {
-      const treasuryAccount = new PublicKey(solTreasuryAccount);
-      const treasuryBalance = await getBalance(treasuryAccount, env, rpcUrl);
-      if (treasuryBalance === 0) {
-        throw new Error(`Cannot use treasury account with 0 balance!`);
-      }
-      wallet = treasuryAccount;
-    }
-
-    const config = new PublicKey(cacheContent.program.config);
-    const [candyMachine, bump] = await getCandyMachineAddress(
-      config,
-      cacheContent.program.uuid,
-    );
-    await anchorProgram.rpc.initializeCandyMachine(
-      bump,
-      {
-        uuid: cacheContent.program.uuid,
-        price: new anchor.BN(parsedPrice),
-        itemsAvailable: new anchor.BN(Object.keys(cacheContent.items).length),
-        goLiveDate: null,
-      },
-      {
-        accounts: {
-          candyMachine,
-          wallet,
-          config: config,
-          authority: walletKeyPair.publicKey,
-          payer: walletKeyPair.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        },
-        signers: [],
-        remainingAccounts,
-      },
-    );
-    cacheContent.candyMachineAddress = candyMachine.toBase58();
-    saveCache(cacheName, env, cacheContent);
-    log.info(
-      `create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`,
-    );
-  });
-
 programCommand('update_candy_machine')
   .option(
     '-d, --date <string>',
@@ -820,6 +682,7 @@ programCommand('update_candy_machine')
   )
   .option('--new-authority <Pubkey>', 'New Authority. Base58-encoded')
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, date, rpcUrl, price, newAuthority, cacheName } =
       cmd.opts();
     const cacheContent = loadCache(cacheName, env);
@@ -831,6 +694,9 @@ programCommand('update_candy_machine')
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
+    if (!cacheContent.candyMachineAddress) {
+      useCandyMachineV2Error();
+    }
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
 
     if (lamports || secondsSinceEpoch) {
@@ -877,6 +743,7 @@ programCommand('mint_one_token')
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, cacheName, rpcUrl } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
@@ -899,6 +766,7 @@ programCommand('mint_multiple_tokens')
     'custom rpc url since this is a heavy command',
   )
   .action(async (_, cmd) => {
+    deprecationWarning();
     const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
 
     const NUMBER_OF_NFTS_TO_MINT = parseInt(number, 10);
@@ -937,6 +805,7 @@ programCommand('sign')
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, rpcUrl, metadata } = cmd.opts();
 
     await signMetadata(metadata, keypair, env, rpcUrl);
@@ -950,10 +819,14 @@ programCommand('sign_all')
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, cacheName, rpcUrl, batchSize, daemon } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    if (!cacheContent.candyMachineAddress) {
+      useCandyMachineV2Error();
+    }
     const candyAddress = cacheContent.candyMachineAddress;
 
     const batchSizeParsed = parseInt(batchSize);
@@ -983,12 +856,16 @@ programCommand('update_existing_nfts_from_latest_cache_file')
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, cacheName, rpcUrl, batchSize, daemon, newCache } =
       cmd.opts();
     const cacheContent = loadCache(cacheName, env);
     const newCacheContent = loadCache(newCache, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    if (!cacheContent.candyMachineAddress) {
+      useCandyMachineV2Error();
+    }
     const candyAddress = cacheContent.candyMachineAddress;
 
     const batchSizeParsed = parseInt(batchSize);
@@ -1014,10 +891,14 @@ programCommand('update_existing_nfts_from_latest_cache_file')
 // can then upload these
 programCommand('randomize_unminted_nfts_in_new_cache_file').action(
   async (directory, cmd) => {
+    deprecationWarning();
     const { keypair, env, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    if (!cacheContent.candyMachineAddress) {
+      useCandyMachineV2Error();
+    }
     const candyAddress = cacheContent.candyMachineAddress;
 
     log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
@@ -1052,12 +933,15 @@ programCommand('randomize_unminted_nfts_in_new_cache_file').action(
 );
 
 programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
+  deprecationWarning();
   const { env, cacheName, keypair } = cmd.opts();
-
   const cacheContent = loadCache(cacheName, env);
   const walletKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
+  if (!cacheContent.candyMachineAddress) {
+    useCandyMachineV2Error();
+  }
   const accountsByCreatorAddress = await getAccountsByCreatorAddress(
     cacheContent.candyMachineAddress,
     anchorProgram.provider.connection,
@@ -1068,75 +952,6 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
 
   console.log(JSON.stringify(addresses, null, 2));
 });
-
-programCommand('generate_art_configurations')
-  .argument('<directory>', 'Directory containing traits named from 0-n', val =>
-    fs.readdirSync(`${val}`),
-  )
-  .action(async (files: string[]) => {
-    log.info('creating traits configuration file');
-    const startMs = Date.now();
-    const successful = await generateConfigurations(files);
-    const endMs = Date.now();
-    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
-    if (successful) {
-      log.info('traits-configuration.json has been created!');
-      log.info(
-        `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
-      );
-    } else {
-      log.info('The art configuration file was not created');
-    }
-  });
-
-programCommand('create_generative_art')
-  .option(
-    '-n, --number-of-images <string>',
-    'Number of images to be generated',
-    '100',
-  )
-  .option(
-    '-c, --config-location <string>',
-    'Location of the traits configuration file',
-    './traits-configuration.json',
-  )
-  .option(
-    '-o, --output-location <string>',
-    'If you wish to do image generation elsewhere, skip it and dump randomized sets to file',
-  )
-  .option(
-    '-ta, --treat-attributes-as-file-names <string>',
-    'If your attributes are filenames, trim the .png off if set to true',
-  )
-  .action(async (directory, cmd) => {
-    const {
-      numberOfImages,
-      configLocation,
-      outputLocation,
-      treatAttributesAsFileNames,
-    } = cmd.opts();
-
-    log.info('Loaded configuration file');
-
-    // 1. generate the metadata json files
-    const randomSets = await createMetadataFiles(
-      numberOfImages,
-      configLocation,
-      treatAttributesAsFileNames == 'true',
-    );
-
-    log.info('JSON files have been created within the assets directory');
-
-    // 2. piecemeal generate the images
-    if (!outputLocation) {
-      await createGenerativeArt(configLocation, randomSets);
-      log.info('Images have been created successfully!');
-    } else {
-      fs.writeFileSync(outputLocation, JSON.stringify(randomSets));
-
-      log.info('Traits written!');
-    }
-  });
 
 function programCommand(name: string) {
   return program
@@ -1157,16 +972,35 @@ function programCommand(name: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setLogLevel(value, prev) {
-  if (value === undefined || value === null) {
+  if (value == null) {
     return;
   }
   log.info('setting the log value to: ' + value);
   log.setLevel(value);
 }
+
 function errorColor(str) {
   // Add ANSI escape codes to display text in red.
   return `\x1b[31m${str}\x1b[0m`;
 }
+
+function deprecationWarning() {
+  log.warn(
+    errorColor(
+      'Candy Machine V1 has been deprecated and new instances can no longer be created.\n' +
+        'Although, you can still update existing V1 Candy Machines.\n\n' +
+        'You must use Candy Machine V2 to create a new instance of a Candy Machine.\n' +
+        'For more information about this change, visit https://docs.metaplex.com.\n',
+    ),
+  );
+}
+
+function useCandyMachineV2Error() {
+  return log.error(
+    'Candy Machine account not found in the cache. To create a new instance of a Candy Machine, please use Candy Machine V2.',
+  );
+}
+
 program
   .configureOutput({
     // Visibly override write routines as example!

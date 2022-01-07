@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
-import fetch from 'node-fetch';
 
 import {
   chunks,
@@ -25,6 +24,7 @@ import {
   loadCandyProgramV2,
   loadWalletKey,
   AccountAndPubkey,
+  deriveCandyMachineV2ProgramAddress,
 } from './helpers/accounts';
 
 import { uploadV2 } from './commands/upload';
@@ -308,7 +308,7 @@ programCommand('withdraw')
     }
   });
 
-programCommand('verify_token_metadata')
+programCommand('verify_assets')
   .argument(
     '<directory>',
     'Directory containing images and metadata files named from 0-n',
@@ -333,7 +333,7 @@ programCommand('verify_token_metadata')
     );
   });
 
-programCommand('verify')
+programCommand('verify_upload')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -357,7 +357,7 @@ programCommand('verify')
     const keys = Object.keys(cacheContent.items).filter(
       k => !cacheContent.items[k].verifyRun,
     );
-    console.log('Key ize', keys.length);
+    console.log('Key size', keys.length);
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 500).map(
         async allIndexesInSlice => {
@@ -388,97 +388,6 @@ programCommand('verify')
               );*/
               cacheItem.onChain = false;
               allGood = false;
-            } else {
-              let json;
-              try {
-                json = await fetch(cacheItem.link);
-              } catch (e) {
-                json = { status: 404 };
-              }
-              if (
-                json.status == 200 ||
-                json.status == 204 ||
-                json.status == 202
-              ) {
-                const body = await json.text();
-                const parsed = JSON.parse(body);
-                if (parsed.image) {
-                  let check;
-                  try {
-                    check = await fetch(parsed.image);
-                  } catch (e) {
-                    check = { status: 404 };
-                  }
-                  if (
-                    check.status == 200 ||
-                    check.status == 204 ||
-                    check.status == 202
-                  ) {
-                    const text = await check.text();
-                    if (!text.match(/Not found/i)) {
-                      if (text.length == 0) {
-                        log.info(
-                          'Name',
-                          name,
-                          'with',
-                          uri,
-                          'has zero length, failing',
-                        );
-                        cacheItem.link = null;
-                        cacheItem.onChain = false;
-                        allGood = false;
-                      } else {
-                        log.info('Name', name, 'with', uri, 'checked out');
-                      }
-                    } else {
-                      log.info(
-                        'Name',
-                        name,
-                        'with',
-                        uri,
-                        'never got uploaded to arweave, failing',
-                      );
-                      cacheItem.link = null;
-                      cacheItem.onChain = false;
-                      allGood = false;
-                    }
-                  } else {
-                    log.info(
-                      'Name',
-                      name,
-                      'with',
-                      uri,
-                      'returned non-200 from uploader',
-                      check.status,
-                    );
-                    cacheItem.link = null;
-                    cacheItem.onChain = false;
-                    allGood = false;
-                  }
-                } else {
-                  log.info(
-                    'Name',
-                    name,
-                    'with',
-                    uri,
-                    'lacked image in json, failing',
-                  );
-                  cacheItem.link = null;
-                  cacheItem.onChain = false;
-                  allGood = false;
-                }
-              } else {
-                log.info(
-                  'Name',
-                  name,
-                  'with',
-                  uri,
-                  'returned no json from link',
-                );
-                cacheItem.link = null;
-                cacheItem.onChain = false;
-                allGood = false;
-              }
             }
             cacheItem.verifyRun = true;
           }
@@ -965,8 +874,13 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   const walletKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
 
+  const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+  const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+    candyMachineId,
+  );
+
   const accountsByCreatorAddress = await getAccountsByCreatorAddress(
-    cacheContent.program.candyMachine,
+    candyMachineAddr.toBase58(),
     anchorProgram.provider.connection,
   );
   const addresses = accountsByCreatorAddress.map(it => {

@@ -1,4 +1,5 @@
 import {
+  AccountInfo,
   Connection,
   Keypair,
   PublicKey,
@@ -7,7 +8,7 @@ import {
 } from '@solana/web3.js';
 
 import { Connection as ContextConnection } from '../contexts';
-
+import { deserializeUnchecked } from 'borsh';
 import * as anchor from '@project-serum/anchor';
 import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
@@ -21,15 +22,146 @@ import {
 } from '@solana/spl-token';
 import { BN } from '@project-serum/anchor';
 import { getEdition, getMetadata, getTokenAmount } from './accounts';
-import {
-  decodeMetadata,
-  Metadata,
-} from '@oyster/common/dist/lib/actions/metadata';
-
+import mints from './valid_mints.json';
+import { extendBorsh } from './borsh';
 export const TOKEN_ENTANGLER = 'token_entangler';
 export const ESCROW = 'escrow';
 export const A = 'A';
 export const B = 'B';
+
+export class Creator {
+  address: PublicKey;
+  verified: number;
+  share: number;
+
+  constructor(args: { address: PublicKey; verified: number; share: number }) {
+    this.address = args.address;
+    this.verified = args.verified;
+    this.share = args.share;
+  }
+}
+
+export class Data {
+  name: string;
+  symbol: string;
+  uri: string;
+  sellerFeeBasisPoints: number;
+  creators: Creator[] | null;
+  constructor(args: {
+    name: string;
+    symbol: string;
+    uri: string;
+    sellerFeeBasisPoints: number;
+    creators: Creator[] | null;
+  }) {
+    this.name = args.name;
+    this.symbol = args.symbol;
+    this.uri = args.uri;
+    this.sellerFeeBasisPoints = args.sellerFeeBasisPoints;
+    this.creators = args.creators;
+  }
+}
+
+export enum MetadataKey {
+  Uninitialized = 0,
+  MetadataV1 = 4,
+  EditionV1 = 1,
+  MasterEditionV1 = 2,
+  MasterEditionV2 = 6,
+  EditionMarker = 7,
+}
+export class Metadata {
+  key: MetadataKey;
+  updateAuthority: PublicKey;
+  mint: PublicKey;
+  data: Data;
+  primarySaleHappened: boolean;
+  isMutable: boolean;
+  editionNonce: number | null;
+  imageUrl: string | null;
+
+  // set lazy
+  masterEdition?: PublicKey;
+  edition?: PublicKey;
+
+  constructor(args: {
+    updateAuthority: PublicKey;
+    mint: PublicKey;
+    data: Data;
+    primarySaleHappened: boolean;
+    isMutable: boolean;
+    editionNonce: number | null;
+    imageUrl: string | null;
+  }) {
+    this.key = MetadataKey.MetadataV1;
+    this.updateAuthority = args.updateAuthority;
+    this.mint = args.mint;
+    this.data = args.data;
+    this.primarySaleHappened = args.primarySaleHappened;
+    this.isMutable = args.isMutable;
+    this.imageUrl = null;
+    this.editionNonce = args.editionNonce ?? null;
+  }
+}
+
+export const METADATA_SCHEMA = new Map<any, any>([
+  [
+    Data,
+    {
+      kind: 'struct',
+      fields: [
+        ['name', 'string'],
+        ['symbol', 'string'],
+        ['uri', 'string'],
+        ['sellerFeeBasisPoints', 'u16'],
+        ['creators', { kind: 'option', type: [Creator] }],
+      ],
+    },
+  ],
+  [
+    Creator,
+    {
+      kind: 'struct',
+      fields: [
+        ['address', 'pubkey'],
+        ['verified', 'u8'],
+        ['share', 'u8'],
+      ],
+    },
+  ],
+  [
+    Metadata,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['updateAuthority', 'pubkey'],
+        ['mint', 'pubkey'],
+        ['data', Data],
+        ['primarySaleHappened', 'u8'], // bool
+        ['isMutable', 'u8'], // bool
+        ['editionNonce', { kind: 'option', type: 'u8' }],
+      ],
+    },
+  ],
+]);
+
+extendBorsh();
+
+// eslint-disable-next-line no-control-regex
+const METADATA_REPLACE = new RegExp('\u0000', 'g');
+
+export const decodeMetadata = (buffer: Buffer): Metadata => {
+  const metadata = deserializeUnchecked(
+    METADATA_SCHEMA,
+    Metadata,
+    buffer,
+  ) as Metadata;
+  metadata.data.name = metadata.data.name.replace(METADATA_REPLACE, '');
+  metadata.data.uri = metadata.data.uri.replace(METADATA_REPLACE, '');
+  metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, '');
+  return metadata;
+};
 
 export const getTokenEntanglement = async (
   mintA: anchor.web3.PublicKey,
@@ -97,6 +229,7 @@ export async function loadTokenEntanglementProgram(
     TOKEN_ENTANGLEMENT_PROGRAM_ID,
     provider,
   );
+  //@ts-ignore
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
@@ -299,6 +432,12 @@ export const createEntanglement = async (
   return createResult;
 };
 
+export function chunks(array, size) {
+  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
+    (_, index) => array.slice(index * size, (index + 1) * size),
+  );
+}
+
 export const swapEntanglement = async (
   anchorWallet: anchor.Wallet,
   connection: Connection,
@@ -325,17 +464,17 @@ export const swapEntanglement = async (
   const aAta = (await getAtaForMint(mintAKey, anchorWallet.publicKey))[0];
   const bAta = (await getAtaForMint(mintBKey, anchorWallet.publicKey))[0];
   const currABal = await getTokenAmount(anchorProgram, aAta, mintAKey);
-  const token = currABal == 1 ? aAta : bAta,
-    replacementToken = currABal == 1 ? bAta : aAta;
-  const tokenMint = currABal == 1 ? mintAKey : mintBKey,
-    replacementTokenMint = currABal == 1 ? mintBKey : mintAKey;
+  const token = currABal === 1 ? aAta : bAta,
+    replacementToken = currABal === 1 ? bAta : aAta;
+  const tokenMint = currABal === 1 ? mintAKey : mintBKey,
+    replacementTokenMint = currABal === 1 ? mintBKey : mintAKey;
   const result = await getTokenEntanglementEscrows(mintAKey, mintBKey);
 
   const tokenAEscrow = result[0];
   const tokenBEscrow = result[2];
   const transferAuthority = Keypair.generate();
   const paymentTransferAuthority = Keypair.generate();
-  const tokenMetadata = await getMetadata(tokenMint);
+  const replacementTokenMetadata = await getMetadata(replacementTokenMint);
   const signers = [transferAuthority];
 
   //@ts-ignore
@@ -345,13 +484,13 @@ export const swapEntanglement = async (
   const paymentAccount = isNative
     ? anchorWallet.publicKey
     : //@ts-ignore
-    (await getAtaForMint(epObj.treasuryMint, anchorWallet.publicKey))[0];
+      (await getAtaForMint(epObj.treasuryMint, anchorWallet.publicKey))[0];
 
   if (!isNative) signers.push(paymentTransferAuthority);
   const remainingAccounts = [];
 
   const metadataObj = await anchorProgram.provider.connection.getAccountInfo(
-    tokenMetadata,
+    replacementTokenMetadata,
   );
   const metadataDecoded: Metadata = decodeMetadata(
     //@ts-ignore
@@ -394,7 +533,7 @@ export const swapEntanglement = async (
       transferAuthority: transferAuthority.publicKey,
       paymentTransferAuthority: paymentTransferAuthority.publicKey,
       token,
-      tokenMetadata,
+      replacementTokenMetadata,
       replacementToken,
       replacementTokenMint,
       tokenAEscrow,
@@ -425,16 +564,16 @@ export const swapEntanglement = async (
     ),
     ...(!isNative
       ? [
-        Token.createApproveInstruction(
-          TOKEN_PROGRAM_ID,
-          paymentAccount,
-          paymentTransferAuthority.publicKey,
-          anchorWallet.publicKey,
-          [],
-          //@ts-ignore
-          epObj.price.toNumber(),
-        ),
-      ]
+          Token.createApproveInstruction(
+            TOKEN_PROGRAM_ID,
+            paymentAccount,
+            paymentTransferAuthority.publicKey,
+            anchorWallet.publicKey,
+            [],
+            //@ts-ignore
+            epObj.price.toNumber(),
+          ),
+        ]
       : []),
     instruction,
     Token.createRevokeInstruction(
@@ -445,13 +584,13 @@ export const swapEntanglement = async (
     ),
     ...(!isNative
       ? [
-        Token.createRevokeInstruction(
-          TOKEN_PROGRAM_ID,
-          paymentAccount,
-          anchorWallet.publicKey,
-          [],
-        ),
-      ]
+          Token.createRevokeInstruction(
+            TOKEN_PROGRAM_ID,
+            paymentAccount,
+            anchorWallet.publicKey,
+            [],
+          ),
+        ]
       : []),
   ];
   const txnResult = await ContextConnection.sendTransactionWithRetry(
@@ -487,7 +626,6 @@ export const searchEntanglements = async (
   const searchMint = new PublicKey(mint);
   const searchAuthority = new PublicKey(authority);
 
-
   const searchMintAAccounts =
     await anchorProgram.provider.connection.getProgramAccounts(
       TOKEN_ENTANGLEMENT_PROGRAM_ID,
@@ -505,7 +643,7 @@ export const searchEntanglements = async (
               offset: 8 + 160,
               bytes: searchAuthority.toString(),
             },
-          }
+          },
         ],
       },
     );
@@ -526,7 +664,7 @@ export const searchEntanglements = async (
               offset: 8 + 160,
               bytes: searchAuthority.toString(),
             },
-          }
+          },
         ],
       },
     );
@@ -535,13 +673,140 @@ export const searchEntanglements = async (
     ...searchMintAAccounts,
     ...searchMintBAccounts,
   ];
-  const entanglements = entanglementsAccounts.map(
-    account =>
-      anchorProgram.account.entangledPair
-        .fetch(account.pubkey)
+
+  let entanglements: any[] = [];
+  await Promise.all(
+    chunks(Array.from(Array(entanglementsAccounts.length).keys()), 100).map(
+      async allIndexesInSlice => {
+        const entanglementData = await getMultipleAccounts(
+          anchorProgram.provider.connection,
+          allIndexesInSlice.map(e =>
+            entanglementsAccounts[e].pubkey.toBase58(),
+          ),
+          'single',
+        );
+        const decodedEntanglementData = entanglementData.array.map(a =>
+          anchorProgram.account.entangledPair.coder.accounts.decode(
+            'EntangledPair',
+            a.data,
+          ),
+        );
+        entanglements = entanglements.concat(decodedEntanglementData);
+      },
+    ),
   );
+  const reducedEntanglements = entanglements.filter(
+    en =>
+      //@ts-ignore
+      mints.includes(en.mintA.toBase58()) &&
+      //@ts-ignore
+      mints.includes(en.mintB.toBase58()),
+  );
+
+  let metadata: Metadata[] = [];
+  await Promise.all(
+    chunks(Array.from(Array(reducedEntanglements.length).keys()), 100).map(
+      async allIndexesInSlice => {
+        const metadataAKey: PublicKey[] = [];
+        const metadataBKey: PublicKey[] = [];
+        for (let i = 0; i < allIndexesInSlice.length; i++) {
+          metadataAKey.push(
+            await getMetadata(reducedEntanglements[allIndexesInSlice[i]].mintA),
+          );
+          metadataBKey.push(
+            await getMetadata(reducedEntanglements[allIndexesInSlice[i]].mintB),
+          );
+        }
+        const metadatasA = await getMultipleAccounts(
+          anchorProgram.provider.connection,
+          metadataAKey.map(a => a.toBase58()),
+          'single',
+        );
+        const metadatasB = await getMultipleAccounts(
+          anchorProgram.provider.connection,
+          metadataBKey.map(a => a.toBase58()),
+          'single',
+        );
+        const decodedMetadata = [
+          ...metadatasA.array.map(a => decodeMetadata(a.data)),
+          ...metadatasB.array.map(a => decodeMetadata(a.data)),
+        ];
+        await Promise.all(
+          chunks(Array.from(Array(decodedMetadata.length).keys()), 10).map(
+            async allIndexesInSlice => {
+              for (let j = 0; j < allIndexesInSlice.length; j++) {
+                const json = await fetch(
+                  decodedMetadata[allIndexesInSlice[j]].data.uri,
+                );
+                const decoded = JSON.parse(await json.text());
+                decodedMetadata[allIndexesInSlice[j]].imageUrl = decoded.image;
+              }
+            },
+          ),
+        );
+        metadata = metadata.concat(decodedMetadata);
+      },
+    ),
+  );
+
   // console.log('Found', mint, entanglements.length, 'entanglements');
-  return Promise.all(entanglements);
+  return { entanglements: reducedEntanglements, metadata };
+};
+
+export const getMultipleAccounts = async (
+  connection: any,
+  keys: string[],
+  commitment: string,
+) => {
+  const result = await Promise.all(
+    chunks(keys, 99).map(chunk =>
+      getMultipleAccountsCore(connection, chunk, commitment),
+    ),
+  );
+
+  const array = result
+    .map(
+      a =>
+        //@ts-ignore
+        a.array.map(acc => {
+          if (!acc) {
+            return undefined;
+          }
+
+          const { data, ...rest } = acc;
+          const obj = {
+            ...rest,
+            data: Buffer.from(data[0], 'base64'),
+          } as AccountInfo<Buffer>;
+          return obj;
+        }) as AccountInfo<Buffer>[],
+    )
+    //@ts-ignore
+    .flat();
+  return { keys, array };
+};
+
+const getMultipleAccountsCore = async (
+  connection: any,
+  keys: string[],
+  commitment: string,
+) => {
+  const args = connection._buildArgs([keys], commitment, 'base64');
+
+  const unsafeRes = await connection._rpcRequest('getMultipleAccounts', args);
+  if (unsafeRes.error) {
+    throw new Error(
+      'failed to get info about account ' + unsafeRes.error.message,
+    );
+  }
+
+  if (unsafeRes.result.value) {
+    const array = unsafeRes.result.value as AccountInfo<string[]>[];
+    return { keys, array };
+  }
+
+  // TODO: fix
+  throw new Error();
 };
 
 export const getOwnedNFTMints = async (
@@ -558,7 +823,15 @@ export const getOwnedNFTMints = async (
       anchorWallet.publicKey,
       { programId: TOKEN_PROGRAM_ID },
     );
-  const NFTMints = TokenAccounts.value.map(val => val.account.data.parsed).filter(val => val.info.tokenAmount.amount != 0 && val.info.tokenAmount.decimals === 0);
+  const NFTMints = TokenAccounts.value
+    .map(val => val.account.data.parsed)
+    .filter(
+      val =>
+        val.info.tokenAmount.amount !== 0 &&
+        val.info.tokenAmount.decimals === 0 &&
+        //@ts-ignore
+        mints.includes(val.info.mint),
+    );
 
   return NFTMints;
 };
