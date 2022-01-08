@@ -62,7 +62,7 @@ export const MintButton = ({
       ) : isMinting ? (
         <CircularProgress />
       ) : (
-        'MINT'
+        candyMachine?.state.isPresale ? 'PRESALE MINT' : 'MINT'
       )}
     </CTAButton>
   );
