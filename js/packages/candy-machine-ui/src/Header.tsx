@@ -1,3 +1,5 @@
+import * as anchor from '@project-serum/anchor';
+
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { MintCountdown } from './MintCountdown';
@@ -43,12 +45,17 @@ export const Header = ({ candyMachine }: HeaderProps) => {
           </Grid>
         )}
         <MintCountdown
-          date={toDate(candyMachine?.state.goLiveDate)}
+          date={toDate(candyMachine?.state.goLiveDate
+            ? candyMachine?.state.goLiveDate
+            : candyMachine?.state.isPresale
+              ? new anchor.BN(new Date().getTime() / 1000)
+              : undefined
+        )}
           style={{ justifyContent: 'flex-end' }}
           status={
             !candyMachine?.state?.isActive || candyMachine?.state?.isSoldOut
               ? 'COMPLETED'
-              : 'LIVE'
+              : candyMachine?.state.isPresale ?  'PRESALE' : 'LIVE'
           }
         />
       </Grid>
