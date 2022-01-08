@@ -28,6 +28,7 @@ interface CandyMachineState {
   tokenMint: anchor.web3.PublicKey;
   isSoldOut: boolean;
   isActive: boolean;
+  isPresale: boolean;
   goLiveDate: anchor.BN;
   price: anchor.BN;
   gatekeeper: null | {
@@ -166,6 +167,8 @@ export const getCandyMachineState = async (
   const itemsAvailable = state.data.itemsAvailable.toNumber();
   const itemsRedeemed = state.itemsRedeemed.toNumber();
   const itemsRemaining = itemsAvailable - itemsRedeemed;
+  const presale = state.data.whitelistMintSettings.presale &&
+    (!state.data.goLiveDate || state.data.goLiveDate.toNumber() > new Date().getTime() / 1000);
 
   return {
     id: candyMachineId,
@@ -176,12 +179,14 @@ export const getCandyMachineState = async (
       itemsRemaining,
       isSoldOut: itemsRemaining === 0,
       isActive:
-        state.data.goLiveDate.toNumber() < new Date().getTime() / 1000 &&
+        (presale ||
+          state.data.goLiveDate.toNumber() < new Date().getTime() / 1000) &&
         (state.endSettings
           ? state.endSettings.endSettingType.date
             ? state.endSettings.number.toNumber() > new Date().getTime() / 1000
             : itemsRedeemed < state.endSettings.number.toNumber()
           : true),
+      isPresale: presale,
       goLiveDate: state.data.goLiveDate,
       treasury: state.wallet,
       tokenMint: state.tokenMint,
