@@ -8,7 +8,6 @@ import {
   cache,
   ensureWrappedAccount,
   updatePrimarySaleHappenedViaToken,
-  createUpdatePrimarySaleHappenedViaTokenInstructions,
   getMetadata,
   deprecatedGetReservationList,
   AuctionState,
@@ -54,7 +53,6 @@ import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
-import { createEmptyPaymentAccountForAllTokensIX } from './settle';
 
 export function eligibleForParticipationPrizeGivenWinningIndex(
   winnerIndex: number | null,
@@ -126,8 +124,6 @@ export async function sendRedeemBid(
       auctionView.myBidderPot?.info.bidderAct,
     );
 
-  let multipleFlipPrimarySaleHappenedFlagIXs: CreatedInstruction[] = [];
-
   if (winnerIndex !== null) {
     // items is a prebuilt array of arrays where each entry represents one
     // winning spot, and each entry in it represents one type of item that can
@@ -154,59 +150,47 @@ export async function sendRedeemBid(
           );
           break;
         case WinningConfigType.PrintingV2:
-          {
-            console.log('Redeeming printing v2');
-            const results = await setupRedeemPrintingV2Instructions(
-              connection,
-              auctionView,
-              mintRentExempt,
-              wallet,
-              wallet.publicKey.toBase58(),
-              safetyDeposit,
-              item,
-              signers,
-              instructions,
-              winnerIndex,
-              prizeTrackingTickets,
-            );
-            multipleFlipPrimarySaleHappenedFlagIXs = [
-              ...multipleFlipPrimarySaleHappenedFlagIXs,
-              ...results,
-            ];
-          }
+          console.log('Redeeming printing v2');
+          await setupRedeemPrintingV2Instructions(
+            connection,
+            auctionView,
+            mintRentExempt,
+            wallet,
+            wallet.publicKey.toBase58(),
+            safetyDeposit,
+            item,
+            signers,
+            instructions,
+            winnerIndex,
+            prizeTrackingTickets,
+          );
           break;
         case WinningConfigType.FullRightsTransfer:
-          {
-            console.log('Redeeming Full Rights');
-            const result = await setupRedeemFullRightsTransferInstructions(
-              auctionView,
-              accountsByMint,
-              accountRentExempt,
-              wallet,
-              safetyDeposit,
-              item,
-              winnerIndex,
-              signers,
-              instructions,
-            );
-            multipleFlipPrimarySaleHappenedFlagIXs.push(result);
-          }
+          console.log('Redeeming Full Rights');
+          await setupRedeemFullRightsTransferInstructions(
+            auctionView,
+            accountsByMint,
+            accountRentExempt,
+            wallet,
+            safetyDeposit,
+            item,
+            winnerIndex,
+            signers,
+            instructions,
+          );
           break;
         case WinningConfigType.TokenOnlyTransfer:
-          {
-            console.log('Redeeming Token only');
-            const result = await setupRedeemInstructions(
-              auctionView,
-              accountsByMint,
-              accountRentExempt,
-              wallet,
-              safetyDeposit,
-              winnerIndex,
-              signers,
-              instructions,
-            );
-            multipleFlipPrimarySaleHappenedFlagIXs.push(result);
-          }
+          console.log('Redeeming Token only');
+          await setupRedeemInstructions(
+            auctionView,
+            accountsByMint,
+            accountRentExempt,
+            wallet,
+            safetyDeposit,
+            winnerIndex,
+            signers,
+            instructions,
+          );
           break;
       }
     }
@@ -264,7 +248,7 @@ export async function sendRedeemBid(
         instructions,
       );
     } else {
-      const result = await setupRedeemParticipationInstructions(
+      await setupRedeemParticipationInstructions(
         connection,
         auctionView,
         accountsByMint,
@@ -279,7 +263,6 @@ export async function sendRedeemBid(
         signers,
         instructions,
       );
-      multipleFlipPrimarySaleHappenedFlagIXs.push(result);
     }
   }
 
@@ -295,34 +278,6 @@ export async function sendRedeemBid(
       signers,
       instructions,
     );
-  }
-
-  if (multipleFlipPrimarySaleHappenedFlagIXs.length) {
-    // Intercept, add empty payment before flip primary sale happened.
-    const result = await createEmptyPaymentAccountForAllTokensIX(
-      connection,
-      wallet,
-      auctionView,
-    );
-    // Adapt output.
-    const emptyPaymentIXs = result.instructions.flatMap(i => i);
-    const emptyPaymentSigners = result.signers.flatMap(i => i);
-    emptyPaymentIXs.forEach(batch => {
-      instructions.push(batch);
-    });
-    emptyPaymentSigners.forEach(batch => {
-      signers.push(batch);
-    });
-    if (multipleFlipPrimarySaleHappenedFlagIXs.length) {
-      multipleFlipPrimarySaleHappenedFlagIXs.forEach(({ ix, signer }) => {
-        if (ix) {
-          instructions.push([ix]);
-          if (signer) {
-            signers.push(signer);
-          }
-        }
-      });
-    }
   }
 
   await sendTransactionsWithManualRetry(
@@ -342,7 +297,7 @@ async function setupRedeemInstructions(
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-): Promise<CreatedInstruction> {
+) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const winningPrizeSigner: Keypair[] = [];
@@ -383,26 +338,14 @@ async function setupRedeemInstructions(
     );
 
     const metadata = await getMetadata(safetyDeposit.info.tokenMint);
-    const ix = createUpdatePrimarySaleHappenedViaTokenInstructions(
+    await updatePrimarySaleHappenedViaToken(
       metadata,
       wallet.publicKey.toBase58(),
       newTokenAccount,
+      winningPrizeInstructions,
     );
-    return {
-      ix,
-      signer: winningPrizeSigner,
-    };
   }
-  return {
-    ix: null,
-    signer: winningPrizeSigner,
-  };
 }
-
-export type CreatedInstruction = {
-  ix: TransactionInstruction | null;
-  signer: Keypair[];
-};
 
 async function setupRedeemFullRightsTransferInstructions(
   auctionView: AuctionView,
@@ -414,7 +357,7 @@ async function setupRedeemFullRightsTransferInstructions(
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-): Promise<CreatedInstruction> {
+) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const winningPrizeSigner: Keypair[] = [];
@@ -455,19 +398,13 @@ async function setupRedeemFullRightsTransferInstructions(
     );
 
     const metadata = await getMetadata(safetyDeposit.info.tokenMint);
-    return {
-      ix: createUpdatePrimarySaleHappenedViaTokenInstructions(
-        metadata,
-        wallet.publicKey.toBase58(),
-        newTokenAccount,
-      ),
-      signer: winningPrizeSigner,
-    };
+    await updatePrimarySaleHappenedViaToken(
+      metadata,
+      wallet.publicKey.toBase58(),
+      newTokenAccount,
+      winningPrizeInstructions,
+    );
   }
-  return {
-    ix: null,
-    signer: winningPrizeSigner,
-  };
 }
 
 export async function setupRedeemPrintingV2Instructions(
@@ -482,11 +419,11 @@ export async function setupRedeemPrintingV2Instructions(
   instructions: Array<TransactionInstruction[]>,
   winningIndex: number,
   prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
-): Promise<CreatedInstruction[]> {
+) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   if (!item.masterEdition || !item.metadata) {
-    return [];
+    return;
   }
 
   const me = item.masterEdition as ParsedAccount<MasterEditionV2>;
@@ -517,7 +454,6 @@ export async function setupRedeemPrintingV2Instructions(
       }),
   );
 
-  const results: CreatedInstruction[] = [];
   for (let i = 0; i < item.amount.toNumber(); i++) {
     const myInstructions: TransactionInstruction[] = [];
     const mySigners: Keypair[] = [];
@@ -575,22 +511,17 @@ export async function setupRedeemPrintingV2Instructions(
 
     const metadata = await getMetadata(mint);
 
-    let ix = null;
     if (wallet.publicKey.toBase58() === receiverWallet) {
-      ix = createUpdatePrimarySaleHappenedViaTokenInstructions(
+      await updatePrimarySaleHappenedViaToken(
         metadata,
         wallet.publicKey.toBase58(),
         account,
+        myInstructions,
       );
     }
-    results.push({
-      ix,
-      signer: mySigners,
-    });
     instructions.push(myInstructions);
     signers.push(mySigners);
   }
-  return results;
 }
 
 async function deprecatedSetupRedeemPrintingV1Instructions(
@@ -783,14 +714,11 @@ export async function setupRedeemParticipationInstructions(
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-): Promise<CreatedInstruction> {
+) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   if (!item.masterEdition || !item.metadata) {
-    return {
-      ix: null,
-      signer: [],
-    };
+    return;
   }
 
   // Forgive me, for i have sinned. I had to split up the commands
@@ -894,28 +822,18 @@ export async function setupRedeemParticipationInstructions(
       const updatePrimarySaleHappenedInstructions: TransactionInstruction[] =
         [];
       const updatePrimarySaleHappenedSigners: Keypair[] = [];
-      const ix = createUpdatePrimarySaleHappenedViaTokenInstructions(
+
+      await updatePrimarySaleHappenedViaToken(
         metadata,
         wallet.publicKey.toBase58(),
         account,
+        updatePrimarySaleHappenedInstructions,
       );
       instructions.push(updatePrimarySaleHappenedInstructions);
       signers.push(updatePrimarySaleHappenedSigners);
-      return {
-        ix,
-        signer: updatePrimarySaleHappenedSigners,
-      };
     }
-    return {
-      ix: null,
-      signer: [],
-    };
   } else {
     console.log('Item is already claimed!', item.metadata.info.mint);
-    return {
-      ix: null,
-      signer: [],
-    };
   }
 }
 
