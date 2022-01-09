@@ -343,7 +343,6 @@ export function MetaProvider({ children = null as any }) {
     storeAddress,
     isReady,
     page,
-    isLoading,
   ]);
 
   // Fetch metadata on userAccounts change
