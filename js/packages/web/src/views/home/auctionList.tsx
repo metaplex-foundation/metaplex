@@ -45,7 +45,7 @@ export const AuctionListView = () => {
         useBannerBg
       />
       <Layout>
-        <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Content className="ant-layout-inner-content" style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 32 }}>
             <Row>
               <Tabs
