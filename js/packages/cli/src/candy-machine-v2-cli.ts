@@ -391,8 +391,9 @@ programCommand('verify_upload')
               );*/
               cacheItem.onChain = false;
               allGood = false;
+            } else {
+              cacheItem.verifyRun = true;
             }
-            cacheItem.verifyRun = true;
           }
         },
       ),

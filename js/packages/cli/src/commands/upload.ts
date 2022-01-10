@@ -93,84 +93,90 @@ export async function uploadV2({
 
   const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
   const SIZE = dedupedAssetKeys.length;
-  console.log('Size', SIZE, dedupedAssetKeys[0]);
+
+  const dirname = path.dirname(files[0]);
   let candyMachine = cacheContent.program.candyMachine
     ? new PublicKey(cacheContent.program.candyMachine)
     : undefined;
-  const dirname = path.dirname(files[0]);
 
-  const tick = SIZE / 100; //print every one percent
-  let lastPrinted = 0;
+  if (!cacheContent.program.uuid) {
+    const firstAssetKey = dedupedAssetKeys[0];
+    const firstAssetManifest = getAssetManifest(
+      dirname,
+      firstAssetKey.index.includes('json')
+        ? firstAssetKey.index
+        : `${firstAssetKey.index}.json`,
+    );
+
+    try {
+      const remainingAccounts = [];
+
+      if (splToken) {
+        const splTokenKey = new PublicKey(splToken);
+
+        remainingAccounts.push({
+          pubkey: splTokenKey,
+          isWritable: false,
+          isSigner: false,
+        });
+      }
+
+      // initialize candy
+      log.info(`initializing candy machine`);
+      const res = await createCandyMachineV2(
+        anchorProgram,
+        walletKeyPair,
+        treasuryWallet,
+        splToken,
+        {
+          itemsAvailable: new BN(totalNFTs),
+          uuid,
+          symbol: firstAssetManifest.symbol,
+          sellerFeeBasisPoints: firstAssetManifest.seller_fee_basis_points,
+          isMutable: mutable,
+          maxSupply: new BN(0),
+          retainAuthority: retainAuthority,
+          gatekeeper,
+          goLiveDate,
+          price,
+          endSettings,
+          whitelistMintSettings,
+          hiddenSettings,
+          creators: firstAssetManifest.properties.creators.map(creator => {
+            return {
+              address: new PublicKey(creator.address),
+              verified: true,
+              share: creator.share,
+            };
+          }),
+        },
+      );
+      cacheContent.program.uuid = res.uuid;
+      cacheContent.program.candyMachine = res.candyMachine.toBase58();
+      candyMachine = res.candyMachine;
+
+      log.info(
+        `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+      );
+
+      saveCache(cacheName, env, cacheContent);
+    } catch (exx) {
+      log.error('Error deploying config to Solana network.', exx);
+      throw exx;
+    }
+  } else {
+    log.info(
+      `config for a candy machine with publickey: ${cacheContent.program.candyMachine} has been already initialized`,
+    );
+  }
+
+  console.log('Uploading Size', SIZE, dedupedAssetKeys[0]);
 
   if (dedupedAssetKeys.length) {
     if (
       storage === StorageType.ArweaveBundle ||
       storage === StorageType.ArweaveSol
     ) {
-      const assetKey = dedupedAssetKeys[0];
-      const manifest = getAssetManifest(
-        dirname,
-        assetKey.index.includes('json')
-          ? assetKey.index
-          : `${assetKey.index}.json`,
-      );
-      if (!cacheContent.program.uuid) {
-        try {
-          const remainingAccounts = [];
-
-          if (splToken) {
-            const splTokenKey = new PublicKey(splToken);
-
-            remainingAccounts.push({
-              pubkey: splTokenKey,
-              isWritable: false,
-              isSigner: false,
-            });
-          }
-
-          // initialize candy
-          log.info(`initializing candy machine`);
-          const res = await createCandyMachineV2(
-            anchorProgram,
-            walletKeyPair,
-            treasuryWallet,
-            splToken,
-            {
-              itemsAvailable: new BN(totalNFTs),
-              uuid,
-              symbol: manifest.symbol,
-              sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-              isMutable: mutable,
-              maxSupply: new BN(0),
-              retainAuthority: retainAuthority,
-              gatekeeper,
-              goLiveDate,
-              price,
-              endSettings,
-              whitelistMintSettings,
-              hiddenSettings,
-              creators: manifest.properties.creators.map(creator => {
-                return {
-                  address: new PublicKey(creator.address),
-                  verified: true,
-                  share: creator.share,
-                };
-              }),
-            },
-          );
-          cacheContent.program.uuid = res.uuid;
-          cacheContent.program.candyMachine = res.candyMachine.toBase58();
-          candyMachine = res.candyMachine;
-          log.info(
-            `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
-          );
-
-          saveCache(cacheName, env, cacheContent);
-        } catch (exx) {
-          log.error('Error deploying config to Solana network.', exx);
-          throw exx;
-        }
-      }
       // Initialize the Arweave Bundle Upload Generator.
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
       const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(
@@ -201,6 +207,9 @@ export async function uploadV2({
       }
       log.info('Upload done.');
     } else {
+      let lastPrinted = 0;
+      const tick = SIZE / 100; //print every one percent
+
       await Promise.all(
         chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
           async allIndexesInSlice => {
@@ -217,71 +226,13 @@ export async function uploadV2({
                   : `${assetKey.index}.json`,
               );
               const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+
               if (
                 allIndexesInSlice[i] >= lastPrinted + tick ||
                 allIndexesInSlice[i] === 0
               ) {
                 lastPrinted = i;
                 log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-              }
-
-              if (allIndexesInSlice[i] === 0 && !cacheContent.program.uuid) {
-                try {
-                  const remainingAccounts = [];
-
-                  if (splToken) {
-                    const splTokenKey = new PublicKey(splToken);
-
-                    remainingAccounts.push({
-                      pubkey: splTokenKey,
-                      isWritable: false,
-                      isSigner: false,
-                    });
-                  }
-
-                  // initialize candy
-                  log.info(`initializing candy machine`);
-                  const res = await createCandyMachineV2(
-                    anchorProgram,
-                    walletKeyPair,
-                    treasuryWallet,
-                    splToken,
-                    {
-                      itemsAvailable: new BN(totalNFTs),
-                      uuid,
-                      symbol: manifest.symbol,
-                      sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-                      isMutable: mutable,
-                      maxSupply: new BN(0),
-                      retainAuthority: retainAuthority,
-                      gatekeeper,
-                      goLiveDate,
-                      price,
-                      endSettings,
-                      whitelistMintSettings,
-                      hiddenSettings,
-                      creators: manifest.properties.creators.map(creator => {
-                        return {
-                          address: new PublicKey(creator.address),
-                          verified: true,
-                          share: creator.share,
-                        };
-                      }),
-                    },
-                  );
-                  cacheContent.program.uuid = res.uuid;
-                  cacheContent.program.candyMachine =
-                    res.candyMachine.toBase58();
-                  candyMachine = res.candyMachine;
-                  log.info(
-                    `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
-                  );
-
-                  saveCache(cacheName, env, cacheContent);
-                } catch (exx) {
-                  log.error('Error deploying config to Solana network.', exx);
-                  throw exx;
-                }
               }
 
               if (
@@ -325,7 +276,6 @@ export async function uploadV2({
                   log.debug('Updating cache for ', allIndexesInSlice[i]);
                   cacheContent.items[assetKey.index] = {
                     link,
-                    imageLink,
                     name: manifest.name,
                     onChain: false,
                   };
@@ -345,9 +295,7 @@ export async function uploadV2({
   }
 
   const keys = Object.keys(cacheContent.items);
-  if (hiddenSettings) {
-    log.info('Skipping upload to chain as this is a hidden Candy Machine');
-  } else {
+  if (!hiddenSettings) {
     try {
       await Promise.all(
         chunks(Array.from(Array(keys.length).keys()), 1000).map(
@@ -408,7 +356,10 @@ export async function uploadV2({
     } finally {
       saveCache(cacheName, env, cacheContent);
     }
+  } else {
+    log.info('Skipping upload to chain as this is a hidden Candy Machine');
   }
+
   console.log(`Done. Successful = ${uploadSuccessful}.`);
   return uploadSuccessful;
 }
