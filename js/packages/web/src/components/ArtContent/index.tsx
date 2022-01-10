@@ -227,6 +227,14 @@ const HTMLContent = ({
   );
 };
 
+
+const ArtContentWrapper = styled.div`
+  display: flex;
+  alignItems: center;
+  justifyContent: center;
+  height: 100%;
+`;
+
 export const ArtContent = ({
   category,
   className,
@@ -347,15 +355,10 @@ export const ArtContent = ({
     );
 
   return (
-    <div
+    <ArtContentWrapper
       ref={ref as any}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
     >
       {content}
-    </div>
+    </ArtContentWrapper>
   );
 };
