@@ -29,7 +29,6 @@ use {
 };
 anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
-const EXPIRE_OFFSET: i64 = 10 * 60;
 const PREFIX: &str = "candy_machine";
 #[program]
 pub mod nft_candy_machine_v2 {
@@ -110,8 +109,17 @@ pub mod nft_candy_machine_v2 {
                 Some(val) => {
                     // Civic f-ed up - expire time is actually the time it was made...
                     if expire_time < val {
-                        msg!("Invalid gateway token expire time: {} compared with go live of {}", expire_time, val);
-                        return Err(ErrorCode::GatewayTokenExpireTimeInvalid.into());
+                        if let Some(ws) = &candy_machine.data.whitelist_mint_settings {
+                            // when dealing with whitelist, the expire_time can be
+                            // before the go_live_date only if presale enabled
+                            if !ws.presale {
+                                msg!("Invalid gateway token expire time: {} compared with go live of {}", expire_time, val);
+                                return Err(ErrorCode::GatewayTokenExpireTimeInvalid.into());
+                            }
+                        } else {
+                            msg!("Invalid gateway token expire time: {} compared with go live of {}", expire_time, val);
+                            return Err(ErrorCode::GatewayTokenExpireTimeInvalid.into());
+                        }
                     }
                 }
                 None => {}
