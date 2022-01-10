@@ -1,8 +1,13 @@
 {
-  "name": "",
-  "symbol": "",
-  "description": "",
-  "creators": [],
+  "name": "sfe",
+  "symbol": "sef",
+  "description": "sefefqaefqaef",
+  "creators": [
+    {
+      "address": "FsSThjUxqSo6zoLa5gWHUHy2riq3vvxAVtpPF4w7mZjr",
+      "share": 100
+    }
+  ],
   "collection": {},
   "premadeCustoms": [
     {
