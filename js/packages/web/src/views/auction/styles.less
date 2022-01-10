@@ -1,12 +1,119 @@
+.item-page-wrapper {
+  display: flex;
+  gap: 5rem;
+  max-width: 1400px;
+  margin: 2rem auto;
+
+  @media screen and (max-width: 1400px) {
+    gap: 4rem;
+  }
+
+  @media screen and (max-width: 1200px) {
+    gap: 3rem;
+  }
+
+  @media screen and (max-width: 1000px) {
+    gap: 2rem;
+  }
+
+  @media screen and (max-width: 760px) {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.item-page-left {
+  width: 30rem;
+  max-width: 40vw;
+
+  @media screen and (max-width: 760px) {
+    width: auto;
+  }
+}
+
+.item-page-right {
+  flex-grow: 1;
+}
+
+.art-mobile {
+  display: none;
+  margin-bottom: 2rem;
+
+  @media screen and (max-width: 760px) {
+    display: block;
+  }
+}
+
+.art-desktop {
+  @media screen and (max-width: 760px) {
+    display: none;
+  }
+}
+
 .auction-bid {
-    &-line-item {
-        &-is-canceled {
-            .ant-statistic-content-value {
-                text-decoration: line-through;
-            }
-        }
+  &-line-item {
+    &-is-canceled {
+      .ant-statistic-content-value {
+        text-decoration: line-through;
+      }
     }
-    &-last-winner {
-        border-bottom: 1px solid @theme-color-base-bold;
-    }
+  }
+  &-last-winner {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid @theme-color-base-bold;
+  }
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 2rem;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.info-outer-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.info-items-wrapper {
+  flex-grow: 1;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.info-item-wrapper {
+  display: flex;
+  flex-direction: column;
+  background-color: @theme-neutral-gray-very-transparent;
+  padding: 0.75rem 1rem 1rem;
+  border-radius: @border-radius;
+  text-align: center;
+
+  *:not(.item-title) {
+    opacity: 0.77;
+    font-size: 0.9rem;
+  }
+}
+
+.item-title {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.bid-line-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-header {
+  margin: 0.75rem 0;
 }

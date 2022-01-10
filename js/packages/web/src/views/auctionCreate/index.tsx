@@ -17,6 +17,7 @@ import {
   processAuctions,
   VAULT_ID,
   processVaultData,
+  SendAndConfirmError,
 } from '@oyster/common';
 import Bugsnag from '@bugsnag/browser';
 import {
@@ -136,7 +137,7 @@ export const AuctionCreateView = () => {
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
   const [percentComplete, setPercentComplete] = useState(0);
-  const [rejection, setRejection] = useState<string>();
+  const [rejection, setRejection] = useState<SendAndConfirmError | undefined>();
   const [step, setStep] = useState<number>(1);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [auctionObj, setAuctionObj] = useState<
@@ -507,12 +508,19 @@ export const AuctionCreateView = () => {
       ? attributes.items[0]
       : attributes.participationNFT;
 
+    // Track useState updates across this callback for rejection
+    let tmpRejection = undefined;
+    setRejection(undefined);
+
     try {
       auctionInfo = await createAuctionManager(
         connection,
         wallet,
         setPercentComplete,
-        setRejection,
+        rej => {
+          setRejection(r => r ?? rej);
+          tmpRejection ??= rej;
+        },
         whitelistedCreatorsByCreator,
         auctionSettings,
         safetyDepositDrafts,
@@ -521,8 +529,16 @@ export const AuctionCreateView = () => {
         storeIndexer,
       );
     } catch (e: any) {
-      setRejection(e.message);
-      Bugsnag.notify(e);
+      const rej: SendAndConfirmError = { type: 'misc-error', inner: e };
+      setRejection(r => r ?? rej);
+      tmpRejection ??= rej;
+    }
+
+    if (tmpRejection) {
+      Bugsnag.notify({
+        name: 'createAuctionManager failure',
+        message: JSON.stringify(rejection),
+      });
       return;
     }
 

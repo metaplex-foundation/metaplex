@@ -1,22 +1,24 @@
 import { useStore, View } from '@oyster/common';
 import React, { useEffect } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Alert, Button, Spin, Anchor, Menu } from 'antd';
+import { Alert, Button, Spin, Anchor } from 'antd';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAuctionManagersToCache } from '../../hooks';
-import { Banner } from './../../components/Banner';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { MetaplexMasonry } from './../../components/MetaplexMasonry';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
 import { useSearchParams } from 'react-router-dom';
 import { useInfiniteScrollAuctions } from '../../hooks';
+import { Banner } from './../../components/Banner';
+import cx from 'classnames';
 
 export const Listings = () => {
+  const { storefront } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const view = searchParams.get('view') as View;
-  const { ownerAddress, storefront } = useStore();
+  const { ownerAddress } = useStore();
   const wallet = useWallet();
   const { auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
@@ -41,19 +43,52 @@ export const Listings = () => {
   });
 
   const showCount = (view: View) =>
-    auctionsCount[view] != null ? auctionsCount[view] : <Spin size="small" indicator={<LoadingOutlined />}  />;
+    auctionsCount[view] != null ? (
+      auctionsCount[view]
+    ) : (
+      <Spin size="small" indicator={<LoadingOutlined />} />
+    );
+
+  const currentViewIsEmpty = () =>
+    views.filter(x => x.key === view)[0]?.count() === 0;
+
   useEffect(() => {
-    if (!view) {
-      setSearchParams({ view: View.live });
+    // makes sure cards load when switching back to listings from another page
+    setSearchParams({
+      view: view || View.live,
+    });
+    // auto-forwards to first listings view with matching listings
+    if (currentViewIsEmpty()) {
+      setSearchParams({
+        view: views.find(x => x.count() > 0)?.key || View.live,
+      });
     }
-  }, [view]);
+  }, [view, loading, auctionsCount]); // triggers the auto-forward in all edge cases I could find
+
+  const views = [
+    {
+      key: 'live',
+      title: 'Live',
+      count: () => showCount(View.live) || 0,
+    },
+    {
+      key: 'resale',
+      title: 'Secondary',
+      count: () => showCount(View.resale) || 0,
+    },
+    {
+      key: 'ended',
+      title: 'Ended',
+      count: () => showCount(View.ended) || 0,
+    },
+  ];
 
   return (
     <>
       {showCacheAuctionsAlert && (
         <Alert
           message="Attention Store Owner"
-          className="app-alert-banner metaplex-spacing-bottom-lg"
+          className="app-alert-banner metaplex-margin-bottom-8"
           description={
             <p>
               Make your storefront faster by enabling listing caches.{' '}
@@ -80,30 +115,29 @@ export const Listings = () => {
           }
         />
       )}
+
       <Banner
         src={storefront.theme.banner}
         headingText={storefront.meta.title}
         subHeadingText={storefront.meta.description}
+        logo={storefront?.theme?.logo || ''}
+        twitterVerification={storefront.integrations?.twitterVerification}
       />
-      <Anchor showInkInFixed={false}>
-        <Menu
-          className="metaplex-menu-pills"
-          onClick={(e: any) => {
-            setSearchParams({ view: e.key });
-          }}
-          selectedKeys={[view]}
-          mode="horizontal"
-        >
-          <Menu.Item key={View.live}>
-            Live <span className="auctions-count"> | {showCount(View.live)}</span>
-          </Menu.Item>
-          <Menu.Item key={View.resale}>
-            Secondary Listings <span className="auctions-count"> | {showCount(View.resale)}</span>
-          </Menu.Item>
-          <Menu.Item key={View.ended}>
-            Ended <span className="auctions-count"> | {showCount(View.ended)}</span>
-          </Menu.Item>
-        </Menu>
+      <Anchor showInkInFixed={false} className="metaplex-anchor">
+        <div className="listings-menu-wrapper">
+          {views.map(({ key, title, count }) => {
+            return (
+              <button
+                key={key}
+                className={cx('listings-menu-item', { active: view === key })}
+                onClick={() => setSearchParams({ view: key })}
+                disabled={count() === 0}
+              >
+                {title} <span className="auctions-count">| {count()}</span>
+              </button>
+            );
+          })}
+        </div>
       </Anchor>
       {initLoading ? (
         <div className="app-section--loading">

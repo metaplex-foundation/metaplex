@@ -1,32 +1,39 @@
-.metaplex-menu-pills {
-  padding: 12px 0;
-  &.ant-menu-horizontal:not(.ant-menu-dark) {
-    > .ant-menu-item {
-      border-radius: 8px;
-      margin: 0 12px 0 0;
-      &:last-child {
-        margin: 0;
-      }
-      &::after {
-        border-bottom: none;
-      }
-      &:hover, &.ant-menu-item-selected {
-        background-color: @theme-color-base-bold;
-        color: @theme-color-text;
-        &::after {
-          border-bottom: none;
-        }
-      }
-      &.ant-menu-item-active {
-        &::after {
-          border-bottom: none;
-        }
-      }
-    }
+.listings-menu-wrapper {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  flex-wrap: wrap;
+
+  @media screen and (max-width: 450px) {
+    gap: 0.5rem;
+    margin: 0.25rem 0 0;
+  }
+}
+
+.listings-menu-item {
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0.25rem 0.5rem 0.25rem 0.625rem;
+  border-radius: @border-radius;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &.active {
+    background-color: @theme-neutral-gray-very-transparent;
   }
 
-  .auctions-count {
-    vertical-align: top;
-    opacity: .6;
+  &:disabled {
+    opacity: 0.5;
+    pointer-events: none;
   }
+
+  @media screen and (max-width: 450px) {
+    font-size: 0.8rem;
+  }
+}
+
+.auctions-count {
+  vertical-align: top;
+  opacity: 0.6;
 }

@@ -7,6 +7,13 @@ import { maybeCDN } from '../utils/cdn';
 
 const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 
+const pubkeyDenyList = [
+  'Fy8GCo5pyaMmUS6BqydzYnHBYeQN5BnKijCV2x2pRc3n',
+  '9ztzyU9eFuce42CHD7opPxpjrsg15onjNARnmuMS2aQy',
+  '5pKYHnoCMyjVqVdZaGAs63wUSBvhEGWnz5ie2YC5MaZx',
+  'D2bj7rCLC4Dy9ZJuDNm5jFRNn5bqVTTpn16nnqDYmciv',
+];
+
 export const getStorefront = async (
   subdomain: string,
 ): Promise<Storefront | null> => {
@@ -52,6 +59,10 @@ export const getStorefront = async (
 
       return acc;
     }, {});
+
+    if (pubkeyDenyList.includes(values['solana:pubkey'])) {
+      return null;
+    }
 
     return {
       subdomain,
