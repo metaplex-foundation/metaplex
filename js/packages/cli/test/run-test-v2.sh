@@ -26,11 +26,11 @@ echo ""
 echo "Environment:"
 echo "1. devnet (default)"
 echo "2. mainnet-beta"
-echo -n "Select the environment: "
+echo -n "Select the environment (default 'devnet'): "
 read Input
 case "$Input" in
-1) ENV_URL="devnet" ;;
-2) ENV_URL="mainnet-beta" ;;
+    1) ENV_URL="devnet" ;;
+    2) ENV_URL="mainnet-beta" ;;
 esac
 
 # RPC server can be specified from the command-line with the flag "-r"
@@ -55,14 +55,14 @@ echo "2. arweave-sol (default)"
 echo "3. arweave"
 echo "4. ipfs"
 echo "5. aws"
-echo -n "Select the storage type [1-5]: "
+echo -n "Select the storage type [1-5] (default 2): "
 read Input
 case "$Input" in
-1) STORAGE="arweave-bundle" ;;
-2) STORAGE="arweave-sol" ;;
-3) STORAGE="arweave" ;;
-4) STORAGE="ipfs" ;;
-5) STORAGE="aws" ;;
+    1) STORAGE="arweave-bundle" ;;
+    2) STORAGE="arweave-sol" ;;
+    3) STORAGE="arweave" ;;
+    4) STORAGE="ipfs" ;;
+    5) STORAGE="aws" ;;
 esac
 
 ARWEAVE_JWK="null"
@@ -98,27 +98,24 @@ echo "Asset type:"
 echo "1. PNG (default)"
 echo "2. JPG"
 echo "3. GIF"
-echo -n "Select the file type [1-3]: "
+echo -n "Select the file type [1-3] (default 1): "
 read Input
 case "$Input" in
-1)
-    IMAGE=$PNG
-    EXT="png"
-    ;;
-2)
-    IMAGE=$JPG
-    EXT="jpg"
-    ;;
-3)
-    IMAGE=$GIF
-    EXT="gif"
-    ;;
+    1) IMAGE=$PNG
+       EXT="png"
+       ;;
+    2) IMAGE=$JPG
+       EXT="jpg"
+       ;;
+    3) IMAGE=$GIF
+       EXT="gif"
+       ;;
 esac
 
 # Collection size
 
 echo ""
-echo -n "Number of items [10]: "
+echo -n "Number of items (default 10): "
 read Number
 
 if [ -z "$Number" ]; then
@@ -128,27 +125,33 @@ else
     ITEMS=$(($Number + 0))
 fi
 
+# Mint multiple tokens
+
+echo ""
+echo -n "Number of multiple tokens to mint (default 0): "
+read Number
+
+if [ -z "$Number" ]; then
+    MULTIPLE=0
+else
+    # make sure we are dealing with a number
+    MULTIPLE=$(($Number + 0))
+fi
+
 # Clean up
 
 echo ""
-echo -n "Remove previous cache and assets [Y/n]: "
+echo -n "Remove previous cache and assets [Y/n] (default 'Y'): "
 read Reset
 if [ -z "$Reset" ]; then
     Reset="Y"
 fi
 
 echo ""
-echo -n "Close candy machine and withdraw funds at the end [Y/n]: "
+echo -n "Close candy machine and withdraw funds at the end [Y/n] (default 'Y'): "
 read Close
 if [ -z "$Close" ]; then
     Close="Y"
-fi
-
-echo ""
-echo -n "Skip mint_multiple_tokens [Y/n]: "
-read SkipM
-if [ -z "$SkipM" ]; then
-    SkipM="Y"
 fi
 
 if [ "${Reset}" = "Y" ]; then
@@ -240,10 +243,6 @@ CACHE_NAME="test"
 function clean_up {
     rm $CONFIG_FILE
     rm -rf $ASSETS_DIR
-}
-
-function success {
-    clean_up
     rm -rf .cache
 }
 
@@ -276,9 +275,9 @@ if [ ! $EXIT_CODE -eq 0 ]; then
 fi
 
 echo ""
-echo "3. Minting one token"
+echo "3. Minting"
 echo ""
-echo ">>>"
+echo "mint_one_token >>>"
 $CMD_CMV2 mint_one_token --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
 echo "<<<"
@@ -288,12 +287,10 @@ if [ ! $EXIT_CODE -eq 0 ]; then
     exit 1
 fi
 
-if [ ${SkipM} = "Y" ]; then
+if [ "${MULTIPLE}" -gt 0 ]; then
     echo ""
-    echo "4. Minting multiple tokens"
-    echo ""
-    echo ">>>"
-    $CMD_CMV2 mint_multiple_tokens --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -n 3
+    echo "mint_multiple_tokens >>>"
+    $CMD_CMV2 mint_multiple_tokens --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -n $MULTIPLE
     EXIT_CODE=$?
     echo "<<<"
 
@@ -301,15 +298,11 @@ if [ ${SkipM} = "Y" ]; then
         echo "[$(date "+%T")] Aborting: mint multiple tokens failed"
         exit 1
     fi
-else
-    echo ""
-    echo "4. Skipping Mint Multiple Tokens"
-    echo ""
 fi
 
 if [ ${Close} = "Y" ]; then
     echo ""
-    echo "5. Clean up: withdrawing CM funds."
+    echo "4. Clean up: withdrawing CM funds."
     echo ""
     echo ">>>"
     $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
@@ -319,8 +312,9 @@ if [ ${Close} = "Y" ]; then
         echo "[$(date "+%T")] Aborting: withdraw failed"
         exit 1
     fi
+
+    clean_up
 fi
 
-success
 echo ""
 echo "[$(date "+%T")] Test completed"
