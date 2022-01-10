@@ -56,7 +56,7 @@
     "start:prod": "next start",
     "test": "jest --passWithNoTests",
     "deploy:ar": "yarn export && arweave deploy-dir  ../../build/web --key-file ",
-    "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://atom3001.github.io/metaplex/ -t true",
+    "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/atom3001/metaplex -t true",
     "deploy": "cross-env ASSET_PREFIX=/metaplex/ yarn build && yarn deploy:gh",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
