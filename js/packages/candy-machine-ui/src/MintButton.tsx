@@ -35,6 +35,18 @@ export const MintButton = ({
     }
   }, [gatewayStatus, clicked, setClicked, onMint]);
 
+  const getMintButtonContent = () => {
+    if (candyMachine?.state.isSoldOut) {
+      return 'SOLD OUT';
+    } else if (isMinting) {
+      return <CircularProgress />;
+    } else if (candyMachine?.state.isPresale) {
+      return 'PRESALE MINT';
+    }
+
+    return 'MINT';
+  };
+
   return (
     <CTAButton
       disabled={
@@ -57,13 +69,7 @@ export const MintButton = ({
       }}
       variant="contained"
     >
-      {candyMachine?.state.isSoldOut ? (
-        'SOLD OUT'
-      ) : isMinting ? (
-        <CircularProgress />
-      ) : (
-        'MINT'
-      )}
+      {getMintButtonContent()}
     </CTAButton>
   );
 };

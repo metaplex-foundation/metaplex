@@ -1,3 +1,5 @@
+import * as anchor from '@project-serum/anchor';
+
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { MintCountdown } from './MintCountdown';
@@ -37,21 +39,38 @@ export const Header = ({ candyMachine }: HeaderProps) => {
                 color="textPrimary"
                 style={{ fontWeight: 'bold' }}
               >
-                ◎ {formatNumber.asNumber(candyMachine?.state.price!)}
+                {getMintPrice(candyMachine)}
               </Typography>
             </Grid>
           </Grid>
         )}
         <MintCountdown
-          date={toDate(candyMachine?.state.goLiveDate)}
+          date={toDate(
+            candyMachine?.state.goLiveDate
+              ? candyMachine?.state.goLiveDate
+              : candyMachine?.state.isPresale
+              ? new anchor.BN(new Date().getTime() / 1000)
+              : undefined,
+          )}
           style={{ justifyContent: 'flex-end' }}
           status={
             !candyMachine?.state?.isActive || candyMachine?.state?.isSoldOut
               ? 'COMPLETED'
+              : candyMachine?.state.isPresale
+              ? 'PRESALE'
               : 'LIVE'
           }
         />
       </Grid>
     </Grid>
   );
+};
+
+const getMintPrice = (candyMachine: CandyMachineAccount): string => {
+  const price = formatNumber.asNumber(
+    candyMachine.state.isPresale
+      ? candyMachine.state.whitelistMintSettings?.discountPrice!
+      : candyMachine.state.price!,
+  );
+  return `◎ ${price}`;
 };
