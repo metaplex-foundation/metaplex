@@ -121,6 +121,10 @@ export async function uploadV2({
         });
       }
 
+      if (!firstAssetManifest.properties?.creators?.every(creator => creator.address !== undefined)) {
+        throw new Error('Creator address is missing');
+      }
+
       // initialize candy
       log.info(`initializing candy machine`);
       const res = await createCandyMachineV2(
