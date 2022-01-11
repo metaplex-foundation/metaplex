@@ -66,7 +66,7 @@ Usually, prints are created as a part of an auction that has happened on Metaple
 
 For limited auctions, each print number is awarded based on the bid placement.
 
-Prints can be created during [Open Edition](#open-edition) or [Limited Edition](#limited-edition) auction.
+Prints can be created during an [Open Edition](#open-edition) or [Limited Edition](#limited-edition) auction.
 
 ### Normal NFT
 
@@ -110,7 +110,7 @@ It is required for limited supply NFTs that there is atleast as much supply rema
 
 ### Tiered Auction
 
-A tiered auction can contain a mix of the other three auction types as winning placements. For instance, the first place winner could win a Print of Limited Edition NFT A, while the second-place winner could win Normal NFT, and so on. Additionally, all participants who did not win any place could get a Participation NFT Print from a Master Edition (if the Master Edition had no supply limit).
+A tiered auction can contain a mix of the other three auction types as winning placements. For instance, the first place winner could win a Print of Limited Edition NFT A, while the second-place winner could win a Normal NFT, etc. Additionally, all participants who did not win any place could get a Participation NFT Print from a Master Edition (if the Master Edition had no supply limit).
 
 ## Royalties
 
