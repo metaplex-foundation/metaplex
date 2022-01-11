@@ -58,25 +58,27 @@ export const Banner = ({
         ) : (
           wallet.connected &&
           ownerAddress === wallet.publicKey?.toBase58() && (
-            <Alert
-              className="metaplex-flex-align-items-center metaplex-align-left"
-              message="Connect your Twitter account"
-              description={
-                <>
-                  Help protect collectors by connecting your store to a Twitter
-                  page on{' '}
-                  <a
-                    href="https://naming.bonfida.org/#/twitter-registration"
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Bonfida
-                  </a>
-                </>
-              }
-              icon={<TwitterOutlined />}
-              showIcon
-            />
+            <div className="metaplex-margin-top-8">
+              <Alert
+                className="metaplex-flex-align-items-center metaplex-align-left"
+                message="Connect your Twitter account"
+                description={
+                  <>
+                    Help protect collectors by connecting your store to a
+                    Twitter page on{' '}
+                    <a
+                      href="https://naming.bonfida.org/#/twitter-registration"
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Bonfida
+                    </a>
+                  </>
+                }
+                icon={<TwitterOutlined />}
+                showIcon
+              />
+            </div>
           )
         )}
       </div>

@@ -122,6 +122,7 @@ export const Listings = () => {
         subHeadingText={storefront.meta.description}
         logo={storefront?.theme?.logo || ''}
         twitterVerification={storefront.integrations?.twitterVerification}
+        ownerAddress={ownerAddress}
       />
       <Anchor showInkInFixed={false} className="metaplex-anchor">
         <div className="listings-menu-wrapper">

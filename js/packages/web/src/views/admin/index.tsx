@@ -514,6 +514,12 @@ function InnerAdminView({
           </div>
         )}
       </div>
+      <h2>Miscellaneous</h2>
+      <div>
+        <Button type="primary" onClick={() => localStorage.clear()}>
+          Clear Local Cache
+        </Button>
+      </div>
     </div>
   );
 }
