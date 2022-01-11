@@ -121,7 +121,7 @@ export async function uploadV2({
         });
       }
 
-      if (firstAssetManifest.properties.creators.some(creator => creator.address === undefined)) {
+      if (!firstAssetManifest.properties?.creators?.every(creator => creator.address !== undefined)) {
         throw new Error('Creator address is missing');
       }
 
