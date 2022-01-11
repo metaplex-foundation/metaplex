@@ -29,6 +29,7 @@ module.exports = withPlugins(plugins, {
   },
 
   env: {
+    ASSET_PREFIX: '/metaplex/',
     NEXT_PUBLIC_STORE_OWNER_ADDRESS:
       process.env.STORE_OWNER_ADDRESS ||
       process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
