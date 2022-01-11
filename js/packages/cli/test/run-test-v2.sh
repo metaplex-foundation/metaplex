@@ -359,27 +359,28 @@ function clean_up {
 function change_cache {
     cat $CACHE_FILE | jq -c ".items.\"0\".onChain=false|.items.\"0\".name=\"Changed 0\"|del(.items.\""$LAST_INDEX"\")" \
         >$CACHE_FILE.tmp && mv $CACHE_FILE.tmp $CACHE_FILE
+    grn "Success: cache file changed"
 }
 
 # check on chain config to make sure it changed
 function check_changed {
     CANDY="$(cat $CACHE_FILE | jq -c -r ".program.candyMachine")"
     LAST_LINK="$(cat $CACHE_FILE | jq -c -r ".items.\""$LAST_INDEX"\".link")"
-    grn "Candy Machine Id: $CANDY"
-    grn "Changed Link: $LAST_LINK"
+    echo "$(grn "Candy Machine Id:") $CANDY"
+    echo "$(grn "Changed Link:") $LAST_LINK"
     temp_file=$(mktemp)
     echo $CANDY | xargs -I{} solana account {} -u $RPC -o $temp_file
 
-    if [[ strings $temp_file | grep -a "Changed 0" ]]; then
+    if [[ $(strings $temp_file | grep -a "Changed 0") ]]; then
         grn "Success: item 0 found on chain"
     else
         red "Failure: new item 0 not found on chain"
     fi
 
-    if [[ strings $temp_file | grep -a "$LAST_LINK" ]]; then
-        grn "Success: new last item found on chain"
+    if [[ $(strings $temp_file | grep -a "$LAST_LINK") ]]; then
+        grn "Success: last item found on chain"
     else
-        red "Failure: new last item not found on chain"
+        red "Failure: last item not found on chain"
     fi
 }
 
@@ -469,11 +470,12 @@ if [ "${CLOSE}" = "Y" ]; then
     mag ">>>"
     $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
     EXIT_CODE=$?
-
+    
     if [ ! $EXIT_CODE -eq 0 ]; then
         red "[$(date "+%T")] Aborting: withdraw failed"
         exit 1
     fi
+
     mag "<<<"
     clean_up
 fi
