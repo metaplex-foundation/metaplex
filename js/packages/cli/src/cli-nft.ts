@@ -5,6 +5,7 @@ import { loadWalletKey } from './helpers/accounts';
 import { web3 } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { getCluster } from './helpers/various';
+
 program.version('0.0.1');
 log.setLevel('info');
 

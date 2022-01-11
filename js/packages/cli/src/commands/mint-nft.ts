@@ -11,14 +11,7 @@ import {
   getMasterEdition,
 } from '../helpers/accounts';
 import * as anchor from '@project-serum/anchor';
-import {
-  Data,
-  Creator,
-  CreateMetadataArgs,
-  UpdateMetadataArgs,
-  CreateMasterEditionArgs,
-  METADATA_SCHEMA,
-} from '../helpers/schema';
+import { Creator, METADATA_SCHEMA } from '../helpers/schema';
 import { serialize } from 'borsh';
 import { TOKEN_PROGRAM_ID } from '../helpers/constants';
 import fetch from 'node-fetch';
@@ -31,8 +24,14 @@ import {
   PublicKey,
 } from '@solana/web3.js';
 import log from 'loglevel';
+import {
+  CreateMetadataV2Args,
+  UpdateMetadataV2Args,
+  CreateMasterEditionV3Args,
+  DataV2,
+} from '@metaplex-foundation/mpl-token-metadata';
 
-export const createMetadata = async (metadataLink: string): Promise<Data> => {
+export const createMetadata = async (metadataLink: string): Promise<DataV2> => {
   // Metadata
   let metadata;
   try {
@@ -73,12 +72,14 @@ export const createMetadata = async (metadataLink: string): Promise<Data> => {
       }),
   );
 
-  return new Data({
+  return new DataV2({
     symbol: metadata.symbol,
     name: metadata.name,
     uri: metadataLink,
     sellerFeeBasisPoints: metadata.seller_fee_basis_points,
     creators: creators,
+    collection: null,
+    uses: null,
   });
 };
 
@@ -142,8 +143,12 @@ export const mintNFT = async (
   const metadataAccount = await getMetadata(mint.publicKey);
   let txnData = Buffer.from(
     serialize(
-      METADATA_SCHEMA,
-      new CreateMetadataArgs({ data, isMutable: mutableMetadata }),
+      new Map([
+        DataV2.SCHEMA,
+        ...METADATA_SCHEMA,
+        ...CreateMetadataV2Args.SCHEMA,
+      ]),
+      new CreateMetadataV2Args({ data, isMutable: mutableMetadata }),
     ),
   );
 
@@ -173,8 +178,12 @@ export const mintNFT = async (
   const editionAccount = await getMasterEdition(mint.publicKey);
   txnData = Buffer.from(
     serialize(
-      METADATA_SCHEMA,
-      new CreateMasterEditionArgs({ maxSupply: new anchor.BN(0) }),
+      new Map([
+        DataV2.SCHEMA,
+        ...METADATA_SCHEMA,
+        ...CreateMasterEditionV3Args.SCHEMA,
+      ]),
+      new CreateMasterEditionV3Args({ maxSupply: new anchor.BN(0) }),
     ),
   );
 
@@ -221,10 +230,11 @@ export const updateMetadata = async (
 
   const metadataAccount = await getMetadata(mintKey);
   const signers: anchor.web3.Keypair[] = [];
-  const value = new UpdateMetadataArgs({
+  const value = new UpdateMetadataV2Args({
     data,
     updateAuthority: walletKeypair.publicKey.toBase58(),
     primarySaleHappened: null,
+    isMutable: true,
   });
   const txnData = Buffer.from(serialize(METADATA_SCHEMA, value));
 
