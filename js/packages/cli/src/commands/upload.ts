@@ -121,6 +121,14 @@ export async function uploadV2({
         });
       }
 
+      if (
+        !firstAssetManifest.properties?.creators?.every(
+          creator => creator.address !== undefined,
+        )
+      ) {
+        throw new Error('Creator address is missing');
+      }
+
       // initialize candy
       log.info(`initializing candy machine`);
       const res = await createCandyMachineV2(
@@ -340,7 +348,8 @@ export async function uploadV2({
                   saveCache(cacheName, env, cacheContent);
                 } catch (e) {
                   log.error(
-                    `saving config line ${ind}-${keys[indexes[indexes.length - 1]]
+                    `saving config line ${ind}-${
+                      keys[indexes[indexes.length - 1]]
                     } failed`,
                     e,
                   );
@@ -441,10 +450,8 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
   );
   manifest.image = manifest.image.replace('image', assetIndex);
   if (manifest.properties?.files?.length > 0) {
-    manifest.properties.files[0].uri = manifest.properties.files[0]?.uri?.replace(
-      'image',
-      assetIndex,
-    );
+    manifest.properties.files[0].uri =
+      manifest.properties.files[0]?.uri?.replace('image', assetIndex);
   }
   return manifest;
 }
@@ -508,7 +515,8 @@ async function writeIndices({
                 saveCache(cacheName, env, cache);
               } catch (err) {
                 log.error(
-                  `Saving config line ${ind}-${keys[indexes[indexes.length - 1]]
+                  `Saving config line ${ind}-${
+                    keys[indexes[indexes.length - 1]]
                   } failed`,
                   err,
                 );

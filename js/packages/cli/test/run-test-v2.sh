@@ -7,7 +7,6 @@
 # ENV_URL="mainnet-beta"
 # RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
 RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
- 
 
 # STORAGE="arweave-sol"
 # ARWEAVE_JWK="null"
@@ -98,7 +97,7 @@ fi
 
 while getopts r: flag; do
     case "${flag}" in
-    r) RPC=${OPTARG} ;;
+        r) RPC=${OPTARG} ;;
     esac
 done
 
