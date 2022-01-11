@@ -5,7 +5,7 @@
       "packages/*"
     ]
   },
-  "homepage": "https://github.com/atom3001/metaplex",
+  "homepage": ".",
   "keywords": [],
   "license": "Apache-2.0",
   "engines": {

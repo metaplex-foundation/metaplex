@@ -76,7 +76,7 @@
     "type": "git",
     "url": "https://github.com/atom3001/metaplex"
   },
-  "homepage": "https://github.com/atom3001/metaplex",
+  "homepage": ".",
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
