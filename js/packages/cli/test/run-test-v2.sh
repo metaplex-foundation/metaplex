@@ -1,4 +1,22 @@
 #!/bin/bash
+#
+# Candy Machine CLI - Automated Test
+#
+# To suppress prompts, you will need to set/export the following variables:
+#
+#ENV_URL="devnet"
+#STORAGE="arweave"
+#ARWEAVE_JWK="null"
+#INFURA_ID="null"
+#INFURA_SECRET="null"
+#AWS_BUCKET="null"
+#EXT="png"
+#ITEMS=10
+#MULTIPLE=0
+#RESET="Y"
+#CLOSE="Y"
+#
+# The custom RPC server option can be specified either by the flag -r <url>
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -11,147 +29,186 @@ PNG="https://rm5fm2cz5z4kww2gbyjwhyfekgcc3qjmz43cw53g6qhwhgcofoyq.arweave.net/iz
 GIF="https://3shhjbznlupbi4gldnfdzpvulcexrek5fovdtzpo37bxde6au5va.arweave.net/3I50hy1dHhRwyxtKPL60WIl4kV0rqjnl7t_DcZPAp2o/?ext=gif"
 JPG="https://7cvkvtes5uh4h3ud42bi3nl2ivtmnbpqppqmau7pk2p2qykkmbya.arweave.net/-KqqzJLtD8Pug-aCjbV6RWbGhfB74MBT71afqGFKYHA/?ext=jpg"
 
+echo ""
+echo "Candy Machine CLI - Automated Test"
+echo "----------------------------------"
+
 #-------------------------------------------#
 # SETUP                                     #
 #-------------------------------------------#
 
 # Environment
 
-ENV_URL="devnet"
+if [ -z ${ENV_URL+x} ]; then
+    ENV_URL="devnet"
 
-echo ""
-echo "Candy Machine CLI - Automated Test"
-echo "----------------------------------"
-echo ""
-echo "Environment:"
-echo "1. devnet (default)"
-echo "2. mainnet-beta"
-echo -n "Select the environment: "
-read Input
-case "$Input" in
-1) ENV_URL="devnet" ;;
-2) ENV_URL="mainnet-beta" ;;
-esac
+    echo ""
+    echo "Environment:"
+    echo "1. devnet (default)"
+    echo "2. mainnet-beta"
+    echo -n "Select the environment (default 'devnet'): "
+    read Input
+    case "$Input" in
+        1) ENV_URL="devnet" ;;
+        2) ENV_URL="mainnet-beta" ;;
+    esac
+fi
 
 # RPC server can be specified from the command-line with the flag "-r"
 # Otherwise the default public one will be used
 
-RPC="https://api.${ENV_URL}.solana.com"
+if [ -z ${RPC+x} ]; then
+    RPC="https://api.${ENV_URL}.solana.com"
+fi
 
 while getopts r: flag; do
     case "${flag}" in
-    r) RPC=${OPTARG} ;;
+        r) RPC=${OPTARG} ;;
     esac
 done
 
 # Storage
 
-STORAGE="arweave-sol"
+if [ -z ${STORAGE+x} ]; then
+    STORAGE="arweave-sol"
 
-echo ""
-echo "Storage type:"
-echo "1. arweave-bundle"
-echo "2. arweave-sol (default)"
-echo "3. arweave"
-echo "4. ipfs"
-echo "5. aws"
-echo -n "Select the storage type [1-5]: "
-read Input
-case "$Input" in
-1) STORAGE="arweave-bundle" ;;
-2) STORAGE="arweave-sol" ;;
-3) STORAGE="arweave" ;;
-4) STORAGE="ipfs" ;;
-5) STORAGE="aws" ;;
-esac
-
-ARWEAVE_JWK="null"
-
-if [ "$STORAGE" = "arweave-bundle" ]; then
-    echo -n "Arweave JWK wallet file: "
-    read ARWEAVE_JWK
+    echo ""
+    echo "Storage type:"
+    echo "1. arweave-bundle"
+    echo "2. arweave-sol (default)"
+    echo "3. arweave"
+    echo "4. ipfs"
+    echo "5. aws"
+    echo -n "Select the storage type [1-5] (default 2): "
+    read Input
+    case "$Input" in
+        1) STORAGE="arweave-bundle" ;;
+        2) STORAGE="arweave-sol" ;;
+        3) STORAGE="arweave" ;;
+        4) STORAGE="ipfs" ;;
+        5) STORAGE="aws" ;;
+    esac
 fi
 
-INFURA_ID="null"
-INFURA_SECRET="null"
+if [ -z ${ARWEAVE_JWK+x} ]; then
+    ARWEAVE_JWK="null"
 
-if [ "$STORAGE" = "ipfs" ]; then
-    echo -n "Infura Project ID: "
-    read INFURA_ID
-    echo -n "Infura Secret: "
-    read INFURA_SECRET
+    if [ "$STORAGE" = "arweave-bundle" ]; then
+        echo -n "Arweave JWK wallet file: "
+        read ARWEAVE_JWK
+    fi
 fi
 
-AWS_BUCKET="null"
+if [ -z ${INFURA_ID+x} ]; then
+    INFURA_ID="null"
+    INFURA_SECRET="null"
 
-if [ "$STORAGE" = "aws" ]; then
-    echo -n "AWS bucket name: "
-    read AWS_BUCKET
+    if [ "$STORAGE" = "ipfs" ]; then
+        echo -n "Infura Project ID: "
+        read INFURA_ID
+        echo -n "Infura Secret: "
+        read INFURA_SECRET
+    fi
+fi
+
+if [ -z ${AWS_BUCKET+x} ]; then
+    AWS_BUCKET="null"
+
+    if [ "$STORAGE" = "aws" ]; then
+        echo -n "AWS bucket name: "
+        read AWS_BUCKET
+    fi
 fi
 
 # Asset type
 
-IMAGE=$PNG
-EXT="png"
-echo ""
-echo "Asset type:"
-echo "1. PNG (default)"
-echo "2. JPG"
-echo "3. GIF"
-echo -n "Select the file type [1-3]: "
-read Input
-case "$Input" in
-1)
+if [ -z ${EXT+x} ]; then
     IMAGE=$PNG
     EXT="png"
-    ;;
-2)
-    IMAGE=$JPG
-    EXT="jpg"
-    ;;
-3)
-    IMAGE=$GIF
-    EXT="gif"
-    ;;
-esac
+    echo ""
+    echo "Asset type:"
+    echo "1. PNG (default)"
+    echo "2. JPG"
+    echo "3. GIF"
+    echo -n "Select the file type [1-3] (default 1): "
+    read Input
+    case "$Input" in
+        1) IMAGE=$PNG
+           EXT="png"
+           ;;
+        2) IMAGE=$JPG
+           EXT="jpg"
+           ;;
+        3) IMAGE=$GIF
+           EXT="gif"
+           ;;
+    esac
+else
+    case "$EXT" in
+        png) IMAGE=$PNG
+             ;;
+        jpg) IMAGE=$JPG
+             ;;
+        gif) IMAGE=$GIF
+             ;;
+        *) "[$(date "+%T")] Aborting: invalid asset type ${EXT}"
+           exit 1
+    esac
+fi
 
 # Collection size
 
-echo ""
-echo -n "Number of items [10]: "
-read Number
+if [ -z ${ITEMS+x} ]; then
+    echo ""
+    echo -n "Number of items (default 10): "
+    read Number
 
-if [ -z "$Number" ]; then
-    ITEMS=10
-else
-    # make sure we are dealing with a number
-    ITEMS=$(($Number + 0))
+    if [ -z "$Number" ]; then
+        ITEMS=10
+    else
+        # make sure we are dealing with a number
+        ITEMS=$(($Number + 0))
+    fi
+fi
+
+# Mint multiple tokens
+
+if [ -z ${MULTIPLE+x} ]; then
+    echo ""
+    echo -n "Number of multiple tokens to mint (default 0): "
+    read Number
+
+    if [ -z "$Number" ]; then
+        MULTIPLE=0
+    else
+        # make sure we are dealing with a number
+        MULTIPLE=$(($Number + 0))
+    fi
 fi
 
 # Clean up
 
-echo ""
-echo -n "Remove previous cache and assets [Y/n]: "
-read Reset
-if [ -z "$Reset" ]; then
-    Reset="Y"
+if [ -z ${RESET+x} ]; then
+    echo ""
+    echo -n "Remove previous cache and assets [Y/n] (default 'Y'): "
+    read RESET
+    if [ -z "$RESET" ]; then
+        RESET="Y"
+    fi
+fi
+
+if [ -z ${CLOSE+x} ]; then
+    echo ""
+    echo -n "Close candy machine and withdraw funds at the end [Y/n] (default 'Y'): "
+    read CLOSE
+    if [ -z "$CLOSE" ]; then
+        CLOSE="Y"
+    fi
 fi
 
 echo ""
-echo -n "Close candy machine and withdraw funds at the end [Y/n]: "
-read Close
-if [ -z "$Close" ]; then
-    Close="Y"
-fi
 
-echo ""
-echo -n "Skip mint_multiple_tokens [Y/n]: "
-read SkipM
-if [ -z "$SkipM" ]; then
-    SkipM="Y"
-fi
-
-if [ "${Reset}" = "Y" ]; then
+if [ "${RESET}" = "Y" ]; then
     echo "[$(date "+%T")] Removing previous cache and assets"
     rm $CONFIG_FILE 2>/dev/null
     rm -rf $ASSETS_DIR 2>/dev/null
@@ -240,10 +297,6 @@ CACHE_NAME="test"
 function clean_up {
     rm $CONFIG_FILE
     rm -rf $ASSETS_DIR
-}
-
-function success {
-    clean_up
     rm -rf .cache
 }
 
@@ -276,9 +329,9 @@ if [ ! $EXIT_CODE -eq 0 ]; then
 fi
 
 echo ""
-echo "3. Minting one token"
+echo "3. Minting"
 echo ""
-echo ">>>"
+echo "mint_one_token >>>"
 $CMD_CMV2 mint_one_token --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
 echo "<<<"
@@ -288,12 +341,10 @@ if [ ! $EXIT_CODE -eq 0 ]; then
     exit 1
 fi
 
-if [ ${SkipM} = "Y" ]; then
+if [ "${MULTIPLE}" -gt 0 ]; then
     echo ""
-    echo "4. Minting multiple tokens"
-    echo ""
-    echo ">>>"
-    $CMD_CMV2 mint_multiple_tokens --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -n 3
+    echo "mint_multiple_tokens >>>"
+    $CMD_CMV2 mint_multiple_tokens --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -n $MULTIPLE
     EXIT_CODE=$?
     echo "<<<"
 
@@ -301,15 +352,11 @@ if [ ${SkipM} = "Y" ]; then
         echo "[$(date "+%T")] Aborting: mint multiple tokens failed"
         exit 1
     fi
-else
-    echo ""
-    echo "4. Skipping Mint Multiple Tokens"
-    echo ""
 fi
 
-if [ ${Close} = "Y" ]; then
+if [ "${CLOSE}" = "Y" ]; then
     echo ""
-    echo "5. Clean up: withdrawing CM funds."
+    echo "4. Clean up: withdrawing CM funds."
     echo ""
     echo ">>>"
     $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
@@ -319,8 +366,9 @@ if [ ${Close} = "Y" ]; then
         echo "[$(date "+%T")] Aborting: withdraw failed"
         exit 1
     fi
+
+    clean_up
 fi
 
-success
 echo ""
 echo "[$(date "+%T")] Test completed"
