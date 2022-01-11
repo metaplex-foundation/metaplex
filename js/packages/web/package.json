@@ -74,9 +74,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/metaplex-foundation/metaplex"
+    "url": "https://github.com/atom3001/metaplex"
   },
-  "homepage": ".",
+  "homepage": "https://github.com/atom3001/metaplex",
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
