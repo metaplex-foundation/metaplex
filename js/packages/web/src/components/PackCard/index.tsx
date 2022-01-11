@@ -89,7 +89,7 @@ const PackCard = ({
         </div>
         <div className="art-auction-info">
           <div className="art-auction-info__left-side">
-            <img src="/grid-4.svg" />
+            <img src="/metaplex/grid-4.svg" />
             <span className="info-message">{infoMessage}</span>
           </div>
           <div className="art-auction-info__right-side">

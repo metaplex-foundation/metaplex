@@ -46,20 +46,19 @@ export const MetaplexMenu = () => {
   const { width } = useWindowDimensions();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const { connected } = useWallet();
-  const { ASSET_PREFIX } = process.env;
 
   if (width < 768)
     return (
       <>
         <Modal
-          title={<img src={ASSET_PREFIX +'/metaplex-logo.svg'} />}
+          title={<img src={'/metaplex/metaplex-logo.svg'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
           closeIcon={
             <img
               onClick={() => setIsModalVisible(false)}
-              src={'/modals/close.svg'}
+              src={'/metaplex/modals/close.svg'}
             />
           }
         >
@@ -111,7 +110,7 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={ASSET_PREFIX +'/metaplex-logo.svg'} />
+      <img src={'/metaplex/metaplex-logo.svg'} />
     </Link>
   );
 };

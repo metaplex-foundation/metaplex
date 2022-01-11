@@ -57,7 +57,7 @@ export const CachedImageContent = ({
 
   return (
     <Image
-      fallback="image-placeholder.svg"
+      fallback="metaplex/image-placeholder.svg"
       src={cachedBlob}
       preview={preview}
       wrapperClassName={className}

@@ -85,7 +85,7 @@ const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
       </div>
       {isClaiming && (
         <div className="claiming-step__notes">
-          <img src="wallet.svg" />
+          <img src="metaplex/wallet.svg" />
           <span>{infoMessageText}</span>
         </div>
       )}
