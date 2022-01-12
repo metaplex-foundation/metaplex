@@ -13,7 +13,7 @@ export const PriceAuction = (props: {
   const [priceError, setPriceError] = useState(false);
 
   const handlePriceError = (price: InputState, tick: InputState) => {
-    const multiplier = 1000000;
+    const multiplier = 1000;
     if (tick && price && (price * multiplier) % (tick * multiplier) !== 0) {
       setPriceError(true);
     } else {
