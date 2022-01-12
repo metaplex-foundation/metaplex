@@ -750,8 +750,6 @@ export async function upload({
 }
 
 export async function uploadCoinfra({
-  cacheName,
-  env,
   totalNFTs,
   retainAuthority,
   mutable,
@@ -805,8 +803,7 @@ export async function uploadCoinfra({
   imageName: string;
 }): Promise<{ uploadSuccessful: boolean; cacheContent: any }> {
   let uploadSuccessful = true;
-  const savedContent = loadCache(cacheName, env);
-  const cacheContent = savedContent || {};
+  const cacheContent: any = {};
 
   if (!cacheContent.program) {
     cacheContent.program = {};
