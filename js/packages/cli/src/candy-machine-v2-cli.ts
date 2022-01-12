@@ -979,7 +979,7 @@ function programCommand(name: string) {
       'Solana cluster env name',
       'devnet', //mainnet-beta, testnet, devnet
     )
-    .requiredOption('-k, --keypair <path>', `Solana wallet location`)
+    .option('-k, --keypair <path>', 'Solana wallet location','--keypair not provided')
     .option('-l, --log-level <string>', 'log level', setLogLevel)
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
 }
