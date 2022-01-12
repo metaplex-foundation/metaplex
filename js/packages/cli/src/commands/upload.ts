@@ -765,9 +765,9 @@ export async function uploadCoinfra({
   uuid,
   walletKeyPair,
   anchorProgram,
+  manifest,
   metadataLink,
   imageLink,
-  imageName,
 }: {
   cacheName: string;
   env: string;
@@ -798,9 +798,9 @@ export async function uploadCoinfra({
   uuid: string;
   walletKeyPair: web3.Keypair;
   anchorProgram: Program;
+  manifest: any;
   metadataLink: string;
   imageLink: string;
-  imageName: string;
 }): Promise<{ uploadSuccessful: boolean; cacheContent: any }> {
   let uploadSuccessful = true;
   const cacheContent: any = {};
@@ -813,9 +813,9 @@ export async function uploadCoinfra({
     cacheContent.items = {};
   }
 
-  const ext = path.extname(imageName);
+  const ext = path.extname(manifest.name);
   const dedupedAssetKeys: AssetKey[] = [
-    { mediaExt: ext, index: path.basename(imageName, ext) },
+    { mediaExt: ext, index: path.basename(manifest.name, ext) },
   ];
   const SIZE = dedupedAssetKeys.length;
   console.log('Size', SIZE, dedupedAssetKeys[0]);
@@ -831,10 +831,6 @@ export async function uploadCoinfra({
       async allIndexesInSlice => {
         for (let i = 0; i < allIndexesInSlice.length; i++) {
           const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-          const fetch = require('node-fetch');
-          const manifest: Manifest = await (await fetch(metadataLink)).json();
-          console.log('manifest', manifest);
-
           if (
             allIndexesInSlice[i] >= lastPrinted + tick ||
             allIndexesInSlice[i] === 0
