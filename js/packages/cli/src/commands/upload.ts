@@ -803,7 +803,7 @@ export async function uploadCoinfra({
   metadataLink: string;
   imageLink: string;
   imageName: string;
-}): Promise<boolean> {
+}): Promise<{ uploadSuccessful: boolean; cacheContent: any }> {
   let uploadSuccessful = true;
   const savedContent = loadCache(cacheName, env);
   const cacheContent = savedContent || {};
@@ -834,15 +834,10 @@ export async function uploadCoinfra({
       async allIndexesInSlice => {
         for (let i = 0; i < allIndexesInSlice.length; i++) {
           const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-          let manifest: Manifest;
-          fetch(metadataLink)
-            .then(response => {
-              return response.json();
-            })
-            .then(metadataJson => {
-              manifest = metadataJson;
-              console.log(manifest);
-            });
+          const fetch = require('node-fetch');
+          const manifest: Manifest = await (await fetch(metadataLink)).json();
+          console.log('manifest', manifest);
+
           if (
             allIndexesInSlice[i] >= lastPrinted + tick ||
             allIndexesInSlice[i] === 0
@@ -901,8 +896,6 @@ export async function uploadCoinfra({
               log.info(
                 `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
               );
-
-              saveCache(cacheName, env, cacheContent);
             } catch (exx) {
               log.error('Error deploying config to Solana network.', exx);
               throw exx;
@@ -926,7 +919,6 @@ export async function uploadCoinfra({
                 name: manifest.name,
                 onChain: false,
               };
-              saveCache(cacheName, env, cacheContent);
             }
           } catch (err) {
             log.error(`Error uploading file ${assetKey}`, err);
@@ -936,7 +928,6 @@ export async function uploadCoinfra({
       },
     ),
   );
-  saveCache(cacheName, env, cacheContent);
   const keys = Object.keys(cacheContent.items);
   if (hiddenSettings) {
     log.info('Skipping upload to chain as this is a hidden Candy Machine');
@@ -982,7 +973,6 @@ export async function uploadCoinfra({
                       onChain: true,
                     };
                   });
-                  saveCache(cacheName, env, cacheContent);
                 } catch (e) {
                   log.error(
                     `saving config line ${ind}-${
@@ -999,10 +989,8 @@ export async function uploadCoinfra({
       );
     } catch (e) {
       log.error(e);
-    } finally {
-      saveCache(cacheName, env, cacheContent);
     }
   }
   console.log(`Done. Successful = ${uploadSuccessful}.`);
-  return uploadSuccessful;
+  return { uploadSuccessful, cacheContent };
 }
