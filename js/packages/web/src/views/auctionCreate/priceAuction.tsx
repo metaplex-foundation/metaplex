@@ -1,4 +1,4 @@
-import { Button, Input, Space } from 'antd';
+import { Button, InputNumber, Space } from 'antd';
 import React, { useState } from 'react';
 import { AuctionCategory, AuctionState } from '.';
 
@@ -21,16 +21,14 @@ export const PriceAuction = (props: {
     }
   };
 
-  const handleInput = (inputString: string, isPrice: boolean) => {
-    const parsedFloat = parseFloat(inputString);
+  const handleInput = (input: number, isPrice: boolean) => {
     if (isPrice) {
-      setPrice(parsedFloat);
-      handlePriceError(parsedFloat, tickSize);
+      setPrice(input);
+      handlePriceError(input, tickSize);
     } else {
-      setTickSize(parsedFloat);
-      handlePriceError(price, parsedFloat);
+      setTickSize(input);
+      handlePriceError(price, input);
     }
-    return parsedFloat;
   };
 
   return (
@@ -47,22 +45,24 @@ export const PriceAuction = (props: {
             This is the fixed price that everybody will pay for your
             Participation NFT.
           </span>
-          <Input
-            type="number"
+          <InputNumber<number>
             min={0}
+            decimalSeparator="."
+            className="metaplex-fullwidth"
+            step="0.01"
             autoFocus
-            placeholder="Fixed Price"
-            prefix="◎"
-            suffix="SOL"
-            onChange={info => {
-              const parsedFloat = handleInput(info.target.value, true);
+            placeholder="Fixed Price in SOL"
+            onChange={price => {
+              handleInput(price, true);
               props.setAttributes({
                 ...props.attributes,
                 // Do both, since we know this is the only item being sold.
-                participationFixedPrice: parsedFloat,
-                priceFloor: parsedFloat,
+                participationFixedPrice: price,
+                priceFloor: price,
               });
             }}
+            precision={2}
+            formatter={x => (x ? `◎ ${x}` : '')}
           />
         </label>
       )}
@@ -70,39 +70,44 @@ export const PriceAuction = (props: {
         <label>
           <h3>Price Floor</h3>
           <p>This is the starting bid price for your auction.</p>
-          <Input
-            type="number"
+          <InputNumber<number>
             min={0}
+            decimalSeparator="."
+            className="metaplex-fullwidth"
+            step="0.01"
             autoFocus
-            placeholder="Price"
-            prefix="◎"
-            suffix="SOL"
-            onChange={info => {
-              const parsedFloat = handleInput(info.target.value, true);
+            placeholder="Price in SOL"
+            onChange={price => {
+              handleInput(price, true);
               props.setAttributes({
                 ...props.attributes,
-                priceFloor: parsedFloat,
+                priceFloor: price,
               });
             }}
+            precision={2}
+            formatter={x => (x ? `◎ ${x}` : '')}
           />
         </label>
       )}
       <label>
         <h3>Tick Size</h3>
         <p>All bids must fall within this price increment.</p>
-        <Input
-          type="number"
+        <InputNumber<number>
           min={0}
+          decimalSeparator="."
+          className="metaplex-fullwidth"
+          step="0.01"
+          autoFocus
           placeholder="Tick size in SOL"
-          prefix="◎"
-          suffix="SOL"
-          onChange={info => {
-            const parsedFloat = handleInput(info.target.value, false);
+          onChange={tick => {
+            handleInput(tick, false);
             props.setAttributes({
               ...props.attributes,
-              priceTick: parsedFloat,
+              priceTick: tick,
             });
           }}
+          precision={2}
+          formatter={x => (x ? `◎ ${x}` : '')}
         />
       </label>
 
