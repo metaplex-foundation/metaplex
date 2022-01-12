@@ -7,6 +7,7 @@ import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { StorageType } from './storage-type';
 import { getAtaForMint } from './accounts';
 import { CLUSTERS, DEFAULT_CLUSTER } from './constants';
+import { Uses, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
 
 const { readFile } = fs.promises;
 
@@ -507,4 +508,15 @@ export function getCluster(name: string): string {
     }
   }
   return DEFAULT_CLUSTER.url;
+}
+
+export function parseUses(useMethod: string, total: number): Uses | null {
+  if (!!useMethod && !!total) {
+    const realUseMethod = (UseMethod as any)[useMethod];
+    if (!realUseMethod) {
+      throw new Error(`Invalid use method: ${useMethod}`);
+    }
+    return new Uses({ useMethod: realUseMethod, total, remaining: total });
+  }
+  return null;
 }

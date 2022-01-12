@@ -29,9 +29,16 @@ import {
   UpdateMetadataV2Args,
   CreateMasterEditionV3Args,
   DataV2,
+  Collection,
+  Uses,
+  VerifyCollection,
 } from '@metaplex-foundation/mpl-token-metadata';
 
-export const createMetadata = async (metadataLink: string): Promise<DataV2> => {
+export const createMetadata = async (
+  metadataLink: string,
+  collection: PublicKey,
+  uses?: Uses,
+): Promise<DataV2> => {
   // Metadata
   let metadata;
   try {
@@ -71,15 +78,16 @@ export const createMetadata = async (metadataLink: string): Promise<DataV2> => {
         verified: 1,
       }),
   );
-
   return new DataV2({
     symbol: metadata.symbol,
     name: metadata.name,
     uri: metadataLink,
     sellerFeeBasisPoints: metadata.seller_fee_basis_points,
     creators: creators,
-    collection: null,
-    uses: null,
+    collection: collection
+      ? new Collection({ key: collection.toBase58(), verified: false })
+      : null,
+    uses,
   });
 };
 
@@ -88,9 +96,11 @@ export const mintNFT = async (
   walletKeypair: Keypair,
   metadataLink: string,
   mutableMetadata: boolean = true,
+  collection: PublicKey = null,
+  use: Uses = null,
 ): Promise<PublicKey | void> => {
   // Retrieve metadata
-  const data = await createMetadata(metadataLink);
+  const data = await createMetadata(metadataLink, collection, use);
   if (!data) return;
 
   // Create wallet from keypair
@@ -215,6 +225,7 @@ export const mintNFT = async (
   // Force wait for max confirmations
   await connection.getParsedConfirmedTransaction(res.txid, 'confirmed');
   log.info('NFT created', res.txid);
+  log.info('\n\nNFT: Mint Address is ', mint.publicKey.toBase58());
   return metadataAccount;
 };
 
@@ -223,9 +234,11 @@ export const updateMetadata = async (
   connection: Connection,
   walletKeypair: Keypair,
   metadataLink: string,
+  collection: PublicKey = null,
+  uses: Uses,
 ): Promise<PublicKey | void> => {
   // Retrieve metadata
-  const data = await createMetadata(metadataLink);
+  const data = await createMetadata(metadataLink, collection, uses);
   if (!data) return;
 
   const metadataAccount = await getMetadata(mintKey);
@@ -254,5 +267,35 @@ export const updateMetadata = async (
     signers,
   );
   console.log('Metadata updated', txid);
+  log.info('\n\nUpdated NFT: Mint Address is ', mintKey.toBase58());
   return metadataAccount;
+};
+
+export const verifyCollection = async (
+  mintKey: PublicKey,
+  connection: Connection,
+  walletKeypair: Keypair,
+  collectionMint: PublicKey,
+) => {
+  const metadataAccount = await getMetadata(mintKey);
+  const collectionMetadataAccount = await getMetadata(collectionMint);
+  const collectionMasterEdition = await getMasterEdition(collectionMint);
+  const signers: anchor.web3.Keypair[] = [walletKeypair];
+  const tx = new VerifyCollection(
+    { feePayer: walletKeypair.publicKey },
+    {
+      metadata: metadataAccount,
+      collectionAuthority: walletKeypair.publicKey,
+      collectionMint: collectionMint,
+      collectionMetadata: collectionMetadataAccount,
+      collectionMasterEdition: collectionMasterEdition,
+    },
+  );
+  const txid = await sendTransactionWithRetryWithKeypair(
+    connection,
+    walletKeypair,
+    tx.instructions,
+    signers,
+  );
+  return txid;
 };
