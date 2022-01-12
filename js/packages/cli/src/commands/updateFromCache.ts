@@ -62,6 +62,15 @@ export async function updateMetadataFromCache(
   cacheContent: any,
   newCacheContent: any,
 ) {
+  const utf8Encode = new TextEncoder();
+  const temp = await PublicKey.findProgramAddress(
+    [
+      utf8Encode.encode('candy_machine'),
+      new PublicKey(candyMachineAddress).toBytes(),
+    ],
+    new PublicKey('cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ'),
+  );
+  candyMachineAddress = temp[0].toString();
   const metadataByCandyMachine = await getAccountsByCreatorAddress(
     candyMachineAddress,
     connection,
@@ -76,9 +85,11 @@ export async function updateMetadataFromCache(
         newCacheContent.items[i.toString()].link;
     }
   }
+  console.log(differences);
   const toUpdate = metadataByCandyMachine.filter(
     m => !!differences[m[0].data.uri],
   );
+
   log.info('Found', toUpdate.length, 'uris to update');
   let total = 0;
   while (toUpdate.length > 0) {
