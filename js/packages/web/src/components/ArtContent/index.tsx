@@ -161,6 +161,7 @@ const VideoArtContent = ({
 const HTMLWrapper = styled.div`
   padding-top: 100%;
   position: relative;
+  width: 100%;
 `;
 
 const HTMLContent = ({
@@ -213,22 +214,26 @@ const HTMLContent = ({
         sandbox="allow-scripts"
         frameBorder="0"
         src={htmlURL}
-        className={className}
+        className={`html-iframe ${className}`}
         onLoad={() => {
           setLoaded(true);
         }}
         style={{
           ...style,
           height: !loaded ? 0 : '100%',
-          width: '100%',
-          top: 0,
-          left: 0,
-          position: 'absolute',
         }}
       ></iframe>
     </HTMLWrapper>
   );
 };
+
+
+const ArtContentWrapper = styled.div`
+  display: flex;
+  alignItems: center;
+  justifyContent: center;
+  height: 100%;
+`;
 
 export const ArtContent = ({
   category,
@@ -350,15 +355,10 @@ export const ArtContent = ({
     );
 
   return (
-    <div
+    <ArtContentWrapper
       ref={ref as any}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
     >
       {content}
-    </div>
+    </ArtContentWrapper>
   );
 };

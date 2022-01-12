@@ -14,5 +14,5 @@ jobs:
           days-before-stale: 30
           days-before-close: 30
           exempt-pr-labels: 'wip,reviewing'
-          operations-per-run: 100
+          operations-per-run: 500
           

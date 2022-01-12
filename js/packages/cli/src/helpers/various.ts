@@ -46,6 +46,9 @@ export async function getCandyMachineV2Config(
   uuid: string;
   arweaveJwk: string;
 }> {
+  if (configPath === undefined) {
+    throw new Error('The configPath is undefined');
+  }
   const configString = fs.readFileSync(configPath);
 
   //@ts-ignore
