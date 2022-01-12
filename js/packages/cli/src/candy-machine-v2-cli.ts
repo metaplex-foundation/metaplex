@@ -311,7 +311,8 @@ programCommand('withdraw')
     }
   });
 
-programCommand('verify_assets')
+program
+  .command('verify_assets')
   .argument(
     '<directory>',
     'Directory containing images and metadata files named from 0-n',
@@ -899,7 +900,8 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   console.log(JSON.stringify(addresses, null, 2));
 });
 
-programCommand('generate_art_configurations')
+program
+  .command('generate_art_configurations')
   .argument('<directory>', 'Directory containing traits named from 0-n', val =>
     fs.readdirSync(`${val}`),
   )
@@ -919,7 +921,8 @@ programCommand('generate_art_configurations')
     }
   });
 
-programCommand('create_generative_art')
+program
+  .command('create_generative_art')
   .option(
     '-n, --number-of-images <string>',
     'Number of images to be generated',
