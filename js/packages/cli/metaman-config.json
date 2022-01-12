@@ -1,0 +1,21 @@
+{
+  "price": 0.0001,
+  "number": 10,
+  "gatekeeper": {
+    "gatekeeperNetwork": "ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6",
+    "expireOnUse": true
+  },
+  "solTreasuryAccount": "23GpK93KaL9VvcBW3NF497fj4daTnhMnrhRVvNMQNrHY",
+  "splTokenAccount": "23GpK93KaL9VvcBW3NF497fj4daTnhMnrhRVvNMQNrHY",
+  "splToken": null,
+  "goLiveDate": "now",
+  "endSettings": null,
+  "whitelistMintSettings": null,
+  "hiddenSettings": null,
+  "storage": "arweave",
+  "ipfsInfuraProjectId": null,
+  "ipfsInfuraSecret": null,
+  "awsS3Bucket": null,
+  "noRetainAuthority": false,
+  "noMutable": false
+}
