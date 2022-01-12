@@ -102,7 +102,7 @@ const fetchFromSource = async (
 
 export const getStorefront = async (
   subdomain: string,
-): Promise<Storefront | null> => {
+): Promise<Storefront | undefined> => {
   let cached: Storefront | undefined = undefined;
 
   const client = createClient({
@@ -141,9 +141,11 @@ export const getStorefront = async (
       .set(subdomain, JSON.stringify(source))
       .set(`${subdomain}-timestamp`, now.format())
       .exec();
+
+    return source;
   }
 
   await client.quit();
 
-  return source;
+  return cached;
 };
