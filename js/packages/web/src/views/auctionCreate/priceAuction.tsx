@@ -97,7 +97,6 @@ export const PriceAuction = (props: {
           decimalSeparator="."
           className="metaplex-fullwidth"
           step="0.01"
-          autoFocus
           placeholder="Tick size in SOL"
           onChange={tick => {
             handleInput(tick, false);
