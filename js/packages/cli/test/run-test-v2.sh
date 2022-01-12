@@ -6,7 +6,7 @@
 #
 # ENV_URL="mainnet-beta"
 # RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
-RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
+# RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
 
 # STORAGE="arweave-sol"
 # ARWEAVE_JWK="null"
@@ -50,11 +50,12 @@ function cyn() {
     echo $cyn"$1"$white 
 }
 
-
-CURRENT_DIR="$(dirname -- "${BASH_SOURCE[0]}")"
-SCRIPT_DIR=$(cd -- ${CURRENT_DIR} &>/dev/null && pwd)
+CURRENT_DIR=$(pwd)
+SCRIPT_DIR=$(cd -- $(dirname -- "${BASH_SOURCE[0]}") &>/dev/null && pwd)
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+# echo ${SCRIPT_DIR}
 ASSETS_DIR=$SCRIPT_DIR/assets
+# echo $ASSETS_DIR
 SRC_DIR=$PARENT_DIR/src
 CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
 
@@ -342,6 +343,7 @@ EOM
 WALLET_KEY="$(solana config get keypair | cut -d : -f 2)"
 CACHE_NAME="test"
 CACHE_FILE="${CURRENT_DIR}/.cache/${ENV_URL}-${CACHE_NAME}.json"
+echo $CACHE_FILE
 LAST_INDEX=$((ITEMS - 1))
 
 #-------------------------------------------#
@@ -359,7 +361,11 @@ function clean_up {
 function change_cache {
     cat $CACHE_FILE | jq -c ".items.\"0\".onChain=false|.items.\"0\".name=\"Changed 0\"|del(.items.\""$LAST_INDEX"\")" \
         >$CACHE_FILE.tmp && mv $CACHE_FILE.tmp $CACHE_FILE
-    grn "Success: cache file changed"
+    if [[ $(cat $CACHE_FILE | grep "Changed 0") ]]; then
+        grn "Success: cache file changed"
+    else 
+        red "Failure: cache file was not changed"
+    fi
 }
 
 # check on chain config to make sure it changed
@@ -427,11 +433,8 @@ if [ "${CHANGE}" = "Y" ]; then
     mag ">>>"
     change_cache
     upload
-    # verify_upload
+    verify_upload
     check_changed
-    # upload
-    # verify_upload
-    # check_changed
     mag "<<<"
 else
     blu "Skipping 3 (Editing cache and testing reupload)"
