@@ -519,6 +519,10 @@ export async function setupRedeemPrintingV2Instructions(
         myInstructions,
       );
     }
+    results.push({
+      ix,
+      signer: [],
+    });
     instructions.push(myInstructions);
     signers.push(mySigners);
   }
