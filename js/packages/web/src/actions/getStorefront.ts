@@ -12,6 +12,8 @@ const pubkeyDenyList = [
   '9ztzyU9eFuce42CHD7opPxpjrsg15onjNARnmuMS2aQy',
   '5pKYHnoCMyjVqVdZaGAs63wUSBvhEGWnz5ie2YC5MaZx',
   'D2bj7rCLC4Dy9ZJuDNm5jFRNn5bqVTTpn16nnqDYmciv',
+  'DYE359beVPHzLUuwAYAqujJ9d8JwFszAcus9qht5moxT',
+  '8K7zyrvVLDacNRJeFZui4cazW1XUkWKRnm7UmnBGQPdS',
 ];
 
 export const getStorefront = async (
