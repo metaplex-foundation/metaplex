@@ -130,6 +130,7 @@ export const getStorefront = async (
   const duration = moment.duration(now.diff(lastSavedAt)).as('minutes');
 
   if (duration < 2 && cached) {
+    await client.quit();
     return cached;
   }
 
@@ -142,6 +143,7 @@ export const getStorefront = async (
       .set(`${subdomain}-timestamp`, now.format())
       .exec();
 
+    await client.quit();
     return source;
   }
 
