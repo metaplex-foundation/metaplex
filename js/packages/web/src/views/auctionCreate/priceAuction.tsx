@@ -159,7 +159,7 @@ export const PriceAuction = (props: {
         </Form.Item>
         <Form.Item>
           <Button
-            className="metaplex-fullwidth metaplex-margin-top-4 metaplex-margin-bottom-4"
+            className="metaplex-fullwidth metaplex-margin-y-4"
             type="primary"
             size="large"
             htmlType="submit"
