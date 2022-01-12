@@ -29,6 +29,7 @@ $ cd js
 $ yarn install
 $ yarn bootstrap
 $ yarn build
+$ docker-compose up -d
 $ SUBDOMAIN='store-subdomain' yarn start
 ```
 
