@@ -40,11 +40,11 @@ export const PriceAuction = (props: {
 
       {props.attributes.category === AuctionCategory.Open && (
         <label>
-          <span>Price</span>
-          <span>
+          <h3>Price</h3>
+          <p>
             This is the fixed price that everybody will pay for your
             Participation NFT.
-          </span>
+          </p>
           <InputNumber<number>
             min={0}
             decimalSeparator="."
@@ -90,7 +90,7 @@ export const PriceAuction = (props: {
         </label>
       )}
       <label>
-        <h3>Tick Size</h3>
+        <h3 className="metaplex-margin-top-4">Tick Size</h3>
         <p>All bids must fall within this price increment.</p>
         <InputNumber<number>
           min={0}
