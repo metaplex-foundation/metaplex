@@ -4,23 +4,58 @@
 #
 # To suppress prompts, you will need to set/export the following variables:
 #
-#ENV_URL="devnet"
-#STORAGE="arweave"
-#ARWEAVE_JWK="null"
-#INFURA_ID="null"
-#INFURA_SECRET="null"
-#AWS_BUCKET="null"
-#EXT="png"
-#ITEMS=10
-#MULTIPLE=0
-#RESET="Y"
-#CLOSE="Y"
+# ENV_URL="mainnet-beta"
+# RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
+# RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
+
+# STORAGE="arweave-sol"
+# ARWEAVE_JWK="null"
+# INFURA_ID="null"
+# INFURA_SECRET="null"
+# AWS_BUCKET="null"
+# EXT="png"
+# ITEMS=10
+# MULTIPLE=2
+# RESET="Y"
+# CLOSE="Y"
+# CHANGE="Y"
 #
 # The custom RPC server option can be specified either by the flag -r <url>
+# Good RPCs:
 
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# "https://ssc-dao.genesysgo.net/" 
+# "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/"
+
+# colors!
+red=$'\e[1;31m'
+grn=$'\e[1;32m'
+blu=$'\e[1;34m'
+mag=$'\e[1;35m'
+cyn=$'\e[1;36m'
+white=$'\e[0m'
+
+function red() { 
+    echo $red"$1"$white 
+}
+function grn() { 
+    echo $grn"$1"$white 
+}
+function blu() { 
+    echo $blu"$1"$white 
+}
+function mag() { 
+    echo $mag"$1"$white 
+}
+function cyn() { 
+    echo $cyn"$1"$white 
+}
+
+CURRENT_DIR=$(pwd)
+SCRIPT_DIR=$(cd -- $(dirname -- "${BASH_SOURCE[0]}") &>/dev/null && pwd)
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+# echo ${SCRIPT_DIR}
 ASSETS_DIR=$SCRIPT_DIR/assets
+# echo $ASSETS_DIR
 SRC_DIR=$PARENT_DIR/src
 CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
 
@@ -29,9 +64,9 @@ PNG="https://rm5fm2cz5z4kww2gbyjwhyfekgcc3qjmz43cw53g6qhwhgcofoyq.arweave.net/iz
 GIF="https://3shhjbznlupbi4gldnfdzpvulcexrek5fovdtzpo37bxde6au5va.arweave.net/3I50hy1dHhRwyxtKPL60WIl4kV0rqjnl7t_DcZPAp2o/?ext=gif"
 JPG="https://7cvkvtes5uh4h3ud42bi3nl2ivtmnbpqppqmau7pk2p2qykkmbya.arweave.net/-KqqzJLtD8Pug-aCjbV6RWbGhfB74MBT71afqGFKYHA/?ext=jpg"
 
-echo ""
-echo "Candy Machine CLI - Automated Test"
-echo "----------------------------------"
+blu ""
+blu "Candy Machine CLI - Automated Test"
+blu "----------------------------------"
 
 #-------------------------------------------#
 # SETUP                                     #
@@ -43,14 +78,14 @@ if [ -z ${ENV_URL+x} ]; then
     ENV_URL="devnet"
 
     echo ""
-    echo "Environment:"
+    cyn "Environment:"
     echo "1. devnet (default)"
     echo "2. mainnet-beta"
     echo -n "Select the environment (default 'devnet'): "
     read Input
     case "$Input" in
-        1) ENV_URL="devnet" ;;
-        2) ENV_URL="mainnet-beta" ;;
+    1) ENV_URL="devnet" ;;
+    2) ENV_URL="mainnet-beta" ;;
     esac
 fi
 
@@ -70,23 +105,23 @@ done
 # Storage
 
 if [ -z ${STORAGE+x} ]; then
-    STORAGE="arweave-sol"
+    STORAGE="arweave"
 
     echo ""
-    echo "Storage type:"
+    cyn "Storage type:"
     echo "1. arweave-bundle"
-    echo "2. arweave-sol (default)"
-    echo "3. arweave"
+    echo "2. arweave-sol"
+    echo "3. arweave (default)"
     echo "4. ipfs"
     echo "5. aws"
-    echo -n "Select the storage type [1-5] (default 2): "
+    echo -n "Select the storage type [1-5] (default 3): "
     read Input
     case "$Input" in
-        1) STORAGE="arweave-bundle" ;;
-        2) STORAGE="arweave-sol" ;;
-        3) STORAGE="arweave" ;;
-        4) STORAGE="ipfs" ;;
-        5) STORAGE="aws" ;;
+    1) STORAGE="arweave-bundle" ;;
+    2) STORAGE="arweave-sol" ;;
+    3) STORAGE="arweave" ;;
+    4) STORAGE="ipfs" ;;
+    5) STORAGE="aws" ;;
     esac
 fi
 
@@ -126,33 +161,41 @@ if [ -z ${EXT+x} ]; then
     IMAGE=$PNG
     EXT="png"
     echo ""
-    echo "Asset type:"
+    cyn "Asset type:"
     echo "1. PNG (default)"
     echo "2. JPG"
     echo "3. GIF"
     echo -n "Select the file type [1-3] (default 1): "
     read Input
     case "$Input" in
-        1) IMAGE=$PNG
-           EXT="png"
-           ;;
-        2) IMAGE=$JPG
-           EXT="jpg"
-           ;;
-        3) IMAGE=$GIF
-           EXT="gif"
-           ;;
+    1)
+        IMAGE=$PNG
+        EXT="png"
+        ;;
+    2)
+        IMAGE=$JPG
+        EXT="jpg"
+        ;;
+    3)
+        IMAGE=$GIF
+        EXT="gif"
+        ;;
     esac
 else
     case "$EXT" in
-        png) IMAGE=$PNG
-             ;;
-        jpg) IMAGE=$JPG
-             ;;
-        gif) IMAGE=$GIF
-             ;;
-        *) "[$(date "+%T")] Aborting: invalid asset type ${EXT}"
-           exit 1
+    png)
+        IMAGE=$PNG
+        ;;
+    jpg)
+        IMAGE=$JPG
+        ;;
+    gif)
+        IMAGE=$GIF
+        ;;
+    *)
+        red "[$(date "+%T")] Aborting: invalid asset type ${EXT}"
+        exit 1
+        ;;
     esac
 fi
 
@@ -160,7 +203,7 @@ fi
 
 if [ -z ${ITEMS+x} ]; then
     echo ""
-    echo -n "Number of items (default 10): "
+    echo -n "$(cyn "Number of items") (default 10): "
     read Number
 
     if [ -z "$Number" ]; then
@@ -171,11 +214,22 @@ if [ -z ${ITEMS+x} ]; then
     fi
 fi
 
+# Test reupload
+
+if [ -z ${CHANGE+x} ]; then
+    echo ""
+    echo -n "$(cyn "Test reupload [Y/n]") (default 'Y'): "
+    read CHANGE
+    if [ -z "$CHANGE" ]; then
+        CHANGE="Y"
+    fi
+fi
+
 # Mint multiple tokens
 
 if [ -z ${MULTIPLE+x} ]; then
     echo ""
-    echo -n "Number of multiple tokens to mint (default 0): "
+    echo -n "$(cyn "Number of multiple tokens to mint") (default 0): "
     read Number
 
     if [ -z "$Number" ]; then
@@ -190,7 +244,7 @@ fi
 
 if [ -z ${RESET+x} ]; then
     echo ""
-    echo -n "Remove previous cache and assets [Y/n] (default 'Y'): "
+    echo -n "$(cyn "Remove previous cache and assets [Y/n]") (default 'Y'): "
     read RESET
     if [ -z "$RESET" ]; then
         RESET="Y"
@@ -199,7 +253,7 @@ fi
 
 if [ -z ${CLOSE+x} ]; then
     echo ""
-    echo -n "Close candy machine and withdraw funds at the end [Y/n] (default 'Y'): "
+    echo -n "$(cyn "Close candy machine and withdraw funds at the end [Y/n]") (default 'Y'): "
     read CLOSE
     if [ -z "$CLOSE" ]; then
         CLOSE="Y"
@@ -245,7 +299,7 @@ if [ ! -d $ASSETS_DIR ]; then
     SIZE=$(wc -c "$ASSETS_DIR/template.$EXT" | grep -oE '[0-9]+' | head -n 1)
 
     if [ $SIZE -eq 0 ]; then
-        echo "[$(date "+%T")] Aborting: could not download sample image"
+        red "[$(date "+%T")] Aborting: could not download sample image"
         exit 1
     fi
 
@@ -288,6 +342,9 @@ EOM
 
 WALLET_KEY="$(solana config get keypair | cut -d : -f 2)"
 CACHE_NAME="test"
+CACHE_FILE="${CURRENT_DIR}/.cache/${ENV_URL}-${CACHE_NAME}.json"
+echo $CACHE_FILE
+LAST_INDEX=$((ITEMS - 1))
 
 #-------------------------------------------#
 # COMMAND EXECUTION                         #
@@ -300,75 +357,132 @@ function clean_up {
     rm -rf .cache
 }
 
+# edit cache file for reupload
+function change_cache {
+    cat $CACHE_FILE | jq -c ".items.\"0\".onChain=false|.items.\"0\".name=\"Changed 0\"|del(.items.\""$LAST_INDEX"\")" \
+        >$CACHE_FILE.tmp && mv $CACHE_FILE.tmp $CACHE_FILE
+    if [[ $(cat $CACHE_FILE | grep "Changed 0") ]]; then
+        grn "Success: cache file changed"
+    else 
+        red "Failure: cache file was not changed"
+    fi
+}
+
+# check on chain config to make sure it changed
+function check_changed {
+    CANDY="$(cat $CACHE_FILE | jq -c -r ".program.candyMachine")"
+    LAST_LINK="$(cat $CACHE_FILE | jq -c -r ".items.\""$LAST_INDEX"\".link")"
+    echo "$(grn "Candy Machine Id:") $CANDY"
+    echo "$(grn "Changed Link:") $LAST_LINK"
+    temp_file=$(mktemp)
+    echo $CANDY | xargs -I{} solana account {} -u $RPC -o $temp_file
+
+    if [[ $(strings $temp_file | grep -a "Changed 0") ]]; then
+        grn "Success: item 0 found on chain"
+    else
+        red "Failure: new item 0 not found on chain"
+    fi
+
+    if [[ $(strings $temp_file | grep -a "$LAST_LINK") ]]; then
+        grn "Success: last item found on chain"
+    else
+        red "Failure: last item not found on chain"
+    fi
+}
+
+# run the verify upload command
+function verify_upload {
+    $CMD_CMV2 verify_upload --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
+    EXIT_CODE=$?
+    if [ ! $EXIT_CODE -eq 0 ]; then
+        red "[$(date "+%T")] Aborting: verify upload failed"
+        # exit 1
+    fi
+}
+
+# run the upload command
+function upload {
+    $CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME -r $RPC
+    EXIT_CODE=$?
+    if [ ! $EXIT_CODE -eq 0 ]; then
+        red "[$(date "+%T")] Aborting: upload failed"
+        exit 1
+    fi
+}
+
 echo "[$(date "+%T")] Testing started using ${STORAGE} storage"
 echo "[$(date "+%T")] RPC URL: ${RPC}"
 echo ""
-echo "1. Uploading assets and creating the candy machine"
+cyn "1. Uploading assets and creating the candy machine"
 echo ""
-echo ">>>"
-$CMD_CMV2 upload -cp ${CONFIG_FILE} --keypair $WALLET_KEY $ASSETS_DIR --env $ENV_URL -c $CACHE_NAME -r $RPC
-EXIT_CODE=$?
-echo "<<<"
+mag ">>>"
+upload
+mag "<<<"
 echo ""
 
-if [ ! $EXIT_CODE -eq 0 ]; then
-    echo "[$(date "+%T")] Aborting: upload failed"
-    exit 1
+cyn "2. Verifying upload"
+echo ""
+mag ">>>"
+verify_upload
+mag "<<<"
+
+echo ""
+if [ "${CHANGE}" = "Y" ]; then
+    cyn "3. Editing cache and testing reupload"
+    echo ""
+    mag ">>>"
+    change_cache
+    upload
+    verify_upload
+    check_changed
+    mag "<<<"
+else
+    blu "Skipping 3 (Editing cache and testing reupload)"
 fi
 
-echo "2. Verifying upload"
 echo ""
-echo ">>>"
-$CMD_CMV2 verify_upload --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
-EXIT_CODE=$?
-echo "<<<"
-
-if [ ! $EXIT_CODE -eq 0 ]; then
-    echo "[$(date "+%T")] Aborting: verify upload failed"
-    exit 1
-fi
-
+cyn "4. Minting"
 echo ""
-echo "3. Minting"
-echo ""
-echo "mint_one_token >>>"
+echo "mint_one_token $(mag ">>>")"
 $CMD_CMV2 mint_one_token --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
 EXIT_CODE=$?
-echo "<<<"
+mag "<<<"
 
 if [ ! $EXIT_CODE -eq 0 ]; then
-    echo "[$(date "+%T")] Aborting: mint failed"
+    red "[$(date "+%T")] Aborting: mint failed"
     exit 1
 fi
 
 if [ "${MULTIPLE}" -gt 0 ]; then
     echo ""
-    echo "mint_multiple_tokens >>>"
+    echo "mint_multiple_tokens $(mag ">>>")"
     $CMD_CMV2 mint_multiple_tokens --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC -n $MULTIPLE
     EXIT_CODE=$?
-    echo "<<<"
+    mag "<<<"
 
     if [ ! $EXIT_CODE -eq 0 ]; then
-        echo "[$(date "+%T")] Aborting: mint multiple tokens failed"
+        red "[$(date "+%T")] Aborting: mint multiple tokens failed"
         exit 1
     fi
 fi
 
 if [ "${CLOSE}" = "Y" ]; then
     echo ""
-    echo "4. Clean up: withdrawing CM funds."
+    cyn "5. Clean up: withdrawing CM funds."
     echo ""
-    echo ">>>"
+    mag ">>>"
     $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
     EXIT_CODE=$?
-
+    
     if [ ! $EXIT_CODE -eq 0 ]; then
-        echo "[$(date "+%T")] Aborting: withdraw failed"
+        red "[$(date "+%T")] Aborting: withdraw failed"
         exit 1
     fi
 
+    mag "<<<"
     clean_up
 fi
 
+rm ${temp_file}
 echo ""
-echo "[$(date "+%T")] Test completed"
+blu "[$(date "+%T")] Test completed"
