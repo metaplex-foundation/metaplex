@@ -23,6 +23,12 @@ if (process.env.NEXT_PUBLIC_BUGSNAG_API_KEY) {
   });
 }
 
+const storefrontDenyList = [
+  'solboogle',
+  'childofdice',
+  'cotdnft' // user request
+]
+
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
   const forwarded = headers.forwarded
@@ -42,7 +48,7 @@ export async function getServerSideProps(context: NextPageContext) {
 
   const storefront = await getStorefront(subdomain);
 
-  if (storefront) {
+  if (storefront && !storefrontDenyList.includes(subdomain)) {
     return { props: { storefront } };
   }
 

@@ -1,110 +1,87 @@
-import { ConnectButton, useStore } from '@oyster/common';
+import { useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Menu, Row, Space } from 'antd';
-import React, { ReactElement } from 'react';
+import React from 'react';
 import { Link, useResolvedPath, useMatch } from 'react-router-dom';
-import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
-import { HowToBuyModal } from '../HowToBuyModal';
-import { Notifications } from '../Notifications';
 import cx from 'classnames';
-type P = {
-  logo: string;
-};
+import { SecondaryMenu } from '../SecondaryMenu';
 
-interface NavMenuItemProps {
-  to: string;
-  key: string;
-  group?: string;
-  children: string | ReactElement;
-}
-
-const NavMenuItem = ({ to, children, key, group }: NavMenuItemProps) => {
-  const resolved = useResolvedPath(group || to);
-  const match = useMatch({ path: resolved.pathname, end: false });
-
-  return (
-    <Menu.Item key={key} className={cx({ "ant-menu-item-selected": match })}>
-      <Link to={to}>{children}</Link>
-    </Menu.Item>
-  )
-}
-
-export const AppBar = (props: P) => {
+export const AppBar = () => {
   const { connected, publicKey } = useWallet();
-  const { ownerAddress } = useStore();
+  const { ownerAddress, storefront } = useStore();
+  const logo = storefront?.theme?.logo || '';
 
-    let menu = [
-      {
-        key: 'auctions',
-        title: 'Listings',
-        link: '/listings?views=live',
-      },
-      {
-        key: 'creators',
-        title: 'Creators',
-        link: `/creators/${ownerAddress}`,
-        group: '/creators',
-      },
-    ];
+  const getMenuItem = (key: string, linkAppend?: string, title?: string) => {
+    return {
+      key,
+      title: title || key[0].toUpperCase() + key.substring(1),
+      link: `/${key + (linkAppend ? linkAppend : '')}`,
+      group: `/${key}`,
+    };
+  };
 
-    if (connected) {
-      menu = [
-        ...menu,
-        {
-          key: 'owned',
-          title: 'Owned',
-          link: '/owned',
-        },
-      ];
-    };;
+  let menu = [
+    getMenuItem('listings', '?views=live'),
+    getMenuItem('creators', `/${ownerAddress}`),
+  ];
 
-    if (publicKey?.toBase58() === ownerAddress) {
-      menu = [
-        ...menu,
-        {
-          key: 'admin',
-          title: 'Admin',
-          link: '/admin',
-        },
-      ];
-    }
+  if (connected) {
+    menu = [...menu, getMenuItem('owned')];
+  }
+
+  if (publicKey?.toBase58() === ownerAddress) {
+    menu = [...menu, getMenuItem('admin')];
+  }
+
+  interface MenuItemProps {
+    to: string;
+    itemKey: string;
+    group?: string;
+    title: string;
+  }
+
+  const MenuItem = ({ to, title, itemKey, group }: MenuItemProps) => {
+    const resolved = useResolvedPath(group || to);
+    const match = useMatch({ path: resolved.pathname, end: false });
+
+    return (
+      <Link
+        to={to}
+        key={itemKey}
+        className={cx('main-menu-item', {
+          active: match,
+        })}
+      >
+        {title}
+      </Link>
+    );
+  };
 
   return (
-    <>
-      <Row wrap={false} align="middle">
-        <Col flex="0 0 auto">
-          <Link to="/" id="metaplex-header-logo">
-            <img src={props.logo} />
+    <div className="outer-wrapper">
+      <div className="app-bar-wrapper">
+        <div className="app-bar-left-wrapper">
+          <Link
+            to="/"
+            className={cx('app-bar-logo-wrapper', {
+              hide: useMatch('listings'),
+            })}
+          >
+            <img src={logo || ''} className="app-bar-logo" />
           </Link>
-        </Col>
-        <Col flex="1 0 0">
-          <Menu theme="dark" mode="horizontal" selectedKeys={[]}>
-            {menu.map(({ key, link, title, group }) => {
-                return (
-                  <NavMenuItem to={link} key={key} group={group}>
-                    {title}
-                  </NavMenuItem>
-                )
-              })}
-          </Menu>
-        </Col>
-        <Col flex="0 1 auto">
-          <Space className="metaplex-display-flex" align="center">
-            {connected ? (
-              <>
-                <CurrentUserBadge showAddress={true} buttonType="text" />
-                <Notifications buttonType="text" />
-                <Cog buttonType="text" />
-              </>
-            ) : (
-              <>
-                <HowToBuyModal buttonType="text" />
-                <ConnectButton type="text" allowWalletChange={false} />
-              </>
-            )}
-          </Space>
-        </Col>
-      </Row>
-    </>
+          <div className="main-menu-wrapper">
+            {menu.map(({ key, title, link, group }) => (
+              <MenuItem
+                to={link}
+                key={key}
+                itemKey={key}
+                group={group}
+                title={title}
+              />
+            ))}
+          </div>
+        </div>
+        <SecondaryMenu />
+      </div>
+    </div>
   );
 };
