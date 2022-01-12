@@ -62,6 +62,15 @@ export async function updateMetadataFromCache(
   cacheContent: any,
   newCacheContent: any,
 ) {
+  const utf8Encode = new TextEncoder();
+  const temp = await PublicKey.findProgramAddress(
+    [
+      utf8Encode.encode('candy_machine'),
+      new PublicKey(candyMachineAddress).toBytes(),
+    ],
+    new PublicKey('cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ'),
+  );
+  candyMachineAddress = temp[0].toString();
   const metadataByCandyMachine = await getAccountsByCreatorAddress(
     candyMachineAddress,
     connection,
