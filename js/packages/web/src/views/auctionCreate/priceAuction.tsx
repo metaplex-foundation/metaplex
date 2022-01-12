@@ -1,5 +1,5 @@
 import { Button, Input, Space } from 'antd';
-import React from 'react';
+import React, { useState } from 'react';
 import { AuctionCategory, AuctionState } from '.';
 
 export const PriceAuction = (props: {
@@ -7,6 +7,32 @@ export const PriceAuction = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
+  type InputState = number | null;
+  const [price, setPrice] = useState<InputState>(null);
+  const [tickSize, setTickSize] = useState<InputState>(null);
+  const [priceError, setPriceError] = useState(false);
+
+  const handlePriceError = (price: InputState, tick: InputState) => {
+    const multiplier = 1000000;
+    if (tick && price && (price * multiplier) % (tick * multiplier) !== 0) {
+      setPriceError(true);
+    } else {
+      setPriceError(false);
+    }
+  };
+
+  const handleInput = (inputString: string, isPrice: boolean) => {
+    const parsedFloat = parseFloat(inputString);
+    if (isPrice) {
+      setPrice(parsedFloat);
+      handlePriceError(parsedFloat, tickSize);
+    } else {
+      setTickSize(parsedFloat);
+      handlePriceError(price, parsedFloat);
+    }
+    return parsedFloat;
+  };
+
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
       <div>
@@ -28,14 +54,15 @@ export const PriceAuction = (props: {
             placeholder="Fixed Price"
             prefix="◎"
             suffix="SOL"
-            onChange={info =>
+            onChange={info => {
+              const parsedFloat = handleInput(info.target.value, true);
               props.setAttributes({
                 ...props.attributes,
                 // Do both, since we know this is the only item being sold.
-                participationFixedPrice: parseFloat(info.target.value),
-                priceFloor: parseFloat(info.target.value),
-              })
-            }
+                participationFixedPrice: parsedFloat,
+                priceFloor: parsedFloat,
+              });
+            }}
           />
         </label>
       )}
@@ -50,12 +77,13 @@ export const PriceAuction = (props: {
             placeholder="Price"
             prefix="◎"
             suffix="SOL"
-            onChange={info =>
+            onChange={info => {
+              const parsedFloat = handleInput(info.target.value, true);
               props.setAttributes({
                 ...props.attributes,
-                priceFloor: parseFloat(info.target.value),
-              })
-            }
+                priceFloor: parsedFloat,
+              });
+            }}
           />
         </label>
       )}
@@ -68,20 +96,28 @@ export const PriceAuction = (props: {
           placeholder="Tick size in SOL"
           prefix="◎"
           suffix="SOL"
-          onChange={info =>
+          onChange={info => {
+            const parsedFloat = handleInput(info.target.value, false);
             props.setAttributes({
               ...props.attributes,
-              priceTick: parseFloat(info.target.value),
-            })
-          }
+              priceTick: parsedFloat,
+            });
+          }}
         />
       </label>
 
+      {priceError && (
+        <div className="error-message">
+          Starting price must be an exact multiple of the tick size!
+        </div>
+      )}
+
       <Button
-        className="metaplex-fullwidth"
+        className="metaplex-fullwidth metaplex-margin-top-4 metaplex-margin-bottom-4"
         type="primary"
         size="large"
         onClick={props.confirm}
+        disabled={priceError}
       >
         Continue
       </Button>
