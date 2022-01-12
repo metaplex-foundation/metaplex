@@ -57,7 +57,7 @@
     "image-data-uri": "^2.0.1",
     "imagemin": "^7.0.1",
     "imagemin-pngquant": "^9.0.2",
-    "ipfs-http-client": "47.0.0",
+    "ipfs-http-client": "^52.0.3",
     "jsonschema": "^1.4.0",
     "lodash": "^4.17.21",
     "loglevel": "^1.7.1",
@@ -66,9 +66,6 @@
     "node-fetch": "^2.6.1",
     "weighted": "^0.3.0"
   },
-  "__comments": [
-    "Because 「Module not found: Can't resolve 'electron'」, ipfs-http-client is fixed at 47.0.0 <reference>https://github.com/ipfs/js-ipfs/issues/3452"
-  ],
   "devDependencies": {
     "@babel/preset-env": "^7.15.6",
     "@babel/preset-typescript": "^7.15.0",
