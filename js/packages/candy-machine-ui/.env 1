@@ -1,0 +1,4 @@
+REACT_APP_CANDY_MACHINE_ID=81fDbesxKnVnaqimia9DShAGU8sAqB5f1aocxrcgAGq2
+
+REACT_APP_SOLANA_NETWORK=devnet
+REACT_APP_SOLANA_RPC_HOST=https://api.devnet.solana.com
