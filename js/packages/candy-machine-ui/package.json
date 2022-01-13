@@ -1,10 +1,9 @@
 {
   "name": "candy-machine-mint",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
-    "@bundlr-network/client": "^0.2.4",
-    "@civic/solana-gateway-react": "^0.4.6",
+    "@civic/solana-gateway-react": "^0.4.7",
     "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.60",
@@ -23,7 +22,6 @@
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "canvas-confetti": "^1.4.0",
     "mime": "^3.0.0",
     "react": "^17.0.2",
     "react-countdown": "^2.3.2",
@@ -31,7 +29,11 @@
     "react-scripts": "4.0.3",
     "styled-components": "^5.3.1",
     "typescript": "^4.1.2",
-    "web-vitals": "^1.0.1"
+    "web-vitals": "^1.0.1",
+    "react-is": "^16.8.0",
+    "@babel/runtime": "^7.15.5",
+    "@testing-library/dom": "^7.21.4",
+    "prop-types": "^15.7.2"
   },
   "scripts": {
     "start": "react-scripts start",

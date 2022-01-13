@@ -28,6 +28,7 @@ interface CandyMachineState {
   tokenMint: anchor.web3.PublicKey;
   isSoldOut: boolean;
   isActive: boolean;
+  isPresale: boolean;
   goLiveDate: anchor.BN;
   price: anchor.BN;
   gatekeeper: null | {
@@ -58,7 +59,6 @@ export const awaitTransactionSignatureConfirmation = async (
   txid: anchor.web3.TransactionSignature,
   timeout: number,
   connection: anchor.web3.Connection,
-  commitment: anchor.web3.Commitment = 'recent',
   queryStatus = false,
 ): Promise<anchor.web3.SignatureStatus | null | void> => {
   let done = false;
@@ -77,6 +77,7 @@ export const awaitTransactionSignatureConfirmation = async (
       console.log('Rejecting for timeout...');
       reject({ timeout: true });
     }, timeout);
+
     while (!done && queryStatus) {
       // eslint-disable-next-line no-loop-func
       (async () => {
@@ -119,7 +120,7 @@ export const awaitTransactionSignatureConfirmation = async (
   return status;
 };
 
-/* export */ const createAssociatedTokenAccountInstruction = (
+const createAssociatedTokenAccountInstruction = (
   associatedTokenAddress: anchor.web3.PublicKey,
   payer: anchor.web3.PublicKey,
   walletAddress: anchor.web3.PublicKey,
@@ -167,6 +168,12 @@ export const getCandyMachineState = async (
   const itemsRedeemed = state.itemsRedeemed.toNumber();
   const itemsRemaining = itemsAvailable - itemsRedeemed;
 
+  const presale =
+    state.data.whitelistMintSettings &&
+    state.data.whitelistMintSettings.presale &&
+    (!state.data.goLiveDate ||
+      state.data.goLiveDate.toNumber() > new Date().getTime() / 1000);
+
   return {
     id: candyMachineId,
     program,
@@ -176,12 +183,14 @@ export const getCandyMachineState = async (
       itemsRemaining,
       isSoldOut: itemsRemaining === 0,
       isActive:
-        state.data.goLiveDate.toNumber() < new Date().getTime() / 1000 &&
+        (presale ||
+          state.data.goLiveDate.toNumber() < new Date().getTime() / 1000) &&
         (state.endSettings
           ? state.endSettings.endSettingType.date
             ? state.endSettings.number.toNumber() > new Date().getTime() / 1000
             : itemsRedeemed < state.endSettings.number.toNumber()
           : true),
+      isPresale: presale,
       goLiveDate: state.data.goLiveDate,
       treasury: state.wallet,
       tokenMint: state.tokenMint,

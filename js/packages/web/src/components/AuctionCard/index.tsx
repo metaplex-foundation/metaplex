@@ -1,13 +1,12 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, InputNumber, Spin } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import {
   useConnection,
   useUserAccounts,
   MetaplexModal,
   MetaplexOverlay,
-  formatAmount,
   formatTokenAmount,
   useMint,
   PriceFloorType,
@@ -27,16 +26,17 @@ import {
   WRAPPED_SOL_MINT,
   Bid,
   BidderPot,
+  shortenAddress,
 } from '@oyster/common';
 import {
   AuctionView,
   AuctionViewState,
   useBidsForAuction,
+  useCreators,
   useUserBalance,
 } from '../../hooks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
-// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import {
   sendRedeemBid,
@@ -64,6 +64,7 @@ import { endSale } from './utils/endSale';
 import { useInstantSaleState } from './hooks/useInstantSaleState';
 import { useTokenList } from '../../contexts/tokenList';
 import { FundsIssueModal } from "../FundsIssueModal";
+import CongratulationsModal from '../Modals/CongratulationsModal';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -203,6 +204,7 @@ export const AuctionCard = ({
   hideDefaultAction?: boolean;
   action?: JSX.Element;
 }) => {
+  const history = useHistory();
   const connection = useConnection();
   const { update } = useMeta();
 
@@ -216,6 +218,7 @@ export const AuctionCard = ({
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
   const bids = useBidsForAuction(auctionView.auction.pubkey);
+  const creators = useCreators(auctionView);
 
   const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -228,8 +231,9 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
-  const [purchaseFinished, setPurchaseFinished] = useState<boolean>(false);
   const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
+  const [isOpenPurchase, setIsOpenPurchase] = useState<boolean>(false);
+  const [isOpenClaim, setIsOpenClaim] = useState<boolean>(false);
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -461,7 +465,8 @@ export const AuctionCard = ({
         bids,
       );
       await update();
-      setShowRedeemedBidModal(true);
+      if (canClaimPurchasedItem) setIsOpenClaim(true);
+      else setIsOpenPurchase(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
@@ -489,7 +494,7 @@ export const AuctionCard = ({
     (auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty);
 
-  const { canEndInstantSale, isAlreadyBought } =
+  const { canEndInstantSale, isAlreadyBought, canClaimPurchasedItem } =
     useInstantSaleState(auctionView);
 
   const actionButtonContent = useActionButtonContent(auctionView);
@@ -786,25 +791,17 @@ export const AuctionCard = ({
             <Spin />
           ) : (
             auctionView.isInstantSale &&
-            !isAlreadyBought && !purchaseFinished && (<>
-                <FundsIssueModal
-                  message={"Price"}
-                  minimumFunds={fromLamports(instantSalePrice?.toNumber(), mintInfo)}
-                  currentFunds={balance.balance}
-                  isModalVisible={showFundsIssueModal}
-                  onClose={() => setShowFundsIssueModal(false)}
-                />
-                <Button
-                  type="primary"
-                  size="large"
-                  className="ant-btn secondary-btn"
-                  disabled={loading}
-                  onClick={instantSaleAction}
-                  style={{ marginTop: 20, width: '100%' }}
-                >
-                  {actionButtonContent}
+            !isAlreadyBought && (
+              <Button
+                type="primary"
+                size="large"
+                className="ant-btn secondary-btn"
+                disabled={loading}
+                onClick={instantSaleAction}
+                style={{ marginTop: 20, width: '100%' }}
+              >
+                {actionButtonContent}
               </Button>
-              </>
             )
           ))}
         {!hideDefaultAction && !wallet.connected && (
@@ -943,6 +940,21 @@ export const AuctionCard = ({
           to redeem their bids for them right now.
         </h3>
       </MetaplexModal>
+      <CongratulationsModal
+        isModalVisible={isOpenPurchase}
+        onClose={() => setIsOpenPurchase(false)}
+        onClickOk={() => window.location.reload()}
+        buttonText='Reload'
+        content='Reload the page and click claim to receive your NFT. Then check your wallet to confirm it has arrived. It may take a few minutes to process.'
+      />
+      <CongratulationsModal
+        isModalVisible={isOpenClaim}
+        onClose={() => setIsOpenClaim(false)}
+        buttonText='Got it'
+        content={`You have claimed your item from ${creators.map(item => ' ' + (item.name || shortenAddress(item.address || '')))}!`}
+        extraButtonText='View My Items'
+        onClickExtraButton={() => history.push('/artworks')}
+      />
     </div>
   );
 };

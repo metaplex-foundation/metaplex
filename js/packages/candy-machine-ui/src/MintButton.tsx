@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import Button from '@material-ui/core/Button';
 import { CandyMachineAccount } from './candy-machine';
-import { FairLaunchAccount } from './fair-launch';
 import { CircularProgress } from '@material-ui/core';
 import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
 import { useEffect, useState } from 'react';
@@ -15,38 +14,45 @@ export const CTAButton = styled(Button)`
   color: white;
   font-size: 16px;
   font-weight: bold;
-`; // add your styles here
+`; // add your own styles here
 
 export const MintButton = ({
   onMint,
   candyMachine,
-  fairLaunch,
   isMinting,
-  fairLaunchBalance,
 }: {
   onMint: () => Promise<void>;
-  candyMachine: CandyMachineAccount | undefined;
-  fairLaunch?: FairLaunchAccount | undefined;
+  candyMachine?: CandyMachineAccount;
   isMinting: boolean;
-  fairLaunchBalance: number;
 }) => {
   const { requestGatewayToken, gatewayStatus } = useGateway();
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
     if (gatewayStatus === GatewayStatus.ACTIVE && clicked) {
-      console.log('Minting');
       onMint();
       setClicked(false);
     }
   }, [gatewayStatus, clicked, setClicked, onMint]);
+
+  const getMintButtonContent = () => {
+    if (candyMachine?.state.isSoldOut) {
+      return 'SOLD OUT';
+    } else if (isMinting) {
+      return <CircularProgress />;
+    } else if (candyMachine?.state.isPresale) {
+      return 'PRESALE MINT';
+    }
+
+    return 'MINT';
+  };
+
   return (
     <CTAButton
       disabled={
         candyMachine?.state.isSoldOut ||
         isMinting ||
-        !candyMachine?.state.isActive ||
-        (fairLaunch?.ticket?.data?.state.punched && fairLaunchBalance === 0)
+        !candyMachine?.state.isActive
       }
       onClick={async () => {
         setClicked(true);
@@ -63,15 +69,7 @@ export const MintButton = ({
       }}
       variant="contained"
     >
-      {fairLaunch?.ticket?.data?.state.punched && fairLaunchBalance === 0 ? (
-        'MINTED'
-      ) : candyMachine?.state.isSoldOut ? (
-        'SOLD OUT'
-      ) : isMinting ? (
-        <CircularProgress />
-      ) : (
-        'MINT'
-      )}
+      {getMintButtonContent()}
     </CTAButton>
   );
 };
