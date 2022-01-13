@@ -14,6 +14,7 @@ import {
   Keypair,
   RpcResponseAndContext,
   SignatureStatus,
+  Signer,
   SimulatedTransactionResponse,
   Transaction,
   TransactionError,
@@ -77,8 +78,11 @@ interface ConnectionConfig {
 
 const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
-  setEndpoint: () => { },
-  connection: new Connection(DEFAULT, { commitment: 'recent', confirmTransactionInitialTimeout:  DEFAULT_CONNECTION_TIMEOUT }),
+  setEndpoint: () => {},
+  connection: new Connection(DEFAULT, {
+    commitment: 'recent',
+    confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT,
+  }),
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
@@ -101,7 +105,11 @@ export function ConnectionProvider({
   const endpoint = queryEndpoint || savedEndpoint;
 
   const connection = useMemo(
-    () => new Connection(endpoint, { commitment: 'recent', confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT }),
+    () =>
+      new Connection(endpoint, {
+        commitment: 'recent',
+        confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT,
+      }),
     [endpoint],
   );
 
@@ -137,7 +145,7 @@ export function ConnectionProvider({
   useEffect(() => {
     const id = connection.onAccountChange(
       Keypair.generate().publicKey,
-      () => { },
+      () => {},
     );
     return () => {
       connection.removeAccountChangeListener(id);
@@ -287,8 +295,9 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = () => { },
-  failCallback: (err: SendAndConfirmError, ind: number) => boolean = () => false,
+  successCallback: (txid: string, ind: number) => void = () => {},
+  failCallback: (err: SendAndConfirmError, ind: number) => boolean = () =>
+    false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<number> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -338,17 +347,20 @@ export const sendTransactions = async (
     const signedTxnPromise = sendSignedTransaction({
       connection,
       signedTransaction: signedTxns[i],
-    }).then(res => {
+    })
+      .then(res => {
         if (res.err) {
           failCallback(res.err, i);
-          throw new Error(`Instructions set ${i} failed: ${JSON.stringify(res.err)}`);
+          throw new Error(
+            `Instructions set ${i} failed: ${JSON.stringify(res.err)}`,
+          );
         }
 
         const { txid } = res;
         console.log(`Instructions set ${i} succeeded. Transaction Id ${txid}`);
         successCallback(txid, i);
       })
-      .catch((e) => {
+      .catch(e => {
         console.error(e);
         if (sequenceType === SequenceType.StopOnFailure) {
           cancelToken.idx ??= i;
@@ -459,6 +471,87 @@ export const sendTransaction = async (
   return { txid, slot };
 };
 
+interface InstructionSet {
+  signers: Signer[];
+  instructions: TransactionInstruction[];
+}
+
+type SmartInstructionSenderProgressCallback = (currentIndex: number) => void;
+type SmartInstructionSenderReSignCallback = (
+  attempt: number,
+  currentIndex: number,
+) => void;
+type SmartInstructionSenderFailureCallback = (
+  error: Error,
+  successfulItems: number,
+  currentIndex: number,
+  instructionSet: InstructionSet,
+) => void;
+
+export class SmartInstructionSender {
+  private connection?: Connection;
+  private wallet?: WalletSigner;
+  private instructionSets?: InstructionSet[];
+  private config?: {
+    maxSigningAttempts: number;
+    transactionTimeout: number;
+  };
+  private block?: BlockhashAndFeeCalculator;
+
+  private progressCallback?: SmartInstructionSenderProgressCallback;
+  private reSignCallback?: SmartInstructionSenderReSignCallback;
+  private onFailureCallback?: SmartInstructionSenderFailureCallback;
+
+  public withConnection = (connection: Connection) => {
+    this.connection = connection;
+    return this;
+  };
+
+  public withWallet = (wallet: WalletSigner) => {
+    this.wallet = wallet;
+    return this;
+  };
+
+  public withBlock = (block: BlockhashAndFeeCalculator) => {
+    this.block = block;
+    return this;
+  };
+
+  public withInstructionSets = (instructionSets: InstructionSet[]) => {
+    this.instructionSets = instructionSets;
+    return this;
+  };
+
+  public withConfig = (config: {
+    maxSigningAttempts: number;
+    transactionTimeout: number;
+  }) => {
+    this.config = config;
+    return this;
+  };
+
+  public onProgress = (
+    progressCallback: SmartInstructionSenderProgressCallback,
+  ) => {
+    this.progressCallback = progressCallback;
+    return this;
+  };
+
+  public onReSign = (reSignCallback: SmartInstructionSenderReSignCallback) => {
+    this.reSignCallback = reSignCallback;
+    return this;
+  };
+
+  public onFailure = (
+    onFailureCallback: SmartInstructionSenderFailureCallback,
+  ) => {
+    this.onFailureCallback = onFailureCallback;
+    return this;
+  };
+
+  public send = async () => {};
+}
+
 export const sendTransactionWithRetry = async (
   connection: Connection,
   wallet: WalletSigner,
@@ -557,8 +650,6 @@ export async function sendSignedTransaction({
 }: {
   signedTransaction: Transaction;
   connection: Connection;
-  // sendingMessage?: string;
-  // sentMessage?: string;
   // successMessage?: string;
   // timeout?: number;
 }): Promise<SendSignedTransactionResult> {
