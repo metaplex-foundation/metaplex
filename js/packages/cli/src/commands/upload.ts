@@ -343,6 +343,7 @@ export async function uploadV2({
                     cacheContent.items[keys[i]] = {
                       ...cacheContent.items[keys[i]],
                       onChain: true,
+                      verifyRun: false,
                     };
                   });
                   saveCache(cacheName, env, cacheContent);
@@ -453,6 +454,7 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
     manifest.properties.files[0].uri =
       manifest.properties.files[0]?.uri?.replace('image', assetIndex);
   }
+
   return manifest;
 }
 

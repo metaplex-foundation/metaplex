@@ -358,46 +358,42 @@ programCommand('verify_upload')
     );
     let allGood = true;
 
-    const keys = Object.keys(cacheContent.items).filter(
-      k => !cacheContent.items[k].verifyRun,
-    );
+    const keys = Object.keys(cacheContent.items)
+      .filter(k => !cacheContent.items[k].verifyRun)
+      .sort((a, b) => Number(a) - Number(b));
+
     console.log('Key size', keys.length);
     await Promise.all(
-      chunks(Array.from(Array(keys.length).keys()), 500).map(
-        async allIndexesInSlice => {
-          for (let i = 0; i < allIndexesInSlice.length; i++) {
-            // Save frequently.
-            if (i % 100 == 0) saveCache(cacheName, env, cacheContent);
+      chunks(keys, 500).map(async allIndexesInSlice => {
+        for (let i = 0; i < allIndexesInSlice.length; i++) {
+          // Save frequently.
+          if (i % 100 == 0) saveCache(cacheName, env, cacheContent);
 
-            const key = keys[allIndexesInSlice[i]];
-            log.debug('Looking at key ', allIndexesInSlice[i]);
+          const key = allIndexesInSlice[i];
+          log.info('Looking at key ', key);
 
-            const thisSlice = candyMachine.data.slice(
-              CONFIG_ARRAY_START_V2 +
-                4 +
-                CONFIG_LINE_SIZE_V2 * allIndexesInSlice[i],
-              CONFIG_ARRAY_START_V2 +
-                4 +
-                CONFIG_LINE_SIZE_V2 * (allIndexesInSlice[i] + 1),
-            );
-            const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
-            const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
-            const cacheItem = cacheContent.items[key];
-            if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
-              //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-              /*log.info(
+          const thisSlice = candyMachine.data.slice(
+            CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * key,
+            CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * (key + 1),
+          );
+
+          const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
+          const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+          const cacheItem = cacheContent.items[key];
+          if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
+            //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
+            /*log.info(
                 `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
                   `and (${cacheItem.link}). marking to rerun for image`,
                 key,
               );*/
-              cacheItem.onChain = false;
-              allGood = false;
-            } else {
-              cacheItem.verifyRun = true;
-            }
+            cacheItem.onChain = false;
+            allGood = false;
+          } else {
+            cacheItem.verifyRun = true;
           }
-        },
-      ),
+        }
+      }),
     );
 
     if (!allGood) {
