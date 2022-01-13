@@ -1,7 +1,7 @@
 import { program } from 'commander';
 import log from 'loglevel';
 import { mintNFT, updateMetadata, verifyCollection } from './commands/mint-nft';
-import { loadWalletKey } from './helpers/accounts';
+import { getMetadata, loadWalletKey } from './helpers/accounts';
 import { parseUses } from './helpers/various';
 import { web3 } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
@@ -124,10 +124,14 @@ program
     const { env, mint } = cmd.opts();
     const mintKey = new PublicKey(mint);
     const solConnection = new web3.Connection(getCluster(env));
-    const info = await solConnection.getAccountInfo(mintKey);
-    console.log(MetadataData.SCHEMA);
-    const meta = MetadataData.deserialize(info.data);
-    log.info(meta);
+    const metadataAccount = await getMetadata(mintKey);
+    const info = await solConnection.getAccountInfo(metadataAccount);
+    if (info) {
+      const meta = MetadataData.deserialize(info.data);
+      log.info(meta);
+    } else {
+      log.info(`No Metadata account associated with: ${mintKey}`);
+    }
   });
 
 function programCommand(name: string) {
