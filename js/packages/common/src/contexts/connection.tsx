@@ -34,7 +34,7 @@ import { notify } from '../utils/notifications';
 import { sleep, useLocalStorageState } from '../utils/utils';
 import { WalletSigner } from './wallet';
 
-interface BlockhashAndFeeCalculator {
+export interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
   feeCalculator: FeeCalculator;
 }
@@ -471,86 +471,6 @@ export const sendTransaction = async (
   return { txid, slot };
 };
 
-interface InstructionSet {
-  signers: Signer[];
-  instructions: TransactionInstruction[];
-}
-
-type SmartInstructionSenderProgressCallback = (currentIndex: number) => void;
-type SmartInstructionSenderReSignCallback = (
-  attempt: number,
-  currentIndex: number,
-) => void;
-type SmartInstructionSenderFailureCallback = (
-  error: Error,
-  successfulItems: number,
-  currentIndex: number,
-  instructionSet: InstructionSet,
-) => void;
-
-export class SmartInstructionSender {
-  private connection?: Connection;
-  private wallet?: WalletSigner;
-  private instructionSets?: InstructionSet[];
-  private config?: {
-    maxSigningAttempts: number;
-    transactionTimeout: number;
-  };
-  private block?: BlockhashAndFeeCalculator;
-
-  private progressCallback?: SmartInstructionSenderProgressCallback;
-  private reSignCallback?: SmartInstructionSenderReSignCallback;
-  private onFailureCallback?: SmartInstructionSenderFailureCallback;
-
-  public withConnection = (connection: Connection) => {
-    this.connection = connection;
-    return this;
-  };
-
-  public withWallet = (wallet: WalletSigner) => {
-    this.wallet = wallet;
-    return this;
-  };
-
-  public withBlock = (block: BlockhashAndFeeCalculator) => {
-    this.block = block;
-    return this;
-  };
-
-  public withInstructionSets = (instructionSets: InstructionSet[]) => {
-    this.instructionSets = instructionSets;
-    return this;
-  };
-
-  public withConfig = (config: {
-    maxSigningAttempts: number;
-    transactionTimeout: number;
-  }) => {
-    this.config = config;
-    return this;
-  };
-
-  public onProgress = (
-    progressCallback: SmartInstructionSenderProgressCallback,
-  ) => {
-    this.progressCallback = progressCallback;
-    return this;
-  };
-
-  public onReSign = (reSignCallback: SmartInstructionSenderReSignCallback) => {
-    this.reSignCallback = reSignCallback;
-    return this;
-  };
-
-  public onFailure = (
-    onFailureCallback: SmartInstructionSenderFailureCallback,
-  ) => {
-    this.onFailureCallback = onFailureCallback;
-    return this;
-  };
-
-  public send = async () => {};
-}
 
 export const sendTransactionWithRetry = async (
   connection: Connection,
