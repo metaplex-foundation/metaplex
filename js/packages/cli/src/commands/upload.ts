@@ -239,14 +239,6 @@ export async function uploadV2({
                 allIndexesInSlice[i] >= lastPrinted + tick ||
                 allIndexesInSlice[i] === 0
               ) {
-                lastPrinted = i;
-                log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-              }
-
-              if (
-                allIndexesInSlice[i] >= lastPrinted + tick ||
-                allIndexesInSlice[i] === 0
-              ) {
                 lastPrinted = allIndexesInSlice[i];
                 log.info(`Processing asset: ${allIndexesInSlice[i]}`);
               }
