@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import * as anchor from '@project-serum/anchor';
+import { useParams } from 'react-router-dom';
 
 import styled from 'styled-components';
 import { Container, Snackbar } from '@material-ui/core';
@@ -34,7 +35,6 @@ const ConnectButton = styled(WalletDialogButton)`
 const MintContainer = styled.div``; // add your owns styles here
 
 export interface HomeProps {
-  candyMachineId?: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   startDate: number;
   txTimeout: number;
@@ -44,6 +44,9 @@ export interface HomeProps {
 const Home = (props: HomeProps) => {
   const [isUserMinting, setIsUserMinting] = useState(false);
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
+  const [candyMachineId, setCandyMachineId] = useState<
+    anchor.web3.PublicKey | undefined
+  >(undefined);
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
     message: '',
@@ -52,6 +55,12 @@ const Home = (props: HomeProps) => {
 
   const rpcUrl = props.rpcHost;
   const wallet = useWallet();
+  const { id } = useParams<{ id: string }>();
+
+  useEffect(() => {
+    if (!id) return;
+    setCandyMachineId(new anchor.web3.PublicKey(id));
+  }, [id]);
 
   const anchorWallet = useMemo(() => {
     if (
@@ -75,11 +84,11 @@ const Home = (props: HomeProps) => {
       return;
     }
 
-    if (props.candyMachineId) {
+    if (candyMachineId) {
       try {
         const cndy = await getCandyMachineState(
           anchorWallet,
-          props.candyMachineId,
+          candyMachineId,
           props.connection,
         );
         setCandyMachine(cndy);
@@ -88,7 +97,7 @@ const Home = (props: HomeProps) => {
         console.log(e);
       }
     }
-  }, [anchorWallet, props.candyMachineId, props.connection]);
+  }, [anchorWallet, candyMachineId, props.connection]);
 
   const onMint = async () => {
     try {
@@ -156,7 +165,7 @@ const Home = (props: HomeProps) => {
     refreshCandyMachineState();
   }, [
     anchorWallet,
-    props.candyMachineId,
+    candyMachineId,
     props.connection,
     refreshCandyMachineState,
   ]);
