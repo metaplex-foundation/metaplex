@@ -26,7 +26,7 @@ export async function uploadCoinfra({
   manifest,
   metadataLink,
   imageLink,
-  extention,
+  extension,
   filename,
 }: {
   cacheName: string;
@@ -62,7 +62,7 @@ export async function uploadCoinfra({
   manifest: any;
   metadataLink: string;
   imageLink: string;
-  extention: string;
+  extension: string;
   filename: string;
 }): Promise<{
   uploadSuccessful: boolean;
@@ -82,7 +82,7 @@ export async function uploadCoinfra({
   }
 
   const dedupedAssetKeys: AssetKey[] = [
-    { mediaExt: extention, index: filename },
+    { mediaExt: extension, index: filename },
   ];
   const SIZE = dedupedAssetKeys.length;
   console.log('Size', SIZE, dedupedAssetKeys[0]);
