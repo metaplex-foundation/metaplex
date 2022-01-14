@@ -4,7 +4,12 @@ import { PublicKey } from '@solana/web3.js';
 type StringPublicKey = string;
 
 import { BN } from '@project-serum/anchor';
-
+import {
+  DataV2,
+  UpdateMetadataV2Args,
+  Uses,
+  Collection,
+} from '@metaplex-foundation/mpl-token-metadata';
 export enum MetadataKey {
   Uninitialized = 0,
   MetadataV1 = 4,
@@ -152,6 +157,19 @@ export const METADATA_SCHEMA = new Map<any, any>([
     },
   ],
   [
+    UpdateMetadataV2Args,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['data', { kind: 'option', type: Data }],
+        ['updateAuthority', { kind: 'option', type: 'pubkeyAsString' }],
+        ['primarySaleHappened', { kind: 'option', type: 'u8' }],
+        ['isMutable', { kind: 'option', type: 'u8' }],
+      ],
+    },
+  ],
+  [
     Data,
     {
       kind: 'struct',
@@ -161,6 +179,21 @@ export const METADATA_SCHEMA = new Map<any, any>([
         ['uri', 'string'],
         ['sellerFeeBasisPoints', 'u16'],
         ['creators', { kind: 'option', type: [Creator] }],
+      ],
+    },
+  ],
+  [
+    DataV2,
+    {
+      kind: 'struct',
+      fields: [
+        ['name', 'string'],
+        ['symbol', 'string'],
+        ['uri', 'string'],
+        ['sellerFeeBasisPoints', 'u16'],
+        ['creators', { kind: 'option', type: [Creator] }],
+        ['collection', { kind: 'option', type: [Collection] }],
+        ['uses', { kind: 'option', type: [Uses] }],
       ],
     },
   ],
