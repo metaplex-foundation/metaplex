@@ -243,14 +243,6 @@ export async function uploadV2({
                 log.info(`Processing asset: ${allIndexesInSlice[i]}`);
               }
 
-              if (
-                allIndexesInSlice[i] >= lastPrinted + tick ||
-                allIndexesInSlice[i] === 0
-              ) {
-                lastPrinted = allIndexesInSlice[i];
-                log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-              }
-
               let link, imageLink;
               try {
                 switch (storage) {
