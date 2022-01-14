@@ -1,4 +1,8 @@
-import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined,
+  InfoCircleFilled,
+  LoadingOutlined,
+} from '@ant-design/icons';
 import {
   AuctionState,
   BidderMetadata,
@@ -263,6 +267,25 @@ export const AuctionView = () => {
                 )}
               </span>
             </div>
+            {(auction?.items.length || 0) > 1 && (
+              <div className="info-item-wrapper">
+                <span className="item-title">Remaining</span>
+                <span>
+                  {art.maxSupply === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    <span>
+                      {`${(art.maxSupply || 0) - (art.supply || 0)} of ${
+                        art.maxSupply || 0
+                      } `}
+                      <Tooltip title="Max supply may include items from previous listings">
+                        <InfoCircleFilled size={12} />
+                      </Tooltip>
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
