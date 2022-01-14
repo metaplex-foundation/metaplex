@@ -289,7 +289,7 @@ programCommand('withdraw')
               cpf,
             );
             log.info(
-              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+              `${cg.pubkey} has been withdrawn. \nTransaction Signature: ${tx}`,
             );
           }
         } catch (e) {
@@ -373,12 +373,10 @@ programCommand('verify_upload')
             log.debug('Looking at key ', allIndexesInSlice[i]);
 
             const thisSlice = candyMachine.data.slice(
+              CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * Number(key),
               CONFIG_ARRAY_START_V2 +
                 4 +
-                CONFIG_LINE_SIZE_V2 * allIndexesInSlice[i],
-              CONFIG_ARRAY_START_V2 +
-                4 +
-                CONFIG_LINE_SIZE_V2 * (allIndexesInSlice[i] + 1),
+                CONFIG_LINE_SIZE_V2 * (Number(key) + 1),
             );
             const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
             const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
