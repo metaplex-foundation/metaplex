@@ -147,8 +147,8 @@ export function AccountsProvider({ children = null as any }) {
     const subs: number[] = [];
     cache.emitter.onCache(args => {
       if (args.isNew && args.isActive) {
-        let id = args.id;
-        let deserialize = args.parser;
+        const id = args.id;
+        const deserialize = args.parser;
         connection.onAccountChange(new PublicKey(id), info => {
           cache.add(id, info, deserialize);
         });

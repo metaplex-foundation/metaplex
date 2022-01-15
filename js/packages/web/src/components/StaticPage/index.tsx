@@ -246,7 +246,11 @@ export const StaticPage = (props: {
           {section.caption && (
             <p className="image-caption">
               {section.caption.text}
-              <a href={section.caption.linkUrl} target="_blank">
+              <a
+                href={section.caption.linkUrl}
+                rel="noreferrer"
+                target="_blank"
+              >
                 {section.caption.linkText}
               </a>
             </p>

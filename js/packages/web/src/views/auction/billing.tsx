@@ -250,7 +250,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
       ),
   );
 
-  let hasParticipation =
+  const hasParticipation =
     auctionView.auctionManager.participationConfig !== undefined &&
     auctionView.auctionManager.participationConfig !== null;
   let participationEligible = hasParticipation ? usableBids : [];

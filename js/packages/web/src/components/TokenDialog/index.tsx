@@ -25,7 +25,7 @@ export function TokenButton({
   onClick: () => void;
 }) {
   const tokenMap = useTokenList().mainnetTokens;
-  let tokenInfo = tokenMap.filter(t => t.address == mint.toBase58())[0];
+  const tokenInfo = tokenMap.filter(t => t.address == mint.toBase58())[0];
 
   return (
     <Row onClick={onClick} className={'token-button'} justify='space-between'>
@@ -61,7 +61,7 @@ export default function TokenDialog({
       : tabSelection === TokenViewState.Wormhole
         ? swappableTokensWormhole
         : swappableTokensSollet;
-  let tokens =
+  const tokens =
     tokenFilter === ""
       ? selectedTokens
       : selectedTokens.filter(
@@ -182,7 +182,7 @@ function TokenListItem({
 
 export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
   const tokenMap = useTokenList().tokenMap;
-  let tokenInfo = tokenMap.get(mint.toString());
+  const tokenInfo = tokenMap.get(mint.toString());
   return (
     <div
       style={{
@@ -202,9 +202,9 @@ export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
 
 function TokenName({ mint, style }: { mint: PublicKey; style?: any}) {
   const tokenMap = useTokenList().tokenMap;
-  let tokenInfo = tokenMap.get(mint.toString());
-  let tokenSymbol = tokenInfo? tokenInfo.symbol: "CUSTOM"
-  let tokenName = tokenInfo? tokenInfo.name: "Custom Token"
+  const tokenInfo = tokenMap.get(mint.toString());
+  const tokenSymbol = tokenInfo? tokenInfo.symbol: "CUSTOM"
+  const tokenName = tokenInfo? tokenInfo.name: "Custom Token"
 
   return (
     <div style={{ marginLeft: "16px", overflow: 'hidden' }}>

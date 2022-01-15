@@ -107,7 +107,7 @@ const rerun = async ({
         totalAuctions++;
         averageBidders += extended.info.totalUncancelledBids.toNumber();
         const bids = auction.auction.info.bidState;
-        let highestBid = bids.getAmountAt(0);
+        const highestBid = bids.getAmountAt(0);
         if (highestBid && highestBid.toNumber() > newHighestSale) {
           newHighestSale = highestBid.toNumber();
         }

@@ -47,7 +47,7 @@ export function CoingeckoProvider({ children = null as any }) {
       const subscribedTokenMints = process.env.NEXT_SPL_TOKEN_MINTS? process.env.NEXT_SPL_TOKEN_MINTS.split(","): []
       const subscribedTokenIDS = process.env.NEXT_CG_SPL_TOKEN_IDS? process.env.NEXT_CG_SPL_TOKEN_IDS.split(","): []
 
-      var allSplPrices:AllSplTokens[] = []
+      const allSplPrices:AllSplTokens[] = []
       for (let i=0; i < subscribedTokenMints.length; i++) {
         try {
           const splName = subscribedTokenIDS[i]

@@ -480,6 +480,7 @@ const BidLine = (props: {
                 target="_blank"
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
+                rel="noreferrer"
               >{`@${bidderTwitterHandle}`}</a>
             ) : (
               shortenAddress(bidder)
@@ -574,6 +575,7 @@ const BidLine = (props: {
                     target="_blank"
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
+                    rel="noreferrer"
                   >{`@${bidderTwitterHandle}`}</a>
                   <ClickToCopy
                     className="copy-pubkey"

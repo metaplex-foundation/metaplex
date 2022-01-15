@@ -87,14 +87,16 @@ export function ConnectionProvider({ children }: { children: any }) {
 
   let maybeEndpoint;
   if (networkParam) {
-    let endpointParam = ENDPOINTS.find(({ name }) => name === networkParam);
+    const endpointParam = ENDPOINTS.find(({ name }) => name === networkParam);
     if (endpointParam) {
       maybeEndpoint = endpointParam;
     }
   }
 
   if (networkStorage && !maybeEndpoint) {
-    let endpointStorage = ENDPOINTS.find(({ name }) => name === networkStorage);
+    const endpointStorage = ENDPOINTS.find(
+      ({ name }) => name === networkStorage,
+    );
     if (endpointStorage) {
       maybeEndpoint = endpointStorage;
     }
@@ -226,7 +228,7 @@ export async function sendTransactionsWithManualRetry(
   let stopPoint = 0;
   let tries = 0;
   let lastInstructionsLength = null;
-  let toRemoveSigners: Record<number, boolean> = {};
+  const toRemoveSigners: Record<number, boolean> = {};
   instructions = instructions.filter((instr, i) => {
     if (instr.length > 0) {
       return true;
@@ -386,7 +388,7 @@ export const sendTransactions = async (
       continue;
     }
 
-    let transaction = new Transaction();
+    const transaction = new Transaction();
     instructions.forEach(instruction => transaction.add(instruction));
     transaction.recentBlockhash = block.blockhash;
     transaction.setSigners(
@@ -406,7 +408,7 @@ export const sendTransactions = async (
 
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 
-  let breakEarlyObject = { breakEarly: false, i: 0 };
+  const breakEarlyObject = { breakEarly: false, i: 0 };
   console.log(
     'Signed txns length',
     signedTxns.length,
@@ -562,7 +564,7 @@ export const sendTransaction = async (
   }
 
   const rawTransaction = transaction.serialize();
-  let options = {
+  const options = {
     skipPreflight: true,
     commitment,
   };

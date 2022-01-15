@@ -104,7 +104,12 @@ export const Footer = () => {
             <div className="sub-header">{component.title}</div>
             {component.links.map(link => (
               <div className="body-text">
-                <a href={link.url} target="_blank" className="footer-link">
+                <a
+                  className="footer-link"
+                  href={link.url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
                   {link.label}
                 </a>
               </div>
