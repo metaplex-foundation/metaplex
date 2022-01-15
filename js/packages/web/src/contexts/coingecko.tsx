@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useTokenList } from './tokenList';
+
 export const COINGECKO_POOL_INTERVAL = 1000 * 60; // 60 sec
 export const COINGECKO_API = 'https://api.coingecko.com/api/v3/';
 export const COINGECKO_COIN_PRICE_API = `${COINGECKO_API}simple/price`;
@@ -40,7 +40,6 @@ const CoingeckoContext =
   }) {
   const [solPrice, setSolPrice] = useState<number>(0);
   const [allSplPrices, setAllSplPrices] = useState<AllSplTokens[]>([]);
-  const tokenList = useTokenList().mainnetTokens
 
   useEffect(() => {
     let timerId = 0;

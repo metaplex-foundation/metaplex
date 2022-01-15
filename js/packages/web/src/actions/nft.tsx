@@ -121,7 +121,7 @@ export const mintNFT = async (
   ];
 
   const { instructions: pushInstructions, signers: pushSigners } =
-    await prepPayForFilesTxn(wallet, realFiles, metadata);
+    await prepPayForFilesTxn(wallet, realFiles);
 
   progressCallback(1);
 
@@ -312,7 +312,7 @@ export const mintNFT = async (
 
     progressCallback(8);
 
-    const txid = await sendTransactionWithRetry(
+    await sendTransactionWithRetry(
       connection,
       wallet,
       updateInstructions,
@@ -343,7 +343,6 @@ export const mintNFT = async (
 export const prepPayForFilesTxn = async (
   wallet: WalletSigner,
   files: File[],
-  metadata: any,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];

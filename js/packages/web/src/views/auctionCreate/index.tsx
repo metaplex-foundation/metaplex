@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Divider,
   Steps,
@@ -48,7 +42,6 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo, MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { capitalize } from 'lodash';
 import {
   WinningConfigType,
   AmountRange,
@@ -68,7 +61,6 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
 import TokenDialog, { TokenButton } from '../../components/TokenDialog';
 import { useTokenList } from '../../contexts/tokenList';
-import { mintTo } from '@project-serum/serum/lib/token-instructions';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { FundsIssueModal } from '../../components/FundsIssueModal';
 
@@ -192,10 +184,6 @@ export const AuctionCreateView = () => {
     items: [],
     tiers: [],
   });
-  const [quoteMintAddress, setQuoteMintAddress] = useState<string>();
-  const [quoteMintInfo, setQuoteMintInfo] = useState<MintInfo>();
-  const [quoteMintInfoExtended, setQuoteMintInfoExtended] =
-    useState<TokenInfo>();
 
   useEffect(() => {
     if (step_param) setStep(parseInt(step_param));
@@ -988,12 +976,7 @@ const CopiesStep = (props: {
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
-  const { hasOtherTokens, tokenMap } = useTokenList();
-
-  // give default value to mint
-  const mintInfo = tokenMap.get(
-    !mint ? QUOTE_MINT.toString() : mint.toString(),
-  );
+  const { hasOtherTokens } = useTokenList();
 
   props.attributes.quoteMintAddress = mint
     ? mint.toBase58()
@@ -1010,8 +993,7 @@ const CopiesStep = (props: {
 
   const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
-  let filter: (i: SafetyDepositDraft) => boolean = (i: SafetyDepositDraft) =>
-    true;
+  let filter: (i: SafetyDepositDraft) => boolean = () => true;
   if (props.attributes.category === AuctionCategory.Limited) {
     filter = (i: SafetyDepositDraft) =>
       !!i.masterEdition && !!i.masterEdition.info.maxSupply;
@@ -1109,12 +1091,7 @@ const NumberOfWinnersStep = (props: {
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
-  const { hasOtherTokens, tokenMap } = useTokenList();
-
-  // give default value to mint
-  const mintInfo = tokenMap.get(
-    !mint ? QUOTE_MINT.toString() : mint.toString(),
-  );
+  const { hasOtherTokens } = useTokenList();
 
   props.attributes.quoteMintAddress = mint
     ? mint.toBase58()
@@ -1214,7 +1191,8 @@ const PriceAuction = (props: {
           {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && (
             <a
               href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`}
-              target="_blank" rel="noreferrer"
+              target="_blank"
+              rel="noreferrer"
             >
               {' '}
               {props.attributes?.quoteMintAddress !=
@@ -1990,6 +1968,7 @@ const ReviewStep = (props: {
   const [cost, setCost] = useState(0);
   const { account } = useNativeAccount();
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const rentCall = Promise.all([
       props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
       props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
@@ -2186,7 +2165,7 @@ const Congrats = (props: {
         <div className="congrats-button-container">
           <Button
             className="metaplex-button"
-            onClick={_ => window.open(newTweetURL(), '_blank')}
+            onClick={() => window.open(newTweetURL(), '_blank')}
           >
             <span>Share it on Twitter</span>
             <span>&gt;</span>

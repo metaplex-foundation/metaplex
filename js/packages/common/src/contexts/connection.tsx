@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   TokenInfo,
   TokenListProvider,
@@ -338,7 +338,7 @@ export const sendTransactionsInChunks = async (
         signedTransaction: signedTxns[i],
         timeout,
       });
-      signedTxnPromise.catch(reason => {
+      signedTxnPromise.catch(() => {
         // @ts-ignore
         if (sequenceType === SequenceType.StopOnFailure) {
           breakEarlyObject.breakEarly = true;
@@ -368,8 +368,8 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = (txid, ind) => {},
-  failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
+  successCallback: (txid: string, ind: number) => void = () => {},
+  failCallback: (reason: string, ind: number) => boolean = () => false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<number> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -422,10 +422,10 @@ export const sendTransactions = async (
     });
 
     signedTxnPromise
-      .then(({ txid, slot }) => {
+      .then(({ txid }) => {
         successCallback(txid, i);
       })
-      .catch(reason => {
+      .catch(() => {
         // @ts-ignore
         failCallback(signedTxns[i], i);
         if (sequenceType === SequenceType.StopOnFailure) {

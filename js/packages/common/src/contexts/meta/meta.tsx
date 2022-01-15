@@ -48,7 +48,11 @@ export function MetaProvider({
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
   const [page, setPage] = useState(0);
-  const [lastLength, setLastLength] = useState(0);
+  const [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _lastLength,
+    setLastLength,
+  ] = useState(0);
   const { userAccounts } = useUserAccounts();
 
   const [isLoading, setIsLoading] = useState(false);

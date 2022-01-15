@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import React, { useState } from "react";
 import { useSwappableTokens, useTokenList } from "../../contexts/tokenList";
-import { Row, Col, Typography, Modal, Tabs, Input, List } from 'antd';
+import { Row, Col, Typography, Tabs, Input, List } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenCircle } from "../Custom";
@@ -32,7 +32,7 @@ export function TokenButton({
       <Col>
         <Row>
           <TokenCircle iconSize={40} iconFile={tokenInfo?.logoURI} style={{ marginTop: 2.5 }} />
-          <TokenName mint={mint} style={{ fontSize: 14, fontWeight: 700 }} />
+          <TokenName mint={mint} />
         </Row>
       </Col>
       <Col>
@@ -200,10 +200,9 @@ export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
   );
 }
 
-function TokenName({ mint, style }: { mint: PublicKey; style?: any}) {
+function TokenName({ mint }: { mint: PublicKey }) {
   const tokenMap = useTokenList().tokenMap;
   const tokenInfo = tokenMap.get(mint.toString());
-  const tokenSymbol = tokenInfo? tokenInfo.symbol: "CUSTOM"
   const tokenName = tokenInfo? tokenInfo.name: "Custom Token"
 
   return (

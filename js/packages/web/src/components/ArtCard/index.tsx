@@ -32,25 +32,27 @@ export interface ArtCardProps extends CardProps {
 }
 
 export const ArtCard = (props: ArtCardProps) => {
-  let {
+  const {
     className,
     small,
     category,
     image,
     animationURL,
-    name,
     preview,
-    creators,
-    description,
     onClose,
     pubkey,
     height,
     artView,
     width,
     count,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    name: _name,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    creators: _creators,
     ...rest
   } = props;
   const art = useArt(pubkey);
+  let { name, creators } = props;
   creators = art?.creators || creators || [];
   name = art?.title || name || ' ';
 
