@@ -433,86 +433,83 @@ function InnerAdminView({
 
       <div className="metaplex-flex-column metaplex-gap-4">
         <h2>Administrator Actions</h2>
+        <div className="metaplex-flex metaplex-gap-4">
+          <div className="metaplex-width-50">
+            <h3>Convert Master Editions</h3>
+            <p>
+              You have {filteredMetadata?.available.length} MasterEditionV1s
+              that can be converted right now and{' '}
+              {filteredMetadata?.unavailable.length} still in unfinished
+              auctions that cannot be converted yet.
+            </p>
+            <Button
+              size="large"
+              loading={convertingMasterEditions}
+              onClick={async () => {
+                setConvertMasterEditions(true);
 
-        {!store.info.public && (
-          <div className="metaplex-flex metaplex-gap-4">
-            <div className="metaplex-width-50">
-              <h3>Convert Master Editions</h3>
-              <p>
-                You have {filteredMetadata?.available.length} MasterEditionV1s
-                that can be converted right now and{' '}
-                {filteredMetadata?.unavailable.length} still in unfinished
-                auctions that cannot be converted yet.
-              </p>
-              <Button
-                size="large"
-                loading={convertingMasterEditions}
-                onClick={async () => {
-                  setConvertMasterEditions(true);
+                await convertMasterEditions(
+                  connection,
+                  wallet,
+                  filteredMetadata?.available || [],
+                  accountByMint,
+                );
 
-                  await convertMasterEditions(
-                    connection,
-                    wallet,
-                    filteredMetadata?.available || [],
-                    accountByMint,
-                  );
-
-                  setConvertMasterEditions(false);
-                }}
-              >
-                Convert Eligible Master Editions
-              </Button>
-            </div>
-            <div className="metaplex-width-50">
-              <h3>Cache Auctions</h3>
-              <p>
-                Activate your storefront listing caches by pressing &ldquo;build
-                cache&rdquo;. This will reduce page load times for your
-                listings. Your storefront will start looking up listing using
-                the cache on November 17th. To preview the speed improvement
-                visit the Holaplex{' '}
-                <a
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  href={`https://${storefront.subdomain}.holaxplex.dev`}
-                >
-                  {' '}
-                  staging environment
-                </a>{' '}
-                for your storefront.
-              </p>
-              <Space direction="vertical" size="middle" align="center">
-                <Progress
-                  type="circle"
-                  status="normal"
-                  percent={(auctionCacheTotal / auctionManagerTotal) * 100}
-                  format={() => `${auctionManagersToCache.length} left`}
-                />
-                {auctionManagersToCache.length > 0 && (
-                  <Button
-                    size="large"
-                    loading={cachingAuctions}
-                    onClick={async () => {
-                      setCachingAuctions(true);
-
-                      await cacheAllAuctions(
-                        wallet,
-                        connection,
-                        auctionManagersToCache,
-                        auctionCaches,
-                        storeIndexer,
-                      );
-
-                      setCachingAuctions(false);
-                    }}
-                  >
-                    Build Cache
-                  </Button>
-                )}
-              </Space>
-            </div>
+                setConvertMasterEditions(false);
+              }}
+            >
+              Convert Eligible Master Editions
+            </Button>
           </div>
-        )}
+          <div className="metaplex-width-50">
+            <h3>Cache Auctions</h3>
+            <p>
+              Activate your storefront listing caches by pressing &ldquo;build
+              cache&rdquo;. This will reduce page load times for your
+              listings. Your storefront will start looking up listing using
+              the cache on November 17th. To preview the speed improvement
+              visit the Holaplex{' '}
+              <a
+                rel="noopener noreferrer"
+                target="_blank"
+                href={`https://${storefront.subdomain}.holaxplex.dev`}
+              >
+                {' '}
+                staging environment
+              </a>{' '}
+              for your storefront.
+            </p>
+            <Space direction="vertical" size="middle" align="center">
+              <Progress
+                type="circle"
+                status="normal"
+                percent={(auctionCacheTotal / auctionManagerTotal) * 100}
+                format={() => `${auctionManagersToCache.length} left`}
+              />
+              {auctionManagersToCache.length > 0 && (
+                <Button
+                  size="large"
+                  loading={cachingAuctions}
+                  onClick={async () => {
+                    setCachingAuctions(true);
+
+                    await cacheAllAuctions(
+                      wallet,
+                      connection,
+                      auctionManagersToCache,
+                      auctionCaches,
+                      storeIndexer,
+                    );
+
+                    setCachingAuctions(false);
+                  }}
+                >
+                  Build Cache
+                </Button>
+              )}
+            </Space>
+          </div>
+        </div>
       </div>
       <h2>Miscellaneous</h2>
       <div>
