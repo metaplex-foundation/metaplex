@@ -37,7 +37,11 @@ const MetaContext = React.createContext<MetaContextState>({
   update: () => [AuctionData, BidderMetadata, BidderPot],
 });
 
-export function MetaProvider({ children = null as any }) {
+export function MetaProvider({
+  children = null,
+}: {
+  children: React.ReactNode;
+}) {
   const connection = useConnection();
   const { isReady, storeAddress } = useStore();
   const wallet = useWallet();

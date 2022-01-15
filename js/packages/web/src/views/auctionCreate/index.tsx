@@ -729,7 +729,7 @@ const CategoryStep = (props: {
       <Row className="call-to-action">
         <h2>List an item</h2>
         <p>
-          First time listing on Metaplex? <a>Read our sellers' guide.</a>
+          First time listing on Metaplex? <a>Read our sellers&apos; guide.</a>
         </p>
       </Row>
       <Row justify={width < 768 ? 'center' : 'start'}>

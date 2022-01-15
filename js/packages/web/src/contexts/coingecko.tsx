@@ -33,7 +33,11 @@ export const altSplToUSD = async (cgTokenName?: string): Promise<number> => {
 
 const CoingeckoContext =
   React.createContext<CoingeckoContextState | null>(null);
-export function CoingeckoProvider({ children = null as any }) {
+  export function CoingeckoProvider({
+    children = null,
+  }: {
+    children: React.ReactNode;
+  }) {
   const [solPrice, setSolPrice] = useState<number>(0);
   const [allSplPrices, setAllSplPrices] = useState<AllSplTokens[]>([]);
   const tokenList = useTokenList().mainnetTokens

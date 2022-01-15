@@ -7,7 +7,11 @@ export interface ConfettiContextState {
 
 const ConfettiContext = React.createContext<ConfettiContextState | null>(null);
 
-export const ConfettiProvider = ({ children = null as any }) => {
+export const ConfettiProvider = ({
+  children = null,
+}: {
+  children: React.ReactNode;
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>();
   const confettiRef = useRef<confetti.CreateTypes>();
 
