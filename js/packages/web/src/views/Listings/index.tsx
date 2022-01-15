@@ -9,7 +9,7 @@ import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { MetaplexMasonry } from './../../components/MetaplexMasonry';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
 import { useSearchParams } from 'react-router-dom';
-import { useInfiniteScrollAuctions } from '../../hooks';
+import { useInfiniteScrollAuctions, useGroupedAuctions } from '../../hooks';
 import { Banner } from './../../components/Banner';
 import cx from 'classnames';
 
@@ -26,14 +26,14 @@ export const Listings = () => {
   const notAllAuctionsCached = auctionManagerTotal !== auctionCacheTotal;
   const showCacheAuctionsAlert = isStoreOwner && notAllAuctionsCached;
 
+  const { groups, fetching } = useGroupedAuctions();
+
   const {
     auctions,
     loading,
     hasNextPage,
-    initLoading,
     loadMore,
-    auctionsCount,
-  } = useInfiniteScrollAuctions(view);
+  } = useInfiniteScrollAuctions(groups[view]);
 
   const [sentryRef] = useInfiniteScroll({
     loading,
@@ -42,44 +42,50 @@ export const Listings = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
-  const showCount = (view: View) =>
-    auctionsCount[view] != null ? (
-      auctionsCount[view]
-    ) : (
-      <Spin size="small" indicator={<LoadingOutlined />} />
-    );
+  useEffect(() => {    
+    const activeGroup = groups[view];
 
-  const currentViewIsEmpty = () =>
-    views.filter(x => x.key === view)[0]?.count() === 0;
+    if (fetching) {
+      return;
+     }
 
-  useEffect(() => {
-    // makes sure cards load when switching back to listings from another page
-    setSearchParams({
-      view: view || View.live,
-    });
-    // auto-forwards to first listings view with matching listings
-    if (currentViewIsEmpty()) {
-      setSearchParams({
-        view: views.find(x => x.count() > 0)?.key || View.live,
-      });
+    if (activeGroup.length > 0) {
+      return;
     }
-  }, [view, loading, auctionsCount]); // triggers the auto-forward in all edge cases I could find
+
+    if (groups[View.live].length > 0) {
+      setSearchParams({
+        view: View.live,
+      });        
+
+      return;
+    }
+
+    if (groups[View.resale].length > 0 ) {
+      setSearchParams({
+        view: View.resale,
+      });        
+
+      return;
+    }
+
+    setSearchParams({
+      view: View.ended,
+    });
+  }, [fetching, groups]); // triggers the auto-forward in all edge cases I could find
 
   const views = [
     {
-      key: 'live',
+      key: View.live,
       title: 'Live',
-      count: () => showCount(View.live) || 0,
     },
     {
-      key: 'resale',
+      key: View.resale,
       title: 'Secondary',
-      count: () => showCount(View.resale) || 0,
     },
     {
-      key: 'ended',
+      key: View.ended,
       title: 'Ended',
-      count: () => showCount(View.ended) || 0,
     },
   ];
 
@@ -126,21 +132,23 @@ export const Listings = () => {
       />
       <Anchor showInkInFixed={false} className="metaplex-anchor">
         <div className="listings-menu-wrapper">
-          {views.map(({ key, title, count }) => {
+          {views.map(({ key, title }) => {
+            const count = groups[key].length;
+            
             return (
               <button
                 key={key}
                 className={cx('listings-menu-item', { active: view === key })}
                 onClick={() => setSearchParams({ view: key })}
-                disabled={count() === 0}
+                disabled={count === 0}
               >
-                {title} <span className="auctions-count">| {count()}</span>
+                {title} <span className="auctions-count">| {count}</span>
               </button>
             );
           })}
         </div>
       </Anchor>
-      {initLoading ? (
+      {fetching ? (
         <div className="app-section--loading">
           <Spin indicator={<LoadingOutlined />} />
         </div>

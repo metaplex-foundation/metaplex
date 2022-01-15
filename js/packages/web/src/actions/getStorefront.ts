@@ -9,6 +9,7 @@ import { maybeCDN } from '../utils/cdn';
 
 const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 const REDIS_URL = process.env.REDIS_URL;
+const REDIS_TLS_ENABLED = process.env.REDIS_TLS_ENABLED === 'true';
 const pubkeyDenyList = [
   'Fy8GCo5pyaMmUS6BqydzYnHBYeQN5BnKijCV2x2pRc3n',
   '9ztzyU9eFuce42CHD7opPxpjrsg15onjNARnmuMS2aQy',
@@ -111,7 +112,7 @@ export const getStorefront = async (
   const client = createClient({
     url: REDIS_URL,
     socket: {
-      tls: true,
+      tls: REDIS_TLS_ENABLED,
       rejectUnauthorized: false,
     },
   });
