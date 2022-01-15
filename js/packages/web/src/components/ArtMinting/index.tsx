@@ -52,8 +52,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const renderMintEdition =
     isArtMasterEdition &&
     isArtOwnedByUser &&
-    !isMasterEditionV1 &&
-    maxEditionsToMint !== 0;
+    !isMasterEditionV1
 
   const mintingDestinationErr = useMemo(() => {
     if (!mintingDestination) return 'Required';
@@ -227,7 +226,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
                 type="number"
                 style={{ width: '100%' }}
                 min={1}
-                max={maxEditionsToMint}
+                max={art.supply}
                 value={editionNumber}
                 precision={0}
                 onChange={setEditionNumber}
