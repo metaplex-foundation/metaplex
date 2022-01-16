@@ -435,6 +435,7 @@ if [ "${CHANGE}" = "Y" ]; then
     upload
     verify_upload
     check_changed
+    verify_upload
     mag "<<<"
 else
     blu "Skipping 3 (Editing cache and testing reupload)"
