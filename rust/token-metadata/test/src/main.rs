@@ -610,7 +610,7 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let metadata_program = spl_token_metadata::id();
 
     let participation_trophy =
-        Pubkey::from_str("AFe2hrpDKdLuq2auxyBX8iumjyBsLFnEc68pNVXFUSSv").unwrap();
+        Pubkey::from_str("Gt2VHnTpWhczM2EvYQSVAf3BHCVNyR1q5yUGibzb6sEX").unwrap();
 
     let metadata_seeds = &[
         PREFIX.as_bytes(),
@@ -633,6 +633,7 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let master_edition_account = client.get_account(&master_edition_key).unwrap();
     let master_edition: MasterEditionV2 =
         try_from_slice_unchecked(&master_edition_account.data).unwrap();
+    let edition_offset = master_edition.supply;
     let existing_token_account = Pubkey::from_str(
         &client
             .get_token_accounts_by_owner(
@@ -763,7 +764,7 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
                 Pubkey::from_str(&key.0).unwrap(),
                 master_metadata_key,
                 master_metadata.mint,
-                0 + i as u64 + j as u64 + 1,
+                edition_offset + i as u64 + j as u64 + 1,
             ));
 
             let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
