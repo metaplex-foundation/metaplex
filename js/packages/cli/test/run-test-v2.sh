@@ -359,9 +359,9 @@ function clean_up {
 
 # edit cache file for reupload
 function change_cache {
-    cat $CACHE_FILE | jq -c ".items.\"0\".onChain=false|.items.\"0\".name=\"Changed 0\"|del(.items.\""$LAST_INDEX"\")" \
+    cat $CACHE_FILE | jq -c ".items.\"0\".onChain=false|.items.\"0\".name=\"Changed #0\"|del(.items.\""$LAST_INDEX"\")" \
         >$CACHE_FILE.tmp && mv $CACHE_FILE.tmp $CACHE_FILE
-    if [[ $(cat $CACHE_FILE | grep "Changed 0") ]]; then
+    if [[ $(cat $CACHE_FILE | grep "Changed #0") ]]; then
         grn "Success: cache file changed"
     else 
         red "Failure: cache file was not changed"
@@ -377,7 +377,7 @@ function check_changed {
     temp_file=$(mktemp)
     echo $CANDY | xargs -I{} solana account {} -u $RPC -o $temp_file
 
-    if [[ $(strings $temp_file | grep -a "Changed 0") ]]; then
+    if [[ $(strings $temp_file | grep -a "Changed #0") ]]; then
         grn "Success: item 0 found on chain"
     else
         red "Failure: new item 0 not found on chain"
