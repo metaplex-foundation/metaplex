@@ -364,7 +364,6 @@ programCommand('verify_upload')
 
     console.log('Key size', keys.length);
     await Promise.all(
-<<<<<<< HEAD
       chunks(keys, 500).map(async allIndexesInSlice => {
         for (let i = 0; i < allIndexesInSlice.length; i++) {
           // Save frequently.
@@ -384,29 +383,6 @@ programCommand('verify_upload')
           if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
             //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
             /*log.info(
-=======
-      chunks(Array.from(Array(keys.length).keys()), 500).map(
-        async allIndexesInSlice => {
-          for (let i = 0; i < allIndexesInSlice.length; i++) {
-            // Save frequently.
-            if (i % 100 == 0) saveCache(cacheName, env, cacheContent);
-
-            const key = keys[allIndexesInSlice[i]];
-            log.debug('Looking at key ', allIndexesInSlice[i]);
-
-            const thisSlice = candyMachine.data.slice(
-              CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * Number(key),
-              CONFIG_ARRAY_START_V2 +
-                4 +
-                CONFIG_LINE_SIZE_V2 * (Number(key) + 1),
-            );
-            const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
-            const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
-            const cacheItem = cacheContent.items[key];
-            if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
-              //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-              /*log.info(
->>>>>>> 69126d04 (fix: fixing multiple bugs on test script)
                 `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
                   `and (${cacheItem.link}). marking to rerun for image`,
                 key,
