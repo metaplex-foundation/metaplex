@@ -63,7 +63,7 @@ export async function pinataUpload(
     const hashJson = await resJson.json();
     const { IpfsHash: jsonHash } = hashJson;
 
-    await sleep(500);
+    await sleep(750);
 
     const link = `${gatewayUrl}/ipfs/${jsonHash}`;
     log.info('uploaded manifest: ', link);
