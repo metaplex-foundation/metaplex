@@ -161,6 +161,25 @@ const Home = (props: HomeProps) => {
     refreshCandyMachineState,
   ]);
 
+  // if an end date is set, setup a timer to refresh the candy machine state
+  // after it ends (w/a small delay), to catch that the mint is no longer active
+  useEffect(() => {
+    if (candyMachine && candyMachine.state.endSettings) {
+      const endSettings = candyMachine.state.endSettings;
+      if (endSettings.endSettingType.date) {
+        const endDate = endSettings.number.toNumber();
+        const currentDate = new Date().getTime() / 1000;
+        if (currentDate < endDate) {
+          const millisUntilEndDate = (endDate - currentDate) * 1000;
+          const delay5SecMillis = 5000;
+          setTimeout(() => {
+            refreshCandyMachineState();
+          }, millisUntilEndDate + delay5SecMillis);
+        }
+      }
+    }
+  }, [candyMachine, refreshCandyMachineState]);
+
   return (
     <Container style={{ marginTop: 100 }}>
       <Container maxWidth="xs" style={{ position: 'relative' }}>
