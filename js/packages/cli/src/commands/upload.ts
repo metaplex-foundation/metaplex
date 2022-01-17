@@ -20,6 +20,7 @@ import { pinataUpload } from '../helpers/upload/pinata';
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks } from '../helpers/various';
+import { first } from 'lodash';
 
 export async function uploadV2({
   files,
@@ -96,7 +97,7 @@ export async function uploadV2({
     cacheContent.items = {};
   }
 
-  const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);  
+  const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
   const SIZE = dedupedAssetKeys.length;
   console.log('Size', SIZE, dedupedAssetKeys[0]);
   let candyMachine = cacheContent.program.candyMachine
@@ -204,10 +205,108 @@ export async function uploadV2({
       result = arweaveBundleUploadGenerator.next();
     }
     log.info('Upload done.');
+  } else if(StorageType.Pinata) {
+    const pairings = [];
+    const jsons = files.filter(file => file.includes(".json"));
+    const images = files.filter(file => !file.includes(".json"));
+    jsons.forEach(json => {
+      const obj = {
+        meta: json, 
+        img: ""
+      }
+      pairings.push(obj);
+    });
+
+    for(let i = 0; i < images.length; i++) {
+      pairings[i].img = images[i];
+    }
+
+    let count = 0;
+    for(const pairing of pairings) {
+      const manifest = getAssetManifest(
+        dirname,
+        `${count}.json`,
+      );
+      if (count === 0 && !cacheContent.program.uuid) {
+        try {
+          const remainingAccounts = [];
+
+          if (splToken) {
+            const splTokenKey = new PublicKey(splToken);
+
+            remainingAccounts.push({
+              pubkey: splTokenKey,
+              isWritable: false,
+              isSigner: false,
+            });
+          }
+
+          // initialize candy
+          log.info(`initializing candy machine`);
+          const res = await createCandyMachineV2(
+            anchorProgram,
+            walletKeyPair,
+            treasuryWallet,
+            splToken,
+            {
+              itemsAvailable: new BN(totalNFTs),
+              uuid,
+              symbol: manifest.symbol,
+              sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+              isMutable: mutable,
+              maxSupply: new BN(0),
+              retainAuthority: retainAuthority,
+              gatekeeper,
+              goLiveDate,
+              price,
+              endSettings,
+              whitelistMintSettings,
+              hiddenSettings,
+              creators: manifest.properties.creators.map(creator => {
+                return {
+                  address: new PublicKey(creator.address),
+                  verified: true,
+                  share: creator.share,
+                };
+              }),
+            },
+          );
+          cacheContent.program.uuid = res.uuid;
+          cacheContent.program.candyMachine = res.candyMachine.toBase58();
+          candyMachine = res.candyMachine;
+          log.info(
+            `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+          );
+
+          saveCache(cacheName, env, cacheContent);
+        } catch (exx) {
+          log.error('Error deploying config to Solana network.', exx);
+          throw exx;
+        }
+      }
+
+      if (
+        count >= lastPrinted + tick ||
+        count === 0
+      ) {
+        lastPrinted = count;
+        log.info(`Processing asset: ${count}`);
+      }
+      const [link, imageLink] = await pinataUpload(pinataJwt, pinataGateway, pairing.img, pairing.meta);
+      log.debug('Updating cache for ', pairings[count]);      
+      cacheContent.items[count] = {
+        link,
+        imageLink,
+        name: manifest.name,
+        onChain: false,
+      };
+      saveCache(cacheName, env, cacheContent); 
+      count++;
+    }    
   } else {
     await Promise.all(
       chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
-        async allIndexesInSlice => {
+        async allIndexesInSlice => {          
           for (let i = 0; i < allIndexesInSlice.length; i++) {
             const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
             const image = path.join(
@@ -305,9 +404,9 @@ export async function uploadV2({
                     manifestBuffer,
                   );
                   break;
-                case StorageType.Pinata: 
-                    [link, imageLink] = await pinataUpload(pinataJwt, pinataGateway, image, manifestBuffer)
-                    break;
+                case StorageType.Pinata:
+                  [link, imageLink] = await pinataUpload(pinataJwt, pinataGateway, image, manifestBuffer)
+                  break;
                 case StorageType.Aws:
                   [link, imageLink] = await awsUpload(
                     awsS3Bucket,
@@ -395,8 +494,7 @@ export async function uploadV2({
                   saveCache(cacheName, env, cacheContent);
                 } catch (e) {
                   log.error(
-                    `saving config line ${ind}-${
-                      keys[indexes[indexes.length - 1]]
+                    `saving config line ${ind}-${keys[indexes[indexes.length - 1]]
                     } failed`,
                     e,
                   );
@@ -559,8 +657,7 @@ async function writeIndices({
                 saveCache(cacheName, env, cache);
               } catch (err) {
                 log.error(
-                  `Saving config line ${ind}-${
-                    keys[indexes[indexes.length - 1]]
+                  `Saving config line ${ind}-${keys[indexes[indexes.length - 1]]
                   } failed`,
                   err,
                 );
@@ -625,7 +722,7 @@ export async function upload({
   keypair,
   storage,
   rpcUrl,
-  ipfsCredentials,  
+  ipfsCredentials,
   awsS3Bucket,
   arweaveJwk,
   batchSize,

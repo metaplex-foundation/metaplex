@@ -2,3 +2,7 @@
 # yarn lockfile v1
 
 
+"p-throttle@^5.0.0":
+  "integrity" "sha512-iXBFjW4kP/5Ivw7uC9EDnj+/xo3pNn4Rws3zgMGPwXnWTv1M3P0LVdZxLrqRUI5JK0Fp3Du0bt6lCaVrI3WF7g=="
+  "resolved" "https://registry.npmjs.org/p-throttle/-/p-throttle-5.0.0.tgz"
+  "version" "5.0.0"
