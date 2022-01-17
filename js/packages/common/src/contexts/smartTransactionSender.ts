@@ -33,50 +33,39 @@ export type SmartInstructionSenderFailureCallback = (
 export interface SmartInstructionSenderConfig {
   maxSigningAttempts: number;
   abortOnFailure: boolean;
+  commitment: Commitment;
 }
 
 export class SmartInstructionSender {
-  private connection?: Connection;
-  private wallet?: WalletSigner;
+  private connection: Connection;
+  private wallet: WalletSigner;
   private instructionSets?: InstructionSet[];
-  private commitment: Commitment = 'singleGossip';
-  private config: SmartInstructionSenderConfig = {
+  private configuration: SmartInstructionSenderConfig = {
     maxSigningAttempts: 3,
     abortOnFailure: true,
+    commitment: 'singleGossip',
   };
 
   private onProgressCallback?: SmartInstructionSenderProgressCallback;
   private onReSignCallback?: SmartInstructionSenderReSignCallback;
   private onFailureCallback?: SmartInstructionSenderFailureCallback;
 
-  private constructor() {}
-
-  public static build() {
-    return new SmartInstructionSender();
+  private constructor(wallet: WalletSigner, connection: Connection) {
+    this.wallet = wallet;
+    this.connection = connection;
   }
 
-  public withConnection = (connection: Connection) => {
-    this.connection = connection;
-    return this;
-  };
+  public static build(wallet: WalletSigner, connection: Connection) {
+    return new SmartInstructionSender(wallet, connection);
+  }
 
-  public withWallet = (wallet: WalletSigner) => {
-    this.wallet = wallet;
+  public config = (config: SmartInstructionSenderConfig) => {
+    this.configuration = config;
     return this;
   };
 
   public withInstructionSets = (instructionSets: InstructionSet[]) => {
     this.instructionSets = instructionSets;
-    return this;
-  };
-
-  public withConfig = (config: SmartInstructionSenderConfig) => {
-    this.config = config;
-    return this;
-  };
-
-  public withCommitment = (commitment: Commitment) => {
-    this.commitment = commitment;
     return this;
   };
 
@@ -104,8 +93,8 @@ export class SmartInstructionSender {
       throw new Error('No connection provided');
     }
     return Promise.all([
-      this.connection.getSlot(this.commitment),
-      this.connection.getRecentBlockhash(this.commitment),
+      this.connection.getSlot(this.configuration.commitment),
+      this.connection.getRecentBlockhash(this.configuration.commitment),
     ]);
   }
 
@@ -135,8 +124,6 @@ export class SmartInstructionSender {
   };
 
   public send = async () => {
-    if (!this.connection) throw new Error('No connection provided');
-    if (!this.wallet) throw new Error('No wallet provided');
     if (!this.wallet?.publicKey) throw new WalletNotConnectedError();
     if (!this.instructionSets?.length)
       throw new Error('No instruction sets provided');
@@ -174,7 +161,7 @@ export class SmartInstructionSender {
             if (result.err) {
               if (
                 result.err.type === 'timeout' &&
-                retryNumber >= this.config!.maxSigningAttempts
+                retryNumber >= this.configuration!.maxSigningAttempts
               ) {
                 bail(new Error('MAX_RESIGN_ATTEMPTS_REACHED'));
                 return;
@@ -210,11 +197,11 @@ export class SmartInstructionSender {
             }
           },
           {
-            retries: this.config.maxSigningAttempts,
+            retries: this.configuration.maxSigningAttempts,
             onRetry: async (error: any, attempt: number) => {
               if (error?.type === 'timeout') {
                 const slotResult = await this.connection!.getSlot(
-                  this.commitment,
+                  this.configuration.commitment,
                 );
                 if (slotResult >= slot + 150) {
                   const [newSlot, newCurrentBlock] =
@@ -239,7 +226,7 @@ export class SmartInstructionSender {
           successfulItems,
           this.instructionSets[successfulItems - 1],
         );
-        if (this.config.abortOnFailure) {
+        if (this.configuration.abortOnFailure) {
           break;
         }
       }

@@ -9,8 +9,6 @@ import {
   ParsedAccount,
   MasterEditionV1,
   MasterEditionV2,
-  // SequenceType,
-  // sendTransactions,
   getSafetyDepositBox,
   Edition,
   getEdition,
@@ -18,7 +16,6 @@ import {
   Creator,
   getSafetyDepositBoxAddress,
   createAssociatedTokenAccountInstruction,
-  sendTransactionWithRetry,
   findProgramAddress,
   IPartialCreateAuctionArgs,
   MetadataKey,
@@ -341,56 +338,30 @@ export async function createAuctionManager(
   const filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
   let rejection: SendAndConfirmError | undefined;
 
-  if (instructions.length === 1) {
-    await sendTransactionWithRetry(
-      connection,
-      wallet,
-      instructions[0],
-      filteredSigners[0],
-      'single',
-    );
-  } else {
-    const instructionSets = instructions.map((ix, i) => ({
-      instructions: ix,
-      signers: filteredSigners[i],
-    }));
-    const instructionSender = SmartInstructionSender.build()
-      .withCommitment('confirmed')
-      .withConnection(connection)
-      .withWallet(wallet)
-      .withInstructionSets(instructionSets)
-      .onProgress(
-        (
-          index,
-          progress = Math.round((index + 1 / instructions.length) * 100),
-        ) => progressCallback(progress),
-      )
-      .onReSign(reSignCallback)
-      .onFailure(err => {
-        rejection = err;
-        return false;
-      });
-
-    await instructionSender.send();
-    // await sendTransactions(
-    //   connection,
-    //   wallet,
-    //   instructions,
-    //   filteredSigners,
-    //   SequenceType.StopOnFailure,
-    //   'confirmed',
-    //   (_, index) => {
-    //     const step = index + 1;
-    //     const total = instructions.length;
-
-    //     progressCallback(Math.round((step / total) * 100));
-    //   },
-    //   reason => {
-    //     rejection = reason;
-    //     return false;
-    //   },
-    // );
-  }
+  await SmartInstructionSender.build()
+    .withCommitment('confirmed')
+    .withConfig({
+      abortOnFailure: true,
+      maxSigningAttempts: 5,
+    })
+    .withConnection(connection)
+    .withWallet(wallet)
+    .withInstructionSets(
+      instructions.map((ix, i) => ({
+        instructions: ix,
+        signers: filteredSigners[i],
+      })),
+    )
+    .onProgress(
+      (index, progress = Math.round((index + 1 / instructions.length) * 100)) =>
+        progressCallback(progress),
+    )
+    .onReSign(reSignCallback)
+    .onFailure(err => {
+      rejection = err;
+      return false;
+    })
+    .send();
 
   if (rejection) {
     failureCallback(rejection);
