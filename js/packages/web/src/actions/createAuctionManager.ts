@@ -3,6 +3,7 @@ import {
   Connection,
   TransactionInstruction,
   SystemProgram,
+  Commitment,
 } from '@solana/web3.js';
 import {
   Metadata,
@@ -338,23 +339,20 @@ export async function createAuctionManager(
   const filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
   let rejection: SendAndConfirmError | undefined;
 
-  await SmartInstructionSender.build()
-    .withCommitment('confirmed')
-    .withConfig({
-      abortOnFailure: true,
-      maxSigningAttempts: 5,
-    })
-    .withConnection(connection)
-    .withWallet(wallet)
-    .withInstructionSets(
-      instructions.map((ix, i) => ({
-        instructions: ix,
-        signers: filteredSigners[i],
-      })),
-    )
-    .onProgress(
-      (index, progress = Math.round((index + 1 / instructions.length) * 100)) =>
-        progressCallback(progress),
+  const config = {
+    abortOnFailure: true,
+    maxSigningAttempts: 5,
+    commitment: 'confirmed' as Commitment,
+  };
+  const instructionSets = instructions.map((ix, i) => ({
+    instructions: ix,
+    signers: filteredSigners[i],
+  }));
+  await SmartInstructionSender.build(wallet, connection)
+    .config(config)
+    .withInstructionSets(instructionSets)
+    .onProgress(i =>
+      progressCallback(Math.round((i + 1 / instructions.length) * 100)),
     )
     .onReSign(reSignCallback)
     .onFailure(err => {
