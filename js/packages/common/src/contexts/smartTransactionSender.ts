@@ -5,6 +5,7 @@ import {
   Signer,
   Transaction,
   TransactionInstruction,
+  FeeCalculator,
 } from '@solana/web3.js';
 import retry from 'async-retry';
 import { sendSignedTransaction } from '.';
@@ -21,7 +22,7 @@ type SmartInstructionSenderReSignCallback = (
   currentIndex: number,
 ) => void;
 type SmartInstructionSenderFailureCallback = (
-  error: Error,
+  error: Error | any,
   successfulItems: number,
   currentIndex: number,
   instructionSet: InstructionSet,
@@ -88,6 +89,30 @@ export class SmartInstructionSender {
     return this;
   };
 
+  private signAndrebuildTransactionsFromIntructionSets = async (
+    signedTXs: Transaction[],
+    index: number,
+    blockhash: {
+      blockhash: string;
+      feeCalculator: FeeCalculator;
+    },
+    attempt: number = 0,
+  ) => {
+    this.onReSignCallback?.(attempt, index);
+    for (let j = index; j < this.instructionSets!.length; j++) {
+      const instructionSet = this.instructionSets![j];
+      signedTXs[j] = new Transaction({
+        feePayer: this.wallet!.publicKey,
+        recentBlockhash: blockhash.blockhash,
+      }).add(...instructionSet.instructions);
+      if (instructionSet.signers.length)
+        signedTXs[j].partialSign(...instructionSet.signers);
+    }
+    await this.wallet!.signAllTransactions(
+      signedTXs.slice(index, signedTXs.length),
+    );
+  };
+
   public send = async () => {
     if (!this.connection) throw new Error('No connection provided');
     if (!this.wallet) throw new Error('No wallet provided');
@@ -109,60 +134,87 @@ export class SmartInstructionSender {
         return tx;
       });
     const signedTXs = await this.wallet.signAllTransactions(unsignedTXs);
+    let successfullItems = 0;
     for (const [i, tx] of signedTXs.entries()) {
-      await retry(
-        async () => {
-          const result = await sendSignedTransaction({
-            connection: this.connection!,
-            signedTransaction: tx,
-          });
-          if (result.err) throw result.err;
-
-          this.onProgressCallback?.(i);
-          if (result.slot >= slot + 150) {
-            // Alright, this tx went fine but
-            // we went out of slot in this tx. we need to re-sign the next txs.
-            const nextTXs = signedTXs.slice(i + 1);
-
-            if (nextTXs.length) {
-              const results = await this.getSlotAndCurrentBlockHash();
-              slot = results[0];
-              currentBlock = results[1];
-
-              // Reassign and re-sign lol
-              nextTXs.forEach(tx => {
-                tx.recentBlockhash = currentBlock.blockhash;
-              });
-              await this.wallet!.signAllTransactions(nextTXs);
-              this.onReSignCallback?.(0, i);
-            }
-          }
-        },
-        {
-          retries: this.config.maxSigningAttempts,
-          onRetry: async (error: any, attempt: number) => {
-            if (error?.type === 'tx-error') {
-              const slotResult = await this.connection!.getSlot(
-                this.commitment,
-              );
-              if (slotResult >= slot + 150) {
-                const results = await this.getSlotAndCurrentBlockHash();
-                slot = results[0];
-                currentBlock = results[1];
-                signedTXs.forEach(tx => {
-                  tx.recentBlockhash = currentBlock.blockhash;
-                });
-                await this.wallet!.signAllTransactions(signedTXs);
-                this.onReSignCallback?.(attempt, i);
+      let retryNumber = 0;
+      try {
+        await retry(
+          async (bail: (reason: Error | any) => void) => {
+            retryNumber++;
+            const result = await sendSignedTransaction({
+              connection: this.connection!,
+              signedTransaction: tx,
+            });
+            if (result.err) {
+              if (
+                result.err.type === 'tx-error' &&
+                retryNumber >= this.config!.maxSigningAttempts
+              ) {
+                bail(new Error('MAX_RESIGN_ATTEMPTS_REACHED'));
+                return;
+              } else if (result.err.type === 'tx-error') {
+                // ⭐️ Throwing is good because it will be catched by the onRetry block
+                // and will be retried.
+                throw result.err;
+              } else if (result.err.type === 'misc-error') {
+                bail(result.err);
+                return;
+              } else {
+                bail(result.err);
+                return;
               }
-            } else if (error?.type === 'misc-error') {
-              // Other kinds of errors
-              // TODO: Add handling?
             }
-            this.onFailureCallback?.(error, i - 1, i, this.instructionSets![i]);
+
+            this.onProgressCallback?.(i);
+            successfullItems++;
+
+            if (result.slot >= slot + 150) {
+              const nextTXs = signedTXs.slice(i + 1);
+              if (nextTXs.length) {
+                const [newSlot, newCurrentBlock] =
+                  await this.getSlotAndCurrentBlockHash();
+                slot = newSlot;
+                currentBlock = newCurrentBlock;
+                await this.signAndrebuildTransactionsFromIntructionSets(
+                  signedTXs,
+                  i + 1,
+                  newCurrentBlock,
+                );
+              }
+            }
           },
-        },
-      );
+          {
+            retries: this.config.maxSigningAttempts,
+            onRetry: async (error: any, attempt: number) => {
+              if (error?.type === 'tx-error') {
+                const slotResult = await this.connection!.getSlot(
+                  this.commitment,
+                );
+                if (slotResult >= slot + 150) {
+                  const [newSlot, newCurrentBlock] =
+                    await this.getSlotAndCurrentBlockHash();
+                  slot = newSlot;
+                  currentBlock = newCurrentBlock;
+                  await this.signAndrebuildTransactionsFromIntructionSets(
+                    signedTXs,
+                    i + 1,
+                    newCurrentBlock,
+                    attempt,
+                  );
+                }
+              }
+            },
+          },
+        );
+      } catch (error) {
+        this.onFailureCallback?.(
+          error,
+          i,
+          successfullItems,
+          this.instructionSets[successfullItems - 1],
+        );
+        break;
+      }
     }
   };
 
