@@ -11,36 +11,49 @@ import retry from 'async-retry';
 import { sendSignedTransaction } from '.';
 import { WalletSigner } from './wallet';
 
-interface InstructionSet {
+export interface InstructionSet {
   signers: Signer[];
   instructions: TransactionInstruction[];
 }
 
-type SmartInstructionSenderProgressCallback = (currentIndex: number) => void;
-type SmartInstructionSenderReSignCallback = (
+export type SmartInstructionSenderProgressCallback = (
+  currentIndex: number,
+) => void;
+export type SmartInstructionSenderReSignCallback = (
   attempt: number,
   currentIndex: number,
 ) => void;
-type SmartInstructionSenderFailureCallback = (
+export type SmartInstructionSenderFailureCallback = (
   error: Error | any,
   successfulItems: number,
   currentIndex: number,
   instructionSet: InstructionSet,
 ) => void;
 
+export interface SmartInstructionSenderConfig {
+  maxSigningAttempts: number;
+  abortOnFailure: boolean;
+}
+
 export class SmartInstructionSender {
   private connection?: Connection;
   private wallet?: WalletSigner;
   private instructionSets?: InstructionSet[];
   private commitment: Commitment = 'singleGossip';
-  private config?: {
-    maxSigningAttempts: number;
-    transactionTimeout: number;
+  private config: SmartInstructionSenderConfig = {
+    maxSigningAttempts: 3,
+    abortOnFailure: true,
   };
 
   private onProgressCallback?: SmartInstructionSenderProgressCallback;
   private onReSignCallback?: SmartInstructionSenderReSignCallback;
   private onFailureCallback?: SmartInstructionSenderFailureCallback;
+
+  private constructor() {}
+
+  public static build() {
+    return new SmartInstructionSender();
+  }
 
   public withConnection = (connection: Connection) => {
     this.connection = connection;
@@ -57,10 +70,7 @@ export class SmartInstructionSender {
     return this;
   };
 
-  public withConfig = (config: {
-    maxSigningAttempts: number;
-    transactionTimeout: number;
-  }) => {
+  public withConfig = (config: SmartInstructionSenderConfig) => {
     this.config = config;
     return this;
   };
@@ -89,7 +99,17 @@ export class SmartInstructionSender {
     return this;
   };
 
-  private signAndrebuildTransactionsFromIntructionSets = async (
+  private getSlotAndCurrentBlockHash() {
+    if (!this.connection) {
+      throw new Error('No connection provided');
+    }
+    return Promise.all([
+      this.connection.getSlot(this.commitment),
+      this.connection.getRecentBlockhash(this.commitment),
+    ]);
+  }
+
+  private signAndRebuildTransactionsFromInstructionSets = async (
     signedTXs: Transaction[],
     index: number,
     blockhash: {
@@ -111,6 +131,7 @@ export class SmartInstructionSender {
     await this.wallet!.signAllTransactions(
       signedTXs.slice(index, signedTXs.length),
     );
+    return signedTXs.slice(index, signedTXs.length)[0]; // Return current tx for convenience
   };
 
   public send = async () => {
@@ -119,7 +140,6 @@ export class SmartInstructionSender {
     if (!this.wallet?.publicKey) throw new WalletNotConnectedError();
     if (!this.instructionSets?.length)
       throw new Error('No instruction sets provided');
-    if (!this.config) throw new Error('No config provided');
 
     let [slot, currentBlock] = await this.getSlotAndCurrentBlockHash();
 
@@ -133,26 +153,32 @@ export class SmartInstructionSender {
         if (signers.length) tx.partialSign(...signers);
         return tx;
       });
+
     const signedTXs = await this.wallet.signAllTransactions(unsignedTXs);
-    let successfullItems = 0;
-    for (const [i, tx] of signedTXs.entries()) {
+    let successfulItems = 0;
+    for (let i = 0; i < signedTXs.length; i++) {
+      let tx = signedTXs[i];
       let retryNumber = 0;
       try {
         await retry(
           async (bail: (reason: Error | any) => void) => {
             retryNumber++;
+
+            await new Promise(resolve => setTimeout(resolve, 15000));
+
             const result = await sendSignedTransaction({
               connection: this.connection!,
               signedTransaction: tx,
             });
+
             if (result.err) {
               if (
-                result.err.type === 'tx-error' &&
+                result.err.type === 'timeout' &&
                 retryNumber >= this.config!.maxSigningAttempts
               ) {
                 bail(new Error('MAX_RESIGN_ATTEMPTS_REACHED'));
                 return;
-              } else if (result.err.type === 'tx-error') {
+              } else if (result.err.type === 'timeout') {
                 // ⭐️ Throwing is good because it will be catched by the onRetry block
                 // and will be retried.
                 throw result.err;
@@ -166,7 +192,7 @@ export class SmartInstructionSender {
             }
 
             this.onProgressCallback?.(i);
-            successfullItems++;
+            successfulItems++;
 
             if (result.slot >= slot + 150) {
               const nextTXs = signedTXs.slice(i + 1);
@@ -175,7 +201,7 @@ export class SmartInstructionSender {
                   await this.getSlotAndCurrentBlockHash();
                 slot = newSlot;
                 currentBlock = newCurrentBlock;
-                await this.signAndrebuildTransactionsFromIntructionSets(
+                await this.signAndRebuildTransactionsFromInstructionSets(
                   signedTXs,
                   i + 1,
                   newCurrentBlock,
@@ -186,7 +212,7 @@ export class SmartInstructionSender {
           {
             retries: this.config.maxSigningAttempts,
             onRetry: async (error: any, attempt: number) => {
-              if (error?.type === 'tx-error') {
+              if (error?.type === 'timeout') {
                 const slotResult = await this.connection!.getSlot(
                   this.commitment,
                 );
@@ -195,9 +221,9 @@ export class SmartInstructionSender {
                     await this.getSlotAndCurrentBlockHash();
                   slot = newSlot;
                   currentBlock = newCurrentBlock;
-                  await this.signAndrebuildTransactionsFromIntructionSets(
+                  tx = await this.signAndRebuildTransactionsFromInstructionSets(
                     signedTXs,
-                    i + 1,
+                    i,
                     newCurrentBlock,
                     attempt,
                   );
@@ -210,21 +236,13 @@ export class SmartInstructionSender {
         this.onFailureCallback?.(
           error,
           i,
-          successfullItems,
-          this.instructionSets[successfullItems - 1],
+          successfulItems,
+          this.instructionSets[successfulItems - 1],
         );
-        break;
+        if (this.config.abortOnFailure) {
+          break;
+        }
       }
     }
   };
-
-  private getSlotAndCurrentBlockHash() {
-    if (!this.connection) {
-      throw new Error('No connection provided');
-    }
-    return Promise.all([
-      this.connection.getSlot(this.commitment),
-      this.connection.getRecentBlockhash(this.commitment),
-    ]);
-  }
 }

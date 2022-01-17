@@ -18,6 +18,7 @@ import {
   VAULT_ID,
   processVaultData,
   SendAndConfirmError,
+  notify,
 } from '@oyster/common';
 import Bugsnag from '@bugsnag/browser';
 import {
@@ -517,6 +518,13 @@ export const AuctionCreateView = () => {
         connection,
         wallet,
         setPercentComplete,
+        () => {
+          notify({
+            message: 'New signature needed...',
+            description: 'Please re-sign the current transaction again to continue.',
+            type: 'info',
+          });
+        },
         rej => {
           setRejection(r => r ?? rej);
           tmpRejection ??= rej;

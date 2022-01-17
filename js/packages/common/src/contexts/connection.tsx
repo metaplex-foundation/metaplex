@@ -65,7 +65,7 @@ export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
-const DEFAULT_CONNECTION_TIMEOUT = 300 * 1000;
+const DEFAULT_CONNECTION_TIMEOUT = 15 * 1000;
 
 interface ConnectionConfig {
   connection: Connection;
@@ -525,6 +525,7 @@ const DEFAULT_TIMEOUT = 30000;
 
 export type SendAndConfirmError =
   | { type: 'tx-error'; inner: TransactionError; txid: TransactionSignature }
+  | { type: 'timeout'; inner: unknown; txid?: TransactionSignature }
   | { type: 'misc-error'; inner: unknown; txid?: TransactionSignature };
 
 /** Mirror of web3.js's `sendAndConfirmRawTransaction`, but with better errors. */
@@ -555,8 +556,12 @@ export async function sendAndConfirmRawTransactionEx(
     }
 
     return { ok: txid };
-  } catch (e) {
-    return { err: { type: 'misc-error', inner: e, txid } };
+  } catch (e: any) {
+    let type: 'misc-error' | 'timeout' = 'misc-error';
+    if (e.message.includes('Transaction was not confirmed in')) {
+      type = 'timeout';
+    }
+    return { err: { type, inner: e, txid } };
   }
 }
 

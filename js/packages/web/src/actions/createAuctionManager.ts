@@ -9,8 +9,8 @@ import {
   ParsedAccount,
   MasterEditionV1,
   MasterEditionV2,
-  SequenceType,
-  sendTransactions,
+  // SequenceType,
+  // sendTransactions,
   getSafetyDepositBox,
   Edition,
   getEdition,
@@ -26,6 +26,8 @@ import {
   toPublicKey,
   WalletSigner,
   SendAndConfirmError,
+  SmartInstructionSender,
+  SmartInstructionSenderReSignCallback,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -107,6 +109,7 @@ export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
   progressCallback: Dispatch<SetStateAction<number>>,
+  reSignCallback: SmartInstructionSenderReSignCallback,
   failureCallback: (err: SendAndConfirmError) => void,
   whitelistedCreatorsByCreator: Record<
     string,
@@ -347,24 +350,46 @@ export async function createAuctionManager(
       'single',
     );
   } else {
-    await sendTransactions(
-      connection,
-      wallet,
-      instructions,
-      filteredSigners,
-      SequenceType.StopOnFailure,
-      'confirmed',
-      (_, index) => {
-        const step = index + 1;
-        const total = instructions.length;
-
-        progressCallback(Math.round((step / total) * 100));
-      },
-      reason => {
-        rejection = reason;
+    const instructionSets = instructions.map((ix, i) => ({
+      instructions: ix,
+      signers: filteredSigners[i],
+    }));
+    const instructionSender = SmartInstructionSender.build()
+      .withCommitment('confirmed')
+      .withConnection(connection)
+      .withWallet(wallet)
+      .withInstructionSets(instructionSets)
+      .onProgress(
+        (
+          index,
+          progress = Math.round((index + 1 / instructions.length) * 100),
+        ) => progressCallback(progress),
+      )
+      .onReSign(reSignCallback)
+      .onFailure(err => {
+        rejection = err;
         return false;
-      },
-    );
+      });
+
+    await instructionSender.send();
+    // await sendTransactions(
+    //   connection,
+    //   wallet,
+    //   instructions,
+    //   filteredSigners,
+    //   SequenceType.StopOnFailure,
+    //   'confirmed',
+    //   (_, index) => {
+    //     const step = index + 1;
+    //     const total = instructions.length;
+
+    //     progressCallback(Math.round((step / total) * 100));
+    //   },
+    //   reason => {
+    //     rejection = reason;
+    //     return false;
+    //   },
+    // );
   }
 
   if (rejection) {
