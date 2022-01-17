@@ -20,7 +20,7 @@ export async function nftStorageUpload(
     body: readStream // Here, stringContent or bufferContent would also work
   }).then((response) => response.json()).then(imageUploadResponse => {
     const mediaURL = `https://${imageUploadResponse.value.cid}.ipfs.dweb.link`
-    log.info('Uploaded metadata');
+    log.info('Upload metadata');
     const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
     manifestJson.image = mediaURL;
     const metaData = Buffer.from(JSON.stringify(manifestJson));

@@ -454,12 +454,12 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
     fs.readFileSync(manifestPath).toString(),
   );
   manifest.image = manifest.image.replace('image', assetIndex);
-  if (manifest.properties?.files?.length > 0) {
-    manifest.properties.files[0].uri = manifest.properties.files[0]?.uri?.replace(
-      'image',
-      assetIndex,
-    );
-  }
+  // if (manifest.properties?.files?.length > 0) {
+  //   manifest.properties.files[0].uri = manifest.properties.files[0]?.uri?.replace(
+  //     'image',
+  //     assetIndex,
+  //   );
+  // }
   return manifest;
 }
 
