@@ -132,12 +132,18 @@ export async function getCandyMachineV2Config(
 
     wallet = new web3.PublicKey(splTokenAccountKey);
     parsedPrice = price * 10 ** mintInfo.decimals;
-    if (whitelistMintSettings?.discountPrice) {
+    if (
+      whitelistMintSettings?.discountPrice ||
+      whitelistMintSettings?.discountPrice === 0
+    ) {
       whitelistMintSettings.discountPrice *= 10 ** mintInfo.decimals;
     }
   } else {
     parsedPrice = price * 10 ** 9;
-    if (whitelistMintSettings?.discountPrice) {
+    if (
+      whitelistMintSettings?.discountPrice ||
+      whitelistMintSettings?.discountPrice === 0
+    ) {
       whitelistMintSettings.discountPrice *= 10 ** 9;
     }
     wallet = solTreasuryAccount
@@ -147,7 +153,10 @@ export async function getCandyMachineV2Config(
 
   if (whitelistMintSettings) {
     whitelistMintSettings.mint = new web3.PublicKey(whitelistMintSettings.mint);
-    if (whitelistMintSettings?.discountPrice) {
+    if (
+      whitelistMintSettings?.discountPrice ||
+      whitelistMintSettings?.discountPrice === 0
+    ) {
       whitelistMintSettings.discountPrice = new BN(
         whitelistMintSettings.discountPrice,
       );
