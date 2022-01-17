@@ -14,7 +14,6 @@ import {
   Keypair,
   RpcResponseAndContext,
   SignatureStatus,
-  Signer,
   SimulatedTransactionResponse,
   Transaction,
   TransactionError,
