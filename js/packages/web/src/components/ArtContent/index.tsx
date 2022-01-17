@@ -130,29 +130,30 @@ const VideoArtContent = ({
         />
       </div>
     ) : (
-      <video
-        className={className}
-        playsInline={true}
-        autoPlay={true}
-        muted={true}
-        controls={true}
-        controlsList="nodownload"
-        style={style}
-        loop={true}
-        poster={uri}
-      >
-        {likelyVideo && (
-          <source src={likelyVideo} type="video/mp4" style={style} />
-        )}
-        {animationURL && (
-          <source src={animationURL} type="video/mp4" style={style} />
-        )}
-        {files
-          ?.filter(f => typeof f !== 'string')
-          .map((f: any) => (
-            <source src={f.uri} type={f.type} style={style} />
-          ))}
-      </video>
+      <div className={`${className} square`}>
+        <video
+          playsInline={true}
+          autoPlay={true}
+          muted={true}
+          controls={true}
+          controlsList="nodownload"
+          style={style}
+          loop={true}
+          poster={uri}
+        >
+          {likelyVideo && (
+            <source src={likelyVideo} type="video/mp4" style={style} />
+          )}
+          {animationURL && (
+            <source src={animationURL} type="video/mp4" style={style} />
+          )}
+          {files
+            ?.filter(f => typeof f !== 'string')
+            .map((f: any) => (
+              <source src={f.uri} type={f.type} style={style} />
+            ))}
+        </video>
+      </div>
     );
 
   return content;
