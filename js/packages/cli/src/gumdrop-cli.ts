@@ -553,6 +553,13 @@ async function sendTransactionWithRetry(
   }
   transaction.partialSign(wallet);
 
+  transaction.feePayer = wallet.publicKey;
+
+  console.log(
+    transaction.signatures[0].publicKey.toBase58(),
+    transaction.signatures[1].publicKey.toBase58(),
+  );
+
   return sendSignedTransaction({
     connection,
     signedTransaction: transaction,

@@ -17,9 +17,10 @@ import {
   getEditionMarkPda,
   getMasterEdition,
   getTokenWallet,
+  deriveCandyMachineV2ProgramAddress,
 } from '../accounts';
 import {
-  CANDY_MACHINE_PROGRAM_ID,
+  CANDY_MACHINE_PROGRAM_V2_ID,
   GUMDROP_DISTRIBUTOR_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -127,7 +128,7 @@ export const getCandyConfig = async (
   if (configAccount === null) {
     throw new Error(`Could not fetch config`);
   }
-  if (!configAccount.owner.equals(CANDY_MACHINE_PROGRAM_ID)) {
+  if (!configAccount.owner.equals(CANDY_MACHINE_PROGRAM_V2_ID)) {
     throw new Error(`Invalid config owner ${configAccount.owner.toBase58()}`);
   }
   return configKey;
@@ -138,13 +139,15 @@ export const getCandyMachine = async (
   candyMachineKey: PublicKey,
 ) => {
   const candyMachineCoder = new anchor.Coder(
-    await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, {
+    await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_V2_ID, {
       connection: connection,
     } as anchor.Provider),
   );
   if (candyMachineCoder === null) {
     throw new Error(`Could not fetch candy machine IDL`);
   }
+
+  console.log(candyMachineKey.toBase58());
   const candyMachineAccount = await connection.getAccountInfo(candyMachineKey);
   if (candyMachineAccount === null) {
     throw new Error(`Could not fetch candy machine`);
@@ -276,9 +279,10 @@ export const validateCandyClaims = async (
 
   const total = claimants.reduce((acc, c) => acc + c.amount, 0);
   const configKey = await getCandyConfig(connection, candyConfig);
-  const [candyMachineKey] = await getCandyMachineAddress(configKey, candyUuid);
+  // const [candyMachineKey] = await getCandyMachineAddress(configKey, candyUuid);
+  // const [candyMachineKey] = await deriveCandyMachineV2ProgramAddress(configKey);
 
-  const candyMachine = await getCandyMachine(connection, candyMachineKey);
+  const candyMachine = await getCandyMachine(connection, configKey);
 
   const remaining =
     candyMachine.data.itemsAvailable.toNumber() -
@@ -303,7 +307,7 @@ export const validateCandyClaims = async (
     total: total,
     config: configKey,
     uuid: candyUuid,
-    candyMachineKey: candyMachineKey,
+    // candyMachineKey: candyMachineKey,
   };
 };
 
@@ -613,10 +617,10 @@ export const buildGumdrop = async (
 
     instructions.push(
       new TransactionInstruction({
-        programId: CANDY_MACHINE_PROGRAM_ID,
+        programId: CANDY_MACHINE_PROGRAM_V2_ID,
         keys: [
           {
-            pubkey: claimInfo.candyMachineKey,
+            pubkey: claimInfo.config,
             isSigner: false,
             isWritable: true,
           },
@@ -705,14 +709,14 @@ export const closeGumdrop = async (
 
   if (claimMethod === 'candy') {
     const configKey = await getCandyConfig(connection, candyConfig);
-    const [candyMachineKey] = await getCandyMachineAddress(
-      configKey,
-      candyUuid,
-    );
 
     extraKeys = [
-      { pubkey: candyMachineKey, isSigner: false, isWritable: true },
-      { pubkey: CANDY_MACHINE_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: configKey, isSigner: false, isWritable: true },
+      {
+        pubkey: CANDY_MACHINE_PROGRAM_V2_ID,
+        isSigner: false,
+        isWritable: false,
+      },
     ];
   } else {
     extraKeys = [];

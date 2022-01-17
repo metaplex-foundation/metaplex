@@ -182,9 +182,9 @@ export const validateCandyClaims = async (
 
   const total = claimants.reduce((acc, c) => acc + c.amount, 0);
   const configKey = await getCandyConfig(connection, candyConfig);
-  const [candyMachineKey] = await getCandyMachineAddress(configKey, candyUuid);
+  // const [candyMachineKey] = await getCandyMachineAddress(configKey, candyUuid);
 
-  const candyMachine = await getCandyMachine(connection, candyMachineKey);
+  const candyMachine = await getCandyMachine(connection, configKey);
 
   const remaining =
     candyMachine.data.itemsAvailable.toNumber() -
@@ -209,7 +209,7 @@ export const validateCandyClaims = async (
     total: total,
     config: configKey,
     uuid: candyUuid,
-    candyMachineKey: candyMachineKey,
+    // candyMachineKey: candyMachineKey,
   };
 };
 
@@ -519,7 +519,7 @@ export const buildGumdrop = async (
         programId: CANDY_MACHINE_ID,
         keys: [
           {
-            pubkey: claimInfo.candyMachineKey,
+            pubkey: claimInfo.config,
             isSigner: false,
             isWritable: true,
           },
@@ -608,13 +608,9 @@ export const closeGumdrop = async (
 
   if (claimMethod === 'candy') {
     const configKey = await getCandyConfig(connection, candyConfig);
-    const [candyMachineKey] = await getCandyMachineAddress(
-      configKey,
-      candyUuid,
-    );
 
     extraKeys = [
-      { pubkey: candyMachineKey, isSigner: false, isWritable: true },
+      { pubkey: configKey, isSigner: false, isWritable: true },
       { pubkey: CANDY_MACHINE_ID, isSigner: false, isWritable: false },
     ];
   } else {
