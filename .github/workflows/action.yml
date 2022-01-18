@@ -15,4 +15,6 @@ jobs:
           days-before-close: 30
           exempt-pr-labels: 'wip,reviewing'
           operations-per-run: 500
-          
+permissions:
+  issues: write
+  pull-requests: write
