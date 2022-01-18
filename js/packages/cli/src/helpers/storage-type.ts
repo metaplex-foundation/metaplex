@@ -3,5 +3,6 @@ export enum StorageType {
   ArweaveSol = 'arweave-sol',
   Arweave = 'arweave',
   Ipfs = 'ipfs',
+  NftStorage = 'nft.storage',
   Aws = 'aws',
 }

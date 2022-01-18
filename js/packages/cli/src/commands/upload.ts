@@ -15,6 +15,7 @@ import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { nftStorageUpload } from '../helpers/upload/nftstorage';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
@@ -251,6 +252,14 @@ export async function uploadV2({
                       ipfsCredentials,
                       image,
                       manifestBuffer,
+                    );
+                    break;
+                  case StorageType.NftStorage:
+                    [link, imageLink] = await nftStorageUpload(
+                      walletKeyPair,
+                      env,
+                      image,
+                      manifest,
                     );
                     break;
                   case StorageType.Aws:
@@ -689,6 +698,14 @@ export async function upload({
                       ipfsCredentials,
                       image,
                       manifestBuffer,
+                    );
+                    break;
+                  case StorageType.NftStorage:
+                    [link, imageLink] = await nftStorageUpload(
+                      walletKeyPair,
+                      env,
+                      image,
+                      manifest
                     );
                     break;
                   case StorageType.Aws:
