@@ -64,7 +64,7 @@ export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
-const DEFAULT_CONNECTION_TIMEOUT = 15 * 1000;
+const DEFAULT_CONNECTION_TIMEOUT = 30 * 1000;
 
 interface ConnectionConfig {
   connection: Connection;
