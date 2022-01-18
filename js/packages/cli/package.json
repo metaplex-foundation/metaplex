@@ -64,7 +64,8 @@
     "merge-images": "^2.0.0",
     "mime": "^3.0.0",
     "node-fetch": "^2.6.1",
-    "weighted": "^0.3.0"
+    "weighted": "^0.3.0",
+    "@metaplex-foundation/mpl-token-metadata": "1.1.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.6",

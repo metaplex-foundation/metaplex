@@ -251,7 +251,7 @@ The following file will be generated (based off of `example-traits`):
 }
 ```
 
-3. Go through and customize the fields in the `traits-configuration.json`, such as `name`, `symbol`, `description`, , `creators`, `collection`, `width`, and `height`.
+3. Go through and customize the fields in the `traits-configuration.json`, such as `name`, `symbol`, `description`, `creators`, `collection`, `width`, and `height`.
 4. After you have adjusted the configurations to your heart's content, you can run the following command to generate the JSON files along with the images.
 
 ```

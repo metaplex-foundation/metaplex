@@ -299,7 +299,7 @@ programCommand('withdraw')
               cpf,
             );
             log.info(
-              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+              `${cg.pubkey} has been withdrawn. \nTransaction Signature: ${tx}`,
             );
           }
         } catch (e) {
