@@ -28,12 +28,8 @@ export const Listings = () => {
 
   const { groups, fetching } = useGroupedAuctions();
 
-  const {
-    auctions,
-    loading,
-    hasNextPage,
-    loadMore,
-  } = useInfiniteScrollAuctions(groups[view]);
+  const { auctions, loading, hasNextPage, loadMore } =
+    useInfiniteScrollAuctions(groups[view], view);
 
   const [sentryRef] = useInfiniteScroll({
     loading,
@@ -42,12 +38,12 @@ export const Listings = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
-  useEffect(() => {    
+  useEffect(() => {
     const activeGroup = groups[view];
 
     if (fetching) {
       return;
-     }
+    }
 
     if (activeGroup.length > 0) {
       return;
@@ -56,15 +52,15 @@ export const Listings = () => {
     if (groups[View.live].length > 0) {
       setSearchParams({
         view: View.live,
-      });        
+      });
 
       return;
     }
 
-    if (groups[View.resale].length > 0 ) {
+    if (groups[View.resale].length > 0) {
       setSearchParams({
         view: View.resale,
-      });        
+      });
 
       return;
     }
@@ -134,7 +130,7 @@ export const Listings = () => {
         <div className="listings-menu-wrapper">
           {views.map(({ key, title }) => {
             const count = groups[key].length;
-            
+
             return (
               <button
                 key={key}

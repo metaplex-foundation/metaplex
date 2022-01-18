@@ -210,9 +210,11 @@ export const useGroupedAuctions = () => {
         );
       });
 
-      const initializedAuctions = storeAuctionManagers.map(
-        am => auctions[am.info.auction],
-      );
+      const initializedAuctions = storeAuctionManagers
+        .filter((am: any) =>
+          am.info.state.safetyConfigItemsValidated.toNumber(),
+        )
+        .map(am => auctions[am.info.auction]);
 
       const groups = {
         live: initializedAuctions
@@ -239,12 +241,17 @@ export const useGroupedAuctions = () => {
 
 export const useInfiniteScrollAuctions = (
   listings: ParsedAccount<AuctionData>[] = [],
+  view: string,
 ) => {
   const connection = useConnection();
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
   const [loading, setLoading] = useState(false);
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
+
+  useEffect(() => {
+    setAuctionViews([]);
+  }, [view]);
 
   const {
     auctionManagersByAuction,
