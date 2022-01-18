@@ -151,8 +151,6 @@ export class SmartInstructionSender {
           async (bail: (reason: Error | any) => void) => {
             retryNumber++;
 
-            await new Promise(resolve => setTimeout(resolve, 15000));
-
             const result = await sendSignedTransaction({
               connection: this.connection!,
               signedTransaction: tx,

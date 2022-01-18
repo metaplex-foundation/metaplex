@@ -351,9 +351,11 @@ export async function createAuctionManager(
   await SmartInstructionSender.build(wallet, connection)
     .config(config)
     .withInstructionSets(instructionSets)
-    .onProgress(i =>
-      progressCallback(Math.round((i + 1 / instructions.length) * 100)),
-    )
+    .onProgress(index => {
+      const step = index + 1;
+      const total = instructions.length;
+      progressCallback(Math.round((step / total) * 100));
+    })
     .onReSign(reSignCallback)
     .onFailure(err => {
       rejection = err;
