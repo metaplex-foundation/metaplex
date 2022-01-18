@@ -4,8 +4,12 @@ export const CANDY_MACHINE_ID = new PublicKey(
   'cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ',
 );
 
+export const CANDY_MACHINE_ID_V2 = new PublicKey(
+  'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+);
+
 export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(
-  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a',
+  '3hPhRB3M16RerH3B8j56P8ZSnFuKs2ZEQojfSspnhfNW',
 );
 
 export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(

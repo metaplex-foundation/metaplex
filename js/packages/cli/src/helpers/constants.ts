@@ -45,7 +45,7 @@ export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
 );
 export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(
-  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a',
+  '3hPhRB3M16RerH3B8j56P8ZSnFuKs2ZEQojfSspnhfNW',
 );
 export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(
   'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV',

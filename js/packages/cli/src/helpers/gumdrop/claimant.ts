@@ -13,11 +13,9 @@ import BN from 'bn.js';
 import * as bs58 from 'bs58';
 
 import {
-  getCandyMachineAddress,
   getEditionMarkPda,
   getMasterEdition,
   getTokenWallet,
-  deriveCandyMachineV2ProgramAddress,
 } from '../accounts';
 import {
   CANDY_MACHINE_PROGRAM_V2_ID,
@@ -279,8 +277,6 @@ export const validateCandyClaims = async (
 
   const total = claimants.reduce((acc, c) => acc + c.amount, 0);
   const configKey = await getCandyConfig(connection, candyConfig);
-  // const [candyMachineKey] = await getCandyMachineAddress(configKey, candyUuid);
-  // const [candyMachineKey] = await deriveCandyMachineV2ProgramAddress(configKey);
 
   const candyMachine = await getCandyMachine(connection, configKey);
 
@@ -307,7 +303,6 @@ export const validateCandyClaims = async (
     total: total,
     config: configKey,
     uuid: candyUuid,
-    // candyMachineKey: candyMachineKey,
   };
 };
 
@@ -625,6 +620,11 @@ export const buildGumdrop = async (
             isWritable: true,
           },
           { pubkey: walletKey, isSigner: true, isWritable: false },
+          {
+            pubkey: SystemProgram.programId,
+            isSigner: false,
+            isWritable: false,
+          },
         ],
         data: Buffer.from([
           ...Buffer.from(sha256.digest('global:update_authority')).slice(0, 8),

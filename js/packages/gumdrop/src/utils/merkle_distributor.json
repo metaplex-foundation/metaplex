@@ -34,10 +34,7 @@
         {
           "name": "root",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -156,10 +153,7 @@
           "name": "proof",
           "type": {
             "vec": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           }
         }
@@ -192,11 +186,6 @@
           "name": "payer",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "candyMachineConfig",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "candyMachine",
@@ -279,10 +268,7 @@
           "name": "proof",
           "type": {
             "vec": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           }
         }
@@ -306,10 +292,7 @@
           {
             "name": "root",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -377,10 +360,6 @@
             "type": {
               "option": "publicKey"
             }
-          },
-          {
-            "name": "config",
-            "type": "publicKey"
           },
           {
             "name": "data",

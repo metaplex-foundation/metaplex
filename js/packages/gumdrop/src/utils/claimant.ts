@@ -17,14 +17,14 @@ import * as bs58 from 'bs58';
 
 import {
   getCandyConfig,
-  getCandyMachineAddress,
   getCandyMachine,
   getCreatorTokenAccount,
   getEdition,
+  // deriveCandyMachineV2ProgramAddress,
   getEditionMarkerPda,
   getMintInfo,
 } from './accounts';
-import { CANDY_MACHINE_ID, GUMDROP_DISTRIBUTOR_ID } from './ids';
+import { CANDY_MACHINE_ID_V2, GUMDROP_DISTRIBUTOR_ID } from './ids';
 import { MerkleTree } from './merkleTree';
 
 export type ClaimantInfo = {
@@ -182,8 +182,6 @@ export const validateCandyClaims = async (
 
   const total = claimants.reduce((acc, c) => acc + c.amount, 0);
   const configKey = await getCandyConfig(connection, candyConfig);
-  // const [candyMachineKey] = await getCandyMachineAddress(configKey, candyUuid);
-
   const candyMachine = await getCandyMachine(connection, configKey);
 
   const remaining =
@@ -209,7 +207,6 @@ export const validateCandyClaims = async (
     total: total,
     config: configKey,
     uuid: candyUuid,
-    // candyMachineKey: candyMachineKey,
   };
 };
 
@@ -516,7 +513,7 @@ export const buildGumdrop = async (
 
     instructions.push(
       new TransactionInstruction({
-        programId: CANDY_MACHINE_ID,
+        programId: CANDY_MACHINE_ID_V2,
         keys: [
           {
             pubkey: claimInfo.config,
@@ -611,7 +608,7 @@ export const closeGumdrop = async (
 
     extraKeys = [
       { pubkey: configKey, isSigner: false, isWritable: true },
-      { pubkey: CANDY_MACHINE_ID, isSigner: false, isWritable: false },
+      { pubkey: CANDY_MACHINE_ID_V2, isSigner: false, isWritable: false },
     ];
   } else {
     extraKeys = [];

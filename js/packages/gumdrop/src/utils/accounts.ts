@@ -9,7 +9,7 @@ import {
 import BN from 'bn.js';
 
 import {
-  CANDY_MACHINE_ID,
+  CANDY_MACHINE_ID_V2,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
 } from './ids';
@@ -95,7 +95,7 @@ export const getCandyConfig = async (
   if (configAccount === null) {
     throw new Error(`Could not fetch config`);
   }
-  if (!configAccount.owner.equals(CANDY_MACHINE_ID)) {
+  if (!configAccount.owner.equals(CANDY_MACHINE_ID_V2)) {
     throw new Error(`Invalid config owner ${configAccount.owner.toBase58()}`);
   }
   return configKey;
@@ -107,7 +107,16 @@ export const getCandyMachineAddress = async (
 ) => {
   return await PublicKey.findProgramAddress(
     [Buffer.from('candy_machine'), config.toBuffer(), Buffer.from(uuid)],
-    CANDY_MACHINE_ID,
+    CANDY_MACHINE_ID_V2,
+  );
+};
+
+export const deriveCandyMachineV2ProgramAddress = async (
+  candyMachineId: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await PublicKey.findProgramAddress(
+    [Buffer.from('candy_machine'), candyMachineId.toBuffer()],
+    CANDY_MACHINE_ID_V2,
   );
 };
 
@@ -115,7 +124,7 @@ export const getCandyMachine = async (
   connection: Connection,
   candyMachineKey: PublicKey,
 ) => {
-  const candyMachineCoder = await fetchCoder(CANDY_MACHINE_ID, connection);
+  const candyMachineCoder = await fetchCoder(CANDY_MACHINE_ID_V2, connection);
   if (candyMachineCoder === null) {
     throw new Error(`Could not fetch candy machine IDL`);
   }

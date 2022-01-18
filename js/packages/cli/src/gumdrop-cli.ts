@@ -538,6 +538,7 @@ async function sendTransactionWithRetry(
 ): Promise<string | { txid: string; slot: number }> {
   const transaction = new Transaction();
   instructions.forEach(instruction => transaction.add(instruction));
+
   transaction.recentBlockhash = (
     await connection.getRecentBlockhash(commitment)
   ).blockhash;
@@ -552,13 +553,6 @@ async function sendTransactionWithRetry(
     transaction.partialSign(...signers);
   }
   transaction.partialSign(wallet);
-
-  transaction.feePayer = wallet.publicKey;
-
-  console.log(
-    transaction.signatures[0].publicKey.toBase58(),
-    transaction.signatures[1].publicKey.toBase58(),
-  );
 
   return sendSignedTransaction({
     connection,
