@@ -37,6 +37,7 @@ import {
 export const createMetadata = async (
   metadataLink: string,
   collection: PublicKey,
+  verifyCreators: 0 | 1,
   uses?: Uses,
 ): Promise<DataV2> => {
   // Metadata
@@ -75,7 +76,7 @@ export const createMetadata = async (
       new Creator({
         address: creator.address,
         share: creator.share,
-        verified: 1,
+        verified: verifyCreators,
       }),
   );
   return new DataV2({
@@ -97,10 +98,17 @@ export const mintNFT = async (
   metadataLink: string,
   mutableMetadata: boolean = true,
   collection: PublicKey = null,
+  maxSupply: number = 0,
+  verifyCreators: 0 | 1,
   use: Uses = null,
 ): Promise<PublicKey | void> => {
   // Retrieve metadata
-  const data = await createMetadata(metadataLink, collection, use);
+  const data = await createMetadata(
+    metadataLink,
+    collection,
+    verifyCreators,
+    use,
+  );
   if (!data) return;
 
   // Create wallet from keypair
@@ -193,7 +201,7 @@ export const mintNFT = async (
         ...METADATA_SCHEMA,
         ...CreateMasterEditionV3Args.SCHEMA,
       ]),
-      new CreateMasterEditionV3Args({ maxSupply: new anchor.BN(0) }),
+      new CreateMasterEditionV3Args({ maxSupply: new anchor.BN(maxSupply) }),
     ),
   );
 
@@ -235,10 +243,16 @@ export const updateMetadata = async (
   walletKeypair: Keypair,
   metadataLink: string,
   collection: PublicKey = null,
+  verifyCreators: 0 | 1,
   uses: Uses,
 ): Promise<PublicKey | void> => {
   // Retrieve metadata
-  const data = await createMetadata(metadataLink, collection, uses);
+  const data = await createMetadata(
+    metadataLink,
+    collection,
+    verifyCreators,
+    uses,
+  );
   if (!data) return;
 
   const metadataAccount = await getMetadata(mintKey);
