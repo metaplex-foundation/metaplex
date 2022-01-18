@@ -33,7 +33,7 @@ import { notify } from '../utils/notifications';
 import { sleep, useLocalStorageState } from '../utils/utils';
 import { WalletSigner } from './wallet';
 
-interface BlockhashAndFeeCalculator {
+export interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
   feeCalculator: FeeCalculator;
 }
@@ -64,7 +64,7 @@ export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
-const DEFAULT_CONNECTION_TIMEOUT = 300 * 1000;
+const DEFAULT_CONNECTION_TIMEOUT = 30 * 1000;
 
 interface ConnectionConfig {
   connection: Connection;
@@ -77,8 +77,11 @@ interface ConnectionConfig {
 
 const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
-  setEndpoint: () => { },
-  connection: new Connection(DEFAULT, { commitment: 'recent', confirmTransactionInitialTimeout:  DEFAULT_CONNECTION_TIMEOUT }),
+  setEndpoint: () => {},
+  connection: new Connection(DEFAULT, {
+    commitment: 'recent',
+    confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT,
+  }),
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
@@ -101,7 +104,11 @@ export function ConnectionProvider({
   const endpoint = queryEndpoint || savedEndpoint;
 
   const connection = useMemo(
-    () => new Connection(endpoint, { commitment: 'recent', confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT }),
+    () =>
+      new Connection(endpoint, {
+        commitment: 'recent',
+        confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT,
+      }),
     [endpoint],
   );
 
@@ -137,7 +144,7 @@ export function ConnectionProvider({
   useEffect(() => {
     const id = connection.onAccountChange(
       Keypair.generate().publicKey,
-      () => { },
+      () => {},
     );
     return () => {
       connection.removeAccountChangeListener(id);
@@ -287,8 +294,9 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = () => { },
-  failCallback: (err: SendAndConfirmError, ind: number) => boolean = () => false,
+  successCallback: (txid: string, ind: number) => void = () => {},
+  failCallback: (err: SendAndConfirmError, ind: number) => boolean = () =>
+    false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<number> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -338,17 +346,20 @@ export const sendTransactions = async (
     const signedTxnPromise = sendSignedTransaction({
       connection,
       signedTransaction: signedTxns[i],
-    }).then(res => {
+    })
+      .then(res => {
         if (res.err) {
           failCallback(res.err, i);
-          throw new Error(`Instructions set ${i} failed: ${JSON.stringify(res.err)}`);
+          throw new Error(
+            `Instructions set ${i} failed: ${JSON.stringify(res.err)}`,
+          );
         }
 
         const { txid } = res;
         console.log(`Instructions set ${i} succeeded. Transaction Id ${txid}`);
         successCallback(txid, i);
       })
-      .catch((e) => {
+      .catch(e => {
         console.error(e);
         if (sequenceType === SequenceType.StopOnFailure) {
           cancelToken.idx ??= i;
@@ -459,6 +470,7 @@ export const sendTransaction = async (
   return { txid, slot };
 };
 
+
 export const sendTransactionWithRetry = async (
   connection: Connection,
   wallet: WalletSigner,
@@ -512,6 +524,7 @@ const DEFAULT_TIMEOUT = 30000;
 
 export type SendAndConfirmError =
   | { type: 'tx-error'; inner: TransactionError; txid: TransactionSignature }
+  | { type: 'timeout'; inner: unknown; txid?: TransactionSignature }
   | { type: 'misc-error'; inner: unknown; txid?: TransactionSignature };
 
 /** Mirror of web3.js's `sendAndConfirmRawTransaction`, but with better errors. */
@@ -542,8 +555,12 @@ export async function sendAndConfirmRawTransactionEx(
     }
 
     return { ok: txid };
-  } catch (e) {
-    return { err: { type: 'misc-error', inner: e, txid } };
+  } catch (e: any) {
+    let type: 'misc-error' | 'timeout' = 'misc-error';
+    if (e.message.includes('Transaction was not confirmed in')) {
+      type = 'timeout';
+    }
+    return { err: { type, inner: e, txid } };
   }
 }
 
@@ -557,8 +574,6 @@ export async function sendSignedTransaction({
 }: {
   signedTransaction: Transaction;
   connection: Connection;
-  // sendingMessage?: string;
-  // sentMessage?: string;
   // successMessage?: string;
   // timeout?: number;
 }): Promise<SendSignedTransactionResult> {
