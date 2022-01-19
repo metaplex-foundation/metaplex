@@ -151,7 +151,7 @@ export async function uploadCoinfra({
       await Promise.all(
         chunks(Array.from(Array(keys.length).keys()), 1000).map(
           async allIndexesInSlice => {
-            // bachsize of offset is 5. if this value is large, "RangeError: encoding overruns Buffer" occur
+            // if this value is large, "RangeError: encoding overruns Buffer" occur
             const bachsize = 10;
             for (
               let offset = 0;
