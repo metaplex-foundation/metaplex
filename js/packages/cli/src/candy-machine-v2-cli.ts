@@ -49,6 +49,8 @@ const supportedImageTypes = {
   'image/png': 1,
   'image/gif': 1,
   'image/jpeg': 1,
+};
+const supportedAnimationTypes = {
   'video/mp4': 1,
 };
 
@@ -148,12 +150,15 @@ programCommand('upload')
     };
 
     let imageFileCount = 0;
+    let animationFileCount = 0;
     let jsonFileCount = 0;
 
     // Filter out any non-supported file types and find the JSON vs Image file count
     const supportedFiles = files.filter(it => {
       if (supportedImageTypes[getType(it)]) {
         imageFileCount++;
+      } else if (supportedAnimationTypes[getType(it)]) {
+        animationFileCount++;
       } else if (it.endsWith(EXTENSION_JSON)) {
         jsonFileCount++;
       } else {
@@ -164,7 +169,12 @@ programCommand('upload')
       return true;
     });
 
-    if (imageFileCount !== jsonFileCount) {
+    if (animationFileCount !== 0 && animationFileCount !== jsonFileCount) {
+      throw new Error(
+        `number of animation files (${animationFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
+    }
+    else if (imageFileCount !== jsonFileCount) {
       throw new Error(
         `number of img files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
@@ -173,11 +183,17 @@ programCommand('upload')
     const elemCount = number ? number : imageFileCount;
     if (elemCount < imageFileCount) {
       throw new Error(
-        `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
+        `max number (${elemCount}) cannot be smaller than the number of images in the source folder (${imageFileCount})`,
       );
     }
 
-    log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
+    if (animationFileCount === 0) {
+      log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
+    }
+    else {
+      log.info(`Beginning the upload for ${elemCount} (img+animation+json) sets`);
+    }
+    
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());

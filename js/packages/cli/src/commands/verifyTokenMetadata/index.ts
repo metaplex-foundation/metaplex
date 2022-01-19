@@ -1,7 +1,7 @@
 import path from 'path';
 import log from 'loglevel';
 import { validate } from 'jsonschema';
-import { EXTENSION_JSON } from '../../helpers/constants';
+import { EXTENSION_JSON, EXTENSION_MP4, EXTENSION_PNG, EXTENSION_JPG, EXTENSION_GIF } from '../../helpers/constants';
 import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
 type TokenMetadata = {
@@ -15,7 +15,10 @@ type TokenMetadata = {
 
 export const verifyAssets = ({ files, uploadElementsCount }) => {
   const imgFileCount = files.filter(it => {
-    return !it.endsWith(EXTENSION_JSON);
+    return it.endsWith(EXTENSION_PNG || EXTENSION_JPG || EXTENSION_GIF);
+  }).length;
+  const animationFileCount = files.filter(it => {
+    return it.endsWith(EXTENSION_MP4);
   }).length;
   const jsonFileCount = files.filter(it => {
     return it.endsWith(EXTENSION_JSON);
@@ -29,6 +32,18 @@ export const verifyAssets = ({ files, uploadElementsCount }) => {
       `number of img files (${imgFileCount}) is different than the number of json files (${jsonFileCount})`,
     );
   }
+  if (animationFileCount) {
+    if (animationFileCount !== jsonFileCount) {
+      throw new Error(
+        `number of animation files (${animationFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
+    }
+    if (animationFileCount !== imgFileCount) {
+      throw new Error(
+        `number of animation files (${animationFileCount}) is different than the number of img files (${imgFileCount})`,
+      );
+    }
+  }
 
   if (elemCount < imgFileCount) {
     throw new Error(
@@ -36,7 +51,13 @@ export const verifyAssets = ({ files, uploadElementsCount }) => {
     );
   }
 
-  log.info(`Verifying token metadata for ${imgFileCount} (img+json) pairs`);
+  if (animationFileCount) {
+    log.info(`Verifying token metadata for ${jsonFileCount} (img+animation+json) sets`);
+  }
+  else {
+    log.info(`Verifying token metadata for ${jsonFileCount} (img+json) pairs`);
+  }
+  
 };
 
 export const verifyAggregateShare = (
@@ -169,15 +190,14 @@ export const verifyMetadataManifests = ({ files }) => {
 
     verifyCreatorCollation(creators, collatedCreators, manifestFile);
 
-    if (tokenMetadata.hasOwnProperty('image')) {
-      // Check that the `image` and at least one of the files has a URI matching the index of this token.
-      const {
-        image,
-        properties: { files },
-      } = tokenMetadata;
-      verifyImageURL(image, files, manifestFile);
-    }
-    else {
+    // Check that the `image` and at least one of the files has a URI matching the index of this token.
+    const {
+      image,
+      properties: { files },
+    } = tokenMetadata;
+    verifyImageURL(image, files, manifestFile);
+    
+    if (tokenMetadata.hasOwnProperty('animation_url')) {
       // Check that the `animation_url` and at least one of the files has a URI matching the index of this token.
       const {
         animation_url,

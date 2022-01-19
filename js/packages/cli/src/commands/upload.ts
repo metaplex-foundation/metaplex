@@ -15,6 +15,7 @@ import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { EXTENSION_MP4 } from '../helpers/constants';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
@@ -223,67 +224,84 @@ export async function uploadV2({
           async allIndexesInSlice => {
             for (let i = 0; i < allIndexesInSlice.length; i++) {
               const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-              const image = path.join(
-                dirname,
-                `${assetKey.index}${assetKey.mediaExt}`,
-              );
               const manifest = getAssetManifest(
                 dirname,
                 assetKey.index.includes('json')
                   ? assetKey.index
                   : `${assetKey.index}.json`,
               );
-              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
-              if (
-                allIndexesInSlice[i] >= lastPrinted + tick ||
-                allIndexesInSlice[i] === 0
-              ) {
-                lastPrinted = allIndexesInSlice[i];
-                log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-              }
+              for (var index in manifest.properties.files) {
+                const image = path.join(
+                  dirname,
+                  `${manifest.properties.files[index].uri}`,
+                  // `${assetKey.index}${assetKey.mediaExt}`,
+                );
+                const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
-              let link, imageLink;
-              try {
-                switch (storage) {
-                  case StorageType.Ipfs:
-                    [link, imageLink] = await ipfsUpload(
-                      ipfsCredentials,
-                      image,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Aws:
-                    [link, imageLink] = await awsUpload(
-                      awsS3Bucket,
-                      image,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Arweave:
-                  default:
-                    [link, imageLink] = await arweaveUpload(
-                      walletKeyPair,
-                      anchorProgram,
-                      env,
-                      image,
-                      manifestBuffer,
-                      manifest,
-                      assetKey.index,
-                    );
+                if (
+                  allIndexesInSlice[i] >= lastPrinted + tick ||
+                  allIndexesInSlice[i] === 0
+                ) {
+                  lastPrinted = allIndexesInSlice[i];
+                  log.info(`Processing asset: ${manifest.properties.files[index].uri}`);
                 }
-                if (link && imageLink) {
-                  log.debug('Updating cache for ', allIndexesInSlice[i]);
-                  cacheContent.items[assetKey.index] = {
-                    link,
-                    name: manifest.name,
-                    onChain: false,
-                  };
-                  saveCache(cacheName, env, cacheContent);
+
+                let link, imageLink;
+                try {
+                  switch (storage) {
+                    case StorageType.Ipfs:
+                      [link, imageLink] = await ipfsUpload(
+                        ipfsCredentials,
+                        image,
+                        manifestBuffer,
+                      );
+                      break;
+                    case StorageType.Aws:
+                      [link, imageLink] = await awsUpload(
+                        awsS3Bucket,
+                        image,
+                        manifestBuffer,
+                      );
+                      break;
+                    case StorageType.Arweave:
+                    default:
+                      [link, imageLink] = await arweaveUpload(
+                        walletKeyPair,
+                        anchorProgram,
+                        env,
+                        image,
+                        manifestBuffer,
+                        manifest,
+                        assetKey.index,
+                      );
+                  }
+                  if (link && imageLink) {
+                    log.debug('Updating cache for ', allIndexesInSlice[i]);
+                    cacheContent.items[assetKey.index] = {
+                      link,
+                      name: manifest.name,
+                      onChain: false,
+                    };
+                    saveCache(cacheName, env, cacheContent);
+                  }
+
+                  if (manifest.properties.files[index].uri.endsWith(EXTENSION_MP4)) {
+                    manifest.animation_url = imageLink
+                    manifest.properties.files[index].uri = imageLink
+                  }
+                  else {
+                    manifest.image = imageLink
+                    manifest.properties.files[index].uri = imageLink
+                  }
+
+                  log.info(link)
+                  log.info(imageLink)
+
+                } catch (err) {
+                  log.error(`Error uploading file ${manifest.properties.files[index].uri}`, err);
+                  i--;
                 }
-              } catch (err) {
-                log.error(`Error uploading file ${assetKey}`, err);
-                i--;
               }
             }
           },
@@ -442,18 +460,16 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
   const manifest: Manifest = JSON.parse(
     fs.readFileSync(manifestPath).toString(),
   );
-  if (manifest.hasOwnProperty('image')) {
-    manifest.image = manifest.image.replace('image', assetIndex);
-    if (manifest.properties?.files?.length > 0) {
-      manifest.properties.files[0].uri =
-        manifest.properties.files[0]?.uri?.replace('image', assetIndex);
-    }
+  manifest.image = manifest.image.replace('image', assetIndex);
+  if (manifest.properties?.files?.length > 0) {
+    manifest.properties.files[0].uri =
+      manifest.properties.files[0]?.uri?.replace('image', assetIndex);
   }
-  else {
+  if (manifest.hasOwnProperty('animation_url')) {
     manifest.animation_url = manifest.animation_url.replace('animation_url', assetIndex);
     if (manifest.properties?.files?.length > 0) {
-      manifest.properties.files[0].uri =
-        manifest.properties.files[0]?.uri?.replace('animation_url', assetIndex);
+      manifest.properties.files[1].uri =
+        manifest.properties.files[1]?.uri?.replace('animation_url', assetIndex);
     }
   }
 
