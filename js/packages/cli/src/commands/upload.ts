@@ -231,10 +231,10 @@ export async function uploadV2({
                   : `${assetKey.index}.json`,
               );
 
-              for (let index in manifest.properties.files) {
+              for (let ii = 0; ii < manifest.properties.files.length; ii++) {
                 const image = path.join(
                   dirname,
-                  `${manifest.properties.files[index].uri}`,
+                  `${manifest.properties.files[ii].uri}`,
                   // `${assetKey.index}${assetKey.mediaExt}`,
                 );
                 const manifestBuffer = Buffer.from(JSON.stringify(manifest));
@@ -286,17 +286,17 @@ export async function uploadV2({
                     saveCache(cacheName, env, cacheContent);
                   }
 
-                  if (manifest.properties.files[index].uri.endsWith(EXTENSION_MP4)) {
+                  if (manifest.properties.files[ii].uri.endsWith(EXTENSION_MP4)) {
                     manifest.animation_url = imageLink
-                    manifest.properties.files[index].uri = imageLink
+                    manifest.properties.files[ii].uri = imageLink
                   }
                   else {
                     manifest.image = imageLink
-                    manifest.properties.files[index].uri = imageLink
+                    manifest.properties.files[ii].uri = imageLink
                   }
 
                 } catch (err) {
-                  log.error(`Error uploading file ${manifest.properties.files[index].uri}`, err);
+                  log.error(`Error uploading file ${manifest.properties.files[ii].uri}`, err);
                   i--;
                 }
               }
