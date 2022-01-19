@@ -30,7 +30,7 @@ const storefrontDenyList = [
 ]
 
 const subdomainAlias: { [key: string]: string; } = {
-  "endstate-io": "endstate"
+  "endstate": "endstate-io"
 }
 
 export async function getServerSideProps(context: NextPageContext) {
