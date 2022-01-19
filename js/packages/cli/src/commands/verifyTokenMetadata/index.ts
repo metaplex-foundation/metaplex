@@ -6,6 +6,7 @@ import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
 type TokenMetadata = {
   image: string;
+  animation_url: string;
   properties: {
     files: { uri: string; type: string }[];
     creators: { address: string; share: number }[];
@@ -110,6 +111,28 @@ The \`metaplex upload\` command will automatically substitute this URL with the 
   }
 };
 
+export const verifyAnimationURL = (animation_url, files, manifestFile) => {
+  // The animation_url is expected to have the same name as the index
+  const fileIndex = manifestFile.split('/').pop().split('.')[0];
+  const ext = path.extname(animation_url);
+  const expectedAnimationPath = `${fileIndex}${ext}`;
+  if (animation_url !== expectedAnimationPath) {
+    // We _could_ match against this in the JSON schema validation, but it is totally valid to have arbitrary URLs to images here.
+    // The downside, though, is that those images will not get uploaded to Arweave since they're not on-disk.
+    log.warn(`We expected the \`animation_url\` property in ${manifestFile} to be ${expectedAnimationPath}.
+This will still work properly (assuming the URL is valid!), however, this animation_url will not get uploaded to Arweave through the \`metaplex upload\` command.
+If you want us to take care of getting this into Arweave, make sure to set \`animation_url\`: "${expectedAnimationPath}"
+The \`metaplex upload\` command will automatically substitute this URL with the Arweave URL location.
+    `);
+  }
+  const mediaFiles = files.filter(file => file.type !== EXTENSION_JSON);
+  if (mediaFiles.length === 0 || !mediaFiles.some(file => file.uri === animation_url)) {
+    throw new Error(
+      `At least one media file entry in \`properties.files\` array is expected to match the \`animation_url\` property.`,
+    );
+  }
+};
+
 export const verifyConsistentShares = (collatedCreators: CollatedCreators) => {
   // We expect all creators to have been added to the same amount of tokens
   const tokenCountSet = new Set<number>();
@@ -146,12 +169,22 @@ export const verifyMetadataManifests = ({ files }) => {
 
     verifyCreatorCollation(creators, collatedCreators, manifestFile);
 
-    // Check that the `image` and at least one of the files has a URI matching the index of this token.
-    const {
-      image,
-      properties: { files },
-    } = tokenMetadata;
-    verifyImageURL(image, files, manifestFile);
+    if (tokenMetadata.hasOwnProperty('image')) {
+      // Check that the `image` and at least one of the files has a URI matching the index of this token.
+      const {
+        image,
+        properties: { files },
+      } = tokenMetadata;
+      verifyImageURL(image, files, manifestFile);
+    }
+    else {
+      // Check that the `animation_url` and at least one of the files has a URI matching the index of this token.
+      const {
+        animation_url,
+        properties: { files },
+      } = tokenMetadata;
+      verifyAnimationURL(animation_url, files, manifestFile);
+    }
   }
 
   verifyConsistentShares(collatedCreators);
