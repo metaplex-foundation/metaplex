@@ -196,8 +196,8 @@ export const verifyMetadataManifests = ({ files }) => {
       properties: { files },
     } = tokenMetadata;
     verifyImageURL(image, files, manifestFile);
-    
-    if (tokenMetadata.hasOwnProperty('animation_url')) {
+
+    if (Object.prototype.hasOwnProperty.call(tokenMetadata, 'animation_url')) {
       // Check that the `animation_url` and at least one of the files has a URI matching the index of this token.
       const {
         animation_url,

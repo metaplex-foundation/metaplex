@@ -231,7 +231,7 @@ export async function uploadV2({
                   : `${assetKey.index}.json`,
               );
 
-              for (var index in manifest.properties.files) {
+              for (let index in manifest.properties.files) {
                 const image = path.join(
                   dirname,
                   `${manifest.properties.files[index].uri}`,
@@ -244,7 +244,7 @@ export async function uploadV2({
                   allIndexesInSlice[i] === 0
                 ) {
                   lastPrinted = allIndexesInSlice[i];
-                  log.info(`Processing asset: ${manifest.properties.files[index].uri}`);
+                  log.info(`Processing asset: ${allIndexesInSlice[i]}`);
                 }
 
                 let link, imageLink;
@@ -462,7 +462,7 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
     manifest.properties.files[0].uri =
       manifest.properties.files[0]?.uri?.replace('image', assetIndex);
   }
-  if (manifest.hasOwnProperty('animation_url')) {
+  if (Object.prototype.hasOwnProperty.call(manifest, 'animation_url')) {
     manifest.animation_url = manifest.animation_url.replace('animation_url', assetIndex);
     if (manifest.properties?.files?.length > 0) {
       manifest.properties.files[1].uri =
