@@ -23,6 +23,7 @@ import React, {
 import { Link } from 'react-router-dom';
 import { useMeta, useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
+import MintModal from '../MintModal';
 import CogSvg from '../svgs/cog';
 
 const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
@@ -132,10 +133,12 @@ export const CurrentUserBadge = (props: {
   const solPrice = useSolPrice();
 
   const [showAddFundsModal, setShowAddFundsModal] = useState<boolean>(false);
+  const [showMintModal, setShowMintModal] = useState<boolean>(false);
 
   if (!wallet || !publicKey || !solPrice) {
     return null;
   }
+
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
 
@@ -172,6 +175,9 @@ export const CurrentUserBadge = (props: {
                   </Button>
                   <Button onClick={disconnect}>Disconnect</Button>
                 </Space>
+                <Space direction="horizontal">
+                  <Button onClick={() => setShowMintModal(true)}>Create</Button>
+                </Space>
                 <UserActions />
               </Space>
             }
@@ -198,6 +204,11 @@ export const CurrentUserBadge = (props: {
         showAddFundsModal={showAddFundsModal}
         publicKey={publicKey}
         balance={balance}
+      />
+      <MintModal
+        wallet={wallet}
+        show={showMintModal}
+        onClose={() => setShowMintModal(false)}
       />
     </>
   );

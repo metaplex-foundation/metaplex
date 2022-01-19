@@ -111,7 +111,7 @@ export const getStorefront = async (
   const client = createClient({
     url: REDIS_URL,
     socket: {
-      tls: true,
+      // tls: true,
       rejectUnauthorized: false,
     },
   });
