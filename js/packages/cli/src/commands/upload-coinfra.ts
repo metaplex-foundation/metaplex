@@ -1,9 +1,7 @@
-import log from 'loglevel';
-import { createCandyMachineCoinfa } from '../helpers/accounts-coinfra';
+import { createCandyMachineCoinfra } from '../helpers/accounts-coinfra';
 import { PublicKey } from '@solana/web3.js';
 import { BN, Program, web3 } from '@project-serum/anchor';
 
-import { AssetKey } from '../types';
 import { chunks } from '../helpers/various-coinfra';
 
 export async function uploadCoinfra({
@@ -21,13 +19,9 @@ export async function uploadCoinfra({
   hiddenSettings,
   uuid,
   wallet,
-  publicKey,
   anchorProgram,
-  manifest,
-  metadataLink,
-  imageLink,
-  extension,
-  filename,
+  manifests,
+  metadataLinks,
 }: {
   cacheName: string;
   env: string;
@@ -57,155 +51,117 @@ export async function uploadCoinfra({
   };
   uuid: string;
   wallet: any;
-  publicKey: PublicKey;
   anchorProgram: Program;
-  manifest: any;
-  metadataLink: string;
-  imageLink: string;
-  extension: string;
-  filename: string;
+  manifests: any[];
+  metadataLinks: string;
 }): Promise<{
   uploadSuccessful: boolean;
   cacheContent: any;
-  createCandyMachineTxId: string;
-  addConfigLinesTxId: string;
 }> {
   let uploadSuccessful = true;
-  const cacheContent: any = {};
+  const cacheContent: any = { program: {}, items: {} };
 
-  if (!cacheContent.program) {
-    cacheContent.program = {};
+  const SIZE = manifests.length;
+
+  if (SIZE === 0 || manifests.length === 0) {
+    const error = new Error('Error dedupedAssetKeys or manifests is invalid');
+    console.error(error.message);
+    throw error;
   }
 
-  if (!cacheContent.items) {
-    cacheContent.items = {};
+  const firstAssetManifest = manifests[0];
+
+  let candyMachine;
+  try {
+    if (
+      !firstAssetManifest.properties?.creators?.every(
+        creator => creator.address !== undefined,
+      )
+    ) {
+      throw new Error('Creator address is missing');
+    }
+
+    // initialize candy
+    console.log(`initializing candy machine`);
+    const res = await createCandyMachineCoinfra(
+      anchorProgram,
+      wallet,
+      treasuryWallet,
+      splToken,
+      {
+        itemsAvailable: new BN(totalNFTs),
+        uuid,
+        symbol: firstAssetManifest.symbol,
+        sellerFeeBasisPoints: firstAssetManifest.seller_fee_basis_points,
+        isMutable: mutable,
+        maxSupply: new BN(0),
+        retainAuthority: retainAuthority,
+        gatekeeper,
+        goLiveDate,
+        price,
+        endSettings,
+        whitelistMintSettings,
+        hiddenSettings,
+        creators: firstAssetManifest.properties.creators.map(creator => {
+          return {
+            address: new PublicKey(creator.address),
+            verified: true,
+            share: creator.share,
+          };
+        }),
+      },
+    );
+    cacheContent.program.uuid = res.uuid;
+    cacheContent.program.candyMachine = res.candyMachine.toBase58();
+    candyMachine = res.candyMachine;
+
+    console.info(
+      `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+    );
+  } catch (error) {
+    console.error('Error deploying config to Solana network.', error);
+    throw error;
   }
 
-  const dedupedAssetKeys: AssetKey[] = [
-    { mediaExt: extension, index: filename },
-  ];
-  const SIZE = dedupedAssetKeys.length;
-  console.log('Size', SIZE, dedupedAssetKeys[0]);
-  let candyMachine = cacheContent.program.candyMachine
-    ? new PublicKey(cacheContent.program.candyMachine)
-    : undefined;
+  console.log('Uploading Size', SIZE, firstAssetManifest);
 
-  const tick = SIZE / 100; //print every one percent
-  let lastPrinted = 0;
-
-  let createCandyMachineTxId: string;
+  // add config to cacheContent.items
   await Promise.all(
     chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
       async allIndexesInSlice => {
         for (let i = 0; i < allIndexesInSlice.length; i++) {
-          const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-          if (
-            allIndexesInSlice[i] >= lastPrinted + tick ||
-            allIndexesInSlice[i] === 0
-          ) {
-            lastPrinted = i;
-            log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-          }
+          const manifest = manifests[allIndexesInSlice[i]];
+          const metadataLink = metadataLinks[allIndexesInSlice[i]];
 
-          if (allIndexesInSlice[i] === 0 && !cacheContent.program.uuid) {
-            try {
-              const remainingAccounts = [];
-
-              if (splToken) {
-                const splTokenKey = new PublicKey(splToken);
-
-                remainingAccounts.push({
-                  pubkey: splTokenKey,
-                  isWritable: false,
-                  isSigner: false,
-                });
-              }
-
-              // initialize candy
-              log.info(`initializing candy machine`);
-              const res = await createCandyMachineCoinfa(
-                anchorProgram,
-                wallet,
-                publicKey,
-                treasuryWallet,
-                splToken,
-                {
-                  itemsAvailable: new BN(totalNFTs),
-                  uuid,
-                  symbol: manifest.symbol,
-                  sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-                  isMutable: mutable,
-                  maxSupply: new BN(0),
-                  retainAuthority: retainAuthority,
-                  gatekeeper,
-                  goLiveDate,
-                  price,
-                  endSettings,
-                  whitelistMintSettings,
-                  hiddenSettings,
-                  creators: manifest.properties.creators.map(creator => {
-                    return {
-                      address: new PublicKey(creator.address),
-                      verified: true,
-                      share: creator.share,
-                    };
-                  }),
-                },
-              );
-              cacheContent.program.uuid = res.uuid;
-              cacheContent.program.candyMachine = res.candyMachine.toBase58();
-              candyMachine = res.candyMachine;
-              createCandyMachineTxId = res.txId;
-              log.info(
-                `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
-              );
-            } catch (exx) {
-              log.error('Error deploying config to Solana network.', exx);
-              throw exx;
-            }
-          }
-
-          if (
-            allIndexesInSlice[i] >= lastPrinted + tick ||
-            allIndexesInSlice[i] === 0
-          ) {
-            lastPrinted = allIndexesInSlice[i];
-            log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-          }
-
-          try {
-            if (metadataLink && imageLink) {
-              log.debug('Updating cache for ', allIndexesInSlice[i]);
-              cacheContent.items[assetKey.index] = {
-                link: metadataLink,
-                imageLink,
-                name: manifest.name,
-                onChain: false,
-              };
-            }
-          } catch (err) {
-            log.error(`Error uploading file ${assetKey}`, err);
-            i--;
-          }
+          console.debug('Updating cache for ', allIndexesInSlice[i]);
+          cacheContent.items[allIndexesInSlice[i]] = {
+            link: metadataLink,
+            name: manifest.name,
+            onChain: false,
+          };
         }
       },
     ),
   );
-  let addConfigLinesTxId: string;
+
   const keys = Object.keys(cacheContent.items);
-  if (hiddenSettings) {
-    log.info('Skipping upload to chain as this is a hidden Candy Machine');
-  } else {
+  if (!hiddenSettings) {
     try {
+      // add coinfig to candy machine from cacheContent.items
       await Promise.all(
         chunks(Array.from(Array(keys.length).keys()), 1000).map(
           async allIndexesInSlice => {
+            // bachsize of offset is 5. if this value is large, "RangeError: encoding overruns Buffer" occur
+            const bachsize = 10;
             for (
               let offset = 0;
               offset < allIndexesInSlice.length;
-              offset += 10
+              offset += bachsize
             ) {
-              const indexes = allIndexesInSlice.slice(offset, offset + 10);
+              const indexes = allIndexesInSlice.slice(
+                offset,
+                offset + bachsize,
+              );
               const onChain = indexes.filter(i => {
                 const index = keys[i];
                 return cacheContent.items[index]?.onChain || false;
@@ -213,20 +169,22 @@ export async function uploadCoinfra({
               const ind = keys[indexes[0]];
 
               if (onChain.length != indexes.length) {
-                log.info(
+                console.info(
                   `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
                 );
                 try {
-                  addConfigLinesTxId = await anchorProgram.rpc.addConfigLines(
+                  await anchorProgram.rpc.addConfigLines(
                     ind,
-                    indexes.map(i => ({
-                      uri: cacheContent.items[keys[i]].link,
-                      name: cacheContent.items[keys[i]].name,
-                    })),
+                    indexes.map(i => {
+                      return {
+                        uri: cacheContent.items[keys[i]].link,
+                        name: cacheContent.items[keys[i]].name,
+                      };
+                    }),
                     {
                       accounts: {
                         candyMachine,
-                        authority: publicKey,
+                        authority: wallet.publicKey,
                       },
                       // signers: [wallet], // ここにwalletを入れたらエラー
                     },
@@ -235,14 +193,15 @@ export async function uploadCoinfra({
                     cacheContent.items[keys[i]] = {
                       ...cacheContent.items[keys[i]],
                       onChain: true,
+                      verifyRun: false,
                     };
                   });
-                } catch (e) {
-                  log.error(
+                } catch (error) {
+                  console.error(
                     `saving config line ${ind}-${
                       keys[indexes[indexes.length - 1]]
                     } failed`,
-                    e,
+                    error,
                   );
                   uploadSuccessful = false;
                 }
@@ -251,15 +210,16 @@ export async function uploadCoinfra({
           },
         ),
       );
-    } catch (e) {
-      log.error(e);
+    } catch (error) {
+      console.error(error);
     }
+  } else {
+    console.info('Skipping upload to chain as this is a hidden Candy Machine');
   }
+
   console.log(`Done. Successful = ${uploadSuccessful}.`);
   return {
     uploadSuccessful,
     cacheContent,
-    createCandyMachineTxId,
-    addConfigLinesTxId,
   };
 }

@@ -88,10 +88,9 @@ export async function loadCandyProgramCoinfra(
   return program;
 }
 
-export const createCandyMachineCoinfa = async function (
+export const createCandyMachineCoinfra = async function (
   anchorProgram: anchor.Program,
   wallet: any,
-  publicKey: PublicKey,
   treasuryWallet: PublicKey,
   splToken: PublicKey,
   candyData: CandyMachineData,
@@ -127,8 +126,8 @@ export const createCandyMachineCoinfa = async function (
       accounts: {
         candyMachine: candyAccount.publicKey,
         wallet: treasuryWallet,
-        authority: publicKey,
-        payer: publicKey,
+        authority: wallet.publicKey,
+        payer: wallet.publicKey,
         systemProgram: SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
@@ -139,7 +138,7 @@ export const createCandyMachineCoinfa = async function (
         await createCandyMachineV2Account(
           anchorProgram,
           candyData,
-          publicKey,
+          wallet.publicKey,
           candyAccount.publicKey,
         ),
       ],
