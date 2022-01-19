@@ -295,9 +295,6 @@ export async function uploadV2({
                     manifest.properties.files[index].uri = imageLink
                   }
 
-                  log.info(link)
-                  log.info(imageLink)
-
                 } catch (err) {
                   log.error(`Error uploading file ${manifest.properties.files[index].uri}`, err);
                   i--;
