@@ -385,6 +385,7 @@ type Cache = {
  */
 type Manifest = {
   image: string;
+  animation_url: string;
   name: string;
   symbol: string;
   seller_fee_basis_points: number;
@@ -441,10 +442,19 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
   const manifest: Manifest = JSON.parse(
     fs.readFileSync(manifestPath).toString(),
   );
-  manifest.image = manifest.image.replace('image', assetIndex);
-  if (manifest.properties?.files?.length > 0) {
-    manifest.properties.files[0].uri =
-      manifest.properties.files[0]?.uri?.replace('image', assetIndex);
+  if (manifest.hasOwnProperty('image')) {
+    manifest.image = manifest.image.replace('image', assetIndex);
+    if (manifest.properties?.files?.length > 0) {
+      manifest.properties.files[0].uri =
+        manifest.properties.files[0]?.uri?.replace('image', assetIndex);
+    }
+  }
+  else {
+    manifest.animation_url = manifest.animation_url.replace('animation_url', assetIndex);
+    if (manifest.properties?.files?.length > 0) {
+      manifest.properties.files[0].uri =
+        manifest.properties.files[0]?.uri?.replace('animation_url', assetIndex);
+    }
   }
 
   return manifest;
