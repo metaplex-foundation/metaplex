@@ -34,28 +34,26 @@ const About = () => {
       to creators.
       </div>
 
+
       <div>
-      In the Solana ecosystem, the cost of token airdrops is currently largely
-      due to rent costs being{WHITESPACE}
-      <HyperLink
-        href="https://docs.solana.com/implemented-proposals/rent"
-        underline="none"
-      >
-        &quot;fixed at the genesis&quot;
-      </HyperLink>
-      . With the large increase in SOLUSD since genesis, rent costs when
-      creating accounts for thousands of users have duly skyrocketed.
+      Various ecosystem projects want to ensure early followers and supporters
+      gain access to project assets whether they be tokens, NFTs, or others.
+      Simultaneously, capitalization of these assets should not incur undue
+      costs or operational overhead to the creators. There are several ways to
+      achieve such a setup and Gumdrop offers one that integrates with existing
+      Solana and Metaplex ecosystem programs.
       </div>
 
       <div>
-      Simultaneously, NFT projects often have a presale to early project
-      followers and contributors. However, the candy-machine doesn&apos;t have the
-      ability to grant early minting to a whitelisted subset of wallets while
-      also using the same asset configuration for open launch.
+      Gumdrop solves this efficient-airdrop issue by utilizing a space-efficient hash
+      structure (the merkle tree) such that an on-chain program can validate whether
+      the user is part of a whitelist. This uses a pull-based paradigm to shift the
+      burden from creators, sending airdrops or pre-minting NFTs, to recipients, that
+      can choose to claim their portion or leave it for general adoption.
       </div>
 
       <div>
-      Gumdrop (originally pioneered for token airdrops by{" "}
+      The approach, originally pioneered for token airdrops by{" "}
       <HyperLink
         href="https://github.com/Uniswap/merkle-distributor"
         underline="none"
@@ -68,61 +66,51 @@ const About = () => {
         underline="none"
       >
         Saber
-      </HyperLink>) solves both these issues by building a space-efficient hash
-      structure (the merkle tree) such that an on-chain program can validate
-      whether the user is part of a whitelist. Moreover, Gumdrop
-      allows creators to directly send whitelisted users an airdrop reclamation
-      link by building the tree with off-chain handles (e.g email, discord,
-      etc) and allowing the user to redeem into any wallet.
+      </HyperLink>, is extended to allow pre-minting a Candy Machine or
+      printing editions of a master copy.  Moreover, Gumdrop allows creators to
+      directly send whitelisted users a drop reclamation link by building the
+      tree with off-chain handles (e.g email, discord, etc) and allowing the
+      user to redeem into any wallet.
       </div>
     </Stack>
   );
 
   const create= (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/create`}>
+      <Link to={`${process.env.REACT_APP_WEB_HOME}/create`}>
         CREATION
       </Link>
 
       <div>
       Creation builds a whitelist of users that can claim either existing
-      fungible tokens or directly mint from a pre-sale candy-machine.
+      fungible tokens or directly mint from a pre-sale Candy Machine.
+
+      See a full explanation on the{" "}
+      <HyperLink
+        href="https://docs.metaplex.com/airdrops/create-gumdrop"
+        underline="none"
+      >
+        metaplex docs
+      </HyperLink>
       </div>
 
       <div>
-      Creators must choose a mint or a candy-machine config and UUID, an
-      off-chain notification method (based on the handles supplied below, e.g
-      email, discord, etc), and supply a list of recipients and balances with
-      the following JSON schema{WHITESPACE}
+      Click{" "}
       <HyperLink
         href={`data:text/plain;charset=utf-8,${JSON.stringify(require("./example.json"))}`}
         download="example.json"
         underline="none"
       >
-      (Click here for an example)
+      here
       </HyperLink>
-      </div>
-
-      <pre style={{ fontSize: 14 }}>{`
-[
-  {
-    "handle": "<DISTRIBUTION-SPECIFIC-HANDLE>"
-    "amount": <#-TOKENS-OR-CANDY-MINTS>
-  },
-  ...
-]`}</pre>
-
-      <div>
-      NB: When a candy-machine is supplied, update authority for the
-      candy-machine will be transferred to the Gumdrop state. This can
-      be reclaimed by closing the Gumdrop.
+      {" "}for an example distribution list with emails.
       </div>
     </Stack>
   );
 
   const claim = (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/claim`}>
+      <Link to={`${process.env.REACT_APP_WEB_HOME}/claim`}>
         CLAIMS
       </Link>
 
@@ -137,7 +125,7 @@ const About = () => {
 
   const close = (
     <Stack spacing={1}>
-      <Link to={`/gumdrop/close`}>
+      <Link to={`${process.env.REACT_APP_WEB_HOME}/close`}>
         CLOSING
       </Link>
 
@@ -148,7 +136,7 @@ const About = () => {
       </div>
 
       <div>
-      When closing a candy-machine-integrated distributor, update authority
+      When closing a Candy Machine-integrated distributor, update authority
       will be transferred back to the wallet owner.
       </div>
     </Stack>
@@ -238,10 +226,10 @@ function App() {
           >
             <Box height="40px" />
             <Switch>
-              <Route path="/gumdrop/create" component={Create} />
-              <Route path="/gumdrop/claim" component={Claim} />
-              <Route path="/gumdrop/close" component={Close} />
-              <Route path="/gumdrop/" component={About} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/create`} component={Create} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/claim`} component={Claim} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/close`} component={Close} />
+              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/`} component={About} />
             </Switch>
             <Box height="80px" />
           </Box>
