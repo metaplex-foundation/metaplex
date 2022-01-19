@@ -7,7 +7,7 @@ import { useWalletModal } from '../../contexts';
 import { notify, shortenAddress } from '../../utils';
 import { CopyOutlined } from '@ant-design/icons';
 import { Identicon } from '../Identicon';
-import { HashQueryLink } from '../HashQueryLink';
+import { Link } from 'react-router-dom';
 
 export const Settings = ({
   additionalSettings,
@@ -52,15 +52,6 @@ export const Settings = ({
                 &nbsp;{shortenAddress(publicKey?.toBase58())}
               </div>
             </Tooltip>
-
-            <HashQueryLink
-              to={`/profile/${publicKey?.toBase58()}`}
-              style={{
-                color: 'rgba(255, 255, 255, 0.7)',
-              }}
-            >
-              View profile
-            </HashQueryLink>
           </>
         )}
         <br />

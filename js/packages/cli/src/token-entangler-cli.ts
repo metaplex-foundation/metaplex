@@ -281,7 +281,7 @@ programCommand('swap')
     const tokenBEscrow = result[2];
     const transferAuthority = web3.Keypair.generate();
     const paymentTransferAuthority = web3.Keypair.generate();
-    const tokenMetadata = await getMetadata(tokenMint);
+    const replacementTokenMetadata = await getMetadata(replacementTokenMint);
     const signers = [transferAuthority];
 
     //@ts-ignore
@@ -297,7 +297,7 @@ programCommand('swap')
     const remainingAccounts = [];
 
     const metadataObj = await anchorProgram.provider.connection.getAccountInfo(
-      tokenMetadata,
+      replacementTokenMetadata,
     );
     const metadataDecoded: Metadata = decodeMetadata(
       Buffer.from(metadataObj.data),
@@ -332,7 +332,7 @@ programCommand('swap')
         transferAuthority: transferAuthority.publicKey,
         paymentTransferAuthority: paymentTransferAuthority.publicKey,
         token,
-        tokenMetadata,
+        replacementTokenMetadata,
         replacementToken,
         replacementTokenMint,
         tokenAEscrow,

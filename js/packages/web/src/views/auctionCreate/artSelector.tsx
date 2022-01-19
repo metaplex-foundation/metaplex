@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Row, Button, Modal, ButtonProps } from 'antd';
-import { ArtCard } from './../../components/ArtCard';
 import { useUserArts } from '../../hooks';
-import Masonry from 'react-masonry-css';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import AuctionItemCard from './AuctionItemCard';
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[];
@@ -41,30 +40,17 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     close();
   };
 
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
-
   return (
     <>
-      <Masonry
-        breakpointCols={breakpointColumnsObj}
-        className="my-masonry-grid"
-        columnClassName="my-masonry-grid_column"
-      >
+      <div className="artwork-grid">
         {selected.map(m => {
-          let key = m?.metadata.pubkey || '';
-
+          const key = m?.metadata.pubkey || '';
           return (
-            <ArtCard
+            <AuctionItemCard
               key={key}
-              pubkey={m.metadata.pubkey}
-              preview={false}
-              onClick={open}
-              close={() => {
+              current={m}
+              onSelect={open}
+              onClose={() => {
                 setSelected(selected.filter(_ => _.metadata.pubkey !== key));
                 confirm();
               }}
@@ -80,7 +66,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
             <span className="text-center">Add an NFT</span>
           </div>
         )}
-      </Masonry>
+      </div>
 
       <Modal
         visible={visible}
@@ -88,6 +74,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         onOk={confirm}
         width={1100}
         footer={null}
+        className={'modalp-40'}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
           <h2>Select the NFT you want to sell</h2>
@@ -99,11 +86,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           className="content-action"
           style={{ overflowY: 'auto', height: '50vh' }}
         >
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
+          <div className="artwork-grid">
             {items.map(m => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
@@ -118,7 +101,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   ? new Set(list.filter(item => item !== id))
                   : new Set([...list, id]);
 
-                let selected = items.filter(item =>
+                const selected = items.filter(item =>
                   newSet.has(item.metadata.pubkey),
                 );
                 setSelected(selected);
@@ -129,16 +112,15 @@ export const ArtSelector = (props: ArtSelectorProps) => {
               };
 
               return (
-                <ArtCard
+                <AuctionItemCard
                   key={id}
-                  pubkey={m.metadata.pubkey}
-                  preview={false}
-                  onClick={onSelect}
-                  className={isSelected ? 'selected-card' : 'not-selected-card'}
+                  isSelected={isSelected}
+                  current={m}
+                  onSelect={onSelect}
                 />
               );
             })}
-          </Masonry>
+          </div>
         </Row>
         <Row>
           <Button

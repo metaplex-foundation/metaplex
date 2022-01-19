@@ -1,62 +1,11 @@
 import BN from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
-import { programIds } from '../utils/programIds';
-import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 import { PackDistributionType } from '../models/packs/types';
 import {
   AddCardToPackParams,
   InitPackSetParams,
+  RequestCardToRedeemParams,
+  ClaimPackParams,
 } from '../models/packs/interface';
-
-export const PACKS_PREFIX = 'packs';
-export const CARD_PREFIX = 'card';
-export const VOUCHER_PREFIX = 'voucher';
-
-export async function getProgramAuthority(): Promise<StringPublicKey> {
-  const PROGRAM_IDS = programIds();
-
-  return (
-    await findProgramAddress(
-      [
-        Buffer.from(PACKS_PREFIX),
-        toPublicKey(PROGRAM_IDS.pack_create).toBuffer(),
-      ],
-      toPublicKey(PROGRAM_IDS.pack_create),
-    )
-  )[0];
-}
-
-export async function findPackCardProgramAddress(
-  pack: PublicKey,
-  index: number,
-): Promise<StringPublicKey> {
-  return findProgramAddressByPrefix(pack, index, CARD_PREFIX);
-}
-
-export async function findPackVoucherProgramAddress(
-  pack: PublicKey,
-  index: number,
-): Promise<StringPublicKey> {
-  return findProgramAddressByPrefix(pack, index, VOUCHER_PREFIX);
-}
-
-async function findProgramAddressByPrefix(
-  packSetKey: PublicKey,
-  index: number,
-  prefix: string,
-): Promise<StringPublicKey> {
-  const PROGRAM_IDS = programIds();
-
-  const numberBuffer = Buffer.allocUnsafe(4);
-  numberBuffer.writeUInt16LE(index);
-
-  return (
-    await findProgramAddress(
-      [Buffer.from(prefix), new PublicKey(packSetKey).toBuffer(), numberBuffer],
-      toPublicKey(PROGRAM_IDS.pack_create),
-    )
-  )[0];
-}
 
 export class InitPackSetArgs {
   instruction = 0;
@@ -106,6 +55,30 @@ export class ActivatePackArgs {
   constructor() {}
 }
 
+export class ClaimPackArgs {
+  instruction = 6;
+  index: number;
+
+  constructor(args: ClaimPackParams) {
+    this.index = args.index;
+  }
+}
+
+export class RequestCardToRedeemArgs {
+  instruction = 12;
+  index: number;
+
+  constructor(args: RequestCardToRedeemParams) {
+    this.index = args.index;
+  }
+}
+
+export class CleanUpArgs {
+  instruction = 13;
+
+  constructor() {}
+}
+
 export const PACKS_SCHEMA = new Map<any, any>([
   [
     InitPackSetArgs,
@@ -145,6 +118,33 @@ export const PACKS_SCHEMA = new Map<any, any>([
   ],
   [
     ActivatePackArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    ClaimPackArgs,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['index', 'u32'],
+      ],
+    },
+  ],
+  [
+    RequestCardToRedeemArgs,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['index', 'u32'],
+      ],
+    },
+  ],
+  [
+    CleanUpArgs,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],

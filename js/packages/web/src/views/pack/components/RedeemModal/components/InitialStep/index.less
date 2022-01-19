@@ -1,0 +1,35 @@
+.title {
+  font-weight: bold;
+  font-size: 24px;
+  height: 80px;
+  padding: 24px;
+
+  &:last-of-type {
+    font-size: 18px !important;
+    line-height: 24px !important;
+  }
+
+  @media (max-width: @mobile-xs-max) {
+    &:first-of-type {
+      display: none !important;
+    }
+  }
+
+  @media (min-width: 521px) {
+    &:last-of-type {
+      display: none;
+    }
+  }
+}
+
+.body-title {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: bold;
+  margin-bottom: 8px !important;
+}
+
+.body-desc {
+  font-size: 16px;
+  line-height: 20px;
+}

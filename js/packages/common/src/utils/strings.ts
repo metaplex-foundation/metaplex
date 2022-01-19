@@ -72,3 +72,12 @@ export function fromUTF8Array(data: number[]) {
 
   return str;
 }
+
+export function getSearchParams(search: string) {
+  const searchParams = new URLSearchParams(search);
+  const searchData: { [key: string]: string } = {};
+  for (const key of searchParams.keys()) {
+    searchData[key] = <string>searchParams.get(key);
+  }
+  return searchData;
+}

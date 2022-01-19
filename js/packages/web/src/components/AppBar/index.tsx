@@ -6,25 +6,25 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { HowToBuyModal } from '../HowToBuyModal';
-import { HashQueryLink } from '@oyster/common';
 import {
   Cog,
   CurrentUserBadge,
   CurrentUserBadgeMobile,
 } from '../CurrentUserBadge';
 import { ConnectButton } from '@oyster/common';
+import { MobileNavbar } from '../MobileNavbar';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    <HashQueryLink to={`/`} key={'explore'}>
+    <Link to={`/`} key={'explore'}>
       <Button className="app-btn">Explore</Button>
-    </HashQueryLink>,
-    <HashQueryLink to={`/artworks`} key={'artwork'}>
+    </Link>,
+    <Link to={`/artworks`} key={'artwork'}>
       <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
-    </HashQueryLink>,
-    <HashQueryLink to={`/artists`} key={'artists'}>
+    </Link>,
+    <Link to={`/artists`} key={'artists'}>
       <Button className="app-btn">Creators</Button>
-    </HashQueryLink>,
+    </Link>,
   ];
 };
 
@@ -42,7 +42,7 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
   );
 };
 
-const MetaplexMenu = () => {
+export const MetaplexMenu = () => {
   const { width } = useWindowDimensions();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const { connected } = useWallet();
@@ -119,10 +119,7 @@ export const AppBar = () => {
   const { connected } = useWallet();
   return (
     <>
-      <div id="mobile-navbar">
-        <LogoLink />
-        <MetaplexMenu />
-      </div>
+      <MobileNavbar />
       <div id="desktop-navbar">
         <div className="app-left">
           <LogoLink />

@@ -1,6 +1,8 @@
 import { PackDistributionType } from '@oyster/common';
 import React, { memo, ReactElement } from 'react';
-import { Input } from 'antd';
+import { Input, Tooltip } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import classNames from 'classnames';
 
 import ItemRow from '../ItemRow';
 import SelectCard from '../SelectCard';
@@ -43,6 +45,10 @@ const AdjustQuantitiesStep = ({
     const number = Number(value);
     const pubKey = item.metadata.pubkey;
 
+    if (inputType === InputType.weight && number > 100) {
+      return;
+    }
+
     if (inputType === InputType.weight) {
       return setPackState({
         weightByMetadataKey: {
@@ -53,7 +59,6 @@ const AdjustQuantitiesStep = ({
     }
 
     const maxSupply = item.masterEdition?.info.maxSupply?.toNumber();
-
     setPackState({
       supplyByMetadataKey: {
         ...supplyByMetadataKey,
@@ -97,7 +102,15 @@ const AdjustQuantitiesStep = ({
 
       <div className="quantities-step-wrapper__table-titles">
         {shouldRenderSupplyInput && <p>NUMBER OF NFTs</p>}
-        {shouldRenderWeightInput && <p>REDEEM WEIGHT</p>}
+        {shouldRenderWeightInput && (
+          <p className="redeem-weight">
+            REDEEM WEIGHT{' '}
+            <span>
+              — Weights must be between 1-100. 1 is least likely, 100 is most
+              likely.
+            </span>
+          </p>
+        )}
       </div>
 
       {Object.values(selectedItems).map(item => (
@@ -109,6 +122,10 @@ const AdjustQuantitiesStep = ({
                   type="number"
                   min={0}
                   max={item.masterEdition?.info.maxSupply?.toNumber()}
+                  className={classNames({
+                    'ant-error-input':
+                      !supplyByMetadataKey[item.metadata.pubkey],
+                  })}
                   value={supplyByMetadataKey[item.metadata.pubkey]}
                   onChange={({ target: { value } }) =>
                     handleDistributionChange(item, value, InputType.maxSupply)
@@ -126,7 +143,22 @@ const AdjustQuantitiesStep = ({
                   onChange={({ target: { value } }) =>
                     handleDistributionChange(item, value, InputType.weight)
                   }
+                  className={classNames({
+                    'ant-error-input error-redeem':
+                      !weightByMetadataKey[item.metadata.pubkey],
+                  })}
                 />
+                {!weightByMetadataKey[item.metadata.pubkey] && (
+                  <div className="error-tooltip-container">
+                    <Tooltip
+                      overlayClassName="creat-pack-redeem-tooltip"
+                      placement="top"
+                      title="Weight must be between 1-100"
+                    >
+                      <ExclamationCircleOutlined className="input-info" />
+                    </Tooltip>
+                  </div>
+                )}
               </div>
             )}
           </>

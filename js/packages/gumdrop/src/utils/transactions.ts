@@ -11,7 +11,7 @@ import {
   TransactionInstruction,
   TransactionSignature,
 } from '@solana/web3.js';
-import { sleep } from "@oyster/common";
+import { sleep } from '@oyster/common';
 import log from 'loglevel';
 
 interface BlockhashAndFeeCalculator {
@@ -25,24 +25,22 @@ export const getUnixTs = () => {
   return new Date().getTime() / 1000;
 };
 
-export const envFor = (
-  connection: Connection
-) : string => {
+export const envFor = (connection: Connection): string => {
   const endpoint = (connection as any)._rpcEndpoint;
   const regex = /https:\/\/api.([^.]*).solana.com/;
   const match = endpoint.match(regex);
   if (match[1]) {
     return match[1];
   }
-  return "mainnet-beta";
-}
+  return 'mainnet-beta';
+};
 
 export const explorerLinkFor = (
   txid: TransactionSignature,
-  connection: Connection
-) : string => {
+  connection: Connection,
+): string => {
   return `https://explorer.solana.com/tx/${txid}?cluster=${envFor(connection)}`;
-}
+};
 
 export const sendTransactionWithRetryWithKeypair = async (
   connection: Connection,

@@ -10,13 +10,13 @@ import { serialize } from 'borsh';
 import { TokenAccount } from '../..';
 import { getEdition, getMetadata } from '../../..';
 import { StringPublicKey, programIds, toPublicKey } from '../../../utils';
+import { AddCardToPackArgs, PACKS_SCHEMA } from '../../../actions/packs';
+import { AddCardToPackParams } from '../interface';
 import {
   findPackCardProgramAddress,
+  findPackConfigProgramAddress,
   getProgramAuthority,
-  AddCardToPackArgs,
-  PACKS_SCHEMA,
-} from '../../../actions/packs';
-import { AddCardToPackParams } from '../interface';
+} from '../find';
 
 interface Params extends AddCardToPackParams {
   packSetKey: PublicKey;
@@ -35,7 +35,7 @@ export async function addCardToPack({
   mint,
   tokenAccount,
   toAccount,
-}: Params): Promise<TransactionInstruction[]> {
+}: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
 
   const value = new AddCardToPackArgs({
@@ -53,6 +53,7 @@ export async function addCardToPack({
   const masterEdition = await getEdition(mint);
   const programAuthority = await getProgramAuthority();
   const packCard = await findPackCardProgramAddress(packSetKey, index);
+  const packConfig = await findPackConfigProgramAddress(packSetKey);
   const { pubkey: sourceKey } = tokenAccount;
 
   const data = Buffer.from(serialize(PACKS_SCHEMA, value));
@@ -60,6 +61,12 @@ export async function addCardToPack({
     // pack_set
     {
       pubkey: toPublicKey(packSetKey),
+      isSigner: false,
+      isWritable: true,
+    },
+    // pack_config
+    {
+      pubkey: toPublicKey(packConfig),
       isSigner: false,
       isWritable: true,
     },
@@ -137,11 +144,9 @@ export async function addCardToPack({
     },
   ];
 
-  return [
-    new TransactionInstruction({
-      keys,
-      programId: toPublicKey(PROGRAM_IDS.pack_create),
-      data,
-    }),
-  ];
+  return new TransactionInstruction({
+    keys,
+    programId: toPublicKey(PROGRAM_IDS.pack_create),
+    data,
+  });
 }

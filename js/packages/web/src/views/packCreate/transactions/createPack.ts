@@ -1,6 +1,6 @@
 import {
   MAX_PACK_SET_SIZE,
-  sendTransactions,
+  sendTransactionsInChunks,
   SequenceType,
 } from '@oyster/common';
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
@@ -15,6 +15,19 @@ import { mapSelectedItems, mapSelectedVouchers } from '../utils';
 import { getAddVoucherToPack } from './getAddVoucherToPack';
 import { getActivate } from './getActivate';
 import { getCreateTokenAccounts } from './getCreateTokenAccounts';
+
+const CREATE_ACCOUNT_CHUNK_SIZE = 5;
+const ADD_CARD_TO_PACK_CHUNK_SIZE = 3;
+
+const chunk = <T>(arr: Array<T>, chunkSize: number): T[][] => {
+  const R: T[][] = [];
+
+  for (let i = 0, len = arr.length; i < len; i += chunkSize) {
+    R.push(arr.slice(i, i + chunkSize));
+  }
+
+  return R;
+};
 
 const generateCreatePackInstructions = async ({
   wallet,
@@ -91,21 +104,34 @@ const generateCreatePackInstructions = async ({
     packSetKey,
   });
 
-  const cardsTokens = cardsToAdd.map(({ toAccount }) => toAccount);
+  const addCardsChunks = chunk(
+    addCardToPackInstructions,
+    ADD_CARD_TO_PACK_CHUNK_SIZE,
+  );
+  const addCardsSignersChunks = addCardsChunks.map(() => []);
+
+  const createTokenAccountsChunks = chunk(
+    createTokenAccountsInstructions,
+    CREATE_ACCOUNT_CHUNK_SIZE,
+  );
+  const createTokenSignersChunks = chunk(
+    cardsToAdd.map(({ toAccount }) => toAccount),
+    CREATE_ACCOUNT_CHUNK_SIZE,
+  );
 
   return {
     instructions: [
       [createAccountInstruction, initPackSetInstruction],
-      createTokenAccountsInstructions,
-      ...addCardToPackInstructions,
-      ...addVoucherToPackInstructions,
+      ...createTokenAccountsChunks,
+      ...addCardsChunks,
+      addVoucherToPackInstructions,
       [activateInstruction],
     ],
     signers: [
       [packSet],
-      cardsTokens,
-      ...addCardToPackInstructions.map(() => []),
-      ...addVoucherToPackInstructions.map(() => []),
+      ...createTokenSignersChunks,
+      ...addCardsSignersChunks,
+      [],
       [],
     ],
   };
@@ -124,11 +150,14 @@ export const sendCreatePack = async ({
     data,
   });
 
-  return sendTransactions(
+  return sendTransactionsInChunks(
     connection,
     wallet,
     instructions,
     signers,
     SequenceType.Sequential,
+    'singleGossip',
+    120000,
+    10,
   );
 };

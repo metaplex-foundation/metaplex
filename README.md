@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://metaplex.com">
-    <img alt="Metaplex" src="https://metaplex.com/static/logos/metaplex.svg" width="250" />
+    <img alt="Metaplex" src="js/packages/web/public/metaplex-logo.svg" style="background: black; padding: 10px" width="250" />
   </a>
 </p>
 
@@ -12,34 +12,9 @@ Metaplex is a protocol built on top of Solana that allows:
 
 Metaplex is comprised of two core components: an on-chain program, and a self-hosted front-end web3 application.
 
-## Important NOTE
+## Official Metaplex Docs and Guide
 
-Metaplex now follows a release versioning process called semantic versioning. If you are make a new market place, launching a candy machine or any live project that will handle real money, we recommend using a release tag. Using a release tag will ensure that new changes don't break your UI.
-
-https://github.com/metaplex-foundation/metaplex/releases
-
-### How to checkout a release
-```
-//If you are using a fork
-git fetch upstream --tags
-
-git checkout tags/<tag> // this will bring the contents of the tag into your current branch
-
-// OR 
-git checkout tags/<tag> -b <your local branch name> // this will make a new branch for you
-
-To swich to a new release
-
-git checkout tags/<tag> -b new_version_branch /// this will take the new tag and bring it into  anew branch
-//Switch back to the branch you want the new changes in
-git rebase new_version_branch
-```
-
-## In Depth Developer's Guide
-
-If you want to deep dive on the Architecture, you can do so here:
-
-https://docs.metaplex.com/
+You can check out our docs at https://docs.metaplex.com/
 
 ## Installing
 
@@ -91,7 +66,7 @@ Usually, prints are created as a part of an auction that has happened on Metaple
 
 For limited auctions, each print number is awarded based on the bid placement.
 
-Prints can be created during [Open Edition](#open-edition) or [Limited Edition](#limited-edition) auction.
+Prints can be created during an [Open Edition](#open-edition) or [Limited Edition](#limited-edition) auction.
 
 ### Normal NFT
 
@@ -135,7 +110,7 @@ It is required for limited supply NFTs that there is atleast as much supply rema
 
 ### Tiered Auction
 
-A tiered auction can contain a mix of the other three auction types as winning placements. For instance, the first place winner could win a Print of Limited Edition NFT A, while the second-place winner could win Normal NFT, and so on. Additionally, all participants who did not win any place could get a Participation NFT Print from a Master Edition (if the Master Edition had no supply limit).
+A tiered auction can contain a mix of the other three auction types as winning placements. For instance, the first place winner could win a Print of Limited Edition NFT A, while the second-place winner could win a Normal NFT, etc. Additionally, all participants who did not win any place could get a Participation NFT Print from a Master Edition (if the Master Edition had no supply limit).
 
 ## Royalties
 
@@ -205,3 +180,7 @@ solana airdrop 4 NEW_WALLET_ADDRESS
 # Create a new store
 # Test your program changes
 ```
+
+## Reporting security issues
+
+To report a security issue, please follow the guidance on the [SECURITY](.github/SECURITY.md) page.

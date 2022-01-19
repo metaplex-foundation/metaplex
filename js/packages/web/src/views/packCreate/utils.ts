@@ -1,22 +1,16 @@
-import { Creator, PackDistributionType } from '@oyster/common';
+import { PackDistributionType } from '@oyster/common';
 import { Keypair } from '@solana/web3.js';
 import { BN } from 'bn.js';
+import { notification } from 'antd';
 
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import { MAX_PACKS_CREATION_COUNT } from '../../constants';
 import {
   MapSelectedItemsParams,
   MapSelectedVouchersParams,
   SelectedItem,
   SelectedVoucher,
 } from './interface';
-
-export const validCreatorsFilter = ({ metadata }: SafetyDepositDraft) => {
-  const areValidCreators = !(metadata.info.data.creators || []).some(
-    (c: Creator) => !c.verified,
-  );
-
-  return areValidCreators;
-};
 
 export const isItemInPackFilter = (
   selectedItems: Record<string, SafetyDepositDraft>,
@@ -45,22 +39,14 @@ export const packItemsFilter =
   (selectedItems: Record<string, SafetyDepositDraft>, isUnlimited: boolean) =>
   (item: SafetyDepositDraft) => {
     if (Object.values(selectedItems).length === 0) {
-      return (
-        nonUniqueItemFilter(item) &&
-        masterEditionFilter(item) &&
-        validCreatorsFilter(item)
-      );
+      return nonUniqueItemFilter(item) && masterEditionFilter(item);
     }
 
     const shouldShowItemBasedOnSupply = isUnlimited
       ? unlimitedSupplyFilter(item)
       : limitedSupplyFilter(item);
 
-    return (
-      shouldShowItemBasedOnSupply &&
-      masterEditionFilter(item) &&
-      validCreatorsFilter(item)
-    );
+    return shouldShowItemBasedOnSupply && masterEditionFilter(item);
   };
 
 export const vouchersFilter =
@@ -69,8 +55,7 @@ export const vouchersFilter =
     !isItemInPackFilter(selectedItems, item) &&
     nonUniqueItemFilter(item) &&
     masterEditionFilter(item) &&
-    hasSupplyFilter(item) &&
-    validCreatorsFilter(item);
+    hasSupplyFilter(item);
 
 export const mapSelectedItems = ({
   selectedItems,
@@ -125,3 +110,11 @@ export const mapSelectedVouchers = ({
       tokenAccount,
     };
   });
+
+export const exceededPacksCountNotification = (): void => {
+  notification.warning({
+    message: 'Exceeded Max Selected Count!',
+    description: `Maximum ${MAX_PACKS_CREATION_COUNT} items can be selected.`,
+    className: 'notification-container',
+  });
+};

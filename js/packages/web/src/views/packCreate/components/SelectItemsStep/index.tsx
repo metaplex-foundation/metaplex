@@ -1,5 +1,6 @@
 import React, { ReactElement } from 'react';
 
+import SmallLoader from '../../../../components/SmallLoader';
 import ItemRow from '../ItemRow';
 
 import { SelectItemsStepProps } from './interface';
@@ -11,8 +12,13 @@ const SelectItemsStep = ({
   items,
   showSupply,
   emptyMessage,
+  isLoading,
 }: SelectItemsStepProps): ReactElement => {
   const shouldShowEmptyMessage = !items?.length && emptyMessage;
+
+  if (isLoading) {
+    return <SmallLoader />;
+  }
 
   return (
     <div>

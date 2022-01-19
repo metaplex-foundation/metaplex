@@ -5,11 +5,11 @@ export const CANDY_MACHINE_ID = new PublicKey(
 );
 
 export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(
-  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a'
+  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a',
 );
 
 export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(
-  'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV'
+  'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV',
 );
 
 export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(

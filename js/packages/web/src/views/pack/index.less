@@ -1,4 +1,13 @@
+@import './components/RedeemModal/index.less';
+@import './components/ArtCard/index.less';
+
+@scrollbar-color: #2c2c2c;
+
 .pack-view {
+  &__sidebar-container {
+    position: relative;
+  }
+
   &__list {
     display: flex;
     flex-flow: wrap;
@@ -6,48 +15,11 @@
     padding: 48px;
   }
 
-  &__block {
-    position: relative;
-    width: 32%;
-    margin: 1%;
-
-    background: @grey-50;
-    cursor: pointer;
-    border-radius: 12px;
-
-    &:nth-child(3n + 3) {
-      margin-right: 0;
-    }
-
-    &:nth-child(3n + 1),
-    &:first-child {
-      margin-left: 0;
-    }
-
-    span {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-
-      font-size: 48px;
-      font-weight: bold;
-      font-family: @fontFamilyInter;
-      color: @grey-50;
-    }
-  }
-
-  &__square {
-    width: 100%;
-    height: 0;
-    padding-bottom: 100%;
-  }
-
   &__sidebar {
     padding: 48px 24px;
 
     h4 {
-      font-size: 48px;
+      font-size: 32px;
       font-weight: bold;
       margin-bottom: 50px;
       color: white;
@@ -68,36 +40,59 @@
   }
 
   &__description-block {
-    margin: 40px 0;
+    margin: 20px 0 150px;
   }
 
+  .divider {
+    background-color: @grey-50;
+    height: 1px;
+    margin-top: 15px;
+    margin-bottom: 0;
+  }
+  &__owner {
+    .item-title {
+      text-transform: uppercase;
+      color: @grey-20;
+      margin-bottom: 10px;
+    }
+    .item-name {
+      color: @accent-color;
+      font-size: 16px;
+      margin-left: 15px;
+    }
+  }
   &__info {
     display: flex;
-
+    margin-bottom: 40px;
+    flex-direction: row;
+    justify-content: space-between;
     .info-item {
-      padding: 0 24px;
-      border-left: 1px solid @grey-50;
-
-      p {
+      &__title,
+      h6 {
         font-size: 14px;
+        font-weight: normal;
         margin: 0 0 16px 0;
+        text-transform: uppercase;
         color: @grey-20;
-
-        &.info-count {
-          font-weight: bold;
-          color: white;
-
-          span {
-            color: @grey-20;
-          }
-        }
+        white-space: nowrap;
+        opacity: 1;
+      }
+      &__value {
+        color: @accent-color;
+        font-weight: bold;
       }
 
       &:first-child {
-        padding-left: 0;
-        border: none;
+        border-right: 1px solid @grey-50;
+        padding-right: 24px;
       }
     }
+  }
+
+  &__art-preview {
+    width: 100%;
+    max-width: 187px;
+    margin: 30px 0;
   }
 
   &__summary {
@@ -159,158 +154,166 @@
       padding: 0 20px;
     }
   }
+
+  .open-pack {
+    width: calc(33% - 48px);
+    max-width: 400px;
+    padding: 24px;
+    border-radius: 12px;
+    position: fixed;
+    bottom: 40px;
+    background-color: @grey-70;
+
+    & button {
+      background-color: @metaplex-primary-color !important;
+      color: @black-100;
+      width: 100%;
+      border-radius: 8px;
+    }
+    &__title {
+      margin-bottom: 20px;
+      color: @grey-20;
+    }
+  }
+
+  @media (min-width: @mobile-xs-min) {
+    &__info-mobile,
+    .you-label {
+      display: none;
+    }
+  }
+
+  @media (max-width: @mobile-xs-max) {
+    .ant-row {
+      flex-direction: column-reverse;
+    }
+
+    .ant-col-md-16 {
+      width: 100%;
+    }
+
+    &__list {
+      padding: 32px 24px;
+      flex-direction: column;
+
+      & > div {
+        width: 100%;
+        margin: 0 0 32px;
+      }
+    }
+
+    .open-pack {
+      position: static;
+      margin: 0 8px;
+      width: calc(100% - 16px);
+      max-width: none;
+      padding: 16px;
+
+      &__title {
+        color: @accent-color;
+        font-size: 16px;
+        line-height: 20px;
+        margin-bottom: 16px;
+      }
+    }
+
+    &__sidebar {
+      padding: 0;
+      border-top: 1px solid @grey-50;
+
+      & > .ant-divider {
+        display: none;
+      }
+    }
+
+    &__owner {
+      padding: 16px 24px;
+
+      & > div {
+        display: flex;
+        align-items: center;
+      }
+
+      .item-title {
+        font-size: 14px;
+        line-height: 17px;
+        margin-bottom: 8px;
+      }
+
+      .you-label {
+        margin-left: 8px;
+        padding: 9px 16px;
+        background: @grey-60;
+        border-radius: 36px;
+
+        font-family: @fontFamilyInter;
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 14px;
+        color: @grey-20;
+      }
+    }
+
+    &__art-preview {
+      max-width: 100%;
+      margin: 0 0 30px;
+
+      .ant-image-img {
+        border-radius: 0;
+      }
+    }
+
+    &__name {
+      padding: 0 24px;
+    }
+
+    &__info {
+      padding: 0 24px;
+      justify-content: flex-start;
+      margin-bottom: 24px;
+
+      .info-item {
+        padding-right: 30px;
+
+        &__title {
+          margin-bottom: 0;
+        }
+
+        &__value {
+          font-size: 18px;
+          line-height: 24px;
+        }
+
+        &:first-of-type {
+          border: none;
+        }
+
+        &:last-of-type {
+          display: none;
+        }
+      }
+    }
+
+    &__info-mobile {
+      padding: 0 24px;
+
+      .ant-divider {
+        margin-top: 30px;
+      }
+    }
+
+    &__description-block {
+      margin: 34px 0 24px;
+      padding: 0 24px;
+    }
+  }
 }
 
 .ant-modal-body {
   padding: 0;
   border-radius: 12px;
-}
 
-.modal-redeem-wr {
-  .ant-modal-body {
-    border-radius: 12px;
-  }
-}
-
-.modal-redeem {
-  p {
-    color: white;
-    font-family: @fontFamilyInter;
-    margin: 0;
-  }
-
-  &__title {
-    font-weight: bold;
-    font-size: 24px;
-
-    padding: 24px;
-  }
-
-  &__body {
-    background: @grey-60;
-    border-radius: 12px;
-    padding: 20px 24px;
-
-    .body-title {
-      font-size: 18px;
-      line-height: 24px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-
-    .body-desc {
-      font-size: 16px;
-      line-height: 20px;
-    }
-
-    .general-desc {
-      color: white;
-      font-size: 16px;
-      line-height: 20px;
-      margin-bottom: 16px;
-    }
-  }
-
-  &__cards {
-    margin-top: 30px;
-    margin-bottom: 16px;
-  }
-
-  &__cards > p {
-    font-size: 14px;
-    line-height: 17px;
-    color: @grey-20;
-    margin: 0 0 8px 0;
-  }
-
-  &__image {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    height: 64px;
-    width: 64px;
-
-    border-radius: 12px;
-    overflow: hidden;
-    filter: drop-shadow(0px 0px 24px rgba(0, 0, 0, 0.2));
-
-    img {
-      width: 100%;
-      height: 100%;
-      background: @grey-20;
-    }
-  }
-
-  &__card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    background: @grey-60;
-    border-radius: 12px;
-    padding: 16px;
-
-    margin-bottom: 16px;
-
-    .info {
-      display: flex;
-      align-items: center;
-
-      &__text {
-        display: flex;
-        flex-direction: column;
-
-        padding: 0 0 0 16px;
-
-        p {
-          font-size: 16px;
-        }
-      }
-
-      &__title {
-        font-weight: bold;
-      }
-    }
-  }
-
-  &__percentage {
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-
-    height: 30px;
-    border: 1px solid @grey-50;
-    border-radius: 25px;
-
-    p {
-      font-size: 14px;
-      line-height: 17px;
-      color: @grey-20;
-    }
-  }
-
-  &__open-nft {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    outline: none;
-    background: @metaplex-primary-color;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-
-    height: 64px;
-    width: 100%;
-
-    span {
-      display: block;
-      font-size: 16px;
-      font-weight: 600;
-      font-family: @fontFamilyInter;
-      color: @black-100;
-      padding: 0 20px;
-    }
+  @media (max-width: @mobile-xs-max) {
+    border-radius: 0 !important;
   }
 }

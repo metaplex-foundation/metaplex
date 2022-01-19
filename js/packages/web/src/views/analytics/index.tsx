@@ -128,7 +128,7 @@ const rerun = async ({
     } else if (auction.items.length && auction.items[0].length) {
       type =
         auction.items[0][0].winningConfigType ==
-        WinningConfigType.TokenOnlyTransfer
+          WinningConfigType.TokenOnlyTransfer
           ? AuctionType.OneOfKind
           : AuctionType.Limited;
     } else {
@@ -249,7 +249,7 @@ const MemoizedBar = React.memo(
         ],
       },
     };
-
+    // @ts-ignore
     return <Bar data={histoData} options={histoOptions} />;
   },
 );

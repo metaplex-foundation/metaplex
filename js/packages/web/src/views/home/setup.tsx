@@ -1,5 +1,4 @@
 import {
-  sleep,
   useConnection,
   useStore,
   useWalletModal,
@@ -60,7 +59,7 @@ export const SetupView = () => {
     await setStoreForOwner(undefined);
     await setStoreForOwner(wallet.publicKey.toBase58());
 
-    history.push(`/admin/${location.hash?.slice(2)}`);
+    history.push('/admin');
   };
 
   return (

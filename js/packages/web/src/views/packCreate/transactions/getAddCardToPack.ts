@@ -1,4 +1,4 @@
-import { addCardToPack } from '@oyster/common/dist/lib/models/packs/instructions/addCardToPack';
+import { addCardToPack } from '@oyster/common';
 import { TransactionInstruction } from '@solana/web3.js';
 
 import { GetAddCardToPackParams } from './interface';
@@ -7,7 +7,7 @@ export const getAddCardToPack = async ({
   selectedItems,
   packSetKey,
   walletPublicKey,
-}: GetAddCardToPackParams): Promise<TransactionInstruction[][]> => {
+}: GetAddCardToPackParams): Promise<TransactionInstruction[]> => {
   const addCardsToPack = selectedItems.map(selectedItem => {
     return addCardToPack({
       ...selectedItem,

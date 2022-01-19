@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2019",
     "module": "commonjs",
     "outDir": "./../build",
     "declaration": false,
@@ -15,9 +15,22 @@
     "preserveConstEnums": true,
     "suppressImplicitAnyIndexErrors": true,
     "resolveJsonModule": true,
-    "lib": ["dom", "es2019"]
+    "lib": [
+      "dom",
+      "es2019"
+    ],
+    "types": [
+      "jest",
+      "node",
+      "webgl2",
+      "offscreencanvas"
+    ],
   },
-  "exclude": ["node_modules", "typings/browser", "typings/browser.d.ts"],
+  "exclude": [
+    "node_modules",
+    "typings/browser",
+    "typings/browser.d.ts"
+  ],
   "atom": {
     "rewriteTsconfig": false
   }
