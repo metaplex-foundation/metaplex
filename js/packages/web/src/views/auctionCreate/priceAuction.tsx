@@ -1,6 +1,6 @@
 import { Button, InputNumber, Space, Form } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import React, { useState } from 'react';
+import React from 'react';
 import { AuctionCategory, AuctionState } from '.';
 
 export const PriceAuction = (props: {
@@ -8,9 +8,7 @@ export const PriceAuction = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
-  type InputState = number | null;
-  const [price, setPrice] = useState<InputState>(null);
-  const [tickSize, setTickSize] = useState<InputState>(null);
+  type InputState = number | undefined;
   const [form] = useForm();
 
   const checkForPriceError = (price: InputState, tick: InputState) => {
@@ -41,7 +39,7 @@ export const PriceAuction = (props: {
                 message:
                   'Starting price must be an exact multiple of the tick size!',
                 validator: async (_, price) => {
-                  checkForPriceError(price, tickSize);
+                  checkForPriceError(price, props.attributes.priceTick);
                 },
               },
               {
@@ -66,7 +64,6 @@ export const PriceAuction = (props: {
                   autoFocus
                   placeholder="Fixed Price in SOL"
                   onChange={price => {
-                    setPrice(price);
                     props.setAttributes({
                       ...props.attributes,
                       // Do both, since we know this is the only item being sold.
@@ -88,7 +85,7 @@ export const PriceAuction = (props: {
                 message:
                   'Starting price must be an exact multiple of the tick size!',
                 validator: async (_, price) => {
-                  checkForPriceError(price, tickSize);
+                  checkForPriceError(price, props.attributes.priceTick);
                 },
               },
               {
@@ -110,7 +107,6 @@ export const PriceAuction = (props: {
                   autoFocus
                   placeholder="Price in SOL"
                   onChange={price => {
-                    setPrice(price);
                     props.setAttributes({
                       ...props.attributes,
                       priceFloor: price,
@@ -129,7 +125,7 @@ export const PriceAuction = (props: {
               message:
                 'Starting price must be an exact multiple of the tick size!',
               validator: async (_, tickSize) => {
-                checkForPriceError(price, tickSize);
+                checkForPriceError(props.attributes.priceFloor, tickSize);
               },
             },
           ]}
@@ -146,7 +142,6 @@ export const PriceAuction = (props: {
                 step="0.01"
                 placeholder="Tick size in SOL"
                 onChange={tick => {
-                  setTickSize(tick);
                   props.setAttributes({
                     ...props.attributes,
                     priceTick: tick,
