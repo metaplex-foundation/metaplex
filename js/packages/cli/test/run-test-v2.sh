@@ -480,9 +480,9 @@ if [ "${CLOSE}" = "Y" ]; then
     fi
 
     mag "<<<"
-    clean_up
+    # clean_up
 fi
 
-rm ${temp_file}
+# rm ${temp_file}
 echo ""
 blu "[$(date "+%T")] Test completed"
