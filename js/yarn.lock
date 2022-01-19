@@ -1860,6 +1860,34 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
+"@holaplex/js@^4.3.2":
+  version "4.3.2"
+  resolved "https://registry.yarnpkg.com/@holaplex/js/-/js-4.3.2.tgz#c5ebbf42104a8935106186d5cf46d19dabbe2cda"
+  integrity sha512-Xzax0+7N00FcfkaSra+vZZkOG6HYw81AV6YZEEEbzgWv+pR7X+d+dtL9jENRvg3TTAjJ2b3RSd6NlJ+mhptv5Q==
+  dependencies:
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.30.2"
+    "@types/bs58" "^4.0.1"
+    async-retry "^1.3.3"
+    axios "^0.21.4"
+    bn.js "^5.2.0"
+    borsh "^0.4.0"
+    bs58 "^4.0.1"
+    buffer "^6.0.3"
+    crypto-hash "^1.3.0"
+    form-data "^4.0.0"
+
+"@holaplex/ui@file:.yalc/@holaplex/ui":
+  version "0.0.1"
+  dependencies:
+    "@holaplex/js" "^4.3.2"
+    antd "^4.16.7"
+    feather-icons-react "^0.4.3"
+    ramda "^0.27.2"
+    react-step-wizard "^5.3.11"
+    react-toastify "^8.1.0"
+    use-onclickoutside "^0.4.0"
+
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.5.0.tgz#1407967d4c6eecd7388f83acf1eaf4d0c6e58ef9"
@@ -5544,6 +5572,11 @@ arconnect@^0.2.8:
   dependencies:
     arweave "^1.10.13"
 
+are-passive-events-supported@^1.1.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/are-passive-events-supported/-/are-passive-events-supported-1.1.1.tgz#3db180a1753a2186a2de50a32cded3ac0979f5dc"
+  integrity sha512-5wnvlvB/dTbfrCvJ027Y4L4gW/6Mwoy1uFSavney0YO++GU+0e/flnjiBBwH+1kh7xNCgCOGvmJC3s32joYbww==
+
 are-we-there-yet@~1.1.2:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/are-we-there-yet/-/are-we-there-yet-1.1.7.tgz#b15474a932adab4ff8a50d9adfa7e4e926f21146"
@@ -7275,7 +7308,7 @@ clone@^1.0.2:
   resolved "https://registry.yarnpkg.com/clone/-/clone-1.0.4.tgz#da309cc263df15994c688ca902179ca3c7cd7c7e"
   integrity sha1-2jCcwmPfFZlMaIypAheco8fNfH4=
 
-clsx@^1.0.4:
+clsx@^1.0.4, clsx@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/clsx/-/clsx-1.1.1.tgz#98b3134f9abbdf23b2663491ace13c5c03a73188"
   integrity sha512-6/bPho624p3S2pMyvP5kKBPXnI3ufHLObBFCfgx+LkeR5lg2XYy2hqZqUf45ypD8COn2bhgGJSUE+l5dhNBieA==
@@ -9972,6 +10005,11 @@ fd-slicer@~1.1.0:
   dependencies:
     pend "~1.2.0"
 
+feather-icons-react@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/feather-icons-react/-/feather-icons-react-0.4.3.tgz#50b5ee96a26773926636fa41ae3d60f2a8fee4db"
+  integrity sha512-tROWNpZD0HYOovJlaUoHwDN71S2HRoWMxtb3iKlJGObRGbSUzYdmPVcEO4Ksja8ADVbASDXOiD+KlkzDkPP7cA==
+
 figgy-pudding@^3.4.1, figgy-pudding@^3.5.1:
   version "3.5.2"
   resolved "https://registry.yarnpkg.com/figgy-pudding/-/figgy-pudding-3.5.2.tgz#b4eee8148abb01dcf1d1ac34367d59e12fa61d6e"
@@ -11090,11 +11128,6 @@ hoist-non-react-statics@^3.0.0, hoist-non-react-statics@^3.3.0, hoist-non-react-
   integrity sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==
   dependencies:
     react-is "^16.7.0"
-
-"holaplex-ui@file:packages/web/.yalc/holaplex-ui":
-  version "0.0.1"
-  dependencies:
-    antd "^4.16.7"
 
 hoopy@^0.1.4:
   version "0.1.4"
@@ -17751,6 +17784,11 @@ raf@^3.4.1:
   dependencies:
     performance-now "^2.1.0"
 
+ramda@^0.27.2:
+  version "0.27.2"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.27.2.tgz#84463226f7f36dc33592f6f4ed6374c48306c3f1"
+  integrity sha512-SbiLPU40JuJniHexQSAgad32hfwd+DRUdwF2PlVuI5RZD0/vahUco7R8vD86J/tcEKKF9vZrUVwgtmGCqlCKyA==
+
 randombytes@^2.0.0, randombytes@^2.0.1, randombytes@^2.0.5, randombytes@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.1.0.tgz#df6f84372f0270dc65cdf6291349ab7a473d4f2a"
@@ -18060,9 +18098,9 @@ rc-select@~13.1.0-alpha.0:
     rc-virtual-list "^3.2.0"
 
 rc-select@~14.0.0-alpha.15, rc-select@~14.0.0-alpha.8:
-  version "14.0.0-alpha.22"
-  resolved "https://registry.yarnpkg.com/rc-select/-/rc-select-14.0.0-alpha.22.tgz#349fe817c5c29f190f5647df2ed4b323e30c1039"
-  integrity sha512-ScNdwUPMgXQbHlk5EisZchrs+HiqdBLzSh/hcjJh2dOA56DhawcZOGn8URS0rJSW4V3IbE26SVYBH60jV56SwQ==
+  version "14.0.0-alpha.23"
+  resolved "https://registry.yarnpkg.com/rc-select/-/rc-select-14.0.0-alpha.23.tgz#c9381ecce4e0d844e22505170feebbff620dbf6f"
+  integrity sha512-rOTMfpMEtwjzfYdlRSAgTwL2/kDc6Clj/OpxzAbfF0KDBetPpRQAGTL5Y7ErHl7+mJ9hKoitbwy9YQrE+DjRWQ==
   dependencies:
     "@babel/runtime" "^7.10.1"
     classnames "2.x"
@@ -18472,6 +18510,18 @@ react-scripts@4.0.3:
     workbox-webpack-plugin "5.1.4"
   optionalDependencies:
     fsevents "^2.1.3"
+
+react-step-wizard@^5.3.11:
+  version "5.3.11"
+  resolved "https://registry.yarnpkg.com/react-step-wizard/-/react-step-wizard-5.3.11.tgz#a52b46db772c0340dd6f45f93716d2afcf2196e2"
+  integrity sha512-TD3ocUdt4XWvisTNEiATh+cFuh1RK0LgvYqOResTIhLtFmdWnXzFVaNIZJ3qzW5Bm6yeotzZ4KAmRjmsqBXnWQ==
+
+react-toastify@^8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/react-toastify/-/react-toastify-8.1.0.tgz#acaca4e8c4415c8474562dd84a14e6f390ed7f17"
+  integrity sha512-M+Q3rTmEw/53Csr7NsV/YnldJe4c7uERcY7Tma9mvLU98QT2VhIkKwjBzzxZkJRk/oBKyUAtkyMjMgO00hx6gQ==
+  dependencies:
+    clsx "^1.1.1"
 
 react-transition-group@^4.4.0:
   version "4.4.2"
@@ -21488,6 +21538,26 @@ url@^0.11.0:
   dependencies:
     punycode "1.3.2"
     querystring "0.2.0"
+
+use-isomorphic-layout-effect@^1.0.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/use-isomorphic-layout-effect/-/use-isomorphic-layout-effect-1.1.1.tgz#7bb6589170cd2987a152042f9084f9effb75c225"
+  integrity sha512-L7Evj8FGcwo/wpbv/qvSfrkHFtOpCzvM5yl2KVyDJoylVuSvzphiiasmjgQPttIGBAy2WKiBNR98q8w7PiNgKQ==
+
+use-latest@^1.0.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/use-latest/-/use-latest-1.2.0.tgz#a44f6572b8288e0972ec411bdd0840ada366f232"
+  integrity sha512-d2TEuG6nSLKQLAfW3By8mKr8HurOlTkul0sOpxbClIv4SQ4iOd7BYr7VIzdbktUCnv7dua/60xzd8igMU6jmyw==
+  dependencies:
+    use-isomorphic-layout-effect "^1.0.0"
+
+use-onclickoutside@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/use-onclickoutside/-/use-onclickoutside-0.4.0.tgz#97f8dd55c1f5db3f295cec90ed14ba5a50e6ab86"
+  integrity sha512-lg1U+V8SaCfemgBs5dg+cfEOzjuwVS9ATH0VMLSBHI6R11tbfmiKci1lg6pjwXr1sj95XWd2+5EbffJEAPdkJQ==
+  dependencies:
+    are-passive-events-supported "^1.1.0"
+    use-latest "^1.0.0"
 
 use-subscription@1.5.1:
   version "1.5.1"

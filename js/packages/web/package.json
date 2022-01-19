@@ -31,7 +31,6 @@
     "cross-env": "^7.0.3",
     "event-emitter": "^0.3.5",
     "eventemitter3": "^4.0.7",
-    "holaplex-ui": "file:.yalc/holaplex-ui",
     "isomorphic-unfetch": "^3.1.0",
     "less": "^4.1.1",
     "less-loader": "^10.0.1",

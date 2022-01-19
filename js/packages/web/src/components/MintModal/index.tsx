@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from 'antd';
-import { BulkMinter } from 'holaplex-ui';
+import { BulkMinter } from '@holaplex/ui';
 import styled from 'styled-components';
 import { Connection } from '@solana/web3.js';
 import { holaSignMetadata } from './sign-meta';
@@ -14,6 +14,7 @@ const StyledModal = styled(Modal)`
   top: 0;
   padding: 0;
   min-height: 100vh;
+  z-index: 1031;
 
   .ant-modal-body {
     padding: 0;
@@ -25,7 +26,7 @@ const StyledModal = styled(Modal)`
     overflow-y: scroll;
     margin: 0;
     top: 0;
-    background-color: #000;
+    background-color: rgb(51, 51, 51);
   }
 
   .ant-modal-wrap {
@@ -46,7 +47,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
   const { track } = useAnalytics();
   const wallet = useWallet();
 
-  if (!wallet) {
+  if (!wallet?.publicKey) {
     return null;
   }
 
@@ -60,8 +61,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
       bodyStyle={{ height: '100%' }}
       closable={false}
       maskStyle={{ overflowX: 'hidden' }}
-      wrapProps={{ style: { overflowX: 'hidden' } }}
-      style={{ zIndex: 1031 }}
+      wrapProps={{ style: { overflowX: 'hidden', zIndex: 1031 } }}
     >
       <BulkMinter
         wallet={wallet as Wallet}

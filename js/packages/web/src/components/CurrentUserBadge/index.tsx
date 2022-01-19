@@ -205,11 +205,7 @@ export const CurrentUserBadge = (props: {
         publicKey={publicKey}
         balance={balance}
       />
-      <MintModal
-        wallet={wallet}
-        show={showMintModal}
-        onClose={() => setShowMintModal(false)}
-      />
+      <MintModal show={showMintModal} onClose={() => setShowMintModal(false)} />
     </>
   );
 };

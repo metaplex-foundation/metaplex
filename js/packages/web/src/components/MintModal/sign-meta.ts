@@ -1,5 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 
+const SIGN_META_ENDPOINT = 'https://www.holaplex.com/api/sign-meta';
+
 export interface SignMetaParams {
   solanaEndpoint: string;
   metadata: string;
@@ -35,7 +37,7 @@ export const holaSignMetadata = async ({
 
     onProgress('signing');
 
-    const resp = await fetch('/api/sign-meta', {
+    const resp = await fetch(SIGN_META_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
