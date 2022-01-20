@@ -52,12 +52,12 @@ const supportedImageTypes = {
 };
 const supportedAnimationTypes = {
   'video/mp4': 1,
-  'video/mov': 1,
-  'audio/mp3': 1,
-  'audio/flac': 1,
+  'video/quicktime': 1,
+  'audio/mpeg': 1,
+  'audio/x-flac': 1,
   'audio/wav': 1,
-  'vr/glb': 1,
-  'html/html': 1,
+  'model/gltf-binary': 1,
+  'text/html': 1,
 };
 
 if (!fs.existsSync(CACHE_PATH)) {

@@ -238,7 +238,7 @@ export async function uploadV2({
                 lastPrinted = allIndexesInSlice[i];
                 log.info(`Processing asset: ${allIndexesInSlice[i]}`);
               }
-              
+
               for (let ii = 0; ii < manifest.properties.files.length; ii++) {
                 const image = path.join(
                   dirname,
@@ -286,7 +286,13 @@ export async function uploadV2({
                     saveCache(cacheName, env, cacheContent);
                   }
 
-                  if (manifest.properties.files[ii].uri.endsWith(EXTENSION_MP4 || EXTENSION_MOV || EXTENSION_MP3 || EXTENSION_FLAC || EXTENSION_WAV || EXTENSION_GLB || EXTENSION_HTML)) {
+                  if (manifest.properties.files[ii].uri.endsWith(EXTENSION_MP4) || 
+                      manifest.properties.files[ii].uri.endsWith(EXTENSION_MOV) || 
+                      manifest.properties.files[ii].uri.endsWith(EXTENSION_MP3) || 
+                      manifest.properties.files[ii].uri.endsWith(EXTENSION_FLAC)|| 
+                      manifest.properties.files[ii].uri.endsWith(EXTENSION_WAV) || 
+                      manifest.properties.files[ii].uri.endsWith(EXTENSION_GLB) || 
+                      manifest.properties.files[ii].uri.endsWith(EXTENSION_HTML)) {
                     manifest.animation_url = imageLink
                     manifest.properties.files[ii].uri = imageLink
                   }

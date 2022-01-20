@@ -17,10 +17,18 @@ type TokenMetadata = {
 
 export const verifyAssets = ({ files, uploadElementsCount }) => {
   const imgFileCount = files.filter(it => {
-    return it.endsWith(EXTENSION_PNG || EXTENSION_JPG || EXTENSION_GIF);
+    return it.endsWith(EXTENSION_PNG) || 
+           it.endsWith(EXTENSION_JPG) || 
+           it.endsWith(EXTENSION_GIF);
   }).length;
   const animationFileCount = files.filter(it => {
-    return it.endsWith(EXTENSION_MP4 || EXTENSION_MOV || EXTENSION_MP3 || EXTENSION_FLAC || EXTENSION_WAV || EXTENSION_GLB || EXTENSION_HTML);
+    return it.endsWith(EXTENSION_MP4) || 
+           it.endsWith(EXTENSION_MOV) || 
+           it.endsWith(EXTENSION_MP3) || 
+           it.endsWith(EXTENSION_FLAC)|| 
+           it.endsWith(EXTENSION_WAV) || 
+           it.endsWith(EXTENSION_GLB) || 
+           it.endsWith(EXTENSION_HTML);
   }).length;
   const jsonFileCount = files.filter(it => {
     return it.endsWith(EXTENSION_JSON);
