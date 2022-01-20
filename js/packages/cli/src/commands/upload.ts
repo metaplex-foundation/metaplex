@@ -231,6 +231,14 @@ export async function uploadV2({
                   : `${assetKey.index}.json`,
               );
 
+              if (
+                allIndexesInSlice[i] >= lastPrinted + tick ||
+                allIndexesInSlice[i] === 0
+              ) {
+                lastPrinted = allIndexesInSlice[i];
+                log.info(`Processing asset: ${allIndexesInSlice[i]}`);
+              }
+              
               for (let ii = 0; ii < manifest.properties.files.length; ii++) {
                 const image = path.join(
                   dirname,
@@ -238,14 +246,6 @@ export async function uploadV2({
                   // `${assetKey.index}${assetKey.mediaExt}`,
                 );
                 const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
-                if (
-                  allIndexesInSlice[i] >= lastPrinted + tick ||
-                  allIndexesInSlice[i] === 0
-                ) {
-                  lastPrinted = allIndexesInSlice[i];
-                  log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-                }
 
                 let link, imageLink;
                 try {
