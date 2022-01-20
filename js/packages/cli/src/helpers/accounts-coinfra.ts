@@ -119,10 +119,10 @@ export const createCandyMachineCoinfra = async function (
       isWritable: false,
     });
   }
-  return {
-    candyMachine: candyAccount.publicKey,
-    uuid: candyData.uuid,
-    txId: await anchorProgram.rpc.initializeCandyMachine(candyData, {
+
+  const transaction = anchorProgram.transaction.initializeCandyMachine(
+    candyData,
+    {
       accounts: {
         candyMachine: candyAccount.publicKey,
         wallet: treasuryWallet,
@@ -131,7 +131,7 @@ export const createCandyMachineCoinfra = async function (
         systemProgram: SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
-      signers: [candyAccount], // ここにwalletを入れたらエラー
+      signers: [candyAccount],
       remainingAccounts:
         remainingAccounts.length > 0 ? remainingAccounts : undefined,
       instructions: [
@@ -142,6 +142,18 @@ export const createCandyMachineCoinfra = async function (
           candyAccount.publicKey,
         ),
       ],
-    }),
+    },
+  );
+
+  transaction.feePayer = wallet.publicKey;
+  transaction.recentBlockhash = (
+    await anchorProgram.provider.connection.getRecentBlockhash('singleGossip')
+  ).blockhash;
+  transaction.partialSign(...[candyAccount]);
+
+  return {
+    candyMachine: candyAccount.publicKey,
+    uuid: candyData.uuid,
+    transaction,
   };
 };

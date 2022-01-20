@@ -1,8 +1,8 @@
 import { createCandyMachineCoinfra } from '../helpers/accounts-coinfra';
-import { PublicKey } from '@solana/web3.js';
-import { BN, Program, web3 } from '@project-serum/anchor';
-
 import { chunks } from '../helpers/various-coinfra';
+import { sendSignedTransaction } from '../helpers/transactions-coinfra';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { BN, Program, web3 } from '@project-serum/anchor';
 
 export async function uploadCoinfra({
   totalNFTs,
@@ -71,6 +71,7 @@ export async function uploadCoinfra({
 
   const firstAssetManifest = manifests[0];
 
+  const transactions: Transaction[] = [];
   let candyMachine;
   try {
     if (
@@ -114,6 +115,7 @@ export async function uploadCoinfra({
     cacheContent.program.uuid = res.uuid;
     cacheContent.program.candyMachine = res.candyMachine.toBase58();
     candyMachine = res.candyMachine;
+    transactions.push(res.transaction);
 
     console.info(
       `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
@@ -152,7 +154,7 @@ export async function uploadCoinfra({
         chunks(Array.from(Array(keys.length).keys()), 1000).map(
           async allIndexesInSlice => {
             // if this value is large, "RangeError: encoding overruns Buffer" occur
-            const bachsize = 10;
+            const bachsize = 5;
             for (
               let offset = 0;
               offset < allIndexesInSlice.length;
@@ -173,7 +175,7 @@ export async function uploadCoinfra({
                   `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
                 );
                 try {
-                  await anchorProgram.rpc.addConfigLines(
+                  const transaction = anchorProgram.transaction.addConfigLines(
                     ind,
                     indexes.map(i => {
                       return {
@@ -186,9 +188,15 @@ export async function uploadCoinfra({
                         candyMachine,
                         authority: wallet.publicKey,
                       },
-                      // signers: [wallet], // ここにwalletを入れたらエラー
                     },
                   );
+                  transaction.feePayer = wallet.publicKey;
+                  transaction.recentBlockhash = (
+                    await anchorProgram.provider.connection.getRecentBlockhash(
+                      'singleGossip',
+                    )
+                  ).blockhash;
+                  transactions.push(transaction);
                   indexes.forEach(i => {
                     cacheContent.items[keys[i]] = {
                       ...cacheContent.items[keys[i]],
@@ -210,7 +218,20 @@ export async function uploadCoinfra({
           },
         ),
       );
+
+      const signedTransactions = await wallet.signAllTransactions(transactions);
+      for (let i = 0; i < signedTransactions.length; i++) {
+        try {
+          await sendSignedTransaction({
+            connection: anchorProgram.provider.connection,
+            signedTransaction: signedTransactions[i],
+          });
+        } catch (e) {
+          console.log('Caught failure', e);
+        }
+      }
     } catch (error) {
+      uploadSuccessful = false;
       console.error(error);
     }
   } else {
