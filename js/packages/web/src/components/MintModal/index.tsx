@@ -2,12 +2,16 @@ import React from 'react';
 import { Modal } from 'antd';
 import { BulkMinter } from '@holaplex/ui';
 import styled from 'styled-components';
-import { Connection } from '@solana/web3.js';
 import { holaSignMetadata } from './sign-meta';
 import { useAnalytics } from '../Analytics';
-import { useStore } from '../../../../common/dist/lib';
+import {
+  ENDPOINTS,
+  useLocalStorageState,
+  useStore,
+} from '../../../../common/dist/lib';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Wallet } from '@metaplex/js';
+import { Connection } from '@solana/web3.js';
 
 const StyledModal = styled(Modal)`
   margin: 0;
@@ -33,9 +37,6 @@ const StyledModal = styled(Modal)`
     overflow-x: hidden;
   }
 `;
-const connection = new Connection(
-  process.env.NEXT_PUBLIC_SOLANA_ENDPOINT as string,
-);
 
 interface MintModalProps {
   show: boolean;
@@ -46,6 +47,13 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
   const { storefront } = useStore();
   const { track } = useAnalytics();
   const wallet = useWallet();
+  const [savedEndpoint] = useLocalStorageState(
+    'connectionEndpoint',
+    ENDPOINTS[0].endpoint,
+  );
+
+  // how can we get rid of this and just use the context?
+  const connection = new Connection(savedEndpoint);
 
   if (!wallet?.publicKey) {
     return null;
@@ -66,10 +74,11 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
       <BulkMinter
         wallet={wallet as Wallet}
         track={track}
-        connection={connection}
         storefront={storefront}
         holaSignMetadata={holaSignMetadata}
         onClose={onClose}
+        connection={connection}
+        savedEndpoint={savedEndpoint}
       />
     </StyledModal>
   );
