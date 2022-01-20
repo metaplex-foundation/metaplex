@@ -24,7 +24,6 @@ import {
   toPublicKey,
   WalletSigner,
   SendAndConfirmError,
-  SmartInstructionSenderReSignCallback,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -107,7 +106,7 @@ export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
   progressCallback: Dispatch<SetStateAction<number>>,
-  reSignCallback: SmartInstructionSenderReSignCallback,
+  reSignCallback: () => void,
   failureCallback: (err: SendAndConfirmError) => void,
   whitelistedCreatorsByCreator: Record<
     string,
