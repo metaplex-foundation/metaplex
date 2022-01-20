@@ -208,12 +208,10 @@ export const useGroupedAuctions = () => {
           auctions[am.info.auction] &&
           am.info.key === MetaplexKey.AuctionManagerV2
         );
-      });
+      }) as ParsedAccount<AuctionManagerV2>[];
 
       const initializedAuctions = storeAuctionManagers
-        .filter((am: any) =>
-          am.info.state.safetyConfigItemsValidated.toNumber(),
-        )
+        .filter(am => am.info.state.safetyConfigItemsValidated.toNumber())
         .map(am => auctions[am.info.auction]);
 
       const groups = {

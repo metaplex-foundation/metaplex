@@ -27,9 +27,10 @@ export const Listings = () => {
   const showCacheAuctionsAlert = isStoreOwner && notAllAuctionsCached;
 
   const { groups, fetching } = useGroupedAuctions();
+  const activeGroup = groups[view] || [];
 
   const { auctions, loading, hasNextPage, loadMore } =
-    useInfiniteScrollAuctions(groups[view], view);
+    useInfiniteScrollAuctions(activeGroup, view);
 
   const [sentryRef] = useInfiniteScroll({
     loading,
@@ -39,8 +40,6 @@ export const Listings = () => {
   });
 
   useEffect(() => {
-    const activeGroup = groups[view];
-
     if (fetching) {
       return;
     }
@@ -68,7 +67,7 @@ export const Listings = () => {
     setSearchParams({
       view: View.ended,
     });
-  }, [fetching, groups]); // triggers the auto-forward in all edge cases I could find
+  }, [fetching, groups]);
 
   const views = [
     {
