@@ -20,7 +20,7 @@ export const AppBar = () => {
   };
 
   let menu = [
-    getMenuItem('listings', '?views=live'),
+    getMenuItem('listings', '?view=live'),
     getMenuItem('creators', `/${ownerAddress}`),
   ];
 

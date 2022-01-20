@@ -5,8 +5,6 @@ import {
   ensureWrappedAccount,
   sendTransactionWithRetry,
   AuctionState,
-  SequenceType,
-  sendTransactions,
   ParsedAccount,
   BidderMetadata,
   StringPublicKey,
@@ -23,6 +21,7 @@ import {
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 
 export async function sendCancelBid(
   connection: Connection,
@@ -87,22 +86,32 @@ export async function sendCancelBid(
     );
   }
 
-  instructions.length === 1
-    ? await sendTransactionWithRetry(
-        connection,
-        wallet,
-        instructions[0],
-        signers[0],
-        'single',
+  if (instructions.length === 1) {
+    await sendTransactionWithRetry(
+      connection,
+      wallet,
+      instructions[0],
+      signers[0],
+      'single',
+    );
+  } else {
+    await SmartInstructionSender.build(wallet as any, connection)
+      .config({
+        abortOnFailure: true,
+        maxSigningAttempts: 3,
+        commitment: 'single',
+      })
+      .withInstructionSets(
+        instructions.map((ixs, i) => ({
+          instructions: ixs,
+          signers: signers[i],
+        })),
       )
-    : await sendTransactions(
-        connection,
-        wallet,
-        instructions,
-        signers,
-        SequenceType.StopOnFailure,
-        'single',
-      );
+      .onFailure(err => {
+        throw err;
+      })
+      .send();
+  }
 }
 
 export async function setupCancelBid(
@@ -141,6 +150,9 @@ export async function setupCancelBid(
       cancelInstructions,
     );
     signers.push(cancelSigners);
-    instructions.push([...cancelInstructions, ...cleanupInstructions]);
+    instructions.push([
+      ...cancelInstructions,
+      ...cleanupInstructions.reverse(),
+    ]);
   }
 }
