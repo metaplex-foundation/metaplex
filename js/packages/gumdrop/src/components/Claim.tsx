@@ -360,6 +360,14 @@ const buildSingleCandyMint = async (
     setup,
   );
 
+  console.log(
+    'buffer',
+    Buffer.from([
+      ...Buffer.from(sha256.digest('global:claim_candy')).slice(0, 8),
+      ...data,
+    ]),
+  );
+
   setup.push(
     new TransactionInstruction({
       programId: GUMDROP_DISTRIBUTOR_ID,
@@ -411,6 +419,9 @@ const createMintAndAccount = async (
     [walletKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
     SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   );
+
+  console.log(await connection.getMinimumBalanceForRentExemption(
+    MintLayout.span));
 
   setup.push(
     SystemProgram.createAccount({
