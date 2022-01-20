@@ -15,7 +15,7 @@ import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
-import { EXTENSION_MP4 } from '../helpers/constants';
+import { EXTENSION_MP4, EXTENSION_MOV, EXTENSION_MP3, EXTENSION_FLAC, EXTENSION_WAV, EXTENSION_GLB, EXTENSION_HTML } from '../helpers/constants';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
@@ -286,7 +286,7 @@ export async function uploadV2({
                     saveCache(cacheName, env, cacheContent);
                   }
 
-                  if (manifest.properties.files[ii].uri.endsWith(EXTENSION_MP4)) {
+                  if (manifest.properties.files[ii].uri.endsWith(EXTENSION_MP4 || EXTENSION_MOV || EXTENSION_MP3 || EXTENSION_FLAC || EXTENSION_WAV || EXTENSION_GLB || EXTENSION_HTML)) {
                     manifest.animation_url = imageLink
                     manifest.properties.files[ii].uri = imageLink
                   }

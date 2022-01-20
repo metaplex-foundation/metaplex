@@ -1,7 +1,9 @@
 import path from 'path';
 import log from 'loglevel';
 import { validate } from 'jsonschema';
-import { EXTENSION_JSON, EXTENSION_MP4, EXTENSION_PNG, EXTENSION_JPG, EXTENSION_GIF } from '../../helpers/constants';
+import { EXTENSION_JSON } from '../../helpers/constants';
+import { EXTENSION_PNG, EXTENSION_JPG, EXTENSION_GIF } from '../../helpers/constants';
+import { EXTENSION_MP4, EXTENSION_MOV, EXTENSION_MP3, EXTENSION_FLAC, EXTENSION_WAV, EXTENSION_GLB, EXTENSION_HTML } from '../../helpers/constants';
 import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
 type TokenMetadata = {
@@ -18,7 +20,7 @@ export const verifyAssets = ({ files, uploadElementsCount }) => {
     return it.endsWith(EXTENSION_PNG || EXTENSION_JPG || EXTENSION_GIF);
   }).length;
   const animationFileCount = files.filter(it => {
-    return it.endsWith(EXTENSION_MP4);
+    return it.endsWith(EXTENSION_MP4 || EXTENSION_MOV || EXTENSION_MP3 || EXTENSION_FLAC || EXTENSION_WAV || EXTENSION_GLB || EXTENSION_HTML);
   }).length;
   const jsonFileCount = files.filter(it => {
     return it.endsWith(EXTENSION_JSON);
