@@ -1877,10 +1877,10 @@
     crypto-hash "^1.3.0"
     form-data "^4.0.0"
 
-"@holaplex/ui@^0.0.11":
-  version "0.0.11"
-  resolved "https://registry.yarnpkg.com/@holaplex/ui/-/ui-0.0.11.tgz#26f777735c2de758d89d51d734339bd776614f05"
-  integrity sha512-MuGqXZfwH3LXw74kqOduUZwoNSDIwCl5mgFyXIcCBYLpIcKIzzEo+Us8UzI965/pVrGnGSbdt8rjkqIb5gNl1g==
+"@holaplex/ui@^0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@holaplex/ui/-/ui-0.0.12.tgz#3b4a84c6a2bcb01fc9075d8811d8009e5c863aaa"
+  integrity sha512-xSGjIN0Wg3KXsQ1jQcmtRTru35UDbXZ4BSsXEXcPqxdhf/xAtjQLF0f0HpCmfigBBh+nAVwfIilmDvmbq1x//A==
   dependencies:
     "@holaplex/js" "^4.3.2"
     antd "^4.16.7"
