@@ -24,7 +24,6 @@ import {
   toPublicKey,
   WalletSigner,
   SendAndConfirmError,
-  SmartInstructionSender,
   SmartInstructionSenderReSignCallback,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
@@ -50,6 +49,7 @@ import {
   addTokensToVault,
   SafetyDepositInstructionTemplate,
 } from './addTokensToVault';
+import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 import { makeAuction } from './makeAuction';
 import { createExternalPriceAccount } from './createExternalPriceAccount';
 import { deprecatedValidateParticipation } from '@oyster/common/dist/lib/models/metaplex/deprecatedValidateParticipation';

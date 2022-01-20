@@ -151,7 +151,8 @@ export async function setupPlaceBid(
     instructions,
   );
 
-  overallInstructions.push([...instructions, ...cleanupInstructions]);
+  overallInstructions.push([...instructions, ...cleanupInstructions.reverse()]);
   overallSigners.push(signers);
+
   return bid;
 }
