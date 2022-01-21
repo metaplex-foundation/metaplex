@@ -340,7 +340,7 @@ export async function createAuctionManager(
 
   const config = {
     abortOnFailure: true,
-    maxSigningAttempts: 5,
+    maxSigningAttempts: 10,
     commitment: 'confirmed' as Commitment,
   };
   const instructionSets = instructions.map((ix, i) => ({

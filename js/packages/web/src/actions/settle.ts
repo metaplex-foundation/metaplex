@@ -200,6 +200,8 @@ async function emptyPaymentAccountForAllTokens(
   for (let i = 0; i < instructions.length; i++) {
     const instructionBatch = instructions[i];
     const signerBatch = signers[i];
+    let emptyPaymentTokenError: Error | null = null;
+
     if (instructionBatch.length >= 2) {
       await SmartInstructionSender.build(wallet, connection)
         .config({
@@ -214,9 +216,13 @@ async function emptyPaymentAccountForAllTokens(
           })),
         )
         .onFailure(err => {
-          throw err;
+          emptyPaymentTokenError = err;
         })
         .send();
+
+      if (emptyPaymentTokenError) {
+        throw emptyPaymentTokenError;
+      }
     } else {
       await sendTransactionWithRetry(
         connection,
