@@ -178,7 +178,7 @@ pub struct EditionMarker {
 
 ```
 
-The instruction set for the token metadata contract can be found here: https://github.com/metaplex-foundation/metaplex/blob/master/rust/token-metadata/program/src/instruction.rs
+The instruction set for the token metadata contract can be found here: https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/instruction.rs
 
 ### Types
 
