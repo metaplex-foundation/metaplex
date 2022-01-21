@@ -9,7 +9,7 @@
     "@bugsnag/source-maps": "^2.3.0",
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
-    "@holaplex/ui": "^0.0.12",
+    "@holaplex/ui": "^0.0.13",
     "@magic-ext/solana": "^0.2.0",
     "@metaplex/js": "^4.9.0",
     "@oyster/common": "0.0.2",
