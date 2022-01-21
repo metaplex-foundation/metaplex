@@ -21,17 +21,6 @@ import { Header } from './Header';
 import { MintButton } from './MintButton';
 import { GatewayProvider } from '@civic/solana-gateway-react';
 
-const ConnectButton = styled(WalletDialogButton)`
-  width: 100%;
-  height: 60px;
-  margin-top: 10px;
-  margin-bottom: 5px;
-  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-`;
-
 const MintContainer = styled.div``; // add your owns styles here
 
 export interface HomeProps {
@@ -177,7 +166,9 @@ const Home = (props: HomeProps) => {
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
         >
           {!wallet.connected ? (
-            <ConnectButton>Connect Wallet</ConnectButton>
+            <WalletDialogButton id="connectButton">
+              Connect Wallet
+            </WalletDialogButton>
           ) : (
             <>
               <Header candyMachine={candyMachine} />
