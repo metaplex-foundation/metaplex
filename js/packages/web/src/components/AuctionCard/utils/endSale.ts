@@ -1,10 +1,9 @@
+import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 import {
   BidderMetadata,
   BidRedemptionTicket,
   ParsedAccount,
   PrizeTrackingTicket,
-  sendTransactions,
-  SequenceType,
   TokenAccount,
 } from '@oyster/common';
 import { WalletContextState } from '@solana/wallet-adapter-react';
@@ -63,12 +62,17 @@ export async function endSale({
   const instructions = [endAuctionInstructions, ...claimInstructions];
   const signers = [[], ...claimSigners];
 
-  return sendTransactions(
-    connection,
-    wallet,
-    instructions,
-    signers,
-    SequenceType.Sequential,
-    'finalized',
-  );
+  return SmartInstructionSender.build(wallet, connection)
+    .config({
+      abortOnFailure: true,
+      maxSigningAttempts: 3,
+      commitment: 'finalized',
+    })
+    .withInstructionSets(
+      instructions.map((ix, i) => ({
+        instructions: ix,
+        signers: signers[i],
+      })),
+    )
+    .send();
 }

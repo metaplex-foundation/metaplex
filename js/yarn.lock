@@ -1860,35 +1860,12 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@holaplex/js@^4.3.2":
-  version "4.3.2"
-  resolved "https://registry.yarnpkg.com/@holaplex/js/-/js-4.3.2.tgz#c5ebbf42104a8935106186d5cf46d19dabbe2cda"
-  integrity sha512-Xzax0+7N00FcfkaSra+vZZkOG6HYw81AV6YZEEEbzgWv+pR7X+d+dtL9jENRvg3TTAjJ2b3RSd6NlJ+mhptv5Q==
+"@holaplex/solana-web3-tools@^0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@holaplex/solana-web3-tools/-/solana-web3-tools-0.1.7.tgz#e312cfe381099b21da6c297730b6293bec1cf3bd"
+  integrity sha512-Pb3+nrd2VUTWkAtLy/ohCoKpKlRGFVimRhfC2gWjALCxKPDkkUgrvSFuqJE7Q/8NbbGgF5fSL69VjUP+W4ybFQ==
   dependencies:
-    "@solana/spl-token" "^0.1.8"
-    "@solana/web3.js" "^1.30.2"
-    "@types/bs58" "^4.0.1"
     async-retry "^1.3.3"
-    axios "^0.21.4"
-    bn.js "^5.2.0"
-    borsh "^0.4.0"
-    bs58 "^4.0.1"
-    buffer "^6.0.3"
-    crypto-hash "^1.3.0"
-    form-data "^4.0.0"
-
-"@holaplex/ui@^0.0.12":
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/@holaplex/ui/-/ui-0.0.12.tgz#3b4a84c6a2bcb01fc9075d8811d8009e5c863aaa"
-  integrity sha512-xSGjIN0Wg3KXsQ1jQcmtRTru35UDbXZ4BSsXEXcPqxdhf/xAtjQLF0f0HpCmfigBBh+nAVwfIilmDvmbq1x//A==
-  dependencies:
-    "@holaplex/js" "^4.3.2"
-    antd "^4.16.7"
-    feather-icons-react "^0.4.3"
-    ramda "^0.27.2"
-    react-step-wizard "^5.3.11"
-    react-toastify "^8.1.0"
-    use-onclickoutside "^0.4.0"
 
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"

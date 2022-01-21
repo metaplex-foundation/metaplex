@@ -24,8 +24,6 @@ import {
   toPublicKey,
   WalletSigner,
   SendAndConfirmError,
-  SmartInstructionSender,
-  SmartInstructionSenderReSignCallback,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -50,6 +48,7 @@ import {
   addTokensToVault,
   SafetyDepositInstructionTemplate,
 } from './addTokensToVault';
+import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 import { makeAuction } from './makeAuction';
 import { createExternalPriceAccount } from './createExternalPriceAccount';
 import { deprecatedValidateParticipation } from '@oyster/common/dist/lib/models/metaplex/deprecatedValidateParticipation';
@@ -107,7 +106,7 @@ export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
   progressCallback: Dispatch<SetStateAction<number>>,
-  reSignCallback: SmartInstructionSenderReSignCallback,
+  reSignCallback: () => void,
   failureCallback: (err: SendAndConfirmError) => void,
   whitelistedCreatorsByCreator: Record<
     string,
@@ -341,7 +340,7 @@ export async function createAuctionManager(
 
   const config = {
     abortOnFailure: true,
-    maxSigningAttempts: 5,
+    maxSigningAttempts: 10,
     commitment: 'confirmed' as Commitment,
   };
   const instructionSets = instructions.map((ix, i) => ({
