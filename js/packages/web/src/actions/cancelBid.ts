@@ -95,11 +95,13 @@ export async function sendCancelBid(
       'single',
     );
   } else {
+    let cancelBidError: Error | null = null;
+
     await SmartInstructionSender.build(wallet as any, connection)
       .config({
         abortOnFailure: true,
         maxSigningAttempts: 3,
-        commitment: 'single',
+        commitment: 'confirmed',
       })
       .withInstructionSets(
         instructions.map((ixs, i) => ({
@@ -108,9 +110,13 @@ export async function sendCancelBid(
         })),
       )
       .onFailure(err => {
-        throw err;
+        cancelBidError = err;
       })
       .send();
+
+    if (cancelBidError) {
+      throw cancelBidError;
+    }
   }
 }
 
