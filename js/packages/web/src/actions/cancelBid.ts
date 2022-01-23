@@ -101,7 +101,7 @@ export async function sendCancelBid(
       .config({
         abortOnFailure: true,
         maxSigningAttempts: 3,
-        commitment: 'confirmed',
+        commitment: 'single',
       })
       .withInstructionSets(
         instructions.map((ixs, i) => ({

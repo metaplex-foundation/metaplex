@@ -29,6 +29,10 @@ const storefrontDenyList = [
   'cotdnft' // user request
 ]
 
+const subdomainAlias: { [key: string]: string; } = {
+  "endstate": "endstate-io"
+}
+
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
   const forwarded = headers.forwarded
@@ -46,9 +50,14 @@ export async function getServerSideProps(context: NextPageContext) {
     subdomain = process.env.SUBDOMAIN;
   }
 
-  const storefront = await getStorefront(subdomain);
+  let aliasedSubdomain = subdomain;
+  if (subdomainAlias[subdomain]) {
+    aliasedSubdomain = subdomainAlias[subdomain]
+  }
 
-  if (storefront && !storefrontDenyList.includes(subdomain)) {
+  const storefront = await getStorefront(aliasedSubdomain);
+
+  if (storefront && !storefrontDenyList.includes(aliasedSubdomain)) {
     return { props: { storefront } };
   }
 

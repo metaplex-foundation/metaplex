@@ -331,7 +331,7 @@ export async function sendRedeemBid(
   await SmartInstructionSender.build(wallet, connection)
     .config({
       maxSigningAttempts: 3,
-      commitment: 'confirmed',
+      commitment: 'single',
       abortOnFailure: true,
     })
     .withInstructionSets(
