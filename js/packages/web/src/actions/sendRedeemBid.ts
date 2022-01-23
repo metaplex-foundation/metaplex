@@ -23,7 +23,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
-  notify,
+  sendTransactionsWithManualRetry,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -55,7 +55,6 @@ import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
 import { createEmptyPaymentAccountForAllTokensIX } from './settle';
-import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 
 export function eligibleForParticipationPrizeGivenWinningIndex(
   winnerIndex: number | null,
@@ -326,39 +325,12 @@ export async function sendRedeemBid(
     }
   }
 
-  let redeemBidError: Error | null = null;
-
-  await SmartInstructionSender.build(wallet, connection)
-    .config({
-      maxSigningAttempts: 3,
-      commitment: 'single',
-      abortOnFailure: true,
-    })
-    .withInstructionSets(
-      instructions.map((instruction, index) => ({
-        instructions: instruction,
-        signers: signers[index],
-      })),
-    )
-    .onProgress(current => {
-      console.info(`processed instruction: ${current}`);
-    })
-    .onReSign(() => {
-      notify({
-        message: 'New signature needed...',
-        description:
-          'Please re-sign the current transaction again to continue.',
-        type: 'info',
-      });
-    })
-    .onFailure(err => {
-      redeemBidError = err;
-    })
-    .send();
-
-  if (redeemBidError) {
-    throw redeemBidError;
-  }
+  await sendTransactionsWithManualRetry(
+    connection,
+    wallet,
+    instructions,
+    signers,
+  );
 }
 
 async function setupRedeemInstructions(
