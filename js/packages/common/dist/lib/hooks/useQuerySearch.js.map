@@ -1,0 +1,1 @@
+{"version":3,"file":"useQuerySearch.js","sourceRoot":"","sources":["../../../src/hooks/useQuerySearch.ts"],"names":[],"mappings":";;;AAAA,iCAAgC;AAChC,uDAA+C;AAE/C,SAAgB,cAAc;IAC5B,MAAM,EAAE,MAAM,EAAE,GAAG,IAAA,8BAAW,GAAE,CAAC;IACjC,OAAO,IAAA,eAAO,EAAC,GAAG,EAAE,CAAC,IAAI,eAAe,CAAC,MAAM,CAAC,EAAE,CAAC,MAAM,CAAC,CAAC,CAAC;AAC9D,CAAC;AAHD,wCAGC"}

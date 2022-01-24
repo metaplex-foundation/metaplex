@@ -1,0 +1,1 @@
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../src/components/EtherscanLink/index.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAI1B,eAAO,MAAM,aAAa,UAAW;IACnC,OAAO,EAAE,MAAM,CAAC;IAChB,IAAI,EAAE,MAAM,CAAC;IACb,IAAI,CAAC,EAAE,OAAO,CAAC;IACf,KAAK,CAAC,EAAE,MAAM,aAAa,CAAC;IAC5B,MAAM,CAAC,EAAE,MAAM,CAAC;CACjB,uBA4BA,CAAC"}

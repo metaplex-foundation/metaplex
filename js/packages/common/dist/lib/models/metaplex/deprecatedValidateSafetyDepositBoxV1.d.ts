@@ -1,0 +1,4 @@
+import { TransactionInstruction } from '@solana/web3.js';
+import { StringPublicKey } from '../../utils';
+export declare function deprecatedValidateSafetyDepositBoxV1(vault: StringPublicKey, metadata: StringPublicKey, safetyDepositBox: StringPublicKey, safetyDepositTokenStore: StringPublicKey, tokenMint: StringPublicKey, auctionManagerAuthority: StringPublicKey, metadataAuthority: StringPublicKey, payer: StringPublicKey, instructions: TransactionInstruction[], edition: StringPublicKey, whitelistedCreator: StringPublicKey | undefined, store: StringPublicKey, printingMint?: StringPublicKey, printingMintAuthority?: StringPublicKey): Promise<void>;
+//# sourceMappingURL=deprecatedValidateSafetyDepositBoxV1.d.ts.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"useUserAccounts.d.ts","sourceRoot":"","sources":["../../../src/hooks/useUserAccounts.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,YAAY,EAAE,MAAM,WAAW,CAAC;AAGzC,wBAAgB,eAAe,IAAI;IACjC,YAAY,EAAE,YAAY,EAAE,CAAC;IAC7B,aAAa,EAAE,GAAG,CAAC,MAAM,EAAE,YAAY,CAAC,CAAC;CAC1C,CAcA"}
