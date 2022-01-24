@@ -32,21 +32,21 @@ export const MintCountdown: React.FC<MintCountdownProps> = ({
       return status ? <span className="countdown-done">{status}</span> : null;
     } else {
       return (
-        <div className="countdown-root">
+        <div className="coinfra-countdown-root">
           <Paper elevation={0}>
-            <span className="countdown-item">
+            <span className="coinfra-countdown-item">
               {hours < 10 ? `0${hours}` : hours}
             </span>
             <span>hrs</span>
           </Paper>
           <Paper elevation={0}>
-            <span className="countdown-item">
+            <span className="coinfra-countdown-item">
               {minutes < 10 ? `0${minutes}` : minutes}
             </span>
             <span>mins</span>
           </Paper>
           <Paper elevation={0}>
-            <span className="countdown-item">
+            <span className="coinfra-countdown-item">
               {seconds < 10 ? `0${seconds}` : seconds}
             </span>
             <span>secs</span>

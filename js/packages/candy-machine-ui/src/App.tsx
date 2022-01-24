@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import * as anchor from '@project-serum/anchor';
 import Home from './Home';
-import { Route, Routes } from 'react-router-dom';
 
 import { clusterApiUrl } from '@solana/web3.js';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
@@ -36,7 +35,11 @@ const connection = new anchor.web3.Connection(
 const startDateSeed = parseInt(process.env.REACT_APP_CANDY_START_DATE!, 10);
 const txTimeoutInMilliseconds = 30000;
 
-const App = () => {
+export interface AppProps {
+  candyMachineId: string;
+}
+
+const App = (props: AppProps) => {
   const endpoint = useMemo(() => clusterApiUrl(network), []);
 
   const wallets = useMemo(
@@ -55,19 +58,13 @@ const App = () => {
       <ConnectionProvider endpoint={endpoint}>
         <WalletProvider wallets={wallets} autoConnect>
           <WalletDialogProvider>
-            <Routes>
-              <Route
-                path="/candy-machine/:id"
-                element={
-                  <Home
-                    connection={connection}
-                    startDate={startDateSeed}
-                    txTimeout={txTimeoutInMilliseconds}
-                    rpcHost={rpcHost}
-                  />
-                }
-              />
-            </Routes>
+            <Home
+              candyMachineId={props.candyMachineId}
+              connection={connection}
+              startDate={startDateSeed}
+              txTimeout={txTimeoutInMilliseconds}
+              rpcHost={rpcHost}
+            />
           </WalletDialogProvider>
         </WalletProvider>
       </ConnectionProvider>

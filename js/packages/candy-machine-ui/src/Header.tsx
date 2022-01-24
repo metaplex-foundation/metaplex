@@ -23,9 +23,7 @@ export const Header = ({ candyMachine }: HeaderProps) => {
               <Typography
                 variant="h6"
                 color="textPrimary"
-                style={{
-                  fontWeight: 'bold',
-                }}
+                id="coinfraItemsRemaining"
               >
                 {`${candyMachine?.state.itemsRemaining}`}
               </Typography>
@@ -34,11 +32,7 @@ export const Header = ({ candyMachine }: HeaderProps) => {
               <Typography variant="body2" color="textSecondary">
                 Price
               </Typography>
-              <Typography
-                variant="h6"
-                color="textPrimary"
-                style={{ fontWeight: 'bold' }}
-              >
+              <Typography variant="h6" color="textPrimary" id="coinfraPrice">
                 {getMintPrice(candyMachine)}
               </Typography>
             </Grid>
