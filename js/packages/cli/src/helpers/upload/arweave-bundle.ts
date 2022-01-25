@@ -1,4 +1,5 @@
 import { readFile, stat } from 'fs/promises';
+import { readFileSync } from 'fs';
 import path from 'path';
 import Arweave from 'arweave';
 
@@ -50,6 +51,7 @@ type ProcessFileArgs = {
   filePair: {
     key: string;
     image: string;
+    animation: string;
     manifest: string;
   };
 };
@@ -61,6 +63,7 @@ type ProcessFileArgs = {
  */
 type Manifest = {
   image: string;
+  animation_url: string;
   properties: {
     files: Array<{ type: string; uri: string }>;
   };
@@ -140,15 +143,17 @@ function sizeMB(bytes: number): string {
  * - https://github.com/metaplex-foundation/metaplex/pull/859#pullrequestreview-805914075
  */
 function createArweavePathManifest(
-  imageTxId: string,
   manifestTxId: string,
-  mediaType: string,
+  imageTxId: string,
+  imageType: string,
+  animationTxId: string,
+  animationType: string,
 ): ArweavePathManifest {
-  const arweavePathManifest: ArweavePathManifest = {
+  let arweavePathManifest: ArweavePathManifest = {
     manifest: 'arweave/paths',
     version: '0.1.0',
     paths: {
-      [`image${mediaType}`]: {
+      [`image${imageType}`]: {
         id: imageTxId,
       },
       'metadata.json': {
@@ -159,7 +164,9 @@ function createArweavePathManifest(
       path: 'metadata.json',
     },
   };
-
+  if (animationTxId) {
+    arweavePathManifest.paths[`animation${animationType}`] = { id: animationTxId, }
+  }
   return arweavePathManifest;
 }
 
@@ -171,6 +178,8 @@ const dummyAreaveManifestByteSize = (() => {
     'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
     'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
     '.png',
+    undefined,
+    undefined,
   );
   return Buffer.byteLength(JSON.stringify(dummyAreaveManifest));
 })();
@@ -189,6 +198,7 @@ const dummyAreaveManifestByteSize = (() => {
 type FilePair = {
   key: string;
   image: string;
+  animation: string;
   manifest: string;
 };
 
@@ -215,11 +225,15 @@ async function getBundleRange(
 ): Promise<BundleRange> {
   let total = 0;
   let count = 0;
-  for (const { key, image, manifest } of filePairs) {
-    const filePairSize = await [image, manifest].reduce(async (accP, file) => {
+  for (const { key, image, animation, manifest } of filePairs) {
+    const filePairSize = await [image, animation, manifest].reduce(async (accP, file) => {
       const acc = await accP;
-      const { size } = await stat(file);
-      return acc + size;
+      if (!file) {
+        return acc;
+      } else {
+        const { size } = await stat(file);
+        return acc + size;
+      }
     }, Promise.resolve(dummyAreaveManifestByteSize));
 
     const limit = splitSize
@@ -292,14 +306,22 @@ function getArweavePathManifestDataItem(
 async function getUpdatedManifest(
   manifestPath: string,
   imageLink: string,
-  contentType: string,
+  animationLink: string,
 ): Promise<Manifest> {
   const manifest: Manifest = JSON.parse(
     (await readFile(manifestPath)).toString(),
   );
   manifest.image = imageLink;
-  manifest.properties.files = [{ type: contentType, uri: imageLink }];
-
+  if (animationLink) {
+    manifest.animation_url = animationLink;
+  }
+  manifest.properties.files = manifest.properties.files.map(f => {
+    if (f.type.startsWith('image/')) {
+      return { ...f, uri: imageLink };
+    } else {
+      return { ...f, uri: animationLink };
+    }
+  });
   return manifest;
 }
 
@@ -314,33 +336,51 @@ async function processFiles({
   bundlr,
   storageType,
 }: ProcessFileArgs) {
-  const contentType = getType(filePair.image);
-  const imageBuffer = await readFile(filePair.image);
   let imageDataItem: BundlrTransaction | DataItem;
+  let animationDataItem: BundlrTransaction | DataItem;
   let manifestDataItem: BundlrTransaction | DataItem;
   let arweavePathManifestDataItem: BundlrTransaction | DataItem;
 
+  const imageContentType = getType(filePair.image);
+  const imageBuffer = await readFile(filePair.image);
   if (storageType === StorageType.ArweaveSol) {
     imageDataItem = bundlr.createTransaction(imageBuffer, {
       tags: imageTags.concat({
         name: 'Content-Type',
-        value: contentType,
+        value: imageContentType,
       }),
     });
-
     await (imageDataItem as BundlrTransaction).sign();
   } else if (storageType === StorageType.ArweaveBundle) {
-    imageDataItem = await getImageDataItem(signer, imageBuffer, contentType);
-
+    imageDataItem = await getImageDataItem(signer, imageBuffer, imageContentType);
     await (imageDataItem as DataItem).sign(signer);
   }
 
+  let animationContentType = undefined
+  if (filePair.animation) {
+    animationContentType = getType(filePair.animation);
+    const animationBuffer = await readFile(filePair.animation);
+    if (storageType === StorageType.ArweaveSol) {
+      animationDataItem = bundlr.createTransaction(animationBuffer, {
+        tags: imageTags.concat({
+          name: 'Content-Type',
+          value: animationContentType,
+        }),
+      });
+      await (animationDataItem as BundlrTransaction).sign();
+    } else if (storageType === StorageType.ArweaveBundle) {
+      animationDataItem = await getImageDataItem(signer, animationBuffer, animationContentType);
+      await (animationDataItem as DataItem).sign(signer);
+    }
+  }
+
   const imageLink = `https://arweave.net/${imageDataItem.id}`;
+  const animationLink = filePair.animation ? `https://arweave.net/${animationDataItem.id}` : undefined;
 
   const manifest = await getUpdatedManifest(
     filePair.manifest,
     imageLink,
-    contentType,
+    animationLink
   );
 
   if (storageType === StorageType.ArweaveSol) {
@@ -355,9 +395,11 @@ async function processFiles({
   }
 
   const arweavePathManifest = createArweavePathManifest(
-    imageDataItem.id,
     manifestDataItem.id,
-    `.${getExtension(contentType)}`,
+    imageDataItem.id,
+    `.${getExtension(imageContentType)}`,
+    filePair.animation ? animationDataItem.id : undefined,
+    filePair.animation ? `.${getExtension(animationContentType)}` : undefined,
   );
 
   if (storageType === StorageType.ArweaveSol) {
@@ -378,6 +420,7 @@ async function processFiles({
 
   return {
     imageDataItem,
+    animationDataItem,
     manifestDataItem,
     arweavePathManifestDataItem,
     manifest,
@@ -426,11 +469,18 @@ export function* makeArweaveBundleUploadGenerator(
         )
       : undefined;
 
-  const filePairs = assets.map((asset: AssetKey) => ({
-    key: asset.index,
-    image: path.join(dirname, `${asset.index}${asset.mediaExt}`),
-    manifest: path.join(dirname, `${asset.index}.json`),
-  }));
+  const filePairs = assets.map(function (asset: AssetKey) {
+    const manifestPath = path.join(dirname, `${asset.index}.json`);
+    const manifestData: Manifest = JSON.parse(
+      (readFileSync(manifestPath)).toString(),
+    );
+    return {
+      key: asset.index,
+      image: path.join(dirname, `${manifestData.image}`),
+      animation: ('animation_url' in manifestData) ? path.join(dirname, `${manifestData.animation_url}`) : undefined,
+      manifest: manifestPath,
+    };
+  });
 
   // Yield an empty result object before processing file pairs
   // & uploading bundles for initialization.
@@ -474,6 +524,7 @@ export function* makeArweaveBundleUploadGenerator(
 
           const {
             imageDataItem,
+            animationDataItem,
             manifestDataItem,
             arweavePathManifestDataItem,
             manifest,
@@ -487,6 +538,11 @@ export function* makeArweaveBundleUploadGenerator(
             manifestDataItem,
             arweavePathManifestDataItem,
           );
+          if (filePair.animation) {
+            acc.dataItems.push(
+              animationDataItem,
+            );
+          }
           acc.arweavePathManifestLinks.push(arweavePathManifestLink);
           acc.updatedManifests.push(manifest);
 

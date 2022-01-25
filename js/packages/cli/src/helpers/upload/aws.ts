@@ -35,35 +35,62 @@ async function uploadFile(
 
 export async function awsUpload(
   awsS3Bucket: string,
-  file: string,
+  imageFile: string,
+  animationFile: string,
   manifestBuffer: Buffer,
 ) {
   const REGION = 'us-east-1'; // TODO: Parameterize this.
   const s3Client = new S3Client({ region: REGION });
-  const filename = `assets/${basename(file)}`;
-  log.debug('file:', file);
-  log.debug('filename:', filename);
+  const imageFilename = `assets/${basename(imageFile)}`;
+  log.debug('imageFile:', imageFile);
+  log.debug('imageFilename:', imageFilename);
 
-  const imageExt = path.extname(file);
-  const fileStream = createReadStream(file);
-  const mediaUrl = await uploadFile(
+  const imageExt = path.extname(imageFile);
+  const imageFileStream = createReadStream(imageFile);
+  const imageUrl = await uploadFile(
     s3Client,
     awsS3Bucket,
-    filename,
-    getType(file),
-    fileStream,
+    imageFilename,
+    getType(imageFile),
+    imageFileStream,
   );
+
+  let animationUrl = undefined
+  if (animationFile) {
+    const animationFilename = `assets/${basename(animationFile)}`;
+    log.debug('animationFile:', animationFile);
+    log.debug('animationFilename:', animationFilename);
+
+    const animationExt = path.extname(animationFile);
+    const animationFileStream = createReadStream(animationFile);
+    const animationUrl = await uploadFile(
+      s3Client,
+      awsS3Bucket,
+      animationFilename,
+      getType(animationFile),
+      animationFileStream,
+    );
+  }
 
   // Copied from ipfsUpload
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  manifestJson.image = mediaUrl;
+  manifestJson.image = imageUrl;
+  if (animationFile) {
+    manifestJson.animation_url = animationUrl;
+  }
+
   manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    return { ...f, uri: mediaUrl };
+    if (f.type.startsWith('image/')) {
+      return { ...f, uri: imageUrl };
+    } else {
+      return { ...f, uri: animationUrl };
+    }
   });
+
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 
   const extensionRegex = new RegExp(`${imageExt}$`);
-  const metadataFilename = filename.replace(extensionRegex, '.json');
+  const metadataFilename = imageFilename.replace(extensionRegex, '.json');
   const metadataUrl = await uploadFile(
     s3Client,
     awsS3Bucket,
@@ -72,5 +99,5 @@ export async function awsUpload(
     updatedManifestBuffer,
   );
 
-  return [metadataUrl, mediaUrl];
+  return [metadataUrl, imageUrl, animationUrl];
 }

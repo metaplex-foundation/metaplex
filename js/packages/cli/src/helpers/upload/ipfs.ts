@@ -14,6 +14,7 @@ function sleep(ms: number): Promise<void> {
 export async function ipfsUpload(
   ipfsCredentials: ipfsCreds,
   image: string,
+  animation: string,
   manifestBuffer: Buffer,
 ) {
   const tokenIfps = `${ipfsCredentials.projectId}:${ipfsCredentials.secretKey}`;
@@ -25,12 +26,12 @@ export async function ipfsUpload(
     return cid;
   };
 
-  const mediaHash = await uploadToIpfs(globSource(image, { recursive: true }));
-  log.debug('mediaHash:', mediaHash);
-  const mediaUrl = `https://ipfs.io/ipfs/${mediaHash}`;
-  log.debug('mediaUrl:', mediaUrl);
+  const imageHash = await uploadToIpfs(globSource(image, { recursive: true }));
+  log.debug('imageHash:', imageHash);
+  const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
+  log.info('imageUrl:', imageUrl);
   const authIFPS = Buffer.from(tokenIfps).toString('base64');
-  await fetch(`https://ipfs.infura.io:5001/api/v0/pin/add?arg=${mediaHash}`, {
+  await fetch(`https://ipfs.infura.io:5001/api/v0/pin/add?arg=${imageHash}`, {
     headers: {
       Authorization: `Basic ${authIFPS}`,
     },
@@ -40,10 +41,35 @@ export async function ipfsUpload(
 
   await sleep(500);
 
+  let animationUrl = undefined;
+  if (animation) {
+    const animationHash = await uploadToIpfs(globSource(animation, { recursive: true }));
+    log.debug('animationHash:', animationHash);
+    animationUrl = `https://ipfs.io/ipfs/${animationHash}`;
+    log.info('animationUrl:', animationUrl);
+    await fetch(`https://ipfs.infura.io:5001/api/v0/pin/add?arg=${animationHash}`, {
+      headers: {
+        Authorization: `Basic ${authIFPS}`,
+      },
+      method: 'POST',
+    });
+    log.info('uploaded animation for file:', animation);
+
+    await sleep(500);
+  }
+
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  manifestJson.image = mediaUrl;
+  manifestJson.image = imageUrl;
+  if (animation) {
+    manifestJson.animation_url = animationUrl;
+  }
+
   manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    return { ...f, uri: mediaUrl };
+    if (f.type.startsWith('image/')) {
+      return { ...f, uri: imageUrl };
+    } else {
+      return { ...f, uri: animationUrl };
+    }
   });
 
   const manifestHash = await uploadToIpfs(
@@ -63,5 +89,5 @@ export async function ipfsUpload(
   const link = `https://ipfs.io/ipfs/${manifestHash}`;
   log.info('uploaded manifest: ', link);
 
-  return [link, mediaUrl];
+  return [link, imageUrl, animationUrl];
 }

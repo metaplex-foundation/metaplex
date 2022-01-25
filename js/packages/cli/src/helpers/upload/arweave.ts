@@ -59,21 +59,31 @@ export async function arweaveUpload(
   anchorProgram,
   env,
   image,
+  animation,
   manifestBuffer, // TODO rename metadataBuffer
   manifest, // TODO rename metadata
   index,
 ) {
   const imageExt = path.extname(image);
-  const fsStat = await stat(image);
-  const estimatedManifestSize = estimateManifestSize([
+  let fsStat = await stat(image);
+  const manifestFiles = [
     `${index}${imageExt}`,
     'metadata.json',
-  ]);
-  const storageCost = await fetchAssetCostToStore([
+  ]
+  const storageCostSizes = [
     fsStat.size,
     manifestBuffer.length,
-    estimatedManifestSize,
-  ]);
+  ]
+  let animationExt = undefined;
+  if (animation) {
+    animationExt = path.extname(animation);
+    fsStat = await stat(animation);
+    manifestFiles.push(`${index}${animationExt}`);
+    storageCostSizes.push(fsStat.size);
+  }
+  const estimatedManifestSize = estimateManifestSize(manifestFiles);
+  storageCostSizes.push(estimatedManifestSize);
+  const storageCost = await fetchAssetCostToStore(storageCostSizes);
   log.debug(`lamport cost to store ${image}: ${storageCost}`);
 
   const instructions = [
@@ -100,6 +110,12 @@ export async function arweaveUpload(
     filename: `${index}${imageExt}`,
     contentType: `image/${imageExt.replace('.', '')}`,
   });
+  if (animation) {
+    data.append('file[]', fs.createReadStream(animation), {
+      filename: `${index}${animationExt}`,
+      contentType: `image/${animationExt.replace('.', '')}`,
+    });
+  }
   data.append('file[]', manifestBuffer, 'metadata.json');
 
   const result = await upload(data, manifest, index);
@@ -110,13 +126,22 @@ export async function arweaveUpload(
   const imageFile = result.messages?.find(
     m => m.filename === `${index}${imageExt}`,
   );
+  const animationFile = result.messages?.find(
+    m => m.filename === `${index}${animationExt}`,
+  );
   if (metadataFile?.transactionId) {
     const link = `https://arweave.net/${metadataFile.transactionId}`;
     const imageLink = `https://arweave.net/${
       imageFile.transactionId
     }?ext=${imageExt.replace('.', '')}`;
+    let animationLink = undefined;
+    if (animation) {
+      animationLink = `https://arweave.net/${
+        animationFile.transactionId
+      }?ext=${animationExt.replace('.', '')}`;
+    }
     log.debug(`File uploaded: ${link}`);
-    return [link, imageLink];
+    return [link, imageLink, animationLink];
   } else {
     // @todo improve
     throw new Error(`No transaction ID for upload: ${index}`);

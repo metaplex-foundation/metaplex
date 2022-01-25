@@ -15,7 +15,6 @@ import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
-import { EXTENSION_MP4, EXTENSION_MOV, EXTENSION_MP3, EXTENSION_FLAC, EXTENSION_WAV, EXTENSION_GLB, EXTENSION_HTML } from '../helpers/constants';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
@@ -239,72 +238,69 @@ export async function uploadV2({
                 log.info(`Processing asset: ${allIndexesInSlice[i]}`);
               }
 
-              for (let ii = 0; ii < manifest.properties.files.length; ii++) {
-                const image = path.join(
+              const image = path.join(
+                dirname,
+                `${manifest.image}`,
+              );
+
+              let animation = undefined;
+              if ('animation_url' in manifest) {
+                animation = path.join(
                   dirname,
-                  `${manifest.properties.files[ii].uri}`,
-                  // `${assetKey.index}${assetKey.mediaExt}`,
+                  `${manifest.animation_url}`,
                 );
-                const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+              }
 
-                let link, imageLink;
-                try {
-                  switch (storage) {
-                    case StorageType.Ipfs:
-                      [link, imageLink] = await ipfsUpload(
-                        ipfsCredentials,
-                        image,
-                        manifestBuffer,
-                      );
-                      break;
-                    case StorageType.Aws:
-                      [link, imageLink] = await awsUpload(
-                        awsS3Bucket,
-                        image,
-                        manifestBuffer,
-                      );
-                      break;
-                    case StorageType.Arweave:
-                    default:
-                      [link, imageLink] = await arweaveUpload(
-                        walletKeyPair,
-                        anchorProgram,
-                        env,
-                        image,
-                        manifestBuffer,
-                        manifest,
-                        assetKey.index,
-                      );
-                  }
-                  if (link && imageLink) {
-                    log.debug('Updating cache for ', allIndexesInSlice[i]);
-                    cacheContent.items[assetKey.index] = {
-                      link,
-                      name: manifest.name,
-                      onChain: false,
-                    };
-                    saveCache(cacheName, env, cacheContent);
-                  }
+              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
-                  if (manifest.properties.files[ii].uri.endsWith(EXTENSION_MP4) || 
-                      manifest.properties.files[ii].uri.endsWith(EXTENSION_MOV) || 
-                      manifest.properties.files[ii].uri.endsWith(EXTENSION_MP3) || 
-                      manifest.properties.files[ii].uri.endsWith(EXTENSION_FLAC)|| 
-                      manifest.properties.files[ii].uri.endsWith(EXTENSION_WAV) || 
-                      manifest.properties.files[ii].uri.endsWith(EXTENSION_GLB) || 
-                      manifest.properties.files[ii].uri.endsWith(EXTENSION_HTML)) {
-                    manifest.animation_url = imageLink
-                    manifest.properties.files[ii].uri = imageLink
-                  }
-                  else {
-                    manifest.image = imageLink
-                    manifest.properties.files[ii].uri = imageLink
-                  }
-
-                } catch (err) {
-                  log.error(`Error uploading file ${manifest.properties.files[ii].uri}`, err);
-                  i--;
+              let link, imageLink, animationLink;
+              try {
+                switch (storage) {
+                  case StorageType.Ipfs:
+                    [link, imageLink, animationLink] = await ipfsUpload(
+                      ipfsCredentials,
+                      image,
+                      animation,
+                      manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Aws:
+                    [link, imageLink, animationLink] = await awsUpload(
+                      awsS3Bucket,
+                      image,
+                      animation,
+                      manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Arweave:
+                  default:
+                    [link, imageLink, animationLink] = await arweaveUpload(
+                      walletKeyPair,
+                      anchorProgram,
+                      env,
+                      image,
+                      animation,
+                      manifestBuffer,
+                      manifest,
+                      assetKey.index,
+                    );
                 }
+                if (animation ? link && imageLink && animationLink : link && imageLink) {
+                  log.debug('Updating cache for ', allIndexesInSlice[i]);
+                  cacheContent.items[assetKey.index] = {
+                    link,
+                    name: manifest.name,
+                    onChain: false,
+                  };
+                  saveCache(cacheName, env, cacheContent);
+                }
+              } catch (err) {
+                if (animation) {
+                  log.error(`Error uploading files ${manifest.image} + ${manifest.animation_url}`, err);
+                } else {
+                  log.error(`Error uploading file ${manifest.image}`, err);
+                }
+                i--;
               }
             }
           },
@@ -468,7 +464,7 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
     manifest.properties.files[0].uri =
       manifest.properties.files[0]?.uri?.replace('image', assetIndex);
   }
-  if (Object.prototype.hasOwnProperty.call(manifest, 'animation_url')) {
+  if ('animation_url' in manifest) {
     manifest.animation_url = manifest.animation_url.replace('animation_url', assetIndex);
     if (manifest.properties?.files?.length > 0) {
       manifest.properties.files[1].uri =
@@ -710,30 +706,33 @@ export async function upload({
                 log.info(`Processing asset: ${assetKey}`);
               }
 
-              let link, imageLink;
+              let link, imageLink, animationLink;
               try {
                 switch (storage) {
                   case StorageType.Ipfs:
-                    [link, imageLink] = await ipfsUpload(
+                    [link, imageLink, animationLink] = await ipfsUpload(
                       ipfsCredentials,
                       image,
+                      undefined,
                       manifestBuffer,
                     );
                     break;
                   case StorageType.Aws:
-                    [link, imageLink] = await awsUpload(
+                    [link, imageLink, animationLink] = await awsUpload(
                       awsS3Bucket,
                       image,
+                      undefined,
                       manifestBuffer,
                     );
                     break;
                   case StorageType.Arweave:
                   default:
-                    [link, imageLink] = await arweaveUpload(
+                    [link, imageLink, animationLink] = await arweaveUpload(
                       walletKeyPair,
                       anchorProgram,
                       env,
                       image,
+                      undefined,
                       manifestBuffer,
                       manifest,
                       i,
