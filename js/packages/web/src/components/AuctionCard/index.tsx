@@ -211,7 +211,7 @@ export const AuctionCard = ({
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
   const connect = useCallback(
-    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    () => (wallet.wallet ? wallet.connect().catch(() => {}) : setVisible(true)),
     [wallet.wallet, wallet.connect, setVisible],
   );
 
