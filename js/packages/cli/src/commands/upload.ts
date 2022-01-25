@@ -694,13 +694,19 @@ export async function upload({
                 dirname,
                 `${assetKey.index}${assetKey.mediaExt}`,
               );
-              const animation = undefined;
               const manifest = getAssetManifest(
                 dirname,
                 assetKey.index.includes('json')
                   ? assetKey.index
                   : `${assetKey.index}.json`,
               );
+              let animation = undefined;
+              if ('animation_url' in manifest) {
+                animation = path.join(
+                  dirname,
+                  `${manifest.animation_url}`,
+                );
+              }
               const manifestBuffer = Buffer.from(JSON.stringify(manifest));
               if (i >= lastPrinted + tick || i === 0) {
                 lastPrinted = i;
@@ -739,7 +745,7 @@ export async function upload({
                       i,
                     );
                 }
-                if (false ? link && imageLink && animationLink : link && imageLink) {
+                if (animation ? link && imageLink && animationLink : link && imageLink) {
                   log.debug('Updating cache for ', assetKey);
                   cache.items[assetKey.index] = {
                     link,
