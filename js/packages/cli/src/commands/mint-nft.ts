@@ -37,7 +37,7 @@ import {
 export const createMetadata = async (
   metadataLink: string,
   collection: PublicKey,
-  verifyCreators: 0 | 1,
+  verifyCreators: boolean,
   uses?: Uses,
 ): Promise<DataV2> => {
   // Metadata
@@ -76,7 +76,7 @@ export const createMetadata = async (
       new Creator({
         address: creator.address,
         share: creator.share,
-        verified: verifyCreators,
+        verified: verifyCreators ? 1 : 0,
       }),
   );
   return new DataV2({
@@ -99,7 +99,7 @@ export const mintNFT = async (
   mutableMetadata: boolean = true,
   collection: PublicKey = null,
   maxSupply: number = 0,
-  verifyCreators: 0 | 1,
+  verifyCreators: boolean,
   use: Uses = null,
 ): Promise<PublicKey | void> => {
   // Retrieve metadata
@@ -243,7 +243,7 @@ export const updateMetadata = async (
   walletKeypair: Keypair,
   metadataLink: string,
   collection: PublicKey = null,
-  verifyCreators: 0 | 1,
+  verifyCreators: boolean,
   uses: Uses,
 ): Promise<PublicKey | void> => {
   // Retrieve metadata
