@@ -19,7 +19,10 @@ programCommand('mint')
   .option('-um, --use-method <string>', 'Optional: Single, Multiple, or Burn')
   .option('-tum, --total-uses <number>', 'Optional: Allowed Number of Uses')
   .option('-ms, --max-supply <number>', 'Optional: Max Supply')
-  .option('-vc, --verify-creators <number>', 'Optional: 0 or 1')
+  .option(
+    '-nvc, --no-verify-creators',
+    'Optional: Disable Verification of Creators',
+  )
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (directory, cmd) => {
     const {
@@ -45,7 +48,7 @@ programCommand('mint')
       collectionKey = new PublicKey(collection);
     }
     const supply = maxSupply || 0;
-    const verify = typeof verifyCreators === 'undefined' ? 1 : verifyCreators;
+
     await mintNFT(
       solConnection,
       walletKeyPair,
@@ -53,7 +56,7 @@ programCommand('mint')
       true,
       collectionKey,
       supply,
-      verify,
+      verifyCreators,
       structuredUseMethod,
     );
   });
@@ -67,7 +70,10 @@ programCommand('update-metadata')
   )
   .option('-um, --use-method <string>', 'Optional: Single, Multiple, or Burn')
   .option('-tum, --total-uses <number>', 'Optional: Allowed Number of Uses')
-  .option('-vc, --verify-creators <number>', 'Optional: 0 or 1')
+  .option(
+    '-nvc, --no-verify-creators',
+    'Optional: Disable Verification of Creators',
+  )
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (directory, cmd) => {
     const {
@@ -104,14 +110,13 @@ programCommand('update-metadata')
       collectionKey = new PublicKey(collection);
     }
 
-    const verify = typeof verifyCreators === 'undefined' ? 1 : verifyCreators;
     await updateMetadata(
       mintKey,
       solConnection,
       walletKeyPair,
       url,
       collectionKey,
-      verify,
+      verifyCreators,
       structuredUseMethod,
     );
   });
