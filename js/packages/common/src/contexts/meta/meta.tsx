@@ -37,14 +37,22 @@ const MetaContext = React.createContext<MetaContextState>({
   update: () => [AuctionData, BidderMetadata, BidderPot],
 });
 
-export function MetaProvider({ children = null as any }) {
+export function MetaProvider({
+  children = null,
+}: {
+  children: React.ReactNode;
+}) {
   const connection = useConnection();
   const { isReady, storeAddress } = useStore();
   const wallet = useWallet();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
   const [page, setPage] = useState(0);
-  const [lastLength, setLastLength] = useState(0);
+  const [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _lastLength,
+    setLastLength,
+  ] = useState(0);
   const { userAccounts } = useUserAccounts();
 
   const [isLoading, setIsLoading] = useState(false);
