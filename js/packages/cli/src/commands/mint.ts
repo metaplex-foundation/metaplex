@@ -160,12 +160,14 @@ export async function mint(
 export async function mintV2(
   keypair: string,
   env: string,
+  authorityKeypair: string | null,
   candyMachineAddress: PublicKey,
   rpcUrl: string,
 ): Promise<string> {
   const mint = Keypair.generate();
 
   const userKeyPair = loadWalletKey(keypair);
+  const authorityKeyPairLoaded = authorityKeypair ? loadWalletKey(authorityKeypair) : userKeyPair;
   const anchorProgram = await loadCandyProgramV2(userKeyPair, env, rpcUrl);
   const userTokenAccountAddress = await getTokenWallet(
     userKeyPair.publicKey,
@@ -177,7 +179,7 @@ export async function mintV2(
   );
 
   const remainingAccounts = [];
-  const signers = [mint, userKeyPair];
+  const signers = [mint, userKeyPair, authorityKeyPairLoaded];
   const cleanupInstructions = [];
   const instructions = [
     anchor.web3.SystemProgram.createAccount({
@@ -326,7 +328,7 @@ export async function mintV2(
         metadata: metadataAddress,
         masterEdition,
         mintAuthority: userKeyPair.publicKey,
-        updateAuthority: userKeyPair.publicKey,
+        updateAuthority: authorityKeyPairLoaded.publicKey,
         tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,

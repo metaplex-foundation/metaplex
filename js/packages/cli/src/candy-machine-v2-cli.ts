@@ -702,28 +702,30 @@ programCommand('update_candy_machine')
   });
 
 programCommand('mint_one_token')
+  .option('-ak, --authority-keypair <string>', 'Update authority keypair')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, rpcUrl } = cmd.opts();
+    const { keypair, env, authorityKeypair, cacheName, rpcUrl } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const candyMachine = new PublicKey(cacheContent.program.candyMachine);
-    const tx = await mintV2(keypair, env, candyMachine, rpcUrl);
+    const tx = await mintV2(keypair, env, authorityKeypair, candyMachine, rpcUrl);
 
     log.info('mint_one_token finished', tx);
   });
 
 programCommand('mint_multiple_tokens')
+  .option('-ak, --authority-keypair <string>', 'Update authority keypair')
   .requiredOption('-n, --number <string>', 'Number of tokens')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
   .action(async (_, cmd) => {
-    const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
+    const { keypair, env, authorityKeypair, cacheName, number, rpcUrl } = cmd.opts();
 
     const NUMBER_OF_NFTS_TO_MINT = parseInt(number, 10);
     const cacheContent = loadCache(cacheName, env);
@@ -732,7 +734,7 @@ programCommand('mint_multiple_tokens')
     log.info(`Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...`);
 
     const mintToken = async index => {
-      const tx = await mintV2(keypair, env, candyMachine, rpcUrl);
+      const tx = await mintV2(keypair, env, authorityKeypair, candyMachine, rpcUrl);
       log.info(`transaction ${index + 1} complete`, tx);
 
       if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
