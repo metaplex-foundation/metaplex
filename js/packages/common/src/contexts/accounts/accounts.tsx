@@ -120,11 +120,7 @@ const precacheUserTokenAccounts = async (
   });
 };
 
-export function AccountsProvider({
-  children = null,
-}: {
-  children: React.ReactNode;
-}) {
+export function AccountsProvider({ children = null as any }) {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
@@ -151,8 +147,8 @@ export function AccountsProvider({
     const subs: number[] = [];
     cache.emitter.onCache(args => {
       if (args.isNew && args.isActive) {
-        const id = args.id;
-        const deserialize = args.parser;
+        let id = args.id;
+        let deserialize = args.parser;
         connection.onAccountChange(new PublicKey(id), info => {
           cache.add(id, info, deserialize);
         });

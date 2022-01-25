@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import React, { useState } from "react";
 import { useSwappableTokens, useTokenList } from "../../contexts/tokenList";
-import { Row, Col, Typography, Tabs, Input, List } from 'antd';
+import { Row, Col, Typography, Modal, Tabs, Input, List } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenCircle } from "../Custom";
@@ -25,14 +25,14 @@ export function TokenButton({
   onClick: () => void;
 }) {
   const tokenMap = useTokenList().mainnetTokens;
-  const tokenInfo = tokenMap.filter(t => t.address == mint.toBase58())[0];
+  let tokenInfo = tokenMap.filter(t => t.address == mint.toBase58())[0];
 
   return (
     <Row onClick={onClick} className={'token-button'} justify='space-between'>
       <Col>
         <Row>
           <TokenCircle iconSize={40} iconFile={tokenInfo?.logoURI} style={{ marginTop: 2.5 }} />
-          <TokenName mint={mint} />
+          <TokenName mint={mint} style={{ fontSize: 14, fontWeight: 700 }} />
         </Row>
       </Col>
       <Col>
@@ -61,7 +61,7 @@ export default function TokenDialog({
       : tabSelection === TokenViewState.Wormhole
         ? swappableTokensWormhole
         : swappableTokensSollet;
-  const tokens =
+  let tokens =
     tokenFilter === ""
       ? selectedTokens
       : selectedTokens.filter(
@@ -182,7 +182,7 @@ function TokenListItem({
 
 export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
   const tokenMap = useTokenList().tokenMap;
-  const tokenInfo = tokenMap.get(mint.toString());
+  let tokenInfo = tokenMap.get(mint.toString());
   return (
     <div
       style={{
@@ -200,10 +200,11 @@ export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
   );
 }
 
-function TokenName({ mint }: { mint: PublicKey }) {
+function TokenName({ mint, style }: { mint: PublicKey; style?: any}) {
   const tokenMap = useTokenList().tokenMap;
-  const tokenInfo = tokenMap.get(mint.toString());
-  const tokenName = tokenInfo? tokenInfo.name: "Custom Token"
+  let tokenInfo = tokenMap.get(mint.toString());
+  let tokenSymbol = tokenInfo? tokenInfo.symbol: "CUSTOM"
+  let tokenName = tokenInfo? tokenInfo.name: "Custom Token"
 
   return (
     <div style={{ marginLeft: "16px", overflow: 'hidden' }}>

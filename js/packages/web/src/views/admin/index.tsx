@@ -306,7 +306,7 @@ function InnerAdminView({
               unCheckedChildren="Whitelist Only"
               checked={newStore.public}
               onChange={val => {
-                setNewStore(() => {
+                setNewStore(_ => {
                   const newS = new Store(store.info);
                   newS.public = val;
                   return newS;

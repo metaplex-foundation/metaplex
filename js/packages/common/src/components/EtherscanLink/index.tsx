@@ -26,7 +26,6 @@ export const EtherscanLink = (props: {
       target="_blank"
       title={address}
       style={props.style}
-      rel="noreferrer"
     >
       {code ? (
         <Typography.Text style={props.style} code>

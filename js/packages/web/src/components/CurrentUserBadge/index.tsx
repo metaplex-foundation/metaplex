@@ -30,7 +30,7 @@ const btnStyle: React.CSSProperties = {
 };
 
 const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
-  const { publicKey } = useWallet();
+  const { wallet, publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
 
