@@ -8,6 +8,7 @@ import cx from 'classnames';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { getLast } from '../../utils/utils';
 import { MeshViewer } from '../MeshViewer';
+import { maybeCDN } from '../../utils/cdn';
 
 const MeshArtContent = ({
   uri,
@@ -120,7 +121,7 @@ const VideoArtContent = ({
         poster={uri}
       >
         {likelyVideo && <source src={likelyVideo} type="video/mp4" />}
-        {animationURL && <source src={animationURL} type="video/mp4" />}
+        {animationURL && <source src={maybeCDN(animationURL)} type="video/mp4" />}
         {(
           files?.filter(f => !!f && typeof f !== 'string') as MetadataFile[]
         )?.map((f: MetadataFile, i) => (

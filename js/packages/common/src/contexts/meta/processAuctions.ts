@@ -19,6 +19,12 @@ const AUCTION_BLACK_LIST = [
   '9zcrbzSmBPdDjAGYXkfufP2wy1kbHKac8UYLBmHpbuYy',
   'DzR58tU6ZXx2sMBVjaL2dhNF9SL9qd42eYXLbtu5qcCx',
   '5c87cDHxwiF3jeapwrYEtJjCxoddMrRKRwrFh7NAATtg',
+  'BrHimLGmvsGqVrQQxHQH1vrU9srodpwjYipr51Dh2kq7',
+  'Hg94dq2qJ4bdvq1ttvtXWRnvG4ZRW3xZBqY83cHJjjsz',
+  '3cvup2CrUPjhPuyPrGYbNExg6wWdAhMnQ7Fzy4gwL4mP',
+  'BJRYaWyTtj93LkS5tZ6Bqo9em3oFXjASXPC1Z4xDH6s9',
+  'EVa8npkseLJGW5pi2QTJkURX8huFcdtSYEQUupebpxGk',
+  'Px79FbkMahpELmzj5qvqobfVmqGZMS3G1BQJPeugETM',
 ];
 
 export const processAuctions: ProcessAccountsFunc = async (

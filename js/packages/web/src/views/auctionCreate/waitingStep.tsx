@@ -73,7 +73,7 @@ export const WaitingStep = (props: {
     }
   }, [props.rejection]);
 
-  let title = 'Listing NFT with Metaplex...';
+  let title = 'Listing NFT with Holaplex...';
   let description: ReactNode =
     'This may take several minutes depending current network demand.';
   let status: 'normal' | 'exception' = 'normal';
