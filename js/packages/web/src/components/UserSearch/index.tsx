@@ -73,7 +73,7 @@ export const UserSearch = (props: { setCreators: Function }) => {
       size="large"
       value={value}
       placeholder="Select creator"
-      fetchOptions={async () => {
+      fetchOptions={async (search: string) => {
         const items = Object.values(whitelistedCreatorsByCreator)
           .filter(c => c.info.activated)
           .map(a => ({

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-
+import { useTokenList } from './tokenList';
 export const COINGECKO_POOL_INTERVAL = 1000 * 60; // 60 sec
 export const COINGECKO_API = 'https://api.coingecko.com/api/v3/';
 export const COINGECKO_COIN_PRICE_API = `${COINGECKO_API}simple/price`;
@@ -33,13 +33,10 @@ export const altSplToUSD = async (cgTokenName?: string): Promise<number> => {
 
 const CoingeckoContext =
   React.createContext<CoingeckoContextState | null>(null);
-  export function CoingeckoProvider({
-    children = null,
-  }: {
-    children: React.ReactNode;
-  }) {
+export function CoingeckoProvider({ children = null as any }) {
   const [solPrice, setSolPrice] = useState<number>(0);
   const [allSplPrices, setAllSplPrices] = useState<AllSplTokens[]>([]);
+  const tokenList = useTokenList().mainnetTokens
 
   useEffect(() => {
     let timerId = 0;
@@ -50,7 +47,7 @@ const CoingeckoContext =
       const subscribedTokenMints = process.env.NEXT_SPL_TOKEN_MINTS? process.env.NEXT_SPL_TOKEN_MINTS.split(","): []
       const subscribedTokenIDS = process.env.NEXT_CG_SPL_TOKEN_IDS? process.env.NEXT_CG_SPL_TOKEN_IDS.split(","): []
 
-      const allSplPrices:AllSplTokens[] = []
+      var allSplPrices:AllSplTokens[] = []
       for (let i=0; i < subscribedTokenMints.length; i++) {
         try {
           const splName = subscribedTokenIDS[i]

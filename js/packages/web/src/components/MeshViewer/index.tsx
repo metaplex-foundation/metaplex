@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import '@google/model-viewer/dist/model-viewer';
 
 type MeshViewerProps = {
