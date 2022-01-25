@@ -35,46 +35,35 @@ async function uploadFile(
 
 export async function awsUpload(
   awsS3Bucket: string,
-  imageFile: string,
-  animationFile: string,
+  image: string,
+  animation: string,
   manifestBuffer: Buffer,
 ) {
   const REGION = 'us-east-1'; // TODO: Parameterize this.
   const s3Client = new S3Client({ region: REGION });
-  const imageFilename = `assets/${basename(imageFile)}`;
-  log.debug('imageFile:', imageFile);
-  log.debug('imageFilename:', imageFilename);
 
-  const imageExt = path.extname(imageFile);
-  const imageFileStream = createReadStream(imageFile);
-  const imageUrl = await uploadFile(
-    s3Client,
-    awsS3Bucket,
-    imageFilename,
-    getType(imageFile),
-    imageFileStream,
-  );
-
-  let animationUrl = undefined
-  if (animationFile) {
-    const animationFilename = `assets/${basename(animationFile)}`;
-    log.debug('animationFile:', animationFile);
-    log.debug('animationFilename:', animationFilename);
-
-    const animationFileStream = createReadStream(animationFile);
-    animationUrl = await uploadFile(
+  async function uploadMedia(media) {
+    const mediaPath = `assets/${basename(media)}`;
+    log.debug('media:', media);
+    log.debug('mediaPath:', mediaPath);
+    const mediaFileStream = createReadStream(media);
+    const mediaUrl = await uploadFile(
       s3Client,
       awsS3Bucket,
-      animationFilename,
-      getType(animationFile),
-      animationFileStream,
+      mediaPath,
+      getType(media),
+      mediaFileStream,
     );
+    return mediaUrl;
   }
+
+  const imageUrl = uploadMedia(image);
+  const animationUrl = animation ? uploadMedia(animation) : undefined;
 
   // Copied from ipfsUpload
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
   manifestJson.image = imageUrl;
-  if (animationFile) {
+  if (animation) {
     manifestJson.animation_url = animationUrl;
   }
 
@@ -88,8 +77,8 @@ export async function awsUpload(
 
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 
-  const extensionRegex = new RegExp(`${imageExt}$`);
-  const metadataFilename = imageFilename.replace(extensionRegex, '.json');
+  const extensionRegex = new RegExp(`${path.extname(image)}$`);
+  const metadataFilename = image.replace(extensionRegex, '.json');
   const metadataUrl = await uploadFile(
     s3Client,
     awsS3Bucket,

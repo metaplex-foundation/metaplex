@@ -20,43 +20,31 @@ export async function ipfsUpload(
   const tokenIfps = `${ipfsCredentials.projectId}:${ipfsCredentials.secretKey}`;
   // @ts-ignore
   const ipfs = create('https://ipfs.infura.io:5001');
+  const authIFPS = Buffer.from(tokenIfps).toString('base64');
 
   const uploadToIpfs = async source => {
     const { cid } = await ipfs.add(source).catch();
     return cid;
   };
 
-  const imageHash = await uploadToIpfs(globSource(image, { recursive: true }));
-  log.debug('imageHash:', imageHash);
-  const imageUrl = `https://ipfs.io/ipfs/${imageHash}`;
-  log.info('imageUrl:', imageUrl);
-  const authIFPS = Buffer.from(tokenIfps).toString('base64');
-  await fetch(`https://ipfs.infura.io:5001/api/v0/pin/add?arg=${imageHash}`, {
-    headers: {
-      Authorization: `Basic ${authIFPS}`,
-    },
-    method: 'POST',
-  });
-  log.info('uploaded image for file:', image);
-
-  await sleep(500);
-
-  let animationUrl = undefined;
-  if (animation) {
-    const animationHash = await uploadToIpfs(globSource(animation, { recursive: true }));
-    log.debug('animationHash:', animationHash);
-    animationUrl = `https://ipfs.io/ipfs/${animationHash}`;
-    log.info('animationUrl:', animationUrl);
-    await fetch(`https://ipfs.infura.io:5001/api/v0/pin/add?arg=${animationHash}`, {
+  async function uploadMedia(media) {
+    const mediaHash = await uploadToIpfs(globSource(media, { recursive: true }));
+    log.debug('mediaHash:', mediaHash);
+    const mediaUrl = `https://ipfs.io/ipfs/${mediaHash}`;
+    log.info('mediaUrl:', mediaUrl);
+    await fetch(`https://ipfs.infura.io:5001/api/v0/pin/add?arg=${mediaHash}`, {
       headers: {
         Authorization: `Basic ${authIFPS}`,
       },
       method: 'POST',
     });
-    log.info('uploaded animation for file:', animation);
-
+    log.info('uploaded media for file:', media);
     await sleep(500);
+    return mediaUrl;
   }
+
+  const imageUrl = uploadMedia(image);
+  const animationUrl = animation ? uploadMedia(animation) : undefined;
 
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
   manifestJson.image = imageUrl;
