@@ -738,7 +738,7 @@ export async function upload({
                       i,
                     );
                 }
-                if (link && imageLink) {
+                if (false ? link && imageLink && animationLink : link && imageLink) {
                   log.debug('Updating cache for ', assetKey);
                   cache.items[assetKey.index] = {
                     link,

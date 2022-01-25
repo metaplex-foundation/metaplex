@@ -149,7 +149,7 @@ function createArweavePathManifest(
   animationTxId: string,
   animationType: string,
 ): ArweavePathManifest {
-  let arweavePathManifest: ArweavePathManifest = {
+  const arweavePathManifest: ArweavePathManifest = {
     manifest: 'arweave/paths',
     version: '0.1.0',
     paths: {

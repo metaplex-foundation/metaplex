@@ -61,9 +61,8 @@ export async function awsUpload(
     log.debug('animationFile:', animationFile);
     log.debug('animationFilename:', animationFilename);
 
-    const animationExt = path.extname(animationFile);
     const animationFileStream = createReadStream(animationFile);
-    const animationUrl = await uploadFile(
+    animationUrl = await uploadFile(
       s3Client,
       awsS3Bucket,
       animationFilename,
