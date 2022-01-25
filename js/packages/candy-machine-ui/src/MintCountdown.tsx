@@ -1,4 +1,3 @@
-import { Paper } from '@material-ui/core';
 import Countdown from 'react-countdown';
 
 interface MintCountdownProps {
@@ -29,28 +28,30 @@ export const MintCountdown: React.FC<MintCountdownProps> = ({
   }: MintCountdownRender) => {
     hours += days * 24;
     if (completed) {
-      return status ? <span className="countdown-done">{status}</span> : null;
+      return status ? (
+        <span className="coinfra-countdown-done">{status}</span>
+      ) : null;
     } else {
       return (
         <div className="coinfra-countdown-root">
-          <Paper elevation={0}>
+          <div>
             <span className="coinfra-countdown-item">
               {hours < 10 ? `0${hours}` : hours}
             </span>
             <span>hrs</span>
-          </Paper>
-          <Paper elevation={0}>
+          </div>
+          <div>
             <span className="coinfra-countdown-item">
               {minutes < 10 ? `0${minutes}` : minutes}
             </span>
             <span>mins</span>
-          </Paper>
-          <Paper elevation={0}>
+          </div>
+          <div>
             <span className="coinfra-countdown-item">
               {seconds < 10 ? `0${seconds}` : seconds}
             </span>
             <span>secs</span>
-          </Paper>
+          </div>
         </div>
       );
     }

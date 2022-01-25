@@ -168,7 +168,7 @@ const Home = (props: HomeProps) => {
   return (
     <Container className="coinfra-parent-container">
       <Container className="coinfra-child-container" maxWidth="xs">
-        <Paper className="coinfra-paper">
+        <div className="coinfra-paper">
           {!wallet.connected ? (
             <WalletDialogButton id="coinfraConnectButton">
               Connect Wallet
@@ -211,7 +211,7 @@ const Home = (props: HomeProps) => {
               </MintContainer>
             </>
           )}
-        </Paper>
+        </div>
       </Container>
 
       <Snackbar
