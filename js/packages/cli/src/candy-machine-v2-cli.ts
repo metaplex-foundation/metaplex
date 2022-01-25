@@ -499,12 +499,12 @@ programCommand('show')
         cacheContent.program.candyMachine,
       );
       const utf8Encode = new TextEncoder();
-      let temp = await PublicKey.findProgramAddress(
+      const temp = await PublicKey.findProgramAddress(
         [
-          utf8Encode.encode("candy_machine"),
+          utf8Encode.encode('candy_machine'),
           new PublicKey(cacheContent.program.candyMachine).toBytes(),
         ],
-        new PublicKey("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ")
+        new PublicKey(CANDY_MACHINE_PROGRAM_V2_ID),
       );
       log.info('...Candy Machine...');
       log.info('Key:', cacheContent.program.candyMachine);
