@@ -145,15 +145,18 @@ export const createCandyMachineCoinfra = async function (
     },
   );
 
+  /*
   transaction.feePayer = wallet.publicKey;
   transaction.recentBlockhash = (
     await anchorProgram.provider.connection.getRecentBlockhash('singleGossip')
   ).blockhash;
   transaction.partialSign(...[candyAccount]);
+*/
 
   return {
     candyMachine: candyAccount.publicKey,
     uuid: candyData.uuid,
     transaction,
+    candyAccount,
   };
 };

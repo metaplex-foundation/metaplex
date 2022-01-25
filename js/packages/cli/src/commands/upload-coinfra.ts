@@ -3,6 +3,7 @@ import { chunks } from '../helpers/various-coinfra';
 import { sendSignedTransaction } from '../helpers/transactions-coinfra';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { BN, Program, web3 } from '@project-serum/anchor';
+import type { SendTxRequest } from '@project-serum/anchor/dist/cjs/provider';
 
 export async function uploadCoinfra({
   totalNFTs,
@@ -73,6 +74,7 @@ export async function uploadCoinfra({
 
   const transactions: Transaction[] = [];
   let candyMachine;
+  const txs: Array<SendTxRequest> = [];
   try {
     if (
       !firstAssetManifest.properties?.creators?.every(
@@ -116,6 +118,7 @@ export async function uploadCoinfra({
     cacheContent.program.candyMachine = res.candyMachine.toBase58();
     candyMachine = res.candyMachine;
     transactions.push(res.transaction);
+    txs.push({ tx: res.transaction, signers: [res.candyAccount] });
 
     console.info(
       `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
@@ -204,6 +207,7 @@ export async function uploadCoinfra({
                       verifyRun: false,
                     };
                   });
+                  txs.push({ tx: transaction, signers: [] });
                 } catch (error) {
                   console.error(
                     `saving config line ${ind}-${
@@ -219,6 +223,14 @@ export async function uploadCoinfra({
         ),
       );
 
+      // const signers = [candyAccount];
+      //const allTxs = [];
+      await anchorProgram.provider.sendAll(txs, {
+        // preflightCommitment: 'singleGossip',
+        skipPreflight: true,
+      });
+
+      /*
       const signedTransactions = await wallet.signAllTransactions(transactions);
       for (let i = 0; i < signedTransactions.length; i++) {
         try {
@@ -230,6 +242,7 @@ export async function uploadCoinfra({
           console.log('Caught failure', e);
         }
       }
+      */
     } catch (error) {
       uploadSuccessful = false;
       console.error(error);
