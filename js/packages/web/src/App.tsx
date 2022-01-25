@@ -3,7 +3,6 @@ import { Storefront } from '@oyster/common';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Providers } from './providers';
 import {
-  ArtCreateView,
   ArtistView,
   ArtView,
   ArtworksView,
@@ -26,10 +25,6 @@ function App({ storefront }: AppProps) {
       <Providers storefront={storefront}>
         <Routes>
           <Route path="/admin" element={<AdminView />} />
-          <Route
-            path="/nfts/new/:step_param"
-            element={<ArtCreateView />}
-          />
           <Route path="/owned" element={<ArtworksView />} />
           <Route path="/creators/:creator/nfts/:nft" element={<ArtView />} />
           <Route path="/creators/:creator" element={<ArtistView />} />

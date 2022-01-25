@@ -30,7 +30,6 @@ const StyledModal = styled(Modal)`
     overflow-y: scroll;
     margin: 0;
     top: 0;
-    background-color: rgb(51, 51, 51);
   }
 
   .ant-modal-wrap {
@@ -62,7 +61,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
   return (
     <StyledModal
       destroyOnClose
-      footer={[]}
+      footer={null}
       onCancel={onClose}
       visible={show}
       width="100%"
@@ -70,6 +69,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
       closable={false}
       maskStyle={{ overflowX: 'hidden' }}
       wrapProps={{ style: { overflowX: 'hidden', zIndex: 1031 } }}
+      className="blk-minter-modal"
     >
       <BulkMinter
         wallet={wallet as Wallet}

@@ -20,7 +20,6 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Link } from 'react-router-dom';
 import { useMeta, useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
 import MintModal from '../MintModal';
@@ -44,25 +43,18 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
         (props.mobile ? (
           <div>
             {canCreate && (
-              <Link to="/nfts/new/0">
-                <Button
-                  onClick={() => {
-                    props.onClick ? props.onClick() : null;
-                  }}
-                >
-                  Create
-                </Button>
-              </Link>
+                <Space direction="horizontal">
+                  <Button onClick={props.onClick}>Mint NFTs</Button>
+                </Space>
             )}
           </div>
         ) : (
           <div>
             {canCreate && (
               <>
-                <Link to="/nfts/new/0">
-                  <Button>Create</Button>
-                </Link>
-                &nbsp;&nbsp;
+                <Space direction="horizontal">
+                  <Button onClick={props.onClick}>Mint NFTs</Button>
+                </Space>
               </>
             )}
           </div>
@@ -175,9 +167,7 @@ export const CurrentUserBadge = (props: {
                   </Button>
                   <Button onClick={disconnect}>Disconnect</Button>
                 </Space>
-                <Space direction="horizontal">
-                  <Button onClick={() => setShowMintModal(true)}>Mint NFTs</Button>
-                </Space>
+                <UserActions onClick={() => setShowMintModal(true)} />
               </Space>
             }
           />
