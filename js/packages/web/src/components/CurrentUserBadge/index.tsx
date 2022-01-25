@@ -176,9 +176,8 @@ export const CurrentUserBadge = (props: {
                   <Button onClick={disconnect}>Disconnect</Button>
                 </Space>
                 <Space direction="horizontal">
-                  <Button onClick={() => setShowMintModal(true)}>Create</Button>
+                  <Button onClick={() => setShowMintModal(true)}>Mint NFTs</Button>
                 </Space>
-                <UserActions />
               </Space>
             }
           />
