@@ -24,7 +24,11 @@ const TokenListContext = React.createContext<TokenListContextState | null>(
   null,
 );
 
-export function SPLTokenListProvider({ children = null as any }) {
+export function SPLTokenListProvider({
+  children = null,
+}: {
+  children: React.ReactNode;
+}) {
   const [tokenList, setTokenList] = useState<TokenListContainer | null>(null);
 
   const subscribedTokenMints = process.env.NEXT_SPL_TOKEN_MINTS

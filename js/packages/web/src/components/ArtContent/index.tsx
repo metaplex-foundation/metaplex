@@ -149,8 +149,8 @@ const VideoArtContent = ({
           )}
           {files
             ?.filter(f => typeof f !== 'string')
-            .map((f: any) => (
-              <source src={f.uri} type={f.type} style={style} />
+            .map((f: any, index: number) => (
+              <source key={index} src={f.uri} type={f.type} style={style} />
             ))}
         </video>
       </div>

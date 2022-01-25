@@ -150,7 +150,6 @@ function usePayoutTickets(
     ];
     const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
       [];
-    let total = 0;
     for (let i = 0; i < prizeArrays.length; i++) {
       const items = prizeArrays[i];
       for (let j = 0; j < items.length; j++) {
@@ -178,7 +177,6 @@ function usePayoutTickets(
                 recipientAddresses[k],
               ),
             });
-            total += 1;
           }
         }
       }
@@ -250,7 +248,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
       ),
   );
 
-  let hasParticipation =
+  const hasParticipation =
     auctionView.auctionManager.participationConfig !== undefined &&
     auctionView.auctionManager.participationConfig !== null;
   let participationEligible = hasParticipation ? usableBids : [];
