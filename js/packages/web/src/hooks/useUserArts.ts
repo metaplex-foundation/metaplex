@@ -2,7 +2,6 @@ import {
   MasterEditionV1,
   MetadataKey,
   ParsedAccount,
-  TokenAccount,
   useUserAccounts,
 } from '@oyster/common';
 import BN from 'bn.js';
@@ -17,12 +16,7 @@ import { useMeta } from './../contexts';
 
 export const useUserArts = (): SafetyDepositDraft[] => {
   const { metadata, masterEditions, editions } = useMeta();
-  const { userAccounts } = useUserAccounts();
-
-  const accountByMint = userAccounts.reduce((prev, acc) => {
-    prev.set(acc.info.mint.toBase58(), acc);
-    return prev;
-  }, new Map<string, TokenAccount>());
+  const { accountByMint } = useUserAccounts();
 
   const ownedMetadata = metadata.filter(
     m =>

@@ -47,6 +47,7 @@ export const PackProvider: React.FC = ({ children }) => {
     pullPackPage,
     provingProcesses,
     vouchers,
+    isFetching,
   } = useMeta();
   const { accountByMint, userAccounts } = useUserAccounts();
   const metadataByPackCard = useMetadataByPackCard(packKey);
@@ -154,8 +155,10 @@ export const PackProvider: React.FC = ({ children }) => {
   }, [updatedProvingProcess]);
 
   useEffect(() => {
-    handleFetch();
-  }, []);
+    if (!isFetching) {
+      handleFetch();
+    }
+  }, [isFetching]);
 
   return (
     <PackContext.Provider

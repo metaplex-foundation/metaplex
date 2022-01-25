@@ -1,6 +1,6 @@
 import {
   MAX_PACK_SET_SIZE,
-  sendTransactions,
+  sendTransactionsInChunks,
   SequenceType,
 } from '@oyster/common';
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
@@ -150,11 +150,14 @@ export const sendCreatePack = async ({
     data,
   });
 
-  return sendTransactions(
+  return sendTransactionsInChunks(
     connection,
     wallet,
     instructions,
     signers,
     SequenceType.Sequential,
+    'singleGossip',
+    120000,
+    10,
   );
 };

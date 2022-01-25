@@ -21,7 +21,6 @@ import {
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { approve } from '@oyster/common/dist/lib/models/account';
-import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 import { TokenAccount } from '@oyster/common/dist/lib/models/account';
 
 import { AccountLayout, MintInfo } from '@solana/spl-token';
@@ -105,17 +104,8 @@ export async function setupPlaceBid(
       ? toLamports(amount, mint.info)
       : amount.toNumber());
 
-  let bidderPotTokenAccount: string;
-  if (!auctionView.myBidderPot) {
-    bidderPotTokenAccount = createTokenAccount(
-      instructions,
-      wallet.publicKey,
-      accountRentExempt,
-      toPublicKey(auctionView.auction.info.tokenMint),
-      toPublicKey(auctionView.auction.pubkey),
-      signers,
-    ).toBase58();
-  } else {
+  let bidderPotTokenAccount: string | undefined;
+  if (auctionView.myBidderPot) {
     bidderPotTokenAccount = auctionView.myBidderPot?.info.bidderPot;
     if (!auctionView.auction.info.ended()) {
       const cancelSigners: Keypair[][] = [];
@@ -170,7 +160,7 @@ export async function setupPlaceBid(
     instructions,
   );
 
-  overallInstructions.push([...instructions, ...cleanupInstructions]);
+  overallInstructions.push([...instructions, ...cleanupInstructions.reverse()]);
   overallSigners.push(signers);
   return bid;
 }

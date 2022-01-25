@@ -4,7 +4,6 @@ import FormData from 'form-data';
 import fs from 'fs';
 
 async function sleep(ms: number): Promise<void> {
-  console.log("waiting");
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 

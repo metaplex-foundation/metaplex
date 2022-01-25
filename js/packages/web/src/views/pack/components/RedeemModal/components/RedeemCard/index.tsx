@@ -3,6 +3,7 @@ import React from 'react';
 
 import { ArtContent } from '../../../../../../components/ArtContent';
 import { useArt } from '../../../../../../hooks';
+import { Tooltip } from 'antd';
 
 interface IPropsRedeemCard {
   item: ParsedAccount<Metadata>;
@@ -22,10 +23,22 @@ const RedeemCard = ({
           <ArtContent pubkey={pubkey} uri={info.data.uri} preview={false} />
         </div>
         <div className="info__text">
-          <p className="info__title">{info.data.name}</p>
-          <p className="info__creators">
-            {creators?.map(creator => " " + (creator.name || shortenAddress(creator.address || '')))}
-          </p>
+          <Tooltip title={info.data.name}>
+            <p className="info__title">{info.data.name}</p>
+          </Tooltip>
+          <Tooltip
+            title={creators?.map(
+              creator =>
+                ' ' + (creator.name || shortenAddress(creator.address || '')),
+            )}
+          >
+            <p className="info__creators">
+              {creators?.map(
+                creator =>
+                  ' ' + (creator.name || shortenAddress(creator.address || '')),
+              )}
+            </p>
+          </Tooltip>
         </div>
       </div>
       <div className="card-redeem__percentage">
@@ -34,6 +47,6 @@ const RedeemCard = ({
       </div>
     </div>
   );
-}
+};
 
 export default RedeemCard;

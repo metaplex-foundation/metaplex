@@ -80,13 +80,12 @@ programCommand('create')
     // TODO: more explanation
     'Off-chain distribution of claims. Either `aws-email`, `aws-sms`, `discord`, `manual`, or `wallets`',
   )
-  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
-  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .option('--aws-access-key-id <string>', 'Access Key Id')
+  .option('--aws-secret-access-key <string>', 'Secret Access Key')
   .option('--discord-token <string>', 'Discord bot token')
-  .option('--discord-guild <string>', 'Discord guild with members')
   .option(
     '--otp-auth <auth>',
-    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint or `none` to skip OTP',
+    'Off-chain OTP from claim. Either `enable` for AWS OTP endpoint or `disable` to skip OTP',
   )
   .option('--distribution-list <path>', 'List of users to build gumdrop from.')
   .option(
@@ -96,7 +95,7 @@ programCommand('create')
   .option(
     '--host <string>',
     'Website to claim gumdrop',
-    'https://lwus.github.io/gumdrop',
+    'https://lwus.github.io/metaplex',
   )
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (options, cmd) => {
@@ -110,9 +109,9 @@ programCommand('create')
 
     const getTemporalSigner = auth => {
       switch (auth) {
-        case 'default':
+        case 'enable':
           return GUMDROP_TEMPORAL_SIGNER;
-        case 'none':
+        case 'disable':
           return PublicKey.default;
         default:
           throw new Error(`Unknown OTP authorization type ${auth}`);
@@ -174,8 +173,8 @@ programCommand('create')
         case 'aws-email':
           return distributeAwsSes(
             {
-              accessKeyId: options.awsSesAccessKeyId,
-              secretAccessKey: options.awsSesSecretAccessKey,
+              accessKeyId: options.awsAccessKeyId,
+              secretAccessKey: options.awsSecretAccessKey,
             },
             'santa@aws.metaplex.com',
             claimants,
@@ -184,8 +183,8 @@ programCommand('create')
         case 'aws-sms':
           return distributeAwsSns(
             {
-              accessKeyId: options.awsSesAccessKeyId,
-              secretAccessKey: options.awsSesSecretAccessKey,
+              accessKeyId: options.awsAccessKeyId,
+              secretAccessKey: options.awsSecretAccessKey,
             },
             '',
             claimants,
@@ -195,7 +194,6 @@ programCommand('create')
           return distributeDiscord(
             {
               botToken: options.discordToken,
-              guild: options.discordGuild,
             },
             '',
             claimants,
@@ -212,11 +210,10 @@ programCommand('create')
         );
       }
       const responses = await distribute(claimants);
-      // TODO: old path.1?
-      const respPath = logPath(
-        options.env,
-        `resp-${Keypair.generate().publicKey.toBase58()}.json`,
+      const respDir = fs.mkdtempSync(
+        path.join(path.dirname(options.distributionList), 're-'),
       );
+      const respPath = path.join(respDir, 'resp.json');
       console.log(`writing responses to ${respPath}`);
       fs.writeFileSync(respPath, JSON.stringify(responses));
       return;
@@ -270,32 +267,26 @@ programCommand('create')
 
     const base = Keypair.generate();
 
-    const extraParams: Array<string> = [];
-    if (options.distributionMethod === 'discord') {
-      extraParams.push(`guild=${options.discordGuild}`);
-    }
-
     const instructions = await buildGumdrop(
       connection,
       wallet.publicKey,
-      options.distributionMethod !== 'wallets',
+      options.distributionMethod,
       options.claimIntegration,
       options.host,
       base.publicKey,
       temporalSigner,
       claimants,
       claimInfo,
-      extraParams,
     );
 
-    const basePath = logPath(options.env, `${base.publicKey.toBase58()}.json`);
-    console.log(`writing base to ${basePath}`);
-    fs.writeFileSync(basePath, JSON.stringify([...base.secretKey]));
+    const logDir = path.join(LOG_PATH, options.env, base.publicKey.toBase58());
+    fs.mkdirSync(logDir, { recursive: true });
 
-    const urlPath = logPath(
-      options.env,
-      `urls-${base.publicKey.toBase58()}.json`,
-    );
+    const keyPath = path.join(logDir, 'id.json');
+    console.log(`writing base to ${keyPath}`);
+    fs.writeFileSync(keyPath, JSON.stringify([...base.secretKey]));
+
+    const urlPath = path.join(logDir, 'urls.json');
     console.log(`writing claims to ${urlPath}`);
     fs.writeFileSync(urlPath, JSON.stringify(urlAndHandleFor(claimants)));
 
@@ -318,10 +309,7 @@ programCommand('create')
 
     console.log('distributing claim URLs');
     const responses = await distribute(claimants);
-    const respPath = logPath(
-      options.env,
-      `resp-${base.publicKey.toBase58()}.json`,
-    );
+    const respPath = path.join(logDir, 'resp.json');
     console.log(`writing responses to ${respPath}`);
     fs.writeFileSync(respPath, JSON.stringify(responses));
   });
@@ -415,8 +403,8 @@ programCommand('close')
 
 programCommand('create_contact_list')
   .option('--cli-input-json <filename>')
-  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
-  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .option('--aws-access-key-id <string>', 'Access Key Id')
+  .option('--aws-secret-access-key <string>', 'Secret Access Key')
   .addHelpText(
     'before',
     'A thin wrapper mimicking `aws sesv2 create-contact-list`',
@@ -435,8 +423,8 @@ programCommand('create_contact_list')
     const client = new SESv2Client({
       region: 'us-east-2',
       credentials: {
-        accessKeyId: options.awsSesAccessKeyId,
-        secretAccessKey: options.awsSesSecretAccessKey,
+        accessKeyId: options.awsAccessKeyId,
+        secretAccessKey: options.awsSecretAccessKey,
       },
     });
 
@@ -454,8 +442,8 @@ programCommand('create_contact_list')
 
 programCommand('get_contact')
   .argument('<email>', 'email address to query')
-  .option('--aws-ses-access-key-id <string>', 'Access Key Id')
-  .option('--aws-ses-secret-access-key <string>', 'Secret Access Key')
+  .option('--aws-access-key-id <string>', 'Access Key Id')
+  .option('--aws-secret-access-key <string>', 'Secret Access Key')
   .addHelpText('before', 'A thin wrapper mimicking `aws sesv2 get-contact`')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (email, options, cmd) => {
@@ -464,8 +452,8 @@ programCommand('get_contact')
     const client = new SESv2Client({
       region: 'us-east-2',
       credentials: {
-        accessKeyId: options.awsSesAccessKeyId,
-        secretAccessKey: options.awsSesSecretAccessKey,
+        accessKeyId: options.awsAccessKeyId,
+        secretAccessKey: options.awsSecretAccessKey,
       },
     });
 
@@ -519,10 +507,6 @@ function loadWalletKey(keypair): Keypair {
   return loaded;
 }
 
-function logPath(env: string, logName: string, cPath: string = LOG_PATH) {
-  return path.join(cPath, `${env}-${logName}`);
-}
-
 // NB: assumes no overflow
 function randomBytes(): Uint8Array {
   // TODO: some predictable seed? sha256?
@@ -565,7 +549,7 @@ async function distributeDiscord(
   claimants: Claimants,
   drop: DropInfo,
 ) {
-  if (!auth.botToken || !auth.guild) {
+  if (!auth.botToken) {
     throw new Error('Discord auth keys not supplied');
   }
   if (claimants.length === 0) return [];
@@ -574,14 +558,13 @@ async function distributeDiscord(
   const client = new discord.Client();
   await client.login(auth.botToken);
 
-  const guild = await client.guilds.fetch(auth.guild);
-
-  const members = await guild.members.fetch({
-    user: claimants.map(c => c.handle),
-  });
+  const members = {};
+  for (const c of claimants) {
+    members[c.handle] = await client.users.fetch(c.handle);
+  }
 
   const single = async (info: ClaimantInfo, drop: DropInfo) => {
-    const user = members.get(info.handle);
+    const user = members[info.handle];
     if (user === undefined) {
       return {
         status: 'error',

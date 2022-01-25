@@ -20,7 +20,7 @@ import { pinataUpload } from '../helpers/upload/pinata';
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks } from '../helpers/various';
-import { first } from 'lodash';
+import { nftStorageUpload } from '../helpers/upload/nft-storage';
 
 export async function uploadV2({
   files,
@@ -30,6 +30,7 @@ export async function uploadV2({
   storage,
   retainAuthority,
   mutable,
+  nftStorageKey,
   ipfsCredentials,
   pinataJwt,
   pinataGateway,
@@ -55,6 +56,7 @@ export async function uploadV2({
   storage: string;
   retainAuthority: boolean;
   mutable: boolean;
+  nftStorageKey: string;
   ipfsCredentials: ipfsCreds;
   pinataJwt: string;
   pinataGateway: string;
@@ -205,24 +207,24 @@ export async function uploadV2({
       result = arweaveBundleUploadGenerator.next();
     }
     log.info('Upload done.');
-  } else if(StorageType.Pinata) {
+  } else if (StorageType.Pinata) {
     const pairings = [];
     const jsons = files.filter(file => file.includes(".json"));
     const images = files.filter(file => !file.includes(".json"));
     jsons.forEach(json => {
       const obj = {
-        meta: json, 
+        meta: json,
         img: ""
       }
       pairings.push(obj);
     });
 
-    for(let i = 0; i < images.length; i++) {
+    for (let i = 0; i < images.length; i++) {
       pairings[i].img = images[i];
     }
 
     let count = 0;
-    for(const pairing of pairings) {
+    for (const pairing of pairings) {
       const manifest = getAssetManifest(
         dirname,
         `${count}.json`,
@@ -293,16 +295,16 @@ export async function uploadV2({
         log.info(`Processing asset: ${count}`);
       }
       const [link, imageLink] = await pinataUpload(pinataJwt, pinataGateway, pairing.img, pairing.meta);
-      log.debug('Updating cache for ', pairings[count]);      
+      log.debug('Updating cache for ', pairings[count]);
       cacheContent.items[count] = {
         link,
         imageLink,
         name: manifest.name,
         onChain: false,
       };
-      saveCache(cacheName, env, cacheContent); 
+      saveCache(cacheName, env, cacheContent);
       count++;
-    }    
+    }
   } else {
     await Promise.all(
       chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
@@ -397,6 +399,13 @@ export async function uploadV2({
             let link, imageLink;
             try {
               switch (storage) {
+                case StorageType.NftStorage:
+                  [link, imageLink] = await nftStorageUpload(
+                    nftStorageKey,
+                    image,
+                    manifestBuffer,
+                  );
+                  break;
                 case StorageType.Ipfs:
                   [link, imageLink] = await ipfsUpload(
                     ipfsCredentials,

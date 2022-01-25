@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useMeta } from '@oyster/common';
+import { ParsedAccount, useMeta } from '@oyster/common';
+import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
 
 import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
 import { useUserArts } from '../../../hooks';
@@ -11,7 +11,7 @@ import { Item } from '../types';
 // Then a pack entity will be returned
 // SafetyDeposit otherwise
 export const useUserMetadataWithPacks = (): Item[] => {
-  const { vouchers, packs } = useMeta();
+  const { vouchers, packs, provingProcesses } = useMeta();
   const ownedMetadata = useUserArts();
 
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
@@ -20,25 +20,24 @@ export const useUserMetadataWithPacks = (): Item[] => {
     return ownedMetadata;
   }
 
-  return useMemo(
-    () =>
-      getMetadataWithPacks({
-        ownedMetadata,
-        vouchers,
-        packs,
-      }),
-    [ownedMetadata, vouchers, packs],
-  );
+  return getMetadataWithPacks({
+    ownedMetadata,
+    vouchers,
+    packs,
+    provingProcesses,
+  });
 };
 
 const getMetadataWithPacks = ({
   ownedMetadata,
   vouchers,
   packs,
+  provingProcesses,
 }: {
   ownedMetadata: SafetyDepositDraft[];
   vouchers: VoucherByKey;
   packs: PackByKey;
+  provingProcesses: Record<string, ParsedAccount<ProvingProcess>>;
 }): Item[] =>
   // Go through owned metadata
   // If it's an edition, check if this edition can be used as a voucher to open a pack
@@ -55,6 +54,14 @@ const getMetadataWithPacks = ({
 
     if (!voucher) {
       return [...acc, metadata];
+    }
+
+    const doesHaveProvingProcess = Object.values(provingProcesses).find(
+      ({ info }) => info.voucherMint === metadata.metadata.info.mint,
+    );
+
+    if (doesHaveProvingProcess) {
+      return acc;
     }
 
     return [

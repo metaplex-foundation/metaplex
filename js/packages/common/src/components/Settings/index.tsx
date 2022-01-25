@@ -52,15 +52,6 @@ export const Settings = ({
                 &nbsp;{shortenAddress(publicKey?.toBase58())}
               </div>
             </Tooltip>
-
-            <Link
-              to={`/profile/${publicKey?.toBase58()}`}
-              style={{
-                color: 'rgba(255, 255, 255, 0.7)',
-              }}
-            >
-              View profile
-            </Link>
           </>
         )}
         <br />

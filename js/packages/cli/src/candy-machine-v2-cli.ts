@@ -63,7 +63,7 @@ programCommand('upload')
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
-  .option(
+  .requiredOption(
     '-cp, --config-path <string>',
     'JSON file with candy machine settings',
   )
@@ -79,6 +79,7 @@ programCommand('upload')
 
     const {
       storage,
+      nftStorageKey,
       ipfsInfuraProjectId,
       number,
       ipfsInfuraSecret,
@@ -98,7 +99,8 @@ programCommand('upload')
       whitelistMintSettings,
       goLiveDate,
       uuid,
-    } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);    
+    } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
+    log.debug("storage: ", storage);
     if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
       throw new Error(
         'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
@@ -130,6 +132,14 @@ programCommand('upload')
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
+    if (
+      storage === StorageType.NftStorage &&
+      (!nftStorageKey)
+    ) {
+      throw new Error(
+        'NftStorage selected as storage option but NftStorage project api key were not provided.',
+      );
+    }
     if (storage === StorageType.Aws && !awsS3Bucket) {
       throw new Error(
         'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
@@ -147,22 +157,22 @@ programCommand('upload')
       secretKey: ipfsInfuraSecret,
     };
 
-    const imageFiles = files.filter(it => {
-      return !it.endsWith(EXTENSION_JSON);
-    });
-    const imageFileCount = imageFiles.length;
+    let imageFileCount = 0;
+    let jsonFileCount = 0;
 
-    imageFiles.forEach(it => {
-      if (!supportedImageTypes[getType(it)]) {
-        throw new Error(`The file ${it} is not a supported file type.`);
+    // Filter out any non-supported file types and find the JSON vs Image file count
+    const supportedFiles = files.filter(it => {
+      if (supportedImageTypes[getType(it)]) {
+        imageFileCount++;
+      } else if (it.endsWith(EXTENSION_JSON)) {
+        jsonFileCount++;
+      } else {
+        log.warn(`WARNING: Skipping unsupported file type ${it}`);
+        return false;
       }
+
+      return true;
     });
-
-    const jsonFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_JSON);
-    }).length;
-
-    const elemCount = number ? number : imageFileCount;
 
     if (imageFileCount !== jsonFileCount) {
       throw new Error(
@@ -170,9 +180,10 @@ programCommand('upload')
       );
     }
 
+    const elemCount = number ? number : imageFileCount;
     if (elemCount < imageFileCount) {
       throw new Error(
-        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
+        `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
       );
     }
 
@@ -182,7 +193,7 @@ programCommand('upload')
     log.info('started at: ' + startMs.toString());
     try {
       await uploadV2({
-        files,
+        files: supportedFiles,
         cacheName,
         env,
         totalNFTs: elemCount,
@@ -190,6 +201,7 @@ programCommand('upload')
         storage,
         retainAuthority,
         mutable,
+        nftStorageKey,
         ipfsCredentials,
         pinataJwt,
         pinataGateway,
@@ -209,12 +221,14 @@ programCommand('upload')
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
+      process.exit(1);
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
       `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
+    process.exit(0);
   });
 
 programCommand('withdraw')
@@ -289,7 +303,7 @@ programCommand('withdraw')
               cpf,
             );
             log.info(
-              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+              `${cg.pubkey} has been withdrawn. \nTransaction Signature: ${tx}`,
             );
           }
         } catch (e) {
@@ -311,7 +325,8 @@ programCommand('withdraw')
     }
   });
 
-programCommand('verify_assets')
+program
+  .command('verify_assets')
   .argument(
     '<directory>',
     'Directory containing images and metadata files named from 0-n',
@@ -357,45 +372,42 @@ programCommand('verify_upload')
     );
     let allGood = true;
 
-    const keys = Object.keys(cacheContent.items).filter(
-      k => !cacheContent.items[k].verifyRun,
-    );
+    const keys = Object.keys(cacheContent.items)
+      .filter(k => !cacheContent.items[k].verifyRun)
+      .sort((a, b) => Number(a) - Number(b));
+
     console.log('Key size', keys.length);
     await Promise.all(
-      chunks(Array.from(Array(keys.length).keys()), 500).map(
-        async allIndexesInSlice => {
-          for (let i = 0; i < allIndexesInSlice.length; i++) {
-            // Save frequently.
-            if (i % 100 == 0) saveCache(cacheName, env, cacheContent);
+      chunks(keys, 500).map(async allIndexesInSlice => {
+        for (let i = 0; i < allIndexesInSlice.length; i++) {
+          // Save frequently.
+          if (i % 100 == 0) saveCache(cacheName, env, cacheContent);
 
-            const key = keys[allIndexesInSlice[i]];
-            log.debug('Looking at key ', allIndexesInSlice[i]);
+          const key = allIndexesInSlice[i];
+          log.info('Looking at key ', key);
 
-            const thisSlice = candyMachine.data.slice(
-              CONFIG_ARRAY_START_V2 +
-                4 +
-                CONFIG_LINE_SIZE_V2 * allIndexesInSlice[i],
-              CONFIG_ARRAY_START_V2 +
-                4 +
-                CONFIG_LINE_SIZE_V2 * (allIndexesInSlice[i] + 1),
-            );
-            const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
-            const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
-            const cacheItem = cacheContent.items[key];
-            if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
-              //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-              /*log.info(
+          const thisSlice = candyMachine.data.slice(
+            CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * key,
+            CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * (key + 1),
+          );
+
+          const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
+          const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+          const cacheItem = cacheContent.items[key];
+          if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
+            //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
+            /*log.info(
                 `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
                   `and (${cacheItem.link}). marking to rerun for image`,
                 key,
               );*/
-              cacheItem.onChain = false;
-              allGood = false;
-            }
+            cacheItem.onChain = false;
+            allGood = false;
+          } else {
             cacheItem.verifyRun = true;
           }
-        },
-      ),
+        }
+      }),
     );
 
     if (!allGood) {
@@ -431,7 +443,7 @@ programCommand('verify_upload')
   });
 
 programCommand('verify_price')
-  .option('-p, --price <string>')
+  .requiredOption('-p, --price <string>')
   .option('--cache-path <string>')
   .option(
     '-r, --rpc-url <string>',
@@ -442,7 +454,7 @@ programCommand('verify_price')
     const lamports = parsePrice(price);
 
     if (isNaN(lamports)) {
-      return log.error(`verify_price requires a --price to be set`);
+      return log.error(`verify_price requires a valid --price to be set`);
     }
 
     log.info(`Expected price is: ${lamports}`);
@@ -599,7 +611,7 @@ programCommand('show')
   });
 
 programCommand('update_candy_machine')
-  .option(
+  .requiredOption(
     '-cp, --config-path <string>',
     'JSON file with candy machine settings',
   )
@@ -691,6 +703,7 @@ programCommand('update_candy_machine')
         accounts: {
           candyMachine,
           authority: walletKeyPair.publicKey,
+          wallet: treasuryWallet,
         },
       });
 
@@ -718,7 +731,7 @@ programCommand('mint_one_token')
   });
 
 programCommand('mint_multiple_tokens')
-  .option('-n, --number <string>', 'Number of tokens')
+  .requiredOption('-n, --number <string>', 'Number of tokens')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -750,7 +763,7 @@ programCommand('mint_multiple_tokens')
 
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  .option('-m, --metadata <string>', 'base58 metadata account id')
+  .requiredOption('-m, --metadata <string>', 'base58 metadata account id')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -773,21 +786,25 @@ programCommand('sign_all')
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
-    const candyAddress = cacheContent.program.candyMachine;
 
     const batchSizeParsed = parseInt(batchSize);
     if (!parseInt(batchSize)) {
       throw new Error('Batch size needs to be an integer!');
     }
 
+    const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+    const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+      candyMachineId,
+    );
+
     log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
     log.debug('Environment: ', env);
-    log.debug('Candy machine address: ', candyAddress);
+    log.debug('Candy machine address: ', cacheContent.program.candyMachine);
     log.debug('Batch Size: ', batchSizeParsed);
     await signAllMetadataFromCandyMachine(
       anchorProgram.provider.connection,
       walletKeyPair,
-      candyAddress,
+      candyMachineAddr.toBase58(),
       batchSizeParsed,
       daemon,
     );
@@ -893,7 +910,8 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   console.log(JSON.stringify(addresses, null, 2));
 });
 
-programCommand('generate_art_configurations')
+program
+  .command('generate_art_configurations')
   .argument('<directory>', 'Directory containing traits named from 0-n', val =>
     fs.readdirSync(`${val}`),
   )
@@ -913,7 +931,8 @@ programCommand('generate_art_configurations')
     }
   });
 
-programCommand('create_generative_art')
+program
+  .command('create_generative_art')
   .option(
     '-n, --number-of-images <string>',
     'Number of images to be generated',
@@ -970,11 +989,7 @@ function programCommand(name: string) {
       'Solana cluster env name',
       'devnet', //mainnet-beta, testnet, devnet
     )
-    .option(
-      '-k, --keypair <path>',
-      `Solana wallet location`,
-      '--keypair not provided',
-    )
+    .requiredOption('-k, --keypair <path>', `Solana wallet location`)
     .option('-l, --log-level <string>', 'log level', setLogLevel)
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
 }

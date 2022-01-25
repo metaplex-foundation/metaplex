@@ -46,7 +46,7 @@ const AdjustQuantitiesStep = ({
     const pubKey = item.metadata.pubkey;
 
     if (inputType === InputType.weight && number > 100) {
-      return
+      return;
     }
 
     if (inputType === InputType.weight) {
@@ -102,13 +102,15 @@ const AdjustQuantitiesStep = ({
 
       <div className="quantities-step-wrapper__table-titles">
         {shouldRenderSupplyInput && <p>NUMBER OF NFTs</p>}
-        {
-          shouldRenderWeightInput && (
-            <p className="redeem-weight">
-              REDEEM WEIGHT <span>— Weights must be between 1-100. 1 is least likely, 100 is most likely.</span>
-            </p>
-          )
-        }
+        {shouldRenderWeightInput && (
+          <p className="redeem-weight">
+            REDEEM WEIGHT{' '}
+            <span>
+              — Weights must be between 1-100. 1 is least likely, 100 is most
+              likely.
+            </span>
+          </p>
+        )}
       </div>
 
       {Object.values(selectedItems).map(item => (
@@ -120,7 +122,10 @@ const AdjustQuantitiesStep = ({
                   type="number"
                   min={0}
                   max={item.masterEdition?.info.maxSupply?.toNumber()}
-                  className={classNames({ 'ant-error-input': !supplyByMetadataKey[item.metadata.pubkey] })}
+                  className={classNames({
+                    'ant-error-input':
+                      !supplyByMetadataKey[item.metadata.pubkey],
+                  })}
                   value={supplyByMetadataKey[item.metadata.pubkey]}
                   onChange={({ target: { value } }) =>
                     handleDistributionChange(item, value, InputType.maxSupply)
@@ -128,34 +133,32 @@ const AdjustQuantitiesStep = ({
                 />
               </div>
             )}
-            {
-              shouldRenderWeightInput && (
-                <div className="input-column">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={weightByMetadataKey[item.metadata.pubkey]}
-                    onChange={({ target: { value } }) =>
-                      handleDistributionChange(item, value, InputType.weight)
-                    }
-                    className={
-                      classNames({ 'ant-error-input error-redeem': !weightByMetadataKey[item.metadata.pubkey] })
-                    }
-                  />
-                  {
-                    !weightByMetadataKey[item.metadata.pubkey] && (
-                      <div className="error-tooltip-container">
-                        <Tooltip
-                          overlayClassName="creat-pack-redeem-tooltip"
-                          placement="top"
-                          title="Weight must be between 1-100"
-                        >
-                          <ExclamationCircleOutlined className="input-info" />
-                        </Tooltip>
-                      </div>
-                    )
+            {shouldRenderWeightInput && (
+              <div className="input-column">
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={weightByMetadataKey[item.metadata.pubkey]}
+                  onChange={({ target: { value } }) =>
+                    handleDistributionChange(item, value, InputType.weight)
                   }
+                  className={classNames({
+                    'ant-error-input error-redeem':
+                      !weightByMetadataKey[item.metadata.pubkey],
+                  })}
+                />
+                {!weightByMetadataKey[item.metadata.pubkey] && (
+                  <div className="error-tooltip-container">
+                    <Tooltip
+                      overlayClassName="creat-pack-redeem-tooltip"
+                      placement="top"
+                      title="Weight must be between 1-100"
+                    >
+                      <ExclamationCircleOutlined className="input-info" />
+                    </Tooltip>
+                  </div>
+                )}
               </div>
             )}
           </>
