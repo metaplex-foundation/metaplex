@@ -83,6 +83,8 @@ programCommand('upload')
       ipfsInfuraProjectId,
       number,
       ipfsInfuraSecret,
+      pinataJwt,
+      pinataGateway, 
       arweaveJwk,
       awsS3Bucket,
       retainAuthority,
@@ -98,7 +100,7 @@ programCommand('upload')
       goLiveDate,
       uuid,
     } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
-
+    log.debug("storage: ", storage);
     if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
       throw new Error(
         'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
@@ -201,6 +203,8 @@ programCommand('upload')
         mutable,
         nftStorageKey,
         ipfsCredentials,
+        pinataJwt,
+        pinataGateway,
         awsS3Bucket,
         batchSize,
         price,
