@@ -694,6 +694,7 @@ export async function upload({
                 dirname,
                 `${assetKey.index}${assetKey.mediaExt}`,
               );
+              const animation = undefined;
               const manifest = getAssetManifest(
                 dirname,
                 assetKey.index.includes('json')
@@ -713,7 +714,7 @@ export async function upload({
                     [link, imageLink, animationLink] = await ipfsUpload(
                       ipfsCredentials,
                       image,
-                      undefined,
+                      animation,
                       manifestBuffer,
                     );
                     break;
@@ -721,7 +722,7 @@ export async function upload({
                     [link, imageLink, animationLink] = await awsUpload(
                       awsS3Bucket,
                       image,
-                      undefined,
+                      animation,
                       manifestBuffer,
                     );
                     break;
@@ -732,7 +733,7 @@ export async function upload({
                       anchorProgram,
                       env,
                       image,
-                      undefined,
+                      animation,
                       manifestBuffer,
                       manifest,
                       i,
