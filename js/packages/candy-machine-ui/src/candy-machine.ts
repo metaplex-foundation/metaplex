@@ -187,7 +187,8 @@ export const getCandyMachineState = async (
           state.data.goLiveDate?.toNumber() < new Date().getTime() / 1000) &&
         (state.data.endSettings
           ? state.data.endSettings.endSettingType.date
-            ? state.data.endSettings.number.toNumber() > new Date().getTime() / 1000
+            ? state.data.endSettings.number.toNumber() >
+              new Date().getTime() / 1000
             : itemsRedeemed < state.data.endSettings.number.toNumber()
           : true),
       isPresale: presale,

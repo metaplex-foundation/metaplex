@@ -130,10 +130,7 @@ programCommand('upload')
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
-    if (
-      storage === StorageType.NftStorage &&
-      (!nftStorageKey)
-    ) {
+    if (storage === StorageType.NftStorage && !nftStorageKey) {
       throw new Error(
         'NftStorage selected as storage option but NftStorage project api key were not provided.',
       );
