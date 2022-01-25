@@ -9,7 +9,10 @@ const el = document.getElementById('coinfra-candy-machine-ui');
 ReactDOM.render(
   <React.StrictMode>
     <BrowserRouter>
-      <App candyMachineId={el?.getAttribute('data-candy-machine-id')!} />
+      <App
+        candyMachineId={el?.getAttribute('data-candy-machine-id')!}
+        network={el?.getAttribute('data-network')!}
+      />
     </BrowserRouter>
   </React.StrictMode>,
   el,

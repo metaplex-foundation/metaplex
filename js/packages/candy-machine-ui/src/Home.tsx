@@ -3,7 +3,6 @@ import * as anchor from '@project-serum/anchor';
 
 import styled from 'styled-components';
 import { Container, Snackbar } from '@material-ui/core';
-import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -25,7 +24,6 @@ const MintContainer = styled.div``; // add your owns styles here
 export interface HomeProps {
   candyMachineId: string;
   connection: anchor.web3.Connection;
-  startDate: number;
   txTimeout: number;
   rpcHost: string;
 }

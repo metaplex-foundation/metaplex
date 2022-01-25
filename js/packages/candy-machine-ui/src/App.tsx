@@ -26,21 +26,24 @@ const theme = createTheme({
   },
 });
 
-const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
-const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST!;
-const connection = new anchor.web3.Connection(
-  rpcHost ? rpcHost : anchor.web3.clusterApiUrl('devnet'),
-);
-
-const startDateSeed = parseInt(process.env.REACT_APP_CANDY_START_DATE!, 10);
 const txTimeoutInMilliseconds = 30000;
 
 export interface AppProps {
   candyMachineId: string;
+  network: string;
 }
 
 const App = (props: AppProps) => {
-  const endpoint = useMemo(() => clusterApiUrl(network), []);
+  if (!props.network) {
+    console.error('You must set the network');
+  }
+  const network = props.network as WalletAdapterNetwork;
+  const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST!;
+  const connection = new anchor.web3.Connection(
+    rpcHost ? rpcHost : anchor.web3.clusterApiUrl(network, true),
+  );
+
+  const endpoint = useMemo(() => clusterApiUrl(network, true), [network]);
 
   const wallets = useMemo(
     () => [
@@ -50,7 +53,7 @@ const App = (props: AppProps) => {
       getSolletWallet({ network }),
       getSolletExtensionWallet({ network }),
     ],
-    [],
+    [network],
   );
 
   return (
@@ -61,7 +64,6 @@ const App = (props: AppProps) => {
             <Home
               candyMachineId={props.candyMachineId}
               connection={connection}
-              startDate={startDateSeed}
               txTimeout={txTimeoutInMilliseconds}
               rpcHost={rpcHost}
             />
