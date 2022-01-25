@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.36.0",
-    "@bundlr-network/client": "^0.5.8",
+    "@bundlr-network/client": "^0.5.9",
     "@metaplex/arweave-cost": "^1.0.4",
     "@project-serum/anchor": "^0.17.0",
     "@solana/spl-token": "^0.1.8",

@@ -2120,10 +2120,10 @@
     tslib "^2.3.1"
     typescript "^4.4.3"
 
-"@bundlr-network/client@^0.5.8":
-  version "0.5.8"
-  resolved "https://registry.yarnpkg.com/@bundlr-network/client/-/client-0.5.8.tgz#97ee1b657f0a717e3d2372b873f0ea4450774514"
-  integrity sha512-qF3m8HjAzurIa83fIghxAaHK4c7GMWcWlsifrRwAt529YAmhQLf0AE07E1reGOOIg1lNswVwLFlG7K8HlkPOVw==
+"@bundlr-network/client@^0.5.9":
+  version "0.5.9"
+  resolved "https://registry.yarnpkg.com/@bundlr-network/client/-/client-0.5.9.tgz#bd4a17de09115a61a58957499dbf59b932b3066f"
+  integrity sha512-hs5ZqTMmk7D0lyIVMVNHxMxtiQKnIgvzeCjQCqe4TuvhdOFADJBFQUpTa9efsHN+MerhBOV/O5XevTtPrlms6Q==
   dependencies:
     "@solana/wallet-adapter-base" "^0.9.2"
     "@solana/wallet-adapter-phantom" "^0.9.2"
