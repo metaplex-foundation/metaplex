@@ -2,9 +2,9 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import {
   TokenInfo,
   TokenListContainer,
-  TokenListProvider,
 } from "@solana/spl-token-registry";
 import { WRAPPED_SOL_MINT } from '@project-serum/serum/lib/token-instructions';
+import { useConnectionConfig } from '@oyster/common';
 
 // Tag in the spl-token-registry for sollet wrapped tokens.
 export const SPL_REGISTRY_SOLLET_TAG = "wrapped-sollet";
@@ -36,14 +36,16 @@ export function SPLTokenListProvider({ children = null as any }) {
       ...process.env.NEXT_SPL_TOKEN_MINTS.split(",")
     ]: [WRAPPED_SOL_MINT]
 
+  const { tokens } = useConnectionConfig();
+
   useEffect(() => {
-    new TokenListProvider().resolve().then(setTokenList);
-  }, [setTokenList]);
+    setTokenList(new TokenListContainer(Array.from(tokens.values())))
+  }, [setTokenList, tokens]);
 
   const hasOtherTokens = !!process.env.NEXT_SPL_TOKEN_MINTS;
 
   // Added tokenList to know in which currency the auction is (SOL or other SPL)
-  const subscribedTokens = tokenList?tokenList.filterByClusterSlug("mainnet-beta").getList().filter(f=> subscribedTokenMints.some(s=> s == f.address) )
+  const subscribedTokens = tokenList?tokenList.getList().filter(f=> subscribedTokenMints.some(s=> s == f.address) )
     :[]
 
   const tokenMap = useMemo(() => {
