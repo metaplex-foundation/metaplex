@@ -88,6 +88,7 @@ programCommand('upload')
 
     const {
       storage,
+      nftStorageKey,
       ipfsInfuraProjectId,
       number,
       ipfsInfuraSecret,
@@ -136,6 +137,14 @@ programCommand('upload')
     ) {
       throw new Error(
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
+      );
+    }
+    if (
+      storage === StorageType.NftStorage &&
+      (!nftStorageKey)
+    ) {
+      throw new Error(
+        'NftStorage selected as storage option but NftStorage project api key were not provided.',
       );
     }
     if (storage === StorageType.Aws && !awsS3Bucket) {
@@ -213,6 +222,7 @@ programCommand('upload')
         storage,
         retainAuthority,
         mutable,
+        nftStorageKey,
         ipfsCredentials,
         awsS3Bucket,
         batchSize,

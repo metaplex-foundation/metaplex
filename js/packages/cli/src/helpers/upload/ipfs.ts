@@ -39,19 +39,16 @@ export async function ipfsUpload(
       method: 'POST',
     });
     log.info('uploaded media for file:', media);
-    await sleep(500);
     return mediaUrl;
   }
 
-  const imageUrl = uploadMedia(image);
-  const animationUrl = animation ? uploadMedia(animation) : undefined;
-
+  const imageUrl = await uploadMedia(image);
+  const animationUrl = animation ? await uploadMedia(animation) : undefined;
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
   manifestJson.image = imageUrl;
   if (animation) {
     manifestJson.animation_url = animationUrl;
   }
-
   manifestJson.properties.files = manifestJson.properties.files.map(f => {
     if (f.type.startsWith('image/')) {
       return { ...f, uri: imageUrl };

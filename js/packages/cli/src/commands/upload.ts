@@ -19,6 +19,7 @@ import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks } from '../helpers/various';
+import { nftStorageUpload } from '../helpers/upload/nft-storage';
 
 export async function uploadV2({
   files,
@@ -28,6 +29,7 @@ export async function uploadV2({
   storage,
   retainAuthority,
   mutable,
+  nftStorageKey,
   ipfsCredentials,
   awsS3Bucket,
   batchSize,
@@ -51,6 +53,7 @@ export async function uploadV2({
   storage: string;
   retainAuthority: boolean;
   mutable: boolean;
+  nftStorageKey: string;
   ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
   batchSize: number;
@@ -256,6 +259,14 @@ export async function uploadV2({
               let link, imageLink, animationLink;
               try {
                 switch (storage) {
+                  case StorageType.NftStorage:
+                    [link, imageLink, animationLink] = await nftStorageUpload(
+                      nftStorageKey,
+                      image,
+                      animation,
+                      manifestBuffer,
+                    );
+                    break;
                   case StorageType.Ipfs:
                     [link, imageLink, animationLink] = await ipfsUpload(
                       ipfsCredentials,
