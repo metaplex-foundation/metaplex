@@ -408,7 +408,7 @@ async function processFiles({
       { tags: arweavePathManifestTags },
     );
 
-    await (arweavePathManifestDataItem as BundlrTransaction).sign();
+    await (arweavePathManifestDataItem as unknown as BundlrTransaction).sign();
     await arweavePathManifestDataItem.sign(signer);
   } else if (storageType === StorageType.ArweaveBundle) {
     arweavePathManifestDataItem = getArweavePathManifestDataItem(

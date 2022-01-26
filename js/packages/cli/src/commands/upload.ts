@@ -103,13 +103,7 @@ export async function uploadV2({
     : undefined;
 
   if (!cacheContent.program.uuid) {
-    const firstAssetKey = dedupedAssetKeys[0];
-    const firstAssetManifest = getAssetManifest(
-      dirname,
-      firstAssetKey.index.includes('json')
-        ? firstAssetKey.index
-        : `${firstAssetKey.index}.json`,
-    );
+    const firstAssetManifest = getAssetManifest(dirname, '0.json');
 
     try {
       const remainingAccounts = [];
@@ -482,7 +476,6 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
         manifest.properties.files[1]?.uri?.replace('animation_url', assetIndex);
     }
   }
-
   return manifest;
 }
 
