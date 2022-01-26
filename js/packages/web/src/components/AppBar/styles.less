@@ -12,7 +12,6 @@
 
   @media screen and (max-width: 700px) {
     flex-direction: column-reverse;
-    gap: 1rem;
   }
 }
 
@@ -20,7 +19,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
-  height: 1.5rem;
   margin-top: 0.5rem;
 
   @media (max-width: 800px) {
@@ -60,19 +58,27 @@
 
 .app-bar-left-wrapper {
   display: flex;
-  gap: 2rem;
+  // gap: 2rem;
   align-items: center;
 
   @media (max-width: 700px) {
     flex-direction: column-reverse;
+    margin-top: 1rem;
   }
 }
 
 .app-bar-logo-wrapper {
+  margin-right: 1.5rem;
+
   @media screen and (max-width: 800px) {
     &.hide {
       display: none;
     }
+  }
+
+  @media screen and (max-width: 700px) {
+    margin-right: 0;
+    margin-top: 2rem;
   }
 }
 
@@ -85,6 +91,6 @@
     flex-direction: column-reverse;
     width: 120px;
     height: 120px;
-    margin: -0.15rem 0 0 2px;
+    margin: -0.15rem 0 0;
   }
 }

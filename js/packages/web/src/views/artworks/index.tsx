@@ -45,12 +45,14 @@ export const ArtworksView = () => {
 
   return (
     <>
-      <Row justify="space-between" align="middle">
+      <div className="metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap">
         <h2>Owned Artwork</h2>
         <Link to="/listings/new/0">
-          <Button size="large" type="primary">Sell NFT</Button>
+          <Button size="large" type="primary">
+            Sell NFT
+          </Button>
         </Link>
-      </Row>
+      </div>
       <Row>
         <Col span={24}>
           <MetaplexMasonry>
