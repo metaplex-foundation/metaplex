@@ -223,14 +223,6 @@ export async function uploadCoinfra({
         ),
       );
 
-      // const signers = [candyAccount];
-      //const allTxs = [];
-      await anchorProgram.provider.sendAll(txs, {
-        // preflightCommitment: 'singleGossip',
-        skipPreflight: true,
-      });
-
-      /*
       const signedTransactions = await wallet.signAllTransactions(transactions);
       for (let i = 0; i < signedTransactions.length; i++) {
         try {
@@ -242,7 +234,6 @@ export async function uploadCoinfra({
           console.log('Caught failure', e);
         }
       }
-      */
     } catch (error) {
       uploadSuccessful = false;
       console.error(error);
