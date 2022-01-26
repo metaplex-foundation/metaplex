@@ -498,17 +498,12 @@ programCommand('show')
       const machine = await anchorProgram.account.candyMachine.fetch(
         cacheContent.program.candyMachine,
       );
-      const utf8Encode = new TextEncoder();
-      const temp = await PublicKey.findProgramAddress(
-        [
-          utf8Encode.encode('candy_machine'),
-          new PublicKey(cacheContent.program.candyMachine).toBytes(),
-        ],
-        new PublicKey(CANDY_MACHINE_PROGRAM_V2_ID),
+      const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+        new PublicKey(cacheContent.program.candyMachine),
       );
       log.info('...Candy Machine...');
       log.info('Key:', cacheContent.program.candyMachine);
-      log.info('1st creator :', temp[0].toBase58());
+      log.info('1st creator :', candyMachineAddr.toBase58());
       //@ts-ignore
       log.info('authority: ', machine.authority.toBase58());
       //@ts-ignore
