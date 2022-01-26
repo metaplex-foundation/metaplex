@@ -52,11 +52,12 @@
     ]
   },
   "dependencies": {
-    "@holaplex/ui": "^0.0.17",
+    "@holaplex/ui": "^0.0.18",
     "cross-env": "^7.0.3",
     "next": "^11.0.1",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "react-toastify": "^8.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^8.2.0",

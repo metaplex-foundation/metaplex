@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import { BulkMinter } from '@holaplex/ui';
 import styled from 'styled-components';
 import { holaSignMetadata } from './sign-meta';
@@ -78,7 +78,6 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
       wrapProps={{ style: { overflowX: 'hidden', zIndex: 1031 } }}
       className="blk-minter-modal"
     >
-      <Button onClick={goToOwnedRoute}>hello</Button>
       <BulkMinter
         wallet={wallet as Wallet}
         track={track}
