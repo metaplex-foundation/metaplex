@@ -16,12 +16,6 @@ export const ArtistsView = () => {
     700: 2,
     500: 1,
   };
-  const artistsCustomStyle = {
-    'cati': {
-      backgroundPosition: "initial"
-    }
-  }
-  console.log("asmdhgasjhdgahjsdasd")
   const items = Object.values(whitelistedCreatorsByCreator);
   const artistGrid = (
     <Masonry
@@ -42,7 +36,6 @@ export const ArtistsView = () => {
                 link: m.info.twitter || '',
                 background: m.info.background || '',
               }}
-              coverStyle={artistsCustomStyle[id]}
             />
           </Link>
         );
@@ -53,6 +46,7 @@ export const ArtistsView = () => {
   return (
     <Layout style={{ margin: 0, marginTop: 30 }}>
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
+        {artistGrid}
       </Content>
     </Layout>
   );
