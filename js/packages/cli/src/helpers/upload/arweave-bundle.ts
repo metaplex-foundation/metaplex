@@ -350,7 +350,7 @@ async function processFiles({
         value: imageContentType,
       }),
     });
-    await (imageDataItem as BundlrTransaction).sign();
+    await (imageDataItem as unknown as BundlrTransaction).sign();
   } else if (storageType === StorageType.ArweaveBundle) {
     imageDataItem = await getImageDataItem(signer, imageBuffer, imageContentType);
     await (imageDataItem as DataItem).sign(signer);
@@ -367,7 +367,7 @@ async function processFiles({
           value: animationContentType,
         }),
       });
-      await (animationDataItem as BundlrTransaction).sign();
+      await (animationDataItem as unknown as BundlrTransaction).sign();
     } else if (storageType === StorageType.ArweaveBundle) {
       animationDataItem = await getImageDataItem(signer, animationBuffer, animationContentType);
       await (animationDataItem as DataItem).sign(signer);
@@ -388,7 +388,7 @@ async function processFiles({
       tags: manifestTags,
     });
 
-    await (manifestDataItem as BundlrTransaction).sign();
+    await (manifestDataItem as unknown as BundlrTransaction).sign();
   } else if (storageType === StorageType.ArweaveBundle) {
     manifestDataItem = getManifestDataItem(signer, manifest);
     await (manifestDataItem as DataItem).sign(signer);
@@ -534,13 +534,13 @@ export function* makeArweaveBundleUploadGenerator(
 
           acc.cacheKeys.push(filePair.key);
           acc.dataItems.push(
-            imageDataItem,
-            manifestDataItem,
-            arweavePathManifestDataItem,
+            imageDataItem as DataItem,
+            manifestDataItem as DataItem,
+            arweavePathManifestDataItem as DataItem,
           );
           if (filePair.animation) {
             acc.dataItems.push(
-              animationDataItem,
+              animationDataItem as DataItem,
             );
           }
           acc.arweavePathManifestLinks.push(arweavePathManifestLink);
@@ -558,9 +558,11 @@ export function* makeArweaveBundleUploadGenerator(
       );
 
       if (storageType === StorageType.ArweaveSol) {
-        const bundlrTransactions = [...dataItems] as BundlrTransaction[];
+        const bundlrTransactions = [
+          ...dataItems,
+        ] as BundlrTransaction[];
         log.info('Uploading bundle via bundlr... in multiple transactions');
-        const bytes = (dataItems as BundlrTransaction[]).reduce(
+        const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
           (c, d) => c + d.data.length,
           0,
         );
