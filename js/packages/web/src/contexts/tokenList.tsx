@@ -10,7 +10,7 @@ export const SPL_REGISTRY_SOLLET_TAG = "wrapped-sollet";
 export const SPL_REGISTRY_WORM_TAG = "wormhole";
 
 export interface TokenListContextState {
-  mainnetTokens: TokenInfo[];
+  subscribedTokens: TokenInfo[];
   tokenMap: Map<string, TokenInfo>;
   wormholeMap: Map<string, TokenInfo>;
   solletMap: Map<string, TokenInfo>;
@@ -42,12 +42,12 @@ export function SPLTokenListProvider({ children = null as any }) {
   const hasOtherTokens = !!process.env.NEXT_SPL_TOKEN_MINTS;
 
   // Added tokenList to know in which currency the auction is (SOL or other SPL)
-  const mainnetTokens = tokenList?tokenList.filterByClusterSlug("mainnet-beta").getList().filter(f=> subscribedTokenMints.some(s=> s == f.address) )
+  const subscribedTokens = tokenList?tokenList.filterByClusterSlug("mainnet-beta").getList().filter(f=> subscribedTokenMints.some(s=> s == f.address) )
     :[]
 
   const tokenMap = useMemo(() => {
     const tokenMap = new Map();
-    mainnetTokens.forEach((t: TokenInfo) => {
+    subscribedTokens.forEach((t: TokenInfo) => {
       tokenMap.set(t.address, t);
     });
     return tokenMap;
@@ -55,7 +55,7 @@ export function SPLTokenListProvider({ children = null as any }) {
 
   // Tokens with USD(x) quoted markets.
   const swappableTokens = useMemo(() => {
-    const tokens = mainnetTokens.filter((t: TokenInfo) => {
+    const tokens = subscribedTokens.filter((t: TokenInfo) => {
       const isUsdxQuoted =
         t.extensions?.serumV3Usdt || t.extensions?.serumV3Usdc;
       return isUsdxQuoted;
@@ -68,7 +68,7 @@ export function SPLTokenListProvider({ children = null as any }) {
 
   // Sollet wrapped tokens.
   const [swappableTokensSollet, solletMap] = useMemo(() => {
-    const tokens = mainnetTokens.filter((t: TokenInfo) => {
+    const tokens = subscribedTokens.filter((t: TokenInfo) => {
       const isSollet = t.tags?.includes(SPL_REGISTRY_SOLLET_TAG);
       return isSollet;
     });
@@ -83,7 +83,7 @@ export function SPLTokenListProvider({ children = null as any }) {
 
   // Wormhole wrapped tokens.
   const [swappableTokensWormhole, wormholeMap] = useMemo(() => {
-    const tokens = mainnetTokens.filter((t: TokenInfo) => {
+    const tokens = subscribedTokens.filter((t: TokenInfo) => {
       const isSollet = t.tags?.includes(SPL_REGISTRY_WORM_TAG);
       return isSollet;
     });
@@ -98,7 +98,7 @@ export function SPLTokenListProvider({ children = null as any }) {
 
   return (
     <TokenListContext.Provider value={{
-      mainnetTokens,
+      subscribedTokens,
       tokenMap,
       wormholeMap,
       solletMap,
@@ -123,9 +123,9 @@ export const useSwappableTokens = () => {
 }
 
 export const queryTokenList = () => {
-  const { mainnetTokens } = useTokenList();
+  const { subscribedTokens } = useTokenList();
 
-  return mainnetTokens;
+  return subscribedTokens;
 };
 
 export const useTokenList = () => {

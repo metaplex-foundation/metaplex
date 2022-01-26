@@ -242,7 +242,7 @@ export const AuctionCard = ({
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
-  const tokenInfo = useTokenList().mainnetTokens.filter(
+  const tokenInfo = useTokenList().subscribedTokens.filter(
     m => m.address == mintKey,
   )[0];
   const symbol = tokenInfo

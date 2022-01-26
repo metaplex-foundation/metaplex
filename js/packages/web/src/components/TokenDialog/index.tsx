@@ -24,7 +24,7 @@ export function TokenButton({
   mint: PublicKey;
   onClick: () => void;
 }) {
-  const tokenMap = useTokenList().mainnetTokens;
+  const tokenMap = useTokenList().subscribedTokens;
   let tokenInfo = tokenMap.filter(t => t.address == mint.toBase58())[0];
 
   return (
