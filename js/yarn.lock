@@ -1898,10 +1898,10 @@
     react-toastify "^8.1.0"
     use-onclickoutside "^0.4.0"
 
-"@holaplex/ui@^0.0.16":
-  version "0.0.16"
-  resolved "https://registry.yarnpkg.com/@holaplex/ui/-/ui-0.0.16.tgz#24c30c9c90612967473abf08b6839296b592b062"
-  integrity sha512-i/d+FF3HIrVJVjmBuazyqlIzoK1AqwgzY2mU7nIhpCdF/iRbJFMACkBB8hZpUwar6DM/g3xuYrWQnck6GKKaJg==
+"@holaplex/ui@^0.0.17":
+  version "0.0.17"
+  resolved "https://registry.yarnpkg.com/@holaplex/ui/-/ui-0.0.17.tgz#69391fe37dd85dba15e053ab7070c6d5621c7304"
+  integrity sha512-CDN/hotI2jjjkLiJFzyFBLfUKGl/mroeY7kc3UIvfA2Per+2KHTLtBZ0LU74CBqf188Ntz+pGCClqTHpVYmiMw==
   dependencies:
     "@holaplex/js" "^4.3.3"
     "@metaplex/js" "^4.11.3"

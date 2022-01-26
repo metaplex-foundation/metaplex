@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import { BulkMinter } from '@holaplex/ui';
 import styled from 'styled-components';
 import { holaSignMetadata } from './sign-meta';
@@ -12,6 +12,7 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Wallet } from '@metaplex/js';
 import { Connection } from '@solana/web3.js';
+import { useNavigate } from 'react-router-dom';
 
 const StyledModal = styled(Modal)`
   margin: 0;
@@ -46,6 +47,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
   const { storefront } = useStore();
   const { track } = useAnalytics();
   const wallet = useWallet();
+  const navigate = useNavigate();
   const [savedEndpoint] = useLocalStorageState(
     'connectionEndpoint',
     ENDPOINTS[0].endpoint,
@@ -57,6 +59,11 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
   if (!wallet?.publicKey) {
     return null;
   }
+
+  const goToOwnedRoute = () => {
+    navigate('/owned');
+    onClose();
+  };
 
   return (
     <StyledModal
@@ -71,6 +78,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
       wrapProps={{ style: { overflowX: 'hidden', zIndex: 1031 } }}
       className="blk-minter-modal"
     >
+      <Button onClick={goToOwnedRoute}>hello</Button>
       <BulkMinter
         wallet={wallet as Wallet}
         track={track}
@@ -79,6 +87,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
         onClose={onClose}
         connection={connection}
         savedEndpoint={savedEndpoint}
+        goToOwnedRoute={goToOwnedRoute}
       />
     </StyledModal>
   );
