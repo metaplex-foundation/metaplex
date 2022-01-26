@@ -560,7 +560,7 @@ export function* makeArweaveBundleUploadGenerator(
       if (storageType === StorageType.ArweaveSol) {
         const bundlrTransactions = [
           ...dataItems,
-        ] as BundlrTransaction[];
+        ] as unknown as BundlrTransaction[];
         log.info('Uploading bundle via bundlr... in multiple transactions');
         const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
           (c, d) => c + d.data.length,
