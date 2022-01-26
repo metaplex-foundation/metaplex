@@ -1,6 +1,7 @@
 import log from 'loglevel';
 import fetch from 'node-fetch';
 import fs from 'fs';
+import path from 'path';
 
 export async function nftStorageUpload(
   nftStorageKey: string,
@@ -33,8 +34,8 @@ export async function nftStorageUpload(
   }
 
   // Copied from ipfsUpload
-  const imageUrl = await uploadMedia(image);
-  const animationUrl = animation ? await uploadMedia(animation) : undefined;
+  const imageUrl = `${await uploadMedia(image)}?ext=${path.extname(image).replace('.', '')}`;
+  const animationUrl = animation ? `${await uploadMedia(animation)}?ext=${path.extname(animation).replace('.', '')}` : undefined;
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
   manifestJson.image = imageUrl;
   if (animation) {
@@ -47,7 +48,7 @@ export async function nftStorageUpload(
       return { ...f, uri: animationUrl };
     }
   });
-  
+
   log.info('Upload metadata');
   const metaData = Buffer.from(JSON.stringify(manifestJson));
   return fetch('https://api.nft.storage/upload', {

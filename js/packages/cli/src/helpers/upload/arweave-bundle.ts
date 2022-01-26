@@ -374,8 +374,8 @@ async function processFiles({
     }
   }
 
-  const imageLink = `https://arweave.net/${imageDataItem.id}`;
-  const animationLink = filePair.animation ? `https://arweave.net/${animationDataItem.id}` : undefined;
+  const imageLink = `https://arweave.net/${imageDataItem.id}?ext=${path.extname(filePair.image).replace('.', '')}`;
+  const animationLink = filePair.animation ? `https://arweave.net/${animationDataItem.id}?ext=${path.extname(filePair.animation).replace('.', '')}` : undefined;
 
   const manifest = await getUpdatedManifest(
     filePair.manifest,
