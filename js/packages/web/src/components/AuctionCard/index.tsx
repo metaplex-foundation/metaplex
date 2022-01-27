@@ -537,8 +537,8 @@ export const AuctionCard = ({
             navigate('/owned');
           },
         });
-      } catch (e: any) {
-        Bugsnag.notify(e);
+      } catch (err: any) {
+        Bugsnag.notify(err);
 
         notification.error({
           message: 'Purchase Error',

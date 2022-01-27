@@ -12,7 +12,6 @@ import {
   getMetadata,
   deprecatedGetReservationList,
   AuctionState,
-  sendTransactionsWithManualRetry,
   MasterEditionV1,
   MasterEditionV2,
   deprecatedMintNewEditionFromMasterEditionViaPrintingToken,
@@ -24,6 +23,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  sendTransactionsWithManualRetry,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -886,7 +886,7 @@ export async function setupRedeemParticipationInstructions(
         : null,
       myInstructions,
     );
-    instructions.push([...myInstructions, ...cleanupInstructions]);
+    instructions.push([...myInstructions, ...cleanupInstructions.reverse()]);
     signers.push(mySigners);
     const metadata = await getMetadata(mint);
 
@@ -1073,7 +1073,10 @@ async function deprecatedSetupRedeemParticipationInstructions(
         payingSolAccount,
       );
       newTokenBalance = 1;
-      instructions.push([...winningPrizeInstructions, ...cleanupInstructions]);
+      instructions.push([
+        ...winningPrizeInstructions,
+        ...cleanupInstructions.reverse(),
+      ]);
     }
   }
 

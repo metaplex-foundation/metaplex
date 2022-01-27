@@ -95,6 +95,8 @@ export async function sendCancelBid(
       'single',
     );
   } else {
+    let cancelBidError: Error | null = null;
+
     await SmartInstructionSender.build(wallet as any, connection)
       .config({
         abortOnFailure: true,
@@ -108,9 +110,13 @@ export async function sendCancelBid(
         })),
       )
       .onFailure(err => {
-        throw err;
+        cancelBidError = err;
       })
       .send();
+
+    if (cancelBidError) {
+      throw cancelBidError;
+    }
   }
 }
 
@@ -150,6 +156,9 @@ export async function setupCancelBid(
       cancelInstructions,
     );
     signers.push(cancelSigners);
-    instructions.push([...cancelInstructions, ...cleanupInstructions]);
+    instructions.push([
+      ...cancelInstructions,
+      ...cleanupInstructions.reverse(),
+    ]);
   }
 }
