@@ -2,14 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { BrowserRouter } from 'react-router-dom';
 
-import './index.css';
+const el = document.getElementById('coinfra-candy-machine-ui');
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <App
+        candyMachineId={el?.getAttribute('data-candy-machine-id')!}
+        network={el?.getAttribute('data-network')!}
+      />
+    </BrowserRouter>
   </React.StrictMode>,
-  document.getElementById('root'),
+  el,
 );
 
 // If you want to start measuring performance in your app, pass a function

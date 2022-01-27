@@ -11,7 +11,7 @@ import {
   TransactionInstruction,
   TransactionSignature,
 } from '@solana/web3.js';
-import { getUnixTs, sleep } from './various';
+import { getUnixTs, sleep } from './various-coinfra';
 import { DEFAULT_TIMEOUT } from './constants';
 import log from 'loglevel';
 

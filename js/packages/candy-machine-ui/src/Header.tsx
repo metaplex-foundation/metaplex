@@ -23,9 +23,7 @@ export const Header = ({ candyMachine }: HeaderProps) => {
               <Typography
                 variant="h6"
                 color="textPrimary"
-                style={{
-                  fontWeight: 'bold',
-                }}
+                id="coinfraItemsRemaining"
               >
                 {`${candyMachine?.state.itemsRemaining}`}
               </Typography>
@@ -34,11 +32,7 @@ export const Header = ({ candyMachine }: HeaderProps) => {
               <Typography variant="body2" color="textSecondary">
                 Price
               </Typography>
-              <Typography
-                variant="h6"
-                color="textPrimary"
-                style={{ fontWeight: 'bold' }}
-              >
+              <Typography variant="h6" color="textPrimary" id="coinfraPrice">
                 {getMintPrice(candyMachine)}
               </Typography>
             </Grid>
@@ -52,7 +46,6 @@ export const Header = ({ candyMachine }: HeaderProps) => {
               ? new anchor.BN(new Date().getTime() / 1000)
               : undefined,
           )}
-          style={{ justifyContent: 'flex-end' }}
           status={
             !candyMachine?.state?.isActive || candyMachine?.state?.isSoldOut
               ? 'COMPLETED'
@@ -68,7 +61,8 @@ export const Header = ({ candyMachine }: HeaderProps) => {
 
 const getMintPrice = (candyMachine: CandyMachineAccount): string => {
   const price = formatNumber.asNumber(
-    candyMachine.state.isPresale && candyMachine.state.whitelistMintSettings?.discountPrice
+    candyMachine.state.isPresale &&
+      candyMachine.state.whitelistMintSettings?.discountPrice
       ? candyMachine.state.whitelistMintSettings?.discountPrice!
       : candyMachine.state.price!,
   );

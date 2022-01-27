@@ -3,7 +3,6 @@ import * as anchor from '@project-serum/anchor';
 
 import styled from 'styled-components';
 import { Container, Snackbar } from '@material-ui/core';
-import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -20,23 +19,11 @@ import { Header } from './Header';
 import { MintButton } from './MintButton';
 import { GatewayProvider } from '@civic/solana-gateway-react';
 
-const ConnectButton = styled(WalletDialogButton)`
-  width: 100%;
-  height: 60px;
-  margin-top: 10px;
-  margin-bottom: 5px;
-  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-`;
-
 const MintContainer = styled.div``; // add your owns styles here
 
 export interface HomeProps {
-  candyMachineId?: anchor.web3.PublicKey;
+  candyMachineId: string;
   connection: anchor.web3.Connection;
-  startDate: number;
   txTimeout: number;
   rpcHost: string;
 }
@@ -44,6 +31,9 @@ export interface HomeProps {
 const Home = (props: HomeProps) => {
   const [isUserMinting, setIsUserMinting] = useState(false);
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
+  const [candyMachinePublicKey, setCandyMachinePublicKey] = useState<
+    anchor.web3.PublicKey | undefined
+  >(undefined);
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
     message: '',
@@ -52,6 +42,18 @@ const Home = (props: HomeProps) => {
 
   const rpcUrl = props.rpcHost;
   const wallet = useWallet();
+
+  useEffect(() => {
+    if (!props.candyMachineId) {
+      console.error('You must set the candy machine id');
+      return;
+    }
+    try {
+      setCandyMachinePublicKey(new anchor.web3.PublicKey(props.candyMachineId));
+    } catch (e) {
+      console.error('Failed to construct CandyMachinePublicKey', e);
+    }
+  }, [props.candyMachineId]);
 
   const anchorWallet = useMemo(() => {
     if (
@@ -75,11 +77,11 @@ const Home = (props: HomeProps) => {
       return;
     }
 
-    if (props.candyMachineId) {
+    if (candyMachinePublicKey) {
       try {
         const cndy = await getCandyMachineState(
           anchorWallet,
-          props.candyMachineId,
+          candyMachinePublicKey,
           props.connection,
         );
         setCandyMachine(cndy);
@@ -88,7 +90,7 @@ const Home = (props: HomeProps) => {
         console.log(e);
       }
     }
-  }, [anchorWallet, props.candyMachineId, props.connection]);
+  }, [anchorWallet, candyMachinePublicKey, props.connection]);
 
   const onMint = async () => {
     try {
@@ -156,19 +158,19 @@ const Home = (props: HomeProps) => {
     refreshCandyMachineState();
   }, [
     anchorWallet,
-    props.candyMachineId,
+    candyMachinePublicKey,
     props.connection,
     refreshCandyMachineState,
   ]);
 
   return (
-    <Container style={{ marginTop: 100 }}>
-      <Container maxWidth="xs" style={{ position: 'relative' }}>
-        <Paper
-          style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
-        >
+    <Container className="coinfra-parent-container">
+      <Container className="coinfra-child-container" maxWidth="xs">
+        <div className="coinfra-paper">
           {!wallet.connected ? (
-            <ConnectButton>Connect Wallet</ConnectButton>
+            <WalletDialogButton id="coinfraConnectButton">
+              Connect Wallet
+            </WalletDialogButton>
           ) : (
             <>
               <Header candyMachine={candyMachine} />
@@ -207,7 +209,7 @@ const Home = (props: HomeProps) => {
               </MintContainer>
             </>
           )}
-        </Paper>
+        </div>
       </Container>
 
       <Snackbar
