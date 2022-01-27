@@ -699,22 +699,21 @@ const InfoStep = (props: {
               }
             />
           </label>
-          <label className="action-field">
-            <span className="field-title">Collection</span>
-            <Input
-              className="input"
-              placeholder="Collection Mint Key"
-              allowClear
-              value={props.attributes.collection}
-              onChange={info =>
-                props.setAttributes({
-                  ...props.attributes,
-                  collection: info.target.value,
-                })
-              }
-            />
-          </label>
-
+          {/*<label className="action-field">*/}
+          {/*  <span className="field-title">Collection</span>*/}
+          {/*  <Input*/}
+          {/*    className="input"*/}
+          {/*    placeholder="Collection Mint Key"*/}
+          {/*    allowClear*/}
+          {/*    value={props.attributes.collection}*/}
+          {/*    onChange={info =>*/}
+          {/*      props.setAttributes({*/}
+          {/*        ...props.attributes,*/}
+          {/*        collection: info.target.value,*/}
+          {/*      })*/}
+          {/*    }*/}
+          {/*  />*/}
+          {/*</label>*/}
           <label className="action-field">
             <span className="field-title">Description</span>
             <Input.TextArea
