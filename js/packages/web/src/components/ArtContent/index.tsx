@@ -181,7 +181,6 @@ export const ArtContent = ({
   artView,
   backdrop,
   square,
-  mute = true
 }: {
   category?: MetadataCategory;
   preview?: boolean;
@@ -194,7 +193,6 @@ export const ArtContent = ({
   artView?: boolean;
   backdrop: 'dark' | 'light';
   square: boolean;
-  mute: boolean;
 }) => {
   const id = pubkeyToString(pubkey);
 
