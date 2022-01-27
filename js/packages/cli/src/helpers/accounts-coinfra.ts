@@ -90,7 +90,7 @@ export async function loadCandyProgramCoinfra(
 
 export const createCandyMachineCoinfra = async function (
   anchorProgram: anchor.Program,
-  wallet: any,
+  wallet: anchor.Wallet,
   treasuryWallet: PublicKey,
   splToken: PublicKey,
   candyData: CandyMachineData,
@@ -145,18 +145,15 @@ export const createCandyMachineCoinfra = async function (
     },
   );
 
-  /*
   transaction.feePayer = wallet.publicKey;
   transaction.recentBlockhash = (
     await anchorProgram.provider.connection.getRecentBlockhash('singleGossip')
   ).blockhash;
   transaction.partialSign(...[candyAccount]);
-*/
 
   return {
     candyMachine: candyAccount.publicKey,
     uuid: candyData.uuid,
     transaction,
-    candyAccount,
   };
 };
