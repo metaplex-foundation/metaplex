@@ -1,9 +1,8 @@
 import { createCandyMachineCoinfra } from '../helpers/accounts-coinfra';
 import { chunks } from '../helpers/various-coinfra';
-import { sendSignedTransaction } from '../helpers/transactions-coinfra';
+import { sendSignedTransaction } from '../helpers/transactions';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { BN, Program, web3 } from '@project-serum/anchor';
-import type { SendTxRequest } from '@project-serum/anchor/dist/cjs/provider';
+import { BN, Program, web3, Wallet } from '@project-serum/anchor';
 
 export async function uploadCoinfra({
   totalNFTs,
@@ -51,7 +50,7 @@ export async function uploadCoinfra({
     hash: Uint8Array;
   };
   uuid: string;
-  wallet: any;
+  wallet: Wallet;
   anchorProgram: Program;
   manifests: any[];
   metadataLinks: string;
@@ -64,8 +63,8 @@ export async function uploadCoinfra({
 
   const SIZE = manifests.length;
 
-  if (SIZE === 0 || manifests.length === 0) {
-    const error = new Error('Error dedupedAssetKeys or manifests is invalid');
+  if (SIZE === 0) {
+    const error = new Error('Your manifests file is invalid');
     console.error(error.message);
     throw error;
   }
@@ -74,7 +73,6 @@ export async function uploadCoinfra({
 
   const transactions: Transaction[] = [];
   let candyMachine;
-  const txs: Array<SendTxRequest> = [];
   try {
     if (
       !firstAssetManifest.properties?.creators?.every(
@@ -118,7 +116,6 @@ export async function uploadCoinfra({
     cacheContent.program.candyMachine = res.candyMachine.toBase58();
     candyMachine = res.candyMachine;
     transactions.push(res.transaction);
-    txs.push({ tx: res.transaction, signers: [res.candyAccount] });
 
     console.info(
       `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
@@ -207,7 +204,6 @@ export async function uploadCoinfra({
                       verifyRun: false,
                     };
                   });
-                  txs.push({ tx: transaction, signers: [] });
                 } catch (error) {
                   console.error(
                     `saving config line ${ind}-${

@@ -90,7 +90,7 @@ export async function loadCandyProgramCoinfra(
 
 export const createCandyMachineCoinfra = async function (
   anchorProgram: anchor.Program,
-  wallet: any,
+  wallet: anchor.Wallet,
   treasuryWallet: PublicKey,
   splToken: PublicKey,
   candyData: CandyMachineData,
@@ -155,6 +155,5 @@ export const createCandyMachineCoinfra = async function (
     candyMachine: candyAccount.publicKey,
     uuid: candyData.uuid,
     transaction,
-    candyAccount,
   };
 };
