@@ -1089,7 +1089,7 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
-"@civic/solana-gateway-react@^0.4.9":
+"@civic/solana-gateway-react@^0.4.10":
   version "0.4.10"
   resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.10.tgz#9fec268d1e2bf382f93a820a9a9e56dc223117eb"
   integrity sha512-de8JeMr0nKfsrTWMQa5H9uk+V6UBqxDICMK2l19TAz9LPIc0yqfu8nvbWkFdUylasYsu15kvu4Vg4eHLAOs/7A==
