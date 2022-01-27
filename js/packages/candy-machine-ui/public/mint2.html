@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="./favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Candy Machine UI" />
+    <link rel="apple-touch-icon" href="./logo192.png" />
+    <link rel="manifest" href="./manifest.json" />
+    <style type="text/css">
+      html {
+        /* background */
+        background: url(https://s3.ap-northeast-1.wasabisys.com/coinfra/assets/img-bg-kamon.png) center center;
+        background-size: contain;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+          'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+          'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .coinfra-container{
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      /* MINT Button */
+      #coinfraCtaButton {
+        width: 100%;
+        height: 60px;
+        margin-top: 10px;
+        margin-bottom: 5px;
+        background: teal;
+        color: pink;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .coinfra-countdown-root {
+        display: flex;
+        justify-content: flex-end;
+      }
+      
+      p.MuiTypography-colorTextSecondary {
+        color: goldenrod;
+      }
+
+      h6.MuiTypography-colorTextPrimary {
+        color: black;
+      }
+
+      .coinfra-countdown-root > * {
+        color: white;
+        width: 48px;
+        height: 48px;
+        margin: 4px;
+        display: flex;
+        font-size: 10px;
+        background: teal;
+        align-items: center;
+        align-content: center;
+        border-radius: 5px;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .coinfra-countdown-done {
+        color: yellow;
+        margin: 8px;
+        display: flex;
+        padding: 8px;
+        font-size: 18px;
+        background: teal;
+        align-items: center;
+        font-weight: bold;
+        margin-right: 0;
+        align-content: center;
+        border-radius: 5px;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .coinfra-countdown-item {
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .coinfra-parent-container {
+        margin-top: 40px;
+      }
+
+      .coinfra-child-container {
+        position: relative;
+      }
+
+      .coinfra-paper {
+        padding: 24px;
+        background-color: white;
+        border-radius: 6px;
+        box-shadow: 0 3px 6px #ccc;
+      }
+
+      #coinfraItemsRemaining {
+        font-weight: bold;
+      }
+
+      #coinfraPrice {
+        font-weight: bold;
+      }
+
+      .coinfra-nft-title {
+        margin: 20px;
+        text-align: center;
+        font-size: 2.5rem;
+      }
+
+      .coinfra-nft-image-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .coinfra-nft-image {
+        width: 350px;
+        height: 350px;
+        object-fit: cover;
+        text-align: center;
+      }
+
+      .coinfra-nft-description {
+        margin: 20px;
+        text-align: center;
+        font-size: 1.5rem;
+        word-break: break-all;
+      }
+    </style>
+    <title>Candy Machine UI test</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div class="coinfra-container">
+      <h1 class="coinfra-nft-title">
+        testtesttesttesttesttesttesttesttesttesttesttest
+      </h1>
+      <div class="coinfra-nft-image-wrap">
+        <img class="coinfra-nft-image" src="https://s3.ap-northeast-1.wasabisys.com/coinfra/assets/nobunaga.png" alt="">
+      </div>
+      <div
+        id="coinfra-candy-machine-ui"
+        data-candy-machine-id="6CrXZXM6D6pYybiQR2NnT1jxscQMXMBKWbXZs1bwFDmG"
+        data-network="devnet"
+      ></div>
+      <p class="coinfra-nft-description">
+        testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+      </p>
+    </div>
+    <script src="http://localhost:3002/coinfra.js"></script>
+  </body>
+</html>
