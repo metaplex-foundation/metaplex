@@ -113,7 +113,6 @@ export const getStorefront = async (
   subdomain: string,
 ): Promise<Storefront | undefined> => {
   let cached: Storefront | undefined = undefined;
-
   const redisClientOptions: RedisClientOptions<RedisModules, RedisScripts> = {
     url: REDIS_URL,
   };
