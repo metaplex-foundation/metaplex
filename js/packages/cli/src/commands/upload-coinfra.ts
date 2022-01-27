@@ -227,7 +227,7 @@ export async function uploadCoinfra({
             signedTransaction: signedTransactions[i],
           });
         } catch (e) {
-          console.log('Caught failure', e);
+          throw new Error(`Caught failure ${e}`);
         }
       }
     } catch (error) {
