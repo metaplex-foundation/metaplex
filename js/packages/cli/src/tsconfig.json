@@ -15,22 +15,10 @@
     "preserveConstEnums": true,
     "suppressImplicitAnyIndexErrors": true,
     "resolveJsonModule": true,
-    "lib": [
-      "dom",
-      "es2019"
-    ],
-    "types": [
-      "jest",
-      "node",
-      "webgl2",
-      "offscreencanvas"
-    ],
+    "lib": ["dom", "es2019"],
+    "types": ["jest", "node", "webgl2", "offscreencanvas"]
   },
-  "exclude": [
-    "node_modules",
-    "typings/browser",
-    "typings/browser.d.ts"
-  ],
+  "exclude": ["node_modules", "typings/browser", "typings/browser.d.ts"],
   "atom": {
     "rewriteTsconfig": false
   }
