@@ -60,7 +60,7 @@ export function uuidFromConfigPubkey(configAccount: PublicKey) {
 }
 
 export async function loadCandyProgramCoinfra(
-  wallet: any,
+  wallet: anchor.Wallet,
   env: string,
   customRpcUrl?: string,
 ) {
