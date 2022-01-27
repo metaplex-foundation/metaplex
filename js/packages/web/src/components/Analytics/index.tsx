@@ -3,9 +3,11 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { ENDPOINTS, useConnectionConfig, useStore } from '@oyster/common';
 import { useLocation } from 'react-router';
 import { useSolPrice } from '../../contexts';
+import splitbee from '@splitbee/web';
 
 export const GOOGLE_ANALYTICS_ID =
   process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
+const SPLITBEE_TOKEN = process.env.NEXT_PUBLIC_SPLITBEE_TOKEN;
 
 interface AnalyticsUserProperties {
   // user dimensions
@@ -42,6 +44,19 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
   // user pubkey / id
   const pubkey = publicKey?.toBase58() || '';
   const endpointName = ENDPOINTS.find(e => e.endpoint === endpoint)?.name;
+
+  // initial intial config
+  useEffect(() => {
+    if (SPLITBEE_TOKEN) {
+      splitbee.init({
+        token: SPLITBEE_TOKEN,
+        disableCookie: true,
+        scriptUrl: '/bee.js',
+        apiUrl: '/_hive',
+      });
+    }
+  }, []);
+
   useEffect(() => {
     // const isStoreOwner = ownerAddress === publicKey?.toBase58();
 
@@ -49,6 +64,13 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       user_id: pubkey,
       pubkey: pubkey,
     });
+
+    if (SPLITBEE_TOKEN) {
+      splitbee.user.set({
+        userId: pubkey,
+        pubkey: pubkey,
+      });
+    }
 
     // initial config
     configureAnalytics({
@@ -98,7 +120,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
     if (!gtag) return;
     const { category, label, sol_value, value, ...otherAttributes } =
       attributes;
-    gtag('event', action, {
+    const attrs = {
       event_category: category,
       event_label: label,
       page_location: window.location.href,
@@ -111,7 +133,14 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
             value,
           }),
       ...otherAttributes,
-    });
+    };
+    if (gtag && GOOGLE_ANALYTICS_ID) {
+      gtag('event', action, attrs);
+    }
+
+    if (SPLITBEE_TOKEN) {
+      splitbee.track(action, attrs);
+    }
   }
 
   return (
