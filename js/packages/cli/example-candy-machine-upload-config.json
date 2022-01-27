@@ -16,6 +16,7 @@
   "ipfsInfuraProjectId": null,
   "ipfsInfuraSecret": null,
   "awsS3Bucket": null,
+  "nftStorageKey": null,
   "noRetainAuthority": false,
   "noMutable": false
 }
