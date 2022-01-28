@@ -138,7 +138,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       gtag('event', action, attrs);
     }
 
-    if (SPLITBEE_TOKEN) {
+    if (SPLITBEE_TOKEN && action !== 'page_view') {
       splitbee.track(action, attrs);
     }
   }
