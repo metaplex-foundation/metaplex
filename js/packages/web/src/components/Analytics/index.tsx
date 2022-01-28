@@ -82,6 +82,10 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
 
     if (MIXPANEL_TOKEN && pubkey) {
       mixpanel.identify(pubkey);
+      mixpanel.people.set_once({
+        pubkey,
+        isStoreOwner: pubkey === storefront.pubkey,
+      });
     }
 
     // initial config
@@ -136,6 +140,9 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       event_category: category,
       event_label: label,
       page_location: window.location.href,
+      subdomain: storefront.subdomain,
+      storeTitle: storefront.meta.title,
+      userPubkey: pubkey,
       ...(sol_value && solPrice
         ? {
             value: sol_value * solPrice, //Google Analytics likes this one in USD :)
@@ -155,7 +162,15 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
     }
 
     if (MIXPANEL_TOKEN) {
-      mixpanel.track(action, attrs);
+      mixpanel.track(action, {
+        ...attrs,
+        // need to attach these here as Mixpanel does not support super properties without persitence
+        ownsThisStore: pubkey ? storefront.pubkey === pubkey : undefined,
+        network: endpointName,
+        storeDomain: storefront.subdomain,
+        storeTitle: storefront.meta.title,
+        storefrontPubkey: storefront.pubkey,
+      });
     }
   }
 
