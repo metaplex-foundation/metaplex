@@ -6,6 +6,7 @@ import {
 import {
   createClient,
   RedisClientOptions,
+  RedisClientType,
   RedisModules,
   RedisScripts,
 } from 'redis';
@@ -16,23 +17,27 @@ const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 const REDIS_TLS_ENABLED = process.env.REDIS_TLS_ENABLED === 'true';
 
-const fetchDenyList = async (): Promise<Array<String>> => {
-  const denyList = await fetch('https://api.holaplex.com/getOwnerDenylist');
-  return denyList.json();
+const fetchdenyListCacheKey = async (): Promise<Array<String>> => {
+  const res = await fetch('https://api.holaplex.com', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'getOwnerDenylist',
+      params: [],
+      id: 1337,
+    }),
+  });
+  // @ts-ignore
+  return await res.json();
 };
 
-// const pubkeyDenyList = [
-//   'Fy8GCo5pyaMmUS6BqydzYnHBYeQN5BnKijCV2x2pRc3n',
-//   '9ztzyU9eFuce42CHD7opPxpjrsg15onjNARnmuMS2aQy',
-//   '5pKYHnoCMyjVqVdZaGAs63wUSBvhEGWnz5ie2YC5MaZx',
-//   'D2bj7rCLC4Dy9ZJuDNm5jFRNn5bqVTTpn16nnqDYmciv',
-//   'DYE359beVPHzLUuwAYAqujJ9d8JwFszAcus9qht5moxT',
-//   '8K7zyrvVLDacNRJeFZui4cazW1XUkWKRnm7UmnBGQPdS',
-//   'E6EWhx9PRwh3ryHGiWzGb6KceA71kWcg9i5pKuikTtUi',
-// ];
-
+const denyListCacheKey = 'ownerdenyList';
 const fetchFromSource = async (
   subdomain: string,
+  redisClient: RedisClientType,
 ): Promise<Storefront | null> => {
   try {
     const response = await fetch(`${ARWEAVE_URL}/graphql`, {
@@ -76,13 +81,25 @@ const fetchFromSource = async (
 
       return acc;
     }, {});
-    let pubkeyDenyList: Array<String> = [];
+    let pubkeydenyListCacheKey: Array<String> = [];
     try {
-      pubkeyDenyList = await fetchDenyList();
+      const cachedValue = (await redisClient.get(denyListCacheKey)) || '{}';
+      pubkeydenyListCacheKey = JSON.parse(cachedValue) || [];
+
+      if (!pubkeydenyListCacheKey.length) {
+        pubkeydenyListCacheKey = await fetchdenyListCacheKey();
+        redisClient.set(
+          denyListCacheKey,
+          // @ts-ignore
+          JSON.stringify(pubkeydenyListCacheKey.result),
+        );
+        redisClient.expire(denyListCacheKey, 1800); // cache the entire list for an hour
+      }
     } catch (error) {
-      console.error('failed to fetch ', error);
+      console.error('failed to fetch denylist', error);
     }
-    if (pubkeyDenyList.includes(values['solana:pubkey'])) {
+
+    if (pubkeydenyListCacheKey.includes(values['solana:pubkey'])) {
       return null;
     }
 
@@ -159,7 +176,7 @@ export const getStorefront = async (
     return cached;
   }
 
-  const source = await fetchFromSource(subdomain);
+  const source = await fetchFromSource(subdomain, client);
 
   if (source) {
     await client
