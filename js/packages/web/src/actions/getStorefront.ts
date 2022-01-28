@@ -176,6 +176,7 @@ export const getStorefront = async (
     return cached;
   }
 
+  // @ts-ignore
   const source = await fetchFromSource(subdomain, client);
 
   if (source) {
