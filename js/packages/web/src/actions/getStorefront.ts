@@ -83,17 +83,17 @@ const fetchFromSource = async (
     }, {});
     let pubkeydenyListCacheKey: Array<String> = [];
     try {
-      const cachedValue = await redisClient.get(denyListCacheKey);
+      const cachedValue = (await redisClient.get(denyListCacheKey)) || '{}';
       pubkeydenyListCacheKey = JSON.parse(cachedValue) || [];
 
       if (!pubkeydenyListCacheKey.length) {
         pubkeydenyListCacheKey = await fetchdenyListCacheKey();
-        // @ts-ignore
         redisClient.set(
           denyListCacheKey,
+          // @ts-ignore
           JSON.stringify(pubkeydenyListCacheKey.result),
         );
-        redisClient.expire(denyListCacheKey, 3600); // cache the entire list for an hour
+        redisClient.expire(denyListCacheKey, 1800); // cache the entire list for an hour
       }
     } catch (error) {
       console.error('failed to fetch denylist', error);
