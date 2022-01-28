@@ -328,7 +328,7 @@ async function processFiles({
       }),
     });
 
-    await (imageDataItem as BundlrTransaction).sign();
+    await (imageDataItem as unknown as BundlrTransaction).sign();
   } else if (storageType === StorageType.ArweaveBundle) {
     imageDataItem = await getImageDataItem(signer, imageBuffer, contentType);
 
@@ -348,7 +348,7 @@ async function processFiles({
       tags: manifestTags,
     });
 
-    await (manifestDataItem as BundlrTransaction).sign();
+    await (manifestDataItem as unknown as BundlrTransaction).sign();
   } else if (storageType === StorageType.ArweaveBundle) {
     manifestDataItem = getManifestDataItem(signer, manifest);
     await (manifestDataItem as DataItem).sign(signer);
@@ -366,7 +366,7 @@ async function processFiles({
       { tags: arweavePathManifestTags },
     );
 
-    await (arweavePathManifestDataItem as BundlrTransaction).sign();
+    await (arweavePathManifestDataItem as unknown as BundlrTransaction).sign();
     await arweavePathManifestDataItem.sign(signer);
   } else if (storageType === StorageType.ArweaveBundle) {
     arweavePathManifestDataItem = getArweavePathManifestDataItem(
@@ -483,9 +483,9 @@ export function* makeArweaveBundleUploadGenerator(
 
           acc.cacheKeys.push(filePair.key);
           acc.dataItems.push(
-            imageDataItem,
-            manifestDataItem,
-            arweavePathManifestDataItem,
+            imageDataItem as DataItem,
+            manifestDataItem as DataItem,
+            arweavePathManifestDataItem as DataItem,
           );
           acc.arweavePathManifestLinks.push(arweavePathManifestLink);
           acc.updatedManifests.push(manifest);
@@ -502,9 +502,11 @@ export function* makeArweaveBundleUploadGenerator(
       );
 
       if (storageType === StorageType.ArweaveSol) {
-        const bundlrTransactions = [...dataItems] as BundlrTransaction[];
+        const bundlrTransactions = [
+          ...dataItems,
+        ] as unknown as BundlrTransaction[];
         log.info('Uploading bundle via bundlr... in multiple transactions');
-        const bytes = (dataItems as BundlrTransaction[]).reduce(
+        const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
           (c, d) => c + d.data.length,
           0,
         );
