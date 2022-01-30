@@ -136,7 +136,7 @@ export const getStorefront = async (
   }
 
   // @ts-ignore
-  const source = await fetchFromSource(subdomain, client);
+  const source = await fetchFromSource(subdomain);
 
   if (source) {
     await client
