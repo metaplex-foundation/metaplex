@@ -27,12 +27,16 @@ http {
 	# Must read the body in 5 seconds.
 	client_body_timeout 5;
 
+	limit_req_zone $binary_remote_addr zone=mylimit:10m rate=10r/s;
 	server {
 		listen <%= ENV["PORT"] %>;
 		server_name _;
 		keepalive_timeout 5;
 
+
 		location / {
+			limit_req zone=mylimit;
+        
 
 			if ($http_x_forwarded_proto != "https") {
 				return 301 https://$host$request_uri;
