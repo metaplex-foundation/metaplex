@@ -16,11 +16,6 @@ const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 const REDIS_TLS_ENABLED = process.env.REDIS_TLS_ENABLED === 'true';
 
-const fetchDenyList = async (): Promise<Array<String>> => {
-  const denyList = await fetch('https://api.holaplex.com/getOwnerDenylist');
-  return denyList.json();
-};
-
 // const pubkeyDenyList = [
 //   'Fy8GCo5pyaMmUS6BqydzYnHBYeQN5BnKijCV2x2pRc3n',
 //   '9ztzyU9eFuce42CHD7opPxpjrsg15onjNARnmuMS2aQy',
@@ -76,15 +71,6 @@ const fetchFromSource = async (
 
       return acc;
     }, {});
-    let pubkeyDenyList: Array<String> = [];
-    try {
-      pubkeyDenyList = await fetchDenyList();
-    } catch (error) {
-      console.error('failed to fetch ', error);
-    }
-    if (pubkeyDenyList.includes(values['solana:pubkey'])) {
-      return null;
-    }
 
     const storefront = {
       subdomain,
