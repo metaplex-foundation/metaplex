@@ -1089,13 +1089,13 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
-"@civic/solana-gateway-react@^0.4.7":
-  version "0.4.7"
-  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.7.tgz#67c2f29753e3241bac46da1bc0ad534f6fb1a24d"
-  integrity sha512-te5QGI/5ks8KuhpqSySt29piqeWbkTy/TDH1au2Koz9LQiw7sPLLWEQWlupyClHCmBkoz/IsNVNi0C1Z1ve5XA==
+"@civic/solana-gateway-react@^0.4.11":
+  version "0.4.11"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.11.tgz#45fca38fbf70c1517b6666e1e09f20df1bd1480d"
+  integrity sha512-1YfFYfiODatrkpeWeK3xkZ27a93WBGcdCBLIQ/Hy88rXBX9zTs+4HwD/rSSLwIMF0wnt2NxOMSuU7b9B6JBNcw==
   dependencies:
     "@identity.com/prove-solana-wallet" "^0.2.3"
-    "@identity.com/solana-gateway-ts" "^0.4.4"
+    "@identity.com/solana-gateway-ts" "^0.7.0"
     "@solana/web3.js" "^1.20.0"
     "@types/styled-components" "^5.1.15"
     fetch-retry-ts "^1.1.24"
@@ -1243,10 +1243,10 @@
     "@solana/web3.js" "^1.22.0"
     bs58 "^4.0.1"
 
-"@identity.com/solana-gateway-ts@^0.4.4":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.4.4.tgz#d201a7ddea26bff1b55a7557d5547e9a02c657ea"
-  integrity sha512-CaP9gdF6cSOUU+mWrCazaUAmgUzfrCwzobUwq68BCWofl2PEMkqiQyWWJhj1zeyChFx88pivSlPET7DVss407g==
+"@identity.com/solana-gateway-ts@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.7.0.tgz#61ece3f781148b040778bc936128039e52918ecc"
+  integrity sha512-hxOHbQDH3mQ6cBIvEsUZFICJAfgv0V8GB2QpnvXwHoAnPVRpYACHb98P2i93gwyC+jFUEJ5fOQo4eaa06bnAvw==
   dependencies:
     "@solana/web3.js" "^1.22.0"
     async-retry "^1.3.3"
