@@ -13,6 +13,7 @@ import {
 } from '../CurrentUserBadge';
 import { ConnectButton } from '@oyster/common';
 import { MobileNavbar } from '../MobileNavbar';
+import { BetterSearchBox, SearchBox } from './searchBox';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
@@ -51,7 +52,7 @@ export const MetaplexMenu = () => {
     return (
       <>
         <Modal
-          title={<img src={'/metaplex-logo.svg'} />}
+          title={<img src={'/karma-logo.png'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
@@ -110,7 +111,7 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/metaplex-logo.svg'} />
+      <img src={'/karma-logo.png'} />
     </Link>
   );
 };
@@ -123,6 +124,8 @@ export const AppBar = () => {
       <div id="desktop-navbar">
         <div className="app-left">
           <LogoLink />
+          &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+          <BetterSearchBox />
           &nbsp;&nbsp;&nbsp;
           <MetaplexMenu />
         </div>

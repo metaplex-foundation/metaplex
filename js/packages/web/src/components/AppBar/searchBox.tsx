@@ -1,6 +1,6 @@
 import React from 'react';
 import { SearchOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Input } from 'antd';
 
 export const SearchBox = ({}) => {
   return (
@@ -9,5 +9,16 @@ export const SearchBox = ({}) => {
       shape="circle"
       icon={<SearchOutlined />}
     ></Button>
+  );
+};
+
+export const BetterSearchBox = ({}) => {
+  const { Search } = Input;
+  return (
+    <Search
+      placeholder="Search collections"
+      className="searchbar"
+      style={{ width: 400 }}
+    />
   );
 };
