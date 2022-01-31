@@ -37,7 +37,7 @@ http {
 		location / {
 			limit_req zone=mylimit;
 
-			limit_except GET OPTION {
+			limit_except GET {
 				deny  all;
 			}
         
