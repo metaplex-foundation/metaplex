@@ -8,10 +8,6 @@ export const CategoryStep = (props: {
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
       <h2>Create a new item</h2>
-      <p>
-        First time creating on Metaplex?{' '}
-        <a href="#">Read our creators’ guide.</a>
-      </p>
       <Row>
         <Col span={10}>
           <Space className="metaplex-fullwidth" direction="vertical">
