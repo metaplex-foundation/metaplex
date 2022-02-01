@@ -6,6 +6,7 @@ import {
 import {
   createClient,
   RedisClientOptions,
+  RedisClientType,
   RedisModules,
   RedisScripts,
 } from 'redis';
@@ -16,8 +17,27 @@ const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 const REDIS_TLS_ENABLED = process.env.REDIS_TLS_ENABLED === 'true';
 
+const fetchdenyListCacheKey = async (): Promise<Array<String>> => {
+  const res = await fetch('https://api.holaplex.com', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'getOwnerDenylist',
+      params: [],
+      id: 1337,
+    }),
+  });
+  // @ts-ignore
+  return await res.json();
+};
+
+const denyListCacheKey = 'ownerdenyList';
 const fetchFromSource = async (
   subdomain: string,
+  redisClient: RedisClientType,
 ): Promise<Storefront | null> => {
   try {
     const response = await fetch(`${ARWEAVE_URL}/graphql`, {
@@ -61,6 +81,28 @@ const fetchFromSource = async (
 
       return acc;
     }, {});
+
+    let pubkeydenyList: Array<String> = [];
+    try {
+      const cachedValue = (await redisClient.get(denyListCacheKey)) || '{}';
+      pubkeydenyList = JSON.parse(cachedValue).result || [];
+
+      if (!pubkeydenyList.length) {
+        pubkeydenyList = await fetchdenyListCacheKey();
+        redisClient.set(
+          denyListCacheKey,
+          // @ts-ignore
+          JSON.stringify(pubkeydenyList),
+        );
+        redisClient.expire(denyListCacheKey, 300); // cache the entire list for 5 minutes
+      }
+    } catch (error) {
+      console.error('failed to fetch denylist', error);
+    }
+
+    if (pubkeydenyList.includes(values['solana:pubkey'])) {
+      return null;
+    }
 
     const storefront = {
       subdomain,
