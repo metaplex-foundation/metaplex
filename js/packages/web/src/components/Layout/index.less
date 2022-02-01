@@ -33,9 +33,9 @@ section.ant-layout {
   margin: auto;
   position: relative;
 
-  #width-layout {
-    max-width: 1440px;
-  }
+  // #width-layout {
+  //   max-width: 1440px;
+  // }
 }
 
 section#main-layout.ant-layout {
@@ -48,7 +48,11 @@ section#main-layout.ant-layout {
     height: 300px;
     width: 100%;
     left: 0;
-    background: linear-gradient(0, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+    background: linear-gradient(
+      0,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
 
   span#static-end-gradient {
@@ -57,7 +61,11 @@ section#main-layout.ant-layout {
     height: 300px;
     width: 100%;
     left: 0;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
 
   #bg-gradient {
@@ -66,7 +74,11 @@ section#main-layout.ant-layout {
     width: 100%;
     left: 0;
     top: 510px;
-    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(18, 18, 18, 0) 0%,
+      @black-100 100%
+    );
     display: none;
   }
 
@@ -77,7 +89,11 @@ section#main-layout.ant-layout {
     right: 0;
     left: 0;
     height: 708px;
-    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);;
+    background: linear-gradient(
+      180deg,
+      rgba(18, 18, 18, 0) 0%,
+      @black-100 100%
+    );
     background-position: top left !important;
     background-size: cover !important;
     background-repeat: no-repeat !important;

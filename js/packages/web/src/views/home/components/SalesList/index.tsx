@@ -31,14 +31,23 @@ export const SalesListView = () => {
   return (
     <>
       <Banner
-        src="/main-banner.svg"
-        headingText="The amazing world of Metaplex."
-        subHeadingText="Buy exclusive Metaplex NFTs."
+        src="/banner.png"
+        headingText="A Community Focused Solana NFT Marketplace"
+        subHeadingText="Karmaverse is an eco-friendly NFT exchange that 
+        rewards users for their activity and donates a portion
+        of every trade to charitable causes."
         actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
         useBannerBg
       />
       <Layout>
-        <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Content
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            backgroundColor: 'white',
+            maxWidth: '1440px',
+          }}
+        >
           <Col style={{ width: '100%', marginTop: 32 }}>
             <Row>
               <Tabs
