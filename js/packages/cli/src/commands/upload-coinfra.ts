@@ -153,7 +153,7 @@ export async function uploadCoinfra({
       await Promise.all(
         chunks(Array.from(Array(keys.length).keys()), 1000).map(
           async allIndexesInSlice => {
-            // if this value is large, "RangeError: encoding overruns Buffer" occur
+            // if this value is large like 10, "RangeError: encoding overruns Buffer" occur
             const bachsize = 5;
             for (
               let offset = 0;
@@ -219,17 +219,48 @@ export async function uploadCoinfra({
         ),
       );
 
-      const signedTransactions = await wallet.signAllTransactions(transactions);
-      for (let i = 0; i < signedTransactions.length; i++) {
-        try {
-          await sendSignedTransaction({
-            connection: anchorProgram.provider.connection,
-            signedTransaction: signedTransactions[i],
-          });
-        } catch (e) {
-          throw new Error(`Caught failure ${e}`);
-        }
+      // need to sign each 1,000 NFTS(200 txs)
+      const SIGN_BATCH_SIZE = 200;
+      const slicedTransactions: Transaction[][] = transactions.reduce(
+        (resultArray, item, index) => {
+          const chunkIndex = Math.floor(index / SIGN_BATCH_SIZE);
+          if (!resultArray[chunkIndex]) {
+            resultArray[chunkIndex] = []; // start a new chunk
+          }
+          resultArray[chunkIndex].push(item);
+          return resultArray;
+        },
+        [],
+      );
+      console.log('slicedTransactions');
+      console.log(slicedTransactions);
+
+      const signedTransactions: Transaction[] = [];
+      for (let i = 0; i < slicedTransactions.length; i++) {
+        const partialSignedTransactions = await wallet.signAllTransactions(
+          slicedTransactions[i],
+        );
+        signedTransactions.push(...partialSignedTransactions);
       }
+      console.log('signedTransactions');
+      console.log(signedTransactions);
+      const pendingTransactions: Promise<{ txid: string; slot: number }>[] = [];
+      for (let i = 0; i < signedTransactions.length; i++) {
+        const signedTransactionPromise = sendSignedTransaction({
+          connection: anchorProgram.provider.connection,
+          signedTransaction: signedTransactions[i],
+        });
+
+        signedTransactionPromise
+          .then(({ txid, slot }) => {
+            console.log('success transaction:', txid, 'slot:', slot);
+          })
+          .catch(reason => {
+            throw new Error(`failed transaction: ${reason}`);
+          });
+        pendingTransactions.push(signedTransactionPromise);
+      }
+      await Promise.all(pendingTransactions);
     } catch (error) {
       uploadSuccessful = false;
       console.error(error);
@@ -238,7 +269,7 @@ export async function uploadCoinfra({
     console.info('Skipping upload to chain as this is a hidden Candy Machine');
   }
 
-  console.log(`Done. Successful = ${uploadSuccessful}.`);
+  console.log(`Done. Successful! = ${uploadSuccessful}.`);
   return {
     uploadSuccessful,
     cacheContent,
