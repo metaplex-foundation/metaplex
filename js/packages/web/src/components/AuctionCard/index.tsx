@@ -335,7 +335,10 @@ export const AuctionCard = ({
     }
   }
 
-  const belowMinBid = value && minBid && value < minBid;
+  const belowMinBid =
+    value &&
+    minBid &&
+    value * multiplier < parseFloat(minBid.toFixed(2)) * multiplier;
 
   const biddingPower =
     balance.balance +
@@ -355,12 +358,6 @@ export const AuctionCard = ({
     belowMinBid ||
     loading ||
     !accountByMint.get(QUOTE_MINT.toBase58());
-
-  const minNextBid = (
-    tickSize
-      ? (minBid * multiplier + fromLamports(tickSize) * multiplier) / multiplier
-      : minBid
-  ).toFixed(2);
 
   useEffect(() => {
     if (wallet.connected) {
@@ -805,7 +802,7 @@ export const AuctionCard = ({
             onChange={setValue}
             precision={2}
             formatter={value => (value ? `◎ ${value}` : '')}
-            placeholder={`Bid ${minNextBid} SOL or more`}
+            placeholder={`Bid ${minBid.toFixed(2)} SOL or more`}
           />
         </Col>
         <Col flex="0 0 auto">
@@ -874,7 +871,7 @@ export const AuctionCard = ({
               )}
               {value !== undefined && !!belowMinBid && (
                 <Text className="danger" type="danger">
-                  The bid must be at least {minNextBid} SOL.
+                  The bid must be at least {minBid.toFixed(2)} SOL.
                 </Text>
               )}
               {gapBidInvalid && (
