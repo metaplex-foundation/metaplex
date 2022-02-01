@@ -183,7 +183,7 @@ export const AuctionView = () => {
         </>
       )}
 
-      {attributes && (
+      {attributes && attributes.length > 0 && (
         <div>
           <h3 className="info-header">Attributes</h3>
           <List grid={{ column: 4 }}>
