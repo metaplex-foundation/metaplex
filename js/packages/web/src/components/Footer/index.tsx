@@ -49,9 +49,10 @@ export const Footer = () => {
               placeholder="Email Address"
               bordered={false}
             />
-            <Button className={'footer-button'} htmlType="submit">
-              <SendOutlined />
-            </Button>
+            <div className="btn-padding" ><Button className="secondary-btn email-btn"  htmlType="submit">
+              Submit
+            </Button></div>
+           
           </Form.Item>
         </Form>
         {props.status ? (
@@ -98,11 +99,11 @@ export const Footer = () => {
             </div>
             {/*<div className="footer-link">Powered by Metaplex and Solana</div>*/}
             {footerConf.showEmailSubscriber ? (
-          <div className="">
+          <div className="subscriber-text">
             <div className="subscriber-text">
               {footerConf.emailSubscriberText}
             </div>
-            <NewsLetterForm />
+            <div><NewsLetterForm /></div>
           </div>
           
 
