@@ -7,5 +7,5 @@
 echo 'REACT_APP_WEB_HOME="/gumdrop"' > .env
 ```
 
-See the [Metaplex Docs](https://docs.metaplex.com/create-gumdrop/) and the
+See the [Metaplex Docs](https://docs.metaplex.com/airdrops/create-gumdrop) and the
 [About page](https://lwus.github.io/metaplex/) for more information.
