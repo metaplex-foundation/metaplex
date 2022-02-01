@@ -20,8 +20,10 @@
     font-size: 1.2em;
   }
   .footer-input {
-    border-bottom: solid @subtext-color;
-    color:  white;//@subtext-color;
+    border-bottom: solid;
+    color: black; //@subtext-color;
+    background-color:white;
+
   }
   .footer-input::placeholder{
     color:  white;//@subtext-color;
@@ -132,6 +134,10 @@
     padding-bottom: 10px;
   }
 
+  .btn-padding{
+    padding-left: 10px;
+  }
+
   .logo-paddin{
     padding-top: 10px;
     padding-bottom: 20px;
@@ -216,4 +222,52 @@
     }
   }
 
+}
+
+.email-btn {
+  height: 46px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16px;
+  background-color: transparent !important;
+  color: white;
+  padding-left: 20px;
+  &.secondary-btn {
+    padding-left: 20px;
+    color: @black-100;
+    background: @metaplex-primary-color !important;
+    border-color: @metaplex-primary-color !important;
+    box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+    border-radius: 8px;
+    //width: fit-content;
+
+    &:hover,
+    &:focus {
+      background: transparent !important;
+      border-color: @metaplex-primary-color !important;
+      color: @metaplex-primary-color !important;
+    }
+
+    &:disabled,
+    &:disabled &:hover {
+      color: rgba(255, 255, 255, 0.5) !important;
+      background: #1e1e1e !important;
+      border: none;
+    }
+  }
+
+  &.black-btn {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    width: fit-content;
+
+    &:hover,
+    &:focus {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+  }
 }
