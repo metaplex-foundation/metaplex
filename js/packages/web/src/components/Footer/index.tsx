@@ -92,12 +92,48 @@ export const Footer = () => {
     <div className="footer-container">
       <div className="footer-info">
         {footerConf.showShopName ? (
-          <div className="footer-community">
+          <div className="footer-community subscriber-container">
             <div className="sub-header">
-              {LABELS.STORE_NAME} NFT Marketplace
+              {/*LABELS.STORE_NAME*/} Stay up to date
             </div>
-            <div className="footer-link">Powered by Metaplex and Solana</div>
+            {/*<div className="footer-link">Powered by Metaplex and Solana</div>*/}
+            {footerConf.showEmailSubscriber ? (
+          <div className="">
+            <div className="subscriber-text">
+              {footerConf.emailSubscriberText}
+            </div>
+            <NewsLetterForm />
           </div>
+          
+
+        ) : null}
+      <div className="sub-header-community">Join the Community</div>
+      <div className='social-media-bar'>
+              <div img-paddin> <img
+                      className="social-photo img-paddin"
+                      src="/twitter.png"
+                      alt="twitter"
+                    /></div>
+                    <div img-paddin> <img
+                      className="social-photo img-paddin"
+                      src="/instagram.png"
+                      alt="twitter"
+                    /></div>
+                    <div> <img
+                      className="social-photo img-paddin"
+                      src="/discord.png"
+                      alt="twitter"
+                    /></div>
+            </div>
+
+            <div className="logo-paddin"> <img
+                      className="footer-logo"
+                      src="/footer-logo.png"
+                      alt="twitter"
+                    /></div>
+
+          </div>
+          
         ) : null}
         {footerConf.components.map(component => (
           <div className="footer-section-container">
@@ -111,18 +147,11 @@ export const Footer = () => {
             ))}
           </div>
         ))}
-        {footerConf.showEmailSubscriber ? (
-          <div className="footer-section-container subscriber-container">
-            <div className="subscriber-text">
-              {footerConf.emailSubscriberText}
-            </div>
-            <NewsLetterForm />
-          </div>
-        ) : null}
+
       </div>
       <div className="footer-foot">
         <div className="small-body footer-link">
-          2021 {LABELS.STORE_NAME} LLC, All rights reserved
+          2022 {LABELS.STORE_NAME} LLC, All rights reserved
         </div>
       </div>
     </div>
