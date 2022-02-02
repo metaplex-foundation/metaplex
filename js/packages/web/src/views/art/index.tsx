@@ -23,9 +23,9 @@ import { holaSignMetadata } from '../../components/MintModal/sign-meta';
 const META_PROGRAM_ID = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
 
 enum SigningStatus {
-  NOT_DONE,
+  UNVERIFIED,
   PENDING,
-  DONE,
+  VERIFIED,
 }
 
 export const ArtView = () => {
@@ -37,7 +37,7 @@ export const ArtView = () => {
   const { metadataByMetadata } = useMeta();
   const metaDataKey = metadataByMetadata[nft as string];
   const [signingStatus, setSigningStatus] = useState<SigningStatus>(
-    SigningStatus.NOT_DONE,
+    SigningStatus.UNVERIFIED,
   );
   const signingStatusCopy =
     signingStatus === SigningStatus.PENDING
@@ -62,7 +62,7 @@ export const ArtView = () => {
       metadata,
       metaProgramId,
       onComplete: () => {
-        setSigningStatus(SigningStatus.DONE);
+        setSigningStatus(SigningStatus.VERIFIED);
         console.log('sign completed');
       },
       onProgress: status => {
@@ -70,7 +70,7 @@ export const ArtView = () => {
         console.log('sign progress', status);
       },
       onError: (msg: string) => {
-        setSigningStatus(SigningStatus.NOT_DONE);
+        setSigningStatus(SigningStatus.UNVERIFIED);
         throw new Error(msg);
       },
     });
@@ -148,12 +148,12 @@ export const ArtView = () => {
 
   const retrySignAction = (
     <>
-      {signingStatus === SigningStatus.DONE ? (
+      {signingStatus === SigningStatus.VERIFIED ? (
         <p>Validation submitted. Please check back in a few minutes</p>
       ) : (
         <Button
           onClick={retrySigning}
-          disabled={signingStatus !== SigningStatus.NOT_DONE}
+          disabled={signingStatus !== SigningStatus.UNVERIFIED}
         >
           {signingStatusCopy}
         </Button>
