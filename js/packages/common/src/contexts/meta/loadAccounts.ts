@@ -715,6 +715,11 @@ export const pullPage = async (
         tempCache,
         updateTemp,
       );
+
+      for (const collection of collections) {
+        tempCache.metadataByCollection[collection] =
+          tempCache.metadataByMint[collection];
+      }
     }
 
     if (shouldFetchNftPacks) {
