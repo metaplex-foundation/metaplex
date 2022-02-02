@@ -40,7 +40,9 @@ export const ArtView = () => {
     SigningStatus.NOT_DONE,
   );
   const signingStatusCopy =
-    signingStatus === SigningStatus.PENDING ? 'Attempting...' : 'Retry Signing';
+    signingStatus === SigningStatus.PENDING
+      ? 'Attempting...'
+      : 'Retry validating';
 
   const connection = useConnection();
   const art = useArt(nft);
@@ -147,7 +149,7 @@ export const ArtView = () => {
   const retrySignAction = (
     <>
       {signingStatus === SigningStatus.DONE ? (
-        <p>Signing submitted. Please check back in a few minutes</p>
+        <p>Validation submitted. Please check back in a few minutes</p>
       ) : (
         <Button
           onClick={retrySigning}

@@ -3,8 +3,6 @@ import { PublicKey } from '@solana/web3.js';
 const SIGN_META_ENDPOINT = process.env
   .NEXT_PUBLIC_HOLAPLEX_SIGN_META_ENDPOINT as string;
 
-console.log({ SIGN_META_ENDPOINT });
-
 export interface SignMetaParams {
   solanaEndpoint: string;
   metadata: string;
