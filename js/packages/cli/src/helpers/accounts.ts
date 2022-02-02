@@ -121,6 +121,10 @@ export const createCandyMachineV2 = async function (
 ) {
   const candyAccount = Keypair.generate();
   candyData.uuid = uuidFromConfigPubkey(candyAccount.publicKey);
+  
+  if (!candyData.symbol) {
+    throw new Error(`Invalid config, there must be a symbol.`);
+  }
 
   if (!candyData.creators || candyData.creators.length === 0) {
     throw new Error(`Invalid config, there must be at least one creator.`);
