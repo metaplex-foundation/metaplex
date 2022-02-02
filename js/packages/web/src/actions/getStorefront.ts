@@ -94,7 +94,8 @@ const fetchFromSource = async (
           // @ts-ignore
           JSON.stringify(pubkeydenyList),
         );
-        redisClient.expire(denyListCacheKey, 1800); // cache the entire list for an hour
+        redisClient.expire(denyListCacheKey, 300); // cache the entire list for 5 minutes
+
       }
     } catch (error) {
       console.error('failed to fetch denylist', error);
