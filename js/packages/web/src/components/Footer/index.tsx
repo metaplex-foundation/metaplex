@@ -90,7 +90,7 @@ export const Footer = () => {
   );
 
   return (
-    <div className="footer-container">
+    <div className="footer-container" key="footer">
       <div className="footer-info">
         {footerConf.showShopName ? (
           <div className="footer-community subscriber-container">
@@ -110,12 +110,13 @@ export const Footer = () => {
         ) : null}
       <div className="sub-header-community">Join the Community</div>
       <div className='social-media-bar'>
-              <div img-paddin> <img
+              <div> <img
                       className="social-photo img-paddin"
                       src="/twitter.png"
                       alt="twitter"
+                      
                     /></div>
-                    <div img-paddin> <img
+                    <div> <img
                       className="social-photo img-paddin"
                       src="/instagram.png"
                       alt="twitter"
@@ -137,10 +138,10 @@ export const Footer = () => {
           
         ) : null}
         {footerConf.components.map(component => (
-          <div className="footer-section-container">
-            <div className="sub-header">{component.title}</div>
+          <div className="footer-section-container" key={component.title}>
+            <div className="sub-header" key={component.title} >{component.title}</div>
             {component.links.map(link => (
-              <div className="body-text">
+              <div className="body-text" key ={link.label}>
                 <a href={link.url} target="_blank" className="footer-link">
                   {link.label}
                 </a>

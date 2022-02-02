@@ -6,6 +6,17 @@ FROM node:14.17.3-alpine as build
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat git
 
+# Fix for Docker build
+RUN apk update
+RUN apk --no-cache --virtual build-dependencies add \
+    jpeg-dev \
+    cairo-dev \
+    giflib-dev \
+    pango-dev \
+    python3 \
+    make \
+    g++ 
+
 # Set the working directory
 WORKDIR /app
 
