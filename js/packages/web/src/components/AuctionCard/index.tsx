@@ -331,11 +331,19 @@ export const AuctionCard = ({
     );
 
     if (tickSize) {
-      minBid += tickSize.toNumber() / LAMPORTS_PER_SOL;
+      minBid += fromLamports(tickSize) / LAMPORTS_PER_SOL;
     }
   }
 
-  const belowMinBid = value && minBid && value < minBid;
+  const isFirstBid = !auctionView.auction.info.bidState.bids.length;
+
+  const minNextBid = isFirstBid
+    ? minBid.toFixed(2)
+    : !tickSize
+    ? (minBid + 0.01).toFixed(2)
+    : (minBid + fromLamports(tickSize)).toFixed(2);
+
+  const belowMinBid = value && minBid && value < parseFloat(minNextBid);
 
   const biddingPower =
     balance.balance +
@@ -799,7 +807,7 @@ export const AuctionCard = ({
             onChange={setValue}
             precision={2}
             formatter={value => (value ? `◎ ${value}` : '')}
-            placeholder={`Bid ${minBid} SOL or more`}
+            placeholder={`Bid ${minNextBid} SOL or more`}
           />
         </Col>
         <Col flex="0 0 auto">
@@ -861,14 +869,14 @@ export const AuctionCard = ({
                   bidding power is {biddingPower} SOL.
                 </Text>
               )}
+              {value !== undefined && !!belowMinBid && (
+                <Text className="danger" type="danger">
+                  The bid must be at least {minNextBid} SOL.
+                </Text>
+              )}
               {!!value && tickSizeInvalid && tickSize && (
                 <Text className="danger" type="danger">
                   Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
-                </Text>
-              )}
-              {value !== undefined && !!belowMinBid && (
-                <Text className="danger" type="danger">
-                  The bid must be at least {minBid} SOL.
                 </Text>
               )}
               {gapBidInvalid && (
