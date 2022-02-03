@@ -6,7 +6,6 @@ import {
 import {
   createClient,
   RedisClientOptions,
-  RedisClientType,
   RedisModules,
   RedisScripts,
 } from 'redis';
@@ -34,10 +33,8 @@ const fetchdenyListCacheKey = async () => {
   return await res.json();
 };
 
-const denyListCacheKey = 'ownerdenyListV1';
 const fetchFromSource = async (
   subdomain: string,
-  redisClient: RedisClientType,
 ): Promise<Storefront | null> => {
   try {
     const response = await fetch(`${ARWEAVE_URL}/graphql`, {
@@ -82,30 +79,6 @@ const fetchFromSource = async (
       return acc;
     }, {});
 
-    let pubkeydenyList: Array<String> = [];
-    try {
-      const cachedValue = (await redisClient.get(denyListCacheKey)) || '[]';
-      pubkeydenyList = JSON.parse(cachedValue) || [];
-
-      if (!pubkeydenyList.length) {
-        const resp = await fetchdenyListCacheKey();
-        pubkeydenyList = resp.result;
-        redisClient.set(
-          denyListCacheKey,
-          // @ts-ignore
-          JSON.stringify(pubkeydenyList),
-        );
-        redisClient.expire(denyListCacheKey, 300); // cache the entire list for 5 minutes
-
-      }
-    } catch (error) {
-      console.error('failed to fetch denylist', error);
-    }
-
-    if (pubkeydenyList.includes(values['solana:pubkey'])) {
-      return null;
-    }
-
     const storefront = {
       subdomain,
       pubkey: values['solana:pubkey'],
@@ -141,6 +114,31 @@ const fetchFromSource = async (
   }
 };
 
+const denyListCacheKey = 'ownerdenyListV1';
+
+const denyList = async (client: any) => {
+  let pubkeydenyList: Array<String> = [];
+  try {
+    const cachedValue = (await client.get(denyListCacheKey)) || '[]';
+    pubkeydenyList = JSON.parse(cachedValue) || [];
+
+    if (!pubkeydenyList.length) {
+      const resp = await fetchdenyListCacheKey();
+      pubkeydenyList = resp.result;
+      client.set(
+        denyListCacheKey,
+        // @ts-ignore
+        JSON.stringify(pubkeydenyList),
+      );
+      client.expire(denyListCacheKey, 300); // cache the entire list for 5 minutes
+    }
+  } catch (error) {
+    console.error('failed to fetch denylist', error);
+  }
+
+  return pubkeydenyList;
+};
+
 export const getStorefront = async (
   subdomain: string,
 ): Promise<Storefront | undefined> => {
@@ -173,14 +171,19 @@ export const getStorefront = async (
   const lastSavedAt = moment(timestamp);
 
   const duration = moment.duration(now.diff(lastSavedAt)).as('minutes');
+  const denies = await denyList(client);
 
   if (duration < 2 && cached) {
+    if (denies.includes(cached.pubkey)) {
+      await client.quit();
+      return undefined;
+    }
+
     await client.quit();
     return cached;
   }
 
-  // @ts-ignore
-  const source = await fetchFromSource(subdomain, client);
+  const source = await fetchFromSource(subdomain);
 
   if (source) {
     await client
@@ -188,6 +191,11 @@ export const getStorefront = async (
       .set(subdomain, JSON.stringify(source))
       .set(`${subdomain}-timestamp`, now.format())
       .exec();
+
+    if (denies.includes(source.pubkey)) {
+      await client.quit();
+      return undefined;
+    }
 
     await client.quit();
     return source;
