@@ -335,10 +335,20 @@ export const AuctionCard = ({
     }
   }
 
+  const isFirstBid = !auctionView.auction.info.bidState.bids.length;
+
   const belowMinBid =
     value &&
     minBid &&
-    value * multiplier < parseFloat(minBid.toFixed(2)) * multiplier;
+    (isFirstBid
+      ? value * multiplier < parseFloat(minBid.toFixed(2)) * multiplier
+      : value * multiplier <= parseFloat(minBid.toFixed(2)) * multiplier);
+
+  const minNextBid = isFirstBid
+    ? minBid.toFixed(2)
+    : !tickSize
+    ? parseFloat(minBid.toFixed(2)) + 0.01
+    : parseFloat(minBid.toFixed(2)) + fromLamports(tickSize);
 
   const biddingPower =
     balance.balance +
@@ -802,7 +812,7 @@ export const AuctionCard = ({
             onChange={setValue}
             precision={2}
             formatter={value => (value ? `◎ ${value}` : '')}
-            placeholder={`Bid ${minBid.toFixed(2)} SOL or more`}
+            placeholder={`Bid ${minNextBid} SOL or more`}
           />
         </Col>
         <Col flex="0 0 auto">
@@ -871,7 +881,7 @@ export const AuctionCard = ({
               )}
               {value !== undefined && !!belowMinBid && (
                 <Text className="danger" type="danger">
-                  The bid must be at least {minBid.toFixed(2)} SOL.
+                  The bid must be at least {minNextBid} SOL.
                 </Text>
               )}
               {gapBidInvalid && (
