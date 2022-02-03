@@ -121,7 +121,7 @@ module.exports = {
         },
       ],
       lg: [
-        '18px',
+        '20px',
         {
           label: 'Text Large',
           lineHeight: '32px',

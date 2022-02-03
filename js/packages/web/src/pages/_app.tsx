@@ -3,6 +3,7 @@ import Head from 'next/head';
 
 import 'remixicon/fonts/remixicon.css';
 import '../styles/globals.less';
+import '../styles/overrides.less';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

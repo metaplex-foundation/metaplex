@@ -27,6 +27,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
         if (!menuItem.subMenu) {
           return (
             <button
+              key={index}
               className={CN(
                 'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-50 rounded-[4px]',
               )}
