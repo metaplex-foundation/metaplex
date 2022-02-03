@@ -19,6 +19,7 @@ import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks } from '../helpers/various';
+import { nftStorageUpload } from '../helpers/upload/nft-storage';
 
 export async function uploadV2({
   files,
@@ -28,6 +29,7 @@ export async function uploadV2({
   storage,
   retainAuthority,
   mutable,
+  nftStorageKey,
   ipfsCredentials,
   awsS3Bucket,
   batchSize,
@@ -51,6 +53,7 @@ export async function uploadV2({
   storage: string;
   retainAuthority: boolean;
   mutable: boolean;
+  nftStorageKey: string;
   ipfsCredentials: ipfsCreds;
   awsS3Bucket: string;
   batchSize: number;
@@ -100,13 +103,7 @@ export async function uploadV2({
     : undefined;
 
   if (!cacheContent.program.uuid) {
-    const firstAssetKey = dedupedAssetKeys[0];
-    const firstAssetManifest = getAssetManifest(
-      dirname,
-      firstAssetKey.index.includes('json')
-        ? firstAssetKey.index
-        : `${firstAssetKey.index}.json`,
-    );
+    const firstAssetManifest = getAssetManifest(dirname, '0.json');
 
     try {
       const remainingAccounts = [];
@@ -246,6 +243,13 @@ export async function uploadV2({
               let link, imageLink;
               try {
                 switch (storage) {
+                  case StorageType.NftStorage:
+                    [link, imageLink] = await nftStorageUpload(
+                      nftStorageKey,
+                      image,
+                      manifestBuffer,
+                    );
+                    break;
                   case StorageType.Ipfs:
                     [link, imageLink] = await ipfsUpload(
                       ipfsCredentials,
@@ -442,11 +446,12 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
     fs.readFileSync(manifestPath).toString(),
   );
   manifest.image = manifest.image.replace('image', assetIndex);
-  if (manifest.properties?.files?.length > 0) {
-    manifest.properties.files[0].uri =
-      manifest.properties.files[0]?.uri?.replace('image', assetIndex);
-  }
-
+  // if (manifest.properties?.files?.length > 0) {
+  //   manifest.properties.files[0].uri = manifest.properties.files[0]?.uri?.replace(
+  //     'image',
+  //     assetIndex,
+  //   );
+  // }
   return manifest;
 }
 
