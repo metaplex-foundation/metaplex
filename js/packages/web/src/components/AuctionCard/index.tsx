@@ -337,18 +337,15 @@ export const AuctionCard = ({
 
   const isFirstBid = !auctionView.auction.info.bidState.bids.length;
 
-  const belowMinBid =
-    value &&
-    minBid &&
-    (isFirstBid
-      ? value * multiplier < parseFloat(minBid.toFixed(2)) * multiplier
-      : value * multiplier <= parseFloat(minBid.toFixed(2)) * multiplier);
-
   const minNextBid = isFirstBid
     ? minBid.toFixed(2)
     : !tickSize
-    ? parseFloat(minBid.toFixed(2)) + 0.01
-    : parseFloat(minBid.toFixed(2)) + fromLamports(tickSize);
+    ? (minBid + 0.01).toFixed(2)
+    : (minBid + fromLamports(tickSize)).toFixed(2);
+
+  const belowMinBid = value && minBid && value < parseFloat(minNextBid);
+
+  console.log('joe', value, parseFloat(minNextBid));
 
   const biddingPower =
     balance.balance +
@@ -874,14 +871,14 @@ export const AuctionCard = ({
                   bidding power is {biddingPower} SOL.
                 </Text>
               )}
-              {!!value && tickSizeInvalid && tickSize && (
-                <Text className="danger" type="danger">
-                  Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
-                </Text>
-              )}
               {value !== undefined && !!belowMinBid && (
                 <Text className="danger" type="danger">
                   The bid must be at least {minNextBid} SOL.
+                </Text>
+              )}
+              {!!value && tickSizeInvalid && tickSize && (
+                <Text className="danger" type="danger">
+                  Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
                 </Text>
               )}
               {gapBidInvalid && (
