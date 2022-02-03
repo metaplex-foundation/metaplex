@@ -35,7 +35,7 @@ export const ENDPOINTS = [
   },
   {
     name: "devnet" as ENV,
-    endpoint: "https://api.devnet.solana.com",
+    endpoint: "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/",
     ChainId: ChainId.Devnet,
   },
 ];
