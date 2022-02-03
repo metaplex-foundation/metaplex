@@ -345,8 +345,6 @@ export const AuctionCard = ({
 
   const belowMinBid = value && minBid && value < parseFloat(minNextBid);
 
-  console.log('joe', value, parseFloat(minNextBid));
-
   const biddingPower =
     balance.balance +
     (auctionView.myBidderMetadata &&
