@@ -242,7 +242,7 @@ const CategoryStep = (props: {
         <h2>Create a new item</h2>
         <p>
           First time creating on Metaplex?{' '}
-          <a href="https://docs.metaplex.com/create-store/sell" target="_blank" rel="noreferrer">
+          <a href="https://docs.metaplex.com/storefront/create" target="_blank" rel="noreferrer">
             Read our creators’ guide.
           </a>
         </p>
