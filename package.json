@@ -1,5 +1,11 @@
 {
   "dependencies": {
     "gulp-concat": "^2.6.1"
-  }
+  },
+  "name": "metaplex",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/william7829/metaplex.git",
+  "author": "william7829 <92896220+william7829@users.noreply.github.com>",
+  "license": "MIT"
 }
