@@ -22,7 +22,7 @@ import {
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 
 import {
-  useWallet,
+  useAnchorWallet,
 } from "@solana/wallet-adapter-react";
 import {
   Keypair,
@@ -279,7 +279,7 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
 
 export const Create = () => {
   const connection = useConnection();
-  const wallet = useWallet();
+  const wallet = useAnchorWallet();
 
   // claim state
   const [claimMethod, setClaimMethod] = React.useState(localStorage.getItem("claimMethod") || "");
@@ -328,7 +328,7 @@ export const Create = () => {
     setClaimURLs([]);
     setResponses([]);
 
-    if (!wallet.connected || wallet.publicKey === null) {
+    if (!wallet) {
       throw new Error(`Wallet not connected`);
     }
 
@@ -685,7 +685,7 @@ export const Create = () => {
   const createAirdrop = (
     <Box sx={{ position: "relative" }}>
     <Button
-      disabled={!wallet.connected || !commMethod || !filename || loading}
+      disabled={!wallet || !commMethod || !filename || loading}
       variant="contained"
       style={{ width: "100%" }}
       onClick={(e) => {

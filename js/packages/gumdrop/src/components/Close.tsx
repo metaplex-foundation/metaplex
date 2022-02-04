@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 
 import {
-  useWallet,
+  useAnchorWallet,
 } from "@solana/wallet-adapter-react";
 import {
   Keypair,
@@ -36,7 +36,7 @@ import {
 
 export const Close = () => {
   const connection = useConnection();
-  const wallet = useWallet();
+  const wallet = useAnchorWallet();
 
   const [baseKey, setBaseKey] = React.useState("");
   const [claimMethod, setClaimMethod] = React.useState(localStorage.getItem("claimMethod") || "transfer");
@@ -48,7 +48,7 @@ export const Close = () => {
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
 
-    if (!wallet.connected || wallet.publicKey === null) {
+    if (!wallet || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
     }
 
@@ -176,7 +176,7 @@ export const Close = () => {
       {claimMethod !== "" && claimData(claimMethod)}
       <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || !baseKey || loading}
+        disabled={!wallet || !baseKey || loading}
         variant="contained"
         style={{ width: "100%" }}
         onClick={(e) => {

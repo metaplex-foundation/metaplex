@@ -1,4 +1,4 @@
-import { WalletAdapter, WalletError } from "@solana/wallet-adapter-base";
+import { SignerWalletAdapter, WalletError } from "@solana/wallet-adapter-base";
 import {
   useWallet,
   WalletProvider as BaseWalletProvider,
@@ -7,6 +7,7 @@ import {
   getLedgerWallet,
   getMathWallet,
   getPhantomWallet,
+  getSlopeWallet,
   getSolflareWallet,
   getSolletWallet,
   getSolongWallet,
@@ -178,6 +179,7 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
           uxMode: "redirect",
         },
       }),
+      getSlopeWallet(),
       getLedgerWallet(),
       getSolongWallet(),
       getMathWallet(),
@@ -202,6 +204,6 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export type WalletSigner = Pick<
-  WalletAdapter,
+  SignerWalletAdapter,
   "publicKey" | "signTransaction" | "signAllTransactions"
 >;

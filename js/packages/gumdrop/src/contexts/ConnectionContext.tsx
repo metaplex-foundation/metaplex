@@ -218,7 +218,7 @@ export const sendTransactionWithRetry = async (
   }
   if (!includesFeePayer) {
     try {
-      transaction = await wallet.signTransaction(transaction);
+      transaction = await (wallet as any).signTransaction(transaction);
     } catch {
       return "Failed to sign transaction";
     }

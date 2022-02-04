@@ -19,9 +19,10 @@ import {
 } from "@mui/material";
 
 import {
-  useWallet,
+  useAnchorWallet,
 } from "@solana/wallet-adapter-react";
 import {
+  AccountMeta,
   Connection as RPCConnection,
   Keypair,
   PublicKey,
@@ -40,9 +41,9 @@ import {
 import {
   notify,
 } from "@oyster/common";
-import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
+import * as anchor from '@project-serum/anchor';
 
 import {
   useConnection,
@@ -57,6 +58,7 @@ import {
 import {
   getCandyMachine,
   getCandyMachineAddress,
+  getATAChecked,
   getEdition,
   getEditionMarkerPda,
   getMetadata,
@@ -69,7 +71,6 @@ import {
 import {
   chunk,
 } from "../utils/claimant";
-import { coder } from "../utils/merkleDistributor";
 
 const walletKeyOrPda = async (
   walletKey : PublicKey,
@@ -106,9 +107,13 @@ const walletKeyOrPda = async (
   }
 }
 
+type ClaimInstructions = {
+  setup: Array<TransactionInstruction> | null,
+  claim: Array<TransactionInstruction>,
+};
 
 const buildMintClaim = async (
-  connection : RPCConnection,
+  program : anchor.Program,
   walletKey : PublicKey,
   distributorKey : PublicKey,
   distributorInfo : any,
@@ -118,14 +123,14 @@ const buildMintClaim = async (
   amount : number,
   index : number,
   pin : BN | null,
-) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
+) : Promise<[ClaimInstructions, Array<Buffer>, Array<Keypair>]> => {
   let tokenAccKey: PublicKey;
   try {
     tokenAccKey = new PublicKey(tokenAcc);
   } catch (err) {
     throw new Error(`Invalid tokenAcc key ${err}`);
   }
-  const distTokenAccount = await connection.getAccountInfo(tokenAccKey);
+  const distTokenAccount = await program.provider.connection.getAccountInfo(tokenAccKey);
   if (distTokenAccount === null) {
     throw new Error(`Could not fetch distributor token account`);
   }
@@ -174,7 +179,7 @@ const buildMintClaim = async (
 
   const setup : Array<TransactionInstruction> = [];
 
-  if (await connection.getAccountInfo(walletTokenKey) === null) {
+  if (await program.provider.connection.getAccountInfo(walletTokenKey) === null) {
     setup.push(Token.createAssociatedTokenAccountInstruction(
         SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -188,34 +193,31 @@ const buildMintClaim = async (
   const temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
       ? walletKey : distributorInfo.temporal;
 
-  const claimAirdrop = new TransactionInstruction({
-      programId: GUMDROP_DISTRIBUTOR_ID,
-      keys: [
-          { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
-          { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
-          { pubkey: tokenAccKey             , isSigner: false , isWritable: true  } ,
-          { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
-          { pubkey: temporalSigner          , isSigner: true  , isWritable: false } ,
-          { pubkey: walletKey               , isSigner: true  , isWritable: false } ,  // payer
-          { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
-          { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
-      ],
-      data: Buffer.from([
-        ...Buffer.from(sha256.digest("global:claim")).slice(0, 8),
-        ...new BN(cbump).toArray("le", 1),
-        ...new BN(index).toArray("le", 8),
-        ...new BN(amount).toArray("le", 8),
-        ...secret.toBuffer(),
-        ...new BN(proof.length).toArray("le", 4),
-        ...Buffer.concat(proof),
-      ])
-  })
+  const claimAirdrop = await program.instruction.claim(
+    cbump,
+    new BN(index),
+    new BN(amount),
+    secret,
+    proof,
+    {
+      accounts: {
+        distributor: distributorKey,
+        claimStatus,
+        from: tokenAccKey,
+        to: walletTokenKey,
+        temporal: temporalSigner,
+        payer: walletKey,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      }
+    }
+  );
 
-  return [[...setup, claimAirdrop], pdaSeeds, []];
+  return [ { setup, claim: [claimAirdrop] }, pdaSeeds, []];
 }
 
 const buildCandyClaim = async (
-  connection : RPCConnection,
+  program : anchor.Program,
   walletKey : PublicKey,
   distributorKey : PublicKey,
   distributorInfo : any,
@@ -226,7 +228,7 @@ const buildCandyClaim = async (
   amount : number,
   index : number,
   pin : BN | null,
-) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
+) : Promise<[ClaimInstructions, Array<Buffer>, Array<Keypair>]> => {
 
   let configKey : PublicKey;
   try {
@@ -277,16 +279,15 @@ const buildCandyClaim = async (
   let temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
       ? walletKey : distributorInfo.temporal;
 
-  const setup : Array<TransactionInstruction> = [];
-
+  const connection = program.provider.connection;
   const claimCountAccount = await connection.getAccountInfo(claimCount);
   let nftsAlreadyMinted = 0;
   if (claimCountAccount === null) {
     // nothing claimed yet
   } else {
     // TODO: subtract already minted?...
-    const claimAccountInfo = coder.accounts.decode(
-      "ClaimCount", claimCountAccount.data);
+    const claimAccountInfo = program.coder.accounts.decode(
+      "ClaimProof", claimCountAccount.data);
     nftsAlreadyMinted = claimAccountInfo.count;
     if (claimAccountInfo.claimant.equals(walletKey)) {
       // we already proved this claim and verified the OTP once, contract knows
@@ -310,82 +311,77 @@ const buildCandyClaim = async (
   const candyMachine = await getCandyMachine(connection, candyMachineKey);
   console.log("Candy Machine", candyMachine);
 
-  const candyMachineMints : Array<Keypair> = [];
 
-  const [instrs, mint] = await buildSingleCandyMint(
-    connection,
-    walletKey,
-    distributorKey,
-    distributorWalletKey,
-    claimCount,
-    temporalSigner,
-    configKey,
-    candyMachineKey,
-    candyMachine.wallet,
-    Buffer.from([
-      ...new BN(wbump).toArray("le", 1),
-      ...new BN(cbump).toArray("le", 1),
-      ...new BN(index).toArray("le", 8),
-      ...new BN(amount).toArray("le", 8),
-      ...secret.toBuffer(),
-      ...new BN(proof.length).toArray("le", 4),
-      ...Buffer.concat(proof),
-    ]),
-  );
-  candyMachineMints.push(mint);
-  setup.push(...instrs);
-
-  return [setup, pdaSeeds, candyMachineMints];
-}
-
-const buildSingleCandyMint = async (
-  connection : RPCConnection,
-  walletKey : PublicKey,
-  distributorKey : PublicKey,
-  distributorWalletKey : PublicKey,
-  claimCount : PublicKey,
-  temporalSigner : PublicKey,
-  configKey : PublicKey,
-  candyMachineKey : PublicKey,
-  candyMachineWallet : PublicKey,
-  data : Buffer,
-) : Promise<[Array<TransactionInstruction>, Keypair]> => {
   const candyMachineMint = Keypair.generate();
   const candyMachineMetadata = await getMetadata(candyMachineMint.publicKey);
   const candyMachineMaster = await getEdition(candyMachineMint.publicKey);
 
-  const setup : Array<TransactionInstruction> = [];
-  await createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, setup);
-  setup.push(new TransactionInstruction({
-      programId: GUMDROP_DISTRIBUTOR_ID,
-      keys: [
-          { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
-          { pubkey: distributorWalletKey      , isSigner: false , isWritable: true  } ,
-          { pubkey: claimCount                , isSigner: false , isWritable: true  } ,
-          { pubkey: temporalSigner            , isSigner: true  , isWritable: false } ,
-          { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // payer
+  let extraKeys : Array<AccountMeta> = [];
+  if (candyMachine.tokenMint) {
+    const walletATA = await getATAChecked(
+        walletKey, connection, candyMachine.tokenMint, candyMachine.data.price);
+    extraKeys = [
+      // token account
+      { pubkey: walletATA, isSigner: false, isWritable: true },
+      // transfer authority
+      { pubkey: walletKey, isSigner: true, isWritable: false },
+    ];
+  }
 
-          { pubkey: configKey                 , isSigner: false , isWritable: true  } ,
-          { pubkey: candyMachineKey           , isSigner: false , isWritable: true  } ,
-          { pubkey: candyMachineWallet        , isSigner: false , isWritable: true  } ,
-          { pubkey: candyMachineMint.publicKey, isSigner: false , isWritable: true  } ,
-          { pubkey: candyMachineMetadata      , isSigner: false , isWritable: true  } ,
-          { pubkey: candyMachineMaster        , isSigner: false , isWritable: true  } ,
+  const claimPrefix = Buffer.from("ClaimCount");
+  const nonce = Buffer.from([]);
+  const setup = claimCountAccount !== null ? null : await program.instruction.proveClaim(
+    claimPrefix,
+    cbump,
+    new BN(index),
+    new BN(amount),
+    secret,
+    configKey,
+    nonce,
+    proof,
+    {
+      accounts: {
+        distributor: distributorKey,
+        claimProof: claimCount,
+        temporal: temporalSigner,
+        payer: walletKey,
+        systemProgram: SystemProgram.programId,
+      }
+    }
+  );
 
-          { pubkey: SystemProgram.programId   , isSigner: false , isWritable: false } ,
-          { pubkey: TOKEN_PROGRAM_ID          , isSigner: false , isWritable: false } ,
-          { pubkey: TOKEN_METADATA_PROGRAM_ID , isSigner: false , isWritable: false } ,
-          { pubkey: CANDY_MACHINE_ID          , isSigner: false , isWritable: false } ,
-          { pubkey: SYSVAR_RENT_PUBKEY        , isSigner: false , isWritable: false } ,
-          { pubkey: SYSVAR_CLOCK_PUBKEY       , isSigner: false , isWritable: false } ,
-      ],
-      data: Buffer.from([
-        ...Buffer.from(sha256.digest("global:claim_candy")).slice(0, 8),
-        ...data,
-      ])
-  }));
+  // candy machine mints fit in a single transaction
+  const claim: Array<TransactionInstruction> = [];
+  await createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, claim);
+  // TODO: anchorProgram
+  claim.push(await program.instruction.claimCandyProven(
+    wbump,
+    cbump,
+    new BN(index),
+    {
+      accounts: {
+        distributor: distributorKey,
+        distributorWallet: distributorWalletKey,
+        claimProof: claimCount,
+        payer: walletKey,
+        candyMachineConfig: configKey,
+        candyMachine: candyMachineKey,
+        candyMachineWallet: candyMachine.wallet,
+        candyMachineMint: candyMachineMint.publicKey,
+        candyMachineMetadata,
+        candyMachineMasterEdition: candyMachineMaster,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        candyMachineProgram: CANDY_MACHINE_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+        clock: SYSVAR_CLOCK_PUBKEY,
+      },
+      remainingAccounts: extraKeys,
+    }
+  ));
 
-  return [setup, candyMachineMint];
+  return [{ setup: setup === null ? null : [setup], claim }, pdaSeeds, [candyMachineMint]];
 }
 
 const createMintAndAccount = async (
@@ -443,7 +439,7 @@ const createMintAndAccount = async (
 }
 
 const buildEditionClaim = async (
-  connection : RPCConnection,
+  program : anchor.Program,
   walletKey : PublicKey,
   distributorKey : PublicKey,
   distributorInfo : any,
@@ -454,7 +450,7 @@ const buildEditionClaim = async (
   amount : number,
   index : number,
   pin : BN | null,
-) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
+) : Promise<[ClaimInstructions, Array<Buffer>, Array<Keypair>]> => {
 
   let masterMintKey : PublicKey;
   try {
@@ -498,7 +494,7 @@ const buildEditionClaim = async (
   const temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
       ? walletKey : distributorInfo.temporal;
 
-  const claimCountAccount = await connection.getAccountInfo(claimCount);
+  const claimCountAccount = await program.provider.connection.getAccountInfo(claimCount);
   if (claimCountAccount !== null) {
     throw new Error(`This edition was already claimed`);
   }
@@ -511,7 +507,7 @@ const buildEditionClaim = async (
   const newEdition = await getEdition(newMint.publicKey);
   const masterEdition = await getEdition(masterMintKey);
 
-  await createMintAndAccount(connection, walletKey, newMint.publicKey, setup);
+  await createMintAndAccount(program.provider.connection, walletKey, newMint.publicKey, setup);
 
   const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
     [
@@ -524,47 +520,42 @@ const buildEditionClaim = async (
 
   const editionMarkKey = await getEditionMarkerPda(masterMintKey, new BN(edition));
 
-  setup.push(new TransactionInstruction({
-      programId: GUMDROP_DISTRIBUTOR_ID,
-      keys: [
-          { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
-          { pubkey: claimCount                , isSigner: false , isWritable: true  } ,
-          { pubkey: temporalSigner            , isSigner: true  , isWritable: false } ,
-          { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // payer
+  const claim = await program.instruction.claimEdition(
+    cbump,
+    new BN(index),
+    new BN(amount),
+    new BN(edition),
+    secret,
+    proof,
+    {
+      accounts: {
+        distributor: distributorKey,
+        claimCount,
+        temporal: temporalSigner,
+        payer: walletKey,
+        metadataNewMetadata: newMetadataKey,
+        metadataNewEdition: newEdition,
+        metadataMasterEdition: masterEdition,
+        metadataNewMint: newMint.publicKey,
+        metadataEditionMarkPda: editionMarkKey,
+        metadataNewMintAuthority: walletKey,
+        metadataMasterTokenAccount: distributorTokenKey,
+        metadataNewUpdateAuthority: walletKey,
+        metadataMasterMetadata: masterMetadataKey,
+        metadataMasterMint: masterMintKey,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+      }
+    }
+  );
 
-          { pubkey: newMetadataKey            , isSigner: false , isWritable: true  } ,
-          { pubkey: newEdition                , isSigner: false , isWritable: true  } ,
-          { pubkey: masterEdition             , isSigner: false , isWritable: true  } ,
-          { pubkey: newMint.publicKey         , isSigner: false , isWritable: true  } ,
-          { pubkey: editionMarkKey            , isSigner: false , isWritable: true  } ,
-          { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // `newMint` auth
-          { pubkey: distributorTokenKey       , isSigner: false , isWritable: false } ,
-          { pubkey: walletKey                 , isSigner: false , isWritable: false } , // new update auth
-          { pubkey: masterMetadataKey         , isSigner: false , isWritable: false } ,
-          { pubkey: masterMintKey             , isSigner: false , isWritable: false } ,
-
-          { pubkey: SystemProgram.programId   , isSigner: false , isWritable: false } ,
-          { pubkey: TOKEN_PROGRAM_ID          , isSigner: false , isWritable: false } ,
-          { pubkey: TOKEN_METADATA_PROGRAM_ID , isSigner: false , isWritable: false } ,
-          { pubkey: SYSVAR_RENT_PUBKEY        , isSigner: false , isWritable: false } ,
-      ],
-      data: Buffer.from([
-        ...Buffer.from(sha256.digest("global:claim_edition")).slice(0, 8),
-        ...new BN(cbump).toArray("le", 1),
-        ...new BN(index).toArray("le", 8),
-        ...new BN(amount).toArray("le", 8),
-        ...new BN(edition).toArray("le", 8),
-        ...secret.toBuffer(),
-        ...new BN(proof.length).toArray("le", 4),
-        ...Buffer.concat(proof),
-      ])
-  }));
-
-  return [setup, pdaSeeds, [newMint]];
+  return [{ setup, claim: [claim] }, pdaSeeds, [newMint]];
 }
 
 const fetchDistributor = async (
-  connection : RPCConnection,
+  program : anchor.Program,
   distributorStr : string,
 ) => {
   let key;
@@ -573,25 +564,17 @@ const fetchDistributor = async (
   } catch (err) {
     throw new Error(`Invalid distributor key ${err}`);
   }
-  const account = await connection.getAccountInfo(key);
-  if (account === null) {
-    throw new Error(`Could not fetch distributor ${distributorStr}`);
-  }
-  if (!account.owner.equals(GUMDROP_DISTRIBUTOR_ID)) {
-    const ownerStr = account.owner.toBase58();
-    throw new Error(`Invalid distributor owner ${ownerStr}`);
-  }
-  const info = coder.accounts.decode("MerkleDistributor", account.data);
+  const info = await program.account.merkleDistributor.fetch(key);
   return [key, info];
 };
 
 const fetchNeedsTemporalSigner = async (
-  connection : RPCConnection,
+  program : anchor.Program,
   distributorStr : string,
   indexStr : string,
   claimMethod : string,
 ) => {
-  const [key, info] = await fetchDistributor(connection, distributorStr);
+  const [key, info] = await fetchDistributor(program, distributorStr);
   if (!info.temporal.equals(GUMDROP_TEMPORAL_SIGNER)) {
     // default pubkey or program itself (distribution through wallets)
     return false;
@@ -608,7 +591,7 @@ const fetchNeedsTemporalSigner = async (
     // not check the existing temporal signer anymore since presumably
     // they have already verified the OTP. So we need to fetch the temporal
     // signer if it is null
-    const claimCountAccount = await connection.getAccountInfo(claimCount);
+    const claimCountAccount = await program.provider.connection.getAccountInfo(claimCount);
     return claimCountAccount === null;
   } else {
     // default to need one
@@ -627,7 +610,31 @@ export const Claim = (
   props : RouteComponentProps<ClaimProps>,
 ) => {
   const connection = useConnection();
-  const wallet = useWallet();
+  const wallet = useAnchorWallet();
+
+  const [program, setProgram] = React.useState<anchor.Program | null>(null);
+
+  React.useEffect(() => {
+    if (!wallet) {
+      return;
+    }
+
+    const wrap = async () => {
+      try {
+        const provider = new anchor.Provider(connection, wallet, {
+          preflightCommitment: 'recent',
+        });
+        const idl = await anchor.Program.fetchIdl(GUMDROP_DISTRIBUTOR_ID, provider);
+        if (!idl) throw new Error('something went wrong');
+
+        const program = new anchor.Program(idl, GUMDROP_DISTRIBUTOR_ID, provider);
+        setProgram(program);
+      } catch (err) {
+        console.error('Failed to fetch IDL', err);
+      }
+    };
+    wrap();
+  }, [wallet]);
 
   let query = props.location.search;
   if (query && query.length > 0) {
@@ -682,14 +689,15 @@ export const Claim = (
   React.useEffect(() => {
     const wrap = async () => {
       try {
+        if (!program) return;
         setNeedsTemporalSigner(await fetchNeedsTemporalSigner(
-          connection, distributor, indexStr, claimMethod));
+          program, distributor, indexStr, claimMethod));
       } catch {
         // TODO: log?
       }
     };
     wrap();
-  }, [connection, distributor, indexStr, claimMethod]);
+  }, [program, distributor, indexStr, claimMethod]);
 
   const lambdaAPIEndpoint = "https://{PLACEHOLDER-API-ID}.execute-api.us-east-2.amazonaws.com/send-OTP";
 
@@ -698,7 +706,7 @@ export const Claim = (
   const sendOTP = async (e : React.SyntheticEvent) => {
     e.preventDefault();
 
-    if (!wallet.connected || wallet.publicKey === null) {
+    if (!wallet || !program) {
       throw new Error(`Wallet not connected`);
     }
 
@@ -722,7 +730,7 @@ export const Claim = (
 
     // TODO: use cached?
     const [distributorKey, distributorInfo] =
-        await fetchDistributor(connection, distributor);
+        await fetchDistributor(program, distributor);
 
     console.log("Distributor", distributorInfo);
 
@@ -737,13 +745,13 @@ export const Claim = (
     if (claimMethod === "candy") {
       console.log("Building candy claim");
       [instructions, pdaSeeds, extraSigners] = await buildCandyClaim(
-        connection, wallet.publicKey, distributorKey, distributorInfo,
+        program, wallet.publicKey, distributorKey, distributorInfo,
         candyConfig, candyUUID,
         proof, handle, amount, index, pin
       );
     } else if (claimMethod === "transfer") {
       [instructions, pdaSeeds, extraSigners] = await buildMintClaim(
-        connection, wallet.publicKey, distributorKey, distributorInfo,
+        program, wallet.publicKey, distributorKey, distributorInfo,
         tokenAcc,
         proof, handle, amount, index, pin
       );
@@ -753,7 +761,7 @@ export const Claim = (
         throw new Error(`Could not parse edition ${editionStr}`);
       }
       [instructions, pdaSeeds, extraSigners] = await buildEditionClaim(
-        connection, wallet.publicKey, distributorKey, distributorInfo,
+        program, wallet.publicKey, distributorKey, distributorInfo,
         masterMint, edition,
         proof, handle, amount, index, pin
       );
@@ -774,26 +782,30 @@ export const Claim = (
           if (key.isSigner)
             signers.add(key.pubkey);
       }
-      return signers;
+      return [...signers];
+    };
+
+    const partialSignExtra = (tx : Transaction, expected: Array<PublicKey>) => {
+      const matching = extraSigners.filter(kp => expected.find(p => p.equals(kp.publicKey)));
+      if (matching.length > 0) {
+        tx.partialSign(...matching);
+      }
     };
 
     const recentBlockhash = (await connection.getRecentBlockhash("singleGossip")).blockhash;
     let setupTx : Transaction | null = null;
-    if (instructions.length > 1) {
+    if (instructions.setup !== null && instructions.setup.length !== 0) {
       setupTx = new Transaction({
         feePayer: wallet.publicKey,
         recentBlockhash,
       });
 
-      const setupInstrs = instructions.slice(0, -1);
+      const setupInstrs = instructions.setup;
       const setupSigners = signersOf(setupInstrs);
-      console.log(`Expecting the following setup signers: ${[...setupSigners].map(s => s.toBase58())}`);
+      console.log(`Expecting the following setup signers: ${setupSigners.map(s => s.toBase58())}`);
       setupTx.add(...setupInstrs);
       setupTx.setSigners(...setupSigners);
-
-      if (extraSigners.length > 0) {
-        setupTx.partialSign(...extraSigners);
-      }
+      partialSignExtra(setupTx, setupSigners);
     }
 
     const claimTx = new Transaction({
@@ -801,18 +813,21 @@ export const Claim = (
       recentBlockhash,
     });
 
-    const claimInstrs = instructions.slice(-1);
+    const claimInstrs = instructions.claim;
     const claimSigners = signersOf(claimInstrs);
-    console.log(`Expecting the following claim signers: ${[...claimSigners].map(s => s.toBase58())}`);
+    console.log(`Expecting the following claim signers: ${claimSigners.map(s => s.toBase58())}`);
     claimTx.add(...claimInstrs);
     claimTx.setSigners(...claimSigners);
+    partialSignExtra(claimTx, claimSigners);
 
     const txnNeedsTemporalSigner =
-        claimTx.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
-    if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
+        claimTx.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER)) ? claimTx
+      : setupTx && setupTx.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER)) ? setupTx
+      : /*otherwise*/ null;
+    if (txnNeedsTemporalSigner !== null && !skipAWSWorkflow) {
       const otpQuery : { [key: string] : any } = {
         method: "send",
-        transaction: bs58.encode(claimTx.serializeMessage()),
+        transaction: bs58.encode(txnNeedsTemporalSigner.serializeMessage()),
         seeds: pdaSeeds,
         comm: commMethod,
       };
@@ -883,12 +898,16 @@ export const Claim = (
       throw new Error(`Transaction not available for OTP verification`);
     }
 
-    if (!wallet.connected || wallet.publicKey === null) {
+    if (!wallet|| !program) {
       throw new Error(`Wallet not connected`);
     }
 
+    const claimTx = transaction.claim;
+    const setupTx = transaction.setup;
     const txnNeedsTemporalSigner =
-        transaction.claim.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
+        claimTx.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER)) ? claimTx
+      : setupTx && setupTx.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER)) ? setupTx
+      : /*otherwise*/ null;
     if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       // TODO: distinguish between OTP failure and transaction-error. We can try
       // again on the former but not the latter
@@ -932,7 +951,7 @@ export const Claim = (
         throw new Error(`Could not decode transaction signature ${data.body}`);
       }
 
-      transaction.claim.addSignature(GUMDROP_TEMPORAL_SIGNER, sig);
+      txnNeedsTemporalSigner.addSignature(GUMDROP_TEMPORAL_SIGNER, sig);
     }
 
     let fullySigned;
@@ -966,7 +985,7 @@ export const Claim = (
     setTransaction(null);
     try {
       setNeedsTemporalSigner(await fetchNeedsTemporalSigner(
-        connection, distributor, indexStr, claimMethod));
+        program, distributor, indexStr, claimMethod));
     } catch {
       // TODO: log?
     }
@@ -998,7 +1017,7 @@ export const Claim = (
 
       <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || !OTPStr || loading}
+        disabled={!wallet|| !program || !OTPStr || loading}
         variant="contained"
         color="success"
         style={{ width: "100%" }}
@@ -1191,7 +1210,7 @@ export const Claim = (
 
       <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || !allFieldsPopulated || loading}
+        disabled={!wallet|| !program || !allFieldsPopulated || loading}
         variant="contained"
         style={{ width: "100%" }}
         color={asyncNeedsTemporalSigner ? "primary" : "success"}
@@ -1199,8 +1218,11 @@ export const Claim = (
           setLoading(true);
           const wrap = async () => {
             try {
+              if (!program) {
+                throw new Error(`Internal error: no program loaded for claim`);
+              }
               const needsTemporalSigner = await fetchNeedsTemporalSigner(
-                  connection, distributor, indexStr, claimMethod);
+                  program, distributor, indexStr, claimMethod);
               const transaction = await sendOTP(e);
               if (!needsTemporalSigner) {
                 await verifyOTP(e, transaction);
