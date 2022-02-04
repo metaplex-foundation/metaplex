@@ -26,16 +26,8 @@ export const Header = ({ narrow } : { narrow : boolean }) => {
       inner: <HomeIcon />,
     },
     {
-      href: `${process.env.REACT_APP_WEB_HOME}/create`,
-      inner: "Create",
-    },
-    {
       href: `${process.env.REACT_APP_WEB_HOME}/claim`,
       inner: "Claim",
-    },
-    {
-      href: `${process.env.REACT_APP_WEB_HOME}/close`,
-      inner: "Close",
     },
   ];
 

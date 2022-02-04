@@ -20,8 +20,6 @@ import {
 } from "./contexts";
 import { Header } from "./components/Header/Header";
 import { Claim } from "./components/Claim";
-import { Close } from "./components/Close";
-import { Create } from "./components/Create";
 
 const WHITESPACE = "\u00A0";
 
@@ -77,9 +75,9 @@ const About = () => {
 
   const create= (
     <Stack spacing={1}>
-      <Link to={`${process.env.REACT_APP_WEB_HOME}/create`}>
+      <a>
         CREATION
-      </Link>
+      </a>
 
       <div>
       Creation builds a whitelist of users that can claim either existing
@@ -125,9 +123,9 @@ const About = () => {
 
   const close = (
     <Stack spacing={1}>
-      <Link to={`${process.env.REACT_APP_WEB_HOME}/close`}>
+      <a>
         CLOSING
-      </Link>
+      </a>
 
       <div>
       Closing the Gumdrop cleans up the on-chain state and allows
@@ -226,9 +224,7 @@ function App() {
           >
             <Box height="40px" />
             <Switch>
-              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/create`} component={Create} />
               <Route exact path={`${process.env.REACT_APP_WEB_HOME}/claim`} component={Claim} />
-              <Route exact path={`${process.env.REACT_APP_WEB_HOME}/close`} component={Close} />
               <Route exact path={`${process.env.REACT_APP_WEB_HOME}/`} component={About} />
             </Switch>
             <Box height="80px" />

@@ -67,9 +67,21 @@ import {
   explorerLinkFor,
   sendSignedTransaction,
 } from "../utils/transactions";
-import {
-  chunk,
-} from "../utils/claimant";
+
+export const chunk = (
+  arr : Buffer,
+  len : number,
+) : Array<Buffer> => {
+  const chunks : Array<Buffer> = [];
+  const n = arr.length;
+  let i = 0;
+
+  while (i < n) {
+    chunks.push(arr.slice(i, i += len));
+  }
+
+  return chunks;
+}
 
 const walletKeyOrPda = async (
   walletKey : PublicKey,
