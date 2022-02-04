@@ -53,7 +53,8 @@
     "styled-components": "^5.0.0",
     "remixicon": "^2.5.0",
     "swiper": "^7.4.1",
-    "react-tooltip": "^4.2.21"
+    "react-tooltip": "^4.2.21",
+    "react-parallax": "^3.3.0"
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",
