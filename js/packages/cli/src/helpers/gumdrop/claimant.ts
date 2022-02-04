@@ -6,7 +6,7 @@ import {
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { AccountLayout, MintInfo, MintLayout, Token } from '@solana/spl-token';
+import { AccountLayout, MintInfo, MintLayout, Token, u64 } from '@solana/spl-token';
 import * as anchor from '@project-serum/anchor';
 import { sha256 } from 'js-sha256';
 import BN from 'bn.js';
@@ -19,7 +19,7 @@ import {
   getTokenWallet,
 } from '../accounts';
 import {
-  CANDY_MACHINE_PROGRAM_ID,
+  CANDY_MACHINE_PROGRAM_V2_ID,
   GUMDROP_DISTRIBUTOR_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -113,32 +113,12 @@ export const parseClaimants = (
   }
 };
 
-export const getCandyConfig = async (
-  connection: RPCConnection,
-  config: string,
-): Promise<PublicKey> => {
-  let configKey: PublicKey;
-  try {
-    configKey = new PublicKey(config);
-  } catch (err) {
-    throw new Error(`Invalid config key ${err}`);
-  }
-  const configAccount = await connection.getAccountInfo(configKey);
-  if (configAccount === null) {
-    throw new Error(`Could not fetch config`);
-  }
-  if (!configAccount.owner.equals(CANDY_MACHINE_PROGRAM_ID)) {
-    throw new Error(`Invalid config owner ${configAccount.owner.toBase58()}`);
-  }
-  return configKey;
-};
-
 export const getCandyMachine = async (
   connection: RPCConnection,
   candyMachineKey: PublicKey,
 ) => {
   const candyMachineCoder = new anchor.Coder(
-    await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, {
+    await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_V2_ID, {
       connection: connection,
     } as anchor.Provider),
   );
@@ -218,14 +198,14 @@ export const dropInfoFor = (
   env: string,
   integration: string,
   tokenMint: string,
-  candyConfig: string,
+  candyMachine: string,
   masterMint: string,
 ) => {
   switch (integration) {
     case 'transfer':
       return { type: 'Token', meta: explorerUrlFor(env, tokenMint) };
     case 'candy':
-      return { type: 'Candy', meta: explorerUrlFor(env, candyConfig) };
+      return { type: 'Candy', meta: explorerUrlFor(env, candyMachine) };
     case 'edition':
       return { type: 'Edition', meta: explorerUrlFor(env, masterMint) };
     default:
@@ -277,8 +257,8 @@ export const validateCandyClaims = async (
   connection: RPCConnection,
   walletKey: PublicKey,
   claimants: Claimants,
-  candyConfig: string,
-  candyUuid: string,
+  candyMachineStr: string,
+  delegateOnly: PublicKey | null,
 ): Promise<ClaimInfo> => {
   claimants.forEach((c, idx) => {
     if (!c.handle) throw new Error(`Claimant ${idx} doesn't have handle`);
@@ -287,8 +267,7 @@ export const validateCandyClaims = async (
   });
 
   const total = claimants.reduce((acc, c) => acc + c.amount, 0);
-  const configKey = await getCandyConfig(connection, candyConfig);
-  const [candyMachineKey] = await getCandyMachineAddress(configKey, candyUuid);
+  const candyMachineKey = new PublicKey(candyMachineStr);
 
   const candyMachine = await getCandyMachine(connection, candyMachineKey);
 
@@ -307,14 +286,40 @@ export const validateCandyClaims = async (
         `than the candy machine has remaining (${remaining})`,
     );
   }
+
+  // TODO: remove?
   if (!candyMachine.authority.equals(walletKey)) {
     throw new Error(`Candy machine authority does not match wallet public key`);
   }
 
+  if (!candyMachine.data.whitelistMintSettings) {
+    throw new Error(`No whitelist mint found for candy machine`);
+  }
+
+  const mintKey = candyMachine.data.whitelistMintSettings.mint;
+  const mint = await getMintInfo(connection, mintKey);
+  let source = await getCreatorTokenAccount(
+    walletKey,
+    connection,
+    mint.key,
+    total, // TODO: if NeverBurn then just claimants.length
+  );
+
+  if (delegateOnly !== null) {
+    source = (await PublicKey.findProgramAddress(
+      [
+        delegateOnly.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mint.key.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    ))[0];
+  }
+
   return {
     total: total,
-    config: configKey,
-    uuid: candyUuid,
+    mint: mint,
+    source: source,
     candyMachineKey: candyMachineKey,
   };
 };
@@ -577,8 +582,8 @@ export const buildGumdrop = async (
     if (claimIntegration === 'transfer') {
       params.push(`tokenAcc=${claimInfo.source}`);
     } else if (claimIntegration === 'candy') {
-      params.push(`config=${claimInfo.config}`);
-      params.push(`uuid=${claimInfo.uuid}`);
+      params.push(`candy=${claimInfo.candyMachineKey}`);
+      params.push(`wlAcc=${claimInfo.source}`);
     } else {
       params.push(`master=${claimInfo.masterMint.key}`);
       params.push(`edition=${claimant.edition}`);
@@ -608,7 +613,7 @@ export const buildGumdrop = async (
     }),
   );
 
-  if (claimIntegration === 'transfer') {
+  if (claimIntegration === 'transfer' || claimIntegration === 'candy') {
     const [baseATAKey] = await PublicKey.findProgramAddress(
       [
         baseKey.toBuffer(),
@@ -627,6 +632,7 @@ export const buildGumdrop = async (
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
     );
 
+    // TODO: lower if NeverBurn
     const claimTotal = u64.fromBuffer(Buffer.from(claimInfo.total.toArray('le', 8)));
     if (claimInfo.source.equals(baseATAKey)) {
       // transfer tokens to base
@@ -677,30 +683,6 @@ export const buildGumdrop = async (
     } else {
       throw new Error(`Internal error: transfer ClaimInfo source does not match wallet or base ATA`);
     }
-  } else if (claimIntegration === 'candy') {
-    const [distributorWalletKey] = await PublicKey.findProgramAddress(
-      [Buffer.from('Wallet'), distributor.toBuffer()],
-      GUMDROP_DISTRIBUTOR_ID,
-    );
-
-    instructions.push(
-      new TransactionInstruction({
-        programId: CANDY_MACHINE_PROGRAM_ID,
-        keys: [
-          {
-            pubkey: claimInfo.candyMachineKey,
-            isSigner: false,
-            isWritable: true,
-          },
-          { pubkey: walletKey, isSigner: true, isWritable: false },
-        ],
-        data: Buffer.from([
-          ...Buffer.from(sha256.digest('global:update_authority')).slice(0, 8),
-          ...new BN(1).toArray('le', 1), // optional exists...
-          ...distributorWalletKey.toBuffer(),
-        ]),
-      }),
-    );
   } else if (claimIntegration === 'edition') {
     // transfer master edition to distributor
     const [distributorTokenKey] = await PublicKey.findProgramAddress(
@@ -744,8 +726,7 @@ export const closeGumdrop = async (
   base: Keypair,
   claimMethod: string,
   transferMint: string,
-  candyConfig: string,
-  candyUuid: string,
+  candyMachine: string,
   masterMint: string,
 ): Promise<Array<TransactionInstruction>> => {
   const [distributorKey, dbump] = await PublicKey.findProgramAddress(
@@ -817,15 +798,11 @@ export const closeGumdrop = async (
   }
 
   if (claimMethod === 'candy') {
-    const configKey = await getCandyConfig(connection, candyConfig);
-    const [candyMachineKey] = await getCandyMachineAddress(
-      configKey,
-      candyUuid,
-    );
+    const candyMachineKey = new PublicKey(candyMachine);
 
     extraKeys = [
       { pubkey: candyMachineKey, isSigner: false, isWritable: true },
-      { pubkey: CANDY_MACHINE_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: CANDY_MACHINE_PROGRAM_V2_ID, isSigner: false, isWritable: false },
     ];
   } else {
     extraKeys = [];

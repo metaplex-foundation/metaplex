@@ -72,14 +72,10 @@ programCommand('create')
     'Backend for claims. Either `transfer` for token-transfers, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
   )
   .option('--transfer-mint <mint>', 'transfer: public key of mint')
-  .option('--transfer-delegate-only', 'transfer: delegate tokens from KEYPAIR instead of transferring to the gumdrop')
+  .option('--delegate-only', 'transfer and candy: delegate tokens from KEYPAIR instead of transferring to the gumdrop')
   .option(
-    '--candy-config <config>',
-    'candy: public key of the candy machine config',
-  )
-  .option(
-    '--candy-uuid <uuid>',
-    'candy: uuid used to construct the candy machine',
+    '--candy-machine <pubkey>',
+    'candy: public key of the candy machine',
   )
   .option('--edition-mint <mint>', 'edition: mint of the master edition')
   .option(
@@ -167,7 +163,7 @@ programCommand('create')
       options.env,
       options.claimIntegration,
       options.transferMint,
-      options.candyConfig,
+      options.candyMachine,
       options.editionMint,
     );
 
@@ -236,7 +232,7 @@ programCommand('create')
           wallet.publicKey,
           claimants,
           options.transferMint,
-          options.transferDelegateOnly ? null : base.publicKey,
+          options.delegateOnly ? null : base.publicKey,
         );
         break;
       }
@@ -245,8 +241,8 @@ programCommand('create')
           connection,
           wallet.publicKey,
           claimants,
-          options.candyConfig,
-          options.candyUuid,
+          options.candyMachine,
+          options.delegateOnly ? null : base.publicKey,
         );
         break;
       }
@@ -329,12 +325,8 @@ programCommand('close')
   )
   .option('--transfer-mint <mint>', 'transfer: public key of mint')
   .option(
-    '--candy-config <config>',
-    'candy: public key of the candy machine config',
-  )
-  .option(
-    '--candy-uuid <uuid>',
-    'candy: uuid used to construct the candy machine',
+    '--candy-machine <pubkey>',
+    'candy: public key of the candy machine',
   )
   .option('--edition-mint <mint>', 'edition: mint of the master edition')
   .option('--base <path>', 'gumdrop authority generated on create')
@@ -359,9 +351,9 @@ programCommand('close')
         break;
       }
       case 'candy': {
-        if (!options.candyConfig || !options.candyUuid) {
+        if (!options.candyMachine) {
           throw new Error(
-            'No candy-config or candy-uuid provided. Needed to transfer back candy-machine authority',
+            'No candy-machine provided. Needed to transfer back candy-machine authority',
           );
         }
         break;
@@ -386,8 +378,7 @@ programCommand('close')
       base,
       options.claimIntegration,
       options.transferMint,
-      options.candyConfig,
-      options.candyUuid,
+      options.candyMachine,
       options.editionMint,
     );
 
