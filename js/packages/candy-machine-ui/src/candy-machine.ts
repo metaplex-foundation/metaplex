@@ -35,7 +35,10 @@ interface CandyMachineState {
     expireOnUse: boolean;
     gatekeeperNetwork: anchor.web3.PublicKey;
   };
-  endSettings: null | [number, anchor.BN];
+  endSettings: null | {
+    number: anchor.BN;
+    endSettingType: any
+  };
   whitelistMintSettings: null | {
     mode: any;
     mint: anchor.web3.PublicKey;
