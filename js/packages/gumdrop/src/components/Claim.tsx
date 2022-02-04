@@ -57,7 +57,6 @@ import {
 } from "../utils/ids";
 import {
   getCandyMachine,
-  getCandyMachineAddress,
   getATAChecked,
   getEdition,
   getEditionMarkerPda,
@@ -221,29 +220,39 @@ const buildCandyClaim = async (
   walletKey : PublicKey,
   distributorKey : PublicKey,
   distributorInfo : any,
-  candyConfig : string,
-  candyUUID : string,
+  tokenAcc : string,
+  candyMachineStr : string,
   proof : Array<Buffer>,
   handle : string,
   amount : number,
   index : number,
   pin : BN | null,
 ) : Promise<[ClaimInstructions, Array<Buffer>, Array<Keypair>]> => {
-
-  let configKey : PublicKey;
+  let tokenAccKey: PublicKey;
   try {
-    configKey = new PublicKey(candyConfig);
+    tokenAccKey = new PublicKey(tokenAcc);
   } catch (err) {
-    throw new Error(`Invalid candy config key ${err}`);
+    throw new Error(`Invalid tokenAcc key ${err}`);
   }
 
-  const [secret, pdaSeeds] = await walletKeyOrPda(walletKey, handle, pin, configKey);
+  let candyMachineKey : PublicKey;
+  try {
+    candyMachineKey = new PublicKey(candyMachineStr);
+  } catch (err) {
+    throw new Error(`Invalid candy machine key ${err}`);
+  }
+
+  const connection = program.provider.connection;
+  const candyMachine = await getCandyMachine(connection, candyMachineKey);
+  console.log("Candy Machine", candyMachine);
+
+  const [secret, pdaSeeds] = await walletKeyOrPda(walletKey, handle, pin, candyMachineKey);
 
   // TODO: since it's in the PDA do we need it to be in the leaf?
   const leaf = Buffer.from(
     [...new BN(index).toArray("le", 8),
      ...secret.toBuffer(),
-     ...configKey.toBuffer(),
+     ...candyMachine.data.whitelistMintSettings.mint.toBuffer(),
      ...new BN(amount).toArray("le", 8),
     ]
   );
@@ -256,18 +265,10 @@ const buildCandyClaim = async (
     throw new Error("Gumdrop merkle proof does not match");
   }
 
-  const [claimCount, cbump] = await PublicKey.findProgramAddress(
+  const [claimStatus, cbump] = await PublicKey.findProgramAddress(
     [
-      Buffer.from("ClaimCount"),
+      Buffer.from("ClaimStatus"),
       Buffer.from(new BN(index).toArray("le", 8)),
-      distributorKey.toBuffer(),
-    ],
-    GUMDROP_DISTRIBUTOR_ID
-  );
-
-  const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
-    [
-      Buffer.from("Wallet"),
       distributorKey.toBuffer(),
     ],
     GUMDROP_DISTRIBUTOR_ID
@@ -276,40 +277,17 @@ const buildCandyClaim = async (
   // atm the contract has a special case for when the temporal key is defaulted
   // (aka always passes temporal check)
   // TODO: more flexible
-  let temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
+  const temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
       ? walletKey : distributorInfo.temporal;
 
-  const connection = program.provider.connection;
-  const claimCountAccount = await connection.getAccountInfo(claimCount);
-  let nftsAlreadyMinted = 0;
-  if (claimCountAccount === null) {
-    // nothing claimed yet
-  } else {
-    // TODO: subtract already minted?...
-    const claimAccountInfo = program.coder.accounts.decode(
-      "ClaimProof", claimCountAccount.data);
-    nftsAlreadyMinted = claimAccountInfo.count;
-    if (claimAccountInfo.claimant.equals(walletKey)) {
-      // we already proved this claim and verified the OTP once, contract knows
-      // that this wallet is OK
-      temporalSigner = walletKey;
-    } else {
-      // need to claim with the first wallet...
-      const claimantStr = claimAccountInfo.claimant.toBase58();
-      throw new Error(`This wallet does not match existing claimant ${claimantStr}`);
-    }
-  }
-
-  const nftsAvailable = amount;
-  if (nftsAlreadyMinted >= nftsAvailable) {
-    throw new Error(`Cannot mint another NFT. ${nftsAvailable} NFT(s) were originally allocated`
-      + (nftsAlreadyMinted > 0 ? ` and ${nftsAlreadyMinted} NFT(s) were already minted` : ""));
-  }
-
-
-  const [candyMachineKey, ] = await getCandyMachineAddress(configKey, candyUUID);
-  const candyMachine = await getCandyMachine(connection, candyMachineKey);
-  console.log("Candy Machine", candyMachine);
+  const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+    [
+      walletKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      candyMachine.data.whitelistMintSettings.mint.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
 
 
   const candyMachineMint = Keypair.generate();
@@ -328,60 +306,88 @@ const buildCandyClaim = async (
     ];
   }
 
-  const claimPrefix = Buffer.from("ClaimCount");
-  const nonce = Buffer.from([]);
-  const setup = claimCountAccount !== null ? null : await program.instruction.proveClaim(
-    claimPrefix,
+  // candy machine mints fit in a single transaction
+  const claim: Array<TransactionInstruction> = [];
+
+  if (await program.provider.connection.getAccountInfo(walletTokenKey) === null) {
+    claim.push(Token.createAssociatedTokenAccountInstruction(
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        candyMachine.data.whitelistMintSettings.mint,
+        walletTokenKey,
+        walletKey,
+        walletKey
+      ));
+  }
+
+  // await createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, claim);
+  // TODO: anchorProgram
+  claim.push(await program.instruction.claim(
     cbump,
     new BN(index),
     new BN(amount),
     secret,
-    configKey,
-    nonce,
     proof,
     {
       accounts: {
         distributor: distributorKey,
-        claimProof: claimCount,
+        claimStatus,
+        from: tokenAccKey,
+        to: walletTokenKey,
         temporal: temporalSigner,
         payer: walletKey,
         systemProgram: SystemProgram.programId,
-      }
-    }
-  );
-
-  // candy machine mints fit in a single transaction
-  const claim: Array<TransactionInstruction> = [];
-  await createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, claim);
-  // TODO: anchorProgram
-  claim.push(await program.instruction.claimCandyProven(
-    wbump,
-    cbump,
-    new BN(index),
-    {
-      accounts: {
-        distributor: distributorKey,
-        distributorWallet: distributorWalletKey,
-        claimProof: claimCount,
-        payer: walletKey,
-        candyMachineConfig: configKey,
-        candyMachine: candyMachineKey,
-        candyMachineWallet: candyMachine.wallet,
-        candyMachineMint: candyMachineMint.publicKey,
-        candyMachineMetadata,
-        candyMachineMasterEdition: candyMachineMaster,
-        systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        candyMachineProgram: CANDY_MACHINE_ID,
-        rent: SYSVAR_RENT_PUBKEY,
-        clock: SYSVAR_CLOCK_PUBKEY,
-      },
-      remainingAccounts: extraKeys,
+      }
     }
   ));
 
-  return [{ setup: setup === null ? null : [setup], claim }, pdaSeeds, [candyMachineMint]];
+  console.log(
+    distributorKey,
+    walletKey,
+    candyMachineKey,
+    candyMachine.wallet,
+    candyMachineMint.publicKey,
+    candyMachineMetadata,
+    candyMachineMaster,
+    SystemProgram.programId,
+    TOKEN_PROGRAM_ID,
+    TOKEN_METADATA_PROGRAM_ID,
+    CANDY_MACHINE_ID,
+    SYSVAR_RENT_PUBKEY,
+    SYSVAR_CLOCK_PUBKEY,
+    extraKeys,
+  );
+
+  // TODO: mint
+  // claim.push(await program.instruction.claimCandyProven(
+  //   wbump,
+  //   cbump,
+  //   new BN(index),
+  //   {
+  //     accounts: {
+  //       distributor: distributorKey,
+  //       distributorWallet: distributorWalletKey,
+  //       claimProof: claimCount,
+  //       payer: walletKey,
+  //       candyMachineConfig: configKey,
+  //       candyMachine: candyMachineKey,
+  //       candyMachineWallet: candyMachine.wallet,
+  //       candyMachineMint: candyMachineMint.publicKey,
+  //       candyMachineMetadata,
+  //       candyMachineMasterEdition: candyMachineMaster,
+  //       systemProgram: SystemProgram.programId,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+  //       candyMachineProgram: CANDY_MACHINE_ID,
+  //       rent: SYSVAR_RENT_PUBKEY,
+  //       clock: SYSVAR_CLOCK_PUBKEY,
+  //     },
+  //     remainingAccounts: extraKeys,
+  //   }
+  // ));
+
+  return [{ setup: null, claim }, pdaSeeds, [candyMachineMint]];
 }
 
 const createMintAndAccount = async (
@@ -648,13 +654,12 @@ export const Claim = (
   const params = queryString.parse(query);
   const [distributor, setDistributor] = React.useState(params.distributor as string || "");
   const [claimMethod, setClaimMethod] = React.useState(
-        params.tokenAcc ? "transfer"
-      : params.config   ? "candy"
+        params.candy    ? "candy"
+      : params.tokenAcc ? "transfer"
       : params.master   ? "edition"
       :                   "");
   const [tokenAcc, setTokenAcc] = React.useState(params.tokenAcc as string || "");
-  const [candyConfig, setCandyConfig] = React.useState(params.config as string || "");
-  const [candyUUID, setCandyUUID] = React.useState(params.uuid as string || "");
+  const [candyMachine, setCandyMachine] = React.useState(params.candy as string || "");
   const [masterMint, setMasterMint] = React.useState(params.master as string || "");
   const [editionStr, setEditionStr] = React.useState(params.edition as string || "");
   const [handle, setHandle] = React.useState(params.handle as string || "");
@@ -667,7 +672,7 @@ export const Claim = (
   const allFieldsPopulated =
     distributor.length > 0
     && ( claimMethod === "transfer" ? tokenAcc.length > 0
-       : claimMethod === "candy"    ? candyConfig.length > 0 && candyUUID.length > 0
+       : claimMethod === "candy"    ? tokenAcc.length > 0 && candyMachine.length > 0
        : claimMethod === "edition"  ? masterMint.length > 0 && editionStr.length > 0
        :                              false
        )
@@ -746,7 +751,7 @@ export const Claim = (
       console.log("Building candy claim");
       [instructions, pdaSeeds, extraSigners] = await buildCandyClaim(
         program, wallet.publicKey, distributorKey, distributorInfo,
-        candyConfig, candyUUID,
+        tokenAcc, candyMachine,
         proof, handle, amount, index, pin
       );
     } else if (claimMethod === "transfer") {
@@ -1051,17 +1056,17 @@ export const Claim = (
       return (
         <React.Fragment>
           <TextField
-            id="config-text-field"
-            label="Candy Config"
-            value={candyConfig}
-            onChange={e => setCandyConfig(e.target.value)}
+            id="token-acc-text-field"
+            label="Whitelist Token Account"
+            value={tokenAcc}
+            onChange={(e) => setTokenAcc(e.target.value)}
             disabled={!editable}
           />
           <TextField
-            id="config-uuid-text-field"
-            label="Candy UUID"
-            value={candyUUID}
-            onChange={e => setCandyUUID(e.target.value)}
+            id="candy-text-field"
+            label="Candy Machine"
+            value={candyMachine}
+            onChange={e => setCandyMachine(e.target.value)}
             disabled={!editable}
           />
         </React.Fragment>
