@@ -1,3 +1,5 @@
+import { categories } from './categories';
+
 export const header = {
   menu: [
     {
@@ -7,28 +9,7 @@ export const header = {
     {
       label: 'Explore',
       value: '/explore',
-      subMenu: [
-        {
-          label: 'Trending',
-          value: 'trending',
-        },
-        {
-          label: 'Art',
-          value: 'art',
-        },
-        {
-          label: 'Charity Focused',
-          value: 'charity-focused',
-        },
-        {
-          label: 'Gaming',
-          value: 'gaming',
-        },
-        {
-          label: 'Utility',
-          value: 'utility',
-        },
-      ],
+      subMenu: [...categories],
     },
     {
       label: 'Donate',
