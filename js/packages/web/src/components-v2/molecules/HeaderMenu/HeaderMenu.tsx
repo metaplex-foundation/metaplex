@@ -1,12 +1,16 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+
+import { header } from '../../../../dummy-data/header';
+
 import {
   Dropdown,
   DropDownBody,
   DropDownToggle,
   DropDownMenuItem,
 } from '../../atoms/Dropdown';
-import { header } from '../../../../dummy-data/header';
 
 export interface HeaderMenuProps {
   [x: string]: any;
@@ -16,6 +20,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
   className,
   ...restProps
 }: HeaderMenuProps) => {
+  const router = useRouter();
   const HeaderMenuClasses = CN(
     `header-menu flex gap-[12px] items-center`,
     className,
@@ -26,23 +31,31 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
       {header?.menu.map((menuItem: any, index: number) => {
         if (!menuItem.subMenu) {
           return (
-            <button
-              key={index}
-              className={CN(
-                'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 rounded-[4px]',
-              )}
-            >
-              {menuItem?.label}
-            </button>
+            <Link href={menuItem?.value} key={index}>
+              <button
+                key={index}
+                className={CN(
+                  'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 rounded-[4px]',
+                )}
+              >
+                {menuItem?.label}
+              </button>
+            </Link>
           );
         }
 
         return (
           <Dropdown key={index}>
             {({ isOpen, setIsOpen }: any) => {
-              const onSelectOption = (value: string) => {
+              const onSelectOption = (
+                parentValue: string,
+                childValue: string,
+              ) => {
                 setIsOpen(false);
-                console.log('onSelectOption', value);
+                router.push({
+                  pathname: parentValue,
+                  query: { category: childValue },
+                }); // Redirecting to the URL
               };
 
               return (
@@ -67,12 +80,14 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
                       className="w-[172px] !rounded-tl-none"
                     >
                       {menuItem?.subMenu?.map((option: any, index: number) => {
-                        const { label, value } = option;
+                        const { label, parentValue, childValue } = option;
 
                         return (
                           <DropDownMenuItem
                             key={index}
-                            onClick={() => onSelectOption(value)}
+                            onClick={() =>
+                              onSelectOption(parentValue, childValue)
+                            }
                             {...option}
                           >
                             {label}

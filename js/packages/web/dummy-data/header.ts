@@ -9,23 +9,28 @@ export const header = {
       subMenu: [
         {
           label: 'Trending',
-          value: '/trending',
+          parentValue: '/explore',
+          childValue: 'trending',
         },
         {
           label: 'Art',
-          value: '/art',
+          parentValue: '/explore',
+          childValue: 'art',
         },
         {
           label: 'Charity Focused',
-          value: '/charity-focused',
+          parentValue: '/explore',
+          childValue: 'charity-focused',
         },
         {
           label: 'Gaming',
-          value: '/gaming',
+          parentValue: '/explore',
+          childValue: 'gaming',
         },
         {
           label: 'Utility',
-          value: '/utility',
+          parentValue: '/explore',
+          childValue: 'utility',
         },
       ],
     },
@@ -34,51 +39,31 @@ export const header = {
       subMenu: [
         {
           label: 'Donate Crypto',
-          value: '/donate-crypto',
+          parentValue: '/donate',
+          childValue: 'donate-crypto',
         },
         {
           label: 'Donate USD',
-          value: '/donate-usd',
+          parentValue: '/donate',
+          childValue: 'donate-usd',
         },
         {
           label: 'Fundraise',
-          value: '/fundraise',
+          parentValue: '/donate',
+          childValue: 'fundraise',
         },
         {
           label: 'Get Involved',
-          value: '/get-involved',
+          parentValue: '/donate',
+          childValue: 'get-involved',
         },
         {
           label: 'For Nonprofits',
-          value: '/for-nonprofits',
+          parentValue: '/donate',
+          childValue: 'for-nonprofits',
         },
       ],
     },
-    // {
-    //   label: 'Learn',
-    //   subMenu: [
-    //     {
-    //       label: 'How to buy',
-    //       value: '/how-to-buy',
-    //     },
-    //     {
-    //       label: 'What are NFTs?',
-    //       value: '/what-are-nfts',
-    //     },
-    //     {
-    //       label: 'Crypto + NFT Guide',
-    //       value: '/crypto-nft-guide',
-    //     },
-    //     {
-    //       label: 'About Karmaverse',
-    //       value: '/about-karmaverse',
-    //     },
-    //     {
-    //       label: 'Philanthropy',
-    //       value: '/philanthropy',
-    //     },
-    //   ],
-    // },
     {
       label: 'Stats',
       value: '/stats',
