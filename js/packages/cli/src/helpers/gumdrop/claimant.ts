@@ -582,7 +582,7 @@ export const buildGumdrop = async (
       params.push(`tokenAcc=${claimInfo.source}`);
     } else if (claimIntegration === 'candy') {
       params.push(`candy=${claimInfo.candyMachineKey}`);
-      params.push(`wlAcc=${claimInfo.source}`);
+      params.push(`tokenAcc=${claimInfo.source}`);
     } else {
       params.push(`master=${claimInfo.masterMint.key}`);
       params.push(`edition=${claimant.edition}`);
@@ -725,7 +725,7 @@ export const closeGumdrop = async (
   base: Keypair,
   claimMethod: string,
   transferMint: string,
-  candyMachine: string,
+  candyMachineStr: string,
   masterMint: string,
 ): Promise<Array<TransactionInstruction>> => {
   const [distributorKey, dbump] = await PublicKey.findProgramAddress(
@@ -738,11 +738,19 @@ export const closeGumdrop = async (
     GUMDROP_DISTRIBUTOR_ID,
   );
 
-  let extraKeys: Array<AccountMeta>;
   const instructions = Array<TransactionInstruction>();
 
-  if (claimMethod === 'transfer') {
-    const mint = await getMintInfo(connection, transferMint);
+  if (claimMethod === 'transfer' || claimMethod === 'candy') {
+    let mintStr;
+    if (claimMethod === 'transfer') {
+      mintStr = transferMint;
+    } else {
+      const candyMachineKey = new PublicKey(candyMachineStr);
+
+      const candyMachine = await getCandyMachine(connection, candyMachineKey);
+      mintStr = candyMachine.data.whitelistMintSettings.mint.toBase58();
+    }
+    const mint = await getMintInfo(connection, mintStr);
     const baseKey = base.publicKey;
     const [baseATAKey] = await PublicKey.findProgramAddress(
       [
@@ -794,17 +802,6 @@ export const closeGumdrop = async (
         ),
       );
     }
-  }
-
-  if (claimMethod === 'candy') {
-    const candyMachineKey = new PublicKey(candyMachine);
-
-    extraKeys = [
-      { pubkey: candyMachineKey, isSigner: false, isWritable: true },
-      { pubkey: CANDY_MACHINE_PROGRAM_V2_ID, isSigner: false, isWritable: false },
-    ];
-  } else {
-    extraKeys = [];
   }
 
   if (claimMethod === 'edition') {
@@ -868,7 +865,6 @@ export const closeGumdrop = async (
         { pubkey: walletKey, isSigner: true, isWritable: true },
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-        ...extraKeys,
       ],
       data: Buffer.from([
         ...Buffer.from(sha256.digest('global:close_distributor')).slice(0, 8),
