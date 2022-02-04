@@ -6,61 +6,53 @@ export const header = {
     },
     {
       label: 'Explore',
+      value: '/explore',
       subMenu: [
         {
           label: 'Trending',
-          parentValue: '/explore',
-          childValue: 'trending',
+          value: 'trending',
         },
         {
           label: 'Art',
-          parentValue: '/explore',
-          childValue: 'art',
+          value: 'art',
         },
         {
           label: 'Charity Focused',
-          parentValue: '/explore',
-          childValue: 'charity-focused',
+          value: 'charity-focused',
         },
         {
           label: 'Gaming',
-          parentValue: '/explore',
-          childValue: 'gaming',
+          value: 'gaming',
         },
         {
           label: 'Utility',
-          parentValue: '/explore',
-          childValue: 'utility',
+          value: 'utility',
         },
       ],
     },
     {
       label: 'Donate',
+      value: '/donate',
       subMenu: [
         {
           label: 'Donate Crypto',
-          parentValue: '/donate',
-          childValue: 'donate-crypto',
+          value: 'donate-crypto',
         },
         {
           label: 'Donate USD',
-          parentValue: '/donate',
-          childValue: 'donate-usd',
+          value: 'donate-usd',
         },
         {
           label: 'Fundraise',
-          parentValue: '/donate',
-          childValue: 'fundraise',
+          value: 'fundraise',
         },
         {
           label: 'Get Involved',
-          parentValue: '/donate',
-          childValue: 'get-involved',
+          value: 'get-involved',
         },
         {
           label: 'For Nonprofits',
-          parentValue: '/donate',
-          childValue: 'for-nonprofits',
+          value: 'for-nonprofits',
         },
       ],
     },

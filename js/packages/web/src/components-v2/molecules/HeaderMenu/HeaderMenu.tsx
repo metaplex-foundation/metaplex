@@ -47,14 +47,11 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
         return (
           <Dropdown key={index}>
             {({ isOpen, setIsOpen }: any) => {
-              const onSelectOption = (
-                parentValue: string,
-                childValue: string,
-              ) => {
+              const onSelectOption = (value: string) => {
                 setIsOpen(false);
                 router.push({
-                  pathname: parentValue,
-                  query: { category: childValue },
+                  pathname: menuItem?.value,
+                  query: { pid: value },
                 }); // Redirecting to the URL
               };
 
@@ -80,14 +77,12 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
                       className="w-[172px] !rounded-tl-none"
                     >
                       {menuItem?.subMenu?.map((option: any, index: number) => {
-                        const { label, parentValue, childValue } = option;
+                        const { label, value } = option;
 
                         return (
                           <DropDownMenuItem
                             key={index}
-                            onClick={() =>
-                              onSelectOption(parentValue, childValue)
-                            }
+                            onClick={() => onSelectOption(value)}
                             {...option}
                           >
                             {label}
