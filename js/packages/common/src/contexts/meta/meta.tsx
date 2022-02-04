@@ -336,14 +336,7 @@ export function MetaProvider({ children = null as any }) {
       update(undefined, undefined);
       updateRequestsInQueue.current = 0;
     }
-  }, [
-    connection,
-    setState,
-    updateMints,
-    storeAddress,
-    isReady,
-    page,
-  ]);
+  }, [connection, setState, updateMints, storeAddress, isReady, page]);
 
   // Fetch metadata on userAccounts change
   useEffect(() => {

@@ -37,7 +37,7 @@ interface CandyMachineState {
   };
   endSettings: null | {
     number: anchor.BN;
-    endSettingType: any
+    endSettingType: any;
   };
   whitelistMintSettings: null | {
     mode: any;
