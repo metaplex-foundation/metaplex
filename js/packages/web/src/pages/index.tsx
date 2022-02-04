@@ -15,13 +15,15 @@ const Home: NextPage = () => {
   return (
     <>
       <Header />
-      <Hero className="mb-[140px]" />
-      <CallToAction className="mb-[140px]" />
-      <RecentCollectionsCarousel className="mb-[140px]" />
-      <Features className="mb-[140px]" />
-      <MostActive className="mb-[140px]" />
-      <BlogCarousel className="mb-[140px]" />
-      <SubmitCollection className="mb-[140px]" />
+      <div className="pt-[85px]">
+        <Hero className="mb-[140px]" />
+        <CallToAction className="mb-[140px]" />
+        <RecentCollectionsCarousel className="mb-[140px]" />
+        <Features className="mb-[140px]" />
+        <MostActive className="mb-[140px]" />
+        <BlogCarousel className="mb-[140px]" />
+        <SubmitCollection className="mb-[140px]" />
+      </div>
       <Footer />
     </>
   );

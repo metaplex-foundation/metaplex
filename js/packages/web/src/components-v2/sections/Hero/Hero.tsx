@@ -9,7 +9,7 @@ export interface HeroProps {
 }
 
 export const Hero: FC<HeroProps> = ({ className, ...restProps }: HeroProps) => {
-  const HeroClasses = CN(`hero relative mt-[85px]`, className);
+  const HeroClasses = CN(`hero relative`, className);
 
   return (
     <div className={HeroClasses} {...restProps}>
