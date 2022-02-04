@@ -267,7 +267,7 @@ programCommand('create')
         options.claimIntegration === 'transfer'
           ? claimInfo.mint.key
           : options.claimIntegration === 'candy'
-          ? claimInfo.candyMachineKey
+          ? claimInfo.mint.key
           : /* === edition */ claimInfo.masterMint.key;
     });
 
