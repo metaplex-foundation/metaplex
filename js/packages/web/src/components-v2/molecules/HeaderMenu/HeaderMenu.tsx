@@ -29,7 +29,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
             <button
               key={index}
               className={CN(
-                'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-50 rounded-[4px]',
+                'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 rounded-[4px]',
               )}
             >
               {menuItem?.label}
@@ -50,9 +50,9 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
                   <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
                     <button
                       className={CN(
-                        'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-50',
+                        'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400',
                         {
-                          'rounded-t-[4px] bg-white text-B-50': isOpen,
+                          'rounded-t-[4px] bg-white text-B-400': isOpen,
                           'rounded-[4px]': !isOpen,
                         },
                       )}

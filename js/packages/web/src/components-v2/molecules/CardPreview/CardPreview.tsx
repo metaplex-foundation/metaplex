@@ -25,7 +25,7 @@ export const CardPreviewSlide = ({ src, title, value }: any) => {
       />
 
       <span className="flex items-center text-white gap-[12px]">
-        <label className='text-lg'>{title}</label>
+        <label className="text-lg">{title}</label>
         <label className="text-[#05FF00] text-sm font-600">{value}</label>
       </span>
     </div>
@@ -54,10 +54,10 @@ export const CardPreview: FC<CardPreviewProps> = ({
             mousewheel={{ forceToAxis: true }}
           >
             {(list || []).map(
-              ({ id, image, title, value }: any, index: number) => {
+              ({ id, image, name, rate }: any, index: number) => {
                 return (
                   <SwiperSlide key={id || index}>
-                    <CardPreviewSlide src={image} title={title} value={value} />
+                    <CardPreviewSlide src={image} title={name} value={rate} />
                   </SwiperSlide>
                 );
               },

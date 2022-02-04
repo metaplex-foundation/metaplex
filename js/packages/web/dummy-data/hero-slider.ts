@@ -1,26 +1,33 @@
 export const heroSlider = [
   {
     id: 0,
-    title: 'Belugies',
+    name: 'Belugies',
+    tag: '123,456 | $2.12M',
+    rate: '+124.21%',
     image: '/img/nft-1.png',
-    value: '+46%',
   },
   {
     id: 1,
-    title: 'Belugies',
-    image: '/img/nft-2.webp',
-    value: '+48%',
+    name: 'BR1',
+    tag: '123,456 | $2.12M',
+    rate: '+124.21%',
+    image:
+      'https://content.solsea.io/files/thumbnail/1643928345774-328664040.jpg',
   },
   {
     id: 2,
-    title: 'Belugies',
-    image: '/img/nft-3.webp',
-    value: '+76%',
+    name: 'Dronies',
+    tag: '123,456 | $2.12M',
+    rate: '+124.21%',
+    image:
+      'https://content.solsea.io/files/thumbnail/1643782393523-331050135.png',
   },
   {
-    id: 3,
-    title: 'Belugies',
-    image: '/img/nft-4.webp',
-    value: '+11%',
+    id: 4,
+    name: 'SolGuysDAO',
+    tag: '123,456 | $2.12M',
+    rate: '+124.21%',
+    image:
+      'https://content.solsea.io/files/thumbnail/1643639806922-108620021.png',
   },
 ];

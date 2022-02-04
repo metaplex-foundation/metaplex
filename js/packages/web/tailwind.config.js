@@ -12,7 +12,7 @@ module.exports = {
     screens: {
       sm: '640px',
       md: '768px',
-      lg: '1264px',
+      lg: '1098px',
     },
     container: {
       center: true,
@@ -41,5 +41,8 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/line-clamp'),
+    require('@tailwindcss/typography'),
+  ],
 };

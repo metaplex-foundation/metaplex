@@ -9,7 +9,7 @@ export interface HeroProps {
 
 export const Hero: FC<HeroProps> = ({ className, ...restProps }: HeroProps) => {
   const HeroClasses = CN(
-    `hero bg-[url("/img/hero-bg.png")] py-[148px] bg-cover bg-center`,
+    `hero bg-[url("/img/hero-bg.png")] py-[148px] bg-cover bg-center mt-[85px]`,
     className,
   );
 
@@ -28,16 +28,16 @@ export const Hero: FC<HeroProps> = ({ className, ...restProps }: HeroProps) => {
             causes.
           </p>
 
-          <a href="#" className="text-[#9EFFB9] mb-[40px]">
-            Learn more...
+          <a href="#" className="text-G-100 hover:text-G-200 mb-[40px] gap-[4px] flex items-center">
+            Learn more <i className="ri-arrow-right-s-line" />
           </a>
 
           <div className="flex items-center gap-[28px] w-full max-w-[472px]">
-            <button className="h-[42px] bg-[#448FFF] hover:bg-[#3987fc] rounded-full px-[20px] w-full">
+            <button className="h-[48px] bg-B-400 hover:bg-B-500 rounded-full px-[20px] w-full uppercase text-md font-500">
               Browse
             </button>
 
-            <button className="h-[42px] bg-[#8C59F9] hover:bg-[#824afc] rounded-full px-[20px] w-full">
+            <button className="h-[48px] bg-P-400 hover:bg-P-500 rounded-full px-[20px] w-full uppercase text-md font-500">
               Donate
             </button>
           </div>

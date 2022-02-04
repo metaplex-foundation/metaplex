@@ -107,7 +107,7 @@ module.exports = {
         '16px',
         {
           label: 'Base',
-          lineHeight: '32px',
+          lineHeight: '24px',
           letterSpacing: '-0.18px',
         },
       ],
