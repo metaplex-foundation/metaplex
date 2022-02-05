@@ -16,15 +16,22 @@ const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 const REDIS_TLS_ENABLED = process.env.REDIS_TLS_ENABLED === 'true';
 
-// const pubkeyDenyList = [
-//   'Fy8GCo5pyaMmUS6BqydzYnHBYeQN5BnKijCV2x2pRc3n',
-//   '9ztzyU9eFuce42CHD7opPxpjrsg15onjNARnmuMS2aQy',
-//   '5pKYHnoCMyjVqVdZaGAs63wUSBvhEGWnz5ie2YC5MaZx',
-//   'D2bj7rCLC4Dy9ZJuDNm5jFRNn5bqVTTpn16nnqDYmciv',
-//   'DYE359beVPHzLUuwAYAqujJ9d8JwFszAcus9qht5moxT',
-//   '8K7zyrvVLDacNRJeFZui4cazW1XUkWKRnm7UmnBGQPdS',
-//   'E6EWhx9PRwh3ryHGiWzGb6KceA71kWcg9i5pKuikTtUi',
-// ];
+const fetchdenyListCacheKey = async () => {
+  const res = await fetch('https://api.holaplex.com', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'getOwnerDenylist',
+      params: [],
+      id: 1337,
+    }),
+  });
+  // @ts-ignore
+  return await res.json();
+};
 
 const fetchFromSource = async (
   subdomain: string,
@@ -107,6 +114,31 @@ const fetchFromSource = async (
   }
 };
 
+const denyListCacheKey = 'ownerdenyListV1';
+
+const denyList = async (client: any) => {
+  let pubkeydenyList: Array<String> = [];
+  try {
+    const cachedValue = (await client.get(denyListCacheKey)) || '[]';
+    pubkeydenyList = JSON.parse(cachedValue) || [];
+
+    if (!pubkeydenyList.length) {
+      const resp = await fetchdenyListCacheKey();
+      pubkeydenyList = resp.result;
+      client.set(
+        denyListCacheKey,
+        // @ts-ignore
+        JSON.stringify(pubkeydenyList),
+      );
+      client.expire(denyListCacheKey, 300); // cache the entire list for 5 minutes
+    }
+  } catch (error) {
+    console.error('failed to fetch denylist', error);
+  }
+
+  return pubkeydenyList;
+};
+
 export const getStorefront = async (
   subdomain: string,
 ): Promise<Storefront | undefined> => {
@@ -139,8 +171,14 @@ export const getStorefront = async (
   const lastSavedAt = moment(timestamp);
 
   const duration = moment.duration(now.diff(lastSavedAt)).as('minutes');
+  const denies = await denyList(client);
 
   if (duration < 2 && cached) {
+    if (denies.includes(cached.pubkey)) {
+      await client.quit();
+      return undefined;
+    }
+
     await client.quit();
     return cached;
   }
@@ -153,6 +191,11 @@ export const getStorefront = async (
       .set(subdomain, JSON.stringify(source))
       .set(`${subdomain}-timestamp`, now.format())
       .exec();
+
+    if (denies.includes(source.pubkey)) {
+      await client.quit();
+      return undefined;
+    }
 
     await client.quit();
     return source;

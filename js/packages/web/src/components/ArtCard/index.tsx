@@ -41,6 +41,7 @@ export const ArtCard = ({
   const art = useArt(pubkey);
   const creators = art?.creators || creatorsProp || [];
   const name = art?.title || nameProp || ' ';
+  const unverified = art.creators?.find(c => !c.verified);
 
   let badge = '';
   if (art.type === ArtType.NFT) {
@@ -105,7 +106,7 @@ export const ArtCard = ({
     </Card>
   );
 
-  return art.creators?.find(c => !c.verified) ? (
+  return unverified ? (
     <Badge.Ribbon text="Unverified">{card}</Badge.Ribbon>
   ) : (
     card

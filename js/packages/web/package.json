@@ -10,7 +10,7 @@
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
     "@holaplex/solana-web3-tools": "^0.1.7",
-    "@holaplex/ui": "^0.0.13",
+    "@holaplex/ui": "^0.0.26",
     "@magic-ext/solana": "^0.2.0",
     "@metaplex/js": "^4.9.0",
     "@oyster/common": "0.0.2",

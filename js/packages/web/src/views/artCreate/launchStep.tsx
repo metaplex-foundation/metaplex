@@ -93,14 +93,6 @@ export const LaunchStep = (props: {
       >
         Pay with SOL
       </Button>
-      <Button
-        disabled={true}
-        className="metaplex-fullwidth"
-        size="large"
-        onClick={props.confirm}
-      >
-        Pay with Credit Card
-      </Button>
     </Space>
   );
 };
