@@ -52,7 +52,6 @@
     ]
   },
   "dependencies": {
-    "@holaplex/ui": "^0.0.19",
     "cross-env": "^7.0.3",
     "next": "^11.0.1",
     "react": "^17.0.2",
