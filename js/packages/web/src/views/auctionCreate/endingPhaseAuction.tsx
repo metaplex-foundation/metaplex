@@ -38,6 +38,7 @@ export const EndingPhaseAuction = (props: {
           autoFocus
           type="number"
           placeholder="Set the auction duration"
+          defaultValue={props.attributes.auctionDuration}
           onChange={info =>
             props.setAttributes({
               ...props.attributes,

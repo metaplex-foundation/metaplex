@@ -154,7 +154,8 @@ export const AuctionCreateView = () => {
     reservationPrice: 0,
     items: [],
     category: AuctionCategory.Open,
-    auctionDurationType: 'minutes',
+    auctionDurationType: 'hours',
+    auctionDuration: 24,
     gapTimeType: 'minutes',
     winnersCount: 1,
     startSaleTS: undefined,
@@ -521,7 +522,8 @@ export const AuctionCreateView = () => {
         () => {
           notify({
             message: 'New signature needed...',
-            description: 'Please re-sign the current transaction again to continue.',
+            description:
+              'Please re-sign the current transaction again to continue.',
             type: 'info',
           });
         },
