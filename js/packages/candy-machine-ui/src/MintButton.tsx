@@ -4,6 +4,8 @@ import { CandyMachineAccount } from './candy-machine';
 import { CircularProgress } from '@material-ui/core';
 import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
 import { useEffect, useState } from 'react';
+import {useConnection, useWallet} from "@solana/wallet-adapter-react";
+import {findGatewayToken} from "@identity.com/solana-gateway-ts";
 
 export const CTAButton = styled(Button)`
   width: 100%;
@@ -17,18 +19,23 @@ export const CTAButton = styled(Button)`
 `; // add your own styles here
 
 export const MintButton = ({
-  onMint,
-  candyMachine,
-  isMinting,
+                             onMint,
+                             candyMachine,
+                             isMinting,
+                             rpcUrl
   isActive,
-}: {
+                           }: {
   onMint: () => Promise<void>;
   candyMachine?: CandyMachineAccount;
   isMinting: boolean;
   isActive: boolean;
+  rpcUrl: string
 }) => {
   const { requestGatewayToken, gatewayStatus } = useGateway();
   const [clicked, setClicked] = useState(false);
+
+  const wallet = useWallet();
+  const connection = useConnection();
 
   useEffect(() => {
     if (gatewayStatus === GatewayStatus.ACTIVE && clicked) {
@@ -60,10 +67,28 @@ export const MintButton = ({
       onClick={async () => {
         setClicked(true);
         if (candyMachine?.state.isActive && candyMachine?.state.gatekeeper) {
-          if (gatewayStatus === GatewayStatus.ACTIVE) {
-            setClicked(true);
-          } else {
-            await requestGatewayToken();
+          //candyMachine.state.gatekeeper.gatekeeperNetwork === civicNetwork
+          if(true){
+            if (gatewayStatus === GatewayStatus.ACTIVE) {
+              setClicked(true);
+            } else {
+              await requestGatewayToken();
+            }
+          }
+          //candyMachine.state.gatekeeper.gatekeeperNetwork === encoreNetwork
+          else if (true){
+            const gatewayToken = await findGatewayToken(
+              connection.connection,
+              wallet.publicKey!,
+              candyMachine!.state.gatekeeper!.gatekeeperNetwork
+            );
+
+            if (gatewayToken) {
+              await onMint();
+              setClicked(false);
+            } else {
+              window.open(`https://encore.fans/verify-hooman?network=${rpcUrl}&gkNetwork=${candyMachine!.state.gatekeeper}`, '_blank')
+            }
           }
         } else {
           await onMint();

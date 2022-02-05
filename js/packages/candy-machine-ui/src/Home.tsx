@@ -411,6 +411,7 @@ const Home = (props: HomeProps) => {
                       isMinting={isUserMinting}
                       onMint={onMint}
                       isActive={isActive || (isPresale && isWhitelistUser)}
+                      rpcUrl={rpcUrl}
                     />
                   </GatewayProvider>
                 ) : (
@@ -419,6 +420,7 @@ const Home = (props: HomeProps) => {
                     isMinting={isUserMinting}
                     onMint={onMint}
                     isActive={isActive || (isPresale && isWhitelistUser)}
+                    rpcUrl={rpcUrl}
                   />
                 )}
               </MintContainer>
