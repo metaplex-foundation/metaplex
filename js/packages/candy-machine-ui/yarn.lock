@@ -1089,10 +1089,10 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
-"@civic/solana-gateway-react@^0.4.11":
-  version "0.4.11"
-  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.11.tgz#45fca38fbf70c1517b6666e1e09f20df1bd1480d"
-  integrity sha512-1YfFYfiODatrkpeWeK3xkZ27a93WBGcdCBLIQ/Hy88rXBX9zTs+4HwD/rSSLwIMF0wnt2NxOMSuU7b9B6JBNcw==
+"@civic/solana-gateway-react@^0.4.12":
+  version "0.4.12"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.12.tgz#e9e6986d517f09926d7554c9e40265861252e85a"
+  integrity sha512-P7M4A3C6Zd+dtYC2UllyxuUnDdP3cr0/OFZXlv/DkBQcux6XyJFSdQQcjaE2+t/n6v6mnuNiti8r9SkW4ZvQXg==
   dependencies:
     "@identity.com/prove-solana-wallet" "^0.2.3"
     "@identity.com/solana-gateway-ts" "^0.7.0"
@@ -1247,6 +1247,17 @@
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.7.0.tgz#61ece3f781148b040778bc936128039e52918ecc"
   integrity sha512-hxOHbQDH3mQ6cBIvEsUZFICJAfgv0V8GB2QpnvXwHoAnPVRpYACHb98P2i93gwyC+jFUEJ5fOQo4eaa06bnAvw==
+  dependencies:
+    "@solana/web3.js" "^1.22.0"
+    async-retry "^1.3.3"
+    bn.js "^5.2.0"
+    borsh "^0.4.0"
+    ramda "^0.27.1"
+
+"@identity.com/solana-gateway-ts@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.8.1.tgz#387facc495b2256ce2e3ec1673f9e8a09180b52e"
+  integrity sha512-Ezy2rwBfRpfzVyoqiW34AkczR0YxVLN7+kuFvofT/cyMVGpB/4a+lBjPQT6UHXKX9jkP6vyiSsV+VX6jnoimkg==
   dependencies:
     "@solana/web3.js" "^1.22.0"
     async-retry "^1.3.3"

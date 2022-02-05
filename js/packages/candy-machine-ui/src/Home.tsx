@@ -196,6 +196,7 @@ const Home = (props: HomeProps) => {
                       candyMachine={candyMachine}
                       isMinting={isUserMinting}
                       onMint={onMint}
+                      rpcUrl={rpcUrl}
                     />
                   </GatewayProvider>
                 ) : (
@@ -203,6 +204,7 @@ const Home = (props: HomeProps) => {
                     candyMachine={candyMachine}
                     isMinting={isUserMinting}
                     onMint={onMint}
+                    rpcUrl={rpcUrl}
                   />
                 )}
               </MintContainer>
