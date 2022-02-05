@@ -1,0 +1,19 @@
+/* Swiper bullets */
+.swiper-pagination {
+  bottom: 4px !important;
+  right: 0 !important;
+  left: unset !important;
+  width: unset !important;
+
+  &-bullet {
+    width: 34px !important;
+    height: 6px !important;
+    border-radius: 8px !important;
+    @apply !bg-white/20;
+    opacity: 1 !important;
+
+    &-active {
+      @apply !bg-white;
+    }
+  }
+}

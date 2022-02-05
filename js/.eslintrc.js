@@ -4,9 +4,9 @@ module.exports = {
     es6: true,
   },
   extends: [
-    "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:@typescript-eslint/eslint-recommended"
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:@typescript-eslint/eslint-recommended',
   ],
   globals: {
     Atomics: 'readonly',
@@ -28,6 +28,8 @@ module.exports = {
   },
   rules: {
     'no-unused-vars': 'off',
+    'react/display-name': 'off',
+    'react/react-in-jsx-scope': 'off',
     '@typescript-eslint/no-unused-vars': ['error'],
   },
 };
