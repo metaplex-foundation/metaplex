@@ -34,7 +34,7 @@ export function SPLTokenListProvider({ children = null as any }) {
     ]: [WRAPPED_SOL_MINT]
 
   useEffect(() => {
-    getTokenListContainerPromise().then(setTokenList);
+    getTokenListContainerPromise().then(()=>setTokenList);
   }, [setTokenList]);
 
   const hasOtherTokens = !!process.env.NEXT_SPL_TOKEN_MINTS;
