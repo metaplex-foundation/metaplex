@@ -25,9 +25,9 @@ export const FeatureCard: FC<FeatureCardProps> = ({
           className="h-[76px] w-[140px] object-contain mb-[8px]"
         />
       )}
-      <h3 className="text-h5 text-N-800">{heading}</h3>
+      <h3 className="text-h5 text-gray-800">{heading}</h3>
       <p
-        className="text-N-600"
+        className="text-gray-700"
         dangerouslySetInnerHTML={{ __html: description }}
       />
     </div>

@@ -23,11 +23,11 @@ export const BlogCarousel: FC<BlogCarouselProps> = ({
   return (
     <div className={BlogCarouselClasses} {...restProps}>
       <div className="container flex flex-col gap-[40px]">
-        <h2 className="text-h3 text-N-800">From the blog</h2>
+        <h2 className="text-h3 text-gray-800">From the blog</h2>
 
         <div className="flex items-center w-full">
           <div className="relative left-[-40px]">
-            <button className="cursor-pointer appearance-none blog-carousel--prev ml-[-25px] text-N-300 hover:text-N-700">
+            <button className="cursor-pointer appearance-none blog-carousel--prev ml-[-25px] text-gray-300 hover:text-gray-700">
               <svg
                 width="25"
                 height="44"
@@ -75,7 +75,7 @@ export const BlogCarousel: FC<BlogCarouselProps> = ({
           />
 
           <div className="relative right-[-40px]">
-            <button className="cursor-pointer appearance-none blog-carousel--next mr-[-25px] text-N-300 hover:text-N-700">
+            <button className="cursor-pointer appearance-none blog-carousel--next mr-[-25px] text-gray-300 hover:text-gray-700">
               <svg
                 width="25"
                 height="44"

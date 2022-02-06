@@ -35,7 +35,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
               <button
                 key={index}
                 className={CN(
-                  'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 rounded-[4px]',
+                  'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 rounded-[6px] transition-colors',
                 )}
               >
                 {menuItem?.label}
@@ -60,10 +60,10 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
                   <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
                     <button
                       className={CN(
-                        'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400',
+                        'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 transition-colors',
                         {
-                          'rounded-t-[4px] bg-white text-B-400': isOpen,
-                          'rounded-[4px]': !isOpen,
+                          'rounded-t-[6px] bg-white text-B-400': isOpen,
+                          'rounded-[6px]': !isOpen,
                         },
                       )}
                     >
@@ -74,7 +74,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
                   {isOpen && (
                     <DropDownBody
                       align="left"
-                      className="w-[172px] !rounded-tl-none"
+                      className="w-[172px] !rounded-tl-none shadow-lg"
                     >
                       {menuItem?.subMenu?.map((option: any, index: number) => {
                         const { label, value } = option;

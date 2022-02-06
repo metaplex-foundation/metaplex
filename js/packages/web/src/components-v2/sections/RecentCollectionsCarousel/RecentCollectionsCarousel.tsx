@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
+import Link from 'next/link';
 import { collections } from '../../../../dummy-data/collections';
 import { BlockCarousel } from '../../molecules/BlockCarousel';
 import { NftCard } from '../../molecules/NftCard';
@@ -17,19 +18,25 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
     className,
   );
 
-  const slidesList = (collections || []).map(({ id, ...restProps }, index) => ({
-    id: index,
-    Component: () => <NftCard key={id || index} {...restProps} />,
-  }));
+  const slidesList = (collections || []).map(
+    ({ id, link, ...restProps }, index) => ({
+      id: index,
+      Component: () => (
+        <Link href={link}>
+          <NftCard key={id || index} {...restProps} />
+        </Link>
+      ),
+    }),
+  );
 
   return (
     <div className={RecentCollectionsCarouselClasses} {...restProps}>
       <div className="container flex flex-col gap-[40px]">
-        <h2 className="text-h3 text-N-800">Recently listed collections</h2>
+        <h2 className="text-h3 text-gray-800">Recently listed collections</h2>
 
         <div className="flex items-center w-full">
           <div className="relative left-[-40px]">
-            <button className="cursor-pointer appearance-none recent-collections-carousel--prev ml-[-25px] text-N-300 hover:text-N-700">
+            <button className="cursor-pointer appearance-none recent-collections-carousel--prev ml-[-25px] text-gray-300 hover:text-gray-700">
               <svg
                 width="25"
                 height="44"
@@ -77,7 +84,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
           />
 
           <div className="relative right-[-40px]">
-            <button className="cursor-pointer appearance-none recent-collections-carousel--next mr-[-25px] text-N-300 hover:text-N-700">
+            <button className="cursor-pointer appearance-none recent-collections-carousel--next mr-[-25px] text-gray-300 hover:text-gray-700">
               <svg
                 width="25"
                 height="44"

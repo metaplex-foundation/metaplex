@@ -76,7 +76,7 @@ export const DropDownMenuItem = ({
   return (
     <div
       className={CN(
-        'bg-white py-[4px] px-[8px] rounded-[4px] mb-[4px] text-md ease-in-out duration-100 flex items-center hover:text-B-400 hover:bg-N-50 cursor-pointer',
+        'bg-white py-[4px] px-[8px] rounded-[4px] mb-[4px] text-md ease-in-out duration-100 flex items-center hover:text-B-400 hover:bg-gray-100 cursor-pointer transition-all',
         className,
       )}
       onClick={onClick}

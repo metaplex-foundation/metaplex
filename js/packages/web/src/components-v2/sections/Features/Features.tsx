@@ -15,7 +15,7 @@ export const Features: FC<FeaturesProps> = ({
   return (
     <div className={FeaturesClasses} {...restProps}>
       <div className="container flex flex-col items-center gap-[60px]">
-        <h2 className="text-h3 text-N-800">What makes us different</h2>
+        <h2 className="text-h3 text-gray-800">What makes us different</h2>
 
         <div className="grid grid-cols-3 gap-[100px] w-full">
           <FeatureCard

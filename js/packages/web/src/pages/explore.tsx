@@ -5,7 +5,7 @@ import { Header } from '../components-v2/sections/Header';
 import { Footer } from '../components-v2/sections/Footer';
 import { ExploreCollections } from '../components-v2/sections/ExploreCollections';
 
-const Home: NextPage = () => {
+const Explore: NextPage = () => {
   return (
     <>
       <Header />
@@ -17,4 +17,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default Explore;
