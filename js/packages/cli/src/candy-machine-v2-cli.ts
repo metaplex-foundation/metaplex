@@ -29,7 +29,6 @@ import {
 
 import { uploadV2 } from './commands/upload';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
-import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mintV2 } from './commands/mint';
 import { signMetadata } from './commands/sign';
@@ -38,8 +37,6 @@ import {
   signAllMetadataFromCandyMachine,
 } from './commands/signAll';
 import log from 'loglevel';
-import { createMetadataFiles } from './helpers/metadata';
-import { createGenerativeArt } from './commands/createArt';
 import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
@@ -416,7 +413,10 @@ programCommand('verify_upload')
           const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
           const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
           const cacheItem = cacheContent.items[key];
-          if (!name.match(escapeRegExp(cacheItem.name)) || !uri.match(escapeRegExp(cacheItem.link))) {
+          if (
+            !name.match(escapeRegExp(cacheItem.name)) ||
+            !uri.match(escapeRegExp(cacheItem.link))
+          ) {
             //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
             /*log.info(
                 `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
@@ -935,77 +935,6 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
 
   console.log(JSON.stringify(addresses, null, 2));
 });
-
-program
-  .command('generate_art_configurations')
-  .argument('<directory>', 'Directory containing traits named from 0-n', val =>
-    fs.readdirSync(`${val}`),
-  )
-  .action(async (files: string[]) => {
-    log.info('creating traits configuration file');
-    const startMs = Date.now();
-    const successful = await generateConfigurations(files);
-    const endMs = Date.now();
-    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
-    if (successful) {
-      log.info('traits-configuration.json has been created!');
-      log.info(
-        `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
-      );
-    } else {
-      log.info('The art configuration file was not created');
-    }
-  });
-
-program
-  .command('create_generative_art')
-  .option(
-    '-n, --number-of-images <string>',
-    'Number of images to be generated',
-    '100',
-  )
-  .option(
-    '-c, --config-location <string>',
-    'Location of the traits configuration file',
-    './traits-configuration.json',
-  )
-  .option(
-    '-o, --output-location <string>',
-    'If you wish to do image generation elsewhere, skip it and dump randomized sets to file',
-  )
-  .option(
-    '-ta, --treat-attributes-as-file-names <string>',
-    'If your attributes are filenames, trim the .png off if set to true',
-  )
-  .action(async (directory, cmd) => {
-    const {
-      numberOfImages,
-      configLocation,
-      outputLocation,
-      treatAttributesAsFileNames,
-    } = cmd.opts();
-
-    log.info('Loaded configuration file');
-
-    // 1. generate the metadata json files
-    const randomSets = await createMetadataFiles(
-      numberOfImages,
-      configLocation,
-      treatAttributesAsFileNames == 'true',
-    );
-
-    log.info('JSON files have been created within the assets directory');
-
-    // 2. piecemeal generate the images
-    if (!outputLocation) {
-      await createGenerativeArt(configLocation, randomSets);
-      log.info('Images have been created successfully!');
-    } else {
-      fs.writeFileSync(outputLocation, JSON.stringify(randomSets));
-
-      log.info('Traits written!');
-    }
-  });
 
 function programCommand(name: string) {
   return program
