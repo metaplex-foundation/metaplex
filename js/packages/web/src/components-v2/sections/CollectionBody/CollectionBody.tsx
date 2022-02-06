@@ -79,6 +79,9 @@ export const CollectionBody: FC<CollectionBodyProps> = ({
               <Chip onClose={() => {}} label="Shirt">
                 Beach
               </Chip>
+              <Chip onClose={() => {}} label="Tier">
+                Professional
+              </Chip>
 
               <button className="appearance-none text-md text-B-400 font-500 h-[32px] px-[8px] rounded-full">
                 Clear all
