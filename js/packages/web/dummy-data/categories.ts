@@ -4,8 +4,12 @@ export const categories = [
     value: 'trending',
   },
   {
-    label: 'Art',
+    label: '1/1 Art',
     value: 'art',
+  },
+  {
+    label: 'Collectibles',
+    value: 'collectibles',
   },
   {
     label: 'Charity Focused',

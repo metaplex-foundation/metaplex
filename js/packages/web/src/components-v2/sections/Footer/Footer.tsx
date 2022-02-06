@@ -14,14 +14,14 @@ export const Footer: FC<FooterProps> = ({
   className,
   ...restProps
 }: FooterProps) => {
-  const FooterClasses = CN(`footer bg-N-500 py-[80px]`, className);
+  const FooterClasses = CN(`footer bg-gray-500 py-[80px]`, className);
 
   return (
     <div className={FooterClasses} {...restProps}>
       <div className="container flex gap-[64px]">
         <div className="flex flex-col gap-[32px] w-full lg:w-[443px] flex-shrink-0">
           <div className="flex flex-col text-white gap-[16px]">
-            <h3 className="text-h4">Stay up-to date</h3>
+            <h3 className="text-white text-h4">Stay up-to date</h3>
             <p>
               Subscribe to our newsletter to be on top of updates, announcements
               and more!
@@ -36,7 +36,7 @@ export const Footer: FC<FooterProps> = ({
           </div>
 
           <div className="flex flex-col text-white gap-[20px]">
-            <h3 className="text-h5">Join the community</h3>
+            <h3 className="text-white text-h5">Join the community</h3>
 
             <div className="flex items-center gap-[20px]">
               <TwitterIcon className="cursor-pointer" width={48} height={48} />
@@ -56,7 +56,7 @@ export const Footer: FC<FooterProps> = ({
 
         <div className="flex text-white gap-[40px] justify-between w-full pt-[120px]">
           <div className="flex flex-col gap-[20px]">
-            <h3 className="text-h5">Marketplace</h3>
+            <h3 className="text-white text-h5">Marketplace</h3>
 
             <div className="flex flex-col gap-[8px]">
               <a href="#" className="text-base text-white hover:text-white/70">
@@ -70,7 +70,7 @@ export const Footer: FC<FooterProps> = ({
           </div>
 
           <div className="flex flex-col gap-[20px]">
-            <h3 className="text-h5">Resources</h3>
+            <h3 className="text-white text-h5">Resources</h3>
 
             <div className="flex flex-col gap-[8px]">
               <a href="#" className="text-base text-white hover:text-white/70">
@@ -88,7 +88,7 @@ export const Footer: FC<FooterProps> = ({
           </div>
 
           <div className="flex flex-col gap-[20px]">
-            <h3 className="text-h5">Stats</h3>
+            <h3 className="text-white text-h5">Stats</h3>
 
             <div className="flex flex-col gap-[8px]">
               <a href="#" className="text-base text-white hover:text-white/70">
@@ -98,7 +98,7 @@ export const Footer: FC<FooterProps> = ({
           </div>
 
           <div className="flex flex-col gap-[20px]">
-            <h3 className="text-h5">Company</h3>
+            <h3 className="text-white text-h5">Company</h3>
 
             <div className="flex flex-col gap-[8px]">
               <a href="#" className="text-base text-white hover:text-white/70">

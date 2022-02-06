@@ -15,7 +15,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({
   ...restProps
 }: ProjectCardProps) => {
   const ProjectCardClasses = CN(
-    `project-card flex items-center bg-N-50 hover:bg-N-100 rounded-[8px] overflow-hidden w-full cursor-pointer`,
+    `project-card flex items-center bg-gray-50 hover:bg-gray-100 rounded-[12px] overflow-hidden w-full cursor-pointer transition-all`,
     className,
   );
 
@@ -31,8 +31,8 @@ export const ProjectCard: FC<ProjectCardProps> = ({
 
       <div className="flex items-center px-[16px] py-[16px] justify-between w-full">
         <div className="flex flex-col w-full">
-          <span className="text-N-800 text-h6 line-clamp-1">{name}</span>
-          <span className="flex items-center text-N-500 text-md gap-[4px]">
+          <span className="text-gray-800 text-h6 line-clamp-1">{name}</span>
+          <span className="flex items-center text-gray-600 text-md gap-[4px]">
             <SolanaIcon width={16} height={16} />
             <span>{tag}</span>
           </span>

@@ -9,6 +9,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1635177414355-988603329-5BoKlM8Z_400x400.jpg',
+    link: '/collection',
   },
   {
     id: 1,
@@ -20,6 +21,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1643928345774-328664040.jpg',
+    link: '/collection',
   },
   {
     id: 2,
@@ -31,6 +33,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1643782393523-331050135.png',
+    link: '/collection',
   },
   {
     id: 3,
@@ -42,6 +45,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1643826708545-679555765.jpg',
+    link: '/collection',
   },
   {
     id: 4,
@@ -53,6 +57,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1643639806922-108620021.png',
+    link: '/collection',
   },
   {
     id: 5,
@@ -64,6 +69,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1643499551636-146609262.jpg',
+    link: '/collection',
   },
   {
     id: 6,
@@ -75,6 +81,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1643406846707-631456667.png',
+    link: '/collection',
   },
   {
     id: 7,
@@ -86,6 +93,7 @@ export const collections = [
     isVerified: true,
     image:
       'https://content.solsea.io/files/thumbnail/1643162348396-965639537.jpg',
+    link: '/collection',
   },
   {
     id: 8,
@@ -96,5 +104,6 @@ export const collections = [
     isVerified: false,
     image:
       'https://content.solsea.io/files/thumbnail/1635112027815-161235783-download%20(9).png',
+    link: '/collection',
   },
 ];

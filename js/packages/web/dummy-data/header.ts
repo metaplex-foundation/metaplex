@@ -3,13 +3,13 @@ import { categories } from './categories';
 export const header = {
   menu: [
     {
-      label: 'Get started',
-      value: '/get-started',
-    },
-    {
       label: 'Explore',
       value: '/explore',
       subMenu: [...categories],
+    },
+    {
+      label: 'Create',
+      value: '/create',
     },
     {
       label: 'Donate',
@@ -38,12 +38,56 @@ export const header = {
       ],
     },
     {
-      label: 'Stats',
-      value: '/stats',
+      label: 'Learn',
+      value: '/learn',
+      subMenu: [
+        {
+          label: 'How to buy',
+          value: 'how-to-buy',
+        },
+        {
+          label: 'What are NFTs?',
+          value: 'what-are-nfts',
+        },
+        {
+          label: 'Crypto + NFT Guide',
+          value: 'crypto-nft-guide',
+        },
+        {
+          label: 'About Karmaverse',
+          value: 'about-karmaverse',
+        },
+        {
+          label: 'Philanthropy',
+          value: 'philanthropy',
+        },
+      ],
     },
     {
       label: 'Community',
       value: '/community',
+      subMenu: [
+        {
+          label: 'Become an ambassador',
+          value: 'become-an-ambassador',
+        },
+        {
+          label: 'Twitter',
+          value: 'twitter',
+        },
+        {
+          label: 'Discord',
+          value: 'discord',
+        },
+        {
+          label: 'Blog',
+          value: 'blog',
+        },
+        {
+          label: 'Merch',
+          value: 'merch',
+        },
+      ],
     },
   ],
 };

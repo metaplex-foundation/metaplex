@@ -12,7 +12,7 @@ export const BlogCard: FC<BlogCardProps> = ({
   ...restProps
 }: BlogCardProps) => {
   const BlogCardClasses = CN(
-    `blog-card flex flex-col bg-N-50 rounded-[8px] overflow-hidden h-full cursor-pointer hover:bg-N-100`,
+    `blog-card flex flex-col bg-gray-50 rounded-[12px] overflow-hidden h-full cursor-pointer hover:bg-gray-100 transition-all`,
     className,
   );
 

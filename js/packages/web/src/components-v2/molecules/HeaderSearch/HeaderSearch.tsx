@@ -15,11 +15,11 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({
   return (
     <div className={HeaderSearchClasses} {...restProps}>
       <TextField
-        iconBefore={<i className="text-white ri-search-line" />}
+        iconBefore={<i className="text-white ri-search-2-line" />}
         placeholder="Search Collections"
         size="sm"
-        wrapperClassName="!rounded-[4px] border-2 border-transparent !bg-white/20 !w-full focus-within:!bg-B-600/60 focus-within:!border-2 focus-within:!border-white"
-        className="placeholder:!text-white/70 focus:placeholder:!text-white/50 placeholder:font-400 text-white"
+        wrapperClassName="border-2 !border-transparent !bg-white/20 !w-full focus-within:!bg-B-400 focus-within:!border-2 focus-within:!border-white"
+        className="placeholder:!text-white focus:placeholder:!text-white/70 placeholder:font-400 text-white"
       />
     </div>
   );
