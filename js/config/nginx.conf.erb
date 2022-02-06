@@ -27,7 +27,7 @@ http {
 	# Must read the body in 5 seconds.
 	client_body_timeout 5;
 
-	limit_req_zone $binary_remote_addr zone=mylimit:10m rate=10r/s;
+	limit_req_zone $binary_remote_addr zone=mylimit:100m rate=100r/s;
 	server {
 		listen <%= ENV["PORT"] %>;
 		server_name _;
