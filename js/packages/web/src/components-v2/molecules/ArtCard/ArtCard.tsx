@@ -29,7 +29,7 @@ export const ArtCard: FC<ArtCardProps> = ({
         />
       </div>
 
-      <div className="hidden group-hover:flex absolute top-0 w-full h-[140px] items-center justify-center bg-gray-800/30 text-white gap-[4px] backdrop-blur-sm">
+      <div className="hidden group-hover:flex absolute top-0 w-full h-[140px] items-center justify-center bg-gray-800/30 text-white gap-[4px] backdrop-blur-sm rounded-t-[12px]">
         <i className="text-lg ri-eye-fill" />
         <span className="text-sm">Show details</span>
       </div>
