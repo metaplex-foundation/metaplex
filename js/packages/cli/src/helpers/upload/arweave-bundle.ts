@@ -165,7 +165,9 @@ function createArweavePathManifest(
     },
   };
   if (animationTxId) {
-    arweavePathManifest.paths[`animation${animationType}`] = { id: animationTxId, }
+    arweavePathManifest.paths[`animation${animationType}`] = {
+      id: animationTxId,
+    };
   }
   return arweavePathManifest;
 }
@@ -226,15 +228,18 @@ async function getBundleRange(
   let total = 0;
   let count = 0;
   for (const { key, image, animation, manifest } of filePairs) {
-    const filePairSize = await [image, animation, manifest].reduce(async (accP, file) => {
-      const acc = await accP;
-      if (!file) {
-        return acc;
-      } else {
-        const { size } = await stat(file);
-        return acc + size;
-      }
-    }, Promise.resolve(dummyAreaveManifestByteSize));
+    const filePairSize = await [image, animation, manifest].reduce(
+      async (accP, file) => {
+        const acc = await accP;
+        if (!file) {
+          return acc;
+        } else {
+          const { size } = await stat(file);
+          return acc + size;
+        }
+      },
+      Promise.resolve(dummyAreaveManifestByteSize),
+    );
 
     const limit = splitSize
       ? BUNDLE_SIZE_BYTE_LIMIT * 2
@@ -301,7 +306,7 @@ function getArweavePathManifestDataItem(
 
 /**
  * Retrieve an asset's manifest from the filesystem & update it with the link
- * to the asset's image link, obtained from signing the asset image DataItem.
+ * to the asset's image/animation link, obtained from signing the asset image/animation DataItem.
  */
 async function getUpdatedManifest(
   manifestPath: string,
@@ -352,11 +357,15 @@ async function processFiles({
     });
     await (imageDataItem as unknown as BundlrTransaction).sign();
   } else if (storageType === StorageType.ArweaveBundle) {
-    imageDataItem = await getImageDataItem(signer, imageBuffer, imageContentType);
+    imageDataItem = await getImageDataItem(
+      signer,
+      imageBuffer,
+      imageContentType,
+    );
     await (imageDataItem as DataItem).sign(signer);
   }
 
-  let animationContentType = undefined
+  let animationContentType = undefined;
   if (filePair.animation) {
     animationContentType = getType(filePair.animation);
     const animationBuffer = await readFile(filePair.animation);
@@ -369,18 +378,28 @@ async function processFiles({
       });
       await (animationDataItem as unknown as BundlrTransaction).sign();
     } else if (storageType === StorageType.ArweaveBundle) {
-      animationDataItem = await getImageDataItem(signer, animationBuffer, animationContentType);
+      animationDataItem = await getImageDataItem(
+        signer,
+        animationBuffer,
+        animationContentType,
+      );
       await (animationDataItem as DataItem).sign(signer);
     }
   }
 
-  const imageLink = `https://arweave.net/${imageDataItem.id}?ext=${path.extname(filePair.image).replace('.', '')}`;
-  const animationLink = filePair.animation ? `https://arweave.net/${animationDataItem.id}?ext=${path.extname(filePair.animation).replace('.', '')}` : undefined;
+  const imageLink = `https://arweave.net/${imageDataItem.id}?ext=${path
+    .extname(filePair.image)
+    .replace('.', '')}`;
+  const animationLink = filePair.animation
+    ? `https://arweave.net/${animationDataItem.id}?ext=${path
+        .extname(filePair.animation)
+        .replace('.', '')}`
+    : undefined;
 
   const manifest = await getUpdatedManifest(
     filePair.manifest,
     imageLink,
-    animationLink
+    animationLink,
   );
 
   if (storageType === StorageType.ArweaveSol) {
@@ -469,15 +488,18 @@ export function* makeArweaveBundleUploadGenerator(
         )
       : undefined;
 
-  const filePairs = assets.map(function (asset: AssetKey) {
+  const filePairs = assets.map((asset: AssetKey) => {
     const manifestPath = path.join(dirname, `${asset.index}.json`);
     const manifestData: Manifest = JSON.parse(
-      (readFileSync(manifestPath)).toString(),
+      readFileSync(manifestPath).toString(),
     );
     return {
       key: asset.index,
       image: path.join(dirname, `${manifestData.image}`),
-      animation: ('animation_url' in manifestData) ? path.join(dirname, `${manifestData.animation_url}`) : undefined,
+      animation:
+        'animation_url' in manifestData
+          ? path.join(dirname, `${manifestData.animation_url}`)
+          : undefined,
       manifest: manifestPath,
     };
   });
@@ -539,9 +561,7 @@ export function* makeArweaveBundleUploadGenerator(
             arweavePathManifestDataItem as DataItem,
           );
           if (filePair.animation) {
-            acc.dataItems.push(
-              animationDataItem as DataItem,
-            );
+            acc.dataItems.push(animationDataItem as DataItem);
           }
           acc.arweavePathManifestLinks.push(arweavePathManifestLink);
           acc.updatedManifests.push(manifest);

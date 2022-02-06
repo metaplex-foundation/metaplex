@@ -181,12 +181,17 @@ programCommand('upload')
       return true;
     });
 
+    if (animationFileCount !== 0 && storage === StorageType.Arweave) {
+      throw new Error(
+        'The "arweave" storage option is incompatible with animation files. Please try again with another storage option using `--storage <option>`.',
+      );
+    }
+
     if (animationFileCount !== 0 && animationFileCount !== jsonFileCount) {
       throw new Error(
         `number of animation files (${animationFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
-    }
-    else if (imageFileCount !== jsonFileCount) {
+    } else if (imageFileCount !== jsonFileCount) {
       throw new Error(
         `number of img files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
@@ -201,11 +206,11 @@ programCommand('upload')
 
     if (animationFileCount === 0) {
       log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
+    } else {
+      log.info(
+        `Beginning the upload for ${elemCount} (img+animation+json) sets`,
+      );
     }
-    else {
-      log.info(`Beginning the upload for ${elemCount} (img+animation+json) sets`);
-    }
-    
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
