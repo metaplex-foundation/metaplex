@@ -209,13 +209,14 @@ export const CurrentUserBadge = (props: {
   const { account } = useNativeAccount();
   const solPrice = useSolPrice();
   const [showAddFundsModal, setShowAddFundsModal] = useState<Boolean>(false);
+  const tokenList = useTokenList();
 
   if (!wallet || !publicKey) {
     return null;
   }
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
-  const solMintInfo = useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString());
+  const solMintInfo = tokenList.tokenMap.get(WRAPPED_SOL_MINT.toString());
   const iconStyle: React.CSSProperties = {
     display: 'flex',
     width: props.iconSize,
