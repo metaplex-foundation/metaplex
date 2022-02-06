@@ -1,9 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import {
-  TokenInfo,
-  TokenListContainer,
-  TokenListProvider,
-} from "@solana/spl-token-registry";
+import { getTokenListContainerPromise } from '@oyster/common';
+import { TokenInfo, TokenListContainer } from "@solana/spl-token-registry";
 import { WRAPPED_SOL_MINT } from '@project-serum/serum/lib/token-instructions';
 
 // Tag in the spl-token-registry for sollet wrapped tokens.
@@ -37,7 +34,7 @@ export function SPLTokenListProvider({ children = null as any }) {
     ]: [WRAPPED_SOL_MINT]
 
   useEffect(() => {
-    new TokenListProvider().resolve().then(setTokenList);
+    getTokenListContainerPromise().then(()=>setTokenList);
   }, [setTokenList]);
 
   const hasOtherTokens = !!process.env.NEXT_SPL_TOKEN_MINTS;
