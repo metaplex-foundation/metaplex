@@ -15,6 +15,9 @@ export const Chip: FC<ChipProps> = ({
   const ChipClasses = CN(
     `chip bg-white border border-N-100 h-[32px] inline-flex pl-[16px] items-center justify-center rounded-full text-md font-500 overflow-hidden flex-shrink-0 hover:bg-gray-50 cursor-pointer transition-all`,
     className,
+    {
+      'pr-[16px]': !onClose,
+    }
   );
 
   return (

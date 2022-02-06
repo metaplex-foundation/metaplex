@@ -14,7 +14,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
   className,
   ...restProps
 }: CollectionHeaderProps) => {
-  const CollectionHeaderClasses = CN(`collection-header`, className);
+  const CollectionHeaderClasses = CN(`collection-header bg-white`, className);
   const [isFavorite, setIsFavorite] = useState(true);
   const [isShowFullBio, setIsShowFullBio] = useState(false);
 

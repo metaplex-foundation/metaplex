@@ -15,22 +15,28 @@ export const Avatar: FC<AvatarProps> = ({
   onClick,
   size,
   hasBorder,
+  radius,
   ...restProps
 }: AvatarProps) => {
-  const AvatarClasses = CN(`avatar rounded-full overflow-hidden`, className, {
-    'border-[8px] border-white': hasBorder,
-    'w-[150px] h-[150px]': size === 'lg',
-    'w-[76px] h-[76px]': size === 'default',
-    'w-[56px] h-[56px]': size === 'md',
-    'w-[36px] h-[36px]': size === 'sm',
-  });
+  const AvatarClasses = CN(
+    `avatar rounded-full overflow-hidden`,
+    className,
+    {
+      'border-[8px] border-white': hasBorder,
+      'w-[150px] h-[150px]': size === 'lg',
+      'w-[76px] h-[76px]': size === 'default',
+      'w-[48px] h-[48px]': size === 'md',
+      'w-[36px] h-[36px]': size === 'sm',
+    },
+    radius,
+  );
 
   return (
     <div className={AvatarClasses} {...restProps}>
       <img
         src={image}
         onClick={onClick}
-        className="w-full h-full rounded-full"
+        className={CN('w-full h-full rounded-full', radius)}
       />
     </div>
   );

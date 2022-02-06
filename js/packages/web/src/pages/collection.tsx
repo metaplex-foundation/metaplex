@@ -11,8 +11,8 @@ const Collection: NextPage = () => {
     <>
       <Header />
       <div className="pt-[85px]">
-        <CollectionHeader />
-        <CollectionBody className="pt-[60px] pb-[100px]" />
+        <CollectionHeader className="pb-[60px]" />
+        <CollectionBody className="pb-[100px]" />
       </div>
       <Footer />
     </>

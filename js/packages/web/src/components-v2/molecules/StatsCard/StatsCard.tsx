@@ -23,7 +23,7 @@ export const StatsCard: FC<StatsCardProps> = ({
   ...restProps
 }: StatsCardProps) => {
   const StatsCardClasses = CN(
-    `stats-card flex py-[32px] bg-gray-50 flex-shrink-0 rounded-[12px] px-[12px]`,
+    `stats-card flex py-[32px] bg-gray-50 flex-shrink-0 rounded-[8px] px-[12px]`,
     className,
   );
 

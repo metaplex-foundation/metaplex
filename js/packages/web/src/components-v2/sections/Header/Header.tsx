@@ -15,7 +15,7 @@ export const Header: FC<HeaderProps> = ({
   ...restProps
 }: HeaderProps) => {
   const HeaderClasses = CN(
-    `header flex gap-[28px] items-center bg-B-400 py-[20px] px-[32px] fixed top-0 left-0 right-0 z-50`,
+    `header flex gap-[28px] items-center bg-B-400 py-[20px] px-[32px] fixed top-0 left-0 right-0 z-50 shadow-lg shadow-blue-700/10`,
     className,
   );
 

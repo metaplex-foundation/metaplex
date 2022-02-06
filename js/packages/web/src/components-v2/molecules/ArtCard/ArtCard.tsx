@@ -12,10 +12,11 @@ export const ArtCard: FC<ArtCardProps> = ({
   price,
   bid,
   lastPrice,
+  onClickBuy,
   ...restProps
 }: ArtCardProps) => {
   const ArtCardClasses = CN(
-    `art-card rounded-[12px] overflow-hidden hover:shadow-lg cursor-pointer relative group`,
+    `art-card rounded-[8px] overflow-hidden hover:shadow-lg hover:shadow-blue-900/10 cursor-pointer relative group`,
     className,
   );
 
@@ -29,18 +30,21 @@ export const ArtCard: FC<ArtCardProps> = ({
         />
       </div>
 
-      <div className="hidden group-hover:flex absolute top-0 w-full h-[140px] items-center justify-center bg-gray-800/30 text-white gap-[4px] backdrop-blur-sm rounded-t-[12px]">
+      <div className="hidden group-hover:flex absolute top-0 w-full h-[140px] items-center justify-center bg-gray-800/30 text-white gap-[4px] backdrop-blur-sm rounded-t-[8px]">
         <i className="text-lg ri-eye-fill" />
         <span className="text-sm">Show details</span>
       </div>
 
       <div className="hidden transition-colors group-hover:flex absolute bottom-0 w-full top-[140px]">
-        <button className="w-full text-white appearance-none bg-B-400 hover:bg-B-500 font-600">
+        <button
+          className="w-full text-white appearance-none bg-B-400 hover:bg-B-500 font-600"
+          onClick={onClickBuy}
+        >
           Buy Now
         </button>
       </div>
 
-      <div className="flex px-[12px] pt-[12px] pb-[12px] flex-col gap-[4px] border rounded-b-[12px]">
+      <div className="flex px-[12px] pt-[12px] pb-[12px] flex-col gap-[4px] border rounded-b-[8px]">
         <h3 className="flex text-gray-800 text-md font-600">
           <span className="line-clamp-1">{name}</span>
         </h3>
