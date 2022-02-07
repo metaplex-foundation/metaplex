@@ -1,4 +1,4 @@
-import { Button, Input, Space } from 'antd';
+import { Button, Space } from 'antd';
 import React from 'react';
 import { AuctionState } from '.';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
@@ -40,27 +40,9 @@ export const ParticipationStep = (props: {
         Select Participation NFT
       </ArtSelector>
 
-      <label>
-        <h3>Price</h3>
-        <p>
-          This is an optional fixed price that non-winners will pay for your
-          Participation NFT.
-        </p>
-        <Input
-          type="number"
-          min={0}
-          autoFocus
-          placeholder="Fixed Price"
-          prefix="◎"
-          suffix="SOL"
-          onChange={info =>
-            props.setAttributes({
-              ...props.attributes,
-              participationFixedPrice: parseFloat(info.target.value),
-            })
-          }
-        />
-      </label>
+      <p>
+        NOTE: Participation NFTs will be provided free of charge to bidders.
+      </p>
 
       <Button
         className="metaplex-fullwidth"
