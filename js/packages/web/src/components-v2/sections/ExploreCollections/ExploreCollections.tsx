@@ -8,6 +8,7 @@ import { collections } from '../../../../dummy-data/explore-collections';
 
 import { NftCard } from '../../molecules/NftCard';
 import { TextField } from '../../atoms/TextField';
+import { TabHighlightButton } from '../../atoms/TabHighlightButton';
 
 export interface ExploreCollectionsProps {
   [x: string]: any;
@@ -42,30 +43,15 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
         <div className="flex gap-[32px] pt-[40px] pb-[80px]">
           {categories?.map(({ label, value }: any, index: number) => {
             return (
-              <div
+              <TabHighlightButton
+                isActive={pid === value}
                 key={value || index}
-                className={CN(
-                  'cursor-pointer flex flex-col px-[12px] pb-[8px] relative',
-                  {
-                    'text-gray-800': pid === value,
-                    'text-gray-500 hover:text-gray-700': pid !== value,
-                  },
-                )}
                 onClick={() => {
                   push({ pathname: '/explore', query: { pid: value } });
                 }}
               >
-                <span>{label}</span>
-
-                <span
-                  className={CN(
-                    'bg-[linear-gradient(89.57deg,_#3E9CD1_0.79%,_#224CB8_124%)] h-[4px] w-full rounded-full absolute left-0 right-0 bottom-0 opacity-0 transition-all',
-                    {
-                      'opacity-[1]': pid === value,
-                    },
-                  )}
-                />
-              </div>
+                {label}
+              </TabHighlightButton>
             );
           })}
         </div>

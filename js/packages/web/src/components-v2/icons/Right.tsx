@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const Left = ({
+export const Right = ({
   width = 26,
   height = 26,
   color = 'currentColor',
@@ -16,7 +16,7 @@ export const Left = ({
       {...restProps}
     >
       <path
-        d="M23 42L3 22L23 2"
+        d="M2 2L22 22L2 42"
         stroke={color}
         strokeWidth="3"
         strokeLinecap="round"
@@ -25,4 +25,4 @@ export const Left = ({
   );
 };
 
-export default Left;
+export default Right;

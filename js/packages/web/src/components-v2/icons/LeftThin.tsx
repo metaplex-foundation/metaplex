@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const Left = ({
+export const LeftThin = ({
   width = 26,
   height = 26,
   color = 'currentColor',
@@ -18,11 +18,11 @@ export const Left = ({
       <path
         d="M23 42L3 22L23 2"
         stroke={color}
-        strokeWidth="3"
+        strokeWidth="1"
         strokeLinecap="round"
       />
     </svg>
   );
 };
 
-export default Left;
+export default LeftThin;

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import CN from 'classnames';
 
 export interface ArtCardProps {
@@ -13,24 +13,30 @@ export const ArtCard: FC<ArtCardProps> = ({
   bid,
   lastPrice,
   onClickBuy,
+  onClickDetails,
   ...restProps
 }: ArtCardProps) => {
   const ArtCardClasses = CN(
     `art-card rounded-[8px] overflow-hidden hover:shadow-lg hover:shadow-blue-900/10 cursor-pointer relative group`,
     className,
   );
+  const [artImage, setArtImage] = useState(image);
 
   return (
     <div className={ArtCardClasses} {...restProps}>
       <div className="flex flex-col">
         <img
-          src={image}
+          src={artImage}
           alt={name}
+          onError={() => setArtImage('/img/art-placeholder-sm.jpg')}
           className="h-[140px] w-full object-cover object-top"
         />
       </div>
 
-      <div className="hidden group-hover:flex absolute top-0 w-full h-[140px] items-center justify-center bg-gray-800/30 text-white gap-[4px] backdrop-blur-sm rounded-t-[8px]">
+      <div
+        className="hidden group-hover:flex absolute top-0 w-full h-[140px] items-center justify-center bg-gray-800/30 text-white gap-[4px] backdrop-blur-sm rounded-t-[8px]"
+        onClick={onClickDetails}
+      >
         <i className="text-lg ri-eye-fill" />
         <span className="text-sm">Show details</span>
       </div>
