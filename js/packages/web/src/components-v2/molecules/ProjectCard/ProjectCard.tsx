@@ -15,7 +15,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({
   ...restProps
 }: ProjectCardProps) => {
   const ProjectCardClasses = CN(
-    `project-card flex items-center bg-gray-50 hover:bg-gray-100 rounded-[12px] overflow-hidden w-full cursor-pointer transition-all`,
+    `project-card flex items-center bg-gray-50 hover:bg-gray-100 rounded-[8px] overflow-hidden w-full cursor-pointer transition-all`,
     className,
   );
 

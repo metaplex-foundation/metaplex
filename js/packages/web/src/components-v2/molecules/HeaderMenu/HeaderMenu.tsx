@@ -74,7 +74,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
                   {isOpen && (
                     <DropDownBody
                       align="left"
-                      className="w-[172px] !rounded-tl-none shadow-lg"
+                      className="w-[172px] !rounded-tl-none shadow-lg shadow-blue-900/10"
                     >
                       {menuItem?.subMenu?.map((option: any, index: number) => {
                         const { label, value } = option;
