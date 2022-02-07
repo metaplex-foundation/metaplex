@@ -35,7 +35,10 @@ interface CandyMachineState {
     expireOnUse: boolean;
     gatekeeperNetwork: anchor.web3.PublicKey;
   };
-  endSettings: null | [number, anchor.BN];
+  endSettings: null | {
+    number: anchor.BN;
+    endSettingType: any;
+  };
   whitelistMintSettings: null | {
     mode: any;
     mint: anchor.web3.PublicKey;
@@ -184,10 +187,11 @@ export const getCandyMachineState = async (
       isSoldOut: itemsRemaining === 0,
       isActive:
         (presale ||
-          state.data.goLiveDate.toNumber() < new Date().getTime() / 1000) &&
+          state.data.goLiveDate?.toNumber() < new Date().getTime() / 1000) &&
         (state.data.endSettings
           ? state.data.endSettings.endSettingType.date
-            ? state.data.endSettings.number.toNumber() > new Date().getTime() / 1000
+            ? state.data.endSettings.number.toNumber() >
+              new Date().getTime() / 1000
             : itemsRedeemed < state.data.endSettings.number.toNumber()
           : true),
       isPresale: presale,

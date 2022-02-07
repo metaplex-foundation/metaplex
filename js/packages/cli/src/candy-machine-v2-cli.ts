@@ -44,11 +44,21 @@ import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
+import { escapeRegExp } from 'lodash';
 program.version('0.0.2');
 const supportedImageTypes = {
   'image/png': 1,
   'image/gif': 1,
   'image/jpeg': 1,
+};
+const supportedAnimationTypes = {
+  'video/mp4': 1,
+  'video/quicktime': 1,
+  'audio/mpeg': 1,
+  'audio/x-flac': 1,
+  'audio/wav': 1,
+  'model/gltf-binary': 1,
+  'text/html': 1,
 };
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -79,6 +89,7 @@ programCommand('upload')
 
     const {
       storage,
+      nftStorageKey,
       ipfsInfuraProjectId,
       number,
       ipfsInfuraSecret,
@@ -129,6 +140,11 @@ programCommand('upload')
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
+    if (storage === StorageType.NftStorage && !nftStorageKey) {
+      throw new Error(
+        'NftStorage selected as storage option but NftStorage project api key were not provided.',
+      );
+    }
     if (storage === StorageType.Aws && !awsS3Bucket) {
       throw new Error(
         'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
@@ -147,12 +163,15 @@ programCommand('upload')
     };
 
     let imageFileCount = 0;
+    let animationFileCount = 0;
     let jsonFileCount = 0;
 
     // Filter out any non-supported file types and find the JSON vs Image file count
     const supportedFiles = files.filter(it => {
       if (supportedImageTypes[getType(it)]) {
         imageFileCount++;
+      } else if (supportedAnimationTypes[getType(it)]) {
+        animationFileCount++;
       } else if (it.endsWith(EXTENSION_JSON)) {
         jsonFileCount++;
       } else {
@@ -163,7 +182,17 @@ programCommand('upload')
       return true;
     });
 
-    if (imageFileCount !== jsonFileCount) {
+    if (animationFileCount !== 0 && storage === StorageType.Arweave) {
+      throw new Error(
+        'The "arweave" storage option is incompatible with animation files. Please try again with another storage option using `--storage <option>`.',
+      );
+    }
+
+    if (animationFileCount !== 0 && animationFileCount !== jsonFileCount) {
+      throw new Error(
+        `number of animation files (${animationFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
+    } else if (imageFileCount !== jsonFileCount) {
       throw new Error(
         `number of img files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
@@ -172,11 +201,17 @@ programCommand('upload')
     const elemCount = number ? number : imageFileCount;
     if (elemCount < imageFileCount) {
       throw new Error(
-        `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
+        `max number (${elemCount}) cannot be smaller than the number of images in the source folder (${imageFileCount})`,
       );
     }
 
-    log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
+    if (animationFileCount === 0) {
+      log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
+    } else {
+      log.info(
+        `Beginning the upload for ${elemCount} (img+animation+json) sets`,
+      );
+    }
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
@@ -190,6 +225,7 @@ programCommand('upload')
         storage,
         retainAuthority,
         mutable,
+        nftStorageKey,
         ipfsCredentials,
         awsS3Bucket,
         batchSize,
@@ -380,7 +416,10 @@ programCommand('verify_upload')
           const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
           const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
           const cacheItem = cacheContent.items[key];
-          if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
+          if (
+            !name.match(escapeRegExp(cacheItem.name)) ||
+            !uri.match(escapeRegExp(cacheItem.link))
+          ) {
             //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
             /*log.info(
                 `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
@@ -498,8 +537,12 @@ programCommand('show')
       const machine = await anchorProgram.account.candyMachine.fetch(
         cacheContent.program.candyMachine,
       );
+      const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+        new PublicKey(cacheContent.program.candyMachine),
+      );
       log.info('...Candy Machine...');
       log.info('Key:', cacheContent.program.candyMachine);
+      log.info('1st creator :', candyMachineAddr.toBase58());
       //@ts-ignore
       log.info('authority: ', machine.authority.toBase58());
       //@ts-ignore
