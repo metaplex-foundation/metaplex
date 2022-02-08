@@ -66,6 +66,10 @@ export const ArtCard = ({
   const retrySigning = async () => {
     const metaProgramId = new PublicKey(META_PROGRAM_ID);
     const metadata = new PublicKey(metaDataKey.pubkey);
+    if (!solanaEndpoint) {
+      throw new Error('solanaEndpoint is required for retrySigning');
+    }
+
     await holaSignMetadata({
       solanaEndpoint,
       metadata,
