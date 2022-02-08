@@ -4,13 +4,10 @@ import {
   useConnection,
   useMeta,
   loadMultipleAccounts,
-  ENDPOINTS,
-  useLocalStorageState,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, List, Skeleton, Tag, Space } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { PublicKey } from '@solana/web3.js';
 import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { ArtContent } from '../../components/ArtContent';
@@ -18,15 +15,6 @@ import { ArtMinting } from '../../components/ArtMinting';
 import { ViewOn } from '../../components/ViewOn';
 import { useArt, useExtendedArt } from '../../hooks';
 import { ArtType } from '../../types';
-import { holaSignMetadata } from '../../components/MintModal/sign-meta';
-
-const META_PROGRAM_ID = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
-
-enum SigningStatus {
-  UNVERIFIED,
-  PENDING,
-  VERIFIED,
-}
 
 export const ArtView = () => {
   const { nft } = useParams<{ nft: string }>();
@@ -34,47 +22,10 @@ export const ArtView = () => {
   const { patchState, whitelistedCreatorsByCreator } = useMeta();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
   const [validating, setValidating] = useState(false);
-  const { metadataByMetadata } = useMeta();
-  const metaDataKey = metadataByMetadata[nft as string];
-  const [signingStatus, setSigningStatus] = useState<SigningStatus>(
-    SigningStatus.UNVERIFIED,
-  );
-  const signingStatusCopy =
-    signingStatus === SigningStatus.PENDING
-      ? 'Attempting...'
-      : 'Retry validating';
 
   const connection = useConnection();
   const art = useArt(nft);
   const isUnverified = !!art.creators?.find(c => !c.verified);
-
-  const [solanaEndpoint] = useLocalStorageState(
-    'connectionEndpoint',
-    ENDPOINTS[0].endpoint,
-  );
-
-  const retrySigning: React.MouseEventHandler<HTMLElement> = async e => {
-    e.preventDefault();
-    const metaProgramId = new PublicKey(META_PROGRAM_ID);
-    const metadata = new PublicKey(metaDataKey.pubkey);
-    await holaSignMetadata({
-      solanaEndpoint,
-      metadata,
-      metaProgramId,
-      onComplete: () => {
-        setSigningStatus(SigningStatus.VERIFIED);
-        console.log('sign completed');
-      },
-      onProgress: status => {
-        setSigningStatus(SigningStatus.PENDING);
-        console.log('sign progress', status);
-      },
-      onError: (msg: string) => {
-        setSigningStatus(SigningStatus.UNVERIFIED);
-        throw new Error(msg);
-      },
-    });
-  };
 
   let badge = '';
   let maxSupply = '';
@@ -144,21 +95,6 @@ export const ArtView = () => {
         square={false}
       />
     </div>
-  );
-
-  const retrySignAction = (
-    <>
-      {signingStatus === SigningStatus.VERIFIED ? (
-        <p>Validation submitted. Please check back in a few minutes</p>
-      ) : (
-        <Button
-          onClick={retrySigning}
-          disabled={signingStatus !== SigningStatus.UNVERIFIED}
-        >
-          {signingStatusCopy}
-        </Button>
-      )}
-    </>
   );
 
   const getDescriptionAndAttributes = (className: string) => (
@@ -300,7 +236,6 @@ export const ArtView = () => {
             key={remountArtMinting}
             onMint={async () => await setRemountArtMinting(prev => prev + 1)}
           />
-          {isUnverified && retrySignAction}
         </Space>
       </div>
     </div>
