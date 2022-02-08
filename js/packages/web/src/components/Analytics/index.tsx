@@ -3,12 +3,10 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { ENDPOINTS, useConnectionConfig, useStore } from '@oyster/common';
 import { useLocation } from 'react-router';
 import { useSolPrice } from '../../contexts';
-import splitbee from '@splitbee/web';
 import mixpanel from 'mixpanel-browser';
 
 export const GOOGLE_ANALYTICS_ID =
   process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
-const SPLITBEE_TOKEN = process.env.NEXT_PUBLIC_SPLITBEE_TOKEN;
 const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
 
 interface AnalyticsUserProperties {
@@ -54,14 +52,6 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
         debug: window.location.host.includes('localhost'),
       });
     }
-    if (SPLITBEE_TOKEN) {
-      splitbee.init({
-        token: SPLITBEE_TOKEN,
-        disableCookie: true,
-        scriptUrl: '/bee.js',
-        apiUrl: '/_hive',
-      });
-    }
   }, []);
 
   useEffect(() => {
@@ -71,13 +61,6 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
       user_id: pubkey,
       pubkey: pubkey,
     });
-
-    if (SPLITBEE_TOKEN) {
-      splitbee.user.set({
-        userId: pubkey,
-        pubkey: pubkey,
-      });
-    }
 
     if (MIXPANEL_TOKEN && pubkey) {
       mixpanel.identify(pubkey);
@@ -154,10 +137,6 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
     };
     if (gtag && GOOGLE_ANALYTICS_ID) {
       gtag('event', action, attrs);
-    }
-
-    if (SPLITBEE_TOKEN && action !== 'page_view') {
-      splitbee.track(action, attrs);
     }
 
     if (MIXPANEL_TOKEN) {
