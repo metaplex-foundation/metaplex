@@ -2,6 +2,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import { Link } from 'react-router-dom';
 import React, { useMemo, useState } from 'react';
+import { i18n } from "@lingui/core";
 
 import { useMeta } from '../../../../contexts';
 import { CardLoader } from '../../../../components/MyLoader';
@@ -10,6 +11,7 @@ import { HowToBuyModal } from '../../../../components/HowToBuyModal';
 
 import { useAuctionsList } from './hooks/useAuctionsList';
 import { AuctionRenderCard } from '../../../../components/AuctionRenderCard';
+import { LABELS } from '../../../../constants';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -44,8 +46,8 @@ export const SalesListView = (props: { collectionMintFilter?: string }) => {
       {!props.collectionMintFilter && (
         <Banner
           src="/main-banner.svg"
-          headingText="The amazing world of Metaplex."
-          subHeadingText="Buy exclusive Metaplex NFTs."
+          headingText={/*i18n*/ i18n._("The amazing world of {name}", { name: LABELS.STORE_NAME })}
+          subHeadingText={/*i18n*/ i18n._("Buy exclusive {name} NFTs.")}
           actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
           useBannerBg
         />
