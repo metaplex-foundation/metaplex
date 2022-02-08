@@ -35,7 +35,7 @@ export interface ArtCardProps extends CardProps {
   small?: boolean;
   hoverable?: boolean;
   close?: () => void;
-  solanaEndpoint: any;
+  solanaEndpoint?: string;
   allowRetrySigning?: boolean;
 }
 
