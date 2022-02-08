@@ -249,10 +249,12 @@ export async function uploadV2({
                 switch (storage) {
                   case StorageType.NftStorage:
                     [link, imageLink, animationLink] = await nftStorageUpload(
-                      nftStorageKey,
                       image,
                       animation,
                       manifestBuffer,
+                      walletKeyPair,
+                      env,
+                      nftStorageKey,
                     );
                     break;
                   case StorageType.Ipfs:
