@@ -230,6 +230,7 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
+  const [showFundsIssueModal, setShowFundsIssueModal] = useState(false);
   const [isOpenPurchase, setIsOpenPurchase] = useState<boolean>(false);
   const [isOpenClaim, setIsOpenClaim] = useState<boolean>(false);
 

@@ -109,7 +109,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           // @ts-ignore
@@ -228,10 +228,11 @@ const HTMLContent = ({
   );
 };
 
+
 const ArtContentWrapper = styled.div`
   display: flex;
-  alignitems: center;
-  justifycontent: center;
+  alignItems: center;
+  justifyContent: center;
   height: 100%;
 `;
 
@@ -264,15 +265,9 @@ export const ArtContent = ({
   artView?: boolean;
 }) => {
   const [uriState, setUriState] = useState<string | undefined>();
-  const [animationURLState, setAnimationURLState] = useState<
-    string | undefined
-  >();
-  const [filesState, setFilesState] = useState<
-    (MetadataFile | string)[] | undefined
-  >();
-  const [categoryState, setCategoryState] = useState<
-    MetadataCategory | undefined
-  >();
+  const [animationURLState, setAnimationURLState] = useState<string | undefined>();
+  const [filesState, setFilesState] = useState<(MetadataFile | string)[] | undefined>();
+  const [categoryState, setCategoryState] = useState<MetadataCategory | undefined>();
 
   const id = pubkeyToString(pubkey);
 
@@ -304,7 +299,7 @@ export const ArtContent = ({
       setFilesState(data.properties.files);
       setCategoryState(data.properties.category);
     }
-  }, [pubkey, data]);
+  }, [pubkey, data])
 
   const animationUrlExt = new URLSearchParams(
     getLast((animationURLState || '').split('?')),
@@ -360,5 +355,11 @@ export const ArtContent = ({
       />
     );
 
-  return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>;
+  return (
+    <ArtContentWrapper
+      ref={ref as any}
+    >
+      {content}
+    </ArtContentWrapper>
+  );
 };
