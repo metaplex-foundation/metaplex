@@ -21,17 +21,19 @@ if (process.env.NEXT_PUBLIC_BUGSNAG_API_KEY) {
     apiKey: process.env.NEXT_PUBLIC_BUGSNAG_API_KEY || '',
     plugins: [new BugsnagPluginReact()],
   });
+
+  Bugsnag.notify(new Error('Test error'));
 }
 
 const storefrontDenyList = [
   'solboogle',
   'childofdice',
-  'cotdnft' // user request
-]
+  'cotdnft', // user request
+];
 
-const subdomainAlias: { [key: string]: string; } = {
-  "endstate": "endstate-io"
-}
+const subdomainAlias: { [key: string]: string } = {
+  endstate: 'endstate-io',
+};
 
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
@@ -52,7 +54,7 @@ export async function getServerSideProps(context: NextPageContext) {
 
   let aliasedSubdomain = subdomain;
   if (subdomainAlias[subdomain]) {
-    aliasedSubdomain = subdomainAlias[subdomain]
+    aliasedSubdomain = subdomainAlias[subdomain];
   }
 
   const storefront = await getStorefront(aliasedSubdomain);
