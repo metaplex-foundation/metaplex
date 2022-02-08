@@ -110,7 +110,7 @@ export const AuctionView = () => {
   const description = data?.description;
   const attributes = data?.attributes;
 
-  const tokenInfo = useTokenList()?.mainnetTokens.filter(
+  const tokenInfo = useTokenList()?.subscribedTokens.filter(
     m => m.address == auction?.auction.info.tokenMint,
   )[0];
 
@@ -435,7 +435,7 @@ const BidLine = (props: {
   const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
   const isme = publicKey?.toBase58() === bidder;
-  const tokenInfo = useTokenList().mainnetTokens.filter(
+  const tokenInfo = useTokenList().subscribedTokens.filter(
     m => m.address == mintKey,
   )[0];
 

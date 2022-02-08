@@ -36,7 +36,7 @@ const CoingeckoContext =
 export function CoingeckoProvider({ children = null as any }) {
   const [solPrice, setSolPrice] = useState<number>(0);
   const [allSplPrices, setAllSplPrices] = useState<AllSplTokens[]>([]);
-  const tokenList = useTokenList().mainnetTokens
+  const tokenList = useTokenList().subscribedTokens
 
   useEffect(() => {
     let timerId = 0;
