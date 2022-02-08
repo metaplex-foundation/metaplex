@@ -438,7 +438,7 @@ export const mintOneToken = async (
         systemProgram: SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-        recentBlockhashes: new anchor.web3.PublicKey('SysvarS1otHashes111111111111111111111111111'),
+        recentBlockhashes: anchor.web3.SYSVAR_SLOT_HASHES_PUBKEY,
         instructionSysvarAccount: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
       },
       remainingAccounts:
