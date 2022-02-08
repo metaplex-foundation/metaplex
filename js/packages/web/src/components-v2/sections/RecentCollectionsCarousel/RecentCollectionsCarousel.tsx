@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { collections } from '../../../../dummy-data/collections';
 import { BlockCarousel } from '../../molecules/BlockCarousel';
 import { NftCard } from '../../molecules/NftCard';
@@ -22,7 +22,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
     ({ id, link, ...restProps }, index) => ({
       id: index,
       Component: () => (
-        <Link href={link}>
+        <Link to={link}>
           <NftCard key={id || index} {...restProps} />
         </Link>
       ),
@@ -32,7 +32,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
   return (
     <div className={RecentCollectionsCarouselClasses} {...restProps}>
       <div className="container flex flex-col gap-[40px]">
-        <h2 className="text-h3 text-gray-800">Recently listed collections</h2>
+        <h2 className="text-gray-800 text-h3">Recently listed collections</h2>
 
         <div className="flex items-center w-full">
           <div className="relative left-[-40px]">

@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
+import queryString from 'query-string';
+import { useHistory, Link, useLocation } from 'react-router-dom';
 
 import { categories } from '../../../../dummy-data/categories';
 import { collections } from '../../../../dummy-data/explore-collections';
@@ -18,8 +18,9 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   className,
   ...restProps
 }: ExploreCollectionsProps) => {
-  const { query, push } = useRouter();
-  const { pid } = query;
+  const { push } = useHistory();
+  const { search } = useLocation();
+  const { pid } = queryString.parse(search) || {};
 
   const ExploreCollectionsClasses = CN(
     `explore-collections py-[80px]`,
@@ -47,7 +48,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 isActive={pid === value}
                 key={value || index}
                 onClick={() => {
-                  push({ pathname: '/explore', query: { pid: value } });
+                  push(`/explore?pid=${value}`);
                 }}
               >
                 {label}
@@ -61,7 +62,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             collections?.trending?.map(
               ({ id, ...restProps }: any, index: number) => {
                 return (
-                  <Link key={id || index} href="/collection" passHref>
+                  <Link key={id || index} to="/collection">
                     <NftCard {...restProps} />
                   </Link>
                 );
@@ -72,7 +73,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             collections?.trending?.map(
               ({ id, ...restProps }: any, index: number) => {
                 return (
-                  <Link key={id || index} href="/collection" passHref>
+                  <Link key={id || index} to="/collection">
                     <NftCard {...restProps} />
                   </Link>
                 );
@@ -83,7 +84,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             collections?.art?.map(
               ({ id, ...restProps }: any, index: number) => {
                 return (
-                  <Link key={id || index} href="/collection" passHref>
+                  <Link key={id || index} to="/collection">
                     <NftCard {...restProps} />
                   </Link>
                 );
@@ -94,7 +95,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             collections?.charity?.map(
               ({ id, ...restProps }: any, index: number) => {
                 return (
-                  <Link key={id || index} href="/collection" passHref>
+                  <Link key={id || index} to="/collection">
                     <NftCard {...restProps} />
                   </Link>
                 );
@@ -105,7 +106,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             collections?.gaming?.map(
               ({ id, ...restProps }: any, index: number) => {
                 return (
-                  <Link key={id || index} href="/collection" passHref>
+                  <Link key={id || index} to="/collection">
                     <NftCard {...restProps} />
                   </Link>
                 );
@@ -116,7 +117,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             collections?.utility?.map(
               ({ id, ...restProps }: any, index: number) => {
                 return (
-                  <Link key={id || index} href="/collection" passHref>
+                  <Link key={id || index} to="/collection">
                     <NftCard {...restProps} />
                   </Link>
                 );

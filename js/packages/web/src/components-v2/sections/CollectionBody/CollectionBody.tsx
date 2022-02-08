@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import CN from 'classnames';
 
-import { FilterSidebar } from '../FilterSidebar';
+import { FilterSidebar } from '../../sections/FilterSidebar';
 import { CollectionItems } from '../../sections/CollectionItems';
 import { CollectionActivity } from '../../sections/CollectionActivity';
 

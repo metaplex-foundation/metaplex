@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 import { Logo } from '../../atoms/Logo';
 import { HeaderMenu } from '../../molecules/HeaderMenu';
@@ -22,7 +22,7 @@ export const Header: FC<HeaderProps> = ({
   return (
     <div className={HeaderClasses} {...restProps}>
       <div className="flex items-center gap-[28px]">
-        <Link href="/" passHref>
+        <Link to="/">
           <Logo isInverted className="cursor-pointer" />
         </Link>
         <HeaderSearch />
