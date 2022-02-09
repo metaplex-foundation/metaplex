@@ -23,7 +23,6 @@ export async function mintEditionsToWallet(
   mintTokenAccount: TokenAccount,
   editions: number = 1,
   mintDestination: StringPublicKey,
-  editionNumber?: number,
 ) {
   const signers: Array<Array<Keypair[]>> = [];
   const instructions: Array<Array<TransactionInstruction[]>> = [];
@@ -45,7 +44,7 @@ export async function mintEditionsToWallet(
       wallet,
       connection,
       mintTokenAccount,
-      editionNumber ? new BN(editionNumber) : new BN(art.supply! + 1 + i),
+      new BN(art.supply! + 1 + i),
       mintEditionIntoWalletInstructions,
       mintEditionIntoWalletSigners,
       mintDestination,

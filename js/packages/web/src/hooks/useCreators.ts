@@ -12,7 +12,7 @@ export const useCreators = (auction?: AuctionView) => {
         ...(
           [
             ...(auction?.items || []).flat().map(item => item?.metadata),
-            auction?.thumbnail?.metadata,
+            auction?.participationItem?.metadata,
           ]
             .filter(item => item && item.info)
             .map(item => item?.info.data.creators || [])

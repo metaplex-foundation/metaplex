@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { shortenAddress, useMeta } from '@oyster/common';
-import { SwitchTransition, CSSTransition } from 'react-transition-group';
 
 import { getCreator } from '../../../../../../components/PackCard/utils';
 import { ArtContent } from '../../../../../../components/ArtContent';
@@ -18,7 +17,7 @@ interface ClaimingStepProps {
 }
 
 // Delay between switching cards on the slider
-const DELAY_BETWEEN_CARDS_CHANGE = 4000;
+const DELAY_BETWEEN_CARDS_CHANGE = 2000;
 
 const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
   const [currentCardIndex, setCurrentCardIndex] = useState<number>(-1);
@@ -77,23 +76,12 @@ const ClaimingStep: React.FC<ClaimingStepProps> = ({ onClose }) => {
             <GhostCard key={index} index={index} />
           ))}
         </div>
-        <div className="current-card-container">
-          <SwitchTransition>
-            <CSSTransition
-              classNames="fade"
-              key={currentCardIndex}
-              addEndListener={(node, done) =>
-                node.addEventListener('transitionend', done, false)
-              }
-            >
-              <ArtContent
-                key={currentCardIndex}
-                pubkey={currentMetadataToShow}
-                preview={false}
-              />
-            </CSSTransition>
-          </SwitchTransition>
-        </div>
+        <ArtContent
+          key={currentCardIndex}
+          className="claiming-step__art-content"
+          pubkey={currentMetadataToShow}
+          preview={false}
+        />
       </div>
       {isClaiming && (
         <div className="claiming-step__notes">

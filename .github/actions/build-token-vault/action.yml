@@ -1,0 +1,16 @@
+# Implicit dependencies
+# - actions/checkout@v2
+# - ./.github/actions/install-linux-build-deps
+# - ./.github/actions/install-solana
+# - ./.github/actions/install-rust
+
+name: Build Token Vault 
+runs:
+  using: "composite"
+  steps:
+    - name: build-token-vault-program
+      working-directory: ./rust/token-vault/program
+      run: |
+        cargo +${{ env.RUST_STABLE }} build-bpf --version
+        cargo +${{ env.RUST_STABLE }} build-bpf
+      shell: bash

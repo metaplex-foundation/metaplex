@@ -382,21 +382,27 @@ export const chunk = (arr: Buffer, len: number): Array<Buffer> => {
 };
 
 export const buildGumdrop = async (
-  connection : RPCConnection,
-  walletKey : PublicKey,
-  commMethod : string,
-  claimIntegration : string,
-  host : string,
-  baseKey : PublicKey,
-  temporalSigner : PublicKey,
-  claimants : Claimants,
-  claimInfo  : ClaimInfo,
-  extraParams : Array<string> = [],
-) : Promise<Array<TransactionInstruction>> => {
-
-  const needsPin = commMethod !== "wallets";
-  const leafs : Array<Buffer> = [];
-  for (let idx = 0; idx < claimants.length; ++idx ) {
+  connection: RPCConnection,
+  walletKey: PublicKey,
+<<<<<<< HEAD
+  commMethod: string,
+=======
+  needsPin: boolean,
+>>>>>>> parent of 1ae01158 (rebased)
+  claimIntegration: string,
+  host: string,
+  baseKey: PublicKey,
+  temporalSigner: PublicKey,
+  claimants: Claimants,
+  claimInfo: ClaimInfo,
+  extraParams: Array<string> = [],
+): Promise<Array<TransactionInstruction>> => {
+<<<<<<< HEAD
+  const needsPin = commMethod !== 'wallets';
+=======
+>>>>>>> parent of 1ae01158 (rebased)
+  const leafs: Array<Buffer> = [];
+  for (let idx = 0; idx < claimants.length; ++idx) {
     const claimant = claimants[idx];
     if (!needsPin) {
       try {
@@ -454,7 +460,6 @@ export const buildGumdrop = async (
     const claimant = claimants[idx];
     const params = [
       `distributor=${distributor}`,
-      `method=${commMethod}`,
       `handle=${encodeURIComponent(claimant.handle)}`,
       `amount=${claimant.amount}`,
       `index=${idx}`,

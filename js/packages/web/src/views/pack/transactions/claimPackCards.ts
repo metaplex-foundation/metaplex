@@ -2,7 +2,7 @@ import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import {
   claimPack,
   findPackCardProgramAddress,
-  sendTransactionsInChunks,
+  sendTransactions,
   SequenceType,
   toPublicKey,
 } from '@oyster/common';
@@ -29,15 +29,12 @@ export const claimPackCards = async ({
 
   const flatInstructions = instructions.flat();
 
-  await sendTransactionsInChunks(
+  await sendTransactions(
     connection,
     wallet,
     flatInstructions.map(({ instructions }) => instructions),
     flatInstructions.map(({ signers }) => signers),
     SequenceType.Sequential,
-    'singleGossip',
-    120000,
-    20,
   );
 };
 

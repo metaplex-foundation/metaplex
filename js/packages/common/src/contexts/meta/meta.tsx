@@ -32,7 +32,7 @@ import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
   isLoading: false,
-  isFetching: false,
+  isLoadingMetadata: false,
   // @ts-ignore
   update: () => [AuctionData, BidderMetadata, BidderPot],
 });
@@ -47,8 +47,7 @@ export function MetaProvider({ children = null as any }) {
   const [lastLength, setLastLength] = useState(0);
   const { userAccounts } = useUserAccounts();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const updateRequestsInQueue = useRef(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
   const loadedMetadataLength = useRef(0);
@@ -138,8 +137,13 @@ export function MetaProvider({ children = null as any }) {
   async function pullItemsPage(
     userTokenAccounts: TokenAccount[],
   ): Promise<void> {
-    if (isFetching) {
+    if (isLoading) {
       return;
+    }
+    if (!storeAddress) {
+      return setIsLoading(false);
+    } else if (!state.store) {
+      setIsLoading(true);
     }
 
     const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
@@ -154,8 +158,14 @@ export function MetaProvider({ children = null as any }) {
     userTokenAccounts: TokenAccount[],
     packSetKey: StringPublicKey,
   ): Promise<void> {
-    if (isFetching) {
+    if (isLoading) {
       return;
+    }
+
+    if (!storeAddress && isReady) {
+      return setIsLoading(false);
+    } else if (!state.store) {
+      setIsLoading(true);
     }
 
     const packState = await pullPack({
@@ -319,7 +329,6 @@ export function MetaProvider({ children = null as any }) {
     //@ts-ignore
     if (window.loadingData) {
       console.log('currently another update is running, so queue for 3s...');
-      updateRequestsInQueue.current += 1;
       const interval = setInterval(() => {
         //@ts-ignore
         if (window.loadingData) {
@@ -327,23 +336,14 @@ export function MetaProvider({ children = null as any }) {
         } else {
           console.log('running queued update');
           update(undefined, undefined);
-          updateRequestsInQueue.current -= 1;
           clearInterval(interval);
         }
       }, 3000);
     } else {
       console.log('no update is running, updating.');
       update(undefined, undefined);
-      updateRequestsInQueue.current = 0;
     }
-  }, [
-    connection,
-    setState,
-    updateMints,
-    storeAddress,
-    isReady,
-    page,
-  ]);
+  }, [connection, setState, updateMints, storeAddress, isReady, page]);
 
   // Fetch metadata on userAccounts change
   useEffect(() => {
@@ -362,8 +362,6 @@ export function MetaProvider({ children = null as any }) {
     userAccounts.length,
   ]);
 
-  const isFetching = isLoading || updateRequestsInQueue.current > 0;
-
   return (
     <MetaContext.Provider
       value={{
@@ -379,7 +377,7 @@ export function MetaProvider({ children = null as any }) {
         pullPackPage,
         pullUserMetadata,
         isLoading,
-        isFetching,
+        isLoadingMetadata,
       }}
     >
       {children}

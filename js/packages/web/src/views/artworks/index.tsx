@@ -1,6 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
-import { Layout, Row, Col, Tabs, Dropdown, Menu } from 'antd';
+import { Layout, Row, Col, Tabs, Button, Dropdown, Menu } from 'antd';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
 
@@ -8,7 +8,7 @@ import { ArtworkViewState } from './types';
 import { useItems } from './hooks/useItems';
 import ItemCard from './components/ItemCard';
 import { useUserAccounts } from '@oyster/common';
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined } from "@ant-design/icons";
 import { isMetadata, isPack } from './utils';
 
 const { TabPane } = Tabs;
@@ -16,13 +16,7 @@ const { Content } = Layout;
 
 export const ArtworksView = () => {
   const { connected } = useWallet();
-  const {
-    isLoading,
-    pullAllMetadata,
-    storeIndexer,
-    pullItemsPage,
-    isFetching,
-  } = useMeta();
+  const { isLoading, pullAllMetadata, storeIndexer, pullItemsPage } = useMeta();
   const { userAccounts } = useUserAccounts();
 
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
@@ -30,10 +24,8 @@ export const ArtworksView = () => {
   const userItems = useItems({ activeKey });
 
   useEffect(() => {
-    if (!isFetching) {
-      pullItemsPage(userAccounts);
-    }
-  }, [isFetching]);
+    pullItemsPage(userAccounts);
+  }, []);
 
   useEffect(() => {
     if (connected) {
@@ -43,12 +35,16 @@ export const ArtworksView = () => {
     }
   }, [connected, setActiveKey]);
 
-  const isDataLoading = isLoading || isFetching;
-
   const artworkGrid = (
     <div className="artwork-grid">
-      {isDataLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+<<<<<<< HEAD
+      {isDataLoading &&
+        [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
       {!isDataLoading &&
+=======
+      {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+      {!isLoading &&
+>>>>>>> parent of 1ae01158 (rebased)
         userItems.map(item => {
           const pubkey = isMetadata(item)
             ? item.pubkey
@@ -63,15 +59,13 @@ export const ArtworksView = () => {
 
   const refreshButton = connected && storeIndexer.length !== 0 && (
     <Dropdown.Button
-      className="refresh-button padding0"
+      className={"refresh-button padding0"}
       onClick={() => pullItemsPage(userAccounts)}
       icon={<DownOutlined />}
-      overlayClassName="refresh-overlay"
+      overlayClassName={"refresh-overlay"}
       overlay={
-        <Menu className="gray-dropdown">
-          <Menu.Item onClick={() => pullAllMetadata()}>
-            Load All Metadata
-          </Menu.Item>
+        <Menu className={'gray-dropdown'}>
+          <Menu.Item onClick={() => pullAllMetadata()}>Load All Metadata</Menu.Item>
         </Menu>
       }
     >

@@ -11,11 +11,9 @@ export const MobileNavbar = () => {
     <div id="mobile-navbar">
       <LogoLink />
       <div className="mobile-menu">
-        {connected && (
-          <Notifications />
-        )}
+        {connected && <Notifications />}
         <MetaplexMenu />
       </div>
     </div>
-  )
-}
+  );
+};

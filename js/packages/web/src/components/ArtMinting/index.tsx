@@ -32,7 +32,12 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const [showCongrats, setShowCongrats] = useState<boolean>(false);
   const [mintingDestination, setMintingDestination] = useState<string>('');
   const [editions, setEditions] = useState<number>(1);
-  const [editionNumber, setEditionNumber] = useState<number | undefined>(undefined);
+<<<<<<< HEAD
+  const [editionNumber, setEditionNumber] = useState<number | undefined>(
+    undefined,
+  );
+=======
+>>>>>>> parent of 1ae01158 (rebased)
   const [totalCost, setTotalCost] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const art = useArt(id);
@@ -43,16 +48,21 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const artMintTokenAccount = accountByMint.get(art.mint!);
   const isArtOwnedByUser =
     ((accountByMint.has(art.mint!) &&
-        artMintTokenAccount?.info.amount.toNumber()) ||
+      artMintTokenAccount?.info.amount.toNumber()) ||
       0) > 0;
   const isMasterEditionV1 = artMintTokenAccount
     ? decodeMasterEdition(artMintTokenAccount.account.data).key ===
-    MetadataKey.MasterEditionV1
+      MetadataKey.MasterEditionV1
     : false;
   const renderMintEdition =
+<<<<<<< HEAD
+    isArtMasterEdition && isArtOwnedByUser && !isMasterEditionV1;
+=======
     isArtMasterEdition &&
     isArtOwnedByUser &&
-    !isMasterEditionV1
+    !isMasterEditionV1 &&
+    maxEditionsToMint !== 0;
+>>>>>>> parent of 1ae01158 (rebased)
 
   const mintingDestinationErr = useMemo(() => {
     if (!mintingDestination) return 'Required';
@@ -91,9 +101,9 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
 
       const cost =
         ((mintRentExempt +
-            accountRentExempt +
-            metadataRentExempt +
-            editionRentExempt) *
+          accountRentExempt +
+          metadataRentExempt +
+          editionRentExempt) *
           editions) /
         LAMPORTS_PER_SOL;
 
@@ -128,7 +138,10 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
         artMintTokenAccount!,
         editions,
         mintingDestination,
-        editionNumber
+<<<<<<< HEAD
+        editionNumber,
+=======
+>>>>>>> parent of 1ae01158 (rebased)
       );
       onSuccessfulMint();
     } catch (e) {
@@ -208,28 +221,6 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
                 value={editions}
                 precision={0}
                 onChange={debouncedEditionsChangeHandler}
-              />
-            </Form.Item>
-            <Form.Item
-              style={{
-                width: '100%',
-                flexDirection: 'column',
-                paddingTop: 30,
-              }}
-              label={
-                <h3 style={{ color: 'white' }}>Edition Number (Optional)</h3>
-              }
-              labelAlign="left"
-              colon={false}
-            >
-              <InputNumber
-                type="number"
-                style={{ width: '100%' }}
-                min={1}
-                max={art.supply}
-                value={editionNumber}
-                precision={0}
-                onChange={setEditionNumber}
               />
             </Form.Item>
 

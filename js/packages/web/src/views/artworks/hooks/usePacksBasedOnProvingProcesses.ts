@@ -4,6 +4,7 @@ import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/Pr
 import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
 
 import { ExtendedPack } from '../../../types/packs';
+import { useMemo } from 'react';
 
 export const usePacksBasedOnProvingProcesses = (): ExtendedPack[] => {
   const { provingProcesses, packs, vouchers } = useMeta();
@@ -14,7 +15,11 @@ export const usePacksBasedOnProvingProcesses = (): ExtendedPack[] => {
     return [];
   }
 
-  return getPacksBasedOnProvingProcesses({ provingProcesses, packs, vouchers });
+  return useMemo(
+    () =>
+      getPacksBasedOnProvingProcesses({ provingProcesses, packs, vouchers }),
+    [provingProcesses, packs, vouchers],
+  );
 };
 
 const getPacksBasedOnProvingProcesses = ({

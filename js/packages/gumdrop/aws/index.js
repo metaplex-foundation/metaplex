@@ -131,45 +131,34 @@ const sendOTP = async (event) => {
   await logDB(handle, time, serializedBuffer);
 
   const otpMessage = `Your gumdrop OTP is ${String(otp).padStart(8, "0")}`;
-  switch (event.comm) {
-    case "discord": {
-      const client = new discord.Client();
-      await client.login(process.env.DISCORD_BOT_TOKEN);
+  if (event.discordGuild) {
+    const client = new discord.Client();
+    await client.login(process.env.DISCORD_BOT_TOKEN);
 
-      const user = await client.users.fetch(handle);
-      if (!user) {
-        throw new Error(`Could not find discord user ${handle}`);
-      }
-      return await user.send(otpMessage);
-    }
-    case "aws-sms": {
-      const params = {
-        Message: otpMessage,
-        PhoneNumber: handle,
-      };
+    const guild = await client.guilds.fetch(event.discordGuild);
 
-      const sns = new AWS.SNS({ region: "us-east-1" });
-      return sns.publish(params).promise();
+    const user = await guild.members.fetch(handle);
+    if (!user) {
+      throw new Error(`Could not find discord user ${handle}`);
     }
-    case "aws-email":
-    default: {
-      const params = {
-        Destination: {
-          ToAddresses: [handle],
+    return await user.send(otpMessage);
+  } else {
+    const params = {
+      Destination: {
+        ToAddresses: [handle],
+      },
+      Message: {
+        Body: {
+          Text: { Data: otpMessage },
         },
-        Message: {
-          Body: {
-            Text: { Data: otpMessage },
-          },
 
-          Subject: { Data: "Gumdrop OTP" },
-        },
-        Source: "santa@aws.metaplex.com",
-      };
+        Subject: { Data: "Gumdrop OTP" },
+      },
+      Source: "santa@aws.metaplex.com",
+    };
 
-      const ses = new AWS.SES({ region: "us-east-2" });
-      return ses.sendEmail(params).promise();
-    }
+    const ses = new AWS.SES({ region: "us-east-2" });
+    return ses.sendEmail(params).promise();
   }
 };
 

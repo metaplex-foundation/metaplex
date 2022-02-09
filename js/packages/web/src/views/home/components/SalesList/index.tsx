@@ -19,7 +19,6 @@ export enum LiveAuctionViewState {
   Participated = '1',
   Ended = '2',
   Resale = '3',
-  Own = '4',
 }
 
 export const SalesListView = () => {
@@ -64,12 +63,6 @@ export const SalesListView = () => {
                   <TabPane
                     tab="Participated"
                     key={LiveAuctionViewState.Participated}
-                  ></TabPane>
-                )}
-                {connected && (
-                  <TabPane
-                    tab="My Live Auctions"
-                    key={LiveAuctionViewState.Own}
                   ></TabPane>
                 )}
               </Tabs>

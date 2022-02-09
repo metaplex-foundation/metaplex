@@ -1,0 +1,21 @@
+[package]
+name = "metaplex-token-metadata-test-client"
+version = "0.1.0"
+description = "Metaplex Library Metadata Integration Test Client"
+authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/metaplex"
+license = "Apache-2.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+solana-client = "1.7.11"
+solana-program = "1.7.11"
+solana-sdk = "1.7.11"
+bincode = "1.3.2"
+borsh = "0.9.1"
+clap = "2.33.3"
+solana-clap-utils = "1.6"
+solana-cli-config = "1.6"
+metaplex-token-metadata = { path = "../program", features = [ "no-entrypoint" ] }
+spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }

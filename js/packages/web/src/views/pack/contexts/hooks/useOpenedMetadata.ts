@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { StringPublicKey, useMeta } from '@oyster/common';
 
 import { SafetyDepositDraft } from '../../../../actions/createAuctionManager';
@@ -15,20 +16,24 @@ export const useOpenedMetadata = (
 
   const packCards = packCardsByPackSet[packKey];
 
-  const metadata = ownedMetadata.reduce<SafetyDepositDraft[]>((acc, value) => {
-    const parent = value.edition?.info.parent;
-    if (parent && acc.length < maxLength) {
-      const metadataExistsInPack = packCards?.some(
-        ({ info }) => info.master === parent,
-      );
+  const metadata = useMemo(
+    () =>
+      ownedMetadata.reduce<SafetyDepositDraft[]>((acc, value) => {
+        const parent = value.edition?.info.parent;
+        if (parent && acc.length < maxLength) {
+          const metadataExistsInPack = packCards?.some(
+            ({ info }) => info.master === parent,
+          );
 
-      if (metadataExistsInPack) {
-        acc.push(value);
-      }
-    }
+          if (metadataExistsInPack) {
+            acc.push(value);
+          }
+        }
 
-    return acc;
-  }, []);
+        return acc;
+      }, []),
+    [ownedMetadata.length, packCards],
+  );
 
   return metadata;
 };

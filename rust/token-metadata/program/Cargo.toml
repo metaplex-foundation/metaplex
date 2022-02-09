@@ -1,0 +1,30 @@
+[package]
+name = "metaplex-token-metadata"
+version = "0.0.1"
+description = "Metaplex Metadata"
+authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/metaplex"
+license = "Apache-2.0"
+edition = "2018"
+exclude = ["js/**"]
+
+[features]
+no-entrypoint = []
+test-bpf = []
+
+[dependencies]
+num-derive = "0.3"
+arrayref = "0.3.6"
+num-traits = "0.2"
+solana-program = "1.7.11"
+metaplex-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ], version="0.0.1" }
+spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
+thiserror = "1.0"
+borsh = "0.9.1"
+
+[dev-dependencies]
+solana-sdk = "1.7.11"
+solana-program-test = "1.7.11"
+
+[lib]
+crate-type = ["cdylib", "lib"]

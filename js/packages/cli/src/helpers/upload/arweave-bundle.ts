@@ -9,7 +9,6 @@ import { StorageType } from '../storage-type';
 import { Keypair } from '@solana/web3.js';
 import { getType, getExtension } from 'mime';
 import { AssetKey } from '../../types';
-import { sleep } from '../various';
 import Transaction from 'arweave/node/lib/transaction';
 import Bundlr from '@bundlr-network/client';
 
@@ -512,27 +511,8 @@ export function* makeArweaveBundleUploadGenerator(
         log.info(`${cost.toNumber() / LAMPORTS} SOL to upload`);
         await bundlr.fund(cost.toNumber());
         for (const tx of bundlrTransactions) {
-          let attempts = 0;
-
-          const uploadTransaction = async () => {
-            await tx.upload().catch(async (err: Error) => {
-              attempts++;
-              if (attempts >= 3) {
-                throw err;
-              }
-
-              log.warn(
-                `Failed bundlr upload, automatically retrying transaction in 10s (attempt: ${attempts})`,
-                err,
-              );
-              await sleep(10 * 1000);
-              await uploadTransaction();
-            });
-          };
-
-          await uploadTransaction();
+          await tx.upload();
         }
-
         log.info('Bundle uploaded!');
       }
 

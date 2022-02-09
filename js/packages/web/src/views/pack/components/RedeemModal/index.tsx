@@ -7,7 +7,6 @@ import TransactionApprovalStep from './components/TransactionApprovalStep';
 import { useArt } from '../../../../hooks';
 import { usePack } from '../../contexts/PackContext';
 import ClaimingStep from './components/ClaimingStep';
-import ClaimingError from './components/ClaimingStep/ClaimingError';
 
 interface RedeemModalProps {
   isModalVisible: boolean;
@@ -18,7 +17,6 @@ enum openState {
   Initial,
   TransactionApproval,
   Claiming,
-  Error,
 }
 
 const RedeemModal = ({
@@ -31,10 +29,8 @@ const RedeemModal = ({
     metadataByPackCard,
     voucherMetadataKey,
     provingProcess,
-    isLoading,
   } = usePack();
   const [modalState, setModalState] = useState<openState>(openState.Initial);
-  const [error, setError] = useState('');
 
   const numberOfNFTs = pack?.info?.packCards || 0;
   const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
@@ -51,9 +47,8 @@ const RedeemModal = ({
 
     try {
       await handleOpenPack();
-    } catch (e: any) {
-      setModalState(openState.Error);
-      setError(e?.message || '');
+    } catch {
+      setModalState(openState.Initial);
     }
   };
 
@@ -72,23 +67,20 @@ const RedeemModal = ({
 
   const isModalClosable = modalState === openState.Initial;
   const isClaiming = modalState === openState.Claiming;
-  const isClaimingError = modalState === openState.Error;
   const isLoadingMetadata =
-    isLoading ||
     Object.values(metadataByPackCard || {}).length !==
-      (pack?.info.packCards || 0);
+    (pack?.info.packCards || 0);
 
   return (
     <Modal
       className="modal-redeem-wr"
       centered
-      width={575}
+      width={500}
       mask={false}
       visible={isModalVisible}
       onCancel={handleClose}
       footer={null}
       closable={isModalClosable}
-      maskClosable={false}
     >
       <div className="modal-redeem">
         {isClaiming && <ClaimingStep onClose={handleClose} />}
@@ -109,13 +101,7 @@ const RedeemModal = ({
                 goBack={() => setModalState(openState.Initial)}
               />
             )}
-            {isClaimingError && (
-              <ClaimingError
-                onDismiss={() => setModalState(openState.Initial)}
-                error={error}
-              />
-            )}
-            {shouldEnableRedeem && !isClaimingError && (
+            {shouldEnableRedeem && (
               <div className="modal-redeem__footer">
                 <p className="general-desc">
                   Once opened, a Pack cannot be resealed.

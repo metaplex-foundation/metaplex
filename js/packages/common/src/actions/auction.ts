@@ -1,6 +1,5 @@
 import {
   AccountInfo,
-  PublicKey,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -15,7 +14,6 @@ import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 export const AUCTION_PREFIX = 'auction';
 export const METADATA = 'metadata';
 export const EXTENDED = 'extended';
-export const BIDDER_POT_TOKEN = 'bidder_pot_token';
 export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 9 + 33 + 158;
 
 export enum AuctionState {
@@ -790,7 +788,7 @@ export async function setAuctionAuthority(
 export async function placeBid(
   bidderPubkey: StringPublicKey,
   bidderTokenPubkey: StringPublicKey,
-  bidderPotTokenPubkey: StringPublicKey | undefined,
+  bidderPotTokenPubkey: StringPublicKey,
   tokenMintPubkey: StringPublicKey,
   transferAuthority: StringPublicKey,
   payer: StringPublicKey,
@@ -839,23 +837,6 @@ export async function placeBid(
       toPublicKey(auctionProgramId),
     )
   )[0];
-  let bidderPotTokenAccount: PublicKey;
-  if (!bidderPotTokenPubkey) {
-    bidderPotTokenAccount = toPublicKey(
-      (
-        await findProgramAddress(
-          [
-            Buffer.from(AUCTION_PREFIX),
-            toPublicKey(bidderPotKey).toBuffer(),
-            Buffer.from(BIDDER_POT_TOKEN),
-          ],
-          toPublicKey(auctionProgramId),
-        )
-      )[0],
-    );
-  } else {
-    bidderPotTokenAccount = toPublicKey(bidderPotTokenPubkey);
-  }
 
   const keys = [
     {
@@ -874,7 +855,7 @@ export async function placeBid(
       isWritable: true,
     },
     {
-      pubkey: bidderPotTokenAccount,
+      pubkey: toPublicKey(bidderPotTokenPubkey),
       isSigner: false,
       isWritable: true,
     },

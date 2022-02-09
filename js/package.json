@@ -2,10 +2,7 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "packages/cli",
-      "packages/common",
-      "packages/gumdrop",
-      "packages/web"
+      "packages/*"
     ]
   },
   "keywords": [],
@@ -15,7 +12,7 @@
   },
   "scripts": {
     "bootstrap": "lerna link && lerna bootstrap",
-    "build": "lerna run build --ignore=token-entangler --ignore=candy-machine-ui",
+    "build": "lerna run build",
     "build-web": "lerna run build --stream --scope @oyster/common --scope web",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
     "lint": "prettier -c 'packages/*/{src,test}/**/*.ts' && npm run lint:eslint",
@@ -34,8 +31,7 @@
     ]
   },
   "resolutions": {
-    "@types/react": "^17.0.16",
-    "@solana/web3.js": "^1.31.0"
+    "@types/react": "^17.0.16"
   },
   "husky": {
     "hooks": {

@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { AuctionView, AuctionViewState } from '../../../../../../hooks';
+import { AuctionViewState, AuctionView } from '../../../../../../hooks';
 
 import { LiveAuctionViewState } from '../..';
 
@@ -27,16 +27,6 @@ export const resaleAuctionsFilter = (auction: AuctionView): boolean =>
 const endedAuctionsFilter = ({ state }: AuctionView): boolean =>
   [AuctionViewState.Ended, AuctionViewState.BuyNow].includes(state);
 
-const ownAuctionsFilter = (
-  auction: AuctionView,
-  bidderPublicKey?: PublicKey | null,
-): boolean => {
-  return (
-    auction.state === AuctionViewState.Live &&
-    auction.auctionManager.authority === bidderPublicKey?.toBase58()
-  );
-};
-
 export const getFilterFunction = (
   activeKey: LiveAuctionViewState,
 ): ((auction: AuctionView, bidderPublicKey?: PublicKey | null) => boolean) => {
@@ -50,7 +40,5 @@ export const getFilterFunction = (
       break;
     case LiveAuctionViewState.Ended:
       return endedAuctionsFilter;
-    case LiveAuctionViewState.Own:
-      return ownAuctionsFilter;
   }
 };

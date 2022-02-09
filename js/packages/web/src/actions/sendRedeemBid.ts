@@ -822,7 +822,7 @@ export async function setupRedeemParticipationInstructions(
         : null,
       myInstructions,
     );
-    instructions.push([...myInstructions, ...cleanupInstructions.reverse()]);
+    instructions.push([...myInstructions, ...cleanupInstructions]);
     signers.push(mySigners);
     const metadata = await getMetadata(mint);
 
@@ -1008,10 +1008,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
         receivingSolAccountOrAta,
       );
       newTokenBalance = 1;
-      instructions.push([
-        ...winningPrizeInstructions,
-        ...cleanupInstructions.reverse(),
-      ]);
+      instructions.push([...winningPrizeInstructions, ...cleanupInstructions]);
     }
   }
 

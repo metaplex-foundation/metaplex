@@ -27,11 +27,9 @@ import Sidebar from './components/Sidebar';
 import SelectItemsStep from './components/SelectItemsStep';
 import AdjustQuantitiesStep from './components/AdjustQuantitiesStep';
 import ReviewAndMintStep from './components/ReviewAndMintStep';
-import TransactionErrorModal from '../../components/TransactionErrorModal';
 import { sendCreatePack } from './transactions/createPack';
 import SuccessModal from './components/SuccessModal';
 import { useValidation } from './hooks/useValidation';
-import { Button } from 'antd';
 
 // ToDo: Refactor state to a react context
 export const PackCreateView = (): ReactElement => {
@@ -39,20 +37,24 @@ export const PackCreateView = (): ReactElement => {
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
-  const [errorModal, setErrorModal] =
-    useState<{error: string, display: boolean}>({error: '', display: false});
+<<<<<<< HEAD
+  const [errorModal, setErrorModal] = useState<{
+    error: string;
+    display: boolean;
+  }>({ error: '', display: false });
+=======
+>>>>>>> parent of 1ae01158 (rebased)
   const [isCreating, setIsCreating] = useState<boolean>(false);
-  const { pullUserMetadata } = useMeta();
 
   const items = useUserArts();
   const { step, goToNextStep, resetStep } = useStep();
   const wallet = useWallet();
   const connection = useConnection();
-  const { isFetching } = useMeta();
-  const { accountByMint, userAccounts } = useUserAccounts();
+  const { isLoadingMetadata, isLoading: isLoadingSiteState } = useMeta();
+  const { accountByMint } = useUserAccounts();
   const isValidStep = useValidation({ attributes, step });
 
-  const isLoading = isCreating || isFetching;
+  const isLoading = isCreating || isLoadingSiteState || isLoadingMetadata;
 
   const {
     selectedItems,
@@ -155,8 +157,8 @@ export const PackCreateView = (): ReactElement => {
         });
 
         setShouldShowSuccessModal(true);
-      } catch (e: any) {
-        setErrorModal({ error: e?.message, display: true });
+      } catch (e) {
+        console.log(e);
       }
     }
     setIsCreating(false);
@@ -178,11 +180,15 @@ export const PackCreateView = (): ReactElement => {
       description: data.description,
     });
   }, [data]);
-  const shouldRenderSuccessModal = shouldShowSuccessModal && !errorModal.display
+<<<<<<< HEAD
+  const shouldRenderSuccessModal =
+    shouldShowSuccessModal && !errorModal.display;
 
   const shouldRenderRefresh =
     step === CreatePackSteps.SelectItems ||
     step === CreatePackSteps.SelectVoucher;
+=======
+>>>>>>> parent of 1ae01158 (rebased)
 
   return (
     <div className="pack-create-wrapper" ref={ref}>
@@ -194,13 +200,7 @@ export const PackCreateView = (): ReactElement => {
         buttonLoading={isLoading}
       />
       <div className="content-wrapper">
-        <Header step={step}>
-          {shouldRenderRefresh && (
-            <Button onClick={() => pullUserMetadata(userAccounts)}>
-              Refresh
-            </Button>
-          )}
-        </Header>
+        <Header step={step} />
 
         {step === CreatePackSteps.SelectItems && (
           <SelectItemsStep
@@ -244,12 +244,8 @@ export const PackCreateView = (): ReactElement => {
           />
         )}
       </div>
-      <TransactionErrorModal
-        open={errorModal.display}
-        onDismiss={() => setErrorModal({ error: '', display: false })}
-        error={errorModal.error}
-      />
-      <SuccessModal shouldShow={shouldRenderSuccessModal} hide={handleFinish} />
+
+      <SuccessModal shouldShow={shouldShowSuccessModal} hide={handleFinish} />
     </div>
   );
 };

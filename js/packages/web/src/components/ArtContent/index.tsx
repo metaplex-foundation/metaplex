@@ -109,7 +109,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           // @ts-ignore
@@ -130,30 +130,29 @@ const VideoArtContent = ({
         />
       </div>
     ) : (
-      <div className={`${className} square`}>
-        <video
-          playsInline={true}
-          autoPlay={true}
-          muted={true}
-          controls={true}
-          controlsList="nodownload"
-          style={style}
-          loop={true}
-          poster={uri}
-        >
-          {likelyVideo && (
-            <source src={likelyVideo} type="video/mp4" style={style} />
-          )}
-          {animationURL && (
-            <source src={animationURL} type="video/mp4" style={style} />
-          )}
-          {files
-            ?.filter(f => typeof f !== 'string')
-            .map((f: any) => (
-              <source src={f.uri} type={f.type} style={style} />
-            ))}
-        </video>
-      </div>
+      <video
+        className={className}
+        playsInline={true}
+        autoPlay={true}
+        muted={true}
+        controls={true}
+        controlsList="nodownload"
+        style={style}
+        loop={true}
+        poster={uri}
+      >
+        {likelyVideo && (
+          <source src={likelyVideo} type="video/mp4" style={style} />
+        )}
+        {animationURL && (
+          <source src={animationURL} type="video/mp4" style={style} />
+        )}
+        {files
+          ?.filter(f => typeof f !== 'string')
+          .map((f: any) => (
+            <source src={f.uri} type={f.type} style={style} />
+          ))}
+      </video>
     );
 
   return content;
@@ -162,7 +161,6 @@ const VideoArtContent = ({
 const HTMLWrapper = styled.div`
   padding-top: 100%;
   position: relative;
-  width: 100%;
 `;
 
 const HTMLContent = ({
@@ -215,27 +213,33 @@ const HTMLContent = ({
         sandbox="allow-scripts"
         frameBorder="0"
         src={htmlURL}
-        className={`html-iframe ${className}`}
+        className={className}
         onLoad={() => {
           setLoaded(true);
         }}
         style={{
           ...style,
           height: !loaded ? 0 : '100%',
+          width: '100%',
+          top: 0,
+          left: 0,
+          position: 'absolute',
         }}
       ></iframe>
     </HTMLWrapper>
   );
 };
 
-
+<<<<<<< HEAD
 const ArtContentWrapper = styled.div`
   display: flex;
-  alignItems: center;
-  justifyContent: center;
+  alignitems: center;
+  justifycontent: center;
   height: 100%;
 `;
 
+=======
+>>>>>>> parent of 1ae01158 (rebased)
 export const ArtContent = ({
   category,
   className,
@@ -265,9 +269,15 @@ export const ArtContent = ({
   artView?: boolean;
 }) => {
   const [uriState, setUriState] = useState<string | undefined>();
-  const [animationURLState, setAnimationURLState] = useState<string | undefined>();
-  const [filesState, setFilesState] = useState<(MetadataFile | string)[] | undefined>();
-  const [categoryState, setCategoryState] = useState<MetadataCategory | undefined>();
+  const [animationURLState, setAnimationURLState] = useState<
+    string | undefined
+  >();
+  const [filesState, setFilesState] = useState<
+    (MetadataFile | string)[] | undefined
+  >();
+  const [categoryState, setCategoryState] = useState<
+    MetadataCategory | undefined
+  >();
 
   const id = pubkeyToString(pubkey);
 
@@ -299,7 +309,7 @@ export const ArtContent = ({
       setFilesState(data.properties.files);
       setCategoryState(data.properties.category);
     }
-  }, [pubkey, data])
+  }, [pubkey, data]);
 
   const animationUrlExt = new URLSearchParams(
     getLast((animationURLState || '').split('?')),
@@ -355,11 +365,20 @@ export const ArtContent = ({
       />
     );
 
+<<<<<<< HEAD
+  return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>;
+=======
   return (
-    <ArtContentWrapper
+    <div
       ref={ref as any}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
     >
       {content}
-    </ArtContentWrapper>
+    </div>
   );
+>>>>>>> parent of 1ae01158 (rebased)
 };
