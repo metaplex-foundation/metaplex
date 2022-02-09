@@ -9,7 +9,6 @@ export async function nftStorageUpload(
   animation: string,
   manifestBuffer: Buffer,
 ) {
-
   async function uploadMedia(media) {
     const stats = fs.statSync(media);
     const readStream = fs.createReadStream(media);
@@ -34,20 +33,19 @@ export async function nftStorageUpload(
   }
 
   // Copied from ipfsUpload
-  const imageUrl = `${await uploadMedia(image)}?ext=${path.extname(image).replace('.', '')}`;
-  const animationUrl = animation ? `${await uploadMedia(animation)}?ext=${path.extname(animation).replace('.', '')}` : undefined;
+  const imageUrl = `${await uploadMedia(image)}?ext=${path
+    .extname(image)
+    .replace('.', '')}`;
+  const animationUrl = animation
+    ? `${await uploadMedia(animation)}?ext=${path
+        .extname(animation)
+        .replace('.', '')}`
+    : undefined;
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
   manifestJson.image = imageUrl;
   if (animation) {
     manifestJson.animation_url = animationUrl;
   }
-  manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    if (f.type.startsWith('image/')) {
-      return { ...f, uri: imageUrl };
-    } else {
-      return { ...f, uri: animationUrl };
-    }
-  });
 
   log.info('Upload metadata');
   const metaData = Buffer.from(JSON.stringify(manifestJson));
