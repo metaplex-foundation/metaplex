@@ -50,7 +50,7 @@ export async function cacheAllAuctions(
     let offset = 0;
 
     if (activeIndex && cacheExists) {
-      offset = findIndex(activeIndex.info.auctionCaches, pubkey => {
+      const found = findIndex(activeIndex.info.auctionCaches, pubkey => {
         const cache = auctionCaches[pubkey];
 
         return (
@@ -58,6 +58,8 @@ export async function cacheAllAuctions(
           cache.info.timestamp.toNumber()
         );
       });
+
+      offset = found < 0 ? activeIndex.info.auctionCaches.length : found;
     }
 
     const { instructions, signers } = await cacheAuctionIndexer(
