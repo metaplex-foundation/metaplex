@@ -2,10 +2,25 @@ import path from 'path';
 import log from 'loglevel';
 import { validate } from 'jsonschema';
 import { EXTENSION_JSON } from '../../helpers/constants';
+import {
+  EXTENSION_PNG,
+  EXTENSION_JPG,
+  EXTENSION_GIF,
+} from '../../helpers/constants';
+import {
+  EXTENSION_MP4,
+  EXTENSION_MOV,
+  EXTENSION_MP3,
+  EXTENSION_FLAC,
+  EXTENSION_WAV,
+  EXTENSION_GLB,
+  EXTENSION_HTML,
+} from '../../helpers/constants';
 import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
 type TokenMetadata = {
   image: string;
+  animation_url: string;
   properties: {
     files: { uri: string; type: string }[];
     creators: { address: string; share: number }[];
@@ -14,7 +29,22 @@ type TokenMetadata = {
 
 export const verifyAssets = ({ files, uploadElementsCount }) => {
   const imgFileCount = files.filter(it => {
-    return !it.endsWith(EXTENSION_JSON);
+    return (
+      it.endsWith(EXTENSION_PNG) ||
+      it.endsWith(EXTENSION_JPG) ||
+      it.endsWith(EXTENSION_GIF)
+    );
+  }).length;
+  const animationFileCount = files.filter(it => {
+    return (
+      it.endsWith(EXTENSION_MP4) ||
+      it.endsWith(EXTENSION_MOV) ||
+      it.endsWith(EXTENSION_MP3) ||
+      it.endsWith(EXTENSION_FLAC) ||
+      it.endsWith(EXTENSION_WAV) ||
+      it.endsWith(EXTENSION_GLB) ||
+      it.endsWith(EXTENSION_HTML)
+    );
   }).length;
   const jsonFileCount = files.filter(it => {
     return it.endsWith(EXTENSION_JSON);
@@ -28,6 +58,18 @@ export const verifyAssets = ({ files, uploadElementsCount }) => {
       `number of img files (${imgFileCount}) is different than the number of json files (${jsonFileCount})`,
     );
   }
+  if (animationFileCount) {
+    if (animationFileCount !== jsonFileCount) {
+      throw new Error(
+        `number of animation files (${animationFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
+    }
+    if (animationFileCount !== imgFileCount) {
+      throw new Error(
+        `number of animation files (${animationFileCount}) is different than the number of img files (${imgFileCount})`,
+      );
+    }
+  }
 
   if (elemCount < imgFileCount) {
     throw new Error(
@@ -35,7 +77,13 @@ export const verifyAssets = ({ files, uploadElementsCount }) => {
     );
   }
 
-  log.info(`Verifying token metadata for ${imgFileCount} (img+json) pairs`);
+  if (animationFileCount) {
+    log.info(
+      `Verifying token metadata for ${jsonFileCount} (img+animation+json) sets`,
+    );
+  } else {
+    log.info(`Verifying token metadata for ${jsonFileCount} (img+json) pairs`);
+  }
 };
 
 export const verifyAggregateShare = (
@@ -110,6 +158,31 @@ The \`metaplex upload\` command will automatically substitute this URL with the 
   }
 };
 
+export const verifyAnimationURL = (animation_url, files, manifestFile) => {
+  // The animation_url is expected to have the same name as the index
+  const fileIndex = manifestFile.split('/').pop().split('.')[0];
+  const ext = path.extname(animation_url);
+  const expectedAnimationPath = `${fileIndex}${ext}`;
+  if (animation_url !== expectedAnimationPath) {
+    // We _could_ match against this in the JSON schema validation, but it is totally valid to have arbitrary URLs to images here.
+    // The downside, though, is that those images will not get uploaded to Arweave since they're not on-disk.
+    log.warn(`We expected the \`animation_url\` property in ${manifestFile} to be ${expectedAnimationPath}.
+This will still work properly (assuming the URL is valid!), however, this animation_url will not get uploaded to Arweave through the \`metaplex upload\` command.
+If you want us to take care of getting this into Arweave, make sure to set \`animation_url\`: "${expectedAnimationPath}"
+The \`metaplex upload\` command will automatically substitute this URL with the Arweave URL location.
+    `);
+  }
+  const mediaFiles = files.filter(file => file.type !== EXTENSION_JSON);
+  if (
+    mediaFiles.length === 0 ||
+    !mediaFiles.some(file => file.uri === animation_url)
+  ) {
+    throw new Error(
+      `At least one media file entry in \`properties.files\` array is expected to match the \`animation_url\` property.`,
+    );
+  }
+};
+
 export const verifyConsistentShares = (collatedCreators: CollatedCreators) => {
   // We expect all creators to have been added to the same amount of tokens
   const tokenCountSet = new Set<number>();
@@ -152,6 +225,15 @@ export const verifyMetadataManifests = ({ files }) => {
       properties: { files },
     } = tokenMetadata;
     verifyImageURL(image, files, manifestFile);
+
+    if (Object.prototype.hasOwnProperty.call(tokenMetadata, 'animation_url')) {
+      // Check that the `animation_url` and at least one of the files has a URI matching the index of this token.
+      const {
+        animation_url,
+        properties: { files },
+      } = tokenMetadata;
+      verifyAnimationURL(animation_url, files, manifestFile);
+    }
   }
 
   verifyConsistentShares(collatedCreators);

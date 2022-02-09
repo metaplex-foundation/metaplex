@@ -243,11 +243,7 @@ const CategoryStep = (props: {
         <h2>Create a new item</h2>
         <p>
           First time creating on Metaplex?{' '}
-          <a
-            href="https://docs.metaplex.com/storefront/create"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://docs.metaplex.com/storefront/create" target="_blank" rel="noreferrer">
             Read our creators’ guide.
           </a>
         </p>
@@ -747,7 +743,10 @@ const InfoStep = (props: {
                 <>
                   {fields.map(({ key, name }) => (
                     <Space key={key} align="baseline">
-                      <Form.Item name={[name, 'trait_type']} hasFeedback>
+                      <Form.Item
+                        name={[name, 'trait_type']}
+                        hasFeedback
+                      >
                         <Input placeholder="trait_type (Optional)" />
                       </Form.Item>
                       <Form.Item
@@ -757,7 +756,10 @@ const InfoStep = (props: {
                       >
                         <Input placeholder="value" />
                       </Form.Item>
-                      <Form.Item name={[name, 'display_type']} hasFeedback>
+                      <Form.Item
+                        name={[name, 'display_type']}
+                        hasFeedback
+                      >
                         <Input placeholder="display_type (Optional)" />
                       </Form.Item>
                       <MinusCircleOutlined onClick={() => remove(name)} />
