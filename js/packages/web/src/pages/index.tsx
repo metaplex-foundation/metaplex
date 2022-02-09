@@ -97,6 +97,7 @@ function AppWrapper({ storefront, host }: AppProps) {
     logo.onerror = onHasLogo;
   }, []);
 
+  // @ts-ignore ._client is needed to avoid initializing several times. If we try to initialize only on the client we lose out on the error boundry
   if (process.env.NEXT_PUBLIC_BUGSNAG_API_KEY && !Bugsnag._client) {
     // const host = url; // window.location.host;
     Bugsnag.start({
