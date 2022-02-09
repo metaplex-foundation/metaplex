@@ -52,4 +52,24 @@ module.exports = withPlugins(plugins, {
       },
     ];
   },
+  webpack: (config, { webpack, buildId, isServer }) => {
+    // source https://github.com/vercel/next.js/issues/12944#issuecomment-765857160
+    // Actually, Nextjs has a function for generateBuildId, but for some reason it did not get passed to the buildId variable below.
+    // Easier to just define it here
+
+    const BUILD_ID = require('child_process')
+      .execSync('git rev-parse --short HEAD')
+      .toString()
+      .trim();
+
+    config.plugins.forEach(plugin => {
+      if (plugin.constructor.name === 'DefinePlugin') {
+        plugin.definitions = {
+          ...plugin.definitions,
+          'process.env.BUILD_ID': JSON.stringify(BUILD_ID),
+        };
+      }
+    });
+    return config;
+  },
 });

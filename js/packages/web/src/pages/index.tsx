@@ -110,6 +110,7 @@ function AppWrapper({ storefront, host }: AppProps) {
         ? 'staging'
         : 'unknown',
       plugins: [new BugsnagPluginReact()],
+      appVersion: process.env.BUILD_ID,
       metadata: {
         storefront,
       },
