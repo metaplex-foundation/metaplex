@@ -244,7 +244,7 @@ const CategoryStep = (props: {
         <p>
           First time creating on Metaplex?{' '}
           <a
-            href="https://docs.metaplex.com/create-store/sell"
+            href="https://docs.metaplex.com/storefront/create"
             target="_blank"
             rel="noreferrer"
           >
@@ -745,28 +745,19 @@ const InfoStep = (props: {
             <Form.List name="attributes">
               {(fields, { add, remove }) => (
                 <>
-                  {fields.map(({ key, name, fieldKey }: any) => (
+                  {fields.map(({ key, name }) => (
                     <Space key={key} align="baseline">
-                      <Form.Item
-                        name={[name, 'trait_type']}
-                        fieldKey={[fieldKey, 'trait_type']}
-                        hasFeedback
-                      >
+                      <Form.Item name={[name, 'trait_type']} hasFeedback>
                         <Input placeholder="trait_type (Optional)" />
                       </Form.Item>
                       <Form.Item
                         name={[name, 'value']}
-                        fieldKey={[fieldKey, 'value']}
                         rules={[{ required: true, message: 'Missing value' }]}
                         hasFeedback
                       >
                         <Input placeholder="value" />
                       </Form.Item>
-                      <Form.Item
-                        name={[name, 'display_type']}
-                        fieldKey={[fieldKey, 'display_type']}
-                        hasFeedback
-                      >
+                      <Form.Item name={[name, 'display_type']} hasFeedback>
                         <Input placeholder="display_type (Optional)" />
                       </Form.Item>
                       <MinusCircleOutlined onClick={() => remove(name)} />
