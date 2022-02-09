@@ -251,6 +251,92 @@ programCommand('upload')
   });
 
 programCommand('withdraw')
+  .argument('<candy_machine_id>', 'Candy machine id')
+  .option('-d, --dry', 'Show Candy Machine withdraw amount without withdrawing')
+  .option('-ch, --charity <string>', 'Which charity?', '')
+  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .action(async (candyMachineId, _, cmd) => {
+    const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
+
+    if (charityPercent < 0 || charityPercent > 100) {
+      log.error('Charity percentage needs to be between 0 and 100');
+      return;
+    }
+    const walletKeypair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeypair, env, rpcUrl);
+    const configOrCommitment = {
+      commitment: 'confirmed',
+      filters: [
+        {
+          memcmp: {
+            offset: 8,
+            bytes: walletKeypair.publicKey.toBase58(),
+          },
+        },
+      ],
+    };
+    const machines: AccountAndPubkey[] = await getProgramAccounts(
+      anchorProgram.provider.connection,
+      CANDY_MACHINE_PROGRAM_V2_ID.toBase58(),
+      configOrCommitment,
+    );
+    const currentMachine = machines?.find(machine => {
+      return machine.pubkey === candyMachineId;
+    });
+
+    if (!currentMachine) {
+      log.error(`Candy Machine ${candyMachineId} not found`);
+      return;
+    }
+
+    const refundAmount = currentMachine.account.lamports / LAMPORTS_PER_SOL;
+    const cpf = parseFloat(charityPercent);
+    let charityPub;
+    log.info(`Amount to be drained from ${candyMachineId}: ${refundAmount}`);
+    if (!!charity && charityPercent > 0) {
+      const donation = refundAmount * (100 / charityPercent);
+      charityPub = new PublicKey(charity);
+      log.info(
+        `Of that ${refundAmount}, ${donation} will be donated to ${charity}. Thank you!`,
+      );
+    }
+
+    if (!dry) {
+      const errors = [];
+      log.info(
+        `WARNING: This command will drain the SOL from Candy Machine ${candyMachineId}. This will break your Candy Machine if its still in use`,
+      );
+      try {
+        if (currentMachine.account.lamports > 0) {
+          const tx = await withdrawV2(
+            anchorProgram,
+            walletKeypair,
+            env,
+            new PublicKey(candyMachineId),
+            currentMachine.account.lamports,
+            charityPub,
+            cpf,
+          );
+          log.info(
+            `${candyMachineId} has been withdrawn. \nTransaction Signature: ${tx}`,
+          );
+        }
+      } catch (e) {
+        log.error(`Withdraw has failed for ${candyMachineId}`, e.message);
+        errors.push(e);
+        return;
+      }
+      log.info(
+        `Congratulations, ${candyMachineId} has been successfuly drained! Please consider support Open Source developers`,
+      );
+    }
+  });
+
+programCommand('withdraw_all')
   .option(
     '-d ,--dry',
     'Show Candy Machine withdraw amount without withdrawing.',
