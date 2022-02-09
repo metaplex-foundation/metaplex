@@ -1,9 +1,4 @@
-import {
-  MetadataCategory,
-  StringPublicKey,
-  useConnectionConfig,
-  useMeta,
-} from '@oyster/common';
+import { MetadataCategory, StringPublicKey, useMeta } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import { Badge, Button, Card, CardProps, Space, Tag } from 'antd';
 import React, { useState } from 'react';
