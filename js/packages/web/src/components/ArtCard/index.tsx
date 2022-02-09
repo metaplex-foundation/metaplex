@@ -1,4 +1,9 @@
-import { MetadataCategory, StringPublicKey, useMeta } from '@oyster/common';
+import {
+  MetadataCategory,
+  StringPublicKey,
+  useConnectionConfig,
+  useMeta,
+} from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import { Badge, Button, Card, CardProps, Space, Tag } from 'antd';
 import React, { useState } from 'react';
@@ -9,10 +14,10 @@ import { MetaAvatar } from '../MetaAvatar';
 import { holaSignMetadata } from '../MintModal/sign-meta';
 import { ArtContent } from './../ArtContent';
 
-const META_PROGRAM_ID = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
 const { Meta } = Card;
 
-enum SigningStatus {
+export const META_PROGRAM_ID = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
+export enum SigningStatus {
   UNVERIFIED,
   PENDING,
   VERIFICATION_SENT,
@@ -57,10 +62,14 @@ export const ArtCard = ({
   const creators = art?.creators || creatorsProp || [];
   const name = art?.title || nameProp || ' ';
   const unverified = art.creators?.find(c => !c.verified);
+  const holaplexCreator = art.creators?.find(
+    c => c.address === process.env.NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY,
+  );
+  const isHolaplexUnverified = !!(holaplexCreator && !holaplexCreator.verified);
   const { metadataByMetadata } = useMeta();
   const metaDataKey = metadataByMetadata[pubkey as string];
   const [signingStatus, setSigningStatus] = useState<SigningStatus>(
-    unverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED,
+    isHolaplexUnverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED,
   );
 
   const retrySigning = async () => {
@@ -92,13 +101,13 @@ export const ArtCard = ({
   useEffect(() => {
     if (
       allowRetrySigning &&
-      unverified &&
+      isHolaplexUnverified &&
       solanaEndpoint &&
       signingStatus === SigningStatus.UNVERIFIED
     ) {
       retrySigning();
     }
-  }, [retrySigning, unverified, allowRetrySigning, signingStatus]);
+  }, [retrySigning, isHolaplexUnverified, allowRetrySigning, signingStatus]);
 
   let badge = '';
   if (art.type === ArtType.NFT) {
