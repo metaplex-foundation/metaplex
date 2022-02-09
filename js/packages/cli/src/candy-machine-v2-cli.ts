@@ -264,7 +264,7 @@ programCommand('withdraw')
     });
 
     if (!currentMachine) {
-      log.error(`Candy machine ${candyMachineId} not found`);
+      log.error(`Candy Machine ${candyMachineId} not found`);
       return;
     }
 
@@ -283,7 +283,7 @@ programCommand('withdraw')
     if (!dry) {
       const errors = [];
       log.info(
-        'WARNING: This command will drain ALL of the Candy Machine config accounts that are owned by your current KeyPair, this will break your Candy Machine if its still in use',
+        `WARNING: This command will drain the SOL from Candy Machine ${candyMachineId}. This will break your Candy Machine if its still in use`
       );
       try {
         if (currentMachine.account.lamports > 0) {
