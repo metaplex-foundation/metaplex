@@ -235,7 +235,6 @@ programCommand('withdraw')
   )
   .action(async (candyMachineId, _, cmd) => {
     const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
-    console.log(candyMachineId);
 
     if (charityPercent < 0 || charityPercent > 100) {
       log.error('Charity percentage needs to be between 0 and 100');
@@ -283,7 +282,7 @@ programCommand('withdraw')
     if (!dry) {
       const errors = [];
       log.info(
-        `WARNING: This command will drain the SOL from Candy Machine ${candyMachineId}. This will break your Candy Machine if its still in use`
+        `WARNING: This command will drain the SOL from Candy Machine ${candyMachineId}. This will break your Candy Machine if its still in use`,
       );
       try {
         if (currentMachine.account.lamports > 0) {
