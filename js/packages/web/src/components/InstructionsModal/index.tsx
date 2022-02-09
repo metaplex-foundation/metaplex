@@ -2,12 +2,6 @@ import React, { useState, ReactNode } from 'react';
 import { Card, Modal, Button, Col, Row } from 'antd';
 import { CreditCardOutlined } from '@ant-design/icons';
 
-interface ContentCardProps {
-  title: string;
-  description: string;
-  imgSrc?: string;
-}
-
 export const ContentCard = (props: {
   title: string;
   description: string;

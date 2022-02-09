@@ -31,7 +31,7 @@ import {
   BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { MintInfo, Token } from '@solana/spl-token';
+import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
@@ -431,7 +431,7 @@ const BidLine = (props: {
   isActive?: boolean;
   mintKey: string;
 }) => {
-  const { bid, index, mint, isCancelled, isActive, mintKey } = props;
+  const { bid, mint, isCancelled, mintKey } = props;
   const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
   const isme = publicKey?.toBase58() === bidder;
@@ -480,6 +480,7 @@ const BidLine = (props: {
                 target="_blank"
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
+                rel="noreferrer"
               >{`@${bidderTwitterHandle}`}</a>
             ) : (
               shortenAddress(bidder)
@@ -574,6 +575,7 @@ const BidLine = (props: {
                     target="_blank"
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
+                    rel="noreferrer"
                   >{`@${bidderTwitterHandle}`}</a>
                   <ClickToCopy
                     className="copy-pubkey"
