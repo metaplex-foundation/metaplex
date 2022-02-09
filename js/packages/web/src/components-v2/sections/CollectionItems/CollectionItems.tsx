@@ -10,7 +10,8 @@ import {
 } from '../../atoms/Dropdown';
 import { ArtCard } from '../../molecules/ArtCard';
 import { Modal } from '../../molecules/Modal';
-import { QuickBuy } from '../../molecules/QuickBuy';
+import { ArtDetails } from '../../molecules/ArtDetails';
+import { QuickBuy } from '../../sections/QuickBuy';
 
 import { arts } from '../../../../dummy-data/arts';
 
@@ -23,7 +24,8 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
   ...restProps
 }: CollectionItemsProps) => {
   const CollectionItemsClasses = CN(`collection-items w-full`, className);
-  const [showQuickBuyModal, setShowQuickBuyModal] = useState(false);
+  const [showQuickBuyModal, setShowQuickBuyModal] = useState<boolean>(false);
+  const [showArtModalModal, setShowArtModalModal] = useState<boolean>(false);
   const [selectedArt, setSelectedArt] = useState<any>(null);
 
   return (
@@ -129,6 +131,10 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
                 setSelectedArt(art);
                 setShowQuickBuyModal(true);
               }}
+              onClickDetails={() => {
+                setSelectedArt(art);
+                setShowArtModalModal(true);
+              }}
               key={index}
               {...art}
             />
@@ -148,6 +154,28 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
                   onSubmit={(e: any) => {
                     modalClose(e);
                     setShowQuickBuyModal(false);
+                  }}
+                  art={selectedArt}
+                />
+              </>
+            );
+          }}
+        </Modal>
+      )}
+
+      {showArtModalModal && (
+        <Modal
+          onClose={() => setShowArtModalModal(false)}
+          size="lg"
+          isFixed={false}
+        >
+          {({ modalClose }: any) => {
+            return (
+              <>
+                <ArtDetails
+                  onSubmit={(e: any) => {
+                    modalClose(e);
+                    setShowArtModalModal(false);
                   }}
                   art={selectedArt}
                 />

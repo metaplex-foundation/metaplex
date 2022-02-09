@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
-import Link from 'next/link';
+import { Link, useHistory } from 'react-router-dom';
 import { useRouter } from 'next/router';
 
 import { header } from '../../../../dummy-data/header';
@@ -20,7 +20,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
   className,
   ...restProps
 }: HeaderMenuProps) => {
-  const router = useRouter();
+  const { push } = useHistory();
   const HeaderMenuClasses = CN(
     `header-menu flex gap-[12px] items-center`,
     className,
@@ -31,7 +31,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
       {header?.menu.map((menuItem: any, index: number) => {
         if (!menuItem.subMenu) {
           return (
-            <Link href={menuItem?.value} key={index}>
+            <Link to={menuItem?.value} key={index}>
               <button
                 key={index}
                 className={CN(
@@ -49,10 +49,8 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
             {({ isOpen, setIsOpen }: any) => {
               const onSelectOption = (value: string) => {
                 setIsOpen(false);
-                router.push({
-                  pathname: menuItem?.value,
-                  query: { pid: value },
-                }); // Redirecting to the URL
+
+                push(`${menuItem?.value}?pid=${value}`);
               };
 
               return (

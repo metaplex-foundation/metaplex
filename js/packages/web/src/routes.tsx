@@ -10,13 +10,15 @@ import {
   ArtworksView,
   AuctionCreateView,
   AuctionView,
-  HomeView,
   StaticPageView,
 } from './views';
 import { AdminView } from './views/admin';
 import PackView from './views/pack';
 import { PackCreateView } from './views/packCreate';
 import { BillingView } from './views/auction/billing';
+
+/* New view components */
+import { Home, Explore, Collection } from './components-v2/views';
 
 export function Routes() {
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
@@ -75,7 +77,9 @@ export function Routes() {
               component={() => <BillingView />}
             />
             <Route path="/about" component={() => <StaticPageView />} />
-            <Route path="/" component={() => <HomeView />} />
+            <Route path="/explore" component={() => <Explore />} />
+            <Route path="/collection" component={() => <Collection />} />
+            <Route path="/" component={() => <Home />} />
           </Switch>
         </Providers>
       </HashRouter>
