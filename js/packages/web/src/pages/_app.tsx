@@ -1,6 +1,8 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 
+// import '../styles/index.less'
+
 import 'remixicon/fonts/remixicon.css';
 import '../styles/globals.less';
 import '../styles/overrides.less';

@@ -45,14 +45,14 @@ export const ENDPOINTS: Array<Endpoint> = [
   {
     name: 'mainnet-beta',
     label: 'mainnet-beta',
-    url: 'https://api.metaplex.solana.com/',
-    chainId: ChainId.MainnetBeta,
+    url: clusterApiUrl('devnet'),
+    chainId: ChainId.Devnet,
   },
   {
     name: 'testnet',
     label: 'testnet',
-    url: clusterApiUrl('testnet'),
-    chainId: ChainId.Testnet,
+    url: clusterApiUrl('devnet'),
+    chainId: ChainId.Devnet,
   },
   {
     name: 'devnet',
@@ -62,7 +62,7 @@ export const ENDPOINTS: Array<Endpoint> = [
   },
 ];
 
-const DEFAULT_ENDPOINT = ENDPOINTS[0];
+const DEFAULT_ENDPOINT = ENDPOINTS[2];
 
 interface ConnectionConfig {
   connection: Connection;

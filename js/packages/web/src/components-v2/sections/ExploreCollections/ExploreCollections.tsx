@@ -1,4 +1,3 @@
-import React, { FC } from 'react';
 import CN from 'classnames';
 import queryString from 'query-string';
 import { useHistory, Link, useLocation } from 'react-router-dom';
@@ -9,6 +8,19 @@ import { collections } from '../../../../dummy-data/explore-collections';
 import { NftCard } from '../../molecules/NftCard';
 import { TextField } from '../../atoms/TextField';
 import { TabHighlightButton } from '../../atoms/TabHighlightButton';
+
+import { useWallet } from '@solana/wallet-adapter-react';
+import React, { useEffect, useState, FC } from 'react';
+import { Layout, Row, Col, Tabs, Dropdown, Menu } from 'antd';
+import { useMeta } from '../../../contexts';
+import { CardLoader } from '../../../components/MyLoader';
+
+import { ArtworkViewState, Item } from '../../../views/artworks/types';
+import { useItems } from '../../../views/artworks/hooks/useItems';
+import ItemCard from '../../../views/artworks/components/ItemCard';
+import { useUserAccounts } from '@oyster/common';
+import { DownOutlined } from '@ant-design/icons';
+import { isMetadata, isPack } from '../../../views/artworks/utils';
 
 export interface ExploreCollectionsProps {
   [x: string]: any;
@@ -26,6 +38,39 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
     `explore-collections py-[80px]`,
     className,
   );
+
+  ///////////////
+  const { connected } = useWallet();
+  const {
+    isLoading,
+    pullAllMetadata,
+    storeIndexer,
+    pullItemsPage,
+    isFetching,
+  } = useMeta();
+  const { userAccounts } = useUserAccounts();
+
+  const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
+
+  const userItems = useItems({ activeKey });
+
+  useEffect(() => {
+    if (!isFetching) {
+      pullItemsPage(userAccounts);
+    }
+  }, [isFetching]);
+
+  useEffect(() => {
+    if (connected) {
+      setActiveKey(ArtworkViewState.Metaplex);
+    } else {
+      setActiveKey(ArtworkViewState.Metaplex);
+    }
+  }, [connected, setActiveKey]);
+
+  const isDataLoading = isLoading || isFetching;
+
+  ///////////////
 
   return (
     <div className={ExploreCollectionsClasses} {...restProps}>
@@ -59,70 +104,136 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
         <div className="grid grid-cols-4 gap-x-[32px] gap-y-[32px] pb-[100px]">
           {pid === 'trending' &&
-            collections?.trending?.map(
-              ({ id, ...restProps }: any, index: number) => {
-                return (
-                  <Link key={id || index} to="/collection">
-                    <NftCard {...restProps} />
-                  </Link>
-                );
-              },
-            )}
+            userItems.map((item: any) => {
+              const pubkey = isMetadata(item)
+                ? item.pubkey
+                : isPack(item)
+                ? item.provingProcessKey
+                : item.edition?.pubkey || item.metadata.pubkey;
+              const temp = {
+                name: item?.info?.data?.symbol,
+                description: item?.info?.data?.name,
+                itemsCount: 1, //hardcoded
+                floorPrice: 100,
+                isVerified: 1,
+                image: item?.info?.data?.uri,
+              };
+              return (
+                <Link to="/collection">
+                  <NftCard {...temp} />
+                </Link>
+              );
+            })}
 
           {pid === 'collectibles' &&
-            collections?.trending?.map(
-              ({ id, ...restProps }: any, index: number) => {
-                return (
-                  <Link key={id || index} to="/collection">
-                    <NftCard {...restProps} />
-                  </Link>
-                );
-              },
-            )}
+            userItems.map((item: any) => {
+              const pubkey = isMetadata(item)
+                ? item.pubkey
+                : isPack(item)
+                ? item.provingProcessKey
+                : item.edition?.pubkey || item.metadata.pubkey;
+              const temp = {
+                name: item?.info?.data?.symbol,
+                description: item?.info?.data?.name,
+                itemsCount: 1, //hardcoded
+                floorPrice: 100,
+                isVerified: 1,
+                image: item?.info?.data?.uri,
+              };
+              return (
+                <Link to="/collection">
+                  <NftCard {...temp} />
+                </Link>
+              );
+            })}
 
           {pid === 'art' &&
-            collections?.art?.map(
-              ({ id, ...restProps }: any, index: number) => {
-                return (
-                  <Link key={id || index} to="/collection">
-                    <NftCard {...restProps} />
-                  </Link>
-                );
-              },
-            )}
+            userItems.map((item: any) => {
+              const pubkey = isMetadata(item)
+                ? item.pubkey
+                : isPack(item)
+                ? item.provingProcessKey
+                : item.edition?.pubkey || item.metadata.pubkey;
+              const temp = {
+                name: item?.info?.data?.symbol,
+                description: item?.info?.data?.name,
+                itemsCount: 1, //hardcoded
+                floorPrice: 100,
+                isVerified: 1,
+                image: item?.info?.data?.uri,
+              };
+              return (
+                <Link to="/collection">
+                  <NftCard {...temp} />
+                </Link>
+              );
+            })}
 
           {pid === 'charity' &&
-            collections?.charity?.map(
-              ({ id, ...restProps }: any, index: number) => {
-                return (
-                  <Link key={id || index} to="/collection">
-                    <NftCard {...restProps} />
-                  </Link>
-                );
-              },
-            )}
+            userItems.map((item: any) => {
+              const pubkey = isMetadata(item)
+                ? item.pubkey
+                : isPack(item)
+                ? item.provingProcessKey
+                : item.edition?.pubkey || item.metadata.pubkey;
+              const temp = {
+                name: item?.info?.data?.symbol,
+                description: item?.info?.data?.name,
+                itemsCount: 1, //hardcoded
+                floorPrice: 100,
+                isVerified: 1,
+                image: item?.info?.data?.uri,
+              };
+              return (
+                <Link to="/collection">
+                  <NftCard {...temp} />
+                </Link>
+              );
+            })}
 
           {pid === 'gaming' &&
-            collections?.gaming?.map(
-              ({ id, ...restProps }: any, index: number) => {
-                return (
-                  <Link key={id || index} to="/collection">
-                    <NftCard {...restProps} />
-                  </Link>
-                );
-              },
-            )}
+            userItems.map((item: any) => {
+              const pubkey = isMetadata(item)
+                ? item.pubkey
+                : isPack(item)
+                ? item.provingProcessKey
+                : item.edition?.pubkey || item.metadata.pubkey;
+              const temp = {
+                name: item?.info?.data?.symbol,
+                description: item?.info?.data?.name,
+                itemsCount: 1, //hardcoded
+                floorPrice: 100,
+                isVerified: 1,
+                image: item?.info?.data?.uri,
+              };
+              return (
+                <Link to="/collection">
+                  <NftCard {...temp} />
+                </Link>
+              );
+            })}
 
           {pid === 'utility' &&
-            collections?.utility?.map(
-              ({ id, ...restProps }: any, index: number) => {
-                return (
-                  <Link key={id || index} to="/collection">
-                    <NftCard {...restProps} />
-                  </Link>
-                );
-              },
-            )}
+            userItems.map((item: any) => {
+              const pubkey = isMetadata(item)
+                ? item.pubkey
+                : isPack(item)
+                ? item.provingProcessKey
+                : item.edition?.pubkey || item.metadata.pubkey;
+              const temp = {
+                name: item?.info?.data?.symbol,
+                description: item?.info?.data?.name,
+                itemsCount: 1, //hardcoded
+                floorPrice: 100,
+                isVerified: 1,
+                image: item?.info?.data?.uri,
+              };
+              return (
+                <Link to="/collection">
+                  <NftCard {...temp} />
+                </Link>
+              );
+            })}
         </div>
       </div>
     </div>
