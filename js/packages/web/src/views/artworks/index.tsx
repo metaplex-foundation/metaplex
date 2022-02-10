@@ -2,6 +2,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import {
   loadMetadataForUsers,
   useConnection,
+  useConnectionConfig,
   useUserAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -20,7 +21,7 @@ export const ArtworksView = () => {
   const connection = useConnection();
   const wallet = useWallet();
   const { userAccounts } = useUserAccounts();
-
+  const { endpoint } = useConnectionConfig();
   useEffect(() => {
     (async () => {
       setLoadingArt(true);
@@ -70,6 +71,8 @@ export const ArtworksView = () => {
                     key={id}
                     pubkey={m.metadata.pubkey}
                     preview={false}
+                    solanaEndpoint={endpoint}
+                    allowRetrySigning={true}
                   />
                 </Link>
               );

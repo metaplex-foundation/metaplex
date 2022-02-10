@@ -14,24 +14,18 @@ const CreateReactAppEntryPoint = dynamic(() => import('../App'), {
 
 interface AppProps {
   storefront: Storefront;
-}
-
-if (process.env.NEXT_PUBLIC_BUGSNAG_API_KEY) {
-  Bugsnag.start({
-    apiKey: process.env.NEXT_PUBLIC_BUGSNAG_API_KEY || '',
-    plugins: [new BugsnagPluginReact()],
-  });
+  host: string;
 }
 
 const storefrontDenyList = [
   'solboogle',
   'childofdice',
-  'cotdnft' // user request
-]
+  'cotdnft', // user request
+];
 
-const subdomainAlias: { [key: string]: string; } = {
-  "endstate": "endstate-io"
-}
+const subdomainAlias: { [key: string]: string } = {
+  endstate: 'endstate-io',
+};
 
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
@@ -52,13 +46,13 @@ export async function getServerSideProps(context: NextPageContext) {
 
   let aliasedSubdomain = subdomain;
   if (subdomainAlias[subdomain]) {
-    aliasedSubdomain = subdomainAlias[subdomain]
+    aliasedSubdomain = subdomainAlias[subdomain];
   }
 
   const storefront = await getStorefront(aliasedSubdomain);
 
   if (storefront && !storefrontDenyList.includes(aliasedSubdomain)) {
-    return { props: { storefront } };
+    return { props: { storefront, host } };
   }
 
   return {
@@ -66,7 +60,7 @@ export async function getServerSideProps(context: NextPageContext) {
   };
 }
 
-function AppWrapper({ storefront }: AppProps) {
+function AppWrapper({ storefront, host }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [hasLogo, setHasLogo] = useState(false);
   const [hasStylesheet, setHasStylesheet] = useState(false);
@@ -102,6 +96,30 @@ function AppWrapper({ storefront }: AppProps) {
     logo.onload = onHasLogo;
     logo.onerror = onHasLogo;
   }, []);
+
+  // @ts-ignore ._client is needed to avoid initializing several times. If we try to initialize only on the client we lose out on the error boundry
+  if (process.env.NEXT_PUBLIC_BUGSNAG_API_KEY && !Bugsnag._client) {
+    // const host = url; // window.location.host;
+    Bugsnag.start({
+      apiKey: process.env.NEXT_PUBLIC_BUGSNAG_API_KEY || '',
+      releaseStage: host.includes('holaplex.com')
+        ? 'production'
+        : host.includes('localhost')
+        ? 'development'
+        : host.includes('holaplex.dev')
+        ? 'staging'
+        : 'unknown',
+      plugins: [new BugsnagPluginReact()],
+      appVersion: process.env.BUILD_ID,
+      metadata: {
+        storefront,
+      },
+      // onError: function (event) {
+      //   // Adjust event here
+      //   console.log('[bugsnag] fired', event);
+      // },
+    });
+  }
   const appBody = (
     <>
       <Head>

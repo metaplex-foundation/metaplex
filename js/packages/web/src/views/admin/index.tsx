@@ -465,10 +465,9 @@ function InnerAdminView({
             <h3>Cache Auctions</h3>
             <p>
               Activate your storefront listing caches by pressing &ldquo;build
-              cache&rdquo;. This will reduce page load times for your
-              listings. Your storefront will start looking up listing using
-              the cache on November 17th. To preview the speed improvement
-              visit the Holaplex{' '}
+              cache&rdquo;. This will reduce page load times for your listings.
+              Your storefront will start looking up listing using the cache on
+              November 17th. To preview the speed improvement visit the Holaplex{' '}
               <a
                 rel="noopener noreferrer"
                 target="_blank"
@@ -493,15 +492,17 @@ function InnerAdminView({
                   onClick={async () => {
                     setCachingAuctions(true);
 
-                    await cacheAllAuctions(
-                      wallet,
-                      connection,
-                      auctionManagersToCache,
-                      auctionCaches,
-                      storeIndexer,
-                    );
-
-                    setCachingAuctions(false);
+                    try {
+                      await cacheAllAuctions(
+                        wallet,
+                        connection,
+                        auctionManagersToCache,
+                        auctionCaches,
+                        storeIndexer,
+                      );
+                    } finally {
+                      setCachingAuctions(false);
+                    }
                   }}
                 >
                   Build Cache
