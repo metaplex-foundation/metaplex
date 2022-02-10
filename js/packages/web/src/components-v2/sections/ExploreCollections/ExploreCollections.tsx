@@ -119,7 +119,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link key={item?.info?.data?.mint} to="/collection">
+                <Link key={pubkey} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -141,7 +141,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link key={item?.info?.data?.mint} to="/collection">
+                <Link key={pubkey} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -163,7 +163,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link key={item?.info?.data?.mint} to="/collection">
+                <Link key={pubkey} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -186,7 +186,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link key={item?.info?.data?.mint} to="/collection">
+                <Link key={pubkey} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -208,7 +208,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link key={item?.info?.data?.mint} to="/collection">
+                <Link key={pubkey} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -230,7 +230,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link key={item?.info?.data?.mint} to="/collection">
+                <Link key={pubkey} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
