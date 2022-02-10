@@ -6,11 +6,7 @@ export interface ExploreProps {
 }
 
 export const Explore: FC<ExploreProps> = () => {
-  return (
-    <>
-      <ExploreCollections />
-    </>
-  );
+  return <ExploreCollections />;
 };
 
 export default Explore;

@@ -48,9 +48,14 @@ export const Header: FC<HeaderProps> = ({
               return (
                 <>
                   <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
-                    <button className={CN('flex items-center text-white appearance-none gap-[4px] outline-none h-[40px] px-[12px] rounded-[6px] hover:bg-B-500', {
-                      'bg-B-500': isOpen,
-                    })}>
+                    <button
+                      className={CN(
+                        'flex items-center text-white appearance-none gap-[4px] outline-none h-[40px] px-[12px] rounded-[6px] hover:bg-B-500',
+                        {
+                          'bg-B-500': isOpen,
+                        },
+                      )}
+                    >
                       <AvatarPreview
                         size={28}
                         name="Mary Edwards"
