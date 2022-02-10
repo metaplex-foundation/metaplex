@@ -20,7 +20,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const creators = useCreators(auctionView);
   const name = art?.title || ' ';
 
-  const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == auctionView.auction.info.tokenMint)[0]
+  const tokenInfo = useTokenList().subscribedTokens.filter(m=>m.address == auctionView.auction.info.tokenMint)[0]
   const { status, amount } = useAuctionStatus(auctionView);
 
   const card = (
