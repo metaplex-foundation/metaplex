@@ -81,7 +81,7 @@ export const CollectionActivity: FC<CollectionActivityProps> = ({
                     {isOpen && (
                       <DropDownBody
                         align="right"
-                        className="w-[160px] shadow-lg shadow-blue-900/10 mt-[8px]"
+                        className="w-[160px] shadow-lg shadow-B-700/5 border-x border border-B-10 mt-[8px]"
                       >
                         {options?.map((option: any, index: number) => {
                           const { label, value } = option;
