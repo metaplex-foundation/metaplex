@@ -21,10 +21,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendSignedTransaction = exports.getUnixTs = exports.sendTransactionWithRetry = exports.sendTransaction = exports.sendTransactionsWithRecentBlock = exports.sendTransactions = exports.sendTransactionsInChunks = exports.sendTransactionsWithManualRetry = exports.SequenceType = exports.getErrorForTransaction = exports.useConnectionConfig = exports.useConnection = exports.ConnectionProvider = exports.ENDPOINTS = void 0;
 const react_1 = __importStar(require("react"));
+const utils_1 = require("../utils");
 const spl_token_registry_1 = require("@solana/spl-token-registry");
 const wallet_adapter_base_1 = require("@solana/wallet-adapter-base");
 const web3_js_1 = require("@solana/web3.js");
-const utils_1 = require("../utils/utils");
+const utils_2 = require("../utils/utils");
 const notifications_1 = require("../utils/notifications");
 const ExplorerLink_1 = require("../components/ExplorerLink");
 const hooks_1 = require("../hooks");
@@ -56,7 +57,7 @@ const ConnectionContext = react_1.default.createContext({
 });
 function ConnectionProvider({ children }) {
     const searchParams = (0, hooks_1.useQuerySearch)();
-    const [networkStorage, setNetworkStorage] = (0, utils_1.useLocalStorageState)('network', DEFAULT_ENDPOINT.name);
+    const [networkStorage, setNetworkStorage] = (0, utils_2.useLocalStorageState)('network', DEFAULT_ENDPOINT.name);
     const networkParam = searchParams.get('network');
     let maybeEndpoint;
     if (networkParam) {
@@ -76,7 +77,7 @@ function ConnectionProvider({ children }) {
     const [tokens, setTokens] = (0, react_1.useState)(new Map());
     (0, react_1.useEffect)(() => {
         function fetchTokens() {
-            return new spl_token_registry_1.TokenListProvider().resolve().then(container => {
+            return (0, utils_1.getTokenListContainerPromise)().then(container => {
                 const list = container
                     .excludeByTag('nft')
                     .filterByChainId(endpoint.chainId)
@@ -207,8 +208,8 @@ const sendTransactionsInChunks = async (connection, wallet, instructionSet, sign
         throw new wallet_adapter_base_1.WalletNotConnectedError();
     let instructionsChunk = [instructionSet];
     let signersChunk = [signersSet];
-    instructionsChunk = (0, utils_1.chunks)(instructionSet, batchSize);
-    signersChunk = (0, utils_1.chunks)(signersSet, batchSize);
+    instructionsChunk = (0, utils_2.chunks)(instructionSet, batchSize);
+    signersChunk = (0, utils_2.chunks)(signersSet, batchSize);
     for (let c = 0; c < instructionsChunk.length; c++) {
         const unsignedTxns = [];
         for (let i = 0; i < instructionsChunk[c].length; i++) {
@@ -338,7 +339,7 @@ const sendTransactionsWithRecentBlock = async (connection, wallet, instructionSe
             continue;
         }
         const block = await connection.getRecentBlockhash(commitment);
-        await (0, utils_1.sleep)(1200);
+        await (0, utils_2.sleep)(1200);
         const transaction = new web3_js_1.Transaction();
         instructions.forEach(instruction => transaction.add(instruction));
         transaction.recentBlockhash = block.blockhash;
@@ -472,7 +473,7 @@ async function sendSignedTransaction({ signedTransaction, connection, timeout = 
             connection.sendRawTransaction(rawTransaction, {
                 skipPreflight: true,
             });
-            await (0, utils_1.sleep)(500);
+            await (0, utils_2.sleep)(500);
         }
     })();
     try {
@@ -605,7 +606,7 @@ async function awaitTransactionSignatureConfirmation(txid, timeout, connection, 
                     }
                 }
             })();
-            await (0, utils_1.sleep)(2000);
+            await (0, utils_2.sleep)(2000);
         }
     });
     //@ts-ignore

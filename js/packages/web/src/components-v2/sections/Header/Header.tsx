@@ -5,6 +5,13 @@ import { Link } from 'react-router-dom';
 import { Logo } from '../../atoms/Logo';
 import { HeaderMenu } from '../../molecules/HeaderMenu';
 import { HeaderSearch } from '../../molecules/HeaderSearch';
+import { ConnectButton } from '@oyster/common';
+import {
+  Cog,
+  CurrentUserBadge,
+} from '../../../components/CurrentUserBadge';
+import { Notifications } from '../../../components/Notifications';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export interface HeaderProps {
   [x: string]: any;
@@ -18,6 +25,8 @@ export const Header: FC<HeaderProps> = ({
     `header flex gap-[28px] items-center bg-B-400 py-[20px] px-[32px] fixed top-0 left-0 right-0 z-50 shadow-lg shadow-blue-700/10`,
     className,
   );
+
+  const { connected } = useWallet();
 
   return (
     <div className={HeaderClasses} {...restProps}>
@@ -34,10 +43,21 @@ export const Header: FC<HeaderProps> = ({
         <button className="flex appearance-none text-[24px] text-white">
           <i className="ri-user-3-fill" />
         </button>
-
-        <button className="flex text-base text-white border-2 border-white hover:border-B-500 appearance-none rounded-[6px] px-[12px] h-[40px] items-center justify-center font-500 hover:bg-B-500 transition-all active:scale-[0.97]">
-          Create Wallet
-        </button>
+        {!connected && (
+         <ConnectButton style={{ height: 48 }} allowWalletChange />
+        
+        )}
+                  {connected && (
+            <>
+              <CurrentUserBadge
+                showBalance={false}
+                showAddress={true}
+                iconSize={24}
+              />
+              <Notifications />
+              <Cog />
+            </>
+          )}
       </div>
     </div>
   );
