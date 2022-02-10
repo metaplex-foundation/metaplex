@@ -20,7 +20,8 @@ export const CANDY_MACHINE_PROGRAM_ID = new PublicKey(
 );
 
 export const CANDY_MACHINE_PROGRAM_V2_ID = new PublicKey(
-  'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+  '8VRwdyLCnj3KYuKpsEuWZqyaqgTMQ5ESAZEohS5vwBDN',
+  // 'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
   //'Ch3qpQYqr7AvLP6Eph9xxbtneAbzovzuEexAGh48URHS',
 );
 export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(

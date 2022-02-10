@@ -27,7 +27,7 @@ use {
     spl_token::state::Mint,
     std::{cell::RefMut, ops::Deref, str::FromStr},
 };
-anchor_lang::declare_id!("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
+anchor_lang::declare_id!("8VRwdyLCnj3KYuKpsEuWZqyaqgTMQ5ESAZEohS5vwBDN");
 
 const EXPIRE_OFFSET: i64 = 10 * 60;
 const PREFIX: &str = "candy_machine";
@@ -910,7 +910,7 @@ pub fn get_config_line<'info>(
     if let Some(hs) = &a.data.hidden_settings {
         return Ok(ConfigLine {
             name: hs.name.clone() + "#" + &(mint_number + 1).to_string(),
-            uri: hs.uri.clone(),
+            uri: hs.uri.clone() + &(mint_number + 1).to_string(),
         });
     }
     msg!("Index is set to {:?}", index);
