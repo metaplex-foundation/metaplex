@@ -74,6 +74,11 @@ export type Attribute = {
   value: string | number;
 };
 
+export type Collection = {
+  key: StringPublicKey;
+  verified: number;
+};
+
 export interface IMetadataExtension {
   name: string;
   symbol: string;
@@ -237,6 +242,8 @@ export class Metadata {
   primarySaleHappened: boolean;
   isMutable: boolean;
   editionNonce: number | null;
+  collection: Collection;
+  uses: number | null;
 
   // set lazy
   masterEdition?: StringPublicKey;
@@ -249,6 +256,8 @@ export class Metadata {
     primarySaleHappened: boolean;
     isMutable: boolean;
     editionNonce: number | null;
+    collection: Collection;
+    uses: number | null;
   }) {
     this.key = MetadataKey.MetadataV1;
     this.updateAuthority = args.updateAuthority;
@@ -257,6 +266,8 @@ export class Metadata {
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
     this.editionNonce = args.editionNonce ?? null;
+    this.collection = args.collection ?? null;
+    this.uses = args.uses ?? null;
   }
 
   public async init() {

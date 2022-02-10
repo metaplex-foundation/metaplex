@@ -703,8 +703,8 @@ export const pullPage = async (
         );
         tempCache.metadataByAuction[auctionCache.info.auction] = metadata;
         for (const m of metadata) {
-          const data: MetadataData = m.info as unknown as MetadataData;
-          if (data.collection) {
+          const data: MetadataData = m?.info as unknown as MetadataData;
+          if (data?.collection) {
             collections.add(data.collection.key);
           }
         }
