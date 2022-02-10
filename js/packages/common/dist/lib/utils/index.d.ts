@@ -11,4 +11,5 @@ export * from './isValidHttpUrl';
 export * from './borsh';
 export * from './createPipelineExecutor';
 export * from './assets';
+export * from './getTokenListContainerPromise';
 //# sourceMappingURL=index.d.ts.map

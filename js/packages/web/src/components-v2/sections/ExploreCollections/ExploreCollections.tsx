@@ -119,7 +119,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link to="/collection">
+                <Link key={item?.info?.data?.mint} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -141,7 +141,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link to="/collection">
+                <Link key={item?.info?.data?.mint} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -163,7 +163,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link to="/collection">
+                <Link key={item?.info?.data?.mint} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -176,6 +176,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 : isPack(item)
                 ? item.provingProcessKey
                 : item.edition?.pubkey || item.metadata.pubkey;
+              debugger;
               const temp = {
                 name: item?.info?.data?.symbol,
                 description: item?.info?.data?.name,
@@ -185,7 +186,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link to="/collection">
+                <Link key={item?.info?.data?.mint} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -207,7 +208,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link to="/collection">
+                <Link key={item?.info?.data?.mint} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );
@@ -229,7 +230,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 image: item?.info?.data?.uri,
               };
               return (
-                <Link to="/collection">
+                <Link key={item?.info?.data?.mint} to="/collection">
                   <NftCard {...temp} />
                 </Link>
               );

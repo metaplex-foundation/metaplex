@@ -31,7 +31,6 @@ export const NftCard: FC<NftCardProps> = forwardRef(
       try {
         const getImage = async () => {
           const img = await axios.get(`${image}`);
-          debugger;
           setUriState(img.data.image);
         };
         getImage();
