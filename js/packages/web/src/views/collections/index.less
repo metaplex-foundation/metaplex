@@ -12,6 +12,9 @@
 .collections-layout-container {
   width: 100%;
   height: auto;
+  .col-container {
+    margin-bottom: 32px;
+  }
 
   .collection-title {
     font-style: normal;
@@ -29,12 +32,16 @@
     line-height: 20px;
     color: rgba(255, 255, 255, 0.7);
     margin-bottom: 20px;
-    max-height: 100px;
+    height: 100px;
     /* text-overflow: ellipsis; */
     display: -webkit-box;
     overflow: hidden;
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
+  }
+  a:link, a:visited {
+    color: white !important;
+    text-decoration: none;
   }
 
   .artist-name {

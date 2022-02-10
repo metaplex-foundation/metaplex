@@ -1,23 +1,30 @@
 import { Col, Layout, Row } from 'antd';
-import React, { useMemo } from 'react';
-import { useStore } from '@oyster/common';
-import { useMeta } from '../../contexts';
-import { CollectionCard } from "../../components/CollectionCard";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { CollectionCard } from '../../components/CollectionCard';
+import { useCollections } from '../../hooks/useCollections';
 
 export const CollectionsView = () => {
-  const { metadataByCollection } = useMeta();
-
-  const collectionMints = Object.keys(metadataByCollection)
+  const { liveCollections } = useCollections();
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      <span className={"collections-title"}>Collections</span>
-      <Row className={"collections-layout-container"} gutter={32}>
-        {collectionMints.map(collection => {
-          const pubkey = metadataByCollection[collection].pubkey;
+      <span className={'collections-title'}>Collections</span>
+      <Row className={'collections-layout-container'} gutter={32}>
+        {liveCollections.map(collection => {
+          const pubkey = collection.pubkey;
           return (
-            <Col key={pubkey} xs={24} sm={12}>
-              <CollectionCard pubkey={pubkey} key={pubkey} />
+            <Col
+              key={pubkey}
+              xs={24}
+              sm={24}
+              md={24}
+              lg={12}
+              className={'col-container'}
+            >
+              <Link key={pubkey} to={`/collection/${collection.mint}`}>
+                <CollectionCard pubkey={pubkey} key={pubkey} />
+              </Link>
             </Col>
           );
         })}
