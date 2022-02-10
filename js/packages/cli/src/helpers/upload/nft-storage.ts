@@ -46,13 +46,6 @@ export async function nftStorageUpload(
   if (animation) {
     manifestJson.animation_url = animationUrl;
   }
-  manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    if (f.type.startsWith('image/')) {
-      return { ...f, uri: imageUrl };
-    } else {
-      return { ...f, uri: animationUrl };
-    }
-  });
 
   log.info('Upload metadata');
   const metaData = Buffer.from(JSON.stringify(manifestJson));

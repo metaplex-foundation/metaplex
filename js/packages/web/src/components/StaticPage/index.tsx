@@ -214,11 +214,9 @@ export const StaticPage = (props: {
       </div>
       <div className="author-connect">
         <p className="author-subtitle">Connect with the artist</p>
-        {props.leftContent?.author.connectWith?.map((e, i) => (
-          <p>
-            <a key={i} href={e.url}>
-              {e.label}
-            </a>
+        {props.leftContent?.author.connectWith?.map((e, ii) => (
+          <p key={ii}>
+            <a href={e.url}>{e.label}</a>
           </p>
         ))}
       </div>
@@ -229,8 +227,10 @@ export const StaticPage = (props: {
       {props.midContent.sections.map((section, i) => (
         <div key={i} className="mid-section-item">
           {section.title && <span className="mid-title">{section.title}</span>}
-          {section.paragraphs?.map(paragraph => (
-            <p className="paragraph-text">{paragraph}</p>
+          {section.paragraphs?.map((paragraph, ii) => (
+            <p className="paragraph-text" key={ii}>
+              {paragraph}
+            </p>
           ))}
 
           {section.image && (
@@ -246,7 +246,11 @@ export const StaticPage = (props: {
           {section.caption && (
             <p className="image-caption">
               {section.caption.text}
-              <a href={section.caption.linkUrl} target="_blank">
+              <a
+                href={section.caption.linkUrl}
+                rel="noreferrer"
+                target="_blank"
+              >
                 {section.caption.linkText}
               </a>
             </p>

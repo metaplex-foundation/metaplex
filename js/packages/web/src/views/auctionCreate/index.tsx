@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Divider,
   Steps,
@@ -15,7 +15,10 @@ import {
   Checkbox,
 } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
-import { MINIMUM_SAFE_FEE_AUCTION_CREATION, QUOTE_MINT } from './../../constants';
+import {
+  MINIMUM_SAFE_FEE_AUCTION_CREATION,
+  QUOTE_MINT,
+} from './../../constants';
 import { Confetti } from './../../components/Confetti';
 import { ArtSelector } from './artSelector';
 import {
@@ -39,7 +42,6 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo, MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { capitalize } from 'lodash';
 import {
   WinningConfigType,
   AmountRange,
@@ -59,9 +61,8 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
 import TokenDialog, { TokenButton } from '../../components/TokenDialog';
 import { useTokenList } from '../../contexts/tokenList';
-import { mintTo } from '@project-serum/serum/lib/token-instructions';
-import { TokenInfo } from '@solana/spl-token-registry'
-import { FundsIssueModal } from "../../components/FundsIssueModal";
+import { TokenInfo } from '@solana/spl-token-registry';
+import { FundsIssueModal } from '../../components/FundsIssueModal';
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -155,15 +156,14 @@ export const AuctionCreateView = () => {
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
-  const [auctionObj, setAuctionObj] =
-    useState<
-      | {
-          vault: StringPublicKey;
-          auction: StringPublicKey;
-          auctionManager: StringPublicKey;
-        }
-      | undefined
-    >(undefined);
+  const [auctionObj, setAuctionObj] = useState<
+    | {
+        vault: StringPublicKey;
+        auction: StringPublicKey;
+        auctionManager: StringPublicKey;
+      }
+    | undefined
+  >(undefined);
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
@@ -184,9 +184,6 @@ export const AuctionCreateView = () => {
     items: [],
     tiers: [],
   });
-  const [quoteMintAddress, setQuoteMintAddress] = useState<string>()
-  const [quoteMintInfo, setQuoteMintInfo] = useState<MintInfo>()
-  const [quoteMintInfoExtended, setQuoteMintInfoExtended] = useState<TokenInfo>()
 
   useEffect(() => {
     if (step_param) setStep(parseInt(step_param));
@@ -305,7 +302,7 @@ export const AuctionCreateView = () => {
             i => (i as TierDummyEntry).winningConfigType !== undefined,
           )),
       );
-      let filteredTiers = tiers.filter(
+      const filteredTiers = tiers.filter(
         i => i.items.length > 0 && i.winningSpots.length > 0,
       );
 
@@ -351,7 +348,7 @@ export const AuctionCreateView = () => {
             });
             // Ok now we have combined ranges from this tier range. Now we merge them into the ranges
             // at the top level.
-            let oldRanges = ranges;
+            const oldRanges = ranges;
             ranges = [];
             let oldRangeCtr = 0,
               tierRangeCtr = 0;
@@ -456,8 +453,10 @@ export const AuctionCreateView = () => {
       attributes.instantSalePrice &&
       attributes.priceFloor === attributes.instantSalePrice;
 
-    const LAMPORTS_PER_TOKEN = attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? LAMPORTS_PER_SOL
-      : Math.pow(10, attributes.quoteMintInfo.decimals || 0)
+    const LAMPORTS_PER_TOKEN =
+      attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()
+        ? LAMPORTS_PER_SOL
+        : Math.pow(10, attributes.quoteMintInfo.decimals || 0);
 
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
@@ -718,7 +717,7 @@ const CategoryStep = (props: {
       <Row className="call-to-action">
         <h2>List an item</h2>
         <p>
-          First time listing on Metaplex? <a>Read our sellers' guide.</a>
+          First time listing on Metaplex? <a>Read our sellers&apos; guide.</a>
         </p>
       </Row>
       <Row justify={width < 768 ? 'center' : 'start'}>
@@ -811,30 +810,32 @@ const InstantSaleStep = ({
   confirm: () => void;
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
   // give default value to mint
 
-  const { hasOtherTokens, tokenMap} = useTokenList()
+  const { hasOtherTokens, tokenMap } = useTokenList();
 
   // give default value to mint
-  const mintInfo = tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+  const mintInfo = tokenMap.get(
+    !mint ? QUOTE_MINT.toString() : mint.toString(),
+  );
 
-  attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
+  attributes.quoteMintAddress = mint ? mint.toBase58() : QUOTE_MINT.toBase58();
 
   if (attributes.quoteMintAddress) {
-    attributes.quoteMintInfo = useMint(attributes.quoteMintAddress)!
-    attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(attributes.quoteMintAddress)!
+    attributes.quoteMintInfo = useMint(attributes.quoteMintAddress)!;
+    attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(
+      attributes.quoteMintAddress,
+    )!;
   }
 
   //console.log("OBJ MINT", mint.toBase58())
   const isMasterEdition = !!attributes?.items?.[0]?.masterEdition;
 
-  const copiesEnabled = useMemo(
-    () => {
-      const maxSupply = attributes?.items?.[0]?.masterEdition?.info?.maxSupply;
-      return !!maxSupply && maxSupply.toNumber() > 0;
-    },[attributes?.items?.[0]]
-  );
+  const copiesEnabled = useMemo(() => {
+    const maxSupply = attributes?.items?.[0]?.masterEdition?.info?.maxSupply;
+    return !!maxSupply && maxSupply.toNumber() > 0;
+  }, [attributes?.items?.[0]]);
   const artistFilter = useCallback(
     (i: SafetyDepositDraft) =>
       !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
@@ -915,7 +916,10 @@ const InstantSaleStep = ({
           {hasOtherTokens && (
             <label className="action-field">
               <span className="field-title">Auction mint</span>
-              <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+              <TokenButton
+                mint={mint}
+                onClick={() => setShowTokenDialog(true)}
+              />
               <TokenDialog
                 setMint={setMint}
                 open={showTokenDialog}
@@ -937,7 +941,7 @@ const InstantSaleStep = ({
               className="input"
               placeholder="Price"
               prefix="◎"
-              suffix={mintInfo?.symbol || "CUSTOM"}
+              suffix={mintInfo?.symbol || 'CUSTOM'}
               onChange={info =>
                 setAttributes({
                   ...attributes,
@@ -971,23 +975,25 @@ const CopiesStep = (props: {
   confirm: () => void;
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
-  const { hasOtherTokens, tokenMap } = useTokenList()
+  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
+  const { hasOtherTokens } = useTokenList();
 
-  // give default value to mint
-  const mintInfo = tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
-
-  props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
+  props.attributes.quoteMintAddress = mint
+    ? mint.toBase58()
+    : QUOTE_MINT.toBase58();
 
   if (props.attributes.quoteMintAddress) {
-    props.attributes.quoteMintInfo = useMint(props.attributes.quoteMintAddress)!
-    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(props.attributes.quoteMintAddress)!
+    props.attributes.quoteMintInfo = useMint(
+      props.attributes.quoteMintAddress,
+    )!;
+    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(
+      props.attributes.quoteMintAddress,
+    )!;
   }
 
-  let artistFilter = (i: SafetyDepositDraft) =>
+  const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
-  let filter: (i: SafetyDepositDraft) => boolean = (i: SafetyDepositDraft) =>
-    true;
+  let filter: (i: SafetyDepositDraft) => boolean = () => true;
   if (props.attributes.category === AuctionCategory.Limited) {
     filter = (i: SafetyDepositDraft) =>
       !!i.masterEdition && !!i.masterEdition.info.maxSupply;
@@ -1000,7 +1006,7 @@ const CopiesStep = (props: {
       );
   }
 
-  let overallFilter = (i: SafetyDepositDraft) => filter(i) && artistFilter(i);
+  const overallFilter = (i: SafetyDepositDraft) => filter(i) && artistFilter(i);
 
   return (
     <>
@@ -1025,7 +1031,10 @@ const CopiesStep = (props: {
           {hasOtherTokens && (
             <label className="action-field">
               <span className="field-title">Auction mint</span>
-              <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+              <TokenButton
+                mint={mint}
+                onClick={() => setShowTokenDialog(true)}
+              />
               <TokenDialog
                 setMint={setMint}
                 open={showTokenDialog}
@@ -1081,17 +1090,20 @@ const NumberOfWinnersStep = (props: {
   confirm: () => void;
 }) => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
-  const { hasOtherTokens, tokenMap} = useTokenList()
+  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT);
+  const { hasOtherTokens } = useTokenList();
 
-  // give default value to mint
-  const mintInfo = tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
-
-  props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
+  props.attributes.quoteMintAddress = mint
+    ? mint.toBase58()
+    : QUOTE_MINT.toBase58();
 
   if (props.attributes.quoteMintAddress) {
-    props.attributes.quoteMintInfo = useMint(props.attributes.quoteMintAddress)!
-    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(props.attributes.quoteMintAddress)!
+    props.attributes.quoteMintInfo = useMint(
+      props.attributes.quoteMintAddress,
+    )!;
+    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(
+      props.attributes.quoteMintAddress,
+    )!;
   }
 
   return (
@@ -1128,7 +1140,10 @@ const NumberOfWinnersStep = (props: {
               <span className="field-info">
                 This will be the quote mint for your auction.
               </span>
-              <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+              <TokenButton
+                mint={mint}
+                onClick={() => setShowTokenDialog(true)}
+              />
               <TokenDialog
                 setMint={setMint}
                 open={showTokenDialog}
@@ -1159,19 +1174,32 @@ const PriceAuction = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
-  console.log(props.attributes)
-  const quoteMintName = props.attributes?.quoteMintInfoExtended?.name || "Custom Token"
-  const quoteMintExt = props.attributes?.quoteMintInfoExtended?.symbol || shortenAddress(props.attributes.quoteMintAddress)
+  console.log(props.attributes);
+  const quoteMintName =
+    props.attributes?.quoteMintInfoExtended?.name || 'Custom Token';
+  const quoteMintExt =
+    props.attributes?.quoteMintInfoExtended?.symbol ||
+    shortenAddress(props.attributes.quoteMintAddress);
   return (
     <>
       <Row className="call-to-action">
         <h2>Price</h2>
         <p>
           Set the price for your auction.
-          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && ` Warning! the auction quote mint is `}
-          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58()&& <a href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`} target="_blank"> {props.attributes?.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() &&
-            `${quoteMintName} (${quoteMintExt})`}
-          </a>}
+          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() &&
+            ` Warning! the auction quote mint is `}
+          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && (
+            <a
+              href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {' '}
+              {props.attributes?.quoteMintAddress !=
+                WRAPPED_SOL_MINT.toBase58() &&
+                `${quoteMintName} (${quoteMintExt})`}
+            </a>
+          )}
         </p>
       </Row>
       <Row className="content-action">
@@ -1190,8 +1218,14 @@ const PriceAuction = (props: {
                 className="input"
                 placeholder="Fixed Price"
                 prefix="◎"
-                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                    : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+                suffix={
+                  props.attributes.quoteMintInfoExtended
+                    ? props.attributes.quoteMintInfoExtended.symbol
+                    : props.attributes.quoteMintAddress ==
+                      WRAPPED_SOL_MINT.toBase58()
+                    ? 'SOL'
+                    : 'CUSTOM'
+                }
                 onChange={info =>
                   props.setAttributes({
                     ...props.attributes,
@@ -1216,8 +1250,14 @@ const PriceAuction = (props: {
                 className="input"
                 placeholder="Price"
                 prefix="◎"
-                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                  : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+                suffix={
+                  props.attributes.quoteMintInfoExtended
+                    ? props.attributes.quoteMintInfoExtended.symbol
+                    : props.attributes.quoteMintAddress ==
+                      WRAPPED_SOL_MINT.toBase58()
+                    ? 'SOL'
+                    : 'CUSTOM'
+                }
                 onChange={info =>
                   props.setAttributes({
                     ...props.attributes,
@@ -1236,11 +1276,23 @@ const PriceAuction = (props: {
               type="number"
               min={0}
               className="input"
-              placeholder={`Tick size in ${props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "your custom currency"}`}
+              placeholder={`Tick size in ${
+                props.attributes.quoteMintInfoExtended
+                  ? props.attributes.quoteMintInfoExtended.symbol
+                  : props.attributes.quoteMintAddress ==
+                    WRAPPED_SOL_MINT.toBase58()
+                  ? 'SOL'
+                  : 'your custom currency'
+              }`}
               prefix="◎"
-              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+              suffix={
+                props.attributes.quoteMintInfoExtended
+                  ? props.attributes.quoteMintInfoExtended.symbol
+                  : props.attributes.quoteMintAddress ==
+                    WRAPPED_SOL_MINT.toBase58()
+                  ? 'SOL'
+                  : 'CUSTOM'
+              }
               onChange={info =>
                 props.setAttributes({
                   ...props.attributes,
@@ -1550,14 +1602,13 @@ const TierTableStep = (props: {
   maxWinners: number;
   confirm: () => void;
 }) => {
-
   const newImmutableTiers = (tiers: Tier[]) => {
     return tiers.map(wc => ({
       items: [...wc.items.map(it => ({ ...it }))],
       winningSpots: [...wc.winningSpots],
     }));
   };
-  let artistFilter = (i: SafetyDepositDraft) =>
+  const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
   const options: { label: string; value: number }[] = [];
   for (let i = 0; i < props.maxWinners; i++) {
@@ -1875,8 +1926,14 @@ const ParticipationStep = (props: {
               className="input"
               placeholder="Fixed Price"
               prefix="◎"
-              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
-                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
+              suffix={
+                props.attributes.quoteMintInfoExtended
+                  ? props.attributes.quoteMintInfoExtended.symbol
+                  : props.attributes.quoteMintAddress ==
+                    WRAPPED_SOL_MINT.toBase58()
+                  ? 'SOL'
+                  : 'CUSTOM'
+              }
               onChange={info =>
                 props.setAttributes({
                   ...props.attributes,
@@ -1907,10 +1964,11 @@ const ReviewStep = (props: {
   setAttributes: Function;
   connection: Connection;
 }) => {
-  const [showFundsIssueModal, setShowFundsIssueModal] = useState(false)
+  const [showFundsIssueModal, setShowFundsIssueModal] = useState(false);
   const [cost, setCost] = useState(0);
   const { account } = useNativeAccount();
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const rentCall = Promise.all([
       props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
       props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
@@ -1920,7 +1978,7 @@ const ReviewStep = (props: {
 
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
 
-  let item = props.attributes.items?.[0];
+  const item = props.attributes.items?.[0];
 
   const handleConfirm = () => {
     props.setAttributes({
@@ -1929,7 +1987,7 @@ const ReviewStep = (props: {
       startSaleTS: props.attributes.startSaleTS || moment().unix(),
     });
     props.confirm();
-  }
+  };
 
   return (
     <>
@@ -1954,7 +2012,13 @@ const ReviewStep = (props: {
             }
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost} tokenInfo={useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString())}/>
+            <AmountLabel
+              title="Cost to Create"
+              amount={cost}
+              tokenInfo={useTokenList().tokenMap.get(
+                WRAPPED_SOL_MINT.toString(),
+              )}
+            />
           ) : (
             <Spin />
           )}
@@ -2002,9 +2066,9 @@ const ReviewStep = (props: {
           size="large"
           onClick={() => {
             if (balance < MINIMUM_SAFE_FEE_AUCTION_CREATION) {
-              setShowFundsIssueModal(true)
+              setShowFundsIssueModal(true);
             } else {
-              handleConfirm()
+              handleConfirm();
             }
           }}
           className="action-btn"
@@ -2014,7 +2078,7 @@ const ReviewStep = (props: {
             : 'Publish Auction'}
         </Button>
         <FundsIssueModal
-          message={"Estimated Minimum Fee"}
+          message={'Estimated Minimum Fee'}
           minimumFunds={MINIMUM_SAFE_FEE_AUCTION_CREATION}
           currentFunds={balance}
           isModalVisible={showFundsIssueModal}
@@ -2101,7 +2165,7 @@ const Congrats = (props: {
         <div className="congrats-button-container">
           <Button
             className="metaplex-button"
-            onClick={_ => window.open(newTweetURL(), '_blank')}
+            onClick={() => window.open(newTweetURL(), '_blank')}
           >
             <span>Share it on Twitter</span>
             <span>&gt;</span>
@@ -2109,10 +2173,9 @@ const Congrats = (props: {
           <Button
             className="metaplex-button"
             onClick={() => {
-                history.push(`/`);
-                history.go(0);
-              }
-            }
+              history.push(`/`);
+              history.go(0);
+            }}
           >
             <span>See it in your auctions</span>
             <span>&gt;</span>

@@ -2,11 +2,14 @@ import React from 'react';
 
 import { Header } from '../../components-v2/sections/Header';
 import { Footer } from '../../components-v2/sections/Footer';
-import { AppBar } from '../AppBar';
+// import { AppBar } from '../AppBar';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// import { Footer } from '../Footer';
 
-export const AppLayout = React.memo((props: any) => {
+// const { Header, Content } = Layout;
+
+export const AppLayout = React.memo(function AppLayoutImpl(props: any) {
   const { children } = props;
-
   return (
     <>
       {/* <AppBar/> */}
