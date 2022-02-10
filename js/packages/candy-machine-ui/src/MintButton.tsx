@@ -83,11 +83,11 @@ export const MintButton = ({
               candyMachine!.state.gatekeeper!.gatekeeperNetwork
             );
 
-            if (gatewayToken) {
+            if (gatewayToken?.isValid()) {
               await onMint();
               setClicked(false);
             } else {
-              window.open(`https://encore.fans/verify-hooman?network=${rpcUrl}&gkNetwork=${candyMachine!.state.gatekeeper}`, '_blank')
+              window.open(`https://verify.encore.fans/?network=${rpcUrl}&gkNetwork=${candyMachine!.state.gatekeeper}`, '_blank')
             }
           }
         } else {
