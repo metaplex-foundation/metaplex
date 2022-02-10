@@ -61,10 +61,7 @@ module.exports = withPlugins(plugins, {
 
     const BUILD_ID =
       process.env.SOURCE_VERSION ||
-      require('child_process')
-        .execSync('git rev-parse --short HEAD')
-        .toString()
-        .trim();
+      require('child_process').execSync('git rev-parse HEAD').toString().trim();
 
     config.plugins.forEach(plugin => {
       if (plugin.constructor.name === 'DefinePlugin') {

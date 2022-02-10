@@ -105,7 +105,7 @@ function AppWrapper({ storefront, host }: AppProps) {
       releaseStage: host.includes('holaplex.com')
         ? 'production'
         : host.includes('localhost')
-        ? 'dev'
+        ? 'development'
         : host.includes('holaplex.dev')
         ? 'staging'
         : 'unknown',
