@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { useArt } from '../../hooks';
 import { Artist, ArtType } from '../../types';
+import { useAnalytics } from '../Analytics';
 import { MetaAvatar } from '../MetaAvatar';
 import { holaSignMetadata } from '../MintModal/sign-meta';
 import { ArtContent } from './../ArtContent';
@@ -66,6 +67,7 @@ export const ArtCard = ({
   const [signingStatus, setSigningStatus] = useState<SigningStatus>(
     isHolaplexUnverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED,
   );
+  const { track } = useAnalytics();
 
   const retrySigning = async () => {
     const metaProgramId = new PublicKey(META_PROGRAM_ID);
@@ -74,6 +76,7 @@ export const ArtCard = ({
       throw new Error('solanaEndpoint is required for retrySigning');
     }
 
+    track('Holaplex signing Initiated', {});
     await holaSignMetadata({
       solanaEndpoint,
       metadata,

@@ -12,6 +12,7 @@ import { Button, List, Skeleton, Tag, Space, Row, Col } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
+import { useAnalytics } from '../../components/Analytics';
 import { META_PROGRAM_ID, SigningStatus } from '../../components/ArtCard';
 import { ArtContent } from '../../components/ArtContent';
 import { ArtMinting } from '../../components/ArtMinting';
@@ -30,6 +31,7 @@ export const ArtView = () => {
 
   const connection = useConnection();
   const art = useArt(nft);
+  const { track } = useAnalytics();
   const isUnverified = !!art.creators?.find(c => !c.verified);
   const holaplexCreator = art.creators?.find(
     c => c.address === process.env.NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY,
@@ -53,6 +55,7 @@ export const ArtView = () => {
       throw new Error('solanaEndpoint is required for retrySigning');
     }
 
+    track('Holaplex signing Initiated', {});
     await holaSignMetadata({
       solanaEndpoint: endpoint,
       metadata,
@@ -179,7 +182,7 @@ export const ArtView = () => {
     </div>
   );
 
-  const retryMessage = () => (
+  const RetryMessage = () => (
     <Row style={{ marginTop: 20 }}>
       <Space align="start" size={24}>
         <Spinner />
@@ -304,7 +307,7 @@ export const ArtView = () => {
             onMint={async () => await setRemountArtMinting(prev => prev + 1)}
           />
         </Space>
-        {showRetryMessage && retryMessage()}
+        {showRetryMessage && <RetryMessage />}
       </div>
     </div>
   );
