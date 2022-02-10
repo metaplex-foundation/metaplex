@@ -57,10 +57,14 @@ module.exports = withPlugins(plugins, {
     // Actually, Nextjs has a function for generateBuildId, but for some reason it did not get passed to the buildId variable below.
     // Easier to just define it here
 
-    const BUILD_ID = require('child_process')
-      .execSync('git rev-parse --short HEAD')
-      .toString()
-      .trim();
+    // take a look at this in the morning https://stackoverflow.com/questions/14583282/heroku-display-hash-of-current-commit-in-browser
+
+    const BUILD_ID =
+      process.env.SOURCE_VERSION ||
+      require('child_process')
+        .execSync('git rev-parse --short HEAD')
+        .toString()
+        .trim();
 
     config.plugins.forEach(plugin => {
       if (plugin.constructor.name === 'DefinePlugin') {
