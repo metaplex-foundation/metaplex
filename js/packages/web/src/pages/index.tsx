@@ -114,15 +114,11 @@ function AppWrapper({ storefront, host }: AppProps) {
       metadata: {
         storefront,
       },
-      onError: function (event) {
-        // Adjust event here
-        console.log('[bugsnag] fired', event);
-      },
+      // onError: function (event) {
+      //   // Adjust event here
+      //   console.log('[bugsnag] fired', event);
+      // },
     });
-
-    console.log('bugsnag loaded');
-
-    Bugsnag.notify(new Error('Test error 2'));
   }
   const appBody = (
     <>

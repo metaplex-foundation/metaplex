@@ -130,7 +130,7 @@ export function useCollapseWrappedSol({
         }
       } catch (e) {
         console.error(e);
-        Bugsnag.notify(e.message);
+        Bugsnag.notify(e);
       }
     }
     setTimeout(fn, 60000);
