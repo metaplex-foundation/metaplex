@@ -1,8 +1,8 @@
 import * as anchor from '@project-serum/anchor';
 
 import { MintLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
-import { SystemProgram } from '@solana/web3.js';
-import { sendTransactions } from './connection';
+import { SystemProgram, Transaction } from '@solana/web3.js';
+import { sendTransactions, SequenceType } from './connection';
 
 import {
   CIVIC,
@@ -250,6 +250,8 @@ export const getCandyMachineCreator = async (
 export const mintOneToken = async (
   candyMachine: CandyMachineAccount,
   payer: anchor.web3.PublicKey,
+  beforeTransactions: Transaction[] = [],
+  afterTransactions: Transaction[] = [],
 ): Promise<(string | undefined)[]> => {
   const mint = anchor.web3.Keypair.generate();
 
@@ -438,7 +440,7 @@ export const mintOneToken = async (
         systemProgram: SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-        recentBlockhashes: anchor.web3.SYSVAR_SLOT_HASHES_PUBKEY,
+        recentBlockhashes: anchor.web3.SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
         instructionSysvarAccount: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
       },
       remainingAccounts:
@@ -453,6 +455,13 @@ export const mintOneToken = async (
         candyMachine.program.provider.wallet,
         [instructions, cleanupInstructions],
         [signers, []],
+        SequenceType.StopOnFailure,
+        'singleGossip',
+        () => {},
+        () => false,
+        undefined,
+        beforeTransactions,
+        afterTransactions,
       )
     ).txs.map(t => t.txid);
   } catch (e) {

@@ -132,10 +132,12 @@ export const sendTransactions = async (
   successCallback: (txid: string, ind: number) => void = (txid, ind) => {},
   failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
   block?: BlockhashAndFeeCalculator,
+  beforeTransactions: Transaction[] = [],
+  afterTransactions: Transaction[] = [],
 ): Promise<{ number: number; txs: { txid: string; slot: number }[] }> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  const unsignedTxns: Transaction[] = [];
+  const unsignedTxns: Transaction[] = beforeTransactions;
 
   if (!block) {
     block = await connection.getRecentBlockhash(commitment);
@@ -164,8 +166,11 @@ export const sendTransactions = async (
 
     unsignedTxns.push(transaction);
   }
+  unsignedTxns.push(...afterTransactions);
 
-  const signedTxns = await wallet.signAllTransactions(unsignedTxns);
+  const signedTxns = await wallet.signAllTransactions(
+    unsignedTxns.filter((t) => t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)))
+  );
 
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 

@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { Container, Snackbar } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
 import {
@@ -83,6 +83,17 @@ const Home = (props: HomeProps) => {
           props.connection,
         );
         console.log(JSON.stringify(cndy.state, null, 4));
+        console.log(`Price: ${cndy.state.price.toNumber()}`);
+        // TODO: Remove this when set up actual cm
+        cndy.state.gatekeeper = {
+          gatekeeperNetwork: new anchor.web3.PublicKey('tgnuXXNMDLK8dy7Xm1TdeGyc95MDym4bvAQCwcW21Bf'),
+          expireOnUse: true,
+        };
+        cndy.state.isActive = true;
+        cndy.state.isSoldOut = false;
+        cndy.state.itemsRemaining = 100;
+        cndy.state.itemsRedeemed = 100;
+        cndy.state.itemsAvailable = 200;
         setCandyMachine(cndy);
       } catch (e) {
         console.log('There was a problem fetching Candy Machine state');
@@ -91,13 +102,13 @@ const Home = (props: HomeProps) => {
     }
   }, [anchorWallet, props.candyMachineId, props.connection]);
 
-  const onMint = async () => {
+  const onMint = async (beforeTransactions: Transaction[] = [], afterTransactions: Transaction[] = []) => {
     try {
       setIsUserMinting(true);
       document.getElementById('#identity')?.click();
       if (wallet.connected && candyMachine?.program && wallet.publicKey) {
         const mintTxId = (
-          await mintOneToken(candyMachine, wallet.publicKey)
+          await mintOneToken(candyMachine, wallet.publicKey, beforeTransactions, afterTransactions)
         )[0];
 
         let status: any = { err: true };
@@ -130,12 +141,14 @@ const Home = (props: HomeProps) => {
         if (!error.message) {
           message = 'Transaction Timeout! Please try again.';
         } else if (error.message.indexOf('0x137')) {
+          console.log(error);
           message = `SOLD OUT!`;
         } else if (error.message.indexOf('0x135')) {
           message = `Insufficient funds to mint. Please fund your wallet.`;
         }
       } else {
-        if (error.code === 311) {
+        if (error.coade === 311) {
+          console.log(error);
           message = `SOLD OUT!`;
           window.location.reload();
         } else if (error.code === 312) {
@@ -190,6 +203,8 @@ const Home = (props: HomeProps) => {
                       candyMachine?.state?.gatekeeper?.gatekeeperNetwork
                     }
                     clusterUrl={rpcUrl}
+                    handleTransaction={async (transaction: Transaction) => await onMint([transaction])}
+                    broadcastTransaction={false}
                     options={{ autoShowModal: false }}
                   >
                     <MintButton
