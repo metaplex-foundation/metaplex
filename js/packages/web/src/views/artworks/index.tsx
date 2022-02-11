@@ -32,6 +32,7 @@ export const ArtworksView = () => {
   useEffect(() => {
     if (!isFetching) {
       pullItemsPage(userAccounts);
+      pullAllMetadata();
     }
   }, [isFetching]);
 

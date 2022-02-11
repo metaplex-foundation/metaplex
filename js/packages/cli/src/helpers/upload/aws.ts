@@ -71,13 +71,6 @@ export async function awsUpload(
   if (animation) {
     manifestJson.animation_url = animationUrl;
   }
-  manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    if (f.type.startsWith('image/')) {
-      return { ...f, uri: imageUrl };
-    } else {
-      return { ...f, uri: animationUrl };
-    }
-  });
 
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 

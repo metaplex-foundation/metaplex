@@ -320,13 +320,6 @@ async function getUpdatedManifest(
   if (animationLink) {
     manifest.animation_url = animationLink;
   }
-  manifest.properties.files = manifest.properties.files.map(f => {
-    if (f.type.startsWith('image/')) {
-      return { ...f, uri: imageLink };
-    } else {
-      return { ...f, uri: animationLink };
-    }
-  });
   return manifest;
 }
 
