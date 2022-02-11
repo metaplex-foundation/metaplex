@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
 import { Link, useHistory } from 'react-router-dom';
+import { Button } from '@oyster/common';
 
 import { header } from '../../../../dummy-data/header';
 
@@ -31,14 +32,14 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
         if (!menuItem.subMenu) {
           return (
             <Link to={menuItem?.value} key={index}>
-              <button
+              <Button
                 key={index}
                 className={CN(
-                  'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 rounded-[6px] transition-colors',
+                  'hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400',
                 )}
               >
                 {menuItem?.label}
-              </button>
+              </Button>
             </Link>
           );
         }
@@ -54,17 +55,16 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
               return (
                 <>
                   <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
-                    <button
+                    <Button
                       className={CN(
-                        'h-[40px] inline-flex items-center justify-center px-[12px] text-white hover:bg-white hover:text-B-400 transition-colors',
+                        'hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400',
                         {
-                          'rounded-t-[6px] bg-white text-B-400': isOpen,
-                          'rounded-[6px]': !isOpen,
+                          '!rounded-b-[0] !bg-white !text-B-400': isOpen,
                         },
                       )}
                     >
                       {menuItem?.label}
-                    </button>
+                    </Button>
                   </DropDownToggle>
 
                   {isOpen && (

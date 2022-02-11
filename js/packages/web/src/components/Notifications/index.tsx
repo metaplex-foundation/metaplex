@@ -6,6 +6,7 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import {
+  Button,
   findProgramAddress,
   programIds,
   StringPublicKey,
@@ -104,7 +105,7 @@ function RunAction({
 }
 
 export async function getPersonalEscrowAta(
-  wallet: WalletSigner | undefined
+  wallet: WalletSigner | undefined,
 ): Promise<StringPublicKey | undefined> {
   const PROGRAM_IDS = programIds();
   if (!wallet?.publicKey) return;
@@ -142,6 +143,7 @@ export function useCollapseWrappedSol({
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
         }
+        // eslint-disable-next-line no-empty
       } catch (e) {}
     }
     setTimeout(fn, 60000);
@@ -332,7 +334,11 @@ export function useSettlementAuctions({
                 accountByMint,
               );
               // accept funds (open WSOL & close WSOL) only if Auction currency SOL
-              if (wallet.publicKey && auctionView.auction.info.tokenMint == WRAPPED_SOL_MINT.toBase58()) {
+              if (
+                wallet.publicKey &&
+                auctionView.auction.info.tokenMint ==
+                  WRAPPED_SOL_MINT.toBase58()
+              ) {
                 const ata = await getPersonalEscrowAta(wallet);
                 if (ata) await closePersonalEscrow(connection, wallet, ata);
               }
@@ -363,12 +369,10 @@ export function Notifications() {
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
-  const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
   const walletPubkey = wallet.publicKey?.toBase58() || '';
-
 
   useCollapseWrappedSol({ connection, wallet, notifications });
 
@@ -566,8 +570,26 @@ export function Notifications() {
 
   const justContent = (
     <Popover placement="bottomLeft" content={content} trigger="click">
-      <img src={'/bell.svg'} style={{ cursor: 'pointer' }} />
-      {!!notifications.length && <div className="mobile-notification">{notifications.length - 1}</div>}
+      <Button className="hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </Button>
+
+      {!!notifications.length && (
+        <div className="mobile-notification">{notifications.length - 1}</div>
+      )}
     </Popover>
   );
 

@@ -13,7 +13,6 @@ import {
 } from '../CurrentUserBadge';
 import { ConnectButton } from '@oyster/common';
 import { MobileNavbar } from '../MobileNavbar';
-import { BetterSearchBox, SearchBox } from './searchBox';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
@@ -125,7 +124,6 @@ export const AppBar = () => {
         <div className="app-left">
           <LogoLink />
           &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-          <BetterSearchBox />
           &nbsp;&nbsp;&nbsp;
           <MetaplexMenu />
         </div>

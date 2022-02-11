@@ -466,19 +466,11 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
     fs.readFileSync(manifestPath).toString(),
   );
   manifest.image = manifest.image.replace('image', assetIndex);
-  if (manifest.properties?.files?.length > 0) {
-    manifest.properties.files[0].uri =
-      manifest.properties.files[0]?.uri?.replace('image', assetIndex);
-  }
   if ('animation_url' in manifest) {
     manifest.animation_url = manifest.animation_url.replace(
       'animation_url',
       assetIndex,
     );
-    if (manifest.properties?.files?.length > 0) {
-      manifest.properties.files[1].uri =
-        manifest.properties.files[1]?.uri?.replace('animation_url', assetIndex);
-    }
   }
   return manifest;
 }

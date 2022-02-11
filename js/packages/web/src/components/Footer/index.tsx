@@ -1,5 +1,4 @@
 import React from 'react';
-import { SendOutlined } from '@ant-design/icons';
 import { Button, Form, Input } from 'antd';
 import { footerConf } from './footerData';
 import { LABELS } from '../../constants';
@@ -49,10 +48,11 @@ export const Footer = () => {
               placeholder="Email Address"
               bordered={false}
             />
-            <div className="btn-padding" ><Button className="secondary-btn email-btn"  htmlType="submit">
-              Submit
-            </Button></div>
-           
+            <div className="btn-padding">
+              <Button className="secondary-btn email-btn" htmlType="submit">
+                Submit
+              </Button>
+            </div>
           </Form.Item>
         </Form>
         {props.status ? (
@@ -99,57 +99,70 @@ export const Footer = () => {
             </div>
             {/*<div className="footer-link">Powered by Metaplex and Solana</div>*/}
             {footerConf.showEmailSubscriber ? (
-          <div className="subscriber-text">
-            <div className="subscriber-text">
-              {footerConf.emailSubscriberText}
+              <div className="subscriber-text">
+                <div className="subscriber-text">
+                  {footerConf.emailSubscriberText}
+                </div>
+                <div>
+                  <NewsLetterForm />
+                </div>
+              </div>
+            ) : null}
+            <div className="sub-header-community">Join the Community</div>
+            <div className="social-media-bar">
+              <div>
+                {' '}
+                <img
+                  className="social-photo img-paddin"
+                  src="/twitter.png"
+                  alt="twitter"
+                />
+              </div>
+              <div>
+                {' '}
+                <img
+                  className="social-photo img-paddin"
+                  src="/instagram.png"
+                  alt="twitter"
+                />
+              </div>
+              <div>
+                {' '}
+                <img
+                  className="social-photo img-paddin"
+                  src="/discord.png"
+                  alt="twitter"
+                />
+              </div>
             </div>
-            <div><NewsLetterForm /></div>
-          </div>
-          
 
-        ) : null}
-      <div className="sub-header-community">Join the Community</div>
-      <div className='social-media-bar'>
-              <div> <img
-                      className="social-photo img-paddin"
-                      src="/twitter.png"
-                      alt="twitter"
-                      
-                    /></div>
-                    <div> <img
-                      className="social-photo img-paddin"
-                      src="/instagram.png"
-                      alt="twitter"
-                    /></div>
-                    <div> <img
-                      className="social-photo img-paddin"
-                      src="/discord.png"
-                      alt="twitter"
-                    /></div>
+            <div className="logo-paddin">
+              {' '}
+              <img
+                className="footer-logo"
+                src="/footer-logo.png"
+                alt="twitter"
+              />
             </div>
-
-            <div className="logo-paddin"> <img
-                      className="footer-logo"
-                      src="/footer-logo.png"
-                      alt="twitter"
-                    /></div>
-
           </div>
-          
         ) : null}
-        {footerConf.components.map(component => (
-          <div className="footer-section-container" key={component.title}>
-            <div className="sub-header" key={component.title} >{component.title}</div>
-            {component.links.map(link => (
-              <div className="body-text" key ={link.label}>
-                <a href={link.url} target="_blank" className="footer-link">
+        {footerConf.components.map((component, ii) => (
+          <div className="footer-section-container" key={ii}>
+            <div className="sub-header">{component.title}</div>
+            {component.links.map((link, jj) => (
+              <div className="body-text" key={jj}>
+                <a
+                  className="footer-link"
+                  href={link.url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
                   {link.label}
                 </a>
               </div>
             ))}
           </div>
         ))}
-
       </div>
       <div className="footer-foot">
         <div className="small-body footer-link">

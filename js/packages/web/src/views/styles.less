@@ -1,12 +1,8 @@
-@import "~antd/lib/style/themes/default.less";
-
-* {
-  font-family: 'GraphikWeb';
-}
+@import '~antd/lib/style/themes/default.less';
 
 .ant-layout-content {
   overflow: auto !important;
-  @media (max-width: @mobile-xs-max){
+  @media (max-width: @mobile-xs-max) {
     padding: 0 !important;
   }
 }
@@ -16,25 +12,29 @@
 
 .action-btn:disabled {
   color: rgba(255, 255, 255, 0.5);
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     color: rgba(255, 255, 255, 0.5);
   }
 }
 
-.ant-upload-list-item-info .anticon-loading .anticon, .ant-upload-list-item-info .ant-upload-text-icon .anticon {
+.ant-upload-list-item-info .anticon-loading .anticon,
+.ant-upload-list-item-info .ant-upload-text-icon .anticon {
   color: white;
 }
 
 .ant-upload-list-item:hover {
-  .ant-upload-list-item-info .anticon-loading .anticon, .ant-upload-list-item-info .ant-upload-text-icon .anticon,
+  .ant-upload-list-item-info .anticon-loading .anticon,
+  .ant-upload-list-item-info .ant-upload-text-icon .anticon,
   .ant-upload-list-item-name {
     color: @black-100 !important;
   }
 }
 
 .url-form-action {
-  color: #FFFFFF !important;
-  &.ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input {
+  color: #ffffff !important;
+  &.ant-form-item-has-error
+    :not(.ant-input-disabled):not(.ant-input-borderless).ant-input {
     color: red;
   }
   h3 {
@@ -58,34 +58,34 @@
   width: 100% !important;
 }
 
-.call-to-action {
-  text-align: left;
-  display: flex;
-  flex-direction: column;
+// .call-to-action {
+//   text-align: left;
+//   display: flex;
+//   flex-direction: column;
 
-  h2 {
-    font-style: normal;
-    font-weight: 600;
-    font-size: 36px;
-    line-height: 40px;
-    display: flex;
-    align-items: center;
+//   h2 {
+//     font-style: normal;
+//     font-weight: 600;
+//     font-size: 36px;
+//     line-height: 40px;
+//     display: flex;
+//     align-items: center;
 
-    color: #ffffff;
-  }
+//     color: #ffffff;
+//   }
 
-  p {
-    color: #6d6d6d;
-    font-style: normal;
-    font-size: 20px;
-  }
-}
+//   p {
+//     color: #6d6d6d;
+//     font-style: normal;
+//     font-size: 20px;
+//   }
+// }
 
 .content-action {
   .ant-select {
     color: @black-100;
   }
-  .anticon.ant-input-clear-icon{
+  .anticon.ant-input-clear-icon {
     color: white;
   }
   .ant-input-group-addon .ant-select {
@@ -193,15 +193,16 @@
   box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
   border-radius: 8px;
   padding: 12px 20px;
-  font-family: "SF Pro Text";
+  font-family: 'SF Pro Text';
   font-style: normal;
   font-weight: 600;
   height: fit-content;
 
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     background: transparent;
-    border-color: #FFFFFF;
-    color: #FFFFFF;
+    border-color: #ffffff;
+    color: #ffffff;
   }
 }
 
@@ -216,9 +217,9 @@
 .ant-modal-content {
   border-radius: 12px;
 }
-h2 {
-  color: white;
-}
+// h2 {
+//   color: white;
+// }
 
 .create-statistic {
   text-align: left;
@@ -251,7 +252,6 @@ h2 {
     order: 0;
     flex-grow: 0;
   }
-
 }
 
 .action-field {
@@ -317,7 +317,6 @@ h2 {
   margin: 12px 0;
 }
 
-
 .waiting-title {
   font-weight: 600;
   font-size: 2rem;
@@ -352,8 +351,8 @@ h2 {
   /* identical to box height, or 100% */
   letter-spacing: -0.01em;
   /* White */
-  color: #FFFFFF;
-  &.w100{
+  color: #ffffff;
+  &.w100 {
     width: 100%;
   }
 }

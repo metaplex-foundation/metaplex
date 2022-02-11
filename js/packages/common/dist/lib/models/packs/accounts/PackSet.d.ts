@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Connection, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { PackKey, PackDistributionType, PackSetState } from '..';

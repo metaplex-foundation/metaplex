@@ -1,9 +1,20 @@
-import React, { FC } from 'react';
 import CN from 'classnames';
 import { Link } from 'react-router-dom';
 import { collections } from '../../../../dummy-data/collections';
 import { BlockCarousel } from '../../molecules/BlockCarousel';
 import { NftCard } from '../../molecules/NftCard';
+import { useWallet } from '@solana/wallet-adapter-react';
+import React, { useEffect, useState, FC } from 'react';
+import { Layout, Row, Col, Tabs, Dropdown, Menu } from 'antd';
+import { useMeta } from '../../../contexts';
+import { CardLoader } from '../../../components/MyLoader';
+
+import { ArtworkViewState, Item } from '../../../views/artworks/types';
+import { useItems } from '../../../views/artworks/hooks/useItems';
+import ItemCard from '../../../views/artworks/components/ItemCard';
+import { useUserAccounts } from '@oyster/common';
+import { DownOutlined } from '@ant-design/icons';
+import { isMetadata, isPack } from '../../../views/artworks/utils';
 
 export interface RecentCollectionsCarouselProps {
   [x: string]: any;
@@ -18,17 +29,52 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
     className,
   );
 
-  const slidesList = (collections || []).map(
-    ({ id, link, ...restProps }, index) => ({
-      id: index,
-      Component: () => (
-        <Link to={link}>
-          <NftCard key={id || index} {...restProps} />
-        </Link>
-      ),
-    }),
-  );
+  ////
+  const { connected } = useWallet();
+  const {
+    isLoading,
+    pullAllMetadata,
+    storeIndexer,
+    pullItemsPage,
+    isFetching,
+  } = useMeta();
+  const { userAccounts } = useUserAccounts();
 
+  const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
+
+  const userItems = useItems({ activeKey });
+
+  useEffect(() => {
+    if (!isFetching) {
+      pullItemsPage(userAccounts);
+    }
+  }, [isFetching]);
+
+  useEffect(() => {
+    if (connected) {
+      setActiveKey(ArtworkViewState.Metaplex);
+    } else {
+      setActiveKey(ArtworkViewState.Metaplex);
+    }
+  }, [connected, setActiveKey]);
+
+  const slidesList = (userItems || []).map((item: any) => ({
+    Component: () => (
+      <Link to={``}>
+        <NftCard
+          {...{
+            name: item?.info?.data?.symbol,
+            description: item?.info?.data?.name,
+            itemsCount: 1, //hardcoded
+            floorPrice: 100,
+            isVerified: 1,
+            image: item?.info?.data?.uri,
+          }}
+        />
+      </Link>
+    ),
+  }));
+  ////////
   return (
     <div className={RecentCollectionsCarouselClasses} {...restProps}>
       <div className="container flex flex-col gap-[40px]">

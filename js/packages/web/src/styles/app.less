@@ -1,15 +1,5 @@
-@import '~antd/es/style/themes/dark.less';
+// @import '~antd/es/style/themes/dark.less';
 @import '~antd/dist/antd.dark.less';
-
-html {
-  overflow-y: scroll;
-  width: 100%;
-  overflow-x: hidden;
-}
-#root {
-  height: 100%;
-  font-family: 'Graphik Web', sans-serif;
-}
 
 #root::before {
   content: '';
@@ -21,17 +11,6 @@ html {
   filter: grayscale(100%);
   background-repeat: no-repeat;
   background-size: cover;
-}
-
-body {
-  --row-highlight: @background-color-base;
-  margin: 0;
-
-  font-style: normal;
-  font-weight: normal;
-  font-family: 'Graphik Web' !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 .no-events {
@@ -53,6 +32,7 @@ img:not([src]) {
   pointer-events: none;
   width: 100%;
 }
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -112,15 +92,6 @@ code {
   :hover {
     background-color: #434343;
   }
-}
-
-.text-center {
-  align-self: center;
-  margin-left: auto;
-  margin-right: auto;
-}
-.text-uppercase {
-  text-transform: uppercase;
 }
 
 .ant-upload.ant-upload-drag {
@@ -202,11 +173,6 @@ code {
   padding-top: 5px;
 }
 
-h1 {
-  font-style: normal;
-  font-weight: 600;
-  font-size: 2rem;
-}
 .ant-btn:hover {
   background-color: transparent !important;
 }

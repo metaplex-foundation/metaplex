@@ -58,13 +58,6 @@ export async function ipfsUpload(
   if (animation) {
     manifestJson.animation_url = animationUrl;
   }
-  manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    if (f.type.startsWith('image/')) {
-      return { ...f, uri: imageUrl };
-    } else {
-      return { ...f, uri: animationUrl };
-    }
-  });
 
   const manifestHash = await uploadToIpfs(
     Buffer.from(JSON.stringify(manifestJson)),

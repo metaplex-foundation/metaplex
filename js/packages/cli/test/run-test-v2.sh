@@ -471,7 +471,7 @@ if [ "${CLOSE}" = "Y" ]; then
     cyn "5. Clean up: withdrawing CM funds."
     echo ""
     mag ">>>"
-    $CMD_CMV2 withdraw -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
+    $CMD_CMV2 withdraw_all -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
     EXIT_CODE=$?
     
     if [ ! $EXIT_CODE -eq 0 ]; then

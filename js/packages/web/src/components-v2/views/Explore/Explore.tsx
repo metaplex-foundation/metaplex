@@ -1,3 +1,4 @@
+import { useWallet } from '@solana/wallet-adapter-react';
 import React, { FC } from 'react';
 import { ExploreCollections } from '../../sections/ExploreCollections';
 
@@ -6,7 +7,14 @@ export interface ExploreProps {
 }
 
 export const Explore: FC<ExploreProps> = () => {
-  return <ExploreCollections />;
+  const wallet = useWallet();
+
+  console.log(wallet.publicKey?.toBase58());
+  return (
+    <>
+      <ExploreCollections />
+    </>
+  );
 };
 
 export default Explore;

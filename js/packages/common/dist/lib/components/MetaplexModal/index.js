@@ -14,7 +14,7 @@ const MetaplexModal = (props) => {
             display: 'flex',
             flexDirection: 'column',
             ...bodyStyle,
-        }, className: `modal-box small-modal ${className}`, footer: null, width: 500, ...rest }, children));
+        }, className: `modal-box small-modal wallet-modal ${className}`, footer: null, width: 500, ...rest }, children));
 };
 exports.MetaplexModal = MetaplexModal;
 //# sourceMappingURL=index.js.map

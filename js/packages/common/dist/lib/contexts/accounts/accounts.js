@@ -113,7 +113,7 @@ const precacheUserTokenAccounts = async (connection, owner) => {
         cache_1.cache.add(info.pubkey.toBase58(), info.account, parsesrs_1.TokenAccountParser);
     });
 };
-function AccountsProvider({ children = null }) {
+function AccountsProvider({ children = null, }) {
     const connection = (0, connection_1.useConnection)();
     const { publicKey } = (0, wallet_adapter_react_1.useWallet)();
     const [tokenAccounts, setTokenAccounts] = (0, react_1.useState)([]);
@@ -135,8 +135,8 @@ function AccountsProvider({ children = null }) {
         const subs = [];
         cache_1.cache.emitter.onCache(args => {
             if (args.isNew && args.isActive) {
-                let id = args.id;
-                let deserialize = args.parser;
+                const id = args.id;
+                const deserialize = args.parser;
                 connection.onAccountChange(new web3_js_1.PublicKey(id), info => {
                     cache_1.cache.add(id, info, deserialize);
                 });
