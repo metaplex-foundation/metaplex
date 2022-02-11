@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
 import { Link, useHistory } from 'react-router-dom';
-import { useRouter } from 'next/router';
 
 import { header } from '../../../../dummy-data/header';
 
@@ -49,7 +48,6 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
             {({ isOpen, setIsOpen }: any) => {
               const onSelectOption = (value: string) => {
                 setIsOpen(false);
-
                 push(`${menuItem?.value}?pid=${value}`);
               };
 
@@ -72,7 +70,7 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({
                   {isOpen && (
                     <DropDownBody
                       align="left"
-                      className="w-[172px] !rounded-tl-none shadow-lg shadow-blue-900/10"
+                      className="w-[172px] !rounded-tl-none shadow-lg shadow-B-700/5 border-x border-b border-B-10"
                     >
                       {menuItem?.subMenu?.map((option: any, index: number) => {
                         const { label, value } = option;

@@ -43,23 +43,23 @@ export const header = {
       subMenu: [
         {
           label: 'How to buy',
-          value: 'how-to-buy',
+          value: '/how-to-buy',
         },
         {
           label: 'What are NFTs?',
-          value: 'what-are-nfts',
+          value: '/what-are-nfts',
         },
         {
           label: 'Crypto + NFT Guide',
-          value: 'crypto-nft-guide',
+          value: '/crypto-nft-guide',
         },
         {
           label: 'About Karmaverse',
-          value: 'about-karmaverse',
+          value: '/about-karmaverse',
         },
         {
           label: 'Philanthropy',
-          value: 'philanthropy',
+          value: '/philanthropy',
         },
       ],
     },

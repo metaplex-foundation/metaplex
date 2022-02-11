@@ -9358,6 +9358,11 @@ boom@5.x.x:
   dependencies:
     hoek "4.x.x"
 
+boring-avatars@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/boring-avatars/-/boring-avatars-1.6.1.tgz#9b2800bc501c20529fd1e725ab650641f1ed4af3"
+  integrity sha512-P7BZRz1DEdx61iW7q8EoB10rDLGGH4ec8uwQsMKOCag8TznC5A/efd5OBuL9Su3HjMEDHN3X8/JRRQNsVZMl4Q==
+
 borsh@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/borsh/-/borsh-0.4.0.tgz#9dd6defe741627f1315eac2a73df61421f6ddb9f"

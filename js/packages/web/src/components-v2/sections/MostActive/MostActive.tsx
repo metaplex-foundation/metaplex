@@ -49,7 +49,7 @@ export const MostActive: FC<MostActiveProps> = ({
                   {isOpen && (
                     <DropDownBody
                       align="left"
-                      className="w-[158px] !rounded-tl-none shadow"
+                      className="w-[158px] shadow-lg shadow-B-700/5 border border-B-10"
                     >
                       {options.map((option: any, index: number) => {
                         const { label } = option;

@@ -32,10 +32,10 @@ const ConnectButton = (props) => {
     const handleClick = (0, react_1.useCallback)(() => (wallet ? connect().catch(() => { }) : open()), [wallet, connect, open]);
     // only show if wallet selected or user connected
     if (!wallet || !allowWalletChange) {
-        return (react_1.default.createElement(antd_1.Button, { className: className || 'connector', ...rest, onClick: e => {
+        return (react_1.default.createElement("button", { className: "flex text-base text-white border-2 border-white hover:border-B-500 appearance-none rounded-[6px] px-[12px] h-[40px] items-center justify-center font-500 hover:bg-B-500 transition-all active:scale-[0.97]", onClick: e => {
                 props.onClick ? props.onClick(e) : null;
                 handleClick();
-            }, disabled: connected && disabled }, connected ? children : 'Connect Wallet'));
+            }, disabled: connected && disabled, ...rest }, connected ? children : 'Connect Wallet'));
     }
     return (react_1.default.createElement(antd_1.Dropdown.Button, { className: className || (connected ? 'connector' : ''), onClick: handleClick, disabled: connected && disabled, overlay: react_1.default.createElement(antd_1.Menu, { className: 'black-dropdown' },
             react_1.default.createElement(antd_1.Menu.Item, { onClick: open }, "Change Wallet")) }, "Connect"));
