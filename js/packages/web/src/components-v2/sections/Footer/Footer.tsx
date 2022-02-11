@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
+import { Link } from 'react-router-dom';
 import { TextField } from '../../atoms/TextField';
 import TwitterIcon from '../../icons/Twitter';
 import InstagramIcon from '../../icons/Instagram';
@@ -59,9 +60,14 @@ export const Footer: FC<FooterProps> = ({
             <h3 className="text-white text-h5">Marketplace</h3>
 
             <div className="flex flex-col gap-[8px]">
-              <a href="#" className="text-base text-white hover:text-white/70">
-                Explore
-              </a>
+              <Link to="/static-content">
+                <a
+                  href="#"
+                  className="text-base text-white hover:text-white/70"
+                >
+                  Explore
+                </a>
+              </Link>
 
               <a href="#" className="text-base text-white hover:text-white/70">
                 Donate

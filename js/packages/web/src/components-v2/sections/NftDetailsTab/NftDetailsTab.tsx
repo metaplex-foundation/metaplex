@@ -95,7 +95,7 @@ export const NftDetailsTab: FC<NftDetailsTabProps> = ({
                   {isOpen && (
                     <DropDownBody
                       align="right"
-                      className="shadow-lg w-[140px] shadow-blue-900/10 mt-[8px]"
+                      className="w-[140px] shadow-lg shadow-B-700/5 border border-B-10 mt-[8px]"
                     >
                       {options?.map((option: any, index: number) => {
                         const { label, value } = option;
