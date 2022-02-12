@@ -6,6 +6,7 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import {
+  Button,
   findProgramAddress,
   programIds,
   StringPublicKey,
@@ -569,7 +570,23 @@ export function Notifications() {
 
   const justContent = (
     <Popover placement="bottomLeft" content={content} trigger="click">
-      <img src={'/bell.svg'} style={{ cursor: 'pointer' }} />
+      <Button className="hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </Button>
+
       {!!notifications.length && (
         <div className="mobile-notification">{notifications.length - 1}</div>
       )}

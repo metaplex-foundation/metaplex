@@ -1,11 +1,11 @@
-/// <reference types="react" />
 /// <reference types="node" />
+import React from 'react';
 import { AccountInfo, PublicKey } from '@solana/web3.js';
 import { MintInfo } from '@solana/spl-token';
 import { TokenAccount } from '../../models';
 export declare const useAccountsContext: () => any;
-export declare function AccountsProvider({ children }: {
-    children?: any;
+export declare function AccountsProvider({ children, }: {
+    children: React.ReactNode;
 }): JSX.Element;
 export declare function useNativeAccount(): {
     account: AccountInfo<Buffer>;

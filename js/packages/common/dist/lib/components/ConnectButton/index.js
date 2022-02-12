@@ -20,25 +20,37 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ConnectButton = void 0;
-const antd_1 = require("antd");
 const react_1 = __importStar(require("react"));
 const wallet_adapter_react_1 = require("@solana/wallet-adapter-react");
 const contexts_1 = require("../../contexts");
+const ui_components_1 = require("../../ui-components");
 const ConnectButton = (props) => {
-    const { children, disabled, allowWalletChange, className, ...rest } = props;
+    const { children, disabled, allowWalletChange, ...rest } = props;
     const { wallet, connect, connected } = (0, wallet_adapter_react_1.useWallet)();
     const { setVisible } = (0, contexts_1.useWalletModal)();
     const open = (0, react_1.useCallback)(() => setVisible(true), [setVisible]);
     const handleClick = (0, react_1.useCallback)(() => (wallet ? connect().catch(() => { }) : open()), [wallet, connect, open]);
     // only show if wallet selected or user connected
     if (!wallet || !allowWalletChange) {
-        return (react_1.default.createElement("button", { className: "flex text-base text-white border-2 border-white hover:border-B-500 appearance-none rounded-[6px] px-[12px] h-[40px] items-center justify-center font-500 hover:bg-B-500 transition-all active:scale-[0.97]", onClick: e => {
+        return (react_1.default.createElement(ui_components_1.Button
+        // className="hover:!bg-white hover:!text-B-400"
+        , { 
+            // className="hover:!bg-white hover:!text-B-400"
+            view: "outline", appearance: "ghost-invert", onClick: (e) => {
                 props.onClick ? props.onClick(e) : null;
                 handleClick();
             }, disabled: connected && disabled, ...rest }, connected ? children : 'Connect Wallet'));
     }
-    return (react_1.default.createElement(antd_1.Dropdown.Button, { className: className || (connected ? 'connector' : ''), onClick: handleClick, disabled: connected && disabled, overlay: react_1.default.createElement(antd_1.Menu, { className: 'black-dropdown' },
-            react_1.default.createElement(antd_1.Menu.Item, { onClick: open }, "Change Wallet")) }, "Connect"));
+    return (react_1.default.createElement(react_1.default.Fragment, null,
+        react_1.default.createElement(ui_components_1.Button, { size: "lg", onClick: handleClick, disabled: connected && disabled, className: "hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400" }, "Connect"),
+        react_1.default.createElement(ui_components_1.Dropdown, null, ({ isOpen, setIsOpen }) => {
+            return (react_1.default.createElement(react_1.default.Fragment, null,
+                react_1.default.createElement(ui_components_1.DropDownToggle, { onClick: () => setIsOpen(!isOpen) },
+                    react_1.default.createElement(ui_components_1.Button, { size: "lg", className: "px-[8px] hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400" },
+                        react_1.default.createElement("i", { className: "flex ri-arrow-down-s-line" }))),
+                isOpen && (react_1.default.createElement(ui_components_1.DropDownBody, { align: "right", className: "w-[200px] shadow-lg shadow-B-700/5 border-x border-b border-B-10" },
+                    react_1.default.createElement(ui_components_1.DropDownMenuItem, { onClick: open }, "Change Wallet")))));
+        })));
 };
 exports.ConnectButton = ConnectButton;
 //# sourceMappingURL=index.js.map
