@@ -17,8 +17,10 @@ import {
   METADATA_SCHEMA,
   UpdateMetadataArgs,
 } from '../helpers/schema';
-import { getCandyMachineCreator, deriveCandyMachineV2ProgramAddress} from '../helpers/accounts';
-
+import {
+  getCandyMachineCreator,
+  deriveCandyMachineV2ProgramAddress,
+} from '../helpers/accounts';
 
 const SIGNING_INTERVAL = 60 * 1000; //60s
 

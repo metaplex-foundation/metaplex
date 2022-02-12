@@ -43,9 +43,9 @@ const getCandyMachineId = (): anchor.web3.PublicKey | undefined => {
 const candyMachineId = getCandyMachineId();
 const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
 const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST!;
-const connection = new anchor.web3.Connection(rpcHost
-  ? rpcHost
-  : anchor.web3.clusterApiUrl('devnet'));
+const connection = new anchor.web3.Connection(
+  rpcHost ? rpcHost : anchor.web3.clusterApiUrl('devnet'),
+);
 
 const startDateSeed = parseInt(process.env.REACT_APP_CANDY_START_DATE!, 10);
 const txTimeoutInMilliseconds = 30000;

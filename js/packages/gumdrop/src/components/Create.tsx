@@ -1,5 +1,5 @@
-import React from "react";
-import ReactDOM from "react-dom";
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 import {
   Box,
@@ -18,33 +18,17 @@ import {
   TableHead,
   TableRow,
   TextField,
-} from "@mui/material";
+} from '@mui/material';
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 
-import {
-  useWallet,
-} from "@solana/wallet-adapter-react";
-import {
-  Keypair,
-  PublicKey,
-} from "@solana/web3.js";
-import {
-  MintInfo,
-} from "@solana/spl-token";
-import {
-  notify,
-  shortenAddress,
-} from "@oyster/common";
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Keypair, PublicKey } from '@solana/web3.js';
+import { MintInfo } from '@solana/spl-token';
+import { notify, shortenAddress } from '@oyster/common';
 import BN from 'bn.js';
 
-import {
-  useConnection,
-  Connection,
-} from "../contexts";
-import {
-  GUMDROP_DISTRIBUTOR_ID,
-  GUMDROP_TEMPORAL_SIGNER,
-} from "../utils/ids";
+import { useConnection, Connection } from '../contexts';
+import { GUMDROP_DISTRIBUTOR_ID, GUMDROP_TEMPORAL_SIGNER } from '../utils/ids';
 import {
   ClaimantInfo,
   Claimants,
@@ -54,7 +38,7 @@ import {
   validateTransferClaims,
   validateCandyClaims,
   validateEditionClaims,
-} from "../utils/claimant";
+} from '../utils/claimant';
 import {
   AuthKeys,
   DropInfo,
@@ -64,54 +48,58 @@ import {
   distributeManual,
   distributeWallet,
   urlAndHandleFor,
-} from "../utils/communication";
-import {
-  envFor,
-  explorerLinkFor,
-} from "../utils/transactions";
-import { DragAndDrop } from "./DragAndDrop";
-import { DefaultModal } from "./DefaultModal";
+} from '../utils/communication';
+import { envFor, explorerLinkFor } from '../utils/transactions';
+import { DragAndDrop } from './DragAndDrop';
+import { DefaultModal } from './DefaultModal';
 
 // NB: assumes no overflow
-const randomBytes = () : Uint8Array => {
+const randomBytes = (): Uint8Array => {
   // TODO: some predictable seed? sha256?
   const buf = new Uint8Array(4);
   window.crypto.getRandomValues(buf);
   return buf;
-}
+};
 
-const WHITESPACE = "\u00A0";
+const WHITESPACE = '\u00A0';
 
 const distribute = (
-  method : string,
-  auth : AuthKeys,
-  source : string,
-  claimants : Claimants,
-  drop : DropInfo,
+  method: string,
+  auth: AuthKeys,
+  source: string,
+  claimants: Claimants,
+  drop: DropInfo,
 ) => {
-  if (method === "aws-email") {
+  if (method === 'aws-email') {
     return distributeAwsSes(auth, source, claimants, drop);
-  } else if (method === "aws-sms") {
+  } else if (method === 'aws-sms') {
     return distributeAwsSns(auth, source, claimants, drop);
-  } else if (method === "manual") {
+  } else if (method === 'manual') {
     return distributeManual(auth, source, claimants, drop);
-  } else if (method === "wallets") {
+  } else if (method === 'wallets') {
     return distributeWallet(auth, source, claimants, drop);
   } else {
     throw new Error(`Unrecognized claim distribution method ${method}`);
   }
-}
+};
 
-const reactModal = (renderModal) => {
+const reactModal = renderModal => {
   const container = document.createElement('div');
   document.body.appendChild(container);
 
   const displayModal = ({ onSubmit, onDismiss }) => {
-    ReactDOM.render(renderModal({ onSubmit, onDismiss, show: true }), container);
+    ReactDOM.render(
+      renderModal({ onSubmit, onDismiss, show: true }),
+      container,
+    );
   };
 
   const hideModal = ({ onSubmit, onDismiss }, callback) => {
-    ReactDOM.render(renderModal({ onSubmit, onDismiss, show: false }), container, callback);
+    ReactDOM.render(
+      renderModal({ onSubmit, onDismiss, show: false }),
+      container,
+      callback,
+    );
   };
 
   const destroyModal = () => {
@@ -119,8 +107,8 @@ const reactModal = (renderModal) => {
     document.body.removeChild(container);
   };
 
-  const confirmation = new Promise((resolve) => {
-    const onSubmit = (value) => resolve(value);
+  const confirmation = new Promise(resolve => {
+    const onSubmit = value => resolve(value);
     const onDismiss = () => resolve(undefined);
     displayModal({ onSubmit, onDismiss });
   });
@@ -134,54 +122,62 @@ const reactModal = (renderModal) => {
 
 const resendOnlyRender = ({ show, onSubmit, onDismiss }) => {
   const options = [
-    { click: () => onSubmit("create"), name: "Create and Send" },
-    { click: () => onSubmit("send")  , name: "Send only"       },
+    { click: () => onSubmit('create'), name: 'Create and Send' },
+    { click: () => onSubmit('send'), name: 'Send only' },
   ];
   return (
     <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
-      <p style={{
-        color: "white",
-        fontSize: "0.9rem",
-        marginTop: 8,
-        width: "90%",
-      }}>
-        Uploaded distribution list has URLs for all claimants.
-        Skip creation of airdrop and only re-send links?
+      <p
+        style={{
+          color: 'white',
+          fontSize: '0.9rem',
+          marginTop: 8,
+          width: '90%',
+        }}
+      >
+        Uploaded distribution list has URLs for all claimants. Skip creation of
+        airdrop and only re-send links?
       </p>
       <br />
-      <Stack direction="row" spacing={2} style={{width: "100%"}}>
-      {options.map((opt) => {
-        return (
-          <Button
-            key={opt.name}
-            style={{
-              width: "100%",
-              color: "white",
-              marginBottom: 8,
-            }}
-            variant="outlined"
-            onClick={opt.click}
-          >
-            {opt.name}
-          </Button>
-        );
-      })}
+      <Stack direction="row" spacing={2} style={{ width: '100%' }}>
+        {options.map(opt => {
+          return (
+            <Button
+              key={opt.name}
+              style={{
+                width: '100%',
+                color: 'white',
+                marginBottom: 8,
+              }}
+              variant="outlined"
+              onClick={opt.click}
+            >
+              {opt.name}
+            </Button>
+          );
+        })}
       </Stack>
     </DefaultModal>
   );
 };
 
-const displayMintTokens = (amount : number, mintInfo : MintInfo) : string => {
+const displayMintTokens = (amount: number, mintInfo: MintInfo): string => {
   // TODO: better decimal rounding
   return String(amount / Math.pow(10, mintInfo.decimals));
 };
 
-const hyperLinkData = (data) => {
+const hyperLinkData = data => {
   const encoded = encodeURIComponent(JSON.stringify(data));
   return `data:text/plain;charset=utf-8,${encoded}`;
 };
 
-const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) => {
+const shouldSendRender = (
+  claimants,
+  needsPin,
+  claimMethod,
+  claimInfo,
+  baseKey,
+) => {
   const limit = 1000;
   // eslint-disable-next-line react/prop-types
   return function ClaimPreviewC({ show, onSubmit, onDismiss }) {
@@ -189,23 +185,24 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
       <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
         <h2
           style={{
-            color: "white",
-            fontWeight: "bold",
-            fontSize: "1.2rem",
+            color: 'white',
+            fontWeight: 'bold',
+            fontSize: '1.2rem',
           }}
         >
-          Claim Distribution Preview{claimants.length > limit ? ` (First ${limit})` : ""}
+          Claim Distribution Preview
+          {claimants.length > limit ? ` (First ${limit})` : ''}
         </h2>
-        <p style={{ color: "white", fontSize: "1rem", textAlign: "center" }}>
-          Approving will save the keypair authority generated for gumdrop
-          state. This keypair is necessary to close the gumdrop later!
+        <p style={{ color: 'white', fontSize: '1rem', textAlign: 'center' }}>
+          Approving will save the keypair authority generated for gumdrop state.
+          This keypair is necessary to close the gumdrop later!
         </p>
         <TableContainer
           sx={{
-            "td, th": { color: "white" },
-            backgroundColor: "#444444",
-            borderRadius: "5px",
-            maxHeight: "30ch",
+            'td, th': { color: 'white' },
+            backgroundColor: '#444444',
+            borderRadius: '5px',
+            maxHeight: '30ch',
           }}
         >
           <Table size="small">
@@ -213,26 +210,23 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
               <TableRow>
                 <TableCell>Handle</TableCell>
                 <TableCell>
-                  {claimMethod === "edition"
-                    ? "Edition"
-                    : "Tokens"
-                  }
+                  {claimMethod === 'edition' ? 'Edition' : 'Tokens'}
                 </TableCell>
                 {needsPin && <TableCell>Pin</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {claimants.slice(0, limit).map((c, idx) => (
-                <TableRow
-                  key={idx}
-                  sx={{ 'td, th': { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">{c.handle} </TableCell>
+                <TableRow key={idx} sx={{ 'td, th': { border: 0 } }}>
+                  <TableCell component="th" scope="row">
+                    {c.handle}{' '}
+                  </TableCell>
                   <TableCell>
-                    { claimMethod === "transfer" ? displayMintTokens(c.amount, claimInfo.mint.info)
-                    : claimMethod === "candy"    ? c.amount
-                    : /* === "edition" */          c.edition
-                    }
+                    {claimMethod === 'transfer'
+                      ? displayMintTokens(c.amount, claimInfo.mint.info)
+                      : claimMethod === 'candy'
+                      ? c.amount
+                      : /* === "edition" */ c.edition}
                   </TableCell>
                   {needsPin && <TableCell>{c.pin.toNumber()}</TableCell>}
                 </TableRow>
@@ -240,12 +234,12 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
             </TableBody>
           </Table>
         </TableContainer>
-        <Box style={{ height: "3ch" }} />
-        <Stack direction="row" spacing={2} style={{width: "100%"}}>
+        <Box style={{ height: '3ch' }} />
+        <Stack direction="row" spacing={2} style={{ width: '100%' }}>
           <Button
             style={{
-              width: "100%",
-              color: "white",
+              width: '100%',
+              color: 'white',
               marginBottom: 8,
             }}
             variant="outlined"
@@ -257,12 +251,12 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
             href={hyperLinkData(Array.from(baseKey.secretKey))}
             download={`${baseKey.publicKey.toBase58()}.json`}
             underline="none"
-            style={{width: "100%"}}
+            style={{ width: '100%' }}
           >
             <Button
               style={{
-                width: "100%",
-                color: "white",
+                width: '100%',
+                color: 'white',
                 marginBottom: 8,
               }}
               variant="outlined"
@@ -274,7 +268,7 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
         </Stack>
       </DefaultModal>
     );
-  }
+  };
 };
 
 export const Create = () => {
@@ -282,47 +276,68 @@ export const Create = () => {
   const wallet = useWallet();
 
   // claim state
-  const [claimMethod, setClaimMethod] = React.useState(localStorage.getItem("claimMethod") || "");
-  const [candyConfig, setCandyConfig] = React.useState(localStorage.getItem("candyConfig") || "");
-  const [candyUUID, setCandyUUID] = React.useState(localStorage.getItem("candyUUID") || "");
-  const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
-  const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
-  const [filename, setFilename] = React.useState("");
-  const [text, setText] = React.useState("");
+  const [claimMethod, setClaimMethod] = React.useState(
+    localStorage.getItem('claimMethod') || '',
+  );
+  const [candyConfig, setCandyConfig] = React.useState(
+    localStorage.getItem('candyConfig') || '',
+  );
+  const [candyUUID, setCandyUUID] = React.useState(
+    localStorage.getItem('candyUUID') || '',
+  );
+  const [mint, setMint] = React.useState(localStorage.getItem('mint') || '');
+  const [masterMint, setMasterMint] = React.useState(
+    localStorage.getItem('masterMint') || '',
+  );
+  const [filename, setFilename] = React.useState('');
+  const [text, setText] = React.useState('');
 
   // response state
-  const [claimURLs, setClaimURLs] = React.useState<Array<{ [key: string]: any }>>([]);
+  const [claimURLs, setClaimURLs] = React.useState<
+    Array<{ [key: string]: any }>
+  >([]);
   const [responses, setResponses] = React.useState<Array<DResponse>>([]);
 
   // auth state
-  const [otpAuth, setOtpAuth] = React.useState(localStorage.getItem("otpAuth") || "default");
-  const [commMethod, setCommMethod] = React.useState(localStorage.getItem("commMethod") || "");
+  const [otpAuth, setOtpAuth] = React.useState(
+    localStorage.getItem('otpAuth') || 'default',
+  );
+  const [commMethod, setCommMethod] = React.useState(
+    localStorage.getItem('commMethod') || '',
+  );
   const [commAuth, setCommAuth] = React.useState<AuthKeys>({});
-  const [awsAccessKeyId, setAwsAccessKeyId] = React.useState("");
-  const [awsSecretKey, setAwsSecretKey] = React.useState("");
+  const [awsAccessKeyId, setAwsAccessKeyId] = React.useState('');
+  const [awsSecretKey, setAwsSecretKey] = React.useState('');
   const commSource = 'santa@aws.metaplex.com';
 
-  const explorerUrlFor = (key : PublicKey) => {
-    return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(connection)}`;
-  }
+  const explorerUrlFor = (key: PublicKey) => {
+    return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(
+      connection,
+    )}`;
+  };
 
   const distributeClaims = async (claimants, drop) => {
     const responses = await distribute(
-      commMethod, commAuth, commSource, claimants, drop);
+      commMethod,
+      commAuth,
+      commSource,
+      claimants,
+      drop,
+    );
 
-    console.log("Responses", responses);
+    console.log('Responses', responses);
     setResponses(responses);
 
     // notify if the above routine is actually supposed to do anything
     // (manual and wallet do nothing atm)
-    if (commMethod === "aws-email" || commMethod === "aws-sms") {
+    if (commMethod === 'aws-email' || commMethod === 'aws-sms') {
       notify({
-        message: "Gumdrop email distribution completed",
+        message: 'Gumdrop email distribution completed',
       });
     }
-  }
+  };
 
-  const submit = async (e : React.SyntheticEvent) => {
+  const submit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     setClaimURLs([]);
@@ -337,33 +352,37 @@ export const Create = () => {
       throw new Error(`No claimants provided`);
     }
 
-    const dropInfo = dropInfoFor(envFor(connection), claimMethod, mint, candyConfig, masterMint);
+    const dropInfo = dropInfoFor(
+      envFor(connection),
+      claimMethod,
+      mint,
+      candyConfig,
+      masterMint,
+    );
     // check that auth is correct...
-    await distribute(
-      commMethod, commAuth, commSource, [], dropInfo);
+    await distribute(commMethod, commAuth, commSource, [], dropInfo);
 
-    const mightHaveExisting = (info : ClaimantInfo) => {
+    const mightHaveExisting = (info: ClaimantInfo) => {
       return info.url !== undefined && info.url !== null;
     };
     if (claimants.reduce((acc, c) => acc && mightHaveExisting(c), true)) {
       const resendOnly = await reactModal(resendOnlyRender);
-      console.log("Resend only", resendOnly);
-      if (resendOnly === "send") {
+      console.log('Resend only', resendOnly);
+      if (resendOnly === 'send') {
         setClaimURLs(urlAndHandleFor(claimants));
         await distributeClaims(claimants, dropInfo);
         return;
-      } else if (resendOnly === "create") {
+      } else if (resendOnly === 'create') {
         // fallthrough to full create
       } else {
         // dismissed. don't use exceptions for control flow?
-        throw new Error("Dismissed");
+        throw new Error('Dismissed');
       }
     }
 
-
     let claimInfo;
     switch (claimMethod) {
-      case "transfer": {
+      case 'transfer': {
         claimInfo = await validateTransferClaims(
           connection,
           wallet.publicKey,
@@ -372,7 +391,7 @@ export const Create = () => {
         );
         break;
       }
-      case "candy": {
+      case 'candy': {
         claimInfo = await validateCandyClaims(
           connection,
           wallet.publicKey,
@@ -382,7 +401,7 @@ export const Create = () => {
         );
         break;
       }
-      case "edition": {
+      case 'edition': {
         claimInfo = await validateEditionClaims(
           connection,
           wallet.publicKey,
@@ -394,27 +413,30 @@ export const Create = () => {
       default:
         throw new Error(`Unknown claim method ${claimMethod}`);
     }
-    console.log("Claims info", claimInfo);
+    console.log('Claims info', claimInfo);
 
     claimants.forEach(c => {
       c.pin = new BN(randomBytes());
-      c.seed = claimMethod === "transfer" ? claimInfo.mint.key
-             : claimMethod === "candy"    ? claimInfo.config
-             : /* === edition */            claimInfo.masterMint.key;
+      c.seed =
+        claimMethod === 'transfer'
+          ? claimInfo.mint.key
+          : claimMethod === 'candy'
+          ? claimInfo.config
+          : /* === edition */ claimInfo.masterMint.key;
     });
 
     // temporal auth is the AWS signer by 'default' and a no-op key otherwise
     let temporalSigner;
-    if (commMethod === "wallets") {
+    if (commMethod === 'wallets') {
       // TODO: this is a bit jank. There should be no form option to set the
       // OTP auth if we are using a wallet but there's still a defaulted value
       // atm...
       // NB: We also need this to not be 'none' since there is a special check
       // for claimant_secret==accounts.temporal
       temporalSigner = GUMDROP_DISTRIBUTOR_ID;
-    } else if (otpAuth === "default") {
+    } else if (otpAuth === 'default') {
       temporalSigner = GUMDROP_TEMPORAL_SIGNER;
-    } else if (otpAuth === "none") {
+    } else if (otpAuth === 'none') {
       temporalSigner = PublicKey.default;
     } else {
       throw new Error(`Unknown OTP authorization type ${otpAuth}`);
@@ -434,17 +456,22 @@ export const Create = () => {
       base.publicKey,
       temporalSigner,
       claimants,
-      claimInfo
+      claimInfo,
     );
 
-    const shouldSend = await reactModal(
-      shouldSendRender(claimants, commMethod !== 'wallets', claimMethod, claimInfo, base)
-    ) as boolean | undefined;
+    const shouldSend = (await reactModal(
+      shouldSendRender(
+        claimants,
+        commMethod !== 'wallets',
+        claimMethod,
+        claimInfo,
+        base,
+      ),
+    )) as boolean | undefined;
     if (shouldSend !== true) {
       // dismissed. don't use exceptions for control flow?
-      throw new Error("Claim distribution preview not approved");
+      throw new Error('Claim distribution preview not approved');
     }
-
 
     setClaimURLs(urlAndHandleFor(claimants));
 
@@ -452,15 +479,15 @@ export const Create = () => {
       connection,
       wallet,
       instructions,
-      [base]
+      [base],
     );
 
     console.log(createResult);
-    if (typeof createResult === "string") {
+    if (typeof createResult === 'string') {
       throw new Error(createResult);
     } else {
       notify({
-        message: "Gumdrop creation succeeded",
+        message: 'Gumdrop creation succeeded',
         description: (
           <HyperLink href={explorerLinkFor(createResult.txid, connection)}>
             View transaction on explorer
@@ -469,14 +496,14 @@ export const Create = () => {
       });
     }
 
-    console.log("Distributing claim URLs");
+    console.log('Distributing claim URLs');
     await distributeClaims(claimants, dropInfo);
   };
 
-  const handleFiles = (files : FileList | null) => {
+  const handleFiles = (files: FileList | null) => {
     if (files === null || files.length !== 1) {
       notify({
-        message: "File upload failed",
+        message: 'File upload failed',
         description: `Received ${files?.length} files`,
       });
       return;
@@ -484,9 +511,9 @@ export const Create = () => {
 
     const file = files[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       if (e !== null && e.target !== null) {
-        if (typeof e.target.result === "string") {
+        if (typeof e.target.result === 'string') {
           try {
             parseClaimants(e.target.result, file.name, commMethod);
           } catch {
@@ -501,8 +528,8 @@ export const Create = () => {
                 </span>
               ),
             });
-            setFilename("");
-            setText("");
+            setFilename('');
+            setText('');
             return;
           }
           setFilename(file.name);
@@ -510,7 +537,7 @@ export const Create = () => {
         } else {
           notify({
             message: `File upload failed for: ${file.name}`,
-            description: "Could not read uploaded file",
+            description: 'Could not read uploaded file',
           });
         }
       }
@@ -518,8 +545,8 @@ export const Create = () => {
     reader.readAsText(file);
   };
 
-  const claimData = (claimMethod) => {
-    if (claimMethod === "candy") {
+  const claimData = claimMethod => {
+    if (claimMethod === 'candy') {
       return (
         <React.Fragment>
           <TextField
@@ -528,7 +555,7 @@ export const Create = () => {
             value={candyConfig}
             onChange={e => {
               setCandyConfig(e.target.value);
-              localStorage.setItem("candyConfig", e.target.value);
+              localStorage.setItem('candyConfig', e.target.value);
             }}
           />
           <TextField
@@ -537,24 +564,24 @@ export const Create = () => {
             value={candyUUID}
             onChange={e => {
               setCandyUUID(e.target.value);
-              localStorage.setItem("candyUUID", e.target.value);
+              localStorage.setItem('candyUUID', e.target.value);
             }}
           />
         </React.Fragment>
       );
-    } else if (claimMethod === "transfer") {
+    } else if (claimMethod === 'transfer') {
       return (
         <TextField
           id="mint-text-field"
           label="Mint"
           value={mint}
-          onChange={(e) => {
-            localStorage.setItem("mint", e.target.value);
+          onChange={e => {
+            localStorage.setItem('mint', e.target.value);
             setMint(e.target.value);
           }}
         />
       );
-    } else if (claimMethod === "edition") {
+    } else if (claimMethod === 'edition') {
       // transfers master mint token from this account to the distributor
       // wallet ATA
       return (
@@ -562,8 +589,8 @@ export const Create = () => {
           id="master-mint-text-field"
           label="Master Mint"
           value={masterMint}
-          onChange={(e) => {
-            localStorage.setItem("masterMint", e.target.value);
+          onChange={e => {
+            localStorage.setItem('masterMint', e.target.value);
             setMasterMint(e.target.value);
           }}
         />
@@ -571,26 +598,29 @@ export const Create = () => {
     }
   };
 
-  const commAuthorization = (commMethod) => {
-    if (commMethod === "aws-email" || commMethod === "aws-sms") {
+  const commAuthorization = commMethod => {
+    if (commMethod === 'aws-email' || commMethod === 'aws-sms') {
       return (
         <React.Fragment>
           <TextField
             id="comm-access-key-id-field"
             label={`${commMethod} Access Key Id`}
             value={awsAccessKeyId}
-            onChange={(e) => {
-              setCommAuth(prev => ({...prev, accessKeyId: e.target.value}));
-              setAwsAccessKeyId(e.target.value)
+            onChange={e => {
+              setCommAuth(prev => ({ ...prev, accessKeyId: e.target.value }));
+              setAwsAccessKeyId(e.target.value);
             }}
           />
           <TextField
             id="comm-secret-access-key-field"
             label={`${commMethod} Secret Access Key`}
             value={awsSecretKey}
-            onChange={(e) => {
-              setCommAuth(prev => ({...prev, secretAccessKey: e.target.value}));
-              setAwsSecretKey(e.target.value)
+            onChange={e => {
+              setCommAuth(prev => ({
+                ...prev,
+                secretAccessKey: e.target.value,
+              }));
+              setAwsSecretKey(e.target.value);
             }}
           />
         </React.Fragment>
@@ -603,16 +633,16 @@ export const Create = () => {
 
   const fileUpload = (
     <React.Fragment>
-      <DragAndDrop handleDrop={handleFiles} >
+      <DragAndDrop handleDrop={handleFiles}>
         <Stack
           direction="row"
           style={{
-            height: "15ch",
+            height: '15ch',
           }}
           sx={{
             border: '1px dashed grey',
-            justifyContent: "center",
-            alignContent: "center",
+            justifyContent: 'center',
+            alignContent: 'center',
           }}
         >
           <Button
@@ -621,14 +651,14 @@ export const Create = () => {
             style={{
               padding: 0,
               // don't make the button click field too large...
-              marginTop: "5ch",
-              marginBottom: "5ch",
+              marginTop: '5ch',
+              marginBottom: '5ch',
             }}
           >
-            Upload a {filename === "" ? "distribution" : "different"} list
+            Upload a {filename === '' ? 'distribution' : 'different'} list
             <input
               type="file"
-              onChange={(e) => {
+              onChange={e => {
                 handleFiles(e.target.files);
                 // re-parse every time...
                 e.target.value = '';
@@ -644,28 +674,31 @@ export const Create = () => {
             disabled={true}
             style={{
               padding: 0,
-              color: "#eee",
+              color: '#eee',
             }}
           >
             or drag it here
           </Button>
         </Stack>
       </DragAndDrop>
-      {filename !== ""
-      ? (<Button
-            variant="text"
-            component="label"
-            disabled={true}
-            style={{
-              padding: 0,
-              color: "#eee",
-            }}
-          >
-            <FilePresentIcon />
-            <span>{WHITESPACE} Uploaded {filename}</span>
-          </Button>
-        )
-      : (<Box/>)}
+      {filename !== '' ? (
+        <Button
+          variant="text"
+          component="label"
+          disabled={true}
+          style={{
+            padding: 0,
+            color: '#eee',
+          }}
+        >
+          <FilePresentIcon />
+          <span>
+            {WHITESPACE} Uploaded {filename}
+          </span>
+        </Button>
+      ) : (
+        <Box />
+      )}
     </React.Fragment>
   );
 
@@ -683,31 +716,31 @@ export const Create = () => {
     />
   );
   const createAirdrop = (
-    <Box sx={{ position: "relative" }}>
-    <Button
-      disabled={!wallet.connected || !commMethod || !filename || loading}
-      variant="contained"
-      style={{ width: "100%" }}
-      onClick={(e) => {
-        setLoading(true);
-        const wrap = async () => {
-          try {
-            await submit(e);
-            setLoading(false);
-          } catch (err) {
-            notify({
-              message: "Create failed",
-              description: `${err}`,
-            });
-            setLoading(false);
-          }
-        };
-        wrap();
-      }}
-    >
-      Create{claimURLs.length > 0 ? " Another " : " "}Gumdrop
-    </Button>
-    {loading && loadingProgress()}
+    <Box sx={{ position: 'relative' }}>
+      <Button
+        disabled={!wallet.connected || !commMethod || !filename || loading}
+        variant="contained"
+        style={{ width: '100%' }}
+        onClick={e => {
+          setLoading(true);
+          const wrap = async () => {
+            try {
+              await submit(e);
+              setLoading(false);
+            } catch (err) {
+              notify({
+                message: 'Create failed',
+                description: `${err}`,
+              });
+              setLoading(false);
+            }
+          };
+          wrap();
+        }}
+      >
+        Create{claimURLs.length > 0 ? ' Another ' : ' '}Gumdrop
+      </Button>
+      {loading && loadingProgress()}
     </Box>
   );
 
@@ -720,23 +753,24 @@ export const Create = () => {
           id="otp-auth-select"
           value={otpAuth}
           label="OTP Authorization"
-          onChange={(e) => {
-            localStorage.setItem("otpAuth", e.target.value);
+          onChange={e => {
+            localStorage.setItem('otpAuth', e.target.value);
             setOtpAuth(e.target.value);
           }}
-          style={{textAlign: "left"}}
+          style={{ textAlign: 'left' }}
         >
-          <MenuItem value={"default"}>
+          <MenuItem value={'default'}>
             Default{WHITESPACE}
             <HyperLink
               href={explorerUrlFor(GUMDROP_TEMPORAL_SIGNER)}
               underline="none"
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               ({shortenAddress(GUMDROP_TEMPORAL_SIGNER.toBase58())})
             </HyperLink>
           </MenuItem>
-          <MenuItem value={"none"}>None</MenuItem>
+          <MenuItem value={'none'}>None</MenuItem>
         </Select>
       </FormControl>
     </React.Fragment>
@@ -751,18 +785,18 @@ export const Create = () => {
           id="claim-method-select"
           value={claimMethod}
           label="Claim Method"
-          onChange={(e) => {
-            localStorage.setItem("claimMethod", e.target.value);
+          onChange={e => {
+            localStorage.setItem('claimMethod', e.target.value);
             setClaimMethod(e.target.value);
           }}
-          style={{textAlign: "left"}}
+          style={{ textAlign: 'left' }}
         >
-          <MenuItem value={"transfer"}>Token Transfer</MenuItem>
-          <MenuItem value={"candy"}>Candy Machine</MenuItem>
-          <MenuItem value={"edition"}>Limited Edition</MenuItem>
+          <MenuItem value={'transfer'}>Token Transfer</MenuItem>
+          <MenuItem value={'candy'}>Candy Machine</MenuItem>
+          <MenuItem value={'edition'}>Limited Edition</MenuItem>
         </Select>
       </FormControl>
-      {claimMethod !== "" && claimData(claimMethod)}
+      {claimMethod !== '' && claimData(claimMethod)}
       <FormControl fullWidth>
         <InputLabel id="comm-method-label">Distribution Method</InputLabel>
         <Select
@@ -770,41 +804,39 @@ export const Create = () => {
           id="comm-method-select"
           value={commMethod}
           label="Distribution Method"
-          onChange={(e) => {
-            if (e.target.value === "discord") {
+          onChange={e => {
+            if (e.target.value === 'discord') {
               notify({
-                message: "Discord distribution unavailable",
-                description: "Please use the CLI for this. Discord does not support browser-connection requests",
+                message: 'Discord distribution unavailable',
+                description:
+                  'Please use the CLI for this. Discord does not support browser-connection requests',
               });
               return;
             }
-            localStorage.setItem("commMethod", e.target.value);
+            localStorage.setItem('commMethod', e.target.value);
             setCommMethod(e.target.value);
           }}
-          style={{textAlign: "left"}}
+          style={{ textAlign: 'left' }}
         >
-          <MenuItem value={"aws-email"}>AWS Email</MenuItem>
-          <MenuItem value={"aws-sms"}>AWS SMS</MenuItem>
-          <MenuItem value={"discord"}>Discord</MenuItem>
-          <MenuItem value={"wallets"}>Wallets</MenuItem>
-          <MenuItem value={"manual"}>Manual</MenuItem>
+          <MenuItem value={'aws-email'}>AWS Email</MenuItem>
+          <MenuItem value={'aws-sms'}>AWS SMS</MenuItem>
+          <MenuItem value={'discord'}>Discord</MenuItem>
+          <MenuItem value={'wallets'}>Wallets</MenuItem>
+          <MenuItem value={'manual'}>Manual</MenuItem>
         </Select>
       </FormControl>
-      {commMethod !== "" && commAuthorization(commMethod)}
-      {commMethod !== "" && commMethod !== "wallets" && otpAuthC}
-      {commMethod !== "" && fileUpload}
+      {commMethod !== '' && commAuthorization(commMethod)}
+      {commMethod !== '' && commMethod !== 'wallets' && otpAuthC}
+      {commMethod !== '' && fileUpload}
       {createAirdrop}
       {claimURLs.length > 0 && (
         <HyperLink
           href={hyperLinkData(claimURLs)}
           download="claimURLs.json"
           underline="none"
-          style={{width: "100%"}}
+          style={{ width: '100%' }}
         >
-          <Button
-            variant="contained"
-            style={{width: "100%"}}
-          >
+          <Button variant="contained" style={{ width: '100%' }}>
             Download claim URLs
           </Button>
         </HyperLink>
@@ -814,12 +846,9 @@ export const Create = () => {
           href={hyperLinkData(responses)}
           download="responses.json"
           underline="none"
-          style={{width: "100%"}}
+          style={{ width: '100%' }}
         >
-          <Button
-            variant="contained"
-            style={{width: "100%"}}
-          >
+          <Button variant="contained" style={{ width: '100%' }}>
             Download distribution responses
           </Button>
         </HyperLink>
