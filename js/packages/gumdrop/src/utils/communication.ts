@@ -69,23 +69,20 @@ export const distributeAwsSns = async (
   drop: DropInfo,
 ) => {
   if (!auth.accessKeyId || !auth.secretAccessKey) {
-    throw new Error("AWS SNS auth keys not supplied");
+    throw new Error('AWS SNS auth keys not supplied');
   }
   if (claimants.length === 0) return [];
 
-  log.debug("SNS auth", auth);
+  log.debug('SNS auth', auth);
   const client = new SNSClient({
-    region: "us-east-1",
+    region: 'us-east-1',
     credentials: {
       accessKeyId: auth.accessKeyId,
       secretAccessKey: auth.secretAccessKey,
     },
   });
 
-  const single = async (
-    info : ClaimantInfo,
-    drop : DropInfo,
-  ) => {
+  const single = async (info: ClaimantInfo, drop: DropInfo) => {
     const formatted = formatDropMessage(info, drop, false);
     const message = {
       Message: formatted.message,

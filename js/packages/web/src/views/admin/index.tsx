@@ -192,11 +192,10 @@ function InnerAdminView({
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
-  const [filteredMetadata, setFilteredMetadata] =
-    useState<{
-      available: ParsedAccount<MasterEditionV1>[];
-      unavailable: ParsedAccount<MasterEditionV1>[];
-    }>();
+  const [filteredMetadata, setFilteredMetadata] = useState<{
+    available: ParsedAccount<MasterEditionV1>[];
+    unavailable: ParsedAccount<MasterEditionV1>[];
+  }>();
   const [loading, setLoading] = useState<boolean>();
   const { metadata, masterEditions } = useMeta();
   const state = useMeta();
@@ -366,7 +365,9 @@ function InnerAdminView({
         </>
       )}
       <Col>
-        <p style={{'marginTop': '30px'}}>Upgrade the performance of your existing auctions.</p>
+        <p style={{ marginTop: '30px' }}>
+          Upgrade the performance of your existing auctions.
+        </p>
         <Row>
           <Button
             disabled={loading}

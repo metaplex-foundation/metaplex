@@ -15,10 +15,7 @@ import {
   loadWalletKey,
 } from './helpers/accounts';
 import { BN, web3 } from '@project-serum/anchor';
-import {
-  TOKEN_PROGRAM_ID,
-  WRAPPED_SOL_MINT,
-} from './helpers/constants';
+import { TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from './helpers/constants';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { getPriceWithMantissa } from './helpers/various';
 import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';

@@ -68,7 +68,8 @@ export const Header = ({ candyMachine }: HeaderProps) => {
 
 const getMintPrice = (candyMachine: CandyMachineAccount): string => {
   const price = formatNumber.asNumber(
-    candyMachine.state.isPresale && candyMachine.state.whitelistMintSettings?.discountPrice
+    candyMachine.state.isPresale &&
+      candyMachine.state.whitelistMintSettings?.discountPrice
       ? candyMachine.state.whitelistMintSettings?.discountPrice!
       : candyMachine.state.price!,
   );
