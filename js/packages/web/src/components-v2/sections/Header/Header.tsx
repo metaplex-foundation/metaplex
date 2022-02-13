@@ -1,17 +1,12 @@
 import React, { FC } from 'react';
 import CN from 'classnames';
 import { Link } from 'react-router-dom';
-import AvatarPreview from 'boring-avatars';
 import { useWallet } from '@solana/wallet-adapter-react';
-
-import { trimWalletAddress } from '../../../utils/trimWalletAddress';
 
 import { ConnectButton } from '@oyster/common';
 import { Logo } from '../../atoms/Logo';
 import { HeaderMenu } from '../../molecules/HeaderMenu';
 import { HeaderSearch } from '../../molecules/HeaderSearch';
-import { WalletPreviewCard } from '../../molecules/WalletPreviewCard';
-import { Dropdown, DropDownBody, DropDownToggle } from '../../atoms/Dropdown';
 import { Cog, CurrentUserBadge } from '../../../components/CurrentUserBadge';
 import { Notifications } from '../../../components/Notifications';
 
@@ -43,7 +38,7 @@ export const Header: FC<HeaderProps> = ({
 
       <div className="flex items-center gap-[24px]">
         <div className="flex">
-          <Dropdown>
+          {/* <Dropdown>
             {({ isOpen, setIsOpen }: any) => {
               return (
                 <>
@@ -89,7 +84,7 @@ export const Header: FC<HeaderProps> = ({
                 </>
               );
             }}
-          </Dropdown>
+          </Dropdown> */}
         </div>
 
         <button className="flex appearance-none text-[24px] text-white">

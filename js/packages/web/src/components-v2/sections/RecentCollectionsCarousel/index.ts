@@ -1,1 +1,1 @@
-export * from './RecentCollectionsCarousel'
+export * from './RecentCollectionsCarousel';

@@ -44,7 +44,10 @@ export const NftOffersTable: FC<NftOffersTableProps> = ({
               return (
                 <tr key={index} className="odd:bg-[#F4FAFF] group">
                   <Td align="left">
-                    <a href="#" className="truncate cursor-pointer font-500 text-B-400">
+                    <a
+                      href="#"
+                      className="truncate cursor-pointer font-500 text-B-400"
+                    >
                       {username}
                     </a>
                   </Td>
@@ -58,9 +61,9 @@ export const NftOffersTable: FC<NftOffersTableProps> = ({
                   </Td>
                   <Td>
                     <div className="flex items-center gap-[4px] text-B-400">
-                      <span className='inline-flex'>{floorDifference}</span>
+                      <span className="inline-flex">{floorDifference}</span>
 
-                      <span className='inline-flex'>
+                      <span className="inline-flex">
                         {floorDifferenceType === 'above' && (
                           <i className="inline-flex ri-arrow-up-line" />
                         )}
