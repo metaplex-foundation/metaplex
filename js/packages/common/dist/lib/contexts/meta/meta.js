@@ -37,13 +37,15 @@ const MetaContext = react_1.default.createContext({
     // @ts-ignore
     update: () => [actions_1.AuctionData, actions_1.BidderMetadata, actions_1.BidderPot],
 });
-function MetaProvider({ children = null }) {
+function MetaProvider({ children = null, }) {
     const connection = (0, connection_1.useConnection)();
     const { isReady, storeAddress } = (0, store_1.useStore)();
     const wallet = (0, wallet_adapter_react_1.useWallet)();
     const [state, setState] = (0, react_1.useState)((0, getEmptyMetaState_1.getEmptyMetaState)());
     const [page, setPage] = (0, react_1.useState)(0);
-    const [lastLength, setLastLength] = (0, react_1.useState)(0);
+    const [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _lastLength, setLastLength,] = (0, react_1.useState)(0);
     const { userAccounts } = (0, __1.useUserAccounts)();
     const [isLoading, setIsLoading] = (0, react_1.useState)(false);
     const updateRequestsInQueue = (0, react_1.useRef)(0);
@@ -265,14 +267,7 @@ function MetaProvider({ children = null }) {
             update(undefined, undefined);
             updateRequestsInQueue.current = 0;
         }
-    }, [
-        connection,
-        setState,
-        updateMints,
-        storeAddress,
-        isReady,
-        page,
-    ]);
+    }, [connection, setState, updateMints, storeAddress, isReady, page]);
     // Fetch metadata on userAccounts change
     (0, react_1.useEffect)(() => {
         const shouldFetch = !isLoading &&

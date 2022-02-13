@@ -12,7 +12,7 @@ import {
   getSolletWallet,
   getSolongWallet,
 } from '@solana/wallet-adapter-wallets';
-import { Button, Collapse } from 'antd';
+import { Collapse } from 'antd';
 import React, {
   createContext,
   FC,
@@ -25,6 +25,7 @@ import React, {
 } from 'react';
 import { notify } from '../utils';
 import { MetaplexModal } from '../components';
+import { Button } from './../ui-components/Button';
 
 const { Panel } = Collapse;
 
@@ -52,30 +53,24 @@ export const WalletModal: FC = () => {
 
   return (
     <MetaplexModal title="Connect Wallet" visible={visible} onCancel={close}>
-      <span
-        style={{
-          color: 'rgba(255, 255, 255, 0.75)',
-          fontSize: '14px',
-          lineHeight: '14px',
-          fontFamily: 'GraphikWeb',
-          letterSpacing: '0.02em',
-          marginBottom: 14,
-        }}
-      >
-        RECOMMENDED
-      </span>
+      <span className="mb-[12px] text-gray-400">RECOMMENDED</span>
 
       <Button
-        className="phantom-button metaplex-button"
         onClick={() => {
           console.log(phatomWallet.name);
           select(phatomWallet.name);
           close();
         }}
+        iconBefore={
+          <img src={phatomWallet?.icon} style={{ width: '1.2rem' }} />
+        }
+        size="lg"
+        appearance="ghost"
+        className="mb-[12px]"
       >
-        <img src={phatomWallet?.icon} style={{ width: '1.2rem' }} />
-        &nbsp;Connect to Phantom
+        Connect to Phantom
       </Button>
+
       <Collapse
         ghost
         expandIcon={panelProps =>
@@ -115,40 +110,28 @@ export const WalletModal: FC = () => {
         }
       >
         <Panel
-          header={
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: '16px',
-                lineHeight: '16px',
-                letterSpacing: '-0.01em',
-                color: 'rgba(255, 255, 255, 255)',
-              }}
-            >
-              Other Wallets
-            </span>
-          }
+          className="mx-[-16px]"
+          header={<span className="text-white font-500">Other Wallets</span>}
           key="1"
         >
-          {wallets.map((wallet, idx) => {
-            if (wallet.name === 'Phantom') return null;
-
-            return (
-              <Button
-                key={idx}
-                className="metaplex-button w100"
-                style={{
-                  marginBottom: 5,
-                }}
-                onClick={() => {
-                  select(wallet.name);
-                  close();
-                }}
-              >
-                Connect to {wallet.name}
-              </Button>
-            );
-          })}
+          <div className="flex w-full flex-col gap-[8px]">
+            {wallets.map((wallet, idx) => {
+              if (wallet.name === 'Phantom') return null;
+              return (
+                <Button
+                  key={idx}
+                  onClick={() => {
+                    select(wallet.name);
+                    close();
+                  }}
+                  view="outline"
+                  appearance="ghost-invert"
+                >
+                  Connect to {wallet.name}
+                </Button>
+              );
+            })}
+          </div>
         </Panel>
       </Collapse>
     </MetaplexModal>

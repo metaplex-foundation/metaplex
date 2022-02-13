@@ -14,49 +14,32 @@ export const Settings = ({
 
   return (
     <>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '15px 0',
-        }}
-      >
+      <div className="flex flex-col items-center justify-center w-full gap-[8px] p-[16px] border-b border-gray-700">
         <Identicon
           address={publicKey?.toBase58()}
           style={{
             width: 48,
           }}
         />
+
         {publicKey && (
           <>
             <Tooltip title="Address copied">
               <div
-                style={{
-                  fontWeight: 600,
-                  letterSpacing: '-0.02em',
-                  color: '#FFFFFF',
-                }}
+                className="flex items-center gap-[4px] text-white font-500"
                 onClick={() =>
                   navigator.clipboard.writeText(publicKey?.toBase58() || '')
                 }
               >
                 <CopyOutlined />
-                &nbsp;{shortenAddress(publicKey?.toBase58())}
+                {shortenAddress(publicKey?.toBase58())}
               </div>
             </Tooltip>
           </>
         )}
-        <br />
-        <span
-          style={{
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            width: 'calc(100% + 32px)',
-            marginBottom: 10,
-          }}
-        ></span>
-        {additionalSettings}
       </div>
+
+      <div className="flex">{additionalSettings}</div>
     </>
   );
 };
