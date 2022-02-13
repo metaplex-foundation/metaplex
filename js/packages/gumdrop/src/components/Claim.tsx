@@ -287,17 +287,18 @@ const buildCandyClaim = async (
     GUMDROP_DISTRIBUTOR_ID
   );
 
+  // candy machine mints fit in a single transaction
+  const merkleClaim: Array<TransactionInstruction> = [];
+
+  if (connection.getAccountInfo(claimStatus) === null) {
   // atm the contract has a special case for when the temporal key is defaulted
   // (aka always passes temporal check)
   // TODO: more flexible
   const temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
       ? walletKey : distributorInfo.temporal;
 
-  // candy machine mints fit in a single transaction
-  const merkleClaim: Array<TransactionInstruction> = [];
-
   const walletTokenKey = await getATA(walletKey, whitelistMint);
-  if (await program.provider.connection.getAccountInfo(walletTokenKey) === null) {
+  if (await connection.getAccountInfo(walletTokenKey) === null) {
     merkleClaim.push(Token.createAssociatedTokenAccountInstruction(
         SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -327,6 +328,7 @@ const buildCandyClaim = async (
       }
     }
   ));
+  }
 
   const candyMachineMint = Keypair.generate();
   const candyMachineMetadata = await getMetadata(candyMachineMint.publicKey);
