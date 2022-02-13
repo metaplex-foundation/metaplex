@@ -33,9 +33,10 @@ import { loadCache, saveCache } from './helpers/cache';
 import { mintV2 } from './commands/mint';
 import { signMetadata } from './commands/sign';
 import {
-  getAccountsByCreatorAddress,
+  getAddressesByCreatorAddress,
   signAllMetadataFromCandyMachine,
 } from './commands/signAll';
+import { getOwnersByMintAddresses } from './commands/owners';
 import log from 'loglevel';
 import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
@@ -1011,15 +1012,33 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
     candyMachineId,
   );
 
-  const accountsByCreatorAddress = await getAccountsByCreatorAddress(
+  const addresses = await getAddressesByCreatorAddress(
     candyMachineAddr.toBase58(),
     anchorProgram.provider.connection,
   );
-  const addresses = accountsByCreatorAddress.map(it => {
-    return new PublicKey(it[0].mint).toBase58();
-  });
 
   console.log(JSON.stringify(addresses, null, 2));
+});
+
+programCommand('get_all_owners_addresses').action(async (directory, cmd) => {
+  const { env, cacheName, keypair } = cmd.opts();
+
+  const cacheContent = loadCache(cacheName, env);
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
+
+  const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+  const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+    candyMachineId,
+  );
+
+  const addresses = await getAddressesByCreatorAddress(
+    candyMachineAddr.toBase58(),
+    anchorProgram.provider.connection,
+  );
+
+  const owners = await getOwnersByMintAddresses(addresses, anchorProgram.provider.connection);
+  console.log(JSON.stringify(owners, null, 2));
 });
 
 function programCommand(name: string) {
