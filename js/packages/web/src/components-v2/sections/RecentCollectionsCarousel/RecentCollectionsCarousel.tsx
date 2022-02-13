@@ -1,20 +1,14 @@
 import CN from 'classnames';
 import { Link } from 'react-router-dom';
-import { collections } from '../../../../dummy-data/collections';
 import { BlockCarousel } from '../../molecules/BlockCarousel';
 import { NftCard } from '../../molecules/NftCard';
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState, FC } from 'react';
-import { Layout, Row, Col, Tabs, Dropdown, Menu } from 'antd';
 import { useMeta } from '../../../contexts';
-import { CardLoader } from '../../../components/MyLoader';
 
-import { ArtworkViewState, Item } from '../../../views/artworks/types';
+import { ArtworkViewState } from '../../../views/artworks/types';
 import { useItems } from '../../../views/artworks/hooks/useItems';
-import ItemCard from '../../../views/artworks/components/ItemCard';
 import { useUserAccounts } from '@oyster/common';
-import { DownOutlined } from '@ant-design/icons';
-import { isMetadata, isPack } from '../../../views/artworks/utils';
 
 export interface RecentCollectionsCarouselProps {
   [x: string]: any;
@@ -31,13 +25,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
 
   ////
   const { connected } = useWallet();
-  const {
-    isLoading,
-    pullAllMetadata,
-    storeIndexer,
-    pullItemsPage,
-    isFetching,
-  } = useMeta();
+  const { pullItemsPage, isFetching } = useMeta();
   const { userAccounts } = useUserAccounts();
 
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);

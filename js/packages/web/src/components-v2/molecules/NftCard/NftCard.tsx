@@ -34,7 +34,9 @@ export const NftCard: FC<NftCardProps> = forwardRef(
           setUriState(img.data.image);
         };
         getImage();
-      } catch {}
+      } catch {
+        console.log('error');
+      }
     }, [image]);
 
     return (
