@@ -4,6 +4,7 @@ import {
   AccountLayout,
   MintInfo,
   MintLayout,
+  Token,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import BN from 'bn.js';
@@ -42,20 +43,25 @@ export const getMintInfo = async (
   };
 };
 
+export const getATA = (
+  walletKey : PublicKey,
+  mintKey : PublicKey,
+) : Promise<PublicKey> => {
+  return Token.getAssociatedTokenAddress(
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mintKey,
+    walletKey,
+  );
+}
+
 export const getATAChecked = async (
   walletKey : PublicKey,
   connection : Connection,
   mintKey : PublicKey,
   totalClaim : BN,
 ) : Promise<PublicKey> => {
-  const [ataKey, ] = await PublicKey.findProgramAddress(
-    [
-      walletKey.toBuffer(),
-      TOKEN_PROGRAM_ID.toBuffer(),
-      mintKey.toBuffer(),
-    ],
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-  );
+  const ataKey = await getATA(walletKey, mintKey);
   const ataAccount = await connection.getAccountInfo(ataKey);
   if (ataAccount === null) {
     throw new Error(`Failed to fetch associated token account for ${mintKey.toBase58()}`);
