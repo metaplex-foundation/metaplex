@@ -3,7 +3,7 @@ import log from 'loglevel';
 
 
 export async function getOwnersByMintAddresses(addresses, connection) {
-	let owners = [];
+	const owners = [];
 
   log.debug("Recuperation of the owners' addresses");
 	for (const address of addresses) {
@@ -16,7 +16,7 @@ export async function getOwnersByMintAddresses(addresses, connection) {
 
 async function getOwnerOfTokenAddress(address, connection) {
   try {
-    let programAccountsConfig = {
+    const programAccountsConfig = {
       filters: [
         {
           dataSize: 165,
@@ -29,19 +29,17 @@ async function getOwnerOfTokenAddress(address, connection) {
         },
       ]
     };
-    let results = await connection.getParsedProgramAccounts(
+    const results = await connection.getParsedProgramAccounts(
       TOKEN_PROGRAM_ID,
       programAccountsConfig
-	);
-	  
+	);  
 
     const tokenOwner = results.find(token => token.account.data.parsed.info.tokenAmount.amount == 1);
     const ownerAddress = tokenOwner.account.data.parsed.info.owner;
 
     return ownerAddress;
   } catch (error) {
-	  console.log(error);
-	  return `Unable to get owner of: ${address}`
+    console.log(`Unable to get owner of: ${address}`);
   }
 }
 
