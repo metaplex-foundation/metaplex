@@ -105,8 +105,8 @@ export const MetaplexMenu = () => {
                       className="wallet-key"
                       onClick={() => setIsModalVisible(false)}
                     >
-                      <Link to="/sign">
-                        {penSvg(location.pathname === "/sign")}
+                      <Link to="/claim">
+                        {penSvg(location.pathname === "/claim")}
                       </Link>
                     </Button>
                   </div>
@@ -183,7 +183,7 @@ export const AppBar = () => {
           <LogoLink />
         </div>
         <div className="app-right">
-          {!connected && location.pathname !== "/" && (
+          {!connected && (
             <ConnectButton style={{ padding: '21px 20px' }}>
               Connect Wallet
             </ConnectButton>
@@ -204,8 +204,8 @@ export const AppBar = () => {
               </div>
               <div className="wallet-wrapper">
                 <Button className="wallet-key">
-                  <Link to="/sign">
-                    {penSvg(location.pathname === "/sign")}
+                  <Link to="/claim">
+                    {penSvg(location.pathname === "/claim")}
                   </Link>
                 </Button>
               </div>

@@ -9,6 +9,7 @@ import { SPLTokenListProvider } from '../contexts/tokenList';
 import { WalletProvider } from '../contexts/WalletContext';
 import { AppLayout } from './Layout';
 
+import { About } from './About';
 import { Claim } from './Claim';
 
 export const App = () => {
@@ -21,7 +22,8 @@ export const App = () => {
       <WalletProvider>
         <AppLayout>
           <Switch>
-            <Route exact path="/" component={null} />
+            <Route exact path="/" component={About} />
+            <Route exact path="/claim" component={Claim} />
           </Switch>
         </AppLayout>
       </WalletProvider>
