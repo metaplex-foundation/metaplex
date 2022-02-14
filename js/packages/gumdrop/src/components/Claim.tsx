@@ -1153,7 +1153,7 @@ export const Claim = (
       </FormControl>
       <TextField
         id="distributor-text-field"
-        label="Distributor"
+        label="Gumdrop Address"
         value={distributor}
         onChange={(e) => setDistributor(e.target.value)}
         disabled={!editable}
