@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import BN from 'bn.js';
 import { AuctionData, MasterEditionV1, MasterEditionV2, Metadata, SafetyDepositBox, Vault } from '../../actions';
 import { AccountParser, ParsedAccount } from '../../contexts';

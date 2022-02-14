@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { AccountInfo } from '@solana/web3.js';
 import { TokenAccount } from '../../models';
 import { ParsedAccountBase } from './types';

@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { MintInfo } from '@solana/spl-token';
 import { TokenAccount } from '../../models';

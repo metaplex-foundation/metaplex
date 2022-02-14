@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { MintInfo } from '@solana/spl-token';
 import { TokenAccount } from './../models';
 import { PublicKey } from '@solana/web3.js';

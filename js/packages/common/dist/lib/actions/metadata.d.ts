@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import { StringPublicKey } from '../utils';
