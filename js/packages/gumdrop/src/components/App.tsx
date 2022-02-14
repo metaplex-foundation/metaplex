@@ -1,6 +1,7 @@
 import * as React from "react";
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import { hot } from "react-hot-loader";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 import { CoingeckoProvider } from '../contexts/coingecko';
 import { ConnectionProvider } from '../contexts/ConnectionContext';
@@ -13,7 +14,19 @@ import { About } from './About';
 import { Claim } from './Claim';
 
 export const App = () => {
+  const muiDarkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+      primary: {
+        main: '#d0bdf4',
+      },
+      secondary: {
+        main: '#8458B3',
+      },
+    },
+  });
   return (
+    <ThemeProvider theme={muiDarkTheme}>
     <BrowserRouter>
       <ConnectionProvider>
       <SPLTokenListProvider>
@@ -32,6 +45,7 @@ export const App = () => {
       </SPLTokenListProvider>
       </ConnectionProvider>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

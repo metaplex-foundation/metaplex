@@ -47,6 +47,8 @@ import BN from 'bn.js';
 import * as bs58 from "bs58";
 import * as anchor from '@project-serum/anchor';
 
+import { useWindowDimensions } from './AppBar';
+import { CollapsePanel } from './CollapsePanel';
 import {
   useConnection,
 } from "../contexts/ConnectionContext";
@@ -1044,7 +1046,7 @@ export const Claim = (
       <Button
         disabled={!wallet|| !program || !OTPStr || loading}
         variant="contained"
-        color="success"
+        color="secondary"
         style={{ width: "100%" }}
         onClick={(e) => {
           setLoading(true);
@@ -1127,19 +1129,13 @@ export const Claim = (
 
   const populateClaimC = (onClick) => (
     <React.Fragment>
-      <TextField
-        id="distributor-text-field"
-        label="Distributor"
-        value={distributor}
-        onChange={(e) => setDistributor(e.target.value)}
-        disabled={!editable}
-      />
+      <Box />
       <FormControl fullWidth>
         <InputLabel
           id="claim-method-label"
           disabled={!editable}
         >
-          Claim Method
+          Gumdrop Type
         </InputLabel>
         <Select
           labelId="claim-method-label"
@@ -1155,7 +1151,20 @@ export const Claim = (
           <MenuItem value={"edition"}>Limited Edition</MenuItem>
         </Select>
       </FormControl>
-      {claimMethod !== "" && claimData(claimMethod)}
+      <TextField
+        id="distributor-text-field"
+        label="Distributor"
+        value={distributor}
+        onChange={(e) => setDistributor(e.target.value)}
+        disabled={!editable}
+      />
+      <TextField
+        id="handle-text-field"
+        label="Handle"
+        value={handle}
+        onChange={(e) => setHandle(e.target.value)}
+        disabled={!editable}
+      />
       {claimMethod !== "edition" && <TextField
         id="amount-text-field"
         label="Amount"
@@ -1163,6 +1172,14 @@ export const Claim = (
         onChange={(e) => setAmount(e.target.value)}
         disabled={!editable}
       />}
+      {claimMethod !== "" && claimData(claimMethod)}
+
+      <CollapsePanel
+        id="additional-parameters"
+        panelName="Additional Parameters"
+      >
+      <Stack spacing={2}>
+
       <FormControl fullWidth>
         <InputLabel
           id="comm-method-label"
@@ -1197,13 +1214,6 @@ export const Claim = (
         </Select>
       </FormControl>
       <TextField
-        id="handle-text-field"
-        label="Handle"
-        value={handle}
-        onChange={(e) => setHandle(e.target.value)}
-        disabled={!editable}
-      />
-      <TextField
         id="index-text-field"
         label="Index"
         value={indexStr}
@@ -1226,11 +1236,14 @@ export const Claim = (
         disabled={!editable}
       />
       <Button
-        color="info"
         onClick={() => setEditable(!editable)}
       >
         {!editable ? "Edit Claim" : "Stop Editing"}
       </Button>
+
+      </Stack>
+      </CollapsePanel>
+
       <Box />
 
       <Box sx={{ position: "relative" }}>
@@ -1238,7 +1251,7 @@ export const Claim = (
         disabled={!wallet|| !program || !allFieldsPopulated || loading}
         variant="contained"
         style={{ width: "100%" }}
-        color={asyncNeedsTemporalSigner ? "primary" : "success"}
+        color={asyncNeedsTemporalSigner ? "primary" : "secondary"}
         onClick={(e) => {
           setLoading(true);
           const wrap = async () => {
@@ -1313,12 +1326,20 @@ export const Claim = (
           );
         })}
       </Stepper>
-      <Box />
     </React.Fragment>
   );
 
+  const maxWidth = 960;
+  const { width } = useWindowDimensions();
+
   return (
-    <Stack spacing={2}>
+    <Stack
+      spacing={2}
+      style={{
+        margin: 'auto',
+        maxWidth: Math.min(width, maxWidth),
+      }}
+    >
       {asyncNeedsTemporalSigner && stepper}
       {steps[stepToUse].inner(handleNext)}
       {stepToUse > 0 && (
