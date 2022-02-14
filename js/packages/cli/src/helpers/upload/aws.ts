@@ -35,35 +35,47 @@ async function uploadFile(
 
 export async function awsUpload(
   awsS3Bucket: string,
-  file: string,
+  image: string,
+  animation: string,
   manifestBuffer: Buffer,
 ) {
   const REGION = 'us-east-1'; // TODO: Parameterize this.
   const s3Client = new S3Client({ region: REGION });
-  const filename = `assets/${basename(file)}`;
-  log.debug('file:', file);
-  log.debug('filename:', filename);
 
-  const imageExt = path.extname(file);
-  const fileStream = createReadStream(file);
-  const mediaUrl = await uploadFile(
-    s3Client,
-    awsS3Bucket,
-    filename,
-    getType(file),
-    fileStream,
-  );
+  async function uploadMedia(media) {
+    const mediaPath = `assets/${basename(media)}`;
+    log.debug('media:', media);
+    log.debug('mediaPath:', mediaPath);
+    const mediaFileStream = createReadStream(media);
+    const mediaUrl = await uploadFile(
+      s3Client,
+      awsS3Bucket,
+      mediaPath,
+      getType(media),
+      mediaFileStream,
+    );
+    return mediaUrl;
+  }
 
   // Copied from ipfsUpload
+  const imageUrl = `${await uploadMedia(image)}?ext=${path
+    .extname(image)
+    .replace('.', '')}`;
+  const animationUrl = animation
+    ? `${await uploadMedia(animation)}?ext=${path
+        .extname(animation)
+        .replace('.', '')}`
+    : undefined;
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  manifestJson.image = mediaUrl;
-  manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    return { ...f, uri: mediaUrl };
-  });
+  manifestJson.image = imageUrl;
+  if (animation) {
+    manifestJson.animation_url = animationUrl;
+  }
+
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 
-  const extensionRegex = new RegExp(`${imageExt}$`);
-  const metadataFilename = filename.replace(extensionRegex, '.json');
+  const extensionRegex = new RegExp(`${path.extname(image)}$`);
+  const metadataFilename = image.replace(extensionRegex, '.json');
   const metadataUrl = await uploadFile(
     s3Client,
     awsS3Bucket,
@@ -72,5 +84,5 @@ export async function awsUpload(
     updatedManifestBuffer,
   );
 
-  return [metadataUrl, mediaUrl];
+  return [metadataUrl, imageUrl, animationUrl];
 }

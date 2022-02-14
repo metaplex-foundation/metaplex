@@ -12,7 +12,7 @@ export const FundsIssueModal = (props: {
   onClose: () => void
 }) => {
   const {currentFunds: balance, minimumFunds, message} = props
-  const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == WRAPPED_SOL_MINT.toBase58())[0]
+  const tokenInfo = useTokenList().subscribedTokens.filter(m=>m.address == WRAPPED_SOL_MINT.toBase58())[0]
   return (
       <MetaplexModal
         title={"Transaction Alert"}

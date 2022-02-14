@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Row, Col } from 'antd';
 
 import {
@@ -53,7 +53,7 @@ export const AuctionNumbers = (props: {
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
   const isStarted = auctionView.state === AuctionViewState.Live;
 
-  const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == auctionView.auction.info.tokenMint)[0]
+  const tokenInfo = useTokenList().subscribedTokens.filter(m=>m.address == auctionView.auction.info.tokenMint)[0]
   const ended = isEnded(state);
 
   return (

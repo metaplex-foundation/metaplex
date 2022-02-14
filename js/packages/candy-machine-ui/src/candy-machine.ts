@@ -35,7 +35,10 @@ interface CandyMachineState {
     expireOnUse: boolean;
     gatekeeperNetwork: anchor.web3.PublicKey;
   };
-  endSettings: null | [number, anchor.BN];
+  endSettings: null | {
+    number: anchor.BN;
+    endSettingType: any;
+  };
   whitelistMintSettings: null | {
     mode: any;
     mint: anchor.web3.PublicKey;
@@ -435,7 +438,7 @@ export const mintOneToken = async (
         systemProgram: SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-        recentBlockhashes: anchor.web3.SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
+        recentBlockhashes: anchor.web3.SYSVAR_SLOT_HASHES_PUBKEY,
         instructionSysvarAccount: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
       },
       remainingAccounts:
