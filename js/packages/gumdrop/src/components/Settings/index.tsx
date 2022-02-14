@@ -1,9 +1,9 @@
-import React from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { ENDPOINTS, useColorMode, useConnectionConfig } from "../../contexts";
-import { notify, shortenAddress } from "@oyster/common";
-import { CopyOutlined } from "@ant-design/icons";
-import { ModalEnum, useModal, useWalletModal } from "../../contexts";
+import React from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { ENDPOINTS, useColorMode, useConnectionConfig } from '../../contexts';
+import { notify, shortenAddress } from '@oyster/common';
+import { CopyOutlined } from '@ant-design/icons';
+import { ModalEnum, useModal, useWalletModal } from '../../contexts';
 import {
   Box,
   Button,
@@ -19,16 +19,16 @@ import {
   MenuItem,
   Select,
   Stack,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import Brightness4Icon from "@mui/icons-material/Brightness4";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 
-export const Settings = ({ narrow } : { narrow : boolean }) => {
+export const Settings = ({ narrow }: { narrow: boolean }) => {
   const { disconnect, publicKey } = useWallet();
   const { setEndpoint, env, endpoint } = useConnectionConfig();
   const { setVisible } = useWalletModal();
@@ -48,14 +48,13 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
         if (publicKey) {
           await navigator.clipboard.writeText(publicKey.toBase58());
           notify({
-            message: "Wallet update",
-            description: "Address copied to clipboard",
+            message: 'Wallet update',
+            description: 'Address copied to clipboard',
           });
         }
       },
-      innerNarrow: () => (
-        `Copy Address (${publicKey && shortenAddress(publicKey.toBase58())})`
-      ),
+      innerNarrow: () =>
+        `Copy Address (${publicKey && shortenAddress(publicKey.toBase58())})`,
       inner: function ConnectedWalletCopyC() {
         return (
           <React.Fragment>
@@ -67,24 +66,28 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
     },
     {
       click: open,
-      inner: () => "Change\u00A0Wallet",
+      inner: () => 'Change\u00A0Wallet',
     },
     {
       click: () => disconnect().catch(),
       inner: () => `Disconnect\u00A0(${env})`,
-      expandedExtra: { // these are interepreted as props. TODO: specific types
-        color: "error" as any,
-        variant: "contained" as any,
-      }
+      expandedExtra: {
+        // these are interepreted as props. TODO: specific types
+        color: 'error' as any,
+        variant: 'contained' as any,
+      },
     },
   ];
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [envCollapseOpen, setEnvCollapseOpen] = React.useState(false);
 
-  const hackySkipSet = "hackySkipSet";
-  const toggleDrawer = (open) => (event) => {
-    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
+  const hackySkipSet = 'hackySkipSet';
+  const toggleDrawer = open => event => {
+    if (
+      event.type === 'keydown' &&
+      (event.key === 'Tab' || event.key === 'Shift')
+    ) {
       return;
     }
 
@@ -95,17 +98,13 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
     setDrawerOpen(open);
   };
 
-  const drawerC = (inner) => {
+  const drawerC = inner => {
     return (
       <React.Fragment>
         <Button onClick={toggleDrawer(true)}>
           <AccountBalanceWalletIcon />
         </Button>
-        <Drawer
-          anchor="right"
-          open={drawerOpen}
-          onClose={toggleDrawer(false)}
-        >
+        <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
           <Box
             sx={{ width: 250 }}
             role="presentation"
@@ -125,7 +124,7 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
       onClick={colorModeCtx.toggleColorMode}
       color="inherit"
     >
-      {theme.palette.mode === "dark" ? (
+      {theme.palette.mode === 'dark' ? (
         <Brightness7Icon />
       ) : (
         <Brightness4Icon />
@@ -139,7 +138,7 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
         <ListItemText
           primary="Wallet"
           primaryTypographyProps={{
-            fontSize: "1.2rem",
+            fontSize: '1.2rem',
             fontWeight: 'medium',
             letterSpacing: 0,
           }}
@@ -148,50 +147,50 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
     );
     return (
       <React.Fragment>
-        {!publicKey && drawerC(
-          <List>
-            {listHead}
-            <Divider />
-            <ListItemButton
-              onClick={() => setEnvCollapseOpen(!envCollapseOpen)}
-              className={hackySkipSet}
-            >
-              Change Network
-              {envCollapseOpen ? <ExpandLess /> : <ExpandMore />}
-            </ListItemButton>
-            <Collapse in={envCollapseOpen} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                {ENDPOINTS.map(p => (
-                  <ListItemButton
-                    selected={endpoint === p.endpoint}
-                    onClick={() => setEndpoint(p.endpoint)}
-                    key={p.name}
-                    sx={{ pl: 4 }}
-                    className={hackySkipSet}
-                  >
-                    {p.name}
+        {!publicKey &&
+          drawerC(
+            <List>
+              {listHead}
+              <Divider />
+              <ListItemButton
+                onClick={() => setEnvCollapseOpen(!envCollapseOpen)}
+                className={hackySkipSet}
+              >
+                Change Network
+                {envCollapseOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+              <Collapse in={envCollapseOpen} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  {ENDPOINTS.map(p => (
+                    <ListItemButton
+                      selected={endpoint === p.endpoint}
+                      onClick={() => setEndpoint(p.endpoint)}
+                      key={p.name}
+                      sx={{ pl: 4 }}
+                      className={hackySkipSet}
+                    >
+                      {p.name}
+                    </ListItemButton>
+                  ))}
+                </List>
+              </Collapse>
+              <ListItemButton onClick={handleConnect}>Connect</ListItemButton>
+            </List>,
+          )}
+        {publicKey &&
+          drawerC(
+            <List>
+              {listHead}
+              <Divider />
+              {connectedActions.map((a, idx) => {
+                return (
+                  <ListItemButton onClick={a.click} key={idx}>
+                    {(a.innerNarrow && a.innerNarrow()) || a.inner()}
                   </ListItemButton>
-                ))}
-              </List>
-            </Collapse>
-            <ListItemButton onClick={handleConnect}>
-              Connect
-            </ListItemButton>
-          </List>
-        )}
-        {publicKey && drawerC(
-          <List>
-            {listHead}
-            <Divider />
-            {connectedActions.map((a, idx) => {
-              return (
-                <ListItemButton onClick={a.click} key={idx}>
-                  {(a.innerNarrow && a.innerNarrow()) || a.inner()}
-                </ListItemButton>
-              );
-            })}
-          </List>
-        )}
+                );
+              })}
+            </List>,
+          )}
         {themeSwitch}
       </React.Fragment>
     );
@@ -201,36 +200,38 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
         direction="row"
         spacing={2}
         sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          marginRight: "36px",
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          marginRight: '36px',
         }}
       >
         {!publicKey && (
           <React.Fragment>
-            <FormControl variant="standard" style={{minWidth: "10ch"}}>
+            <FormControl variant="standard" style={{ minWidth: '10ch' }}>
               <Select
                 id="connected-env-select"
-                onChange={(e) => { setEndpoint(e.target.value); }}
+                onChange={e => {
+                  setEndpoint(e.target.value);
+                }}
                 value={endpoint}
               >
                 {ENDPOINTS.map(({ name, endpoint }) => (
-                  <MenuItem key={name} value={endpoint}>{name}</MenuItem>
+                  <MenuItem key={name} value={endpoint}>
+                    {name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <Link underline="none">
-              <Button
-                variant="contained"
-                onClick={handleConnect}
-              >
+              <Button variant="contained" onClick={handleConnect}>
                 Connect
               </Button>
             </Link>
           </React.Fragment>
         )}
-        {publicKey && connectedActions.map((a, idx) => {
+        {publicKey &&
+          connectedActions.map((a, idx) => {
             return (
               <Button
                 key={idx}
@@ -241,8 +242,7 @@ export const Settings = ({ narrow } : { narrow : boolean }) => {
                 {a.inner()}
               </Button>
             );
-          })
-        }
+          })}
         {themeSwitch}
       </Stack>
     );

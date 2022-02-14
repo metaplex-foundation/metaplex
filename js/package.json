@@ -5,7 +5,8 @@
       "packages/cli",
       "packages/common",
       "packages/gumdrop",
-      "packages/web"
+      "packages/web",
+      "packages/candy-machine-ui"
     ]
   },
   "keywords": [],

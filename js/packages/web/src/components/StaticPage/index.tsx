@@ -216,9 +216,7 @@ export const StaticPage = (props: {
         <p className="author-subtitle">Connect with the artist</p>
         {props.leftContent?.author.connectWith?.map((e, ii) => (
           <p key={ii}>
-            <a href={e.url}>
-              {e.label}
-            </a>
+            <a href={e.url}>{e.label}</a>
           </p>
         ))}
       </div>

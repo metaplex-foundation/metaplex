@@ -1,8 +1,8 @@
-import { WalletAdapter, WalletError } from "@solana/wallet-adapter-base";
+import { WalletAdapter, WalletError } from '@solana/wallet-adapter-base';
 import {
   useWallet,
   WalletProvider as BaseWalletProvider,
-} from "@solana/wallet-adapter-react";
+} from '@solana/wallet-adapter-react';
 import {
   getLedgerWallet,
   getMathWallet,
@@ -11,8 +11,8 @@ import {
   getSolletWallet,
   getSolongWallet,
   getTorusWallet,
-} from "@solana/wallet-adapter-wallets";
-import { Button } from "antd";
+} from '@solana/wallet-adapter-wallets';
+import { Button } from 'antd';
 import React, {
   createContext,
   FC,
@@ -22,11 +22,11 @@ import React, {
   useEffect,
   useMemo,
   useState,
-} from "react";
-import { notify } from "@oyster/common";
-import { DefaultModal } from "../../components";
+} from 'react';
+import { notify } from '@oyster/common';
+import { DefaultModal } from '../../components';
 
-import "./wallet.less";
+import './wallet.less';
 
 export interface WalletModalContextState {
   visible: boolean;
@@ -34,7 +34,7 @@ export interface WalletModalContextState {
 }
 
 export const WalletModalContext = createContext<WalletModalContextState>(
-  {} as WalletModalContextState
+  {} as WalletModalContextState,
 );
 
 export function useWalletModal(): WalletModalContextState {
@@ -44,7 +44,7 @@ export function useWalletModal(): WalletModalContextState {
 export const WalletModal: FC = () => {
   const { wallets, wallet: selected, select } = useWallet();
   const { visible, setVisible } = useWalletModal();
-  const [ , setShowWallets] = useState(false);
+  const [, setShowWallets] = useState(false);
   const close = useCallback(() => {
     setVisible(false);
     setShowWallets(false);
@@ -55,40 +55,40 @@ export const WalletModal: FC = () => {
       <div
         style={{
           background:
-            "linear-gradient(180deg, #D329FC 0%, #8F6DDE 49.48%, #19E6AD 100%)",
+            'linear-gradient(180deg, #D329FC 0%, #8F6DDE 49.48%, #19E6AD 100%)',
           borderRadius: 36,
           width: 50,
           height: 50,
-          textAlign: "center",
-          verticalAlign: "middle",
+          textAlign: 'center',
+          verticalAlign: 'middle',
           fontWeight: 700,
-          fontSize: "1.3rem",
+          fontSize: '1.3rem',
           lineHeight: 2.4,
           marginBottom: 10,
         }}
       ></div>
       <h2
         style={{
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "1.2rem",
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '1.2rem',
         }}
       >
-        {selected ? "Change provider" : ""}
+        {selected ? 'Change provider' : ''}
       </h2>
-      <p style={{ color: "white", fontSize: "1rem"}}>
+      <p style={{ color: 'white', fontSize: '1rem' }}>
         {selected
-          ? "Choose from the following options:"
-          : "Please sign into your wallet"}
+          ? 'Choose from the following options:'
+          : 'Please sign into your wallet'}
       </p>
 
       <br />
-      {wallets.map((wallet) => {
+      {wallets.map(wallet => {
         return (
           <Button
             key={wallet.name}
             size="large"
-            type={wallet === selected ? "primary" : "ghost"}
+            type={wallet === selected ? 'primary' : 'ghost'}
             onClick={() => {
               select(wallet.name);
               close();
@@ -99,15 +99,15 @@ export const WalletModal: FC = () => {
                 width={20}
                 height={20}
                 src={wallet.icon}
-                style={{ marginRight: 30, float: "left" }}
+                style={{ marginRight: 30, float: 'left' }}
               />
             }
             style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
               marginBottom: 8,
-              color: "white",
+              color: 'white',
             }}
           >
             {wallet.name}
@@ -132,13 +132,13 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
         base58.length > 20
           ? `${base58.substring(0, 7)}.....${base58.substring(
               base58.length - 7,
-              base58.length
+              base58.length,
             )}`
           : base58;
 
       notify({
-        message: "Wallet update",
-        description: "Connected to wallet " + keyToDisplay,
+        message: 'Wallet update',
+        description: 'Connected to wallet ' + keyToDisplay,
       });
     }
   }, [publicKey]);
@@ -146,8 +146,8 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (!publicKey && connected) {
       notify({
-        message: "Wallet update",
-        description: "Disconnected from wallet",
+        message: 'Wallet update',
+        description: 'Disconnected from wallet',
       });
     }
     setConnected(!!publicKey);
@@ -174,8 +174,8 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       getTorusWallet({
         options: {
           clientId:
-            "BEB_D44HovHuXH0Ace97QVqSu1ahCKndjpGhzhVcMy_9XmDTbHyqTbzQTufcyaN0kFwtlVbfPzJwpJXg94gWJqE",
-          uxMode: "redirect",
+            'BEB_D44HovHuXH0Ace97QVqSu1ahCKndjpGhzhVcMy_9XmDTbHyqTbzQTufcyaN0kFwtlVbfPzJwpJXg94gWJqE',
+          uxMode: 'redirect',
         },
       }),
       getLedgerWallet(),
@@ -183,13 +183,13 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       getMathWallet(),
       getSolletWallet(),
     ],
-    []
+    [],
   );
 
   const onError = useCallback((error: WalletError) => {
     console.error(error);
     notify({
-      message: "Wallet error",
+      message: 'Wallet error',
       description: error.message,
     });
   }, []);
@@ -203,5 +203,5 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
 export type WalletSigner = Pick<
   WalletAdapter,
-  "publicKey" | "signTransaction" | "signAllTransactions"
+  'publicKey' | 'signTransaction' | 'signAllTransactions'
 >;
