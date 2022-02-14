@@ -1,19 +1,23 @@
 /* Swiper bullets */
 .swiper-pagination {
-  bottom: 4px !important;
-  right: 0 !important;
-  left: unset !important;
-  width: unset !important;
+  @apply !w-[unset];
+  @apply !left-[unset];
+  @apply !right-[0];
+  @apply lg:!bottom-[4px];
+  @apply !bottom-[2px];
 
   &-bullet {
-    width: 34px !important;
-    height: 6px !important;
-    border-radius: 8px !important;
-    @apply !bg-white/20;
-    opacity: 1 !important;
+    @apply !w-[20px];
+    @apply lg:!w-[34px];
+    @apply !h-[6px];
+    @apply !rounded-[8px];
+    @apply !bg-gray-900/20;
+    @apply md:!bg-white/50;
+    @apply !opacity-100;
 
     &-active {
-      @apply !bg-white;
+      @apply !bg-gray-900;
+      @apply md:!bg-white;
     }
   }
 }
@@ -22,13 +26,18 @@
 .wallet-modal {
   .ant-modal-close,
   .ant-modal-close-x {
-    color: white !important;
+    @apply !text-white;
   }
+}
+
+/* Ant Modal */
+.ant-modal-body {
+  width: 100%;
 }
 
 /* Ant Design Select Dropdown */
 .network-select {
   .ant-select-arrow {
-    color: white !important;
+    @apply !text-white;
   }
 }

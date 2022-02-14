@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { Connection } from '@solana/web3.js';
 import { PackKey } from '..';
 import { AccountAndPubkey, StringPublicKey } from '../../..';

@@ -1,4 +1,3 @@
-/// <reference types="react" />
 export declare const TokenDisplay: (props: {
     name: string;
     mintAddress: string;

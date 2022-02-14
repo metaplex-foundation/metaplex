@@ -12,4 +12,6 @@ export * from './borsh';
 export * from './createPipelineExecutor';
 export * from './assets';
 export * from './getTokenListContainerPromise';
+export * from './useMediaQuery';
+export * from './useViewport';
 //# sourceMappingURL=index.d.ts.map

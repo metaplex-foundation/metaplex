@@ -23,7 +23,7 @@ const Button = ({ view, children, className, iconAfter, iconBefore, onClick, siz
     });
     return (react_1.default.createElement("button", { className: ButtonClasses, ...restProps, onClick: onClick },
         iconBefore && react_1.default.createElement("span", { className: "icon-before" }, iconBefore),
-        react_1.default.createElement("div", { className: "content" },
+        react_1.default.createElement("div", { className: "content flex items-center" },
             typeof children === 'function' && children({ onClick }),
             typeof children !== 'function' && children),
         iconAfter && react_1.default.createElement("span", { className: "icon-after" }, iconAfter)));
