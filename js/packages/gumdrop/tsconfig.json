@@ -1,33 +1,18 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "es2020"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "noImplicitAny": false,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
+    "module": "es2020",
+    "target": "es5",
+    "jsx": "react",
+    "outDir": "./dist/",
     "downlevelIteration": true,
-    "noEmit": true,
-    "jsx": "react-jsx"
-  },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.d.ts"
-  ]
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "typeRoots": ["types", "../../types", "../../node_modules/@types"],
+    "paths": {
+      "@bundlr-network/client/*": [
+        "./node_modules/@bundlr-network/client/build/*"
+      ]
+    }
+  }
 }

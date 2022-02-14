@@ -49,7 +49,7 @@ import * as anchor from '@project-serum/anchor';
 
 import {
   useConnection,
-} from "../contexts";
+} from "../contexts/ConnectionContext";
 import {
   CANDY_MACHINE_ID,
   GUMDROP_DISTRIBUTOR_ID,
@@ -1183,7 +1183,7 @@ export const Claim = (
               });
               return;
             }
-            localStorage.setItem("commMethod", e.target.value);
+            localStorage.setItem("commMethod", e.target.value as string);
             setCommMethod(e.target.value);
           }}
           style={{textAlign: "left"}}

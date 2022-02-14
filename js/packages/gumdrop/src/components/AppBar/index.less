@@ -1,0 +1,132 @@
+.App-Bar {
+  padding: 0px;
+  justify-content: space-between !important;
+
+  button.ant-btn:not(.connector) {
+    height: 32px;
+    background: none;
+  }
+}
+
+header.ant-layout-header.App-Bar {
+  width: 100%;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  height: fit-content;
+  z-index: 10;
+
+  @media (max-width: @mobile-xs-max) {
+    max-height: 64px;
+    position: sticky;
+    //background: @black-100;
+  }
+}
+
+.title {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 26px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  color: #ffffff;
+  padding: 10px 14px 10px 6px;
+
+  margin-bottom: 0px;
+}
+
+.divider {
+  border-left: 1px solid #282828;
+  width: 2px;
+  height: 40px;
+  margin-right: 14px;
+}
+.wallet-wrapper {
+  padding-right: 0.7rem;
+}
+.app-btn {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 16px;
+  line-height: 19px;
+  border-width: 0px;
+}
+
+.app-bar-inner {
+  display: flex;
+  min-width: 50%;
+  justify-content: center;
+  position: relative;
+  height: auto;
+  .app-bar-item {
+    cursor: pointer;
+    padding: 0 30px;
+    color: @tungsten-60;
+    font-size: 18px;
+    a {
+      color: inherit;
+    }
+    &.active {
+      color: white;
+    }
+  }
+}
+
+.app-logo {
+  font-family: 'Montserrat';
+  font-size: 40px;
+  color: white;
+}
+
+#mobile-navbar {
+  display: flex;
+  width: 100%;
+  padding: 16px 24px;
+  align-items: center;
+  justify-content: space-between;
+  @media (min-width: 769px) {
+    display: none;
+  }
+  @media (max-width: 768px) {
+    padding: 16px 0px;
+  }
+
+  & > a {
+    width: 50%;
+    max-width: 200px;
+    img {
+      width: 100%;
+    }
+  }
+}
+
+.mobile-menu {
+  display: flex;
+  align-items: center;
+
+  & > :first-child {
+    display: flex;
+    margin-right: 12px;
+  }
+
+  @media (max-width: @mobile-xs-max) {
+    :first-child {
+      display: flex;
+
+      img {
+        margin-right: 12px;
+      }
+
+      div {
+        margin-right: 10px;
+      }
+    }
+
+    sup {
+      display: none;
+    }
+  }
+}

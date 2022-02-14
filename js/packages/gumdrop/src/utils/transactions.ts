@@ -11,8 +11,9 @@ import {
   TransactionInstruction,
   TransactionSignature,
 } from '@solana/web3.js';
-import { sleep } from "@oyster/common";
 import log from 'loglevel';
+
+import { sleep } from "./common";
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;

@@ -1,153 +1,198 @@
-import { useLocalStorageState } from "@oyster/common";
 import {
-  Keypair,
   Commitment,
   Connection,
+  Keypair,
   Transaction,
   TransactionInstruction,
   Blockhash,
   FeeCalculator,
 } from "@solana/web3.js";
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import {
-  sendSignedTransaction,
-} from "../utils/transactions";
+import React, { useContext, useEffect, useState } from "react";
 import {
   TokenInfo,
   TokenListProvider,
   ENV as ChainId,
 } from "@solana/spl-token-registry";
-import { WalletSigner } from "./WalletContext/WalletContext";
 import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+
+import { WalletSigner } from "./WalletContext";
+import { useQuerySearch } from '../hooks/useQuerySearch';
+import { envFor, sendSignedTransaction } from "../utils/transactions";
+import { shortenAddress, useLocalStorageState } from "../utils/common";
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
   feeCalculator: FeeCalculator;
 }
 
-export type ENV = "mainnet-beta" | "testnet" | "devnet" | "localnet";
+export type ENDPOINT_NAME =
+  | 'mainnet-beta'
+  | 'testnet'
+  | 'devnet'
+  | 'localnet';
 
-export const ENDPOINTS = [
+export type Endpoint = {
+  name: ENDPOINT_NAME;
+  url: string;
+  chainId: ChainId;
+};
+
+export const ENDPOINTS: Array<Endpoint> = [
   {
-    name: "mainnet-beta" as ENV,
-    endpoint: "https://api.metaplex.solana.com",
-    ChainId: ChainId.MainnetBeta,
+    name: "mainnet-beta",
+    url: "https://api.metaplex.solana.com",
+    chainId: ChainId.MainnetBeta,
   },
   {
-    name: "devnet" as ENV,
-    endpoint: "https://api.devnet.solana.com",
-    ChainId: ChainId.Devnet,
+    name: "devnet",
+    url: "https://api.devnet.solana.com",
+    chainId: ChainId.Devnet,
   },
 ];
 
-const DEFAULT = ENDPOINTS[0].endpoint;
+const DEFAULT_IDX = 0;
+const DEFAULT_ENDPOINT = ENDPOINTS[DEFAULT_IDX];
 
 interface ConnectionConfig {
   connection: Connection;
-  endpoint: string;
-  env: ENV;
-  setEndpoint: (val: string) => void;
-  tokens: TokenInfo[];
-  tokenMap: Map<string, TokenInfo>;
+  endpoint: Endpoint;
+  tokens: Map<string, TokenInfo>;
 }
 
 const ConnectionContext = React.createContext<ConnectionConfig>({
-  endpoint: DEFAULT,
-  setEndpoint: () => {},
-  connection: new Connection(DEFAULT, "recent"),
-  env: ENDPOINTS[0].name,
-  tokens: [],
-  tokenMap: new Map<string, TokenInfo>(),
+  connection: new Connection(DEFAULT_ENDPOINT.url, 'recent'),
+  endpoint: DEFAULT_ENDPOINT,
+  tokens: new Map(),
 });
 
-export function ConnectionProvider({ children = undefined } : { children : React.ReactNode }) {
-  const [endpoint, setEndpoint] = useLocalStorageState(
-    "connectionEndpoint",
-    ENDPOINTS[0].endpoint
-  );
+export function ConnectionProvider({ children }: { children: any }) {
+  const searchParams = useQuerySearch();
+  const [networkStorage, setNetworkStorage] =
+    useLocalStorageState<ENDPOINT_NAME>('network', DEFAULT_ENDPOINT.name);
+  const networkParam = searchParams.get('network');
 
-  const connection = useMemo(
-    () => new Connection(endpoint, "recent"),
-    [endpoint]
-  );
+  let maybeEndpoint;
+  if (networkParam) {
+    let endpointParam = ENDPOINTS.find(({ name }) => name === networkParam);
+    if (endpointParam) {
+      maybeEndpoint = endpointParam;
+    }
+  }
 
-  const env =
-    ENDPOINTS.find((end) => end.endpoint === endpoint)?.name ||
-    ENDPOINTS[0].name;
+  if (networkStorage && !maybeEndpoint) {
+    let endpointStorage = ENDPOINTS.find(({ name }) => name === networkStorage);
+    if (endpointStorage) {
+      maybeEndpoint = endpointStorage;
+    }
+  }
 
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
+  const endpoint = maybeEndpoint || DEFAULT_ENDPOINT;
+
+  const { current: connection } = React.useRef(new Connection(endpoint.url));
+
+  const [tokens, setTokens] = useState<Map<string, TokenInfo>>(new Map());
+
   useEffect(() => {
-    // fetch token files
-    new TokenListProvider().resolve().then((container) => {
-      const list = container
-        .excludeByTag("nft")
-        .filterByChainId(
-          ENDPOINTS.find((end) => end.endpoint === endpoint)?.ChainId ||
-            ChainId.MainnetBeta
-        )
-        .getList();
+    function fetchTokens() {
+      return new TokenListProvider().resolve().then(container => {
+        const list = container
+          .excludeByTag('nft')
+          .filterByChainId(endpoint.chainId)
+          .getList();
 
-      const knownMints = [...list].reduce((map, item) => {
-        map.set(item.address, item);
-        return map;
-      }, new Map<string, TokenInfo>());
+        const map = new Map(list.map(item => [item.address, item]));
+        setTokens(map);
+      });
+    }
 
-      setTokenMap(knownMints);
-      setTokens(list);
-    });
-  }, [env, endpoint]);
+    fetchTokens();
+  }, []);
 
-  // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
-  // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.
-  // This is a hack to prevent the list from every getting empty
+  useEffect(() => {
+    function updateNetworkInLocalStorageIfNeeded() {
+      if (networkStorage !== endpoint.name) {
+        setNetworkStorage(endpoint.name);
+      }
+    }
+
+    updateNetworkInLocalStorageIfNeeded();
+  }, []);
+
+  // solana/web3.js closes its websocket connection when the subscription list
+  // is empty after opening for the first time, preventing subsequent
+  // subscriptions from receiving responses.
+  // This is a hack to prevent the list from ever being empty.
   useEffect(() => {
     const id = connection.onAccountChange(
       Keypair.generate().publicKey,
-      () => {}
+      () => {},
     );
     return () => {
       connection.removeAccountChangeListener(id);
     };
-  }, [connection]);
+  }, []);
 
   useEffect(() => {
     const id = connection.onSlotChange(() => null);
     return () => {
       connection.removeSlotChangeListener(id);
     };
-  }, [connection]);
+  }, []);
+
+  const contextValue = React.useMemo(() => {
+    return {
+      endpoint,
+      connection,
+      tokens,
+    };
+  }, [tokens]);
 
   return (
-    <ConnectionContext.Provider
-      value={{
-        endpoint,
-        setEndpoint,
-        connection,
-        tokens,
-        tokenMap,
-        env,
-      }}
-    >
+    <ConnectionContext.Provider value={contextValue}>
       {children}
     </ConnectionContext.Provider>
   );
 }
 
 export function useConnection() {
-  return useContext(ConnectionContext).connection as Connection;
+  const context = useContext(ConnectionContext);
+  if (!context) {
+    throw new Error('ConnectionContext must be used with a ConnectionProvider');
+  }
+  return context.connection as Connection;
 }
 
 export function useConnectionConfig() {
   const context = useContext(ConnectionContext);
+  if (!context) {
+    throw new Error('ConnectionContext must be used with a ConnectionProvider');
+  }
   return {
     endpoint: context.endpoint,
-    setEndpoint: context.setEndpoint,
-    env: context.env,
     tokens: context.tokens,
-    tokenMap: context.tokenMap,
   };
 }
+
+export const explorerLinkCForAddress = (
+  key : string,
+  connection: Connection,
+  shorten: boolean = true,
+) => {
+  return (
+    <a
+      href={`https://explorer.solana.com/address/${key}?cluster=${envFor(connection)}`}
+      target="_blank"
+      rel="noreferrer"
+      title={key}
+      style={{
+        fontFamily: 'Monospace',
+        color: '#7448A3',
+      }}
+    >
+      {shorten ? shortenAddress(key) : key}
+    </a>
+  );
+};
 
 export const getErrorForTransaction = async (
   connection: Connection,
@@ -218,7 +263,7 @@ export const sendTransactionWithRetry = async (
   }
   if (!includesFeePayer) {
     try {
-      transaction = await (wallet as any).signTransaction(transaction);
+      transaction = await wallet.signTransaction(transaction);
     } catch {
       return "Failed to sign transaction";
     }

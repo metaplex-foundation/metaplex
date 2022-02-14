@@ -1,36 +1,9 @@
-import React from "react";
-import ReactDOM from "react-dom";
+import * as React from "react";
+import { render } from "react-dom";
+import App from "./components/App";
 
-import {
-  AccountsProvider,
-  WalletProvider,
-  ConnectionProvider,
-  ColorModeContextProvider,
-} from "./contexts";
+import './styles/index.less';
 
-import "antd/dist/antd.css";
-import "@fontsource/open-sans";
-import "@fontsource/roboto";
-import "@fontsource/sora";
+const rootEl = document.getElementById("root");
 
-import App from "./App";
-import reportWebVitals from "./reportWebVitals";
-
-import "./index.css";
-
-ReactDOM.render(
-  <React.StrictMode>
-    <ConnectionProvider>
-      <WalletProvider>
-        <AccountsProvider>
-          <ColorModeContextProvider>
-            <App />
-          </ColorModeContextProvider>
-        </AccountsProvider>
-      </WalletProvider>
-    </ConnectionProvider>
-  </React.StrictMode>,
-  document.getElementById("root")
-);
-
-reportWebVitals();
+render(<App />, rootEl);
