@@ -23,7 +23,9 @@ export const StaticContent: FC<StaticContentProps> = ({
           id={index}
           heading={faq.heading}
           defaultOpen={faq.defaultOpen}
-          headingClassName={CN('border-b text-lg text-gray-800 hover:text-B-400')}
+          headingClassName={CN(
+            'border-b text-lg text-gray-800 hover:text-B-400',
+          )}
           headingLabelClassName="text-lg py-[16px]"
           iconAlign="left"
         >

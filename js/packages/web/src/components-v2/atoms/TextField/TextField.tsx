@@ -60,7 +60,8 @@ export const TextField: FC<TextFieldProps> = forwardRef(
     ref: any,
   ) => {
     /* Background Color */
-    const wrapperBGColor = (!disabled && 'bg-white') || (disabled && 'bg-gray-50');
+    const wrapperBGColor =
+      (!disabled && 'bg-white') || (disabled && 'bg-gray-50');
 
     /* Border Color */
     const wrapperBorderColor =

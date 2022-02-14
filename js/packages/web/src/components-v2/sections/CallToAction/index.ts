@@ -1,1 +1,1 @@
-export * from './CallToAction'
+export * from './CallToAction';

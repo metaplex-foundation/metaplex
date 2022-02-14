@@ -1,14 +1,15 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useConnection } from './ConnectionContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { AccountLayout, MintInfo, MintLayout, u64 } from '@solana/spl-token';
-import { EventEmitter, programIds, chunks, StringPublicKey, WRAPPED_SOL_MINT } from '@oyster/common';
+import {
+  EventEmitter,
+  programIds,
+  chunks,
+  StringPublicKey,
+  WRAPPED_SOL_MINT,
+} from '@oyster/common';
 
 import { TokenAccount } from '../models';
 
@@ -384,7 +385,11 @@ const precacheUserTokenAccounts = async (
   });
 };
 
-export function AccountsProvider({ children = undefined } : { children : React.ReactNode }) {
+export function AccountsProvider({
+  children = undefined,
+}: {
+  children: React.ReactNode;
+}) {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);

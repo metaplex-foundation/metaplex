@@ -1,1 +1,1 @@
-export * from './MostActive'
+export * from './MostActive';
