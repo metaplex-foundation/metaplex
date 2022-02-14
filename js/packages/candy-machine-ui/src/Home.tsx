@@ -192,6 +192,7 @@ const Home = (props: HomeProps) => {
                 wallet.publicKey &&
                 wallet.signTransaction ? (
                   <GatewayProvider
+                    // ownerSigns={true} How is this set?
                     wallet={{
                       publicKey:
                         wallet.publicKey ||
