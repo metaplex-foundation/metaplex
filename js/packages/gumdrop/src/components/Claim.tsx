@@ -255,7 +255,7 @@ const buildCandyClaim = async (
   const candyMachine = await getCandyMachine(connection, candyMachineKey);
   console.log("Candy Machine", candyMachine);
 
-  if (candyMachine.data.whitelistMintSettings) {
+  if (!candyMachine.data.whitelistMintSettings) {
     // soft error?
     throw new Error(`Candy machine doesn't seem to have a whitelist mint. You can mint normally!`);
   }
@@ -292,7 +292,7 @@ const buildCandyClaim = async (
   // candy machine mints fit in a single transaction
   const merkleClaim: Array<TransactionInstruction> = [];
 
-  if (connection.getAccountInfo(claimStatus) === null) {
+  if (await connection.getAccountInfo(claimStatus) === null) {
   // atm the contract has a special case for when the temporal key is defaulted
   // (aka always passes temporal check)
   // TODO: more flexible
@@ -384,8 +384,8 @@ const buildCandyClaim = async (
   }
 
   const candyMachineClaim: Array<TransactionInstruction> = [];
-  createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, candyMachineClaim);
-  candyMachineClaim.push(await program.instruction.mintNft(
+  await createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, candyMachineClaim);
+  candyMachineClaim.push(await candyProgram.instruction.mintNft(
     candyMachineCreatorBump,
     {
       accounts: {
