@@ -14,13 +14,13 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: '**/node_modules'
+          path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install modules
         run: yarn install
         working-directory: js
 
-      - name: Run ESLint
-        run: yarn lint:eslint
+      - name: Run formatting/lint
+        run: yarn lint
         working-directory: js
