@@ -122,7 +122,7 @@ export const createCandyMachineV2 = async function (
 ) {
   const candyAccount = Keypair.generate();
   candyData.uuid = uuidFromConfigPubkey(candyAccount.publicKey);
-  
+
   if (candyData.symbol === undefined) {
     throw new Error(`Invalid config, there must be a symbol.`);
   }
