@@ -168,9 +168,9 @@ export const sendTransactions = async (
   }
   unsignedTxns.push(...afterTransactions);
 
-  const signedTxns = await wallet.signAllTransactions(
-    unsignedTxns.filter((t) => t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)))
-  );
+  const partiallySignedTransactions = unsignedTxns.filter((t) => t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)));
+  const fullySignedTransactions = unsignedTxns.filter((t) => !t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)));
+  const signedTxns = (await wallet.signAllTransactions(partiallySignedTransactions)).concat(fullySignedTransactions);
 
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 

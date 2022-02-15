@@ -86,7 +86,7 @@ const Home = (props: HomeProps) => {
         console.log(`Price: ${cndy.state.price.toNumber()}`);
         // TODO: Remove this when set up actual cm
         cndy.state.gatekeeper = {
-          gatekeeperNetwork: new anchor.web3.PublicKey('tgnuXXNMDLK8dy7Xm1TdeGyc95MDym4bvAQCwcW21Bf'),
+          gatekeeperNetwork: new anchor.web3.PublicKey('tigoYhp9SpCDoCQmXGj2im5xa3mnjR1zuXrpCJ5ZRmi'),
           expireOnUse: true,
         };
         cndy.state.isActive = true;
@@ -200,10 +200,11 @@ const Home = (props: HomeProps) => {
                       //@ts-ignore
                       signTransaction: wallet.signTransaction,
                     }}
+                    stage={'dev'}
                     gatekeeperNetwork={
                       candyMachine?.state?.gatekeeper?.gatekeeperNetwork
                     }
-                    clusterUrl={rpcUrl}
+                    clusterUrl={'https://api.devnet.solana.com'}
                     handleTransaction={async (transaction: Transaction) => await onMint([transaction])}
                     broadcastTransaction={false}
                     options={{ autoShowModal: false }}

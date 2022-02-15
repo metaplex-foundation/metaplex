@@ -25,7 +25,7 @@ export const MintButton = ({
   candyMachine?: CandyMachineAccount;
   isMinting: boolean;
 }) => {
-  const { requestGatewayToken, gatewayStatus, gatewayTokenTransaction } = useGateway();
+  const { requestGatewayToken, gatewayStatus } = useGateway();
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
@@ -34,12 +34,6 @@ export const MintButton = ({
       setClicked(false);
     }
   }, [gatewayStatus, clicked, setClicked, onMint]);
-
-
-  useEffect(() => {
-    console.log('Partially signed transaction', gatewayTokenTransaction);
-    // ask user to sign.
-  }, [gatewayTokenTransaction]);
 
   const getMintButtonContent = () => {
     if (candyMachine?.state.isSoldOut) {
