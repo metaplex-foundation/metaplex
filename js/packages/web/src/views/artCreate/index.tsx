@@ -11,7 +11,8 @@ import { Button, Col, Row, Space, Steps } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { mintNFT } from '../../actions';
-import { useAnalytics } from '../../components/Analytics';
+import { useAnalytics } from '../../contexts';
+
 import useWindowDimensions from '../../utils/layout';
 import { CategoryStep } from './categoryStep';
 import { Congrats } from './congrats';
@@ -112,9 +113,10 @@ export const ArtCreateView = () => {
 
       try {
         // const mintPriceSol = (await getSolCostForMint(files, connection, attributes))
-        track('nft_created', {
-          category: 'creation',
-          label: metadata.properties.category,
+        // NB: I don't think this is used at all anymore
+        track('NFT Created', {
+          event_category: 'Minter',
+          event_label: metadata.properties.category,
           // sol_value: mintPriceSol.
         });
       } catch (error) {

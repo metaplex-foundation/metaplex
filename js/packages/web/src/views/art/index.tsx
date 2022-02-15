@@ -12,13 +12,14 @@ import { Button, List, Skeleton, Tag, Space, Row, Col } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { useAnalytics } from '../../components/Analytics';
+
 import { META_PROGRAM_ID, SigningStatus } from '../../components/ArtCard';
 import { ArtContent } from '../../components/ArtContent';
 import { ArtMinting } from '../../components/ArtMinting';
 import { Spinner } from '../../components/Loader';
 import { holaSignMetadata } from '../../components/MintModal/sign-meta';
 import { ViewOn } from '../../components/ViewOn';
+import { useAnalytics } from '../../contexts';
 import { useArt, useExtendedArt } from '../../hooks';
 import { ArtType } from '../../types';
 
@@ -55,7 +56,12 @@ export const ArtView = () => {
       throw new Error('solanaEndpoint is required for retrySigning');
     }
 
-    track('Holaplex signing Initiated', {});
+    track('Holaplex signing Initiated', {
+      event_category: 'Minter',
+      nftAddress: pubkey,
+      event_label: 'art page',
+      // nftAddress
+    });
     await holaSignMetadata({
       solanaEndpoint: endpoint,
       metadata,

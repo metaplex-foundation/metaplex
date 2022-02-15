@@ -57,7 +57,7 @@ import {
 } from '../../actions/sendRedeemBid';
 import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
-import { useMeta } from '../../contexts';
+import { useAnalytics, useMeta } from '../../contexts';
 import {
   AuctionView,
   AuctionViewState,
@@ -66,7 +66,7 @@ import {
   useWinningBidsForAuction,
 } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
-import { useAnalytics } from '../Analytics';
+
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 import { endSale } from './utils/endSale';
@@ -398,9 +398,12 @@ export const AuctionCard = ({
         return;
       }
 
-      track('instant_sale_canceled', {
-        category: 'auction',
-        label: 'canceled',
+      track('Listing Cancelled', {
+        event_category: 'Listings',
+        listingType: 'instant_sale',
+        // nftAddress
+        // auctionAddress
+        // event_label: '' nft address
       });
 
       notification.success({
@@ -459,9 +462,12 @@ export const AuctionCard = ({
             'confirmed',
           );
           bidTxid = txid;
-          track('instant_sale_bid_submitted', {
-            category: 'auction',
-            label: 'instant_sale',
+          track('Listing Bid Submitted', {
+            event_category: 'Listings',
+            listingType: 'instant_sale',
+            event_label: 'instant_sale',
+            // nftAddress
+            // auctionAddress
             sol_value: value,
           });
         } catch (e) {
@@ -838,9 +844,10 @@ export const AuctionCard = ({
                     'Your bid was accepted by the auctioneer. You may raise your bid at any time.',
                 });
                 setShowPlaceBidUI(false);
-                track('bid_submitted', {
-                  category: 'auction',
-                  // label: '',
+                track('Listing Bid Submitted', {
+                  event_category: 'Listings',
+                  listingType: 'auction',
+                  event_label: 'auction',
                   sol_value: value,
                 });
               } catch (e: any) {
