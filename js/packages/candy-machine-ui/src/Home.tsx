@@ -38,7 +38,6 @@ const MintContainer = styled.div``; // add your owns styles here
 export interface HomeProps {
   candyMachineId?: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
-  startDate: number;
   txTimeout: number;
   rpcHost: string;
 }
