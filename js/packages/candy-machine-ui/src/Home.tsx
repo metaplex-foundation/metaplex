@@ -198,6 +198,8 @@ const Home = (props: HomeProps) => {
         }
 
         if (status && !status.err) {
+          // manual update since the refresh might not detect
+          // the change immediately
           let remaining = itemsRemaining! - 1;
           setItemsRemaining(remaining);
           setIsActive((candyMachine.state.isActive = remaining > 0));
@@ -239,6 +241,9 @@ const Home = (props: HomeProps) => {
         message,
         severity: 'error',
       });
+      // updates the candy machine state to reflect the lastest
+      // information on chain
+      refreshCandyMachineState();
     } finally {
       setIsUserMinting(false);
     }
@@ -424,7 +429,7 @@ const Home = (props: HomeProps) => {
             variant="caption"
             align="center"
             display="block"
-            style={{ marginTop: 5, color: 'grey' }}
+            style={{ marginTop: 7, color: 'grey' }}
           >
             Powered by METAPLEX
           </Typography>
