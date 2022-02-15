@@ -1,5 +1,6 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
+import { Link } from 'react-router-dom'
 
 export interface SubmitCollectionProps {
   [x: string]: any
@@ -24,9 +25,11 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
         </p>
 
         <div className='w-full pt-[12px]'>
-          <button className='inline-flex h-[48px] w-full appearance-none items-center justify-center rounded-full bg-[linear-gradient(89.57deg,_#448fff_0.79%,_#0066D6_124%)] px-[40px] text-white outline-none hover:bg-[linear-gradient(89.57deg,_#308fc5_0.79%,_#1a44af_124%)] md:w-[440px] lg:h-[60px] lg:text-lg'>
-            Apply here
-          </button>
+          <Link to='/submit-collection'>
+            <button className='inline-flex h-[48px] w-full appearance-none items-center justify-center rounded-full bg-[linear-gradient(89.57deg,_#448fff_0.79%,_#0066D6_124%)] px-[40px] text-white outline-none hover:bg-[linear-gradient(89.57deg,_#308fc5_0.79%,_#1a44af_124%)] md:w-[440px] lg:h-[60px] lg:text-lg'>
+              Apply here
+            </button>
+          </Link>
         </div>
       </div>
     </div>
