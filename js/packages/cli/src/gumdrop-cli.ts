@@ -531,7 +531,7 @@ programCommand('fetch_program')
     'before',
     'Utility to fetch the gumdrop program executable data. Useful for doing a diff against a local build. Bytes are formatted for easy comparison to `xxd` output',
   )
-  .action(async (options, cmd) => {
+  .action(async options => {
     log.info(`Parsed options:`, options);
 
     const connection = new anchor.web3.Connection(

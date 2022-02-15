@@ -1,5 +1,4 @@
 import {
-  AccountMeta,
   Connection as RPCConnection,
   Keypair,
   PublicKey,
@@ -19,7 +18,6 @@ import BN from 'bn.js';
 import * as bs58 from 'bs58';
 
 import {
-  getCandyMachineAddress,
   getEditionMarkPda,
   getMasterEdition,
   getTokenWallet,
