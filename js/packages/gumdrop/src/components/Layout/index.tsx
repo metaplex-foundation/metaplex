@@ -5,7 +5,7 @@ import { AppBar } from '../AppBar';
 
 const { Header, Content } = Layout;
 
-export const AppLayout = React.memo((props: any) => {
+export const AppLayout = React.memo(function AppLayoutImpl(props: any) {
   return (
     <>
       <Layout id={'main-layout'}>

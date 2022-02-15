@@ -1,9 +1,6 @@
 import {
-  Keypair,
   PublicKey,
 } from '@solana/web3.js';
-
-import * as bs58 from 'bs58';
 
 export const CANDY_MACHINE_ID = new PublicKey(
   'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
