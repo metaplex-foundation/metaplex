@@ -73,7 +73,7 @@ export const About = () => {
           target="_blank"
           rel="noreferrer"
         >
-          metaplex docs
+          Metaplex Docs
         </a>
       </div>
 
