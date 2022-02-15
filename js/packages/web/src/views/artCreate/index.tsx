@@ -73,6 +73,7 @@ export const ArtCreateView = () => {
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
     symbol: '',
+    collection: '',
     description: '',
     external_url: '',
     image: '',
@@ -105,6 +106,7 @@ export const ArtCreateView = () => {
       name: attributes.name,
       symbol: attributes.symbol,
       creators: attributes.creators,
+      collection: attributes.collection,
       description: attributes.description,
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
       image: attributes.image,
@@ -692,7 +694,21 @@ const InfoStep = (props: {
               }
             />
           </label>
-
+          {/*<label className="action-field">*/}
+          {/*  <span className="field-title">Collection</span>*/}
+          {/*  <Input*/}
+          {/*    className="input"*/}
+          {/*    placeholder="Collection Mint Key"*/}
+          {/*    allowClear*/}
+          {/*    value={props.attributes.collection}*/}
+          {/*    onChange={info =>*/}
+          {/*      props.setAttributes({*/}
+          {/*        ...props.attributes,*/}
+          {/*        collection: info.target.value,*/}
+          {/*      })*/}
+          {/*    }*/}
+          {/*  />*/}
+          {/*</label>*/}
           <label className="action-field">
             <span className="field-title">Description</span>
             <Input.TextArea
