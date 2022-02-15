@@ -261,7 +261,7 @@ const buildCandyClaim = async (
   }
   const whitelistMint = candyMachine.data.whitelistMintSettings.mint;
 
-  const [secret, pdaSeeds] = await walletKeyOrPda(walletKey, handle, pin, candyMachineKey);
+  const [secret, pdaSeeds] = await walletKeyOrPda(walletKey, handle, pin, whitelistMint);
 
   // TODO: since it's in the PDA do we need it to be in the leaf?
   const leaf = Buffer.from(
@@ -1344,7 +1344,6 @@ export const Claim = (
       {steps[stepToUse].inner(handleNext)}
       {stepToUse > 0 && (
         <Button
-          color="info"
           onClick={handleBack}
         >
           Back
