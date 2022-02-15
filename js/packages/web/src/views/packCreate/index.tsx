@@ -39,8 +39,10 @@ export const PackCreateView = (): ReactElement => {
   const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
   const [shouldShowSuccessModal, setShouldShowSuccessModal] =
     useState<boolean>(false);
-  const [errorModal, setErrorModal] =
-    useState<{error: string, display: boolean}>({error: '', display: false});
+  const [errorModal, setErrorModal] = useState<{
+    error: string;
+    display: boolean;
+  }>({ error: '', display: false });
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const { pullUserMetadata } = useMeta();
 
@@ -178,7 +180,8 @@ export const PackCreateView = (): ReactElement => {
       description: data.description,
     });
   }, [data]);
-  const shouldRenderSuccessModal = shouldShowSuccessModal && !errorModal.display
+  const shouldRenderSuccessModal =
+    shouldShowSuccessModal && !errorModal.display;
 
   const shouldRenderRefresh =
     step === CreatePackSteps.SelectItems ||

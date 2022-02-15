@@ -15,7 +15,10 @@ import {
   StringPublicKey,
   toPublicKey,
   updateMetadataV2,
-  WalletSigner
+  WalletSigner,
+  Attribute,
+  getAssetCostToStore,
+  ARWEAVE_UPLOAD_ENDPOINT,
 } from '@oyster/common';
 import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
@@ -40,14 +43,11 @@ interface IArweaveResult {
 }
 
 const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
-  const resp = await fetch(
-    ARWEAVE_UPLOAD_ENDPOINT,
-    {
-      method: 'POST',
-      // @ts-ignore
-      body: data,
-    },
-  );
+  const resp = await fetch(ARWEAVE_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    // @ts-ignore
+    body: data,
+  });
 
   if (!resp.ok) {
     return Promise.reject(
