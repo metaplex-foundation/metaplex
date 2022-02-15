@@ -14,20 +14,26 @@ import {
   sendTransactionWithRetry,
   StringPublicKey,
   toPublicKey,
-  updateMetadataV2,
   WalletSigner,
-  Attribute,
-  getAssetCostToStore,
-  ARWEAVE_UPLOAD_ENDPOINT,
 } from '@oyster/common';
 import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
-import { Connection, Keypair, PublicKey, SystemProgram, TransactionInstruction, } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import crypto from 'crypto';
 
 import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
-import { Collection, DataV2, Uses } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  Collection,
+  DataV2,
+  Uses,
+} from '@metaplex-foundation/mpl-token-metadata';
 
 const RESERVED_TXN_MANIFEST = 'manifest.json';
 const RESERVED_METADATA = 'metadata.json';
@@ -82,8 +88,8 @@ export const mintNFT = async (
     properties: any;
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
-    collection?: string,
-    uses?: Uses,
+    collection?: string;
+    uses?: Uses;
   },
   progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
@@ -110,10 +116,12 @@ export const mintNFT = async (
         };
       }),
     },
-    collection: metadata.collection ? new PublicKey(metadata.collection).toBase58() : null,
+    collection: metadata.collection
+      ? new PublicKey(metadata.collection).toBase58()
+      : null,
     use: metadata.uses ? metadata.uses : null,
   };
-  console.log(metadata, "METADATA")
+  console.log(metadata, 'METADATA');
 
   const realFiles: File[] = [
     ...files,
@@ -182,7 +190,10 @@ export const mintNFT = async (
       sellerFeeBasisPoints: metadata.sellerFeeBasisPoints,
       creators: metadata.creators,
       collection: metadata.collection
-        ? new Collection({ key: new PublicKey(metadata.collection).toBase58(), verified: false })
+        ? new Collection({
+            key: new PublicKey(metadata.collection).toBase58(),
+            verified: false,
+          })
         : null,
       uses: metadata.uses || null,
     }),
@@ -263,7 +274,10 @@ export const mintNFT = async (
         sellerFeeBasisPoints: metadata.sellerFeeBasisPoints,
         creators: metadata.creators,
         collection: metadata.collection
-          ? new Collection({ key: new PublicKey(metadata.collection).toBase58(), verified: false })
+          ? new Collection({
+              key: new PublicKey(metadata.collection).toBase58(),
+              verified: false,
+            })
           : null,
         uses: metadata.uses || null,
       }),

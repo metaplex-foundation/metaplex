@@ -6,13 +6,13 @@ import { Artist } from '../../types';
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../MetaAvatar';
 
-export const ArtistCard = ({ artist }: { artist: Artist },) => {
+export const ArtistCard = ({ artist }: { artist: Artist }) => {
   return (
     <Card
       hoverable={true}
       className={`artist-card`}
       cover={
-        <div  className="header-container">
+        <div className="header-container">
           {artist.background ? <img src={artist.background} /> : null}
         </div>
       }
