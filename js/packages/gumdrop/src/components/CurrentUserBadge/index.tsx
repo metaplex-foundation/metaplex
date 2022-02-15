@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { useWallet } from '@solana/wallet-adapter-react';
-import {
-  PublicKey,
-  LAMPORTS_PER_SOL,
-} from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Button, Popover, Select, Tooltip } from 'antd';
 import Jazzicon from 'jazzicon';
 import { CopyOutlined } from '@ant-design/icons';
@@ -18,11 +15,7 @@ import {
 import { useWalletModal } from '../../contexts/WalletContext';
 import { useSolPrice } from '../../contexts/coingecko';
 import { useNativeAccount } from '../../contexts/accounts';
-import {
-  formatNumber,
-  formatUSD,
-  shortenAddress,
-} from '../../utils/common';
+import { formatNumber, formatUSD, shortenAddress } from '../../utils/common';
 import { useQuerySearch } from '../../hooks/useQuerySearch';
 
 export const Identicon = (props: {
@@ -282,7 +275,11 @@ export const Cog = () => {
                 // (which will also be saved to local storage for future visits)
                 // for all its lifecycle.
                 routerSearchParams.set('network', network as any);
-                console.log(`Set window search to ${network} ${routerSearchParams.toString()}: ${window.location.search}`);
+                console.log(
+                  `Set window search to ${network} ${routerSearchParams.toString()}: ${
+                    window.location.search
+                  }`,
+                );
                 window.location.search = `?${routerSearchParams.toString()}`;
               }}
               value={endpoint.name}

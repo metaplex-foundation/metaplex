@@ -20,7 +20,7 @@ export const AppLayout = React.memo(function AppLayoutImpl(props: any) {
               flex: 'unset',
             }}
           >
-            <Header className="App-Bar" >
+            <Header className="App-Bar">
               <AppBar />
             </Header>
           </Content>

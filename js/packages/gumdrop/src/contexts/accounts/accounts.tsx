@@ -46,4 +46,3 @@ export const useNativeAccount = () => {
 
   return { account: nativeAccount };
 };
-

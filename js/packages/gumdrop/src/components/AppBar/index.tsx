@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { Button, Modal } from 'antd';
@@ -41,7 +41,7 @@ export function useWindowDimensions() {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <p className={"app-logo"}>GUMDROP</p>
+      <p className={'app-logo'}>GUMDROP</p>
     </Link>
   );
 };
@@ -60,19 +60,14 @@ export const MetaplexMenu = () => {
           footer={null}
           className={'modal-box'}
           closeIcon={
-            <img
-              onClick={() => setIsModalVisible(false)}
-              src={closeSvg}
-            />
+            <img onClick={() => setIsModalVisible(false)} src={closeSvg} />
           }
         >
           <div className="site-card-wrapper mobile-menu-modal">
             <div className="actions">
               {!connected ? (
                 <div className="actions-buttons">
-                  <ConnectButton
-                    onClick={() => setIsModalVisible(false)}
-                  >
+                  <ConnectButton onClick={() => setIsModalVisible(false)}>
                     Connect Wallet
                   </ConnectButton>
                   {/*<HowToBuyModal
@@ -95,9 +90,7 @@ export const MetaplexMenu = () => {
                       className="wallet-key"
                       onClick={() => setIsModalVisible(false)}
                     >
-                      <Link to="/">
-                        {homeSvg(location.pathname === "/")}
-                      </Link>
+                      <Link to="/">{homeSvg(location.pathname === '/')}</Link>
                     </Button>
                   </div>
                   <div className="wallet-wrapper">
@@ -106,7 +99,7 @@ export const MetaplexMenu = () => {
                       onClick={() => setIsModalVisible(false)}
                     >
                       <Link to="/claim">
-                        {gumballsSvg(location.pathname === "/claim")}
+                        {gumballsSvg(location.pathname === '/claim')}
                       </Link>
                     </Button>
                   </div>
@@ -133,36 +126,40 @@ export const MobileNavbar = () => {
         <MetaplexMenu />
       </div>
     </div>
-  )
-}
+  );
+};
 
 const homeSvg = (filled: boolean) => {
   const props = filled
     ? {
-      fill: 'none',
-      stroke: '#d0bdf4',
-      strokeWidth: '1',
-    }
+        fill: 'none',
+        stroke: '#d0bdf4',
+        strokeWidth: '1',
+      }
     : {
-      fill: 'none',
-      stroke: 'white',
-      strokeWidth: '1',
-    };
+        fill: 'none',
+        stroke: 'white',
+        strokeWidth: '1',
+      };
   return (
-    <svg aria-label="Home" height="20" width="20" viewBox="0 0 24 24" {...props} >
-      <path d="M22 23h-6.001a1 1 0 01-1-1v-5.455a2.997 2.997 0 10-5.993 0V22a1 1 0 01-1 1H2a1 1 0 01-1-1V11.543a1.002 1.002 0 01.31-.724l10-9.543a1.001 1.001 0 011.38 0l10 9.543a1.002 1.002 0 01.31.724V22a1 1 0 01-1 1z">
-      </path>
+    <svg
+      aria-label="Home"
+      height="20"
+      width="20"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="M22 23h-6.001a1 1 0 01-1-1v-5.455a2.997 2.997 0 10-5.993 0V22a1 1 0 01-1 1H2a1 1 0 01-1-1V11.543a1.002 1.002 0 01.31-.724l10-9.543a1.001 1.001 0 011.38 0l10 9.543a1.002 1.002 0 01.31.724V22a1 1 0 01-1 1z"></path>
     </svg>
-  )
-}
+  );
+};
 
 const gumballsSvg = (filled: boolean) => {
-  const props = filled
-    ? { fill: '#d0bdf4' }
-    : { fill: 'white' };
+  const props = filled ? { fill: '#d0bdf4' } : { fill: 'white' };
   return (
-    <svg width="20" height="20" viewBox="0 0 479.352 479.352" {...props} >
-      <path d="M393.265,415.733c41.024-41.025,63.618-95.571,63.618-153.589s-22.594-112.564-63.618-153.589
+    <svg width="20" height="20" viewBox="0 0 479.352 479.352" {...props}>
+      <path
+        d="M393.265,415.733c41.024-41.025,63.618-95.571,63.618-153.589s-22.594-112.564-63.618-153.589
         c-41.025-41.025-95.57-63.619-153.589-63.619c-0.473,0-0.949,0.009-1.424,0.012L223.074,18.66
         c-5.85-10.131-16.755-16.424-28.462-16.424c-5.738,0-11.409,1.522-16.399,4.404l-39.334,22.709C137.616,12.956,123.882,0,107.171,0
         C89.629,0,75.357,14.271,75.357,31.813c0,10.872,5.485,20.484,13.831,26.225l-39.07,22.557
@@ -242,10 +239,11 @@ const gumballsSvg = (filled: boolean) => {
         C51.983,108.992,54.115,101.381,60.118,97.915z M238.437,81.505c39.145,0,76.391,12.315,107.711,35.613
         c30.706,22.84,53.017,54.101,64.521,90.402c1.668,5.265-1.247,10.885-6.513,12.554c-1.005,0.318-2.022,0.47-3.023,0.47
         c-4.242,0-8.18-2.722-9.53-6.981c-21.239-67.025-82.792-112.057-153.165-112.057c-5.522,0-10-4.477-10-10
-        S232.914,81.505,238.437,81.505z"/>
+        S232.914,81.505,238.437,81.505z"
+      />
     </svg>
-  )
-}
+  );
+};
 
 export const AppBar = () => {
   const { connected } = useWallet();
@@ -272,15 +270,13 @@ export const AppBar = () => {
               />
               <div className="wallet-wrapper">
                 <Button className="wallet-key">
-                  <Link to="/">
-                    {homeSvg(location.pathname === "/")}
-                  </Link>
+                  <Link to="/">{homeSvg(location.pathname === '/')}</Link>
                 </Button>
               </div>
               <div className="wallet-wrapper">
                 <Button className="wallet-key">
                   <Link to="/claim">
-                    {gumballsSvg(location.pathname === "/claim")}
+                    {gumballsSvg(location.pathname === '/claim')}
                   </Link>
                 </Button>
               </div>
@@ -292,4 +288,3 @@ export const AppBar = () => {
     </>
   );
 };
-

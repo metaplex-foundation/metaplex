@@ -6,30 +6,26 @@ import {
   TransactionInstruction,
   Blockhash,
   FeeCalculator,
-} from "@solana/web3.js";
-import React, { useContext, useEffect, useState } from "react";
+} from '@solana/web3.js';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   TokenInfo,
   TokenListProvider,
   ENV as ChainId,
-} from "@solana/spl-token-registry";
-import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+} from '@solana/spl-token-registry';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
-import { WalletSigner } from "./WalletContext";
+import { WalletSigner } from './WalletContext';
 import { useQuerySearch } from '../hooks/useQuerySearch';
-import { envFor, sendSignedTransaction } from "../utils/transactions";
-import { shortenAddress, useLocalStorageState } from "../utils/common";
+import { envFor, sendSignedTransaction } from '../utils/transactions';
+import { shortenAddress, useLocalStorageState } from '../utils/common';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
   feeCalculator: FeeCalculator;
 }
 
-export type ENDPOINT_NAME =
-  | 'mainnet-beta'
-  | 'testnet'
-  | 'devnet'
-  | 'localnet';
+export type ENDPOINT_NAME = 'mainnet-beta' | 'testnet' | 'devnet' | 'localnet';
 
 export type Endpoint = {
   name: ENDPOINT_NAME;
@@ -39,13 +35,13 @@ export type Endpoint = {
 
 export const ENDPOINTS: Array<Endpoint> = [
   {
-    name: "mainnet-beta",
-    url: "https://api.metaplex.solana.com",
+    name: 'mainnet-beta',
+    url: 'https://api.metaplex.solana.com',
     chainId: ChainId.MainnetBeta,
   },
   {
-    name: "devnet",
-    url: "https://api.devnet.solana.com",
+    name: 'devnet',
+    url: 'https://api.devnet.solana.com',
     chainId: ChainId.Devnet,
   },
 ];
@@ -80,7 +76,9 @@ export function ConnectionProvider({ children }: { children: any }) {
   }
 
   if (networkStorage && !maybeEndpoint) {
-    const endpointStorage = ENDPOINTS.find(({ name }) => name === networkStorage);
+    const endpointStorage = ENDPOINTS.find(
+      ({ name }) => name === networkStorage,
+    );
     if (endpointStorage) {
       maybeEndpoint = endpointStorage;
     }
@@ -174,13 +172,15 @@ export function useConnectionConfig() {
 }
 
 export const explorerLinkCForAddress = (
-  key : string,
+  key: string,
   connection: Connection,
   shorten: boolean = true,
 ) => {
   return (
     <a
-      href={`https://explorer.solana.com/address/${key}?cluster=${envFor(connection)}`}
+      href={`https://explorer.solana.com/address/${key}?cluster=${envFor(
+        connection,
+      )}`}
       target="_blank"
       rel="noreferrer"
       title={key}
@@ -196,16 +196,16 @@ export const explorerLinkCForAddress = (
 
 export const getErrorForTransaction = async (
   connection: Connection,
-  txid: string
+  txid: string,
 ) => {
   // wait for all confirmation before geting transaction
-  await connection.confirmTransaction(txid, "max");
+  await connection.confirmTransaction(txid, 'max');
 
   const tx = await connection.getParsedConfirmedTransaction(txid);
 
   const errors: string[] = [];
   if (tx?.meta && tx.meta.logMessages) {
-    tx.meta.logMessages.forEach((log) => {
+    tx.meta.logMessages.forEach(log => {
       const regex = /Error: (.*)/gm;
       let m;
       while ((m = regex.exec(log)) !== null) {
@@ -235,26 +235,26 @@ export const sendTransactionWithRetry = async (
   wallet: WalletSigner,
   instructions: TransactionInstruction[],
   signers: Keypair[],
-  commitment: Commitment = "singleGossip",
+  commitment: Commitment = 'singleGossip',
   includesFeePayer: boolean = false,
   block?: BlockhashAndFeeCalculator,
-  beforeSend?: () => void
-) : Promise<string| { txid: string; slot: number }> => {
+  beforeSend?: () => void,
+): Promise<string | { txid: string; slot: number }> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   let transaction = new Transaction();
-  instructions.forEach((instruction) => transaction.add(instruction));
+  instructions.forEach(instruction => transaction.add(instruction));
   transaction.recentBlockhash = (
     block || (await connection.getRecentBlockhash(commitment))
   ).blockhash;
 
   if (includesFeePayer) {
-    transaction.setSigners(...signers.map((s) => s.publicKey));
+    transaction.setSigners(...signers.map(s => s.publicKey));
   } else {
     transaction.setSigners(
       // fee payed by the wallet owner
       wallet.publicKey,
-      ...signers.map((s) => s.publicKey)
+      ...signers.map(s => s.publicKey),
     );
   }
 
@@ -265,14 +265,14 @@ export const sendTransactionWithRetry = async (
     try {
       transaction = await wallet.signTransaction(transaction);
     } catch {
-      return "Failed to sign transaction";
+      return 'Failed to sign transaction';
     }
   }
 
   if (beforeSend) {
     beforeSend();
   }
-  console.log("About to send");
+  console.log('About to send');
   try {
     const { txid, slot } = await sendSignedTransaction({
       connection,
@@ -282,7 +282,6 @@ export const sendTransactionWithRetry = async (
     return { txid, slot };
   } catch (error) {
     console.error(error);
-    return "See console logs";
+    return 'See console logs';
   }
 };
-

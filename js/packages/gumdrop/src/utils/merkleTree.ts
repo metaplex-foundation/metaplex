@@ -1,16 +1,16 @@
-import { keccak_256 } from "js-sha3";
+import { keccak_256 } from 'js-sha3';
 
 export class MerkleTree {
   leafs: Array<Buffer>;
   layers: Array<Array<Buffer>>;
 
-  constructor(leafs : Array<Buffer>) {
+  constructor(leafs: Array<Buffer>) {
     this.leafs = leafs.slice();
     this.layers = [];
 
     let hashes = this.leafs.map(MerkleTree.nodeHash);
     while (hashes.length > 0) {
-      console.log("Hashes", this.layers.length, hashes);
+      console.log('Hashes', this.layers.length, hashes);
       this.layers.push(hashes.slice());
       if (hashes.length === 1) break;
       hashes = hashes.reduce((acc, cur, idx, arr) => {
@@ -23,29 +23,21 @@ export class MerkleTree {
     }
   }
 
-  static nodeHash(
-    data : Buffer,
-  ) : Buffer {
+  static nodeHash(data: Buffer): Buffer {
     return Buffer.from(keccak_256.digest([0x00, ...data]));
   }
 
-
-  static internalHash(
-    first : Buffer,
-    second : Buffer | undefined,
-  ) : Buffer {
+  static internalHash(first: Buffer, second: Buffer | undefined): Buffer {
     if (!second) return first;
-    const [fst, snd] = [first, second].sort(Buffer.compare)
-    return Buffer.from(
-      keccak_256.digest([0x01, ...fst, ...snd])
-    );
+    const [fst, snd] = [first, second].sort(Buffer.compare);
+    return Buffer.from(keccak_256.digest([0x01, ...fst, ...snd]));
   }
 
-  getRoot() : Buffer {
+  getRoot(): Buffer {
     return this.layers[this.layers.length - 1][0];
   }
 
-  getProof(idx : number) : Buffer[] {
+  getProof(idx: number): Buffer[] {
     return this.layers.reduce((proof, layer) => {
       const sibling = idx ^ 1;
       if (sibling < layer.length) {
@@ -59,18 +51,14 @@ export class MerkleTree {
   }
 
   getHexRoot(): string {
-    return this.getRoot().toString("hex");
+    return this.getRoot().toString('hex');
   }
 
-  getHexProof(idx : number) : string[] {
-    return this.getProof(idx).map((el) => el.toString("hex"));
+  getHexProof(idx: number): string[] {
+    return this.getProof(idx).map(el => el.toString('hex'));
   }
 
-  verifyProof(
-    idx : number,
-    proof : Buffer[],
-    root : Buffer
-  ): boolean {
+  verifyProof(idx: number, proof: Buffer[], root: Buffer): boolean {
     let pair = MerkleTree.nodeHash(this.leafs[idx]);
     for (const item of proof) {
       pair = MerkleTree.internalHash(pair, item);
@@ -79,11 +67,7 @@ export class MerkleTree {
     return pair.equals(root);
   }
 
-  static verifyClaim(
-    leaf : Buffer,
-    proof : Buffer[],
-    root : Buffer
-  ): boolean {
+  static verifyClaim(leaf: Buffer, proof: Buffer[], root: Buffer): boolean {
     let pair = MerkleTree.nodeHash(leaf);
     for (const item of proof) {
       pair = MerkleTree.internalHash(pair, item);
@@ -91,5 +75,4 @@ export class MerkleTree {
 
     return pair.equals(root);
   }
-
 }

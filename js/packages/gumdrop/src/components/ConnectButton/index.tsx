@@ -42,7 +42,7 @@ export const ConnectButton = (props: ConnectButtonProps) => {
 
   return (
     <Dropdown.Button
-      className={ className || (connected ?  'connector' : '')}
+      className={className || (connected ? 'connector' : '')}
       onClick={handleClick}
       disabled={connected && disabled}
       overlay={

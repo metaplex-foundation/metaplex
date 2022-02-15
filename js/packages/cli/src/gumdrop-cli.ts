@@ -50,10 +50,7 @@ import {
   GUMDROP_DISTRIBUTOR_ID,
   TOKEN_METADATA_PROGRAM_ID,
 } from './helpers/constants';
-import {
-  getMetadata,
-  loadGumdropProgram,
-} from './helpers/accounts';
+import { getMetadata, loadGumdropProgram } from './helpers/accounts';
 import { sendSignedTransaction } from './helpers/transactions';
 
 program.version('0.0.1');
@@ -72,11 +69,11 @@ programCommand('create')
     'Backend for claims. Either `transfer` for token-transfers, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
   )
   .option('--transfer-mint <mint>', 'transfer: public key of mint')
-  .option('--delegate-only', 'transfer and candy: delegate tokens from KEYPAIR instead of transferring to the gumdrop')
   .option(
-    '--candy-machine <pubkey>',
-    'candy: public key of the candy machine',
+    '--delegate-only',
+    'transfer and candy: delegate tokens from KEYPAIR instead of transferring to the gumdrop',
   )
+  .option('--candy-machine <pubkey>', 'candy: public key of the candy machine')
   .option('--edition-mint <mint>', 'edition: mint of the master edition')
   .option(
     '--distribution-method <method>',
@@ -324,10 +321,7 @@ programCommand('close')
     'Backend for claims. Either `transfer` for token-transfers, `candy` for minting through a candy-machine, or `edition` for minting through a master edition',
   )
   .option('--transfer-mint <mint>', 'transfer: public key of mint')
-  .option(
-    '--candy-machine <pubkey>',
-    'candy: public key of the candy machine',
-  )
+  .option('--candy-machine <pubkey>', 'candy: public key of the candy machine')
   .option('--edition-mint <mint>', 'edition: mint of the master edition')
   .option('--base <path>', 'gumdrop authority generated on create')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -402,7 +396,10 @@ programCommand('close')
 
 programCommand('recover_update_authority')
   .option('--base <path>', 'gumdrop authority generated on create')
-  .option('--mint <string-pubkey>', 'mint for metadata to recover update authority')
+  .option(
+    '--mint <string-pubkey>',
+    'mint for metadata to recover update authority',
+  )
   .option('--new-update-authority <string-pubkey>', 'new update authority')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (options, cmd) => {
@@ -417,18 +414,13 @@ programCommand('recover_update_authority')
     const newUpdateAuthorityKey = new PublicKey(options.newUpdateAuthority);
 
     const [distributorKey, dbump] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("MerkleDistributor"),
-        base.publicKey.toBuffer(),
-      ],
-      GUMDROP_DISTRIBUTOR_ID);
+      [Buffer.from('MerkleDistributor'), base.publicKey.toBuffer()],
+      GUMDROP_DISTRIBUTOR_ID,
+    );
 
     const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("Wallet"),
-        distributorKey.toBuffer(),
-      ],
-      GUMDROP_DISTRIBUTOR_ID
+      [Buffer.from('Wallet'), distributorKey.toBuffer()],
+      GUMDROP_DISTRIBUTOR_ID,
     );
 
     const recoverIx = await anchorProgram.instruction.recoverUpdateAuthority(
@@ -443,8 +435,8 @@ programCommand('recover_update_authority')
           metadata: metadataKey,
           systemProgram: SystemProgram.programId,
           tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        }
-      }
+        },
+      },
     );
 
     const recoverResult = await sendTransactionWithRetry(
@@ -537,7 +529,8 @@ programCommand('get_contact')
 programCommand('fetch_program')
   .addHelpText(
     'before',
-    'Utility to fetch the gumdrop program executable data. Useful for doing a diff against a local build. Bytes are formatted for easy comparison to `xxd` output')
+    'Utility to fetch the gumdrop program executable data. Useful for doing a diff against a local build. Bytes are formatted for easy comparison to `xxd` output',
+  )
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
 
@@ -546,7 +539,9 @@ programCommand('fetch_program')
       options.rpcUrl || anchor.web3.clusterApiUrl(options.env),
     );
 
-    const programPointer = await connection.getAccountInfo(GUMDROP_DISTRIBUTOR_ID);
+    const programPointer = await connection.getAccountInfo(
+      GUMDROP_DISTRIBUTOR_ID,
+    );
     const executableBufferKey = new PublicKey(programPointer.data.slice(4));
 
     const programBuffer = await connection.getAccountInfo(executableBufferKey);
@@ -555,8 +550,12 @@ programCommand('fetch_program')
     for (let row = 0; row * 0x10 < programData.length; ++row) {
       let str = `${(row * 0x10).toString(16).padStart(8, '0')}: `;
       for (let chunk = 0; chunk < 8; ++chunk) {
-        str += programData[row * 0x10 + chunk * 2 + 0].toString(16).padStart(2, '0');
-        str += programData[row * 0x10 + chunk * 2 + 1].toString(16).padStart(2, '0');
+        str += programData[row * 0x10 + chunk * 2 + 0]
+          .toString(16)
+          .padStart(2, '0');
+        str += programData[row * 0x10 + chunk * 2 + 1]
+          .toString(16)
+          .padStart(2, '0');
         str += ' ';
       }
       console.log(str);

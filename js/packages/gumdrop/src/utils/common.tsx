@@ -134,9 +134,7 @@ export function sleep(ms: number): Promise<void> {
 }
 
 export function chunks<T>(array: T[], size: number): T[][] {
-  return Array.apply(
-    0,
-    new Array(Math.ceil(array.length / size)),
-  ).map((_: T, index: number) => array.slice(index * size, (index + 1) * size));
+  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
+    (_: T, index: number) => array.slice(index * size, (index + 1) * size),
+  );
 }
-

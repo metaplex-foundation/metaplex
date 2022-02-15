@@ -6,7 +6,13 @@ import {
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { AccountLayout, MintInfo, MintLayout, Token, u64 } from '@solana/spl-token';
+import {
+  AccountLayout,
+  MintInfo,
+  MintLayout,
+  Token,
+  u64,
+} from '@solana/spl-token';
 import * as anchor from '@project-serum/anchor';
 import { sha256 } from 'js-sha256';
 import BN from 'bn.js';
@@ -226,7 +232,10 @@ export const validateTransferClaims = async (
     if (c.amount === 0) throw new Error(`Claimant ${idx} amount is 0`);
   });
 
-  const total = claimants.reduce((acc, c) => acc.add(new BN(c.amount)), new BN(0));
+  const total = claimants.reduce(
+    (acc, c) => acc.add(new BN(c.amount)),
+    new BN(0),
+  );
   const mint = await getMintInfo(connection, mintStr);
   let source = await getCreatorTokenAccount(
     walletKey,
@@ -236,14 +245,16 @@ export const validateTransferClaims = async (
   );
 
   if (delegateOnly !== null) {
-    source = (await PublicKey.findProgramAddress(
-      [
-        delegateOnly.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mint.key.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-    ))[0];
+    source = (
+      await PublicKey.findProgramAddress(
+        [
+          delegateOnly.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          mint.key.toBuffer(),
+        ],
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+      )
+    )[0];
   }
 
   return {
@@ -266,13 +277,17 @@ export const validateCandyClaims = async (
     if (c.amount === 0) throw new Error(`Claimant ${idx} amount is 0`);
   });
 
-  const total = claimants.reduce((acc, c) => acc.add(new BN(c.amount)), new BN(0));
+  const total = claimants.reduce(
+    (acc, c) => acc.add(new BN(c.amount)),
+    new BN(0),
+  );
   const candyMachineKey = new PublicKey(candyMachineStr);
 
   const candyMachine = await getCandyMachine(connection, candyMachineKey);
 
-  const remaining =
-    candyMachine.data.itemsAvailable.sub(candyMachine.itemsRedeemed);
+  const remaining = candyMachine.data.itemsAvailable.sub(
+    candyMachine.itemsRedeemed,
+  );
   if (isNaN(remaining)) {
     // TODO: should this have an override?
     throw new Error(
@@ -305,14 +320,16 @@ export const validateCandyClaims = async (
   );
 
   if (delegateOnly !== null) {
-    source = (await PublicKey.findProgramAddress(
-      [
-        delegateOnly.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mint.key.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-    ))[0];
+    source = (
+      await PublicKey.findProgramAddress(
+        [
+          delegateOnly.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          mint.key.toBuffer(),
+        ],
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+      )
+    )[0];
   }
 
   return {
@@ -370,7 +387,10 @@ export const validateEditionClaims = async (
     }
   });
 
-  const total = claimants.reduce((acc, c) => acc.add(new BN(c.amount)), new BN(0));
+  const total = claimants.reduce(
+    (acc, c) => acc.add(new BN(c.amount)),
+    new BN(0),
+  );
   const masterMint = await getMintInfo(connection, masterMintStr);
   const masterTokenAccount = await getCreatorTokenAccount(
     walletKey,
@@ -396,11 +416,7 @@ export const validateEditionClaims = async (
   if (masterEdition.data[9] === 0) {
     maxSupply = null;
   } else {
-    maxSupply = new BN(
-      masterEdition.data.slice(10, 10 + 8),
-      8,
-      'le',
-    );
+    maxSupply = new BN(masterEdition.data.slice(10, 10 + 8), 8, 'le');
   }
   console.log('Max supply', maxSupply);
   console.log('Current supply', currentSupply);
@@ -632,7 +648,9 @@ export const buildGumdrop = async (
     );
 
     // TODO: lower if NeverBurn
-    const claimTotal = u64.fromBuffer(Buffer.from(claimInfo.total.toArray('le', 8)));
+    const claimTotal = u64.fromBuffer(
+      Buffer.from(claimInfo.total.toArray('le', 8)),
+    );
     if (claimInfo.source.equals(baseATAKey)) {
       // transfer tokens to base
       instructions.push(
@@ -680,7 +698,9 @@ export const buildGumdrop = async (
         ),
       );
     } else {
-      throw new Error(`Internal error: transfer ClaimInfo source does not match wallet or base ATA`);
+      throw new Error(
+        `Internal error: transfer ClaimInfo source does not match wallet or base ATA`,
+      );
     }
   } else if (claimIntegration === 'edition') {
     // transfer master edition to distributor
@@ -753,20 +773,12 @@ export const closeGumdrop = async (
     const mint = await getMintInfo(connection, mintStr);
     const baseKey = base.publicKey;
     const [baseATAKey] = await PublicKey.findProgramAddress(
-      [
-        baseKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mint.key.toBuffer(),
-      ],
+      [baseKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.key.toBuffer()],
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
     );
 
     const [walletATAKey] = await PublicKey.findProgramAddress(
-      [
-        walletKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mint.key.toBuffer(),
-      ],
+      [walletKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.key.toBuffer()],
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
     );
 
@@ -798,7 +810,10 @@ export const closeGumdrop = async (
       // distributor is about to be closed anyway so this is redundant but...
       instructions.push(
         Token.createRevokeInstruction(
-          TOKEN_PROGRAM_ID, walletATAKey, walletKey, []
+          TOKEN_PROGRAM_ID,
+          walletATAKey,
+          walletKey,
+          [],
         ),
       );
     }

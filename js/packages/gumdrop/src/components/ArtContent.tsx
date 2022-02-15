@@ -75,7 +75,9 @@ export const ThreeDots = ({ style }: { style?: React.CSSProperties }) => (
 
 const cachedImages = new Map<string, string>();
 export const useCachedImage = (uri: string) => {
-  const [cachedBlob, setCachedBlob] = React.useState<string | undefined>(undefined);
+  const [cachedBlob, setCachedBlob] = React.useState<string | undefined>(
+    undefined,
+  );
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   React.useEffect(() => {

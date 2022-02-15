@@ -1,11 +1,13 @@
 import React from 'react';
 
 export type LoadingContextState = {
-  loading: number,
-  setLoading: React.Dispatch<React.SetStateAction<number>>,
-}
+  loading: number;
+  setLoading: React.Dispatch<React.SetStateAction<number>>;
+};
 
-export const LoadingContext = React.createContext<LoadingContextState | null>(null);
+export const LoadingContext = React.createContext<LoadingContextState | null>(
+  null,
+);
 
 export const LoaderProvider: React.FC = ({ children }) => {
   const [loading, setLoading] = React.useState(0);

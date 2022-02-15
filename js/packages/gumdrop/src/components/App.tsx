@@ -1,7 +1,7 @@
-import * as React from "react";
+import * as React from 'react';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
-import { hot } from "react-hot-loader";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { hot } from 'react-hot-loader';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import { CoingeckoProvider } from '../contexts/coingecko';
 import { ConnectionProvider } from '../contexts/ConnectionContext';
@@ -27,27 +27,27 @@ export const App = () => {
   });
   return (
     <ThemeProvider theme={muiDarkTheme}>
-    <BrowserRouter>
-      <ConnectionProvider>
-      <SPLTokenListProvider>
-      <CoingeckoProvider>
-      <LoaderProvider>
-      <WalletProvider>
-        <AppLayout>
-          <Switch>
-            <Route exact path="/" component={About} />
-            <Route exact path="/claim" component={Claim} />
-          </Switch>
-        </AppLayout>
-      </WalletProvider>
-      </LoaderProvider>
-      </CoingeckoProvider>
-      </SPLTokenListProvider>
-      </ConnectionProvider>
-    </BrowserRouter>
+      <BrowserRouter>
+        <ConnectionProvider>
+          <SPLTokenListProvider>
+            <CoingeckoProvider>
+              <LoaderProvider>
+                <WalletProvider>
+                  <AppLayout>
+                    <Switch>
+                      <Route exact path="/" component={About} />
+                      <Route exact path="/claim" component={Claim} />
+                    </Switch>
+                  </AppLayout>
+                </WalletProvider>
+              </LoaderProvider>
+            </CoingeckoProvider>
+          </SPLTokenListProvider>
+        </ConnectionProvider>
+      </BrowserRouter>
     </ThemeProvider>
   );
-}
+};
 
 declare let module: Record<string, unknown>;
 

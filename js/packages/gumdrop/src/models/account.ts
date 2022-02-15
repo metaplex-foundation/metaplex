@@ -1,6 +1,4 @@
-import {
-  AccountInfo,
-} from '@solana/web3.js';
+import { AccountInfo } from '@solana/web3.js';
 
 import { AccountInfo as TokenAccountInfo } from '@solana/spl-token';
 
@@ -9,4 +7,3 @@ export interface TokenAccount {
   account: AccountInfo<Buffer>;
   info: TokenAccountInfo;
 }
-
