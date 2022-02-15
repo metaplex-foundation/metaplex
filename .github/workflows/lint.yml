@@ -21,6 +21,14 @@ jobs:
         run: yarn install
         working-directory: js
 
+      - name: Install CM UI modules
+        run: yarn install
+        working-directory: js/packages/candy-machine-ui
+
+      - name: Install entangler modules
+        run: yarn install
+        working-directory: js/packages/token-entangler
+
       - name: Run formatting/lint
         run: yarn lint
         working-directory: js
