@@ -1,6 +1,7 @@
 name: Yarn build
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
   pull_request:
@@ -14,7 +15,7 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: '**/node_modules'
+          path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install modules
