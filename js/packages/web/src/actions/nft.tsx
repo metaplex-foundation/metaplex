@@ -4,6 +4,7 @@ import {
   createAssociatedTokenAccountInstruction,
   createMasterEditionV3,
   createMetadataV2,
+  updateMetadataV2,
   createMint,
   Creator,
   ENDPOINT_NAME,
@@ -121,7 +122,6 @@ export const mintNFT = async (
       : null,
     use: metadata.uses ? metadata.uses : null,
   };
-  console.log(metadata, 'METADATA');
 
   const realFiles: File[] = [
     ...files,
