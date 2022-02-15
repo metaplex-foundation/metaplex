@@ -10,11 +10,11 @@ async function sleep(ms: number): Promise<void> {
 
 export async function pinataUpload(
   jwt: string,
-  gateway: string,
+  gateway: string | null,
   image: string,
   manifestBuffer: Buffer,
 ) {
-  const gatewayUrl = gateway ? `${gateway}` : `https://ipfs.io`;
+  const gatewayUrl = gateway ? gateway : `https://ipfs.io`;
 
   const manifestJson = JSON.parse(fs.readFileSync(manifestBuffer, 'utf-8'));
 

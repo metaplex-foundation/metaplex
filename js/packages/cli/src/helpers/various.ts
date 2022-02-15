@@ -196,7 +196,7 @@ export async function getCandyMachineV2Config(
     number,
     ipfsInfuraSecret,
     pinataJwt,
-    pinataGateway,
+    pinataGateway: pinataGateway ? pinataGateway : null,
     awsS3Bucket,
     retainAuthority: !noRetainAuthority,
     mutable: !noMutable,
