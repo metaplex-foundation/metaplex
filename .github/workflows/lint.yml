@@ -1,6 +1,7 @@
 name: Lint JavaScript
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
   pull_request:
@@ -20,6 +21,14 @@ jobs:
       - name: Install modules
         run: yarn install
         working-directory: js
+
+      - name: Install CM UI modules
+        run: yarn install
+        working-directory: js/packages/candy-machine-ui
+
+      - name: Install entangler modules
+        run: yarn install
+        working-directory: js/packages/token-entangler
 
       - name: Run formatting/lint
         run: yarn lint
