@@ -41,7 +41,7 @@ export const ENDPOINTS: Array<Endpoint> = [
   },
   {
     name: 'devnet',
-    url: 'https://api.devnet.solana.com',
+    url: 'https://metaplex.devnet.rpcpool.com/',
     chainId: ChainId.Devnet,
   },
 ];
