@@ -1,15 +1,15 @@
-import React, { FC } from 'react';
-import CN from 'classnames';
+import React, { FC } from 'react'
+import CN from 'classnames'
 
 export interface ButtonProps {
-  [x: string]: any;
-  view?: 'outline' | 'solid';
-  appearance?: 'primary' | 'secondary' | 'ghost' | 'ghost-invert';
-  children?: any;
-  iconAfter?: any;
-  iconBefore?: any;
-  onClick?: any;
-  size?: 'sm' | 'md' | 'lg';
+  [x: string]: any
+  view?: 'outline' | 'solid'
+  appearance?: 'primary' | 'secondary' | 'ghost' | 'ghost-invert'
+  children?: any
+  iconAfter?: any
+  iconBefore?: any
+  onClick?: any
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export const Button: FC<ButtonProps> = ({
@@ -47,33 +47,32 @@ export const Button: FC<ButtonProps> = ({
       'bg-B-400 text-white hover:bg-B-500 hover:text-white':
         view === 'solid' && appearance === 'primary',
 
-      'bg-gray-500 text-white hover:bg-gray-600':
-        view === 'solid' && appearance === 'secondary',
+      'bg-gray-500 text-white hover:bg-gray-600': view === 'solid' && appearance === 'secondary',
 
       'bg-white text-gray-800 hover:bg-B-400 hover:text-white':
         view === 'solid' && appearance === 'ghost',
 
       'bg-white text-B-400 hover:bg-B-400 hover:text-white':
         view === 'solid' && appearance === 'ghost-invert',
-    },
-  );
+    }
+  )
 
   return (
     <button className={ButtonClasses} {...restProps} onClick={onClick}>
-      {iconBefore && <span className="icon-before">{iconBefore}</span>}
-      <div className="content">
+      {iconBefore && <span className='icon-before'>{iconBefore}</span>}
+      <div className='content flex items-center'>
         {typeof children === 'function' && children({ onClick })}
         {typeof children !== 'function' && children}
       </div>
-      {iconAfter && <span className="icon-after">{iconAfter}</span>}
+      {iconAfter && <span className='icon-after'>{iconAfter}</span>}
     </button>
-  );
-};
+  )
+}
 
 Button.defaultProps = {
   size: 'md',
   view: 'solid',
   appearance: 'primary',
-};
+}
 
-export default Button;
+export default Button
