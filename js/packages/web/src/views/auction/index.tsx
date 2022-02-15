@@ -357,11 +357,11 @@ const BidLine = (props: {
           },
         )}
       >
-        {isme && <CheckOutlined />}
         <AmountLabel
           displaySOL={true}
           amount={fromLamports(bid.info.lastBid, mint)}
         />
+        {isme && <CheckOutlined style={{ marginTop: '-8px' }} />}
       </div>
 
       <div>
