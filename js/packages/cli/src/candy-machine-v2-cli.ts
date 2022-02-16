@@ -93,7 +93,7 @@ programCommand('upload')
     '-rl, --rate-limit <number>',
     'max number of requests per second',
     myParseInt,
-    10,
+    25,
   )
   .action(async (files: string[], options, cmd) => {
     const { keypair, env, cacheName, configPath, rpcUrl, rateLimit } =

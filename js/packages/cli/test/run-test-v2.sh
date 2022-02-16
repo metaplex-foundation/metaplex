@@ -4,21 +4,21 @@
 #
 # To suppress prompts, you will need to set/export the following variables:
 #
-# ENV_URL="mainnet-beta"
-# RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
-# STORAGE="arweave-sol"
+ENV_URL="mainnet-beta"
+RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
+STORAGE="arweave-sol"
 
-ENV_URL="devnet"
-RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
-STORAGE="arweave"
+# ENV_URL="devnet"
+# RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
+# STORAGE="arweave"
 
-ITEMS=300
+ITEMS=50
 MULTIPLE=0
 
 RESET="N"
 EXT="png"
-CLOSE="N"
-CHANGE="N"
+CLOSE="Y"
+CHANGE="Y"
 
 ARWEAVE_JWK="null"
 INFURA_ID="null"

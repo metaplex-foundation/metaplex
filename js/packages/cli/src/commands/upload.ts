@@ -216,110 +216,104 @@ export async function uploadV2({
       log.info('Upload done.');
     } else {
       let lastPrinted = 0;
-      const tick = SIZE / 100;
-      let uploadPromise = [];
-      chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
-        async allIndexesInSlice => {
-          for (let i = 0; i < allIndexesInSlice.length; i++) {
-            const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-            const manifest = getAssetManifest(dirname, assetKey.index);
+      const tick = SIZE / 100; //print every one percent
 
-            if (
-              allIndexesInSlice[i] >= lastPrinted + tick ||
-              allIndexesInSlice[i] === 0
-            ) {
-              lastPrinted = allIndexesInSlice[i];
-              log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-            }
+      await Promise.all(
+        chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
+          async allIndexesInSlice => {
+            for (let i = 0; i < allIndexesInSlice.length; i++) {
+              const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
+              const manifest = getAssetManifest(
+                dirname,
+                assetKey.index.includes('json')
+                  ? assetKey.index
+                  : `${assetKey.index}.json`,
+              );
 
-            const image = path.join(dirname, `${manifest.image}`);
-
-            let animation = undefined;
-            if ('animation_url' in manifest) {
-              animation = path.join(dirname, `${manifest.animation_url}`);
-            }
-
-            const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
-            // let link, imageLink, animationLink;
-            const thenFunction = links => {
               if (
-                animation
-                  ? links[0] && links[1] && links[2]
-                  : links[0] && links[1]
+                allIndexesInSlice[i] >= lastPrinted + tick ||
+                allIndexesInSlice[i] === 0
               ) {
-                log.debug('Updating cache for ', allIndexesInSlice[i]);
-                cacheContent.items[assetKey.index] = {
-                  link: links[0],
-                  name: manifest.name,
-                  onChain: false,
-                };
-                saveCache(cacheName, env, cacheContent);
+                lastPrinted = allIndexesInSlice[i];
+                log.info(`Processing asset: ${allIndexesInSlice[i]}`);
               }
-            };
-            const catchFunction = err => {
-              if (animation) {
-                log.error(
-                  `Error uploading files ${manifest.image} + ${manifest.animation_url}`,
-                  err,
-                );
-              } else {
-                log.error(`Error uploading file ${manifest.image}`, err);
+
+              const image = path.join(dirname, `${manifest.image}`);
+
+              let animation = undefined;
+              if ('animation_url' in manifest) {
+                animation = path.join(dirname, `${manifest.animation_url}`);
               }
-            };
-            switch (storage) {
-              case StorageType.NftStorage:
-                uploadPromise.push(() =>
-                  nftStorageUpload(
-                    nftStorageKey,
-                    image,
-                    animation,
-                    manifestBuffer,
-                  )
-                    .then(thenFunction)
-                    .catch(catchFunction),
-                );
-                break;
-              case StorageType.Ipfs:
-                uploadPromise.push(() =>
-                  ipfsUpload(ipfsCredentials, image, animation, manifestBuffer)
-                    .then(thenFunction)
-                    .catch(catchFunction),
-                );
-                break;
-              case StorageType.Aws:
-                uploadPromise.push(() =>
-                  awsUpload(awsS3Bucket, image, animation, manifestBuffer)
-                    .then(thenFunction)
-                    .catch(catchFunction),
-                );
-                break;
-              case StorageType.Arweave:
-              default:
-                uploadPromise.push(() =>
-                  arweaveUpload(
-                    walletKeyPair,
-                    anchorProgram,
-                    env,
-                    image,
-                    manifestBuffer,
-                    manifest,
-                    assetKey.index,
-                  )
-                    .then(thenFunction)
-                    .catch(catchFunction),
-                );
+
+              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+
+              let link, imageLink, animationLink;
+              try {
+                switch (storage) {
+                  case StorageType.NftStorage:
+                    [link, imageLink, animationLink] = await nftStorageUpload(
+                      nftStorageKey,
+                      image,
+                      animation,
+                      manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Ipfs:
+                    [link, imageLink, animationLink] = await ipfsUpload(
+                      ipfsCredentials,
+                      image,
+                      animation,
+                      manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Aws:
+                    [link, imageLink, animationLink] = await awsUpload(
+                      awsS3Bucket,
+                      image,
+                      animation,
+                      manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Arweave:
+                  default:
+                    [link, imageLink] = await arweaveUpload(
+                      walletKeyPair,
+                      anchorProgram,
+                      env,
+                      image,
+                      manifestBuffer,
+                      manifest,
+                      assetKey.index,
+                    );
+                }
+                if (
+                  animation
+                    ? link && imageLink && animationLink
+                    : link && imageLink
+                ) {
+                  log.debug('Updating cache for ', allIndexesInSlice[i]);
+                  cacheContent.items[assetKey.index] = {
+                    link,
+                    name: manifest.name,
+                    onChain: false,
+                  };
+                  saveCache(cacheName, env, cacheContent);
+                }
+              } catch (err) {
+                if (animation) {
+                  log.error(
+                    `Error uploading files ${manifest.image} + ${manifest.animation_url}`,
+                    err,
+                  );
+                } else {
+                  log.error(`Error uploading file ${manifest.image}`, err);
+                }
+                i--;
+              }
             }
-          }
-        },
+          },
+        ),
       );
-      uploadPromise = uploadPromise.map((p, i) => {
-        return async () => {
-          await sleep(1000 * Math.floor(i / rateLimit));
-          await p();
-        };
-      });
-      await Promise.allSettled(uploadPromise.map(p => p()));
     }
     saveCache(cacheName, env, cacheContent);
   }
