@@ -32,7 +32,8 @@ type EventAttributes = {
   sol_value?: number;
   listingType?: 'auction' | 'instant_sale';
   nftAddress?: string;
-  //   [key: string]: string | number | boolean | any[] | null | undefined;
+  page_path?: string;
+  [key: string]: string | number | boolean | any[] | null | undefined;
 } & Partial<CustomEventDimensions>;
 
 const AnalyticsContext = React.createContext<{
