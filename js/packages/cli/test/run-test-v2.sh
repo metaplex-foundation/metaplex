@@ -6,25 +6,26 @@
 #
 # ENV_URL="mainnet-beta"
 # RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
-# RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
-
 # STORAGE="arweave-sol"
-# ARWEAVE_JWK="null"
-# INFURA_ID="null"
-# INFURA_SECRET="null"
-# AWS_BUCKET="null"
-# EXT="png"
-# ITEMS=10
-# MULTIPLE=2
-# RESET="Y"
-# CLOSE="Y"
-# CHANGE="Y"
-#
-# The custom RPC server option can be specified either by the flag -r <url>
-# Good RPCs:
 
-# "https://ssc-dao.genesysgo.net/" 
-# "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/"
+ENV_URL="devnet"
+RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
+STORAGE="arweave"
+
+ITEMS=10
+MULTIPLE=0
+
+RESET="N"
+EXT="png"
+CLOSE="Y"
+CHANGE="Y"
+
+ARWEAVE_JWK="null"
+INFURA_ID="null"
+INFURA_SECRET="null"
+AWS_BUCKET="null"
+
+# The custom RPC server option can be specified either by the flag -r <url>
 
 # colors!
 red=$'\e[1;31m'
@@ -34,20 +35,20 @@ mag=$'\e[1;35m'
 cyn=$'\e[1;36m'
 white=$'\e[0m'
 
-function red() { 
-    echo $red"$1"$white 
+function red() {
+    echo $red"$1"$white
 }
-function grn() { 
-    echo $grn"$1"$white 
+function grn() {
+    echo $grn"$1"$white
 }
-function blu() { 
-    echo $blu"$1"$white 
+function blu() {
+    echo $blu"$1"$white
 }
-function mag() { 
-    echo $mag"$1"$white 
+function mag() {
+    echo $mag"$1"$white
 }
-function cyn() { 
-    echo $cyn"$1"$white 
+function cyn() {
+    echo $cyn"$1"$white
 }
 
 CURRENT_DIR=$(pwd)
@@ -98,7 +99,7 @@ fi
 
 while getopts r: flag; do
     case "${flag}" in
-        r) RPC=${OPTARG} ;;
+    r) RPC=${OPTARG} ;;
     esac
 done
 
@@ -363,12 +364,12 @@ function change_cache {
         >$CACHE_FILE.tmp && mv $CACHE_FILE.tmp $CACHE_FILE
     if [[ $(cat $CACHE_FILE | grep "Changed #0") ]]; then
         grn "Success: cache file changed"
-    else 
+    else
         red "Failure: cache file was not changed"
     fi
 }
 
-# check on chain config to make sure it changed
+# check on chain config to make sure everything is correct
 function check_changed {
     CANDY="$(cat $CACHE_FILE | jq -c -r ".program.candyMachine")"
     LAST_LINK="$(cat $CACHE_FILE | jq -c -r ".items.\""$LAST_INDEX"\".link")"
@@ -377,17 +378,25 @@ function check_changed {
     temp_file=$(mktemp)
     echo $CANDY | xargs -I{} solana account {} -u $RPC -o $temp_file
 
-    if [[ $(strings $temp_file | grep -a "Changed #0") ]]; then
-        grn "Success: item 0 found on chain"
+    FAILED=0
+    for ((i = 0; i <= $LAST_INDEX; i++)); do
+        LINK="$(cat $CACHE_FILE | jq -c -r ".items.\""$i"\".link")"
+        if [[ $(($i % $(($LAST_INDEX / 20)))) -eq 0 ]]; then
+            echo -ne "\033[2K\r"
+            echo -ne $cyn"Checked $i of $(($LAST_INDEX + 1))"$white
+        fi
+        if [[ ! $(strings $temp_file | grep -a "$LINK") ]]; then
+            # red "Failure: item $i not found on chain"
+            FAILED=$(($FAILED + 1))
+        fi
+    done
+    echo -ne "\033[2K\r"
+    if [[ $(($FAILED)) -eq 0 ]]; then
+        echo -e $grn"Success: all $(($LAST_INDEX + 1)) items found on chain"$white
     else
-        red "Failure: new item 0 not found on chain"
+        echo -e $red"Failure: $FAILED out of $(($LAST_INDEX + 1)) items were not found on chain"$white
     fi
 
-    if [[ $(strings $temp_file | grep -a "$LAST_LINK") ]]; then
-        grn "Success: last item found on chain"
-    else
-        red "Failure: last item not found on chain"
-    fi
 }
 
 # run the verify upload command
@@ -473,7 +482,7 @@ if [ "${CLOSE}" = "Y" ]; then
     mag ">>>"
     $CMD_CMV2 withdraw_all -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
     EXIT_CODE=$?
-    
+
     if [ ! $EXIT_CODE -eq 0 ]; then
         red "[$(date "+%T")] Aborting: withdraw failed"
         exit 1
