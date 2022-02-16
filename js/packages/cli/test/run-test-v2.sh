@@ -12,13 +12,13 @@ ENV_URL="devnet"
 RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
 STORAGE="arweave"
 
-ITEMS=30
+ITEMS=300
 MULTIPLE=0
 
-RESET="Y"
+RESET="N"
 EXT="png"
-CLOSE="Y"
-CHANGE="Y"
+CLOSE="N"
+CHANGE="N"
 
 ARWEAVE_JWK="null"
 INFURA_ID="null"

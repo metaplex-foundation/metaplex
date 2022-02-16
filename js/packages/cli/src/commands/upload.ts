@@ -296,12 +296,6 @@ export async function uploadV2({
                 break;
               case StorageType.Arweave:
               default:
-                // [link, imageLink] = [
-                //   'startlink link link link link: ' +
-                //   assetKey.index +
-                //   'endlink',
-                //   'linklinklink',
-                // ];
                 uploadPromise.push(() =>
                   arweaveUpload(
                     walletKeyPair,
@@ -465,8 +459,19 @@ async function writeIndices({
   try {
     let promiseArray = [];
     const allIndexesInSlice = Array.from(Array(keys.length).keys());
-    for (let offset = 0; offset < allIndexesInSlice.length; offset += 10) {
-      const indexes = allIndexesInSlice.slice(offset, offset + 10);
+    let offset = 0;
+    while (offset < allIndexesInSlice.length) {
+      let length = 0;
+      let index = 0;
+      let indexes = allIndexesInSlice.slice(offset, offset + 16);
+      while (length < 850 && index < 16 && indexes[index] !== undefined) {
+        length +=
+          cacheContent.items[keys[indexes[index]]].link.length +
+          cacheContent.items[keys[indexes[index]]].name.length;
+        if (length < 850) index++;
+      }
+      indexes = allIndexesInSlice.slice(offset, offset + index);
+      offset += index;
       const onChain = indexes.filter(i => {
         const index = keys[i];
         return cacheContent.items[index]?.onChain || false;
