@@ -12,10 +12,10 @@ ENV_URL="devnet"
 RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
 STORAGE="arweave"
 
-ITEMS=10
+ITEMS=30
 MULTIPLE=0
 
-RESET="N"
+RESET="Y"
 EXT="png"
 CLOSE="Y"
 CHANGE="Y"

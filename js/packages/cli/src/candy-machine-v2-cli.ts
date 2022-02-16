@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 import * as fs from 'fs';
 import * as path from 'path';
-import { program } from 'commander';
+import { InvalidArgumentError, program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 
 import {
@@ -62,6 +62,17 @@ if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
 log.setLevel(log.levels.INFO);
+
+// From commander examples
+function myParseInt(value) {
+  // parseInt takes a string and a radix
+  const parsedValue = parseInt(value, 10);
+  if (isNaN(parsedValue)) {
+    throw new InvalidArgumentError('Not a number.');
+  }
+  return parsedValue;
+}
+
 programCommand('upload')
   .argument(
     '<directory>',
@@ -78,8 +89,15 @@ programCommand('upload')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
+  .option(
+    '-rl, --rate-limit <number>',
+    'max number of requests per second',
+    myParseInt,
+    10,
+  )
   .action(async (files: string[], options, cmd) => {
-    const { keypair, env, cacheName, configPath, rpcUrl } = cmd.opts();
+    const { keypair, env, cacheName, configPath, rpcUrl, rateLimit } =
+      cmd.opts();
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
@@ -237,6 +255,7 @@ programCommand('upload')
         goLiveDate,
         uuid,
         arweaveJwk,
+        rateLimit,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);

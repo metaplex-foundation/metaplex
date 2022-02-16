@@ -18,7 +18,7 @@ import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
-import { chunks } from '../helpers/various';
+import { chunks, sleep } from '../helpers/various';
 import { nftStorageUpload } from '../helpers/upload/nft-storage';
 
 export async function uploadV2({
@@ -45,6 +45,7 @@ export async function uploadV2({
   walletKeyPair,
   anchorProgram,
   arweaveJwk,
+  rateLimit,
 }: {
   files: string[];
   cacheName: string;
@@ -81,6 +82,7 @@ export async function uploadV2({
   walletKeyPair: web3.Keypair;
   anchorProgram: Program;
   arweaveJwk: string;
+  rateLimit: number;
 }): Promise<boolean> {
   let uploadSuccessful = true;
   const savedContent = loadCache(cacheName, env);
@@ -103,7 +105,7 @@ export async function uploadV2({
     : undefined;
 
   if (!cacheContent.program.uuid) {
-    const firstAssetManifest = getAssetManifest(dirname, '0.json');
+    const firstAssetManifest = getAssetManifest(dirname, '0');
 
     try {
       const remainingAccounts = [];
@@ -206,6 +208,7 @@ export async function uploadV2({
           arweavePathManifestLinks,
           updatedManifests,
         );
+
         saveCache(cacheName, env, cacheContent);
         log.info('Saved bundle upload result to cache.');
         result = arweaveBundleUploadGenerator.next();
@@ -213,173 +216,131 @@ export async function uploadV2({
       log.info('Upload done.');
     } else {
       let lastPrinted = 0;
-      const tick = SIZE / 100; //print every one percent
+      const tick = SIZE / 100;
+      let uploadPromise = [];
+      chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
+        async allIndexesInSlice => {
+          for (let i = 0; i < allIndexesInSlice.length; i++) {
+            const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
+            const manifest = getAssetManifest(dirname, assetKey.index);
 
-      await Promise.all(
-        chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
-          async allIndexesInSlice => {
-            for (let i = 0; i < allIndexesInSlice.length; i++) {
-              const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-              const manifest = getAssetManifest(
-                dirname,
-                assetKey.index.includes('json')
-                  ? assetKey.index
-                  : `${assetKey.index}.json`,
-              );
-
-              if (
-                allIndexesInSlice[i] >= lastPrinted + tick ||
-                allIndexesInSlice[i] === 0
-              ) {
-                lastPrinted = allIndexesInSlice[i];
-                log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-              }
-
-              const image = path.join(dirname, `${manifest.image}`);
-
-              let animation = undefined;
-              if ('animation_url' in manifest) {
-                animation = path.join(dirname, `${manifest.animation_url}`);
-              }
-
-              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
-              let link, imageLink, animationLink;
-              try {
-                switch (storage) {
-                  case StorageType.NftStorage:
-                    [link, imageLink, animationLink] = await nftStorageUpload(
-                      nftStorageKey,
-                      image,
-                      animation,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Ipfs:
-                    [link, imageLink, animationLink] = await ipfsUpload(
-                      ipfsCredentials,
-                      image,
-                      animation,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Aws:
-                    [link, imageLink, animationLink] = await awsUpload(
-                      awsS3Bucket,
-                      image,
-                      animation,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Arweave:
-                  default:
-                    [link, imageLink] = await arweaveUpload(
-                      walletKeyPair,
-                      anchorProgram,
-                      env,
-                      image,
-                      manifestBuffer,
-                      manifest,
-                      assetKey.index,
-                    );
-                }
-                if (
-                  animation
-                    ? link && imageLink && animationLink
-                    : link && imageLink
-                ) {
-                  log.debug('Updating cache for ', allIndexesInSlice[i]);
-                  cacheContent.items[assetKey.index] = {
-                    link,
-                    name: manifest.name,
-                    onChain: false,
-                  };
-                  saveCache(cacheName, env, cacheContent);
-                }
-              } catch (err) {
-                if (animation) {
-                  log.error(
-                    `Error uploading files ${manifest.image} + ${manifest.animation_url}`,
-                    err,
-                  );
-                } else {
-                  log.error(`Error uploading file ${manifest.image}`, err);
-                }
-                i--;
-              }
+            if (
+              allIndexesInSlice[i] >= lastPrinted + tick ||
+              allIndexesInSlice[i] === 0
+            ) {
+              lastPrinted = allIndexesInSlice[i];
+              log.info(`Processing asset: ${allIndexesInSlice[i]}`);
             }
-          },
-        ),
-      );
-    }
 
+            const image = path.join(dirname, `${manifest.image}`);
+
+            let animation = undefined;
+            if ('animation_url' in manifest) {
+              animation = path.join(dirname, `${manifest.animation_url}`);
+            }
+
+            const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+
+            // let link, imageLink, animationLink;
+            const thenFunction = links => {
+              if (
+                animation
+                  ? links[0] && links[1] && links[2]
+                  : links[0] && links[1]
+              ) {
+                log.debug('Updating cache for ', allIndexesInSlice[i]);
+                cacheContent.items[assetKey.index] = {
+                  link: links[0],
+                  name: manifest.name,
+                  onChain: false,
+                };
+                saveCache(cacheName, env, cacheContent);
+              }
+            };
+            const catchFunction = err => {
+              if (animation) {
+                log.error(
+                  `Error uploading files ${manifest.image} + ${manifest.animation_url}`,
+                  err,
+                );
+              } else {
+                log.error(`Error uploading file ${manifest.image}`, err);
+              }
+            };
+            switch (storage) {
+              case StorageType.NftStorage:
+                uploadPromise.push(() =>
+                  nftStorageUpload(
+                    nftStorageKey,
+                    image,
+                    animation,
+                    manifestBuffer,
+                  )
+                    .then(thenFunction)
+                    .catch(catchFunction),
+                );
+                break;
+              case StorageType.Ipfs:
+                uploadPromise.push(() =>
+                  ipfsUpload(ipfsCredentials, image, animation, manifestBuffer)
+                    .then(thenFunction)
+                    .catch(catchFunction),
+                );
+                break;
+              case StorageType.Aws:
+                uploadPromise.push(() =>
+                  awsUpload(awsS3Bucket, image, animation, manifestBuffer)
+                    .then(thenFunction)
+                    .catch(catchFunction),
+                );
+                break;
+              case StorageType.Arweave:
+              default:
+                // [link, imageLink] = [
+                //   'startlink link link link link: ' +
+                //   assetKey.index +
+                //   'endlink',
+                //   'linklinklink',
+                // ];
+                uploadPromise.push(() =>
+                  arweaveUpload(
+                    walletKeyPair,
+                    anchorProgram,
+                    env,
+                    image,
+                    manifestBuffer,
+                    manifest,
+                    assetKey.index,
+                  )
+                    .then(thenFunction)
+                    .catch(catchFunction),
+                );
+            }
+          }
+        },
+      );
+      uploadPromise = uploadPromise.map((p, i) => {
+        return async () => {
+          await sleep(1000 * Math.floor(i / rateLimit));
+          await p();
+        };
+      });
+      await Promise.allSettled(uploadPromise.map(p => p()));
+    }
     saveCache(cacheName, env, cacheContent);
   }
 
-  const keys = Object.keys(cacheContent.items);
   if (!hiddenSettings) {
-    try {
-      await Promise.all(
-        chunks(Array.from(Array(keys.length).keys()), 1000).map(
-          async allIndexesInSlice => {
-            for (
-              let offset = 0;
-              offset < allIndexesInSlice.length;
-              offset += 10
-            ) {
-              const indexes = allIndexesInSlice.slice(offset, offset + 10);
-              const onChain = indexes.filter(i => {
-                const index = keys[i];
-                return cacheContent.items[index]?.onChain || false;
-              });
-              const ind = keys[indexes[0]];
-
-              if (onChain.length != indexes.length) {
-                log.info(
-                  `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
-                );
-                try {
-                  await anchorProgram.rpc.addConfigLines(
-                    ind,
-                    indexes.map(i => ({
-                      uri: cacheContent.items[keys[i]].link,
-                      name: cacheContent.items[keys[i]].name,
-                    })),
-                    {
-                      accounts: {
-                        candyMachine,
-                        authority: walletKeyPair.publicKey,
-                      },
-                      signers: [walletKeyPair],
-                    },
-                  );
-                  indexes.forEach(i => {
-                    cacheContent.items[keys[i]] = {
-                      ...cacheContent.items[keys[i]],
-                      onChain: true,
-                      verifyRun: false,
-                    };
-                  });
-                  saveCache(cacheName, env, cacheContent);
-                } catch (e) {
-                  log.error(
-                    `saving config line ${ind}-${
-                      keys[indexes[indexes.length - 1]]
-                    } failed`,
-                    e,
-                  );
-                  uploadSuccessful = false;
-                }
-              }
-            }
-          },
-        ),
-      );
-    } catch (e) {
-      log.error(e);
-    } finally {
-      saveCache(cacheName, env, cacheContent);
-    }
+    uploadSuccessful = await writeIndices({
+      anchorProgram,
+      cacheContent,
+      cacheName,
+      env,
+      candyMachine,
+      walletKeyPair,
+      uploadSuccessful,
+      rateLimit,
+    });
   } else {
     log.info('Skipping upload to chain as this is a hidden Candy Machine');
   }
@@ -457,7 +418,7 @@ function getAssetKeysNeedingUpload(
  * Replaces image.ext => index.ext
  * Replaces animation_url.ext => index.ext
  */
-function getAssetManifest(dirname: string, assetKey: string): Manifest {
+export function getAssetManifest(dirname: string, assetKey: string): Manifest {
   const assetIndex = assetKey.includes('.json')
     ? assetKey.substring(0, assetKey.length - 5)
     : assetKey;
@@ -483,73 +444,90 @@ function getAssetManifest(dirname: string, assetKey: string): Manifest {
  */
 async function writeIndices({
   anchorProgram,
-  cache,
+  cacheContent,
   cacheName,
   env,
-  config,
+  candyMachine,
   walletKeyPair,
+  uploadSuccessful,
+  rateLimit,
+}: {
+  anchorProgram: Program;
+  cacheContent: any;
+  cacheName: string;
+  env: any;
+  candyMachine: any;
+  walletKeyPair: web3.Keypair;
+  uploadSuccessful: boolean;
+  rateLimit: number;
 }) {
-  const keys = Object.keys(cache.items);
+  const keys = Object.keys(cacheContent.items);
   try {
-    await Promise.all(
-      chunks(Array.from(Array(keys.length).keys()), 1000).map(
-        async allIndexesInSlice => {
-          for (
-            let offset = 0;
-            offset < allIndexesInSlice.length;
-            offset += 10
-          ) {
-            const indexes = allIndexesInSlice.slice(offset, offset + 10);
-            const onChain = indexes.filter(i => {
-              const index = keys[i];
-              return cache.items[index]?.onChain || false;
-            });
-            const ind = keys[indexes[0]];
+    let promiseArray = [];
+    const allIndexesInSlice = Array.from(Array(keys.length).keys());
+    for (let offset = 0; offset < allIndexesInSlice.length; offset += 10) {
+      const indexes = allIndexesInSlice.slice(offset, offset + 10);
+      const onChain = indexes.filter(i => {
+        const index = keys[i];
+        return cacheContent.items[index]?.onChain || false;
+      });
+      const ind = keys[indexes[0]];
 
-            if (onChain.length != indexes.length) {
-              log.info(
-                `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
+      if (onChain.length != indexes.length) {
+        promiseArray.push(() => {
+          log.info(
+            `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
+          );
+          return anchorProgram.rpc
+            .addConfigLines(
+              ind,
+              indexes.map(i => ({
+                uri: cacheContent.items[keys[i]].link,
+                name: cacheContent.items[keys[i]].name,
+              })),
+              {
+                accounts: {
+                  candyMachine,
+                  authority: walletKeyPair.publicKey,
+                },
+                signers: [walletKeyPair],
+              },
+            )
+            .then(() => {
+              indexes.forEach(i => {
+                cacheContent.items[keys[i]] = {
+                  ...cacheContent.items[keys[i]],
+                  onChain: true,
+                  verifyRun: false,
+                };
+              });
+              saveCache(cacheName, env, cacheContent);
+            })
+            .catch(err => {
+              log.error(
+                `Saving config line ${ind}-${
+                  keys[indexes[indexes.length - 1]]
+                } failed`,
+                err,
               );
-              try {
-                await anchorProgram.rpc.addConfigLines(
-                  ind,
-                  indexes.map(i => ({
-                    uri: cache.items[keys[i]].link,
-                    name: cache.items[keys[i]].name,
-                  })),
-                  {
-                    accounts: {
-                      config,
-                      authority: walletKeyPair.publicKey,
-                    },
-                    signers: [walletKeyPair],
-                  },
-                );
-                indexes.forEach(i => {
-                  cache.items[keys[i]] = {
-                    ...cache.items[keys[i]],
-                    onChain: true,
-                  };
-                });
-                saveCache(cacheName, env, cache);
-              } catch (err) {
-                log.error(
-                  `Saving config line ${ind}-${
-                    keys[indexes[indexes.length - 1]]
-                  } failed`,
-                  err,
-                );
-              }
-            }
-          }
-        },
-      ),
-    );
+              uploadSuccessful = false;
+            });
+        });
+      }
+    }
+    promiseArray = promiseArray.map((p, i) => {
+      return async () => {
+        await sleep(1000 * Math.floor(i / rateLimit));
+        await p();
+      };
+    });
+    await Promise.allSettled(promiseArray.map(p => p()));
   } catch (e) {
     log.error(e);
   } finally {
-    saveCache(cacheName, env, cache);
+    saveCache(cacheName, env, cacheContent);
   }
+  return uploadSuccessful;
 }
 
 /**
@@ -604,7 +582,7 @@ export async function upload({
   awsS3Bucket,
   arweaveJwk,
   batchSize,
-}: UploadParams): Promise<void> {
+}: UploadParams): Promise<boolean> {
   // Read the content of the Cache file into the Cache object, initialize it
   // otherwise.
   const cache: Cache | undefined = loadCache(cacheName, env);
@@ -694,12 +672,7 @@ export async function upload({
                 dirname,
                 `${assetKey.index}${assetKey.mediaExt}`,
               );
-              const manifest = getAssetManifest(
-                dirname,
-                assetKey.index.includes('json')
-                  ? assetKey.index
-                  : `${assetKey.index}.json`,
-              );
+              const manifest = getAssetManifest(dirname, assetKey.index);
               let animation = undefined;
               if ('animation_url' in manifest) {
                 animation = path.join(dirname, `${manifest.animation_url}`);
@@ -769,11 +742,13 @@ export async function upload({
 
     return writeIndices({
       anchorProgram,
-      cache,
+      cacheContent: cache,
       cacheName,
       env,
-      config,
+      candyMachine: config,
       walletKeyPair,
+      uploadSuccessful: true,
+      rateLimit: 10,
     });
   }
 }
