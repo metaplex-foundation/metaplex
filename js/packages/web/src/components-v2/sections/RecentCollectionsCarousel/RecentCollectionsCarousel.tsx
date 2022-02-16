@@ -9,6 +9,7 @@ import { useMeta } from '../../../contexts';
 import { ArtworkViewState } from '../../../views/artworks/types';
 import { useItems } from '../../../views/artworks/hooks/useItems';
 import { useUserAccounts } from '@oyster/common';
+// import { useExtendedArt } from '../../../hooks/useArt';
 
 export interface RecentCollectionsCarouselProps {
   [x: string]: any;
@@ -25,7 +26,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
 
   ////
   const { connected } = useWallet();
-  const { pullItemsPage, isFetching } = useMeta();
+  const { pullItemsPage, isFetching, pullAllMetadata } = useMeta();
   const { userAccounts } = useUserAccounts();
 
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
@@ -35,6 +36,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
   useEffect(() => {
     if (!isFetching) {
       pullItemsPage(userAccounts);
+      pullAllMetadata();
     }
   }, [isFetching]);
 
@@ -46,6 +48,11 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
     }
   }, [connected, setActiveKey]);
 
+  // const getMoreData = id => {
+  //   const { ref, data } = useExtendedArt(id);
+  //   return data;
+  // };
+
   const slidesList = (userItems || []).map((item: any) => ({
     Component: () => (
       <Link to={``}>
@@ -54,7 +61,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
             name: item?.info?.data?.symbol,
             description: item?.info?.data?.name,
             itemsCount: 1, //hardcoded
-            floorPrice: 100,
+            floorPrice: 100, //hardcoded
             isVerified: 1,
             image: item?.info?.data?.uri,
           }}

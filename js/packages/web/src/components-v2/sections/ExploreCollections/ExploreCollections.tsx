@@ -13,8 +13,11 @@ import React, { useEffect, useState, FC } from 'react';
 
 // import { useUserAccounts } from '@oyster/common';
 // import { isMetadata } from '../../../views/artworks/utils';
-import { LiveAuctionViewState } from '../../../views/home/components/SalesList';
-import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList';
+// import { LiveAuctionViewState } from '../../../views/home/components/SalesList';
+// import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList';
+// import { IMetadataExtension, useLocalStorage } from '@oyster/common';
+import { useItems } from '../../../views/artworks/hooks/useItems';
+import { ArtworkViewState } from '../../../views/artworks/types';
 
 export interface ExploreCollectionsProps {
   [x: string]: any;
@@ -35,37 +38,85 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
   ///////////////
   const { connected } = useWallet();
-  // const { isLoading, isFetching } = useMeta();
+  // const { pullItemsPage, isFetching, pullAllMetadata } = useMeta();
   // const { userAccounts } = useUserAccounts();
 
-  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
-  const { auctions } = useAuctionsList(activeKey); //  const { auctions, hasResaleAuctions } = useAuctionsList(activeKey);
+  const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
+  // const { auctions } = useAuctionsList(activeKey); //  const { auctions, hasResaleAuctions } = useAuctionsList(activeKey);
 
-  // const userItems = useItems({ activeKey });
+  const userItems = useItems({ activeKey });
+  // const [data, setData] = useState<IMetadataExtension>();
 
   // useEffect(() => {
   //   if (!isFetching) {
   //     pullItemsPage(userAccounts);
+  //     // pullAllMetadata();
   //   }
   // }, [isFetching]);
+  const initialValue: any[] = [];
+  const [dataItems, setDataItems] = useState(initialValue);
+  useEffect(() => {
+    const getUserItems = async () => {
+      const tempArray: any[] = [];
+      for (const element of userItems) {
+        tempArray.push(
+          await getMoreData(
+            (element as any).pubkey,
+            (element as any)?.info?.data?.uri,
+          ),
+        );
+      }
+      setDataItems(tempArray);
+    };
+    getUserItems();
+  }, [userItems]);
+
+  const getMoreData = async (id, itemuri) => {
+    // const localStorage = useLocalStorage();
+    console.log(id);
+    const USE_CDN = false;
+    const routeCDN = (uri: string) => {
+      let result = uri;
+      if (USE_CDN) {
+        result = uri.replace(
+          'https://arweave.net/',
+          'https://coldcdn.com/api/cdn/bronil/',
+        );
+      }
+
+      return result;
+    };
+
+    if (itemuri) {
+      const uri = routeCDN(itemuri);
+
+      const processJson = (extended: any) => {
+        if (!extended || extended?.properties?.files?.length === 0) {
+          return;
+        }
+
+        if (extended?.image) {
+          const file = extended.image.startsWith('http')
+            ? extended.image
+            : `${itemuri}/${extended.image}`;
+          extended.image = routeCDN(file);
+        }
+
+        return extended;
+      };
+      const data = await fetch(uri);
+      const rdata = processJson(data.json());
+      return rdata;
+    }
+  };
 
   useEffect(() => {
     if (connected) {
-      setActiveKey(LiveAuctionViewState.All);
+      setActiveKey(ArtworkViewState.Metaplex);
     } else {
-      setActiveKey(LiveAuctionViewState.All);
+      setActiveKey(ArtworkViewState.Metaplex);
     }
   }, [connected, setActiveKey]);
-
-  // const isDataLoading = isLoading || isFetching;
-
-  ///////////////
-
-  ///// get auctions  ///////////
-
-  // const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
-
-  ///// end auctions ///////////
 
   return (
     <div className={ExploreCollectionsClasses} {...restProps}>
@@ -99,7 +150,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
         <div className="grid grid-cols-4 gap-x-[32px] gap-y-[32px] pb-[100px]">
           {pid === 'trending' &&
-            auctions.map((item: any) => {
+            dataItems.map((item: any) => {
               console.log(item);
               // const pubkey = isMetadata(item)
               //   ? item.pubkey
@@ -122,7 +173,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             })}
 
           {pid === 'collectibles' &&
-            auctions.map((item: any) => {
+            dataItems.map((item: any) => {
               console.log(item);
               // const pubkey = isMetadata(item)
               //   ? item.pubkey
@@ -145,7 +196,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             })}
 
           {pid === 'art' &&
-            auctions.map((item: any) => {
+            dataItems.map((item: any) => {
               console.log(item);
               // const pubkey = isMetadata(item)
               //   ? item.pubkey
@@ -168,7 +219,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             })}
 
           {pid === 'charity' &&
-            auctions.map((item: any) => {
+            dataItems.map((item: any) => {
               console.log(item);
               // const pubkey = isMetadata(item)
               //   ? item.pubkey
@@ -192,7 +243,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             })}
 
           {pid === 'gaming' &&
-            auctions.map((item: any) => {
+            dataItems.map((item: any) => {
               console.log(item);
               //   : isPack(item)
               //   ? item.provingProcessKey
@@ -213,13 +264,21 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
             })}
 
           {pid === 'utility' &&
-            auctions.map((item: any) => {
+            dataItems.map((item: any) => {
               console.log(item);
               // const pubkey = isMetadata(item)
               //   ? item.pubkey
               //   : isPack(item)
               //   ? item.provingProcessKey
               //   : item.edition?.pubkey || item.metadata.pubkey;
+              // console.log(getMoreData(pubkey, item?.info?.data?.uri));
+              // const pubkey = isMetadata(item)
+              //   ? item.pubkey
+              //   : isPack(item)
+              //   ? item.provingProcessKey
+              //   : item.edition?.pubkey || item.metadata.pubkey;
+              // const extra = getMoreData(pubkey);
+              // console.log(extra);
               // const temp = {
               //   name: item?.info?.data?.symbol,
               //   description: item?.info?.data?.name,
