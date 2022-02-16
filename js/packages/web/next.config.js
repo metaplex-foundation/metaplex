@@ -1,7 +1,7 @@
-const withPlugins = require('next-compose-plugins');
-const withLess = require('next-with-less');
+const withPlugins = require('next-compose-plugins')
+const withLess = require('next-with-less')
 
-const assetPrefix = process.env.ASSET_PREFIX || '';
+const assetPrefix = process.env.ASSET_PREFIX || ''
 
 const plugins = [
   [
@@ -10,8 +10,9 @@ const plugins = [
       lessLoaderOptions: {
         lessOptions: {
           modifyVars: {
-            '@primary-color': '#768BF9',
-            '@text-color': 'rgba(255, 255, 255)',
+            '@primary-color': '#448fff',
+            '@text-color': '#273040',
+            '@text-color-secondary': '#728197',
             '@assetPrefix': assetPrefix || "''",
           },
           javascriptEnabled: true,
@@ -19,7 +20,7 @@ const plugins = [
       },
     },
   ],
-];
+]
 
 module.exports = withPlugins(plugins, {
   assetPrefix,
@@ -30,8 +31,7 @@ module.exports = withPlugins(plugins, {
 
   env: {
     NEXT_PUBLIC_STORE_OWNER_ADDRESS:
-      process.env.STORE_OWNER_ADDRESS ||
-      process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
+      process.env.STORE_OWNER_ADDRESS || process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
     NEXT_PUBLIC_STORE_ADDRESS: process.env.STORE_ADDRESS,
     NEXT_PUBLIC_BIG_STORE: process.env.REACT_APP_BIG_STORE,
     NEXT_PUBLIC_CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
@@ -47,6 +47,6 @@ module.exports = withPlugins(plugins, {
         source: '/:any*',
         destination: '/',
       },
-    ];
+    ]
   },
-});
+})

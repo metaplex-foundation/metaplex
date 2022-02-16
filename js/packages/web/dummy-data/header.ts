@@ -1,4 +1,4 @@
-import { categories } from './categories';
+import { categories } from './categories'
 
 export const header = {
   menu: [
@@ -9,7 +9,7 @@ export const header = {
     },
     {
       label: 'Create',
-      value: '/create',
+      value: '/submit-collection',
     },
     {
       label: 'Donate',
@@ -43,23 +43,28 @@ export const header = {
       subMenu: [
         {
           label: 'How to buy',
-          value: '/how-to-buy',
+          value: '/static-content',
+          isDirectLink: true,
         },
         {
           label: 'What are NFTs?',
-          value: '/what-are-nfts',
+          value: '/static-content',
+          isDirectLink: true,
         },
         {
           label: 'Crypto + NFT Guide',
-          value: '/crypto-nft-guide',
+          value: '/static-content',
+          isDirectLink: true,
         },
         {
           label: 'About Karmaverse',
-          value: '/about-karmaverse',
+          value: '/static-content',
+          isDirectLink: true,
         },
         {
           label: 'Philanthropy',
-          value: '/philanthropy',
+          value: '/static-content',
+          isDirectLink: true,
         },
       ],
     },
@@ -73,21 +78,27 @@ export const header = {
         },
         {
           label: 'Twitter',
-          value: 'twitter',
+          value: 'https://twitter.com/home',
+          isDirectLink: true,
+          isNewTab: true,
         },
         {
           label: 'Discord',
-          value: 'discord',
+          value: 'https://discord.com/',
+          isDirectLink: true,
+          isNewTab: true,
         },
         {
           label: 'Blog',
           value: 'blog',
+          isDirectLink: true,
         },
         {
           label: 'Merch',
           value: 'merch',
+          isDirectLink: true,
         },
       ],
     },
   ],
-};
+}
