@@ -242,7 +242,16 @@ export async function uploadV2({
 
               let animation = undefined;
               if ('animation_url' in manifest) {
-                animation = path.join(dirname, `${manifest.animation_url}`);
+                const animationPath = path.join(
+                  dirname,
+                  `${manifest.animation_url}`,
+                );
+                if (
+                  fs.existsSync(animationPath) &&
+                  fs.lstatSync(animationPath).isFile()
+                ) {
+                  animation = animationPath;
+                }
               }
 
               const manifestBuffer = Buffer.from(JSON.stringify(manifest));
