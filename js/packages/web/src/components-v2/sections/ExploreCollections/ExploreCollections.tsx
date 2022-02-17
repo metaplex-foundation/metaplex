@@ -93,12 +93,13 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
       async function getAllAuctionMeta(metadatas: any[]): Promise<any[]> {
         const promises = await Promise.all(
           auctions.map(async m => {
-            return { m }
+            const meta = m.pubkey.toBase58()
+            return { meta }
           })
         )
         return promises.filter(t => !!t)
       }
-      console.log(auctions)
+      console.log(await getAllAuctionMeta(auctions))
       //
 
       async function getHolderByMint(mint: PublicKey): Promise<PublicKey> {
