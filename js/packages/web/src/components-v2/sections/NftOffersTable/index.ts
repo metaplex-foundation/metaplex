@@ -1,1 +1,1 @@
-export * from './NftOffersTable';
+export * from './NftOffersTable'

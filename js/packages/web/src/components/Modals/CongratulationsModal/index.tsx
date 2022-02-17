@@ -1,17 +1,17 @@
-import React from 'react';
-import { Button } from 'antd';
+import React from 'react'
+import { Button } from 'antd'
 
-import { ModalLayout } from '../index';
+import { ModalLayout } from '../index'
 
 interface CongratulationsProps {
-  isModalVisible: boolean;
-  title?: string;
-  content?: string;
-  buttonText?: string;
-  onClickOk?: () => void;
-  onClose: () => void;
-  extraButtonText?: string | null;
-  onClickExtraButton?: () => void;
+  isModalVisible: boolean
+  title?: string
+  content?: string
+  buttonText?: string
+  onClickOk?: () => void
+  onClose: () => void
+  extraButtonText?: string | null
+  onClickExtraButton?: () => void
 }
 
 const CongratulationsContent: React.FC<CongratulationsProps> = ({
@@ -24,35 +24,35 @@ const CongratulationsContent: React.FC<CongratulationsProps> = ({
   onClickExtraButton,
 }) => {
   const handleClickOk = () => {
-    if (onClickOk) onClickOk();
-    onClose();
-  };
+    if (onClickOk) onClickOk()
+    onClose()
+  }
 
   return (
-    <div className="congratulations-root">
-      <div className="emoji-frame">
-        <img src="/modals/confetti-emoji.svg" />
+    <div className='congratulations-root'>
+      <div className='emoji-frame'>
+        <img src='/modals/confetti-emoji.svg' />
       </div>
-      <span className="title">{title || 'Congratulations'}</span>
-      <span className="content">{content}</span>
-      <Button className="ok-button" onClick={handleClickOk}>
+      <span className='title'>{title || 'Congratulations'}</span>
+      <span className='content'>{content}</span>
+      <Button className='ok-button' onClick={handleClickOk}>
         {buttonText || 'Ok'}
       </Button>
       {!!extraButtonText && (
-        <Button className="extra-button" onClick={onClickExtraButton}>
+        <Button className='extra-button' onClick={onClickExtraButton}>
           {extraButtonText}
         </Button>
       )}
     </div>
-  );
-};
+  )
+}
 
 const CongratulationsModal: React.FC<CongratulationsProps> = ({ ...props }) => {
   return (
     <ModalLayout {...props}>
       <CongratulationsContent {...props} />
     </ModalLayout>
-  );
-};
+  )
+}
 
-export default CongratulationsModal;
+export default CongratulationsModal

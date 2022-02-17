@@ -1,10 +1,10 @@
-import React, { FC, useState } from 'react';
-import CN from 'classnames';
-import TopIcon from '../../icons/Top';
-import DownIcon from '../../icons/Down';
+import React, { FC, useState } from 'react'
+import CN from 'classnames'
+import TopIcon from '../../icons/Top'
+import DownIcon from '../../icons/Down'
 
 export interface AccordionProps {
-  [x: string]: any;
+  [x: string]: any
 }
 
 export const Accordion: FC<AccordionProps> = ({
@@ -18,33 +18,30 @@ export const Accordion: FC<AccordionProps> = ({
   iconAlign,
   ...restProps
 }: AccordionProps) => {
-  const AccordionClasses = CN(
-    `accordion w-full flex flex-col gap-[12px]`,
-    className,
-  );
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const AccordionClasses = CN(`accordion w-full flex flex-col gap-[12px]`, className)
+  const [isOpen, setIsOpen] = useState(defaultOpen)
 
   const renderChildren = (children: any) => {
     if (typeof children === 'function') {
-      return children({ isOpen });
+      return children({ isOpen })
     }
-    return children;
-  };
+    return children
+  }
 
   const renderIcon = () => {
     if (isOpen) {
-      return <TopIcon width={20} height={20} />;
+      return <TopIcon width={20} height={20} />
     }
 
-    return <DownIcon width={20} height={20} />;
-  };
+    return <DownIcon width={20} height={20} />
+  }
 
   return (
     <div className={AccordionClasses} {...restProps}>
       <div
         className={CN(
           'flex items-center w-full text-gray-700 cursor-pointer select-none',
-          headingClassName,
+          headingClassName
         )}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -59,9 +56,7 @@ export const Accordion: FC<AccordionProps> = ({
           {heading}
         </span>
 
-        {iconAlign === 'right' && (
-          <span className="ml-auto">{renderIcon()}</span>
-        )}
+        {iconAlign === 'right' && <span className='ml-auto'>{renderIcon()}</span>}
       </div>
 
       <div
@@ -73,11 +68,11 @@ export const Accordion: FC<AccordionProps> = ({
         {renderChildren(children)}
       </div>
     </div>
-  );
-};
+  )
+}
 
 Accordion.defaultProps = {
   iconAlign: 'right',
-};
+}
 
-export default Accordion;
+export default Accordion

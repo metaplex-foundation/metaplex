@@ -1,9 +1,5 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
 import {
   getAuctionKeys,
@@ -13,14 +9,9 @@ import {
   RedeemFullRightsTransferBidArgs,
   RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
   SCHEMA,
-} from '.';
-import { VAULT_PREFIX, getAuctionExtended } from '../../actions';
-import {
-  findProgramAddress,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-} from '../../utils';
+} from '.'
+import { VAULT_PREFIX, getAuctionExtended } from '../../actions'
+import { findProgramAddress, programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function redeemFullRightsTransferBid(
   vault: StringPublicKey,
@@ -36,20 +27,17 @@ export async function redeemFullRightsTransferBid(
   // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
   // and this will instead call the proxy route instead of the real one, wrapping the original
   // redemption call in an override call that forces the winning index if the auctioneer is authorized.
-  auctioneerReclaimIndex?: number,
+  auctioneerReclaimIndex?: number
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
-  const { bidRedemption, bidMetadata } = await getBidderKeys(
-    auctionKey,
-    bidder,
-  );
+  const { bidRedemption, bidMetadata } = await getBidderKeys(auctionKey, bidder)
 
   const transferAuthority = (
     await findProgramAddress(
@@ -58,19 +46,16 @@ export async function redeemFullRightsTransferBid(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault),
+      toPublicKey(PROGRAM_IDS.vault)
     )
-  )[0];
+  )[0]
 
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
+  const safetyDepositConfig = await getSafetyDepositConfig(auctionManagerKey, safetyDeposit)
 
   const auctionExtended = await getAuctionExtended({
     auctionProgramId: PROGRAM_IDS.auction,
     resource: vault,
-  });
+  })
 
   const value =
     auctioneerReclaimIndex !== undefined
@@ -78,8 +63,8 @@ export async function redeemFullRightsTransferBid(
           winningConfigItemIndex: auctioneerReclaimIndex,
           proxyCall: ProxyCallAddress.RedeemFullRightsTransferBid,
         })
-      : new RedeemFullRightsTransferBidArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+      : new RedeemFullRightsTransferBidArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
   const keys = [
     {
       pubkey: toPublicKey(auctionManagerKey),
@@ -192,13 +177,13 @@ export async function redeemFullRightsTransferBid(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

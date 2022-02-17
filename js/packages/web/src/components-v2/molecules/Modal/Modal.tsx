@@ -1,13 +1,13 @@
-import React, { FC, useEffect } from 'react';
-import CN from 'classnames';
-import CloseIcon from '../../icons/Close';
+import React, { FC, useEffect } from 'react'
+import CN from 'classnames'
+import CloseIcon from '../../icons/Close'
 
 export interface ModalProps {
-  [x: string]: any;
-  heading?: string | undefined;
-  onClose?: any;
-  isFixed?: boolean;
-  size?: 'default' | 'sm' | 'md' | 'lg';
+  [x: string]: any
+  heading?: string | undefined
+  onClose?: any
+  isFixed?: boolean
+  size?: 'default' | 'sm' | 'md' | 'lg'
 }
 
 export const Modal: FC<ModalProps> = ({
@@ -21,32 +21,29 @@ export const Modal: FC<ModalProps> = ({
 }: ModalProps) => {
   const ModalClasses = CN(
     `modal fixed top-0 right-0 bottom-0 left-0 bg-blue-900/5 backdrop-blur-sm overflow-auto z-50 min-h-[100vh]`,
-    className,
-  );
+    className
+  )
 
   useEffect(() => {
     if (document) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden'
     }
-  }, []);
+  }, [])
 
   const modalClose = (e: any) => {
-    e.preventDefault();
-    document.body.style.overflow = 'unset';
-    onClose();
-  };
+    e.preventDefault()
+    document.body.style.overflow = 'unset'
+    onClose()
+  }
 
   const paddingClass = CN({
     'px-[32px]': size === 'default' || size === 'lg',
     'px-[16px]': size === 'sm',
-  });
+  })
 
   return (
     <div className={ModalClasses} {...restProps}>
-      <span
-        className="absolute top-0 bottom-0 left-0 right-0"
-        onClick={modalClose}
-      />
+      <span className='absolute top-0 bottom-0 left-0 right-0' onClick={modalClose} />
 
       <div
         className={CN(
@@ -57,7 +54,7 @@ export const Modal: FC<ModalProps> = ({
             'w-[800px]': size === 'lg',
             'top-[50%] translate-y-[-50%]': isFixed,
             'mt-[85px] mb-[100px]': !isFixed,
-          },
+          }
         )}
       >
         <div
@@ -67,14 +64,11 @@ export const Modal: FC<ModalProps> = ({
             {
               'h-[60px]': size === 'default' || size === 'lg',
               'border-b border-gray-200': heading,
-            },
+            }
           )}
         >
-          {heading && <h2 className="text-gray-800 text-h6">{heading}</h2>}
-          <button
-            className="ml-auto appearance-none hover:text-B-400"
-            onClick={e => modalClose(e)}
-          >
+          {heading && <h2 className='text-gray-800 text-h6'>{heading}</h2>}
+          <button className='ml-auto appearance-none hover:text-B-400' onClick={e => modalClose(e)}>
             <CloseIcon width={16} height={16} />
           </button>
         </div>
@@ -86,19 +80,17 @@ export const Modal: FC<ModalProps> = ({
           })}
         >
           <div className={CN('flex w-full', {})}>
-            {typeof children === 'function'
-              ? children({ modalClose })
-              : children}
+            {typeof children === 'function' ? children({ modalClose }) : children}
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 Modal.defaultProps = {
   size: 'default',
   isFixed: true,
-};
+}
 
-export default Modal;
+export default Modal

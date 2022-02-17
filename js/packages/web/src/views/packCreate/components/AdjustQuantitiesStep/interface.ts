@@ -1,4 +1,4 @@
-import { PackState } from '../../interface';
+import { PackState } from '../../interface'
 
 export enum InputType {
   weight = 'weight',
@@ -14,6 +14,6 @@ export interface AdjustQuantitiesStepProps
     | 'weightByMetadataKey'
     | 'supplyByMetadataKey'
   > {
-  setPackState: (values: Partial<PackState>) => void;
-  isUnlimited: boolean;
+  setPackState: (values: Partial<PackState>) => void
+  isUnlimited: boolean
 }

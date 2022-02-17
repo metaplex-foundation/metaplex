@@ -1,5 +1,5 @@
-import { PackDistributionType } from '@oyster/common';
-import { PackState } from './interface';
+import { PackDistributionType } from '@oyster/common'
+import { PackState } from './interface'
 
 export const INITIAL_PACK_STATE: PackState = {
   selectedItems: {},
@@ -13,4 +13,4 @@ export const INITIAL_PACK_STATE: PackState = {
   supplyByMetadataKey: {},
   isUnlimitedSupply: false,
   mutable: true,
-};
+}

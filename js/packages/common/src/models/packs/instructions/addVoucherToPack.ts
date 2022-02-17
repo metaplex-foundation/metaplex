@@ -3,25 +3,20 @@ import {
   TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+} from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { TokenAccount } from '../..';
-import {
-  AddVoucherToPackArgs,
-  getEdition,
-  getMetadata,
-  PACKS_SCHEMA,
-} from '../../..';
-import { StringPublicKey, programIds, toPublicKey } from '../../../utils';
-import { findPackVoucherProgramAddress } from '../find';
+import { TokenAccount } from '../..'
+import { AddVoucherToPackArgs, getEdition, getMetadata, PACKS_SCHEMA } from '../../..'
+import { StringPublicKey, programIds, toPublicKey } from '../../../utils'
+import { findPackVoucherProgramAddress } from '../find'
 
 interface Params {
-  index: number;
-  packSetKey: PublicKey;
-  authority: StringPublicKey;
-  mint: StringPublicKey;
-  tokenAccount: TokenAccount;
+  index: number
+  packSetKey: PublicKey
+  authority: StringPublicKey
+  mint: StringPublicKey
+  tokenAccount: TokenAccount
 }
 
 export async function addVoucherToPack({
@@ -31,21 +26,21 @@ export async function addVoucherToPack({
   mint,
   tokenAccount,
 }: Params): Promise<TransactionInstruction> {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
-  const value = new AddVoucherToPackArgs();
+  const value = new AddVoucherToPackArgs()
 
-  const masterMetadataKey = await getMetadata(mint);
-  const masterEdition = await getEdition(mint);
-  const packVoucher = await findPackVoucherProgramAddress(packSetKey, index);
-  const { pubkey: sourceKey } = tokenAccount;
+  const masterMetadataKey = await getMetadata(mint)
+  const masterEdition = await getEdition(mint)
+  const packVoucher = await findPackVoucherProgramAddress(packSetKey, index)
+  const { pubkey: sourceKey } = tokenAccount
 
-  const store = PROGRAM_IDS.store;
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const data = Buffer.from(serialize(PACKS_SCHEMA, value));
+  const data = Buffer.from(serialize(PACKS_SCHEMA, value))
   const keys = [
     // pack_set
     {
@@ -119,11 +114,11 @@ export async function addVoucherToPack({
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   return new TransactionInstruction({
     keys,
     programId: toPublicKey(PROGRAM_IDS.pack_create),
     data,
-  });
+  })
 }

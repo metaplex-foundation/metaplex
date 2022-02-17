@@ -1,19 +1,17 @@
-import { InstructionsModal } from '../InstructionsModal';
-import React from 'react';
-import { LABELS } from '../../constants';
+import { InstructionsModal } from '../InstructionsModal'
+import React from 'react'
+import { LABELS } from '../../constants'
 
 interface HowAuctionsWorkModalProps {
-  buttonClassName: string;
+  buttonClassName: string
 }
 
-export const HowAuctionsWorkModal: React.FC<HowAuctionsWorkModalProps> = ({
-  buttonClassName,
-}) => {
+export const HowAuctionsWorkModal: React.FC<HowAuctionsWorkModalProps> = ({ buttonClassName }) => {
   return (
     <InstructionsModal
       buttonClassName={buttonClassName}
-      buttonText="How Auctions Work"
-      modalTitle="How Auctions Work"
+      buttonText='How Auctions Work'
+      modalTitle='How Auctions Work'
       cardProps={[
         {
           title: 'Placing a Bid',
@@ -32,5 +30,5 @@ export const HowAuctionsWorkModal: React.FC<HowAuctionsWorkModalProps> = ({
         },
       ]}
     />
-  );
-};
+  )
+}

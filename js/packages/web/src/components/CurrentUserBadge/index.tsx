@@ -23,7 +23,6 @@ import {
 import { useMeta, useSolPrice } from '../../contexts'
 // import { useTokenList } from '../../contexts/tokenList';
 // import { TokenCircle } from '../Custom';
-
 ;('@solana/wallet-adapter-base')
 
 const btnStyle: React.CSSProperties = {

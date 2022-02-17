@@ -78,7 +78,8 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
 
         {children && (
           <span
-            className={CN('radio__label text-md pl-[8px] select-none text-N-800', labelClassName)}>
+            className={CN('radio__label text-md pl-[8px] select-none text-N-800', labelClassName)}
+          >
             {children}
           </span>
         )}

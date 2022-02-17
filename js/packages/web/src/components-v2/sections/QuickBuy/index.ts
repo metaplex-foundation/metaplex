@@ -1,1 +1,1 @@
-export * from './QuickBuy';
+export * from './QuickBuy'

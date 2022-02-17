@@ -1,1 +1,1 @@
-export * from './CollectionActivity';
+export * from './CollectionActivity'

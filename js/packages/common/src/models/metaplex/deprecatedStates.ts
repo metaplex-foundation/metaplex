@@ -1,4 +1,4 @@
-import BN from 'bn.js';
+import BN from 'bn.js'
 import {
   AuctionManagerStatus,
   BidRedemptionTicket,
@@ -7,165 +7,164 @@ import {
   NonWinningConstraint,
   WinningConfigType,
   WinningConstraint,
-} from '.';
-import { findProgramAddress, programIds, toPublicKey } from '../../utils';
+} from '.'
+import { findProgramAddress, programIds, toPublicKey } from '../../utils'
 
-export const MAX_BID_REDEMPTION_TICKET_V1_SIZE = 3;
+export const MAX_BID_REDEMPTION_TICKET_V1_SIZE = 3
 
 export class AuctionManagerV1 {
-  key: MetaplexKey;
-  store: string;
-  authority: string;
-  auction: string;
-  vault: string;
-  acceptPayment: string;
-  state: AuctionManagerStateV1;
-  settings: AuctionManagerSettingsV1;
+  key: MetaplexKey
+  store: string
+  authority: string
+  auction: string
+  vault: string
+  acceptPayment: string
+  state: AuctionManagerStateV1
+  settings: AuctionManagerSettingsV1
 
   constructor(args: {
-    store: string;
-    authority: string;
-    auction: string;
-    vault: string;
-    acceptPayment: string;
-    state: AuctionManagerStateV1;
-    settings: AuctionManagerSettingsV1;
+    store: string
+    authority: string
+    auction: string
+    vault: string
+    acceptPayment: string
+    state: AuctionManagerStateV1
+    settings: AuctionManagerSettingsV1
   }) {
-    this.key = MetaplexKey.AuctionManagerV1;
-    this.store = args.store;
-    this.authority = args.authority;
-    this.auction = args.auction;
-    this.vault = args.vault;
-    this.acceptPayment = args.acceptPayment;
-    this.state = args.state;
-    this.settings = args.settings;
+    this.key = MetaplexKey.AuctionManagerV1
+    this.store = args.store
+    this.authority = args.authority
+    this.auction = args.auction
+    this.vault = args.vault
+    this.acceptPayment = args.acceptPayment
+    this.state = args.state
+    this.settings = args.settings
   }
 }
 
 export class DeprecatedInitAuctionManagerV1Args {
-  instruction = 0;
-  settings: AuctionManagerSettingsV1;
+  instruction = 0
+  settings: AuctionManagerSettingsV1
 
   constructor(args: { settings: AuctionManagerSettingsV1 }) {
-    this.settings = args.settings;
+    this.settings = args.settings
   }
 }
 
 export class DeprecatedValidateSafetyDepositBoxV1Args {
-  instruction = 1;
+  instruction = 1
 }
 
 export class DeprecatedRedeemParticipationBidArgs {
-  instruction = 4;
+  instruction = 4
 }
 
 export class DeprecatedPopulateParticipationPrintingAccountArgs {
-  instruction = 11;
+  instruction = 11
 }
 
 export class DeprecatedValidateParticipationArgs {
-  instruction = 10;
+  instruction = 10
 }
 
 export class AuctionManagerSettingsV1 {
-  winningConfigs: WinningConfig[] = [];
-  participationConfig: ParticipationConfigV1 | null = null;
+  winningConfigs: WinningConfig[] = []
+  participationConfig: ParticipationConfigV1 | null = null
 
   constructor(args?: AuctionManagerSettingsV1) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 
 export class ParticipationStateV1 {
-  collectedToAcceptPayment: BN = new BN(0);
-  primarySaleHappened: boolean = false;
-  validated: boolean = false;
-  printingAuthorizationTokenAccount: string | null = null;
+  collectedToAcceptPayment: BN = new BN(0)
+  primarySaleHappened: boolean = false
+  validated: boolean = false
+  printingAuthorizationTokenAccount: string | null = null
 
   constructor(args?: ParticipationStateV1) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 
 export class ParticipationConfigV1 {
-  winnerConstraint: WinningConstraint = WinningConstraint.NoParticipationPrize;
-  nonWinningConstraint: NonWinningConstraint =
-    NonWinningConstraint.GivenForFixedPrice;
-  safetyDepositBoxIndex: number = 0;
-  fixedPrice: BN | null = new BN(0);
+  winnerConstraint: WinningConstraint = WinningConstraint.NoParticipationPrize
+  nonWinningConstraint: NonWinningConstraint = NonWinningConstraint.GivenForFixedPrice
+  safetyDepositBoxIndex: number = 0
+  fixedPrice: BN | null = new BN(0)
 
   constructor(args?: ParticipationConfigV1) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 
 export class WinningConfig {
-  items: WinningConfigItem[] = [];
+  items: WinningConfigItem[] = []
 
   constructor(args?: WinningConfig) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 
 export class WinningConfigItem {
-  safetyDepositBoxIndex: number = 0;
-  amount: number = 0;
-  winningConfigType: WinningConfigType = WinningConfigType.TokenOnlyTransfer;
+  safetyDepositBoxIndex: number = 0
+  amount: number = 0
+  winningConfigType: WinningConfigType = WinningConfigType.TokenOnlyTransfer
 
   constructor(args?: WinningConfigItem) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 
 export class WinningConfigState {
-  items: WinningConfigStateItem[] = [];
-  moneyPushedToAcceptPayment: boolean = false;
+  items: WinningConfigStateItem[] = []
+  moneyPushedToAcceptPayment: boolean = false
 
   constructor(args?: WinningConfigState) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 
 export class WinningConfigStateItem {
-  primarySaleHappened: boolean = false;
-  claimed: boolean = false;
+  primarySaleHappened: boolean = false
+  claimed: boolean = false
 
   constructor(args?: WinningConfigStateItem) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 export class AuctionManagerStateV1 {
-  status: AuctionManagerStatus = AuctionManagerStatus.Initialized;
-  winningConfigItemsValidated: number = 0;
+  status: AuctionManagerStatus = AuctionManagerStatus.Initialized
+  winningConfigItemsValidated: number = 0
 
-  winningConfigStates: WinningConfigState[] = [];
+  winningConfigStates: WinningConfigState[] = []
 
-  participationState: ParticipationStateV1 | null = null;
+  participationState: ParticipationStateV1 | null = null
 
   constructor(args?: AuctionManagerStateV1) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 }
 
 export class BidRedemptionTicketV1 implements BidRedemptionTicket {
-  key: MetaplexKey = MetaplexKey.BidRedemptionTicketV1;
-  participationRedeemed: boolean = false;
-  itemsRedeemed: number = 0;
+  key: MetaplexKey = MetaplexKey.BidRedemptionTicketV1
+  participationRedeemed: boolean = false
+  itemsRedeemed: number = 0
 
   constructor(args?: BidRedemptionTicketV1) {
-    Object.assign(this, args);
+    Object.assign(this, args)
   }
 
   getBidRedeemed(): boolean {
-    return this.participationRedeemed;
+    return this.participationRedeemed
   }
 }
 
 export async function getSafetyDepositBoxValidationTicket(
   auctionManager: string,
-  safetyDepositBox: string,
+  safetyDepositBox: string
 ) {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
   return (
     await findProgramAddress(
       [
@@ -174,9 +173,9 @@ export async function getSafetyDepositBoxValidationTicket(
         toPublicKey(auctionManager).toBuffer(),
         toPublicKey(safetyDepositBox).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.metaplex),
+      toPublicKey(PROGRAM_IDS.metaplex)
     )
-  )[0];
+  )[0]
 }
 
 export const DEPRECATED_SCHEMA = new Map<any, any>([
@@ -214,10 +213,7 @@ export const DEPRECATED_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['winningConfigs', [WinningConfig]],
-        [
-          'participationConfig',
-          { kind: 'option', type: ParticipationConfigV1 },
-        ],
+        ['participationConfig', { kind: 'option', type: ParticipationConfigV1 }],
       ],
     },
   ],
@@ -279,10 +275,7 @@ export const DEPRECATED_SCHEMA = new Map<any, any>([
         ['collectedToAcceptPayment', 'u64'],
         ['primarySaleHappened', 'u8'], //bool
         ['validated', 'u8'], //bool
-        [
-          'printingAuthorizationTokenAccount',
-          { kind: 'option', type: 'pubkeyAsString' },
-        ],
+        ['printingAuthorizationTokenAccount', { kind: 'option', type: 'pubkeyAsString' }],
       ],
     },
   ],
@@ -335,4 +328,4 @@ export const DEPRECATED_SCHEMA = new Map<any, any>([
       fields: [['instruction', 'u8']],
     },
   ],
-]);
+])

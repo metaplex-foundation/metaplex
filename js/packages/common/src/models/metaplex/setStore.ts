@@ -1,23 +1,23 @@
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { SCHEMA, SetStoreArgs } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { SCHEMA, SetStoreArgs } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function setStore(
   isPublic: boolean,
   admin: StringPublicKey,
   payer: StringPublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const value = new SetStoreArgs({ public: isPublic });
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new SetStoreArgs({ public: isPublic })
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -61,13 +61,13 @@ export async function setStore(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

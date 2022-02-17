@@ -1,1 +1,1 @@
-export * from './StaticContent';
+export * from './StaticContent'

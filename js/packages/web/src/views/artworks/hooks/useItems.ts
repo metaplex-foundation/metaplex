@@ -1,15 +1,11 @@
-import { useMeta } from '@oyster/common';
+import { useMeta } from '@oyster/common'
 
-import { ArtworkViewState, Item } from '../types';
+import { ArtworkViewState, Item } from '../types'
 
-export const useItems = ({
-  activeKey,
-}: {
-  activeKey: ArtworkViewState;
-}): Item[] => {
+export const useItems = ({ activeKey }: { activeKey: ArtworkViewState }): Item[] => {
   // const { publicKey } = useWallet();
-  console.log(activeKey);
-  const { metadata } = useMeta();
+  console.log(activeKey)
+  const { metadata } = useMeta()
   // const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   // const userMetadataWithPacks = useUserMetadataWithPacks();
   // const packsBasedOnProvingProcesses = usePacksBasedOnProvingProcesses();
@@ -22,5 +18,5 @@ export const useItems = ({
   //   return createdMetadata;
   // }
 
-  return metadata;
-};
+  return metadata
+}

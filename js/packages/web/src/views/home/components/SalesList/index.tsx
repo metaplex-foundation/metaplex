@@ -1,18 +1,18 @@
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Layout, Row, Tabs } from 'antd';
-import { Link } from 'react-router-dom';
-import React, { useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react'
+import { Col, Layout, Row, Tabs } from 'antd'
+import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
 
-import { useMeta } from '../../../../contexts';
-import { CardLoader } from '../../../../components/MyLoader';
-import { Banner } from '../../../../components/Banner';
-import { HowToBuyModal } from '../../../../components/HowToBuyModal';
+import { useMeta } from '../../../../contexts'
+import { CardLoader } from '../../../../components/MyLoader'
+import { Banner } from '../../../../components/Banner'
+import { HowToBuyModal } from '../../../../components/HowToBuyModal'
 
-import { useAuctionsList } from './hooks/useAuctionsList';
-import { AuctionRenderCard } from '../../../../components/AuctionRenderCard';
+import { useAuctionsList } from './hooks/useAuctionsList'
+import { AuctionRenderCard } from '../../../../components/AuctionRenderCard'
 
-const { TabPane } = Tabs;
-const { Content } = Layout;
+const { TabPane } = Tabs
+const { Content } = Layout
 
 export enum LiveAuctionViewState {
   All = '0',
@@ -23,20 +23,20 @@ export enum LiveAuctionViewState {
 }
 
 export const SalesListView = () => {
-  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
-  const { isLoading } = useMeta();
-  const { connected } = useWallet();
-  const { auctions, hasResaleAuctions } = useAuctionsList(activeKey);
+  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All)
+  const { isLoading } = useMeta()
+  const { connected } = useWallet()
+  const { auctions, hasResaleAuctions } = useAuctionsList(activeKey)
 
   return (
     <>
       <Banner
-        src="/banner.png"
-        headingText="A Community Focused Solana NFT Marketplace"
-        subHeadingText="Karmaverse is an eco-friendly NFT exchange that 
+        src='/banner.png'
+        headingText='A Community Focused Solana NFT Marketplace'
+        subHeadingText='Karmaverse is an eco-friendly NFT exchange that 
         rewards users for their activity and donates a portion
-        of every trade to charitable causes."
-        actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
+        of every trade to charitable causes.'
+        actionComponent={<HowToBuyModal buttonClassName='secondary-btn' />}
         useBannerBg
       />
       <Layout>
@@ -57,42 +57,29 @@ export const SalesListView = () => {
                 <TabPane
                   tab={
                     <>
-                      <span className="live"></span> Live
+                      <span className='live'></span> Live
                     </>
                   }
                   key={LiveAuctionViewState.All}
                 ></TabPane>
                 {hasResaleAuctions && (
-                  <TabPane
-                    tab="Secondary Marketplace"
-                    key={LiveAuctionViewState.Resale}
-                  ></TabPane>
+                  <TabPane tab='Secondary Marketplace' key={LiveAuctionViewState.Resale}></TabPane>
                 )}
-                <TabPane tab="Ended" key={LiveAuctionViewState.Ended}></TabPane>
+                <TabPane tab='Ended' key={LiveAuctionViewState.Ended}></TabPane>
                 {connected && (
-                  <TabPane
-                    tab="Participated"
-                    key={LiveAuctionViewState.Participated}
-                  ></TabPane>
+                  <TabPane tab='Participated' key={LiveAuctionViewState.Participated}></TabPane>
                 )}
                 {connected && (
-                  <TabPane
-                    tab="My Live Auctions"
-                    key={LiveAuctionViewState.Own}
-                  ></TabPane>
+                  <TabPane tab='My Live Auctions' key={LiveAuctionViewState.Own}></TabPane>
                 )}
               </Tabs>
             </Row>
             <Row>
-              <div className="artwork-grid">
-                {isLoading &&
-                  [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+              <div className='artwork-grid'>
+                {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
                 {!isLoading &&
                   auctions.map(auction => (
-                    <Link
-                      key={auction.auction.pubkey}
-                      to={`/auction/${auction.auction.pubkey}`}
-                    >
+                    <Link key={auction.auction.pubkey} to={`/auction/${auction.auction.pubkey}`}>
                       <AuctionRenderCard auctionView={auction} />
                     </Link>
                   ))}
@@ -102,5 +89,5 @@ export const SalesListView = () => {
         </Content>
       </Layout>
     </>
-  );
-};
+  )
+}

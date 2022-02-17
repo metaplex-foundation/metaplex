@@ -1,1 +1,1 @@
-export * from './CollectionActivityTable';
+export * from './CollectionActivityTable'

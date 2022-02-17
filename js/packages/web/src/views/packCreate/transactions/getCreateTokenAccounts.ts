@@ -1,9 +1,9 @@
-import { programIds } from '@oyster/common';
-import { AccountLayout } from '@solana/spl-token';
-import { TransactionInstruction } from '@solana/web3.js';
+import { programIds } from '@oyster/common'
+import { AccountLayout } from '@solana/spl-token'
+import { TransactionInstruction } from '@solana/web3.js'
 
-import { getCreateAccount } from './getCreateAccount';
-import { GetCreateTokenAccounts } from './interface';
+import { getCreateAccount } from './getCreateAccount'
+import { GetCreateTokenAccounts } from './interface'
 
 export const getCreateTokenAccounts = ({
   cardsToAdd,
@@ -18,6 +18,6 @@ export const getCreateTokenAccounts = ({
         newAccountPubkey: toAccount.publicKey,
         space: AccountLayout.span,
         programId: programIds().token,
-      }),
-    ),
-  );
+      })
+    )
+  )

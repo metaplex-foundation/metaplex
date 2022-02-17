@@ -1,13 +1,13 @@
-import React, { Ref, useCallback, useEffect, useState } from 'react';
-import { Image } from 'antd';
-import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
-import { MeshViewer } from '../MeshViewer';
-import { ThreeDots } from '../MyLoader';
-import { useCachedImage, useExtendedArt } from '../../hooks';
-import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
-import { PublicKey } from '@solana/web3.js';
-import { getLast } from '../../utils/utils';
-import styled from 'styled-components';
+import React, { Ref, useCallback, useEffect, useState } from 'react'
+import { Image } from 'antd'
+import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common'
+import { MeshViewer } from '../MeshViewer'
+import { ThreeDots } from '../MyLoader'
+import { useCachedImage, useExtendedArt } from '../../hooks'
+import { Stream, StreamPlayerApi } from '@cloudflare/stream-react'
+import { PublicKey } from '@solana/web3.js'
+import { getLast } from '../../utils/utils'
+import styled from 'styled-components'
 
 const MeshArtContent = ({
   uri,
@@ -16,17 +16,15 @@ const MeshArtContent = ({
   style,
   files,
 }: {
-  uri?: string;
-  animationUrl?: string;
-  className?: string;
-  style?: React.CSSProperties;
-  files?: (MetadataFile | string)[];
+  uri?: string
+  animationUrl?: string
+  className?: string
+  style?: React.CSSProperties
+  files?: (MetadataFile | string)[]
 }) => {
   const renderURL =
-    files && files.length > 0 && typeof files[0] === 'string'
-      ? files[0]
-      : animationUrl;
-  const { isLoading } = useCachedImage(renderURL || '', true);
+    files && files.length > 0 && typeof files[0] === 'string' ? files[0] : animationUrl
+  const { isLoading } = useCachedImage(renderURL || '', true)
 
   if (isLoading) {
     return (
@@ -36,11 +34,11 @@ const MeshArtContent = ({
         preview={false}
         style={{ width: '100%', ...style }}
       />
-    );
+    )
   }
 
-  return <MeshViewer url={renderURL} className={className} style={style} />;
-};
+  return <MeshViewer url={renderURL} className={className} style={style} />
+}
 
 export const CachedImageContent = ({
   uri,
@@ -48,25 +46,25 @@ export const CachedImageContent = ({
   preview,
   style,
 }: {
-  uri?: string;
-  className?: string;
-  preview?: boolean;
-  style?: React.CSSProperties;
+  uri?: string
+  className?: string
+  preview?: boolean
+  style?: React.CSSProperties
 }) => {
-  const { cachedBlob } = useCachedImage(uri || '');
+  const { cachedBlob } = useCachedImage(uri || '')
 
   return (
     <Image
-      fallback="image-placeholder.svg"
+      fallback='image-placeholder.svg'
       src={cachedBlob}
       preview={preview}
       wrapperClassName={className}
-      loading="lazy"
+      loading='lazy'
       wrapperStyle={{ ...style }}
       placeholder={<ThreeDots />}
     />
-  );
-};
+  )
+}
 
 const VideoArtContent = ({
   className,
@@ -76,40 +74,39 @@ const VideoArtContent = ({
   animationURL,
   active,
 }: {
-  className?: string;
-  style?: React.CSSProperties;
-  files?: (MetadataFile | string)[];
-  uri?: string;
-  animationURL?: string;
-  active?: boolean;
+  className?: string
+  style?: React.CSSProperties
+  files?: (MetadataFile | string)[]
+  uri?: string
+  animationURL?: string
+  active?: boolean
 }) => {
-  const [playerApi, setPlayerApi] = useState<StreamPlayerApi>();
+  const [playerApi, setPlayerApi] = useState<StreamPlayerApi>()
 
   const playerRef = useCallback(
     ref => {
-      setPlayerApi(ref);
+      setPlayerApi(ref)
     },
-    [setPlayerApi],
-  );
+    [setPlayerApi]
+  )
 
   useEffect(() => {
     if (playerApi) {
-      playerApi.currentTime = 0;
+      playerApi.currentTime = 0
     }
-  }, [active, playerApi]);
+  }, [active, playerApi])
 
   const likelyVideo = (files || []).filter((f, index, arr) => {
     if (typeof f !== 'string') {
-      return false;
+      return false
     }
 
     // TODO: filter by fileType
-    return arr.length >= 2 ? index === 1 : index === 0;
-  })?.[0] as string;
+    return arr.length >= 2 ? index === 1 : index === 0
+  })?.[0] as string
 
   const content =
-    likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+    likelyVideo && likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           // @ts-ignore
@@ -136,17 +133,13 @@ const VideoArtContent = ({
           autoPlay={true}
           muted={true}
           controls={true}
-          controlsList="nodownload"
+          controlsList='nodownload'
           style={style}
           loop={true}
           poster={uri}
         >
-          {likelyVideo && (
-            <source src={likelyVideo} type="video/mp4" style={style} />
-          )}
-          {animationURL && (
-            <source src={animationURL} type="video/mp4" style={style} />
-          )}
+          {likelyVideo && <source src={likelyVideo} type='video/mp4' style={style} />}
+          {animationURL && <source src={animationURL} type='video/mp4' style={style} />}
           {files
             ?.filter(f => typeof f !== 'string')
             .map((f: any, index: number) => (
@@ -154,16 +147,16 @@ const VideoArtContent = ({
             ))}
         </video>
       </div>
-    );
+    )
 
-  return content;
-};
+  return content
+}
 
 const HTMLWrapper = styled.div`
   padding-top: 100%;
   position: relative;
   width: 100%;
-`;
+`
 
 const HTMLContent = ({
   uri,
@@ -174,29 +167,20 @@ const HTMLContent = ({
   files,
   artView,
 }: {
-  uri?: string;
-  animationUrl?: string;
-  className?: string;
-  preview?: boolean;
-  style?: React.CSSProperties;
-  files?: (MetadataFile | string)[];
-  artView?: boolean;
+  uri?: string
+  animationUrl?: string
+  className?: string
+  preview?: boolean
+  style?: React.CSSProperties
+  files?: (MetadataFile | string)[]
+  artView?: boolean
 }) => {
-  const [loaded, setLoaded] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState<boolean>(false)
   if (!artView) {
-    return (
-      <CachedImageContent
-        uri={uri}
-        className={className}
-        preview={preview}
-        style={style}
-      />
-    );
+    return <CachedImageContent uri={uri} className={className} preview={preview} style={style} />
   }
   const htmlURL =
-    files && files.length > 0 && typeof files[0] === 'string'
-      ? files[0]
-      : animationUrl;
+    files && files.length > 0 && typeof files[0] === 'string' ? files[0] : animationUrl
   return (
     <HTMLWrapper>
       {!loaded && (
@@ -211,13 +195,13 @@ const HTMLContent = ({
         />
       )}
       <iframe
-        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-        sandbox="allow-scripts"
-        frameBorder="0"
+        allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture'
+        sandbox='allow-scripts'
+        frameBorder='0'
         src={htmlURL}
         className={`html-iframe ${className}`}
         onLoad={() => {
-          setLoaded(true);
+          setLoaded(true)
         }}
         style={{
           ...style,
@@ -225,15 +209,15 @@ const HTMLContent = ({
         }}
       ></iframe>
     </HTMLWrapper>
-  );
-};
+  )
+}
 
 const ArtContentWrapper = styled.div`
   display: flex;
   alignitems: center;
   justifycontent: center;
   height: 100%;
-`;
+`
 
 export const ArtContent = ({
   category,
@@ -248,73 +232,65 @@ export const ArtContent = ({
   files,
   artView,
 }: {
-  category?: MetadataCategory;
-  className?: string;
-  preview?: boolean;
-  style?: React.CSSProperties;
-  width?: number;
-  height?: number;
-  ref?: Ref<HTMLDivElement>;
-  active?: boolean;
-  allowMeshRender?: boolean;
-  pubkey?: PublicKey | string;
-  uri?: string;
-  animationURL?: string;
-  files?: (MetadataFile | string)[];
-  artView?: boolean;
+  category?: MetadataCategory
+  className?: string
+  preview?: boolean
+  style?: React.CSSProperties
+  width?: number
+  height?: number
+  ref?: Ref<HTMLDivElement>
+  active?: boolean
+  allowMeshRender?: boolean
+  pubkey?: PublicKey | string
+  uri?: string
+  animationURL?: string
+  files?: (MetadataFile | string)[]
+  artView?: boolean
 }) => {
-  const [uriState, setUriState] = useState<string | undefined>();
-  const [animationURLState, setAnimationURLState] = useState<
-    string | undefined
-  >();
-  const [filesState, setFilesState] = useState<
-    (MetadataFile | string)[] | undefined
-  >();
-  const [categoryState, setCategoryState] = useState<
-    MetadataCategory | undefined
-  >();
+  const [uriState, setUriState] = useState<string | undefined>()
+  const [animationURLState, setAnimationURLState] = useState<string | undefined>()
+  const [filesState, setFilesState] = useState<(MetadataFile | string)[] | undefined>()
+  const [categoryState, setCategoryState] = useState<MetadataCategory | undefined>()
 
-  const id = pubkeyToString(pubkey);
+  const id = pubkeyToString(pubkey)
 
-  const { ref, data } = useExtendedArt(id);
+  const { ref, data } = useExtendedArt(id)
 
   useEffect(() => {
-    setUriState(uri);
-  }, [uri]);
+    setUriState(uri)
+  }, [uri])
 
   useEffect(() => {
-    setAnimationURLState(animationURL);
-  }, [animationURL]);
+    setAnimationURLState(animationURL)
+  }, [animationURL])
 
   useEffect(() => {
-    setFilesState(files);
-  }, [files]);
+    setFilesState(files)
+  }, [files])
 
   useEffect(() => {
-    setCategoryState(category);
-  }, [category]);
+    setCategoryState(category)
+  }, [category])
 
   useEffect(() => {
     if (pubkey && data) {
-      setUriState(data.image);
-      setAnimationURLState(data.animation_url);
+      setUriState(data.image)
+      setAnimationURLState(data.animation_url)
     }
 
     if (pubkey && data?.properties) {
-      setFilesState(data.properties.files);
-      setCategoryState(data.properties.category);
+      setFilesState(data.properties.files)
+      setCategoryState(data.properties.category)
     }
-  }, [pubkey, data]);
+  }, [pubkey, data])
 
-  const animationUrlExt = new URLSearchParams(
-    getLast((animationURLState || '').split('?')),
-  ).get('ext');
+  const animationUrlExt = new URLSearchParams(getLast((animationURLState || '').split('?'))).get(
+    'ext'
+  )
 
   if (
     allowMeshRender &&
-    (categoryState === 'vr' ||
-      animationUrlExt === 'glb' ||
-      animationUrlExt === 'gltf')
+    (categoryState === 'vr' || animationUrlExt === 'glb' || animationUrlExt === 'gltf')
   ) {
     return (
       <MeshArtContent
@@ -324,7 +300,7 @@ export const ArtContent = ({
         style={style}
         files={filesState}
       />
-    );
+    )
   }
 
   if (categoryState === 'html' || animationUrlExt === 'html') {
@@ -338,7 +314,7 @@ export const ArtContent = ({
         files={filesState}
         artView={artView}
       />
-    );
+    )
   }
 
   const content =
@@ -352,13 +328,8 @@ export const ArtContent = ({
         active={active}
       />
     ) : (
-      <CachedImageContent
-        uri={uriState}
-        className={className}
-        preview={preview}
-        style={style}
-      />
-    );
+      <CachedImageContent uri={uriState} className={className} preview={preview} style={style} />
+    )
 
-  return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>;
-};
+  return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>
+}

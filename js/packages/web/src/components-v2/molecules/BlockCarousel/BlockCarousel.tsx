@@ -1,33 +1,33 @@
-import React, { FC, useEffect } from 'react';
-import CN from 'classnames';
-import ReactTooltip from 'react-tooltip';
-import Swiper, { Navigation, Autoplay, Mousewheel } from 'swiper';
-import 'swiper/css';
+import React, { FC, useEffect } from 'react'
+import CN from 'classnames'
+import ReactTooltip from 'react-tooltip'
+import Swiper, { Navigation, Autoplay, Mousewheel } from 'swiper'
+import 'swiper/css'
 
 export interface SlideProps {
-  Component?: any;
-  [x: string]: any;
-  id?: number | string;
+  Component?: any
+  [x: string]: any
+  id?: number | string
 }
 
 export interface BlockCarouselProps {
-  [x: string]: any;
-  id?: string;
-  nextButton?: any;
-  prevButton?: any;
-  slides?: SlideProps[];
+  [x: string]: any
+  id?: string
+  nextButton?: any
+  prevButton?: any
+  slides?: SlideProps[]
   options?: {
-    [x: string]: any;
-  };
+    [x: string]: any
+  }
 }
 
 const SampleComponent = ({ children }: any) => {
   return (
-    <div className="w-full h-[400px] bg-[#C2D0DE] text-[40px] font-[600] uppercase text-white flex items-center justify-center">
+    <div className='w-full h-[400px] bg-[#C2D0DE] text-[40px] font-[600] uppercase text-white flex items-center justify-center'>
       {children}
     </div>
-  );
-};
+  )
+}
 
 export const BlockCarousel: FC<BlockCarouselProps> = ({
   className,
@@ -39,10 +39,7 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
   loop,
   ...restProps
 }: BlockCarouselProps) => {
-  const BlockCarouselClasses = CN(
-    `block-carousel w-full flex flex-col overflow-hidden`,
-    className,
-  );
+  const BlockCarouselClasses = CN(`block-carousel w-full flex flex-col overflow-hidden`, className)
 
   const {
     autoPlay,
@@ -55,10 +52,10 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
     wrapperClass,
     resizeObserver,
     ...restOptions
-  } = options || {};
+  } = options || {}
 
   useEffect(() => {
-    Swiper.use([Navigation, Autoplay, Mousewheel]);
+    Swiper.use([Navigation, Autoplay, Mousewheel])
 
     const swiper = new Swiper(`#${id}` || '.block-carousel', {
       autoplay:
@@ -88,37 +85,37 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
       mousewheel: { forceToAxis: true },
       loop: loop || false,
       ...restOptions,
-    });
+    })
 
     swiper.on('slideChange', function () {
       // This is top rebuild tooltip on every slide change (Else tooltip won't work after slide change)
-      ReactTooltip.rebuild();
-    });
-  }, []);
+      ReactTooltip.rebuild()
+    })
+  }, [])
 
   const sampleSlides = [
     { id: 0, Component: () => <SampleComponent>Slide one</SampleComponent> },
     { id: 1, Component: () => <SampleComponent>Slide two</SampleComponent> },
     { id: 2, Component: () => <SampleComponent>Slide three</SampleComponent> },
-  ];
+  ]
 
   return (
     <div id={id} className={BlockCarouselClasses} {...restProps}>
-      <ul className="flex p-0 m-0 list-none block-carousel__wrapper">
+      <ul className='flex p-0 m-0 list-none block-carousel__wrapper'>
         {(slides || sampleSlides).map(
           ({ id, Component, ...restProps }: SlideProps, index: number) => (
             <li
               key={id || index}
-              className="flex flex-col flex-shrink-0 block-carousel__item"
+              className='flex flex-col flex-shrink-0 block-carousel__item'
               {...restProps}
             >
               <Component />
             </li>
-          ),
+          )
         )}
       </ul>
     </div>
-  );
-};
+  )
+}
 
-export default BlockCarousel;
+export default BlockCarousel

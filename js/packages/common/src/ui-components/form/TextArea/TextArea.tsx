@@ -92,7 +92,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
                   'after:bg-white': !disabled,
                   'after:bg-N-50': disabled,
                 }
-              )}>
+              )}
+            >
               <span className='relative z-[1]'>
                 {label} {required && <span className='text-R-400'>*</span>}
               </span>
@@ -113,7 +114,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
             className={CN('pt-[2px] text-sm', hintClassName, {
               'text-R-400': isError,
               'text-G-500': isSuccess,
-            })}>
+            })}
+          >
             {hint}
           </span>
         )}

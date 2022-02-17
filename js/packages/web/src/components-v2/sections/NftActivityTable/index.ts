@@ -1,1 +1,1 @@
-export * from './NftActivityTable';
+export * from './NftActivityTable'

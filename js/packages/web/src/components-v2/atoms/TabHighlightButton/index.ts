@@ -1,1 +1,1 @@
-export * from './TabHighlightButton';
+export * from './TabHighlightButton'

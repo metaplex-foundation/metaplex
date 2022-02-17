@@ -1,17 +1,13 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { getAuctionKeys, getOriginalAuthority, SCHEMA } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { getAuctionKeys, getOriginalAuthority, SCHEMA } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 import {
   getSafetyDepositBoxValidationTicket,
   DeprecatedValidateSafetyDepositBoxV1Args,
-} from './deprecatedStates';
+} from './deprecatedStates'
 
 export async function deprecatedValidateSafetyDepositBoxV1(
   vault: StringPublicKey,
@@ -27,27 +23,21 @@ export async function deprecatedValidateSafetyDepositBoxV1(
   whitelistedCreator: StringPublicKey | undefined,
   store: StringPublicKey,
   printingMint?: StringPublicKey,
-  printingMintAuthority?: StringPublicKey,
+  printingMintAuthority?: StringPublicKey
 ) {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
-  const originalAuthorityLookup = await getOriginalAuthority(
-    auctionKey,
-    metadata,
-  );
+  const originalAuthorityLookup = await getOriginalAuthority(auctionKey, metadata)
 
-  const value = new DeprecatedValidateSafetyDepositBoxV1Args();
+  const value = new DeprecatedValidateSafetyDepositBoxV1Args()
 
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const data = Buffer.from(serialize(SCHEMA, value))
   const keys = [
     {
       pubkey: toPublicKey(
-        await getSafetyDepositBoxValidationTicket(
-          auctionManagerKey,
-          safetyDepositBox,
-        ),
+        await getSafetyDepositBoxValidationTicket(auctionManagerKey, safetyDepositBox)
       ),
       isSigner: false,
       isWritable: true,
@@ -133,26 +123,26 @@ export async function deprecatedValidateSafetyDepositBoxV1(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   if (printingMint && printingMintAuthority) {
     keys.push({
       pubkey: toPublicKey(printingMint),
       isSigner: false,
       isWritable: true,
-    });
+    })
 
     keys.push({
       pubkey: toPublicKey(printingMintAuthority),
       isSigner: true,
       isWritable: false,
-    });
+    })
   }
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

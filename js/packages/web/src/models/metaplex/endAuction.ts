@@ -5,34 +5,28 @@ import {
   programIds,
   toPublicKey,
   SCHEMA,
-} from '@oyster/common';
-import {
-  PublicKey,
-  SYSVAR_CLOCK_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+} from '@oyster/common'
+import { PublicKey, SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
 export async function endAuction(
   vault: PublicKey,
   auctionManagerAuthority: PublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(
-    vault.toString(),
-  );
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault.toString())
   const auctionExtended = await getAuctionExtended({
     auctionProgramId: PROGRAM_IDS.auction,
     resource: vault.toString(),
-  });
-  const value = new EndAuctionArgs({ reveal: null });
-  const data = Buffer.from(serialize(SCHEMA, value));
+  })
+  const value = new EndAuctionArgs({ reveal: null })
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -70,13 +64,13 @@ export async function endAuction(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

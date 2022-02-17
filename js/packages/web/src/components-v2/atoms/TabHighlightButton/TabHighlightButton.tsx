@@ -1,8 +1,8 @@
-import React, { FC } from 'react';
-import CN from 'classnames';
+import React, { FC } from 'react'
+import CN from 'classnames'
 
 export interface TabHighlightButtonProps {
-  [x: string]: any;
+  [x: string]: any
 }
 
 export const TabHighlightButton: FC<TabHighlightButtonProps> = ({
@@ -18,8 +18,8 @@ export const TabHighlightButton: FC<TabHighlightButtonProps> = ({
       'text-gray-800': isActive,
       'text-gray-500 hover:text-gray-700': !isActive,
     },
-    className,
-  );
+    className
+  )
 
   return (
     <div className={TabHighlightButtonClasses} {...restProps} onClick={onClick}>
@@ -30,11 +30,11 @@ export const TabHighlightButton: FC<TabHighlightButtonProps> = ({
           'bg-[linear-gradient(89.57deg,_#3E9CD1_0.79%,_#224CB8_124%)] h-[4px] w-full rounded-full absolute left-0 right-0 bottom-0 opacity-0 transition-all',
           {
             'opacity-[1]': isActive,
-          },
+          }
         )}
       />
     </div>
-  );
-};
+  )
+}
 
-export default TabHighlightButton;
+export default TabHighlightButton

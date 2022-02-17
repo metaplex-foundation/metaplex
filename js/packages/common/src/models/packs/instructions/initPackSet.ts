@@ -3,17 +3,17 @@ import {
   TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+} from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { getWhitelistedCreator } from '../../metaplex';
-import { programIds, toPublicKey, StringPublicKey } from '../../../utils';
-import { InitPackSetParams } from '../interface';
-import { InitPackSetArgs, PACKS_SCHEMA } from '../../..';
+import { getWhitelistedCreator } from '../../metaplex'
+import { programIds, toPublicKey, StringPublicKey } from '../../../utils'
+import { InitPackSetParams } from '../interface'
+import { InitPackSetArgs, PACKS_SCHEMA } from '../../..'
 
 interface Params extends InitPackSetParams {
-  packSetKey: PublicKey;
-  authority: StringPublicKey;
+  packSetKey: PublicKey
+  authority: StringPublicKey
 }
 
 export async function initPackSet({
@@ -28,7 +28,7 @@ export async function initPackSet({
   packSetKey,
   authority,
 }: Params): Promise<TransactionInstruction> {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
   const value = new InitPackSetArgs({
     name,
@@ -39,16 +39,16 @@ export async function initPackSet({
     allowedAmountToRedeem,
     redeemStartDate,
     redeemEndDate,
-  });
+  })
 
-  const store = PROGRAM_IDS.store;
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const whitelistedCreator = await getWhitelistedCreator(authority);
+  const whitelistedCreator = await getWhitelistedCreator(authority)
 
-  const data = Buffer.from(serialize(PACKS_SCHEMA, value));
+  const data = Buffer.from(serialize(PACKS_SCHEMA, value))
   const keys = [
     {
       pubkey: toPublicKey(packSetKey),
@@ -85,11 +85,11 @@ export async function initPackSet({
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   return new TransactionInstruction({
     keys,
     programId: toPublicKey(PROGRAM_IDS.pack_create),
     data,
-  });
+  })
 }

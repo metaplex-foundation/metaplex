@@ -1,1 +1,1 @@
-export * from './SubmitCollection';
+export * from './SubmitCollection'

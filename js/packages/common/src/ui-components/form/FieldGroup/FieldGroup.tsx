@@ -42,7 +42,8 @@ export const FieldGroup: FC<FieldGroupProps> = ({
         className={CN('rounded-tl-none rounded-bl-none', btnClassName)}
         onClick={btnOnClick}
         appearance={btnAppearance}
-        {...restBtnProps}>
+        {...restBtnProps}
+      >
         {btnLabel || 'Submit'}
       </Button>
     </div>

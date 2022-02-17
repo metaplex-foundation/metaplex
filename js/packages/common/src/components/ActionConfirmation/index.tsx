@@ -1,12 +1,9 @@
-import React from 'react';
-import { Button } from 'antd';
-import { LABELS } from '../../constants';
-import { Link } from 'react-router-dom';
+import React from 'react'
+import { Button } from 'antd'
+import { LABELS } from '../../constants'
+import { Link } from 'react-router-dom'
 
-export const ActionConfirmation = (props: {
-  className?: string;
-  onClose: () => void;
-}) => {
+export const ActionConfirmation = (props: { className?: string; onClose: () => void }) => {
   return (
     <div
       style={{
@@ -18,13 +15,13 @@ export const ActionConfirmation = (props: {
     >
       <h2>Congratulations!</h2>
       <div>Your action has been successfully executed</div>
-      <div className="success-icon" />
-      <Link to="/dashboard">
-        <Button type="primary">{LABELS.DASHBOARD_ACTION}</Button>
+      <div className='success-icon' />
+      <Link to='/dashboard'>
+        <Button type='primary'>{LABELS.DASHBOARD_ACTION}</Button>
       </Link>
-      <Button type="text" onClick={props.onClose}>
+      <Button type='text' onClick={props.onClose}>
         {LABELS.GO_BACK_ACTION}
       </Button>
     </div>
-  );
-};
+  )
+}

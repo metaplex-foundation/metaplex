@@ -1,12 +1,12 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties } from 'react'
 
 export const TokenCircle = (props: {
-  iconSize?: number;
-  iconFile?: string;
-  style?: CSSProperties;
+  iconSize?: number
+  iconFile?: string
+  style?: CSSProperties
 }) => {
-  const { iconSize = 24, iconFile = undefined, style = {} } = props;
-  const filePath = iconFile ? iconFile : '/unknown_token.png';
+  const { iconSize = 24, iconFile = undefined, style = {} } = props
+  const filePath = iconFile ? iconFile : '/unknown_token.png'
   return (
     <span
       style={{
@@ -21,5 +21,5 @@ export const TokenCircle = (props: {
     >
       <img src={filePath} />
     </span>
-  );
-};
+  )
+}

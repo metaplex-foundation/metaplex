@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
 /**
  * Hook to handle outside click of dropdown
@@ -7,7 +7,7 @@ export const useOutsideClick = (ref: any, callBack?: any, ignoreRef?: any) => {
   useEffect(() => {
     function handleClickOutside(event: any) {
       if (ref?.current && !ref.current.contains(event.target) && !ignoreRef) {
-        callBack();
+        callBack()
       }
 
       if (
@@ -16,13 +16,13 @@ export const useOutsideClick = (ref: any, callBack?: any, ignoreRef?: any) => {
         ignoreRef?.current &&
         !ignoreRef.current.contains(event.target)
       ) {
-        callBack();
+        callBack()
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [ref]);
-};
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [ref])
+}

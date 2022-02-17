@@ -1,1 +1,1 @@
-export * from './AttributesCard';
+export * from './AttributesCard'

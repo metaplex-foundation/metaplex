@@ -1,8 +1,8 @@
-import { Layout } from 'antd';
-import React from 'react';
+import { Layout } from 'antd'
+import React from 'react'
 // import { useStore } from '@oyster/common';
 // import { useMeta } from '../../contexts';
-import { SalesListView } from './components/SalesList';
+import { SalesListView } from './components/SalesList'
 
 export const HomeView = () => {
   // const { isLoading, store } = useMeta();
@@ -21,5 +21,5 @@ export const HomeView = () => {
       <SalesListView />
       {/* {showAuctions ? <SalesListView /> : <SetupView />} */}
     </Layout>
-  );
-};
+  )
+}

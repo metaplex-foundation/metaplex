@@ -1,36 +1,36 @@
 /* eslint-disable no-param-reassign */
 // https://github.com/tannerlinsley/react-table/discussions/1989
-import React, { forwardRef, MutableRefObject, useEffect, useRef } from 'react';
-import CN from 'classnames';
+import React, { forwardRef, MutableRefObject, useEffect, useRef } from 'react'
+import CN from 'classnames'
 
 export interface CheckboxProps {
-  [x: string]: any;
-  children?: any;
-  className?: string | undefined;
-  id?: string | undefined;
-  indeterminate?: boolean;
-  labelClassName?: string | undefined;
-  onChange?: any;
-  type?: 'checkbox' | undefined;
+  [x: string]: any
+  children?: any
+  className?: string | undefined
+  id?: string | undefined
+  indeterminate?: boolean
+  labelClassName?: string | undefined
+  onChange?: any
+  type?: 'checkbox' | undefined
 }
 
 const useCombinedRefs = (...refs: any[]): MutableRefObject<any> => {
-  const targetRef = useRef();
+  const targetRef = useRef()
 
   useEffect(() => {
     refs.forEach(ref => {
-      if (!ref) return;
+      if (!ref) return
 
       if (typeof ref === 'function') {
-        ref(targetRef.current);
+        ref(targetRef.current)
       } else {
-        ref.current = targetRef.current;
+        ref.current = targetRef.current
       }
-    });
-  }, [refs]);
+    })
+  }, [refs])
 
-  return targetRef;
-};
+  return targetRef
+}
 
 export const CheckBox = forwardRef<HTMLInputElement, CheckboxProps>(
   (
@@ -44,24 +44,24 @@ export const CheckBox = forwardRef<HTMLInputElement, CheckboxProps>(
       type,
       ...restProps
     }: CheckboxProps,
-    ref: React.Ref<HTMLInputElement>,
+    ref: React.Ref<HTMLInputElement>
   ) => {
     const CheckboxClasses = CN(
       'checkbox flex items-start relative pl-[16px] min-h-[24px] cursor-pointer',
       className,
       {
         'checkbox--is-indeterminate': indeterminate,
-      },
-    );
+      }
+    )
 
-    const defaultRef = React.useRef(null);
-    const combinedRef = useCombinedRefs(ref, defaultRef);
+    const defaultRef = React.useRef(null)
+    const combinedRef = useCombinedRefs(ref, defaultRef)
 
     useEffect(() => {
       if (combinedRef?.current) {
-        combinedRef.current.indeterminate = indeterminate || false;
+        combinedRef.current.indeterminate = indeterminate || false
       }
-    }, [combinedRef, indeterminate]);
+    }, [combinedRef, indeterminate])
 
     return (
       <label className={CheckboxClasses} htmlFor={id}>
@@ -70,28 +70,28 @@ export const CheckBox = forwardRef<HTMLInputElement, CheckboxProps>(
           type={type}
           ref={combinedRef}
           onChange={onChange}
-          className="absolute w-0 h-0 opacity-0"
+          className='absolute w-0 h-0 opacity-0'
           {...restProps}
         />
 
-        <span className="checkbox__checkmark w-[18px] h-[18px] bg-white border border-N-400 rounded-[4px] left-0 top-[12px] absolute" />
+        <span className='checkbox__checkmark w-[18px] h-[18px] bg-white border border-N-400 rounded-[4px] left-0 top-[12px] absolute' />
 
         {children && (
           <span
             className={CN(
               'checkbox__label text-md pl-[8px] select-none text-N-800 w-full',
-              labelClassName,
+              labelClassName
             )}
           >
             {children}
           </span>
         )}
       </label>
-    );
-  },
-);
+    )
+  }
+)
 
-export default CheckBox;
+export default CheckBox
 
 CheckBox.defaultProps = {
   children: null,
@@ -100,4 +100,4 @@ CheckBox.defaultProps = {
   indeterminate: false,
   onChange: undefined,
   type: 'checkbox',
-};
+}

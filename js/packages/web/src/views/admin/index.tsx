@@ -1,21 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Layout,
-  Row,
-  Col,
-  Table,
-  Switch,
-  Spin,
-  Modal,
-  Button,
-  Input,
-  Divider,
-} from 'antd';
-import { useMeta } from '../../contexts';
-import {
-  Store,
-  WhitelistedCreator,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Layout, Row, Col, Table, Switch, Spin, Modal, Button, Input, Divider } from 'antd'
+import { useMeta } from '../../contexts'
+import { Store, WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index'
 import {
   MasterEditionV1,
   notify,
@@ -27,29 +13,26 @@ import {
   useUserAccounts,
   useWalletModal,
   WalletSigner,
-} from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection } from '@solana/web3.js';
-import { saveAdmin } from '../../actions/saveAdmin';
-import {
-  convertMasterEditions,
-  filterMetadata,
-} from '../../actions/convertMasterEditions';
-import { Link } from 'react-router-dom';
-import { SetupVariables } from '../../components/SetupVariables';
-import { cacheAllAuctions } from '../../actions/cacheAllAuctions';
+} from '@oyster/common'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { Connection } from '@solana/web3.js'
+import { saveAdmin } from '../../actions/saveAdmin'
+import { convertMasterEditions, filterMetadata } from '../../actions/convertMasterEditions'
+import { Link } from 'react-router-dom'
+import { SetupVariables } from '../../components/SetupVariables'
+import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
 
-const { Content } = Layout;
+const { Content } = Layout
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, isLoading } = useMeta();
-  const connection = useConnection();
-  const wallet = useWallet();
-  const { setVisible } = useWalletModal();
+  const { store, whitelistedCreatorsByCreator, isLoading } = useMeta()
+  const connection = useConnection()
+  const wallet = useWallet()
+  const { setVisible } = useWalletModal()
   const connect = useCallback(
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
-    [wallet.wallet, wallet.connect, setVisible],
-  );
-  const { storeAddress, setStoreForOwner, isConfigured } = useStore();
+    [wallet.wallet, wallet.connect, setVisible]
+  )
+  const { storeAddress, setStoreForOwner, isConfigured } = useStore()
 
   useEffect(() => {
     if (
@@ -58,16 +41,16 @@ export const AdminView = () => {
       wallet.publicKey &&
       !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
     ) {
-      setStoreForOwner(wallet.publicKey.toBase58());
+      setStoreForOwner(wallet.publicKey.toBase58())
     }
-  }, [store, storeAddress, wallet.publicKey]);
-  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
+  }, [store, storeAddress, wallet.publicKey])
+  console.log('@admin', wallet.connected, storeAddress, isLoading, store)
 
   return (
     <>
       {!wallet.connected ? (
         <p>
-          <Button type="primary" className="app-btn" onClick={connect}>
+          <Button type='primary' className='app-btn' onClick={connect}>
             Connect
           </Button>{' '}
           to admin store.
@@ -88,8 +71,8 @@ export const AdminView = () => {
               <Divider />
               <Divider />
               <p>
-                To finish initialization please copy config below into{' '}
-                <b>packages/web/.env</b> and restart yarn or redeploy
+                To finish initialization please copy config below into <b>packages/web/.env</b> and
+                restart yarn or redeploy
               </p>
               <SetupVariables
                 storeAddress={storeAddress}
@@ -105,69 +88,64 @@ export const AdminView = () => {
         </>
       )}
     </>
-  );
-};
+  )
+}
 
 function ArtistModal({
   setUpdatedCreators,
   uniqueCreatorsWithUpdates,
 }: {
-  setUpdatedCreators: React.Dispatch<
-    React.SetStateAction<Record<string, WhitelistedCreator>>
-  >;
-  uniqueCreatorsWithUpdates: Record<string, WhitelistedCreator>;
+  setUpdatedCreators: React.Dispatch<React.SetStateAction<Record<string, WhitelistedCreator>>>
+  uniqueCreatorsWithUpdates: Record<string, WhitelistedCreator>
 }) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalAddress, setModalAddress] = useState<string>('');
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalAddress, setModalAddress] = useState<string>('')
   return (
     <>
       <Modal
         className={'modal-box'}
-        title="Add New Artist Address"
+        title='Add New Artist Address'
         visible={modalOpen}
         onOk={() => {
-          const addressToAdd = modalAddress;
-          setModalAddress('');
-          setModalOpen(false);
+          const addressToAdd = modalAddress
+          setModalAddress('')
+          setModalOpen(false)
 
           if (uniqueCreatorsWithUpdates[addressToAdd]) {
             notify({
               message: 'Artist already added!',
               type: 'error',
-            });
-            return;
+            })
+            return
           }
 
-          let address: StringPublicKey;
+          let address: StringPublicKey
           try {
-            address = addressToAdd;
+            address = addressToAdd
             setUpdatedCreators(u => ({
               ...u,
               [modalAddress]: new WhitelistedCreator({
                 address,
                 activated: true,
               }),
-            }));
+            }))
           } catch {
             notify({
               message: 'Only valid Solana addresses are supported',
               type: 'error',
-            });
+            })
           }
         }}
         onCancel={() => {
-          setModalAddress('');
-          setModalOpen(false);
+          setModalAddress('')
+          setModalOpen(false)
         }}
       >
-        <Input
-          value={modalAddress}
-          onChange={e => setModalAddress(e.target.value)}
-        />
+        <Input value={modalAddress} onChange={e => setModalAddress(e.target.value)} />
       </Modal>
       <Button onClick={() => setModalOpen(true)}>Add Creator</Button>
     </>
-  );
+  )
 }
 
 function InnerAdminView({
@@ -177,53 +155,39 @@ function InnerAdminView({
   wallet,
   connected,
 }: {
-  store: ParsedAccount<Store>;
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >;
-  connection: Connection;
-  wallet: WalletSigner;
-  connected: boolean;
+  store: ParsedAccount<Store>
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>
+  connection: Connection
+  wallet: WalletSigner
+  connected: boolean
 }) {
-  const [newStore, setNewStore] = useState(
-    store && store.info && new Store(store.info),
-  );
-  const [updatedCreators, setUpdatedCreators] = useState<
-    Record<string, WhitelistedCreator>
-  >({});
+  const [newStore, setNewStore] = useState(store && store.info && new Store(store.info))
+  const [updatedCreators, setUpdatedCreators] = useState<Record<string, WhitelistedCreator>>({})
   const [filteredMetadata, setFilteredMetadata] = useState<{
-    available: ParsedAccount<MasterEditionV1>[];
-    unavailable: ParsedAccount<MasterEditionV1>[];
-  }>();
-  const [loading, setLoading] = useState<boolean>();
-  const { metadata, masterEditions } = useMeta();
-  const state = useMeta();
+    available: ParsedAccount<MasterEditionV1>[]
+    unavailable: ParsedAccount<MasterEditionV1>[]
+  }>()
+  const [loading, setLoading] = useState<boolean>()
+  const { metadata, masterEditions } = useMeta()
+  const state = useMeta()
 
-  const { accountByMint } = useUserAccounts();
+  const { accountByMint } = useUserAccounts()
   useMemo(() => {
     const fn = async () => {
-      setFilteredMetadata(
-        await filterMetadata(
-          connection,
-          metadata,
-          masterEditions,
-          accountByMint,
-        ),
-      );
-    };
-    fn();
-  }, [connected]);
+      setFilteredMetadata(await filterMetadata(connection, metadata, masterEditions, accountByMint))
+    }
+    fn()
+  }, [connected])
 
   const uniqueCreators = Object.values(whitelistedCreatorsByCreator).reduce(
     (acc: Record<string, WhitelistedCreator>, e) => {
-      acc[e.info.address] = e.info;
-      return acc;
+      acc[e.info.address] = e.info
+      return acc
     },
-    {},
-  );
+    {}
+  )
 
-  const uniqueCreatorsWithUpdates = { ...uniqueCreators, ...updatedCreators };
+  const uniqueCreatorsWithUpdates = { ...uniqueCreators, ...updatedCreators }
 
   const columns = [
     {
@@ -244,15 +208,15 @@ function InnerAdminView({
       render: (
         value: boolean,
         record: {
-          address: StringPublicKey;
-          activated: boolean;
-          name: string;
-          key: string;
-        },
+          address: StringPublicKey
+          activated: boolean
+          name: string
+          key: string
+        }
       ) => (
         <Switch
-          checkedChildren="Active"
-          unCheckedChildren="Inactive"
+          checkedChildren='Active'
+          unCheckedChildren='Inactive'
           checked={value}
           onChange={val =>
             setUpdatedCreators(u => ({
@@ -266,7 +230,7 @@ function InnerAdminView({
         />
       ),
     },
-  ];
+  ]
 
   return (
     <Content className={'admin-content'}>
@@ -282,41 +246,36 @@ function InnerAdminView({
                 notify({
                   message: 'Saving...',
                   type: 'info',
-                });
-                await saveAdmin(
-                  connection,
-                  wallet,
-                  newStore.public,
-                  Object.values(updatedCreators),
-                );
+                })
+                await saveAdmin(connection, wallet, newStore.public, Object.values(updatedCreators))
                 notify({
                   message: 'Saved',
                   type: 'success',
-                });
+                })
               }}
-              type="primary"
+              type='primary'
             >
               Submit
             </Button>
           </Col>
           <Col span={3}>
             <Switch
-              checkedChildren="Public"
-              unCheckedChildren="Whitelist Only"
+              checkedChildren='Public'
+              unCheckedChildren='Whitelist Only'
               checked={newStore.public}
               onChange={val => {
                 setNewStore(() => {
-                  const newS = new Store(store.info);
-                  newS.public = val;
-                  return newS;
-                });
+                  const newS = new Store(store.info)
+                  newS.public = val
+                  return newS
+                })
               }}
             />
           </Col>
         </Row>
         <Row>
           <Table
-            className="artist-whitelist-table"
+            className='artist-whitelist-table'
             columns={columns}
             dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
               key,
@@ -334,47 +293,40 @@ function InnerAdminView({
       {!store.info.public && (
         <>
           <h1>
-            You have {filteredMetadata?.available.length} MasterEditionV1s that
-            can be converted right now and{' '}
-            {filteredMetadata?.unavailable.length} still in unfinished auctions
-            that cannot be converted yet.
+            You have {filteredMetadata?.available.length} MasterEditionV1s that can be converted
+            right now and {filteredMetadata?.unavailable.length} still in unfinished auctions that
+            cannot be converted yet.
           </h1>
           <Col>
             <Row>
               <Button
                 disabled={loading}
                 onClick={async () => {
-                  setLoading(true);
+                  setLoading(true)
                   await convertMasterEditions(
                     connection,
                     wallet,
                     filteredMetadata?.available || [],
-                    accountByMint,
-                  );
-                  setLoading(false);
+                    accountByMint
+                  )
+                  setLoading(false)
                 }}
               >
-                {loading ? (
-                  <Spin />
-                ) : (
-                  <span>Convert Eligible Master Editions</span>
-                )}
+                {loading ? <Spin /> : <span>Convert Eligible Master Editions</span>}
               </Button>
             </Row>
           </Col>{' '}
         </>
       )}
       <Col>
-        <p style={{ marginTop: '30px' }}>
-          Upgrade the performance of your existing auctions.
-        </p>
+        <p style={{ marginTop: '30px' }}>Upgrade the performance of your existing auctions.</p>
         <Row>
           <Button
             disabled={loading}
             onClick={async () => {
-              setLoading(true);
-              await cacheAllAuctions(wallet, connection, state);
-              setLoading(false);
+              setLoading(true)
+              await cacheAllAuctions(wallet, connection, state)
+              setLoading(false)
             }}
           >
             {loading ? <Spin /> : <span>Upgrade Auction Performance</span>}
@@ -382,5 +334,5 @@ function InnerAdminView({
         </Row>
       </Col>
     </Content>
-  );
+  )
 }

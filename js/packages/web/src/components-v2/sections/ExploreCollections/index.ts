@@ -1,1 +1,1 @@
-export * from './ExploreCollections';
+export * from './ExploreCollections'

@@ -1,7 +1,7 @@
-import { addCardToPack } from '@oyster/common';
-import { TransactionInstruction } from '@solana/web3.js';
+import { addCardToPack } from '@oyster/common'
+import { TransactionInstruction } from '@solana/web3.js'
 
-import { GetAddCardToPackParams } from './interface';
+import { GetAddCardToPackParams } from './interface'
 
 export const getAddCardToPack = async ({
   selectedItems,
@@ -13,8 +13,8 @@ export const getAddCardToPack = async ({
       ...selectedItem,
       packSetKey,
       authority: walletPublicKey.toBase58(),
-    });
-  });
+    })
+  })
 
-  return Promise.all(addCardsToPack);
-};
+  return Promise.all(addCardsToPack)
+}

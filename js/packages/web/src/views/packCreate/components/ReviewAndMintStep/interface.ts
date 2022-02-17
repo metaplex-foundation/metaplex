@@ -1,8 +1,5 @@
-import { InfoFormState, PackState } from '../../interface';
+import { InfoFormState, PackState } from '../../interface'
 
 export interface ReviewAndMintStepProps
   extends InfoFormState,
-    Pick<
-      PackState,
-      'allowedAmountToRedeem' | 'supplyByMetadataKey' | 'distributionType'
-    > {}
+    Pick<PackState, 'allowedAmountToRedeem' | 'supplyByMetadataKey' | 'distributionType'> {}

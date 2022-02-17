@@ -1,8 +1,8 @@
-import React, { FC } from 'react';
-import CN from 'classnames';
+import React, { FC } from 'react'
+import CN from 'classnames'
 
 export interface ChipProps {
-  [x: string]: any;
+  [x: string]: any
 }
 
 export const Chip: FC<ChipProps> = ({
@@ -17,23 +17,23 @@ export const Chip: FC<ChipProps> = ({
     className,
     {
       'pr-[16px]': !onClose,
-    },
-  );
+    }
+  )
 
   return (
     <div className={ChipClasses} {...restProps}>
-      <div className="flex items-center gap-[4px]">
-        {label && <span className="text-sm text-gray-700">{`${label} /`}</span>}
-        <span className="text-gray-700">{children}</span>
+      <div className='flex items-center gap-[4px]'>
+        {label && <span className='text-sm text-gray-700'>{`${label} /`}</span>}
+        <span className='text-gray-700'>{children}</span>
       </div>
 
       {onClose && (
-        <button className="appearance-none pl-[4px] pr-[8px] flex items-center justify-center hover:text-B-400 ">
-          <i className="ri-close-line" />
+        <button className='appearance-none pl-[4px] pr-[8px] flex items-center justify-center hover:text-B-400 '>
+          <i className='ri-close-line' />
         </button>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default Chip;
+export default Chip

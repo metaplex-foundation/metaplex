@@ -1,1 +1,1 @@
-export * from './BlockCarousel';
+export * from './BlockCarousel'
