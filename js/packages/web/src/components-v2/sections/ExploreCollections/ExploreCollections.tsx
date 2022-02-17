@@ -11,7 +11,18 @@ import React, { useEffect, useState, FC } from 'react'
 import { useItems } from '../../../views/artworks/hooks/useItems'
 import { ArtworkViewState } from '../../../views/artworks/types'
 import { NftCard } from '../../molecules/NftCard'
-import { MetadataKey, StringPublicKey, useConnection } from '@oyster/common'
+import {
+  MetadataKey,
+  StringPublicKey,
+  useConnection,
+  Spinner,
+  useViewport,
+  Dropdown,
+  DropDownBody,
+  DropDownToggle,
+  DropDownMenuItem,
+  Button,
+} from '@oyster/common'
 import bs58 from 'bs58'
 import { PublicKey } from '@solana/web3.js'
 
@@ -32,11 +43,12 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   className,
   ...restProps
 }: ExploreCollectionsProps) => {
+  const ExploreCollectionsClasses = CN(`explore-collections py-[40px] lg:py-[80px]`, className)
   const { push } = useHistory()
   const { search } = useLocation()
   const { pid } = queryString.parse(search) || {}
-
-  const ExploreCollectionsClasses = CN(`explore-collections py-[80px]`, className)
+  const [isCollectionsLoading, setIsCollectionsLoading] = useState(true)
+  const { isDesktop, isMobile } = useViewport()
 
   ///////////////
   const connection = useConnection()
@@ -127,6 +139,8 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
       group = Object.keys(group).map(key => [group[key]])
       console.log(group)
       setDataItems(group)
+
+      setIsCollectionsLoading(false)
     }
     getUserItems()
   }, [userItems])
@@ -169,9 +183,12 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   return (
     <div className={ExploreCollectionsClasses} {...restProps}>
       <div className='container flex flex-col items-center'>
-        <h1 className='text-h2 font-500'>Explore collections</h1>
+        <h1 className='text-center text-h2 font-500'>
+          Explore <br className='md:hidden' />
+          collections
+        </h1>
 
-        <div className='flex w-full max-w-[480px] pt-[20px]'>
+        <div className='mb:pb-0 flex w-full max-w-[480px] pt-[20px] pb-[20px]'>
           <TextField
             iconBefore={<i className='ri-search-2-line' />}
             placeholder='Search for traits, tags, item #s, and more...'
@@ -180,149 +197,206 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
           />
         </div>
 
-        <div className='flex gap-[32px] pt-[40px] pb-[80px]'>
-          {categories?.map(({ label, value }: any, index: number) => {
-            return (
-              <TabHighlightButton
-                isActive={pid === value}
-                key={value || index}
-                onClick={() => {
-                  push(`/explore?pid=${value}`)
-                }}
-              >
-                {label}
-              </TabHighlightButton>
-            )
-          })}
-        </div>
-
-        <div className='grid grid-cols-4 gap-x-[32px] gap-y-[32px] pb-[100px]'>
-          {pid === 'trending' &&
-            dataItems.map((item: any) => {
-              console.log(item[0][0])
-              const collectionName = item[0][0].extradata?.collection?.name
-              const len = item[0].length
-              item = item[0][0]
-              const temp = {
-                name: collectionName,
-                description: item?.extradata?.description,
-                itemsCount: len, //hardcoded
-                floorPrice: 100,
-                isVerified: 1,
-                image: item?.extradata?.image,
+        {isMobile && (
+          <Dropdown className='mb-[20px] w-full max-w-[480px]'>
+            {({ isOpen, setIsOpen, innerValue, setInnerValue }: any) => {
+              const onSelectOption = (value: string) => {
+                setInnerValue(value)
+                setIsOpen(false)
               }
+
               return (
-                <Link key={item.pubkey} to='/collection'>
-                  <NftCard {...temp} />
-                </Link>
+                <>
+                  <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
+                    <Button
+                      appearance='secondary'
+                      view='outline'
+                      size='md'
+                      iconAfter={<i className='ri-arrow-down-s-line flex' />}
+                      className='w-full border-gray-200'>
+                      {innerValue ? `Filter: ${innerValue}` : 'Filter collections'}
+                    </Button>
+                  </DropDownToggle>
+
+                  {isOpen && (
+                    <DropDownBody
+                      align='center'
+                      className='w-full border-x border-b border-B-10 shadow-lg shadow-B-700/5'>
+                      {categories?.map(({ label, value }: any, index: number) => {
+                        return (
+                          <>
+                            <DropDownMenuItem
+                              isActive={pid === value}
+                              key={value || index}
+                              onClick={() => {
+                                push(`/explore?pid=${value}`)
+                                onSelectOption(label)
+                              }}>
+                              {label}
+                            </DropDownMenuItem>
+                          </>
+                        )
+                      })}
+                    </DropDownBody>
+                  )}
+                </>
+              )
+            }}
+          </Dropdown>
+        )}
+
+        {!isMobile && (
+          <div className='flex gap-[16px] lg:gap-[32px] pt-[40px] pb-[80px]'>
+            {categories?.map(({ label, value }: any, index: number) => {
+              return (
+                <TabHighlightButton
+                  isActive={pid === value}
+                  key={value || index}
+                  onClick={() => {
+                    push(`/explore?pid=${value}`)
+                  }}>
+                  {label}
+                </TabHighlightButton>
               )
             })}
+          </div>
+        )}
 
-          {pid === 'collectibles' &&
-            dataItems.map((item: any) => {
-              console.log(item[0][0])
-              const collectionName = item[0][0].extradata?.collection?.name
-              const len = item[0].length
-              item = item[0][0]
-              const temp = {
-                name: collectionName,
-                description: item?.extradata?.description,
-                itemsCount: len, //hardcoded
-                floorPrice: 100,
-                isVerified: 1,
-                image: item?.extradata?.image,
-              }
-              return (
-                <Link key={item.pubkey} to='/collection'>
-                  <NftCard {...temp} />
-                </Link>
-              )
-            })}
+        {isCollectionsLoading && (
+          <div className='flex min-h-[396px] w-full justify-center'>
+            <Spinner color='#448fff' size={40} />
+          </div>
+        )}
 
-          {pid === 'art' &&
-            dataItems.map((item: any) => {
-              console.log(item[0][0])
-              const collectionName = item[0][0].extradata?.collection?.name
-              const len = item[0].length
-              item = item[0][0]
-              const temp = {
-                name: collectionName,
-                description: item?.extradata?.description,
-                itemsCount: len, //hardcoded
-                floorPrice: 100,
-                isVerified: 1,
-                image: item?.extradata?.image,
-              }
-              return (
-                <Link key={item.pubkey} to='/collection'>
-                  <NftCard {...temp} />
-                </Link>
-              )
-            })}
+        {!isCollectionsLoading && (
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-x-[32px] gap-y-[32px] pb-[100px] lg:grid-cols-4'>
+            {pid === 'trending' &&
+              dataItems.map((item: any) => {
+                console.log(item[0][0])
+                const collectionName = item[0][0].extradata?.collection?.name
+                const len = item[0].length
+                item = item[0][0]
+                const temp = {
+                  name: collectionName,
+                  description: item?.extradata?.description,
+                  itemsCount: len, //hardcoded
+                  floorPrice: 100,
+                  isVerified: 1,
+                  image: item?.extradata?.image,
+                }
+                return (
+                  <Link key={item.pubkey} to='/collection'>
+                    <NftCard {...temp} />
+                  </Link>
+                )
+              })}
 
-          {pid === 'charity' &&
-            dataItems.map((item: any) => {
-              console.log(item[0][0])
-              const collectionName = item[0][0].extradata?.collection?.name
-              const len = item[0].length
-              item = item[0][0]
-              const temp = {
-                name: collectionName,
-                description: item?.extradata?.description,
-                itemsCount: len, //hardcoded
-                floorPrice: 100,
-                isVerified: 1,
-                image: item?.extradata?.image,
-              }
-              return (
-                <Link key={item.pubkey} to='/collection'>
-                  <NftCard {...temp} />
-                </Link>
-              )
-            })}
+            {pid === 'collectibles' &&
+              dataItems.map((item: any) => {
+                console.log(item[0][0])
+                const collectionName = item[0][0].extradata?.collection?.name
+                const len = item[0].length
+                item = item[0][0]
+                const temp = {
+                  name: collectionName,
+                  description: item?.extradata?.description,
+                  itemsCount: len, //hardcoded
+                  floorPrice: 100,
+                  isVerified: 1,
+                  image: item?.extradata?.image,
+                }
+                return (
+                  <Link key={item.pubkey} to='/collection'>
+                    <NftCard {...temp} />
+                  </Link>
+                )
+              })}
 
-          {pid === 'gaming' &&
-            dataItems.map((item: any) => {
-              console.log(item[0][0])
-              const collectionName = item[0][0].extradata?.collection?.name
-              const len = item[0].length
-              item = item[0][0]
-              const temp = {
-                name: collectionName,
-                description: item?.extradata?.description,
-                itemsCount: len, //hardcoded
-                floorPrice: 100,
-                isVerified: 1,
-                image: item?.extradata?.image,
-              }
-              return (
-                <Link key={item.pubkey} to='/collection'>
-                  <NftCard {...temp} />
-                </Link>
-              )
-            })}
+            {pid === 'art' &&
+              dataItems.map((item: any) => {
+                console.log(item[0][0])
+                const collectionName = item[0][0].extradata?.collection?.name
+                const len = item[0].length
+                item = item[0][0]
+                const temp = {
+                  name: collectionName,
+                  description: item?.extradata?.description,
+                  itemsCount: len, //hardcoded
+                  floorPrice: 100,
+                  isVerified: 1,
+                  image: item?.extradata?.image,
+                }
+                return (
+                  <Link key={item.pubkey} to='/collection'>
+                    <NftCard {...temp} />
+                  </Link>
+                )
+              })}
 
-          {pid === 'utility' &&
-            dataItems.map((item: any) => {
-              console.log(item[0][0])
-              const collectionName = item[0][0].extradata?.collection?.name
-              const len = item[0].length
-              item = item[0][0]
-              const temp = {
-                name: collectionName,
-                description: item?.extradata?.description,
-                itemsCount: len, //hardcoded
-                floorPrice: 100,
-                isVerified: 1,
-                image: item?.extradata?.image,
-              }
-              return (
-                <Link key={item.pubkey} to='/collection'>
-                  <NftCard {...temp} />
-                </Link>
-              )
-            })}
-        </div>
+            {pid === 'charity' &&
+              dataItems.map((item: any) => {
+                console.log(item[0][0])
+                const collectionName = item[0][0].extradata?.collection?.name
+                const len = item[0].length
+                item = item[0][0]
+                const temp = {
+                  name: collectionName,
+                  description: item?.extradata?.description,
+                  itemsCount: len, //hardcoded
+                  floorPrice: 100,
+                  isVerified: 1,
+                  image: item?.extradata?.image,
+                }
+                return (
+                  <Link key={item.pubkey} to='/collection'>
+                    <NftCard {...temp} />
+                  </Link>
+                )
+              })}
+
+            {pid === 'gaming' &&
+              dataItems.map((item: any) => {
+                console.log(item[0][0])
+                const collectionName = item[0][0].extradata?.collection?.name
+                const len = item[0].length
+                item = item[0][0]
+                const temp = {
+                  name: collectionName,
+                  description: item?.extradata?.description,
+                  itemsCount: len, //hardcoded
+                  floorPrice: 100,
+                  isVerified: 1,
+                  image: item?.extradata?.image,
+                }
+                return (
+                  <Link key={item.pubkey} to='/collection'>
+                    <NftCard {...temp} />
+                  </Link>
+                )
+              })}
+
+            {pid === 'utility' &&
+              dataItems.map((item: any) => {
+                console.log(item[0][0])
+                const collectionName = item[0][0].extradata?.collection?.name
+                const len = item[0].length
+                item = item[0][0]
+                const temp = {
+                  name: collectionName,
+                  description: item?.extradata?.description,
+                  itemsCount: len, //hardcoded
+                  floorPrice: 100,
+                  isVerified: 1,
+                  image: item?.extradata?.image,
+                }
+                return (
+                  <Link key={item.pubkey} to='/collection'>
+                    <NftCard {...temp} />
+                  </Link>
+                )
+              })}
+          </div>
+        )}
       </div>
     </div>
   )
