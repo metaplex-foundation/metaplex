@@ -1,13 +1,9 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { SCHEMA } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
-import { DeprecatedValidateParticipationArgs } from './deprecatedStates';
+import { SCHEMA } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
+import { DeprecatedValidateParticipationArgs } from './deprecatedStates'
 
 export async function deprecatedValidateParticipation(
   auctionManager: StringPublicKey,
@@ -20,13 +16,13 @@ export async function deprecatedValidateParticipation(
   safetyDepositBox: StringPublicKey,
   safetyDepositBoxTokenStore: StringPublicKey,
   vault: StringPublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
-  const value = new DeprecatedValidateParticipationArgs();
+  const value = new DeprecatedValidateParticipationArgs()
 
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -92,12 +88,12 @@ export async function deprecatedValidateParticipation(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

@@ -25,7 +25,8 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({ className, ...restProps }: Hea
                 key={index}
                 className={CN(
                   'hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400'
-                )}>
+                )}
+              >
                 {menuItem?.label}
               </Button>
             </Link>
@@ -62,7 +63,8 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({ className, ...restProps }: Hea
                         {
                           '!rounded-b-[0] !bg-white !text-B-400': isOpen,
                         }
-                      )}>
+                      )}
+                    >
                       {menuItem?.label}
                     </Button>
                   </DropDownToggle>
@@ -70,7 +72,8 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({ className, ...restProps }: Hea
                   {isOpen && (
                     <DropDownBody
                       align='left'
-                      className='w-[172px] !rounded-tl-none border-x border-b border-B-10 shadow-lg shadow-B-700/5'>
+                      className='w-[172px] !rounded-tl-none border-x border-b border-B-10 shadow-lg shadow-B-700/5'
+                    >
                       {menuItem?.subMenu?.map((option: any, index: number) => {
                         const { label, value, isDirectLink, isNewTab } = option
 
@@ -78,7 +81,8 @@ export const HeaderMenu: FC<HeaderMenuProps> = ({ className, ...restProps }: Hea
                           <DropDownMenuItem
                             key={index}
                             onClick={() => onSelectOption(value, isDirectLink, isNewTab)}
-                            {...option}>
+                            {...option}
+                          >
                             {label}
                           </DropDownMenuItem>
                         )

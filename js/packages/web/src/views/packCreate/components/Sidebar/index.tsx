@@ -1,44 +1,37 @@
-import React from 'react-dom';
-import { memo } from 'react';
-import { Steps, Button, Spin } from 'antd';
-import { useMeta } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import React from 'react-dom'
+import { memo } from 'react'
+import { Steps, Button, Spin } from 'antd'
+import { useMeta } from '@oyster/common'
+import { useWallet } from '@solana/wallet-adapter-react'
 
-import useWindowDimensions from '../../../../utils/layout';
-import { CreatePackSteps } from '../../types';
+import useWindowDimensions from '../../../../utils/layout'
+import { CreatePackSteps } from '../../types'
 
-import { STEPS_TITLES, CONTINUE_TITLES } from './data';
-import { SidebarProps } from './interface';
+import { STEPS_TITLES, CONTINUE_TITLES } from './data'
+import { SidebarProps } from './interface'
 
-const { Step } = Steps;
+const { Step } = Steps
 
-const Sidebar = ({
-  step,
-  setStep,
-  submit,
-  isValidStep,
-  buttonLoading,
-}: SidebarProps) => {
-  const { connected } = useWallet();
-  const { isLoading } = useMeta();
-  const { width } = useWindowDimensions();
+const Sidebar = ({ step, setStep, submit, isValidStep, buttonLoading }: SidebarProps) => {
+  const { connected } = useWallet()
+  const { isLoading } = useMeta()
+  const { width } = useWindowDimensions()
 
-  const isFinalStep = step === CreatePackSteps.ReviewAndMint;
-  const shouldDisable =
-    !isValidStep || !connected || isLoading || buttonLoading;
+  const isFinalStep = step === CreatePackSteps.ReviewAndMint
+  const shouldDisable = !isValidStep || !connected || isLoading || buttonLoading
 
   const handleContinue = (): void => {
     if (isFinalStep) {
-      return submit();
+      return submit()
     }
 
-    setStep(step + 1);
-  };
+    setStep(step + 1)
+  }
 
   return (
-    <div className="sidebar-wrapper">
+    <div className='sidebar-wrapper'>
       <Steps
-        className="sidebar-steps"
+        className='sidebar-steps'
         direction={width < 768 ? 'horizontal' : 'vertical'}
         current={step}
       >
@@ -48,7 +41,7 @@ const Sidebar = ({
       </Steps>
 
       <Button
-        className="sidebar-btn secondary-btn"
+        className='sidebar-btn secondary-btn'
         onClick={handleContinue}
         disabled={shouldDisable}
       >
@@ -56,16 +49,12 @@ const Sidebar = ({
       </Button>
 
       {step !== CreatePackSteps.SelectItems && (
-        <Button
-          type="text"
-          className="sidebar-btn"
-          onClick={() => setStep(step - 1)}
-        >
+        <Button type='text' className='sidebar-btn' onClick={() => setStep(step - 1)}>
           Back
         </Button>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default memo(Sidebar);
+export default memo(Sidebar)

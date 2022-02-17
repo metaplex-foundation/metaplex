@@ -1,7 +1,7 @@
-import { activate } from '@oyster/common';
-import { TransactionInstruction } from '@solana/web3.js';
+import { activate } from '@oyster/common'
+import { TransactionInstruction } from '@solana/web3.js'
 
-import { GetActivateParams } from './interface';
+import { GetActivateParams } from './interface'
 
 export const getActivate = async ({
   packSetKey,
@@ -10,5 +10,5 @@ export const getActivate = async ({
   return activate({
     packSetKey,
     authority: walletPublicKey.toBase58(),
-  });
-};
+  })
+}

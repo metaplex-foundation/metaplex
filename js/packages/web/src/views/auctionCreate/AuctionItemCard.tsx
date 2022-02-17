@@ -1,35 +1,28 @@
-import React from 'react';
-import { ArtCard } from '../../components/ArtCard';
-import PackCard from '../../components/PackCard';
-import { useMeta } from '../../contexts';
-import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import React from 'react'
+import { ArtCard } from '../../components/ArtCard'
+import PackCard from '../../components/PackCard'
+import { useMeta } from '../../contexts'
+import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 
 interface IAuctionItemCard {
-  current: SafetyDepositDraft;
-  isSelected?: boolean;
-  onSelect: () => void;
-  onClose?: () => void;
+  current: SafetyDepositDraft
+  isSelected?: boolean
+  onSelect: () => void
+  onClose?: () => void
 }
 
-const AuctionItemCard = ({
-  current,
-  isSelected,
-  onSelect,
-  onClose,
-}: IAuctionItemCard) => {
-  const { packs, vouchers } = useMeta();
-  const shouldShowPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+const AuctionItemCard = ({ current, isSelected, onSelect, onClose }: IAuctionItemCard) => {
+  const { packs, vouchers } = useMeta()
+  const shouldShowPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true'
 
   if (shouldShowPacks) {
-    const parent = current.edition?.info?.parent;
-    const voucher = Object.values(vouchers).find(
-      v => v?.info?.master === parent,
-    );
+    const parent = current.edition?.info?.parent
+    const voucher = Object.values(vouchers).find(v => v?.info?.master === parent)
 
     if (voucher) {
       const {
         info: { authority, allowedAmountToRedeem, name, uri },
-      } = packs[voucher.info.packSet];
+      } = packs[voucher.info.packSet]
 
       return (
         // use <div> for correct grid rendering
@@ -44,7 +37,7 @@ const AuctionItemCard = ({
             artView
           />
         </div>
-      );
+      )
     }
   }
 
@@ -60,7 +53,7 @@ const AuctionItemCard = ({
       }
       onClose={onClose}
     />
-  );
-};
+  )
+}
 
-export default AuctionItemCard;
+export default AuctionItemCard

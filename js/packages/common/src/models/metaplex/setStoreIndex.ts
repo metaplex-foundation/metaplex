@@ -1,9 +1,9 @@
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import BN from 'bn.js';
-import { serialize } from 'borsh';
+import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import BN from 'bn.js'
+import { serialize } from 'borsh'
 
-import { SCHEMA, SetStoreIndexArgs } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { SCHEMA, SetStoreIndexArgs } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function setStoreIndex(
   storeIndex: StringPublicKey,
@@ -13,16 +13,16 @@ export async function setStoreIndex(
   offset: BN,
   instructions: TransactionInstruction[],
   belowCache?: StringPublicKey,
-  aboveCache?: StringPublicKey,
+  aboveCache?: StringPublicKey
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const value = new SetStoreIndexArgs({ page, offset });
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new SetStoreIndexArgs({ page, offset })
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -56,14 +56,14 @@ export async function setStoreIndex(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   if (aboveCache) {
     keys.push({
       pubkey: toPublicKey(aboveCache),
       isSigner: false,
       isWritable: false,
-    });
+    })
   }
 
   if (belowCache) {
@@ -71,13 +71,13 @@ export async function setStoreIndex(
       pubkey: toPublicKey(belowCache),
       isSigner: false,
       isWritable: false,
-    });
+    })
   }
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

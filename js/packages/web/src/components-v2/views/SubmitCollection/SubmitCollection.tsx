@@ -76,7 +76,8 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'reapply')}>
+                onChange={value => handleChange(value, 'reapply')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -128,7 +129,8 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'legal')}>
+                onChange={value => handleChange(value, 'legal')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -152,7 +154,8 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-derivative')}>
+                onChange={value => handleChange(value, 'is-derivative')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -194,7 +197,8 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-minting')}>
+                onChange={value => handleChange(value, 'is-minting')}
+              >
                 <Option value='yes'>Yes / Sold Out or Mint Closed</Option>
                 <Option value='no'>No / Still Minting</Option>
               </Select>
@@ -266,7 +270,8 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 mode='multiple'
-                onChange={value => handleChange(value)}>
+                onChange={value => handleChange(value)}
+              >
                 <Option value='art'>Art</Option>
                 <Option value='games'>Games</Option>
                 <Option value='music'>Music</Option>
@@ -287,7 +292,8 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 mode='multiple'
-                onChange={value => handleChange(value)}>
+                onChange={value => handleChange(value)}
+              >
                 <Option value='art'>Art</Option>
                 <Option value='games'>Games</Option>
                 <Option value='music'>Music</Option>
@@ -305,7 +311,8 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-candy-machine')}>
+                onChange={value => handleChange(value, 'is-candy-machine')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>

@@ -1,9 +1,9 @@
-import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { getAuctionKeys, ClaimBidArgs, SCHEMA } from '.';
-import { getBidderPotKey, getAuctionExtended } from '../../actions';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { getAuctionKeys, ClaimBidArgs, SCHEMA } from '.'
+import { getBidderPotKey, getAuctionExtended } from '../../actions'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function claimBid(
   acceptPayment: StringPublicKey,
@@ -11,29 +11,29 @@ export async function claimBid(
   bidderPotToken: StringPublicKey,
   vault: StringPublicKey,
   tokenMint: StringPublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
   const bidderPotKey = await getBidderPotKey({
     auctionProgramId: PROGRAM_IDS.auction,
     auctionKey,
     bidderPubkey: bidder,
-  });
+  })
 
-  const value = new ClaimBidArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new ClaimBidArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const auctionExtendedKey = await getAuctionExtended({
     auctionProgramId: PROGRAM_IDS.auction,
     resource: vault,
-  });
+  })
 
   const keys = [
     {
@@ -102,13 +102,13 @@ export async function claimBid(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

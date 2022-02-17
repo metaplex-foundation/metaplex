@@ -115,7 +115,8 @@ export const TextField: FC<TextFieldProps> = forwardRef(
                   'after:bg-white': !disabled,
                   'after:bg-N-50': disabled,
                 }
-              )}>
+              )}
+            >
               <span className='relative z-[1]'>
                 {label} {required && <span className='text-R-400'>*</span>}
               </span>
@@ -128,7 +129,8 @@ export const TextField: FC<TextFieldProps> = forwardRef(
               onClick={onClickIconBefore || onClickIcon}
               onKeyDown={onClickIconBefore || onClickIcon}
               role='button'
-              tabIndex={0}>
+              tabIndex={0}
+            >
               {iconBefore}
             </div>
           )}
@@ -149,7 +151,8 @@ export const TextField: FC<TextFieldProps> = forwardRef(
               )}
               onClick={() => setInputType(prev => (prev === 'password' ? 'text' : 'password'))}
               role='button'
-              tabIndex={0}>
+              tabIndex={0}
+            >
               {inputType === 'password' ? (
                 <i className='ri-eye-line text-lg' />
               ) : (
@@ -164,7 +167,8 @@ export const TextField: FC<TextFieldProps> = forwardRef(
               onClick={onClickIconAfter || onClickIcon}
               onKeyDown={onClickIconAfter || onClickIcon}
               role='button'
-              tabIndex={0}>
+              tabIndex={0}
+            >
               {iconAfter}
             </div>
           )}
@@ -175,7 +179,8 @@ export const TextField: FC<TextFieldProps> = forwardRef(
             className={CN('pt-[2px] text-sm', hintClassName, {
               'text-R-400': isError,
               'text-G-500': isSuccess,
-            })}>
+            })}
+          >
             {hint}
           </span>
         )}

@@ -1,24 +1,24 @@
-import React, { FC, forwardRef } from 'react';
-import CN from 'classnames';
+import React, { FC, forwardRef } from 'react'
+import CN from 'classnames'
 
 export interface TextFieldProps {
-  [x: string]: any;
-  appearance?: 'default' | 'success' | 'warning' | 'danger';
-  className?: string | undefined;
-  disabled?: boolean;
-  hint?: string | undefined;
-  hintClassName?: string | undefined;
-  iconAfter?: any;
-  iconBefore?: any;
-  isError?: boolean;
-  isSuccess?: boolean;
-  label?: string;
-  onClickIcon?: any;
-  onClickIconAfter?: any;
-  onClickIconBefore?: any;
-  readOnly?: boolean;
-  required?: boolean;
-  size?: 'default' | 'lg' | 'sm';
+  [x: string]: any
+  appearance?: 'default' | 'success' | 'warning' | 'danger'
+  className?: string | undefined
+  disabled?: boolean
+  hint?: string | undefined
+  hintClassName?: string | undefined
+  iconAfter?: any
+  iconBefore?: any
+  isError?: boolean
+  isSuccess?: boolean
+  label?: string
+  onClickIcon?: any
+  onClickIconAfter?: any
+  onClickIconBefore?: any
+  readOnly?: boolean
+  required?: boolean
+  size?: 'default' | 'lg' | 'sm'
   type?:
     | 'text'
     | 'date'
@@ -31,8 +31,8 @@ export interface TextFieldProps {
     | 'tel'
     | 'time'
     | 'url'
-    | 'week';
-  wrapperClassName?: string | undefined;
+    | 'week'
+  wrapperClassName?: string | undefined
 }
 
 export const TextField: FC<TextFieldProps> = forwardRef(
@@ -57,11 +57,10 @@ export const TextField: FC<TextFieldProps> = forwardRef(
       wrapperClassName,
       ...restProps
     }: TextFieldProps,
-    ref: any,
+    ref: any
   ) => {
     /* Background Color */
-    const wrapperBGColor =
-      (!disabled && 'bg-white') || (disabled && 'bg-gray-50');
+    const wrapperBGColor = (!disabled && 'bg-white') || (disabled && 'bg-gray-50')
 
     /* Border Color */
     const wrapperBorderColor =
@@ -69,11 +68,10 @@ export const TextField: FC<TextFieldProps> = forwardRef(
         !isError &&
         'outline-none focus-within:!border-blue-400 focus-within:shadow-[0px_0px_0px_1px_#60a5fa]') ||
       (disabled && 'border-gray-200') ||
-      (!disabled && isError && '!border-R-100 focus-within:!border-B-400');
+      (!disabled && isError && '!border-R-100 focus-within:!border-B-400')
 
     /* Text Color */
-    const inputTextColor =
-      (!disabled && 'text-gray-800') || (disabled && 'text-gray-400');
+    const inputTextColor = (!disabled && 'text-gray-800') || (disabled && 'text-gray-400')
 
     /* Inner Input Field */
     const TextFieldClasses = CN('text-field', className, inputTextColor, {
@@ -89,26 +87,21 @@ export const TextField: FC<TextFieldProps> = forwardRef(
       'pl-[16px]': iconAfter,
       'px-[16px]': !iconAfter && !iconBefore,
       '!px-[0]': iconAfter && iconBefore,
-    });
+    })
 
     /* Wrapper */
-    const TextFieldWrapperClasses = CN(
-      wrapperClassName,
-      wrapperBGColor,
-      wrapperBorderColor,
-      {
-        /* Input Field Wrapper Common */
-        'border border-gray-300 hover:border-gray-400/60 flex items-center rounded-[6px] w-full group ease-in-out duration-[50] relative z-[0] transition-all':
-          true,
-        'mt-[11px]': label,
-        'h-[46px]': size === 'default' || !size,
-        'h-[60px]': size === 'lg',
-        'h-[40px]': size === 'sm',
-      },
-    );
+    const TextFieldWrapperClasses = CN(wrapperClassName, wrapperBGColor, wrapperBorderColor, {
+      /* Input Field Wrapper Common */
+      'border border-gray-300 hover:border-gray-400/60 flex items-center rounded-[6px] w-full group ease-in-out duration-[50] relative z-[0] transition-all':
+        true,
+      'mt-[11px]': label,
+      'h-[46px]': size === 'default' || !size,
+      'h-[60px]': size === 'lg',
+      'h-[40px]': size === 'sm',
+    })
 
     return (
-      <div className="flex flex-col w-full text-field__container">
+      <div className='flex flex-col w-full text-field__container'>
         <div className={TextFieldWrapperClasses}>
           {label && (
             <label
@@ -117,23 +110,21 @@ export const TextField: FC<TextFieldProps> = forwardRef(
                 {
                   'after:bg-white': !disabled,
                   'after:bg-gray-50': disabled,
-                },
+                }
               )}
             >
-              <span className="relative z-[1]">
-                {label} {required && <span className="text-R-400">*</span>}
+              <span className='relative z-[1]'>
+                {label} {required && <span className='text-R-400'>*</span>}
               </span>
             </label>
           )}
 
           {iconBefore && (
             <div
-              className={CN(
-                'text-field__icon flex items-center pl-[16px] pr-[12px] h-full',
-              )}
+              className={CN('text-field__icon flex items-center pl-[16px] pr-[12px] h-full')}
               onClick={onClickIconBefore || onClickIcon}
               onKeyDown={onClickIconBefore || onClickIcon}
-              role="button"
+              role='button'
               tabIndex={0}
             >
               {iconBefore}
@@ -151,12 +142,10 @@ export const TextField: FC<TextFieldProps> = forwardRef(
 
           {iconAfter && (
             <div
-              className={CN(
-                'text-field__icon flex items-center pr-[16px] pl-[12px] h-full',
-              )}
+              className={CN('text-field__icon flex items-center pr-[16px] pl-[12px] h-full')}
               onClick={onClickIconAfter || onClickIcon}
               onKeyDown={onClickIconAfter || onClickIcon}
-              role="button"
+              role='button'
               tabIndex={0}
             >
               {iconAfter}
@@ -175,9 +164,9 @@ export const TextField: FC<TextFieldProps> = forwardRef(
           </span>
         )}
       </div>
-    );
-  },
-);
+    )
+  }
+)
 
 TextField.defaultProps = {
   className: undefined,
@@ -191,6 +180,6 @@ TextField.defaultProps = {
   size: 'default',
   type: 'text',
   wrapperClassName: undefined,
-};
+}
 
-export default TextField;
+export default TextField

@@ -1,4 +1,4 @@
-import { MetaState } from './types';
+import { MetaState } from './types'
 
 export const getEmptyMetaState = (): MetaState => ({
   metadata: [],
@@ -31,4 +31,4 @@ export const getEmptyMetaState = (): MetaState => ({
   packCardsByPackSet: {},
   vouchers: {},
   provingProcesses: {},
-});
+})

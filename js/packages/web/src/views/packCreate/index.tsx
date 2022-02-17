@@ -1,60 +1,50 @@
-import React, { ReactElement, useCallback, useEffect, useState } from 'react';
-import {
-  PackDistributionType,
-  useConnection,
-  useMeta,
-  useUserAccounts,
-} from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useHistory } from 'react-router-dom';
+import React, { ReactElement, useCallback, useEffect, useState } from 'react'
+import { PackDistributionType, useConnection, useMeta, useUserAccounts } from '@oyster/common'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useHistory } from 'react-router-dom'
 
-import { SafetyDepositDraft } from '../../actions/createAuctionManager';
-import { useExtendedArt, useUserArts } from '../../hooks';
+import { SafetyDepositDraft } from '../../actions/createAuctionManager'
+import { useExtendedArt, useUserArts } from '../../hooks'
 
-import { PackState } from './interface';
-import { INITIAL_PACK_STATE } from './data';
-import { CreatePackSteps } from './types';
-import {
-  packItemsFilter,
-  vouchersFilter,
-  exceededPacksCountNotification,
-} from './utils';
-import { MAX_PACKS_CREATION_COUNT } from '../../constants';
-import useStep from './hooks/useStep';
+import { PackState } from './interface'
+import { INITIAL_PACK_STATE } from './data'
+import { CreatePackSteps } from './types'
+import { packItemsFilter, vouchersFilter, exceededPacksCountNotification } from './utils'
+import { MAX_PACKS_CREATION_COUNT } from '../../constants'
+import useStep from './hooks/useStep'
 
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import SelectItemsStep from './components/SelectItemsStep';
-import AdjustQuantitiesStep from './components/AdjustQuantitiesStep';
-import ReviewAndMintStep from './components/ReviewAndMintStep';
-import TransactionErrorModal from '../../components/TransactionErrorModal';
-import { sendCreatePack } from './transactions/createPack';
-import SuccessModal from './components/SuccessModal';
-import { useValidation } from './hooks/useValidation';
-import { Button } from 'antd';
+import Header from './components/Header'
+import Sidebar from './components/Sidebar'
+import SelectItemsStep from './components/SelectItemsStep'
+import AdjustQuantitiesStep from './components/AdjustQuantitiesStep'
+import ReviewAndMintStep from './components/ReviewAndMintStep'
+import TransactionErrorModal from '../../components/TransactionErrorModal'
+import { sendCreatePack } from './transactions/createPack'
+import SuccessModal from './components/SuccessModal'
+import { useValidation } from './hooks/useValidation'
+import { Button } from 'antd'
 
 // ToDo: Refactor state to a react context
 export const PackCreateView = (): ReactElement => {
-  const history = useHistory();
-  const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE);
-  const [shouldShowSuccessModal, setShouldShowSuccessModal] =
-    useState<boolean>(false);
+  const history = useHistory()
+  const [attributes, setAttributes] = useState<PackState>(INITIAL_PACK_STATE)
+  const [shouldShowSuccessModal, setShouldShowSuccessModal] = useState<boolean>(false)
   const [errorModal, setErrorModal] = useState<{
-    error: string;
-    display: boolean;
-  }>({ error: '', display: false });
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const { pullUserMetadata } = useMeta();
+    error: string
+    display: boolean
+  }>({ error: '', display: false })
+  const [isCreating, setIsCreating] = useState<boolean>(false)
+  const { pullUserMetadata } = useMeta()
 
-  const items = useUserArts();
-  const { step, goToNextStep, resetStep } = useStep();
-  const wallet = useWallet();
-  const connection = useConnection();
-  const { isFetching } = useMeta();
-  const { accountByMint, userAccounts } = useUserAccounts();
-  const isValidStep = useValidation({ attributes, step });
+  const items = useUserArts()
+  const { step, goToNextStep, resetStep } = useStep()
+  const wallet = useWallet()
+  const connection = useConnection()
+  const { isFetching } = useMeta()
+  const { accountByMint, userAccounts } = useUserAccounts()
+  const isValidStep = useValidation({ attributes, step })
 
-  const isLoading = isCreating || isFetching;
+  const isLoading = isCreating || isFetching
 
   const {
     selectedItems,
@@ -67,46 +57,42 @@ export const PackCreateView = (): ReactElement => {
     description,
     uri,
     isUnlimitedSupply,
-  } = attributes;
+  } = attributes
 
-  const itemsToSelect = items.filter(
-    packItemsFilter(selectedItems, isUnlimitedSupply),
-  );
-  const vouchersToSelect = items.filter(vouchersFilter(selectedItems));
+  const itemsToSelect = items.filter(packItemsFilter(selectedItems, isUnlimitedSupply))
+  const vouchersToSelect = items.filter(vouchersFilter(selectedItems))
 
-  const [selectedVoucherId] = Object.keys(selectedVouchers);
-  const { ref, data } = useExtendedArt(selectedVoucherId);
+  const [selectedVoucherId] = Object.keys(selectedVouchers)
+  const { ref, data } = useExtendedArt(selectedVoucherId)
 
   const setPackState = useCallback(
     (value: Partial<PackState>) => {
-      setAttributes({ ...attributes, ...value });
+      setAttributes({ ...attributes, ...value })
     },
-    [attributes, setAttributes],
-  );
+    [attributes, setAttributes]
+  )
 
   const handleSelectItem = useCallback(
     (item: SafetyDepositDraft): void => {
-      const { metadata, masterEdition } = item;
+      const { metadata, masterEdition } = item
 
       if (!metadata?.pubkey) {
-        return;
+        return
       }
 
-      const updatedSelectedItems = { ...selectedItems };
+      const updatedSelectedItems = { ...selectedItems }
 
       if (updatedSelectedItems[metadata.pubkey]) {
-        delete updatedSelectedItems[metadata.pubkey];
+        delete updatedSelectedItems[metadata.pubkey]
       } else {
-        updatedSelectedItems[metadata.pubkey] = item;
-        if (
-          Object.keys(updatedSelectedItems).length > MAX_PACKS_CREATION_COUNT
-        ) {
-          exceededPacksCountNotification();
-          return;
+        updatedSelectedItems[metadata.pubkey] = item
+        if (Object.keys(updatedSelectedItems).length > MAX_PACKS_CREATION_COUNT) {
+          exceededPacksCountNotification()
+          return
         }
       }
 
-      const isUnlimitedSupply = masterEdition?.info.maxSupply === undefined;
+      const isUnlimitedSupply = masterEdition?.info.maxSupply === undefined
 
       setPackState({
         selectedItems: updatedSelectedItems,
@@ -114,81 +100,77 @@ export const PackCreateView = (): ReactElement => {
           ? PackDistributionType.Unlimited
           : PackDistributionType.Fixed,
         isUnlimitedSupply,
-      });
+      })
     },
-    [setPackState, selectedItems],
-  );
+    [setPackState, selectedItems]
+  )
 
   const handleSelectVoucher = useCallback(
     (item: SafetyDepositDraft): void => {
-      const { metadata } = item;
+      const { metadata } = item
 
       if (!metadata?.pubkey) {
-        return;
+        return
       }
 
-      let updatedSelectedVouchers = { ...selectedVouchers };
+      let updatedSelectedVouchers = { ...selectedVouchers }
 
       if (updatedSelectedVouchers[metadata.pubkey]) {
-        delete updatedSelectedVouchers[metadata.pubkey];
+        delete updatedSelectedVouchers[metadata.pubkey]
       } else {
-        updatedSelectedVouchers = { [metadata.pubkey]: item };
+        updatedSelectedVouchers = { [metadata.pubkey]: item }
       }
 
-      setPackState({ selectedVouchers: updatedSelectedVouchers });
+      setPackState({ selectedVouchers: updatedSelectedVouchers })
     },
-    [setPackState, selectedVouchers],
-  );
+    [setPackState, selectedVouchers]
+  )
 
   const handleSubmit = useCallback(async (): Promise<void> => {
     const canSubmit =
-      wallet &&
-      !!Object.values(selectedItems).length &&
-      !!Object.values(selectedVouchers).length;
+      wallet && !!Object.values(selectedItems).length && !!Object.values(selectedVouchers).length
 
     if (canSubmit) {
-      setIsCreating(true);
+      setIsCreating(true)
       try {
         await sendCreatePack({
           wallet,
           connection,
           accountByMint,
           data: attributes,
-        });
+        })
 
-        setShouldShowSuccessModal(true);
+        setShouldShowSuccessModal(true)
       } catch (e: any) {
-        setErrorModal({ error: e?.message, display: true });
+        setErrorModal({ error: e?.message, display: true })
       }
     }
-    setIsCreating(false);
-  }, [wallet, connection, accountByMint, attributes]);
+    setIsCreating(false)
+  }, [wallet, connection, accountByMint, attributes])
 
   const handleFinish = useCallback(() => {
-    setAttributes(INITIAL_PACK_STATE);
-    resetStep();
-    setShouldShowSuccessModal(false);
-    history.push('/artworks');
-  }, []);
+    setAttributes(INITIAL_PACK_STATE)
+    resetStep()
+    setShouldShowSuccessModal(false)
+    history.push('/artworks')
+  }, [])
 
   useEffect(() => {
-    if (!data) return;
+    if (!data) return
 
     setPackState({
       uri: data.image,
       name: data.name,
       description: data.description,
-    });
-  }, [data]);
-  const shouldRenderSuccessModal =
-    shouldShowSuccessModal && !errorModal.display;
+    })
+  }, [data])
+  const shouldRenderSuccessModal = shouldShowSuccessModal && !errorModal.display
 
   const shouldRenderRefresh =
-    step === CreatePackSteps.SelectItems ||
-    step === CreatePackSteps.SelectVoucher;
+    step === CreatePackSteps.SelectItems || step === CreatePackSteps.SelectVoucher
 
   return (
-    <div className="pack-create-wrapper" ref={ref}>
+    <div className='pack-create-wrapper' ref={ref}>
       <Sidebar
         step={step}
         setStep={goToNextStep}
@@ -196,12 +178,10 @@ export const PackCreateView = (): ReactElement => {
         submit={handleSubmit}
         buttonLoading={isLoading}
       />
-      <div className="content-wrapper">
+      <div className='content-wrapper'>
         <Header step={step}>
           {shouldRenderRefresh && (
-            <Button onClick={() => pullUserMetadata(userAccounts)}>
-              Refresh
-            </Button>
+            <Button onClick={() => pullUserMetadata(userAccounts)}>Refresh</Button>
           )}
         </Header>
 
@@ -220,7 +200,7 @@ export const PackCreateView = (): ReactElement => {
             selectedItems={selectedVouchers}
             handleSelectItem={handleSelectVoucher}
             showSupply
-            emptyMessage="You need to have minted supply of NFT to use it as a voucher."
+            emptyMessage='You need to have minted supply of NFT to use it as a voucher.'
           />
         )}
 
@@ -254,5 +234,5 @@ export const PackCreateView = (): ReactElement => {
       />
       <SuccessModal shouldShow={shouldRenderSuccessModal} hide={handleFinish} />
     </div>
-  );
-};
+  )
+}

@@ -1,10 +1,10 @@
-import { CreatePackSteps } from '../../types';
+import { CreatePackSteps } from '../../types'
 
 export interface HeaderProps {
-  step: CreatePackSteps;
+  step: CreatePackSteps
 }
 
 export interface HeaderContentRecord {
-  title: string;
-  subtitle?: string;
+  title: string
+  subtitle?: string
 }

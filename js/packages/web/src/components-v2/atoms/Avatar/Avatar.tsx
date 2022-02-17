@@ -1,12 +1,12 @@
-import React, { FC } from 'react';
-import CN from 'classnames';
+import React, { FC } from 'react'
+import CN from 'classnames'
 
 export interface AvatarProps {
-  [x: string]: any;
-  image?: string;
-  onClick?: any;
-  hasBorder?: boolean;
-  size?: 'sm' | 'md' | 'default' | 'lg';
+  [x: string]: any
+  image?: string
+  onClick?: any
+  hasBorder?: boolean
+  size?: 'sm' | 'md' | 'default' | 'lg'
 }
 
 export const Avatar: FC<AvatarProps> = ({
@@ -28,22 +28,18 @@ export const Avatar: FC<AvatarProps> = ({
       'w-[48px] h-[48px]': size === 'md',
       'w-[36px] h-[36px]': size === 'sm',
     },
-    radius,
-  );
+    radius
+  )
 
   return (
     <div className={AvatarClasses} {...restProps}>
-      <img
-        src={image}
-        onClick={onClick}
-        className={CN('w-full h-full rounded-full', radius)}
-      />
+      <img src={image} onClick={onClick} className={CN('w-full h-full rounded-full', radius)} />
     </div>
-  );
-};
+  )
+}
 
 Avatar.defaultProps = {
   size: 'default',
-};
+}
 
-export default Avatar;
+export default Avatar

@@ -1,14 +1,11 @@
-import { ParsedAccount, WhitelistedCreator } from '@oyster/common';
-import { Artist } from '../../types';
+import { ParsedAccount, WhitelistedCreator } from '@oyster/common'
+import { Artist } from '../../types'
 
 export const getCreator = (
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >,
-  authority: string,
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>,
+  authority: string
 ): Artist => {
-  const knownCreator = whitelistedCreatorsByCreator[authority];
+  const knownCreator = whitelistedCreatorsByCreator[authority]
 
   return {
     address: authority,
@@ -16,5 +13,5 @@ export const getCreator = (
     image: knownCreator?.info.image || '',
     name: knownCreator?.info.name || '',
     link: knownCreator?.info.twitter || '',
-  } as Artist;
-};
+  } as Artist
+}

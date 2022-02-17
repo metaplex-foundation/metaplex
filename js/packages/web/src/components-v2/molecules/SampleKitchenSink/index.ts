@@ -1,1 +1,1 @@
-export * from './SampleKitchenSink';
+export * from './SampleKitchenSink'

@@ -4,25 +4,22 @@ import {
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
   SystemProgram,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+} from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { programIds, toPublicKey, StringPublicKey } from '../../../utils';
-import { PACKS_SCHEMA, RequestCardToRedeemArgs } from '../../..';
-import { RequestCardToRedeemParams } from '..';
-import {
-  findPackConfigProgramAddress,
-  findProvingProcessProgramAddress,
-} from '../find';
+import { programIds, toPublicKey, StringPublicKey } from '../../../utils'
+import { PACKS_SCHEMA, RequestCardToRedeemArgs } from '../../..'
+import { RequestCardToRedeemParams } from '..'
+import { findPackConfigProgramAddress, findProvingProcessProgramAddress } from '../find'
 
 interface Params extends RequestCardToRedeemParams {
-  packSetKey: PublicKey;
-  editionKey: StringPublicKey;
-  editionMint: StringPublicKey;
-  voucherKey: StringPublicKey;
-  tokenAccount?: StringPublicKey;
-  wallet: PublicKey;
-  randomOracle: StringPublicKey;
+  packSetKey: PublicKey
+  editionKey: StringPublicKey
+  editionMint: StringPublicKey
+  voucherKey: StringPublicKey
+  tokenAccount?: StringPublicKey
+  wallet: PublicKey
+  randomOracle: StringPublicKey
 }
 
 export async function requestCardToRedeem({
@@ -35,25 +32,25 @@ export async function requestCardToRedeem({
   wallet,
   randomOracle,
 }: Params): Promise<TransactionInstruction> {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
   const value = new RequestCardToRedeemArgs({
     index,
-  });
+  })
 
-  const store = PROGRAM_IDS.store;
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
   const provingProcess = await findProvingProcessProgramAddress(
     packSetKey,
     wallet,
-    toPublicKey(editionMint),
-  );
-  const packConfig = await findPackConfigProgramAddress(packSetKey);
+    toPublicKey(editionMint)
+  )
+  const packConfig = await findPackConfigProgramAddress(packSetKey)
 
-  const data = Buffer.from(serialize(PACKS_SCHEMA, value));
+  const data = Buffer.from(serialize(PACKS_SCHEMA, value))
   const keys = [
     // pack_set
     {
@@ -133,7 +130,7 @@ export async function requestCardToRedeem({
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   if (tokenAccount) {
     // user_token_account
@@ -141,12 +138,12 @@ export async function requestCardToRedeem({
       pubkey: toPublicKey(tokenAccount),
       isSigner: false,
       isWritable: true,
-    });
+    })
   }
 
   return new TransactionInstruction({
     keys,
     programId: toPublicKey(PROGRAM_IDS.pack_create),
     data,
-  });
+  })
 }

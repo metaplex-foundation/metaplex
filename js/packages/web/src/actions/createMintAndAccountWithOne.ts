@@ -1,5 +1,5 @@
-import { Keypair, TransactionInstruction } from '@solana/web3.js';
-import { Token } from '@solana/spl-token';
+import { Keypair, TransactionInstruction } from '@solana/web3.js'
+import { Token } from '@solana/spl-token'
 import {
   createAssociatedTokenAccountInstruction,
   createMint,
@@ -7,17 +7,17 @@ import {
   programIds,
   StringPublicKey,
   toPublicKey,
-} from '@oyster/common';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+} from '@oyster/common'
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
 
 export async function createMintAndAccountWithOne(
   wallet: any,
   receiverWallet: StringPublicKey,
   mintRent: any,
   instructions: TransactionInstruction[],
-  signers: Keypair[],
+  signers: Keypair[]
 ): Promise<{ mint: StringPublicKey; account: StringPublicKey }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
   const mint = createMint(
     instructions,
@@ -26,29 +26,25 @@ export async function createMintAndAccountWithOne(
     0,
     wallet.publicKey,
     wallet.publicKey,
-    signers,
-  );
+    signers
+  )
 
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
   const account: StringPublicKey = (
     await findProgramAddress(
-      [
-        toPublicKey(receiverWallet).toBuffer(),
-        PROGRAM_IDS.token.toBuffer(),
-        mint.toBuffer(),
-      ],
-      PROGRAM_IDS.associatedToken,
+      [toPublicKey(receiverWallet).toBuffer(), PROGRAM_IDS.token.toBuffer(), mint.toBuffer()],
+      PROGRAM_IDS.associatedToken
     )
-  )[0];
+  )[0]
 
   createAssociatedTokenAccountInstruction(
     instructions,
     toPublicKey(account),
     wallet.publicKey,
     toPublicKey(receiverWallet),
-    mint,
-  );
+    mint
+  )
 
   instructions.push(
     Token.createMintToInstruction(
@@ -57,9 +53,9 @@ export async function createMintAndAccountWithOne(
       toPublicKey(account),
       wallet.publicKey,
       [],
-      1,
-    ),
-  );
+      1
+    )
+  )
 
-  return { mint: mint.toBase58(), account };
+  return { mint: mint.toBase58(), account }
 }

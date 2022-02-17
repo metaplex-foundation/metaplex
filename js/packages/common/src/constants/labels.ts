@@ -12,4 +12,4 @@ export const LABELS = {
   SETTINGS_TOOLTIP: 'Settings',
   DASHBOARD_ACTION: 'Go to dashboard',
   GO_BACK_ACTION: 'Go back',
-};
+}

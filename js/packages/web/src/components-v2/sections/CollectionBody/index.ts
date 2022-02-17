@@ -1,1 +1,1 @@
-export * from './CollectionBody';
+export * from './CollectionBody'

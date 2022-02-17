@@ -34,7 +34,8 @@ export const FileUpload: FC<FileUploadProps> = ({
         <Button
           appearance='secondary'
           view='outline'
-          iconBefore={<i className='ri-upload-cloud-2-line text-lg' />}>
+          iconBefore={<i className='ri-upload-cloud-2-line text-lg' />}
+        >
           Attach file
         </Button>
       </Upload>

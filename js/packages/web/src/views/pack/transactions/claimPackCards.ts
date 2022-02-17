@@ -1,33 +1,29 @@
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
 import {
   claimPack,
   findPackCardProgramAddress,
   sendTransactionsInChunks,
   SequenceType,
   toPublicKey,
-} from '@oyster/common';
-import { BN } from 'bn.js';
+} from '@oyster/common'
+import { BN } from 'bn.js'
 
 import {
   ClaimPackCardsParams,
   ClaimSeveralCardsByIndexParams,
   GenerateClaimPackInstructionsParams,
   GenerateTransactionsResponse,
-} from './interface';
-import { getNewMint } from './getNewMint';
+} from './interface'
+import { getNewMint } from './getNewMint'
 
-export const claimPackCards = async ({
-  connection,
-  wallet,
-  ...params
-}: ClaimPackCardsParams) => {
+export const claimPackCards = async ({ connection, wallet, ...params }: ClaimPackCardsParams) => {
   const instructions = await getClaimPackCardsInstructions({
     connection,
     wallet,
     ...params,
-  });
+  })
 
-  const flatInstructions = instructions.flat();
+  const flatInstructions = instructions.flat()
 
   await sendTransactionsInChunks(
     connection,
@@ -37,9 +33,9 @@ export const claimPackCards = async ({
     SequenceType.Sequential,
     'singleGossip',
     120000,
-    20,
-  );
-};
+    20
+  )
+}
 
 const getClaimPackCardsInstructions = async ({
   cardsToRedeem,
@@ -51,9 +47,9 @@ const getClaimPackCardsInstructions = async ({
         numberOfCards,
         index,
         ...params,
-      }),
-    ),
-  );
+      })
+    )
+  )
 
 const claimSeveralCardsByIndex = async ({
   wallet,
@@ -66,30 +62,26 @@ const claimSeveralCardsByIndex = async ({
   packCards,
   masterEditions,
 }: ClaimSeveralCardsByIndexParams): Promise<GenerateTransactionsResponse[]> => {
-  const packSetKey = pack.pubkey;
-  const randomOracle = pack.info.randomOracle;
+  const packSetKey = pack.pubkey
+  const randomOracle = pack.info.randomOracle
 
-  const packCardToRedeem = await findPackCardProgramAddress(
-    toPublicKey(packSetKey),
-    index,
-  );
+  const packCardToRedeem = await findPackCardProgramAddress(toPublicKey(packSetKey), index)
 
-  const packCardMetadata = metadataByPackCard[packCardToRedeem];
-  const userToken = packCards[packCardToRedeem]?.info?.tokenAccount;
+  const packCardMetadata = metadataByPackCard[packCardToRedeem]
+  const userToken = packCards[packCardToRedeem]?.info?.tokenAccount
 
   if (!packCardMetadata?.info?.masterEdition) {
-    throw new Error('Missing master edition');
+    throw new Error('Missing master edition')
   }
   if (!userToken) {
-    throw new Error('Missing user token');
+    throw new Error('Missing user token')
   }
 
-  const packCardEdition = masterEditions[packCardMetadata.info.masterEdition];
+  const packCardEdition = masterEditions[packCardMetadata.info.masterEdition]
 
   return Promise.all(
     Array.from({ length: numberOfCards }).map((_, i) => {
-      const packCardEditionIndex =
-        packCardEdition.info.supply.toNumber() + i + 1;
+      const packCardEditionIndex = packCardEdition.info.supply.toNumber() + i + 1
 
       return generateClaimPackInstructions({
         wallet,
@@ -101,10 +93,10 @@ const claimSeveralCardsByIndex = async ({
         voucherMint,
         metadataMint: packCardMetadata.info.mint,
         edition: new BN(packCardEditionIndex),
-      });
-    }),
-  );
-};
+      })
+    })
+  )
+}
 
 const generateClaimPackInstructions = async ({
   wallet,
@@ -117,15 +109,15 @@ const generateClaimPackInstructions = async ({
   metadataMint,
   edition,
 }: GenerateClaimPackInstructionsParams): Promise<GenerateTransactionsResponse> => {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const walletPublicKey = wallet.publicKey;
+  const walletPublicKey = wallet.publicKey
 
   const {
     mint: newMint,
     instructions: newMintInstructions,
     signers: newMintSigners,
-  } = await getNewMint(wallet, connection);
+  } = await getNewMint(wallet, connection)
 
   const claimPackInstruction = await claimPack({
     index,
@@ -137,10 +129,10 @@ const generateClaimPackInstructions = async ({
     metadataMint,
     edition,
     randomOracle,
-  });
+  })
 
   return {
     instructions: [...newMintInstructions, claimPackInstruction],
     signers: newMintSigners,
-  };
-};
+  }
+}

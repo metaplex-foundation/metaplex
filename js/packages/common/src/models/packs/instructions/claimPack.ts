@@ -3,34 +3,28 @@ import {
   TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
-import BN from 'bn.js';
+} from '@solana/web3.js'
+import { serialize } from 'borsh'
+import BN from 'bn.js'
 
-import { programIds, toPublicKey, StringPublicKey } from '../../../utils';
-import {
-  ClaimPackArgs,
-  getEdition,
-  getEditionMarkPda,
-  getMetadata,
-  PACKS_SCHEMA,
-} from '../../..';
+import { programIds, toPublicKey, StringPublicKey } from '../../../utils'
+import { ClaimPackArgs, getEdition, getEditionMarkPda, getMetadata, PACKS_SCHEMA } from '../../..'
 import {
   findPackCardProgramAddress,
   findProvingProcessProgramAddress,
   getProgramAuthority,
-} from '../find';
-import { ClaimPackParams } from '..';
+} from '../find'
+import { ClaimPackParams } from '..'
 
 interface Params extends ClaimPackParams {
-  packSetKey: StringPublicKey;
-  wallet: PublicKey;
-  voucherMint: StringPublicKey;
-  userToken: StringPublicKey;
-  newMint: StringPublicKey;
-  metadataMint: StringPublicKey;
-  edition: BN;
-  randomOracle: StringPublicKey;
+  packSetKey: StringPublicKey
+  wallet: PublicKey
+  voucherMint: StringPublicKey
+  userToken: StringPublicKey
+  newMint: StringPublicKey
+  metadataMint: StringPublicKey
+  edition: BN
+  randomOracle: StringPublicKey
 }
 
 export async function claimPack({
@@ -44,27 +38,24 @@ export async function claimPack({
   edition,
   randomOracle,
 }: Params): Promise<TransactionInstruction> {
-  const PROGRAM_IDS = programIds();
-  const value = new ClaimPackArgs({ index });
+  const PROGRAM_IDS = programIds()
+  const value = new ClaimPackArgs({ index })
 
   const provingProcess = await findProvingProcessProgramAddress(
     toPublicKey(packSetKey),
     wallet,
-    toPublicKey(voucherMint),
-  );
-  const packCard = await findPackCardProgramAddress(
-    toPublicKey(packSetKey),
-    index,
-  );
+    toPublicKey(voucherMint)
+  )
+  const packCard = await findPackCardProgramAddress(toPublicKey(packSetKey), index)
 
-  const newMetadata = await getMetadata(newMint);
-  const metadata = await getMetadata(metadataMint);
-  const newEdition = await getEdition(newMint);
-  const masterEdition = await getEdition(metadataMint);
-  const editionMarkPda = await getEditionMarkPda(metadataMint, edition);
-  const programAuthority = await getProgramAuthority();
+  const newMetadata = await getMetadata(newMint)
+  const metadata = await getMetadata(metadataMint)
+  const newEdition = await getEdition(newMint)
+  const masterEdition = await getEdition(metadataMint)
+  const editionMarkPda = await getEditionMarkPda(metadataMint, edition)
+  const programAuthority = await getProgramAuthority()
 
-  const data = Buffer.from(serialize(PACKS_SCHEMA, value));
+  const data = Buffer.from(serialize(PACKS_SCHEMA, value))
   const keys = [
     // pack_set
     {
@@ -180,11 +171,11 @@ export async function claimPack({
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   return new TransactionInstruction({
     keys,
     programId: toPublicKey(PROGRAM_IDS.pack_create),
     data,
-  });
+  })
 }

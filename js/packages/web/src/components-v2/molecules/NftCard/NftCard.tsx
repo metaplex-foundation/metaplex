@@ -1,7 +1,6 @@
-import React, { FC, forwardRef, useEffect, useState } from 'react'
+import React, { FC, forwardRef } from 'react'
 import CN from 'classnames'
 import VerifiedBadgeIcon from '../../icons/VerifiedBadge'
-import axios from 'axios'
 
 export interface NftCardProps {
   [x: string]: any
@@ -25,51 +24,32 @@ export const NftCard: FC<NftCardProps> = forwardRef(
       `nft-card flex flex-col bg-gray-50 rounded-[8px] overflow-hidden h-full cursor-pointer hover:bg-gray-100 transition-all`,
       className
     )
-    const [uriState, setUriState] = useState<string | undefined>()
-
-    useEffect(() => {
-      try {
-        const getImage = async () => {
-          const img = await axios.get(`${image}`)
-          setUriState(img.data.image)
-        }
-        getImage()
-      } catch {
-        console.log('error')
-      }
-    }, [image])
 
     return (
       <div className={NftCardClasses} {...restProps} ref={ref}>
         <div className='flex flex-col'>
-          <img
-            src={uriState}
-            alt={name}
-            className='h-[180px] w-full object-cover object-center lg:h-[228px]'
-          />
+          <img src={image} alt={name} className='h-[228px] w-full object-cover object-center' />
 
-          <span className='h-[8px] w-full bg-[linear-gradient(89.57deg,_#3E9CD1_0.79%,_#224CB8_124%)]' />
+          <span className='bg-[linear-gradient(89.57deg,_#3E9CD1_0.79%,_#224CB8_124%)] h-[8px] w-full' />
         </div>
 
-        <div className='flex flex-col gap-[4px] px-[20px] pt-[20px] pb-[28px] lg:gap-[8px] lg:px-[28px]'>
-          <h3 className='flex gap-[8px] text-base'>
+        <div className='flex px-[28px] pt-[20px] pb-[28px] flex-col gap-[8px]'>
+          <h3 className='text-base flex gap-[8px]'>
             <span className='line-clamp-1'>{name}</span>
 
             {isVerified && (
               <VerifiedBadgeIcon
                 width={16}
                 height={16}
-                className='relative top-[4px] flex-shrink-0'
+                className='flex-shrink-0 relative top-[4px]'
               />
             )}
           </h3>
 
-          <p className='text-md text-gray-600 line-clamp-2'>{description}</p>
+          <p className='text-gray-600 text-md line-clamp-2'>{description}</p>
 
-          <div className='flex items-center gap-[6px] text-md font-500 text-gray-700'>
-            <span>
-              {itemsCount} {itemsCount > 1 ? 'items' : 'item'}
-            </span>
+          <div className='flex items-center text-gray-700 gap-[6px] text-md font-500'>
+            <span>{itemsCount} items</span>
             <span>|</span>
             <span>FP {floorPrice}</span>
           </div>

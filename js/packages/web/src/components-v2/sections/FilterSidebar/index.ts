@@ -1,1 +1,1 @@
-export * from './FilterSidebar';
+export * from './FilterSidebar'

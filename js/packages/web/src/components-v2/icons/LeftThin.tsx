@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 
 export const LeftThin = ({
   width = 26,
@@ -10,19 +10,14 @@ export const LeftThin = ({
     <svg
       width={width}
       height={height}
-      viewBox="0 0 25 44"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+      viewBox='0 0 25 44'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
       {...restProps}
     >
-      <path
-        d="M23 42L3 22L23 2"
-        stroke={color}
-        strokeWidth="1"
-        strokeLinecap="round"
-      />
+      <path d='M23 42L3 22L23 2' stroke={color} strokeWidth='1' strokeLinecap='round' />
     </svg>
-  );
-};
+  )
+}
 
-export default LeftThin;
+export default LeftThin

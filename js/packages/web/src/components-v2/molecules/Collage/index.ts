@@ -1,1 +1,1 @@
-export * from './Collage';
+export * from './Collage'

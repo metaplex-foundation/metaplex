@@ -1,15 +1,15 @@
-import { PublicKey } from '@solana/web3.js';
-import React, { useState } from 'react';
-import { useSwappableTokens, useTokenList } from '../../contexts/tokenList';
-import { Row, Col, Typography, Tabs, Input, List } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
-import { TokenInfo } from '@solana/spl-token-registry';
-import { TokenCircle } from '../Custom';
-import { MetaplexModal, shortenAddress, toPublicKey } from '@oyster/common';
+import { PublicKey } from '@solana/web3.js'
+import React, { useState } from 'react'
+import { useSwappableTokens, useTokenList } from '../../contexts/tokenList'
+import { Row, Col, Typography, Tabs, Input, List } from 'antd'
+import { DownOutlined } from '@ant-design/icons'
+import { TokenInfo } from '@solana/spl-token-registry'
+import { TokenCircle } from '../Custom'
+import { MetaplexModal, shortenAddress, toPublicKey } from '@oyster/common'
 
-const { Search } = Input;
+const { Search } = Input
 
-const { TabPane } = Tabs;
+const { TabPane } = Tabs
 
 export enum TokenViewState {
   Main = '0',
@@ -17,25 +17,15 @@ export enum TokenViewState {
   Sollet = '2',
 }
 
-export function TokenButton({
-  mint,
-  onClick,
-}: {
-  mint: PublicKey;
-  onClick: () => void;
-}) {
-  const tokenMap = useTokenList().subscribedTokens;
-  const tokenInfo = tokenMap.filter(t => t.address == mint.toBase58())[0];
+export function TokenButton({ mint, onClick }: { mint: PublicKey; onClick: () => void }) {
+  const tokenMap = useTokenList().subscribedTokens
+  const tokenInfo = tokenMap.filter(t => t.address == mint.toBase58())[0]
 
   return (
-    <Row onClick={onClick} className={'token-button'} justify="space-between">
+    <Row onClick={onClick} className={'token-button'} justify='space-between'>
       <Col>
         <Row>
-          <TokenCircle
-            iconSize={40}
-            iconFile={tokenInfo?.logoURI}
-            style={{ marginTop: 2.5 }}
-          />
+          <TokenCircle iconSize={40} iconFile={tokenInfo?.logoURI} style={{ marginTop: 2.5 }} />
           <TokenName mint={mint} />
         </Row>
       </Col>
@@ -43,7 +33,7 @@ export function TokenButton({
         <DownOutlined style={{ marginLeft: 10, fontWeight: 700 }} />
       </Col>
     </Row>
-  );
+  )
 }
 
 export default function TokenDialog({
@@ -51,21 +41,20 @@ export default function TokenDialog({
   onClose,
   setMint,
 }: {
-  open: boolean;
-  onClose: () => void;
-  setMint: (mint: PublicKey) => void;
+  open: boolean
+  onClose: () => void
+  setMint: (mint: PublicKey) => void
 }) {
-  const [tabSelection, setTabSelection] = useState(TokenViewState.Main);
-  const [tokenFilter, setTokenFilter] = useState('');
-  const filter = tokenFilter.toLowerCase();
-  const { swappableTokens, swappableTokensSollet, swappableTokensWormhole } =
-    useSwappableTokens();
+  const [tabSelection, setTabSelection] = useState(TokenViewState.Main)
+  const [tokenFilter, setTokenFilter] = useState('')
+  const filter = tokenFilter.toLowerCase()
+  const { swappableTokens, swappableTokensSollet, swappableTokensWormhole } = useSwappableTokens()
   const selectedTokens =
     tabSelection === TokenViewState.Main
       ? swappableTokens
       : tabSelection === TokenViewState.Wormhole
       ? swappableTokensWormhole
-      : swappableTokensSollet;
+      : swappableTokensSollet
   const tokens =
     tokenFilter === ''
       ? selectedTokens
@@ -73,33 +62,29 @@ export default function TokenDialog({
           t =>
             t.symbol.toLowerCase().startsWith(filter) ||
             t.name.toLowerCase().startsWith(filter) ||
-            t.address.toLowerCase().startsWith(filter),
-        );
+            t.address.toLowerCase().startsWith(filter)
+        )
 
   const validateTokenMint = (quoteMintAddress: string) => {
     // try to convert to publicKey and check if it is on curve
-    let quoteMintAddressOnCurve = false;
+    let quoteMintAddressOnCurve = false
     try {
       quoteMintAddressOnCurve = PublicKey.isOnCurve(
-        toPublicKey(quoteMintAddress).toBuffer().slice(0, 32),
-      );
+        toPublicKey(quoteMintAddress).toBuffer().slice(0, 32)
+      )
     } catch {
-      console.log('Not an ed25519 curve pubkey');
+      console.log('Not an ed25519 curve pubkey')
     }
 
     if (quoteMintAddressOnCurve) {
-      console.log('MINT OK');
-      setMint(toPublicKey(quoteMintAddress));
-      onClose();
+      console.log('MINT OK')
+      setMint(toPublicKey(quoteMintAddress))
+      onClose()
     }
-  };
+  }
 
   return (
-    <MetaplexModal
-      visible={open}
-      onCancel={onClose}
-      bodyStyle={{ padding: '25px 0 0 0' }}
-    >
+    <MetaplexModal visible={open} onCancel={onClose} bodyStyle={{ padding: '25px 0 0 0' }}>
       <Col className={'dialog-header'}>
         <Typography
           style={{
@@ -113,8 +98,8 @@ export default function TokenDialog({
         </Typography>
         <Input
           autoFocus
-          className="input text-field"
-          placeholder="Search token mints"
+          className='input text-field'
+          placeholder='Search token mints'
           allowClear
           value={tokenFilter}
           onChange={e => setTokenFilter(e.target.value)}
@@ -127,19 +112,19 @@ export default function TokenDialog({
               key={tokenInfo.address}
               tokenInfo={tokenInfo}
               onClick={mint => {
-                setMint(mint);
-                console.log('SET MINT TO', mint.toBase58());
-                onClose();
+                setMint(mint)
+                console.log('SET MINT TO', mint.toBase58())
+                onClose()
               }}
             />
           ))}
         </List>
         <Search
-          enterButton="Go!"
-          className="input search-text-field"
+          enterButton='Go!'
+          className='input search-text-field'
           placeholder="Can't find your token? set it here!"
           allowClear
-          size="large"
+          size='large'
           onSearch={e => validateTokenMint(e)}
         />
       </div>
@@ -153,44 +138,44 @@ export default function TokenDialog({
           key={TokenViewState.Main}
           className={'token-tab'}
           /*  classes={{ selected: 'tab-selected' }} */
-          tab={<span className="tab-title">Main</span>}
+          tab={<span className='tab-title'>Main</span>}
         />
         <TabPane
           key={TokenViewState.Wormhole}
           className={'token-tab'}
           /* classes={{ selected: 'tab-selected' }} */
-          tab={<span className="tab-title">Wormhole</span>}
+          tab={<span className='tab-title'>Wormhole</span>}
         />
         <TabPane
           key={TokenViewState.Sollet}
           className={'token-tab'}
           /* classes={{ selected: 'tab-selected' }} */
-          tab={<span className="tab-title">Sollet</span>}
+          tab={<span className='tab-title'>Sollet</span>}
         />
       </Tabs>
     </MetaplexModal>
-  );
+  )
 }
 
 function TokenListItem({
   tokenInfo,
   onClick,
 }: {
-  tokenInfo: TokenInfo;
-  onClick: (mint: PublicKey) => void;
+  tokenInfo: TokenInfo
+  onClick: (mint: PublicKey) => void
 }) {
-  const mint = new PublicKey(tokenInfo.address);
+  const mint = new PublicKey(tokenInfo.address)
   return (
     <List.Item onClick={() => onClick(mint)} className={'token-list-item'}>
       <TokenIcon mint={mint} style={{ width: '30px', borderRadius: '15px' }} />
       <TokenName mint={mint} />
     </List.Item>
-  );
+  )
 }
 
 export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
-  const tokenMap = useTokenList().tokenMap;
-  const tokenInfo = tokenMap.get(mint.toString());
+  const tokenMap = useTokenList().tokenMap
+  const tokenInfo = tokenMap.get(mint.toString())
   return (
     <div
       style={{
@@ -200,18 +185,18 @@ export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
       }}
     >
       {tokenInfo?.logoURI ? (
-        <img alt="Logo" style={style} src={tokenInfo?.logoURI} />
+        <img alt='Logo' style={style} src={tokenInfo?.logoURI} />
       ) : (
         <div style={style}></div>
       )}
     </div>
-  );
+  )
 }
 
 function TokenName({ mint }: { mint: PublicKey }) {
-  const tokenMap = useTokenList().tokenMap;
-  const tokenInfo = tokenMap.get(mint.toString());
-  const tokenName = tokenInfo ? tokenInfo.name : 'Custom Token';
+  const tokenMap = useTokenList().tokenMap
+  const tokenInfo = tokenMap.get(mint.toString())
+  const tokenName = tokenInfo ? tokenInfo.name : 'Custom Token'
 
   return (
     <div style={{ marginLeft: '16px', overflow: 'hidden' }}>
@@ -219,7 +204,7 @@ function TokenName({ mint }: { mint: PublicKey }) {
         {tokenInfo ? tokenName : `${shortenAddress(mint.toBase58())}`}
       </div>
       <div
-        color="textSecondary"
+        color='textSecondary'
         style={{
           fontSize: '14px',
           color: '#797A8C',
@@ -231,5 +216,5 @@ function TokenName({ mint }: { mint: PublicKey }) {
         {tokenName}
       </div>
     </div>
-  );
+  )
 }

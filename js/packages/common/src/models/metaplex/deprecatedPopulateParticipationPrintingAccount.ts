@@ -1,14 +1,9 @@
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { serialize } from 'borsh';
-import { SCHEMA } from '.';
-import { getAuctionExtended, VAULT_PREFIX } from '../../actions';
-import {
-  findProgramAddress,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-} from '../../utils';
-import { DeprecatedPopulateParticipationPrintingAccountArgs } from './deprecatedStates';
+import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
+import { SCHEMA } from '.'
+import { getAuctionExtended, VAULT_PREFIX } from '../../actions'
+import { findProgramAddress, programIds, StringPublicKey, toPublicKey } from '../../utils'
+import { DeprecatedPopulateParticipationPrintingAccountArgs } from './deprecatedStates'
 
 export async function deprecatedPopulateParticipationPrintingAccount(
   vault: StringPublicKey,
@@ -24,12 +19,12 @@ export async function deprecatedPopulateParticipationPrintingAccount(
   masterEdition: StringPublicKey,
   metadata: StringPublicKey,
   payer: StringPublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
   const transferAuthority = (
@@ -39,12 +34,12 @@ export async function deprecatedPopulateParticipationPrintingAccount(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault),
+      toPublicKey(PROGRAM_IDS.vault)
     )
-  )[0];
+  )[0]
 
-  const value = new DeprecatedPopulateParticipationPrintingAccountArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new DeprecatedPopulateParticipationPrintingAccountArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -97,7 +92,7 @@ export async function deprecatedPopulateParticipationPrintingAccount(
         await getAuctionExtended({
           auctionProgramId: PROGRAM_IDS.auction,
           resource: vault,
-        }),
+        })
       ),
       isSigner: false,
       isWritable: false,
@@ -152,13 +147,13 @@ export async function deprecatedPopulateParticipationPrintingAccount(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

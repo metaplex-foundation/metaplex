@@ -81,7 +81,8 @@ export const CheckBox = forwardRef<HTMLInputElement, CheckboxProps>(
             className={CN(
               'checkbox__label text-md pl-[8px] select-none text-N-800',
               labelClassName
-            )}>
+            )}
+          >
             {children}
           </span>
         )}

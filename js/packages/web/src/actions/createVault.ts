@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  SystemProgram,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, Connection, SystemProgram, TransactionInstruction } from '@solana/web3.js'
 import {
   utils,
   createMint,
@@ -11,16 +6,12 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
-} from '@oyster/common';
-import {
-  initVault,
-  MAX_VAULT_SIZE,
-  VAULT_PREFIX,
-} from '@oyster/common/dist/lib/actions/vault';
-import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
+} from '@oyster/common'
+import { initVault, MAX_VAULT_SIZE, VAULT_PREFIX } from '@oyster/common/dist/lib/actions/vault'
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account'
 
-import { AccountLayout, MintLayout } from '@solana/spl-token';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { AccountLayout, MintLayout } from '@solana/spl-token'
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
 
 // This command creates the external pricing oracle a vault
 // This gets the vault ready for adding the tokens.
@@ -28,35 +19,29 @@ export async function createVault(
   connection: Connection,
   wallet: WalletSigner,
   priceMint: StringPublicKey,
-  externalPriceAccount: StringPublicKey,
+  externalPriceAccount: StringPublicKey
 ): Promise<{
-  vault: StringPublicKey;
-  fractionalMint: StringPublicKey;
-  redeemTreasury: StringPublicKey;
-  fractionTreasury: StringPublicKey;
-  instructions: TransactionInstruction[];
-  signers: Keypair[];
+  vault: StringPublicKey
+  fractionalMint: StringPublicKey
+  redeemTreasury: StringPublicKey
+  fractionTreasury: StringPublicKey
+  instructions: TransactionInstruction[]
+  signers: Keypair[]
 }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const PROGRAM_IDS = utils.programIds();
+  const PROGRAM_IDS = utils.programIds()
 
-  const signers: Keypair[] = [];
-  const instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = []
+  const instructions: TransactionInstruction[] = []
 
-  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span)
 
-  const mintRentExempt = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
-  );
+  const mintRentExempt = await connection.getMinimumBalanceForRentExemption(MintLayout.span)
 
-  const vaultRentExempt = await connection.getMinimumBalanceForRentExemption(
-    MAX_VAULT_SIZE,
-  );
+  const vaultRentExempt = await connection.getMinimumBalanceForRentExemption(MAX_VAULT_SIZE)
 
-  const vault = Keypair.generate();
+  const vault = Keypair.generate()
 
   const vaultAuthority = (
     await findProgramAddress(
@@ -65,9 +50,9 @@ export async function createVault(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         vault.publicKey.toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault),
+      toPublicKey(PROGRAM_IDS.vault)
     )
-  )[0];
+  )[0]
 
   const fractionalMint = createMint(
     instructions,
@@ -76,8 +61,8 @@ export async function createVault(
     0,
     toPublicKey(vaultAuthority),
     toPublicKey(vaultAuthority),
-    signers,
-  ).toBase58();
+    signers
+  ).toBase58()
 
   const redeemTreasury = createTokenAccount(
     instructions,
@@ -85,8 +70,8 @@ export async function createVault(
     accountRentExempt,
     toPublicKey(priceMint),
     toPublicKey(vaultAuthority),
-    signers,
-  ).toBase58();
+    signers
+  ).toBase58()
 
   const fractionTreasury = createTokenAccount(
     instructions,
@@ -94,8 +79,8 @@ export async function createVault(
     accountRentExempt,
     toPublicKey(fractionalMint),
     toPublicKey(vaultAuthority),
-    signers,
-  ).toBase58();
+    signers
+  ).toBase58()
 
   const uninitializedVault = SystemProgram.createAccount({
     fromPubkey: wallet.publicKey,
@@ -103,9 +88,9 @@ export async function createVault(
     lamports: vaultRentExempt,
     space: MAX_VAULT_SIZE,
     programId: toPublicKey(PROGRAM_IDS.vault),
-  });
-  instructions.push(uninitializedVault);
-  signers.push(vault);
+  })
+  instructions.push(uninitializedVault)
+  signers.push(vault)
 
   await initVault(
     true,
@@ -115,8 +100,8 @@ export async function createVault(
     vault.publicKey.toBase58(),
     wallet.publicKey.toBase58(),
     externalPriceAccount,
-    instructions,
-  );
+    instructions
+  )
 
   return {
     vault: vault.publicKey.toBase58(),
@@ -125,5 +110,5 @@ export async function createVault(
     fractionTreasury,
     signers,
     instructions,
-  };
+  }
 }

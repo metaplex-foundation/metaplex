@@ -1,17 +1,11 @@
-import React, { FC } from 'react';
-import CN from 'classnames';
+import React, { FC } from 'react'
+import CN from 'classnames'
 
 export interface BadgeProps {
-  [x: string]: any;
-  appearance?:
-    | 'default'
-    | 'primary'
-    | 'secondary'
-    | 'success'
-    | 'warning'
-    | 'danger';
-  iconBefore?: any;
-  iconAfter?: any;
+  [x: string]: any
+  appearance?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
+  iconBefore?: any
+  iconAfter?: any
 }
 
 export const Badge: FC<BadgeProps> = ({
@@ -32,16 +26,16 @@ export const Badge: FC<BadgeProps> = ({
       'bg-blue-200 text-blue-700': appearance === 'primary',
       'bg-orange-200 text-orange-700': appearance === 'warning',
       'bg-red-200 text-red-700': appearance === 'danger',
-    },
-  );
+    }
+  )
 
   return (
     <div className={BadgeClasses} {...restProps}>
-      {iconBefore && <span className="inline-flex">{iconBefore}</span>}
-      <span className="inline-flex">{children}</span>
-      {iconAfter && <span className="inline-flex">{iconAfter}</span>}
+      {iconBefore && <span className='inline-flex'>{iconBefore}</span>}
+      <span className='inline-flex'>{children}</span>
+      {iconAfter && <span className='inline-flex'>{iconAfter}</span>}
     </div>
-  );
-};
+  )
+}
 
-export default Badge;
+export default Badge

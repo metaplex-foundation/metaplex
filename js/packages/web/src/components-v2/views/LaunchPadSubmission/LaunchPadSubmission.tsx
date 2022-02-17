@@ -72,7 +72,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an option'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'stage')}>
+                onChange={value => handleChange(value, 'stage')}
+              >
                 <Option value='completed'>Completed</Option>
                 <Option value='partially-completed'>Partially Completed</Option>
               </Select>
@@ -109,7 +110,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'legal')}>
+                onChange={value => handleChange(value, 'legal')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -126,7 +128,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-derivative')}>
+                onChange={value => handleChange(value, 'is-derivative')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -173,7 +176,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an answer'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'experience')}>
+                onChange={value => handleChange(value, 'experience')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -240,7 +244,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-doxed')}>
+                onChange={value => handleChange(value, 'is-doxed')}
+              >
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -260,7 +265,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an option'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'package')}>
+                onChange={value => handleChange(value, 'package')}
+              >
                 <Option value='gold'>Gold</Option>
                 <Option value='silver'>Silver</Option>
                 <Option value='basic'>Basic</Option>
