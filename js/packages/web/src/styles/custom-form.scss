@@ -5,7 +5,7 @@
     /* On checked or Indeterminate */
     &:checked ~ .checkbox__checkmark,
     &:indeterminate ~ .checkbox__checkmark {
-      @apply shadow-none bg-B-400 border-B-400;
+      @apply border-B-400 bg-B-400 shadow-none;
     }
 
     /* Checked Indicator */
@@ -21,7 +21,7 @@
     /* Checked and disabled */
     &:checked,
     &:disabled ~ .checkbox__checkmark {
-      @apply bg-gray-50 border-gray-300;
+      @apply border-gray-300 bg-gray-50;
     }
 
     /* CheckBox disabled label */
@@ -55,7 +55,7 @@
     /* Checkmark indicator */
     &:after {
       transform: rotate(45deg);
-      @apply border-white absolute border-t-0 border-l-0 border-b-[2px] border-r-[2px] content-[''] h-[12px] w-[6px] left-[5px] top-[1px];
+      @apply absolute left-[5px] top-[1px] h-[12px] w-[6px] border-t-0 border-l-0 border-b-[2px] border-r-[2px] border-white content-[''];
     }
   }
 
@@ -63,7 +63,7 @@
   &--is-indeterminate {
     .checkbox__checkmark:after {
       transform: rotate(0);
-      @apply w-[8px] top-[7px] left-[4px] h-0;
+      @apply top-[7px] left-[4px] h-0 w-[8px];
     }
   }
 }
@@ -74,7 +74,7 @@
   input {
     /* Checked Indicator */
     &:checked ~ .radio__checkmark:after {
-      @apply visible shadow-none bg-B-500 border-white;
+      @apply visible border-white bg-B-500 shadow-none;
     }
 
     /* Indeterminate Indicator */
@@ -85,7 +85,7 @@
     /* Checked and disabled */
     &:checked,
     &:disabled ~ .radio__checkmark {
-      @apply bg-gray-50 border-gray-300;
+      @apply border-gray-300 bg-gray-50;
     }
 
     /* CheckBox disabled label */
@@ -119,15 +119,52 @@
     /* Checkmark indicator */
     &:after {
       transform: rotate(45deg);
-      @apply bg-white absolute content-[''] h-[14px] w-[14px] left-[50%] translate-x-[-50%] top-[50%] translate-y-[-50%] rounded-full border-2 border-white;
+      @apply absolute left-[50%] top-[50%] h-[14px] w-[14px] translate-x-[-50%] translate-y-[-50%] rounded-full border-2 border-white bg-white content-[''];
     }
   }
+}
 
-  /* Checkmark indicator / is Indeterminate */
-  // &--is-indeterminate {
-  //   .radio__checkmark:after {
-  //     transform: rotate(0);
-  //     @apply w-[8px] top-[7px] left-[4px] h-0;
-  //   }
-  // }
+/* Spinner */
+.spinner {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+
+  &__svg {
+    animation: 1s ease-in-out 0ms 1 normal forwards running animation;
+    opacity: 0;
+    vertical-align: middle;
+
+    &__circle {
+      animation: 0.86s cubic-bezier(0.4, 0.15, 0.6, 0.85) 0ms infinite normal none running
+        animation-circle;
+      fill: none;
+      stroke: currentColor;
+      stroke-dasharray: 60;
+      stroke-dashoffset: inherit;
+      stroke-linecap: round;
+      stroke-width: 1.5;
+      transform-origin: center center;
+    }
+  }
+}
+
+@keyframes animation {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 60;
+    transform: rotate(50deg);
+  }
+
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 50;
+    transform: rotate(230deg);
+  }
+}
+
+@keyframes animation-circle {
+  100% {
+    transform: rotate(360deg);
+  }
 }
