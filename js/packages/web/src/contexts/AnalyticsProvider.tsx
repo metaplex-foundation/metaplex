@@ -111,6 +111,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
 
   function pageview(path: string) {
     if (!gtag) return;
+    // @ts-ignore
     track('page_view', {
       page_path: path,
     });
