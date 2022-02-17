@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 
-import { useAuctions, AuctionView } from '../../../../../../hooks'
+import { useAuctions, AuctionView, AuctionViewState } from '../../../../../../hooks'
 
 import { LiveAuctionViewState } from '../..'
 import { getFilterFunction, resaleAuctionsFilter } from './utils'
@@ -11,7 +11,7 @@ export const useAuctionsList = (
 ): { auctions: AuctionView[]; hasResaleAuctions: boolean } => {
   const { publicKey } = useWallet()
   const auctions = useAuctions()
-
+  debugger
   const filteredAuctions = useMemo(() => {
     const filterFn = getFilterFunction(activeKey)
 

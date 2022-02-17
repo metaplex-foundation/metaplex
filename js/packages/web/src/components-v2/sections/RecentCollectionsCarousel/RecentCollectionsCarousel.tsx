@@ -176,7 +176,9 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
 
   const slidesList = (dataItems || []).map((item: any) => ({
     Component: () => (
-      <Link to={``}>
+      <Link
+        key={item[0][0].pubkey}
+        to={`/collection?collection=${item[0][0].extradata?.collection?.name}`}>
         <NftCard
           {...{
             name: item[0][0].extradata?.collection?.name,
@@ -207,8 +209,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
                 height={isMobile ? '28' : '44'}
                 viewBox='0 0 25 44'
                 fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
+                xmlns='http://www.w3.org/2000/svg'>
                 <path
                   d='M23 42L3 22L23 2'
                   stroke='currentColor'
@@ -255,8 +256,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
                 height={isMobile ? '28' : '44'}
                 viewBox='0 0 25 44'
                 fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
+                xmlns='http://www.w3.org/2000/svg'>
                 <path
                   d='M2 2L22 22L2 42'
                   stroke='currentColor'
