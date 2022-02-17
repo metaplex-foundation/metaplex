@@ -8,6 +8,7 @@
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
     "@magic-ext/solana": "^0.2.0",
+    "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
     "@metaplex/arweave-cost": "^1.0.4",
     "@oyster/common": "0.0.2",
     "@project-serum/serum": "^0.13.52",
@@ -46,9 +47,9 @@
     "react-router-dom": "^5.2.0",
     "react-transition-group": "^4.4.2",
     "react-virtualized": "^9.22.3",
+    "styled-components": "^5.0.0",
     "three": "^0.128.0",
-    "timeago.js": "^4.0.2",
-    "styled-components": "^5.0.0"
+    "timeago.js": "^4.0.2"
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",

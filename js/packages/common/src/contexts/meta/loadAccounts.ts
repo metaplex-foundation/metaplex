@@ -1199,7 +1199,13 @@ export const metadataByMintUpdater = async (
 ) => {
   const key = metadata.info.mint;
   if (isMetadataPartOfStore(metadata, state.whitelistedCreatorsByCreator)) {
-    await metadata.info.init();
+    //await metadata.info.init();
+
+    // The mpl does not have the init() method implemented Yet so we do it manually in the mean time.
+    const edition = await getEdition(metadata.info.mint);
+    metadata.info.edition = edition;
+    metadata.info.masterEdition = edition;
+
     const masterEditionKey = metadata.info?.masterEdition;
     if (masterEditionKey) {
       state.metadataByMasterEdition[masterEditionKey] = metadata;
@@ -1220,7 +1226,13 @@ export const initMetadata = async (
   setter: UpdateStateValueFunc,
 ) => {
   if (isMetadataPartOfStore(metadata, whitelistedCreators)) {
-    await metadata.info.init();
+    //await metadata.info.init();
+
+    // The mpl does not have the init() method implemented Yet so we do it manually in the mean time.
+    const edition = await getEdition(metadata.info.mint);
+    metadata.info.edition = edition;
+    metadata.info.masterEdition = edition;
+
     setter('metadataByMint', metadata.info.mint, metadata);
     setter('metadata', '', metadata);
     const masterEditionKey = metadata.info?.masterEdition;

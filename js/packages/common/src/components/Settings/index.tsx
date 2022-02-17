@@ -1,23 +1,16 @@
-import React, { useCallback } from 'react';
-import { Button, Select } from 'antd';
+import React from 'react';
 import { Tooltip } from 'antd';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ENDPOINTS, useConnectionConfig } from '../../contexts/connection';
-import { useWalletModal } from '../../contexts';
-import { notify, shortenAddress } from '../../utils';
+import { shortenAddress } from '../../utils';
 import { CopyOutlined } from '@ant-design/icons';
 import { Identicon } from '../Identicon';
-import { Link } from 'react-router-dom';
 
 export const Settings = ({
   additionalSettings,
 }: {
   additionalSettings?: JSX.Element;
 }) => {
-  const { connected, disconnect, publicKey } = useWallet();
-  const { endpoint } = useConnectionConfig();
-  const { setVisible } = useWalletModal();
-  const open = useCallback(() => setVisible(true), [setVisible]);
+  const { publicKey } = useWallet();
 
   return (
     <>

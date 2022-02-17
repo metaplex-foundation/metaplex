@@ -32,7 +32,9 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const [showCongrats, setShowCongrats] = useState<boolean>(false);
   const [mintingDestination, setMintingDestination] = useState<string>('');
   const [editions, setEditions] = useState<number>(1);
-  const [editionNumber, setEditionNumber] = useState<number | undefined>(undefined);
+  const [editionNumber, setEditionNumber] = useState<number | undefined>(
+    undefined,
+  );
   const [totalCost, setTotalCost] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const art = useArt(id);
@@ -43,16 +45,14 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const artMintTokenAccount = accountByMint.get(art.mint!);
   const isArtOwnedByUser =
     ((accountByMint.has(art.mint!) &&
-        artMintTokenAccount?.info.amount.toNumber()) ||
+      artMintTokenAccount?.info.amount.toNumber()) ||
       0) > 0;
   const isMasterEditionV1 = artMintTokenAccount
     ? decodeMasterEdition(artMintTokenAccount.account.data).key ===
-    MetadataKey.MasterEditionV1
+      MetadataKey.MasterEditionV1
     : false;
   const renderMintEdition =
-    isArtMasterEdition &&
-    isArtOwnedByUser &&
-    !isMasterEditionV1
+    isArtMasterEdition && isArtOwnedByUser && !isMasterEditionV1;
 
   const mintingDestinationErr = useMemo(() => {
     if (!mintingDestination) return 'Required';
@@ -91,9 +91,9 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
 
       const cost =
         ((mintRentExempt +
-            accountRentExempt +
-            metadataRentExempt +
-            editionRentExempt) *
+          accountRentExempt +
+          metadataRentExempt +
+          editionRentExempt) *
           editions) /
         LAMPORTS_PER_SOL;
 
@@ -128,7 +128,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
         artMintTokenAccount!,
         editions,
         mintingDestination,
-        editionNumber
+        editionNumber,
       );
       onSuccessfulMint();
     } catch (e) {

@@ -29,7 +29,7 @@ export const AmountLabel = (props: IAmountLabel) => {
     iconSize = 38,
     customPrefix,
     ended,
-    tokenInfo
+    tokenInfo,
   } = props;
   // Add formattedAmount to be able to parse USD value and retain abbreviation of value
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
@@ -39,8 +39,11 @@ export const AmountLabel = (props: IAmountLabel) => {
   }
 
   const solPrice = useSolPrice();
-  const altSplPrice = useAllSplPrices().filter(a=>a.tokenMint == tokenInfo?.address)[0]?.tokenPrice
-  const tokenPrice = tokenInfo?.address == WRAPPED_SOL_MINT.toBase58()? solPrice: altSplPrice
+  const altSplPrice = useAllSplPrices().filter(
+    a => a.tokenMint == tokenInfo?.address,
+  )[0]?.tokenPrice;
+  const tokenPrice =
+    tokenInfo?.address == WRAPPED_SOL_MINT.toBase58() ? solPrice : altSplPrice;
 
   const [priceUSD, setPriceUSD] = useState<number | undefined>(undefined);
 
@@ -58,13 +61,26 @@ export const AmountLabel = (props: IAmountLabel) => {
           className="create-statistic"
           title={title || ''}
           value={`${formattedAmount} ${displaySymbol || ''}`}
-          prefix={customPrefix || <TokenCircle iconSize={iconSize} iconFile={tokenInfo?.logoURI==""? undefined: tokenInfo?.logoURI}/>}
+          prefix={
+            customPrefix || (
+              <TokenCircle
+                iconSize={iconSize}
+                iconFile={
+                  tokenInfo?.logoURI == '' ? undefined : tokenInfo?.logoURI
+                }
+              />
+            )
+          }
         />
       )}
       {displayUSD && (
         <div className="usd">
           {PriceNaN === false ? (
-            priceUSD? formatUSD.format(priceUSD): "$N/A"
+            priceUSD ? (
+              formatUSD.format(priceUSD)
+            ) : (
+              '$N/A'
+            )
           ) : (
             <div className="placebid">{ended ? 'N/A' : 'Place Bid'}</div>
           )}

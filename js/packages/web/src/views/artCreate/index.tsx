@@ -39,7 +39,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { cleanName, getLast } from '../../utils/utils';
+import { getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 import {
@@ -66,12 +66,14 @@ export const ArtCreateView = () => {
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [isMinting, setMinting] = useState<boolean>(false);
-  const [nft, setNft] =
-    useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
+  const [nft, setNft] = useState<
+    { metadataAccount: StringPublicKey } | undefined
+  >(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
     symbol: '',
+    collection: '',
     description: '',
     external_url: '',
     image: '',
@@ -104,6 +106,7 @@ export const ArtCreateView = () => {
       name: attributes.name,
       symbol: attributes.symbol,
       creators: attributes.creators,
+      collection: attributes.collection,
       description: attributes.description,
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
       image: attributes.image,
@@ -242,7 +245,11 @@ const CategoryStep = (props: {
         <h2>Create a new item</h2>
         <p>
           First time creating on Metaplex?{' '}
-          <a href="https://docs.metaplex.com/storefront/create" target="_blank" rel="noreferrer">
+          <a
+            href="https://docs.metaplex.com/storefront/create"
+            target="_blank"
+            rel="noreferrer"
+          >
             Read our creators’ guide.
           </a>
         </p>
@@ -385,7 +392,7 @@ const UploadStep = (props: {
   return (
     <>
       <Row className="call-to-action">
-        <h2>Now, let's upload your creation</h2>
+        <h2>Now, let&apos;s upload your creation</h2>
         <p style={{ fontSize: '1.2rem' }}>
           Your file will be uploaded to the decentralized web via Arweave.
           Depending on file type, can take up to 1 minute. Arweave is a new type
@@ -553,8 +560,11 @@ const UploadStep = (props: {
                   : mainFile && mainFile.name,
             });
             const url = await fetch(customURL).then(res => res.blob());
-            const files = [coverFile, mainFile, customURL ? new File([url], customURL) : '']
-              .filter(f => f) as File[];
+            const files = [
+              coverFile,
+              mainFile,
+              customURL ? new File([url], customURL) : '',
+            ].filter(f => f) as File[];
 
             props.setFiles(files);
             props.confirm();
@@ -623,22 +633,9 @@ const InfoStep = (props: {
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
-  const [creators, setCreators] = useState<Array<UserValue>>([]);
-  const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
-  const { image, animation_url } = useArtworkFiles(
-    props.files,
-    props.attributes,
-  );
+  const { image } = useArtworkFiles(props.files, props.attributes);
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    setRoyalties(
-      creators.map(creator => ({
-        creatorKey: creator.key,
-        amount: Math.trunc(100 / creators.length),
-      })),
-    );
-  }, [creators]);
   return (
     <>
       <Row className="call-to-action">
@@ -697,7 +694,21 @@ const InfoStep = (props: {
               }
             />
           </label>
-
+          {/*<label className="action-field">*/}
+          {/*  <span className="field-title">Collection</span>*/}
+          {/*  <Input*/}
+          {/*    className="input"*/}
+          {/*    placeholder="Collection Mint Key"*/}
+          {/*    allowClear*/}
+          {/*    value={props.attributes.collection}*/}
+          {/*    onChange={info =>*/}
+          {/*      props.setAttributes({*/}
+          {/*        ...props.attributes,*/}
+          {/*        collection: info.target.value,*/}
+          {/*      })*/}
+          {/*    }*/}
+          {/*  />*/}
+          {/*</label>*/}
           <label className="action-field">
             <span className="field-title">Description</span>
             <Input.TextArea
@@ -739,10 +750,7 @@ const InfoStep = (props: {
                 <>
                   {fields.map(({ key, name }) => (
                     <Space key={key} align="baseline">
-                      <Form.Item
-                        name={[name, 'trait_type']}
-                        hasFeedback
-                      >
+                      <Form.Item name={[name, 'trait_type']} hasFeedback>
                         <Input placeholder="trait_type (Optional)" />
                       </Form.Item>
                       <Form.Item
@@ -752,10 +760,7 @@ const InfoStep = (props: {
                       >
                         <Input placeholder="value" />
                       </Form.Item>
-                      <Form.Item
-                        name={[name, 'display_type']}
-                        hasFeedback
-                      >
+                      <Form.Item name={[name, 'display_type']} hasFeedback>
                         <Input placeholder="display_type (Optional)" />
                       </Form.Item>
                       <MinusCircleOutlined onClick={() => remove(name)} />
@@ -1079,10 +1084,7 @@ const LaunchStep = (props: {
   connection: Connection;
 }) => {
   const [cost, setCost] = useState(0);
-  const { image, animation_url } = useArtworkFiles(
-    props.files,
-    props.attributes,
-  );
+  const { image } = useArtworkFiles(props.files, props.attributes);
   const files = props.files;
   const metadata = props.attributes;
   useEffect(() => {
@@ -1296,7 +1298,7 @@ const Congrats = (props: {
       <>
         <div className="waiting-title">Sorry, there was an error!</div>
         <p>{props.alert}</p>
-        <Button onClick={_ => history.push('/art/create')}>
+        <Button onClick={() => history.push('/art/create')}>
           Back to Create NFT
         </Button>
       </>
@@ -1309,14 +1311,14 @@ const Congrats = (props: {
       <div className="congrats-button-container">
         <Button
           className="metaplex-button"
-          onClick={_ => window.open(newTweetURL(), '_blank')}
+          onClick={() => window.open(newTweetURL(), '_blank')}
         >
           <span>Share it on Twitter</span>
           <span>&gt;</span>
         </Button>
         <Button
           className="metaplex-button"
-          onClick={_ =>
+          onClick={() =>
             history.push(`/art/${props.nft?.metadataAccount.toString()}`)
           }
         >
@@ -1325,7 +1327,7 @@ const Congrats = (props: {
         </Button>
         <Button
           className="metaplex-button"
-          onClick={_ => history.push('/auction/create')}
+          onClick={() => history.push('/auction/create')}
         >
           <span>Sell it via auction</span>
           <span>&gt;</span>
