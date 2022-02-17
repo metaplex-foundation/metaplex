@@ -1,19 +1,23 @@
 /* Swiper bullets */
 .swiper-pagination {
-  bottom: 4px !important;
-  right: 0 !important;
-  left: unset !important;
-  width: unset !important;
+  @apply !w-[unset];
+  @apply !left-[unset];
+  @apply !right-[0];
+  @apply lg:!bottom-[4px];
+  @apply !bottom-[2px];
 
   &-bullet {
-    width: 34px !important;
-    height: 6px !important;
-    border-radius: 8px !important;
-    @apply !bg-white/20;
-    opacity: 1 !important;
+    @apply !w-[20px];
+    @apply lg:!w-[34px];
+    @apply !h-[6px];
+    @apply !rounded-[8px];
+    @apply !bg-gray-900/20;
+    @apply md:!bg-white/50;
+    @apply !opacity-100;
 
     &-active {
-      @apply !bg-white;
+      @apply !bg-gray-900;
+      @apply md:!bg-white;
     }
   }
 }
@@ -22,13 +26,105 @@
 .wallet-modal {
   .ant-modal-close,
   .ant-modal-close-x {
-    color: white !important;
+    @apply !text-white;
   }
+}
+
+/* Ant Modal */
+.ant-modal-body {
+  width: 100%;
 }
 
 /* Ant Design Select Dropdown */
 .network-select {
   .ant-select-arrow {
-    color: white !important;
+    @apply !text-white;
+  }
+}
+
+/* Ant Select Dropdown */
+.ant-select {
+  &-selector {
+    @apply !h-[46px] !rounded-[4px] !border-N-200 !duration-[50ms] !ease-in-out;
+
+    .ant-select-focused & {
+      @apply focus-within:!border-B-400 focus-within:!shadow-[0px_0px_0px_1px_#2492F6];
+    }
+  }
+
+  &-arrow {
+    @apply !text-N-700;
+  }
+
+  &-dropdown {
+    @apply !rounded-[4px] !bg-white p-[8px];
+  }
+
+  &-item {
+    &-option {
+      @apply !rounded-[4px] font-500 !text-N-700;
+
+      &-active {
+        @apply !bg-B-400 !text-white;
+      }
+    }
+  }
+}
+
+.ant-select-selection {
+  &-placeholder {
+    @apply !text-N-300;
+  }
+
+  &-item {
+    @apply !flex !items-center !text-N-700;
+
+    &-remove {
+      @apply !inline-flex items-center;
+    }
+  }
+}
+
+/* Ant Select DatePicker */
+.ant-picker {
+  &-input {
+    input {
+      @apply !text-N-800 placeholder:!text-N-300;
+    }
+  }
+
+  &-suffix {
+    @apply !text-N-300;
+  }
+}
+
+/* Ant Upload */
+.ant-upload-list-text {
+  @apply !flex flex-col !gap-[8px];
+}
+
+.ant-upload-span {
+  @apply !flex !items-center;
+}
+
+.ant-upload-text-icon {
+  @apply !flex !items-center;
+
+  svg {
+    @apply !text-N-700;
+  }
+}
+
+.ant-upload-list-item-card-actions {
+  button {
+    @apply !opacity-100;
+  }
+}
+
+.ant-upload-list-text-container {
+  @apply flex flex-col !rounded-[4px] !bg-gray-100 p-[8px];
+
+  .ant-upload-list-item {
+    @apply !m-[0px] !h-[auto];
   }
 }
