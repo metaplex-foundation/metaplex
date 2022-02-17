@@ -18,7 +18,7 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
         <h2 className='text-h4 text-gray-800 md:text-h3'>Submit collection</h2>
         <p className='w-full max-w-[580px] text-gray-700'>
           Do you have a Solana based NFT collection? Submit your collection below to be added to our
-          Marketplace and shown to thousands of users!{' '}
+          Marketplace and shown to thousands of users!
           <a className='inline-flex cursor-pointer items-center text-B-400'>
             Learn More <i className='ri-arrow-right-s-line' />
           </a>

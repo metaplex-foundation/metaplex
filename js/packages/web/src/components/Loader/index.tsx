@@ -6,12 +6,14 @@ export const LoaderProvider: FC = ({ children }) => {
 
   return (
     <>
-      <div className={`loader-container absolute z-[-1] ${isLoading ? 'active' : ''}`}>
-        <div className='loader-block'>
-          <div className='loader-title'>loading</div>
-          <Spinner />
+      {isLoading && (
+        <div className={`loader-container absolute z-[-1] ${isLoading ? 'active' : ''}`}>
+          <div className='loader-block'>
+            <div className='loader-title'>loading</div>
+            <Spinner />
+          </div>
         </div>
-      </div>
+      )}
 
       {children}
     </>
