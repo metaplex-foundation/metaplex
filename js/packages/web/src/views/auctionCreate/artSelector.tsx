@@ -112,12 +112,14 @@ export const ArtSelector = (props: ArtSelectorProps) => {
               };
 
               return (
-                <AuctionItemCard
-                  key={id}
-                  isSelected={isSelected}
-                  current={m}
-                  onSelect={onSelect}
-                />
+                <div key={id}>
+                  <AuctionItemCard
+                    key={id}
+                    isSelected={isSelected}
+                    current={m}
+                    onSelect={onSelect}
+                  />
+                </div>
               );
             })}
           </div>
