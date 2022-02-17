@@ -1,17 +1,17 @@
 @import '~antd/es/style/themes/default.less';
 @import '~antd/dist/antd.less';
 
-#root::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  min-width: 100%;
-  min-height: 100%;
-  filter: grayscale(100%);
-  background-repeat: no-repeat;
-  background-size: cover;
-}
+// #root::before {
+//   content: '';
+//   position: absolute;
+//   top: 0;
+//   left: 0;
+//   min-width: 100%;
+//   min-height: 100%;
+//   filter: grayscale(100%);
+//   background-repeat: no-repeat;
+//   background-size: cover;
+// }
 
 .no-events {
   pointer-events: none;
@@ -34,8 +34,7 @@ img:not([src]) {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .app-logo {
@@ -182,16 +181,10 @@ code {
   > .ant-steps-item-title {
   color: hsla(0, 0%, 100%, 0.85);
 }
-.ant-steps-item-wait
-  > .ant-steps-item-container
-  > .ant-steps-item-content
-  > .ant-steps-item-title {
+.ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title {
   color: hsla(0, 0%, 100%, 0.45);
 }
-.ant-steps-item-wait
-  .ant-steps-item-icon
-  > .ant-steps-icon
-  .ant-steps-icon-dot {
+.ant-steps-item-wait .ant-steps-item-icon > .ant-steps-icon .ant-steps-icon-dot {
   background: hsla(0, 0%, 100%, 0.3);
 }
 .ant-card {
