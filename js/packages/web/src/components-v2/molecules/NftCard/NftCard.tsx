@@ -1,7 +1,6 @@
-import React, { FC, forwardRef, useEffect, useState } from 'react';
+import React, { FC, forwardRef } from 'react';
 import CN from 'classnames';
 import VerifiedBadgeIcon from '../../icons/VerifiedBadge';
-import axios from 'axios';
 
 export interface NftCardProps {
   [x: string]: any;
@@ -25,25 +24,12 @@ export const NftCard: FC<NftCardProps> = forwardRef(
       `nft-card flex flex-col bg-gray-50 rounded-[8px] overflow-hidden h-full cursor-pointer hover:bg-gray-100 transition-all`,
       className,
     );
-    const [uriState, setUriState] = useState<string | undefined>();
-
-    useEffect(() => {
-      try {
-        const getImage = async () => {
-          const img = await axios.get(`${image}`);
-          setUriState(img.data.image);
-        };
-        getImage();
-      } catch {
-        console.log('error');
-      }
-    }, [image]);
 
     return (
       <div className={NftCardClasses} {...restProps} ref={ref}>
         <div className="flex flex-col">
           <img
-            src={uriState}
+            src={image}
             alt={name}
             className="h-[228px] w-full object-cover object-center"
           />
