@@ -30,13 +30,6 @@ export const MintButton = ({
   const { requestGatewayToken, gatewayStatus } = useGateway();
   const [clicked, setClicked] = useState(false);
 
-  useEffect(() => {
-    if (gatewayStatus === GatewayStatus.ACTIVE && clicked) {
-      onMint();
-      setClicked(false);
-    }
-  }, [gatewayStatus, clicked, setClicked, onMint]);
-
   const getMintButtonContent = () => {
     if (candyMachine?.state.isSoldOut) {
       return 'SOLD OUT';
@@ -58,16 +51,14 @@ export const MintButton = ({
     <CTAButton
       disabled={clicked || isMinting || !isActive}
       onClick={async () => {
-        setClicked(true);
         if (candyMachine?.state.isActive && candyMachine?.state.gatekeeper) {
           if (gatewayStatus === GatewayStatus.ACTIVE) {
-            setClicked(true);
+            await onMint();
           } else {
             await requestGatewayToken();
           }
         } else {
           await onMint();
-          setClicked(false);
         }
       }}
       variant="contained"
