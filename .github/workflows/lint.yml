@@ -1,6 +1,7 @@
 name: Lint JavaScript
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
   pull_request:
@@ -14,13 +15,21 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: '**/node_modules'
+          path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install modules
         run: yarn install
         working-directory: js
 
-      - name: Run ESLint
-        run: yarn lint:eslint
+      - name: Install CM UI modules
+        run: yarn install
+        working-directory: js/packages/candy-machine-ui
+
+      - name: Install entangler modules
+        run: yarn install
+        working-directory: js/packages/token-entangler
+
+      - name: Run formatting/lint
+        run: yarn lint
         working-directory: js

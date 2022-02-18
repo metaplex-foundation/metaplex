@@ -2,8 +2,20 @@ import path from 'path';
 import log from 'loglevel';
 import { validate } from 'jsonschema';
 import { EXTENSION_JSON } from '../../helpers/constants';
-import { EXTENSION_PNG, EXTENSION_JPG, EXTENSION_GIF } from '../../helpers/constants';
-import { EXTENSION_MP4, EXTENSION_MOV, EXTENSION_MP3, EXTENSION_FLAC, EXTENSION_WAV, EXTENSION_GLB, EXTENSION_HTML } from '../../helpers/constants';
+import {
+  EXTENSION_PNG,
+  EXTENSION_JPG,
+  EXTENSION_GIF,
+} from '../../helpers/constants';
+import {
+  EXTENSION_MP4,
+  EXTENSION_MOV,
+  EXTENSION_MP3,
+  EXTENSION_FLAC,
+  EXTENSION_WAV,
+  EXTENSION_GLB,
+  EXTENSION_HTML,
+} from '../../helpers/constants';
 import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
 type TokenMetadata = {
@@ -17,18 +29,22 @@ type TokenMetadata = {
 
 export const verifyAssets = ({ files, uploadElementsCount }) => {
   const imgFileCount = files.filter(it => {
-    return it.endsWith(EXTENSION_PNG) || 
-           it.endsWith(EXTENSION_JPG) || 
-           it.endsWith(EXTENSION_GIF);
+    return (
+      it.endsWith(EXTENSION_PNG) ||
+      it.endsWith(EXTENSION_JPG) ||
+      it.endsWith(EXTENSION_GIF)
+    );
   }).length;
   const animationFileCount = files.filter(it => {
-    return it.endsWith(EXTENSION_MP4) || 
-           it.endsWith(EXTENSION_MOV) || 
-           it.endsWith(EXTENSION_MP3) || 
-           it.endsWith(EXTENSION_FLAC)|| 
-           it.endsWith(EXTENSION_WAV) || 
-           it.endsWith(EXTENSION_GLB) || 
-           it.endsWith(EXTENSION_HTML);
+    return (
+      it.endsWith(EXTENSION_MP4) ||
+      it.endsWith(EXTENSION_MOV) ||
+      it.endsWith(EXTENSION_MP3) ||
+      it.endsWith(EXTENSION_FLAC) ||
+      it.endsWith(EXTENSION_WAV) ||
+      it.endsWith(EXTENSION_GLB) ||
+      it.endsWith(EXTENSION_HTML)
+    );
   }).length;
   const jsonFileCount = files.filter(it => {
     return it.endsWith(EXTENSION_JSON);
@@ -62,12 +78,12 @@ export const verifyAssets = ({ files, uploadElementsCount }) => {
   }
 
   if (animationFileCount) {
-    log.info(`Verifying token metadata for ${jsonFileCount} (img+animation+json) sets`);
-  }
-  else {
+    log.info(
+      `Verifying token metadata for ${jsonFileCount} (img+animation+json) sets`,
+    );
+  } else {
     log.info(`Verifying token metadata for ${jsonFileCount} (img+json) pairs`);
   }
-  
 };
 
 export const verifyAggregateShare = (
@@ -157,7 +173,10 @@ The \`metaplex upload\` command will automatically substitute this URL with the 
     `);
   }
   const mediaFiles = files.filter(file => file.type !== EXTENSION_JSON);
-  if (mediaFiles.length === 0 || !mediaFiles.some(file => file.uri === animation_url)) {
+  if (
+    mediaFiles.length === 0 ||
+    !mediaFiles.some(file => file.uri === animation_url)
+  ) {
     throw new Error(
       `At least one media file entry in \`properties.files\` array is expected to match the \`animation_url\` property.`,
     );

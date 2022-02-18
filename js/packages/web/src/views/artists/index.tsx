@@ -1,4 +1,4 @@
-import { Col, Layout } from 'antd';
+import { Layout } from 'antd';
 import React from 'react';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
