@@ -129,7 +129,7 @@ export function useCollapseWrappedSol({
           setShowNotification(true);
         }
       } catch (e) {
-        console.error(e);
+        // console.error(e);
         // Bugsnag.notify(e); // this overloads bugsnag a bit
       }
     }
