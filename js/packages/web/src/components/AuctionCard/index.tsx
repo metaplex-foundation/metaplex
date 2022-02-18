@@ -486,7 +486,10 @@ export const AuctionCard = ({
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
 
-  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
+  const isBidderPotEmpty = Boolean(
+    // If I haven't bid, myBidderPot should be empty
+    !auctionView.myBidderPot || auctionView.myBidderPot?.info.emptied,
+  );
   const doesInstantSaleHasNoItems =
     isBidderPotEmpty &&
     auctionView.auction.info.bidState.max.toNumber() === bids.length;
@@ -495,7 +498,9 @@ export const AuctionCard = ({
     !isOpenEditionSale &&
     auctionView.isInstantSale &&
     isAuctionManagerAuthorityNotWalletOwner &&
-    doesInstantSaleHasNoItems;
+    doesInstantSaleHasNoItems &&
+    // If your bidderpot is empty but you haven't claimed
+    !canClaimPurchasedItem;
 
   const shouldHide =
     shouldHideInstantSale ||
