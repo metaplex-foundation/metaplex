@@ -416,7 +416,7 @@ export const AuctionView = () => {
           {auction && (
             <AuctionCard auctionView={auction} hideDefaultAction={false} />
           )}
-          {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
+          <AuctionBids auctionView={auction} />
         </Col>
       </Row>
     );
@@ -651,7 +651,9 @@ export const AuctionBids = ({
   return (
     <Row>
       <Col className="bids-lists">
-        <h6 className={'info-title'}>Bid History</h6>
+        <h6 className={'info-title'}>
+          {auctionView.isInstantSale ? 'Sale' : 'Bid'} History
+        </h6>
         {bidLines.slice(0, 10)}
         {bids.length > 10 && (
           <div
