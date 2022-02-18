@@ -13,8 +13,10 @@ import { ArtworkViewState } from '../../../views/artworks/types'
 import { NftCard } from '../../molecules/NftCard'
 import {
   MetadataKey,
+  pubkeyToString,
   StringPublicKey,
   useConnection,
+  useStore,
   Spinner,
   useViewport,
   Dropdown,
@@ -25,8 +27,19 @@ import {
 } from '@oyster/common'
 import bs58 from 'bs58'
 import { PublicKey } from '@solana/web3.js'
+import { actions, programs } from '@metaplex/js'
+import { getPhantomWallet } from '@solana/wallet-adapter-wallets'
+
+const {
+  metaplex: { Store, AuctionManager },
+  auction: { Auction, AuctionExtended, AuctionData },
+  vault: { Vault },
+} = programs
 
 import { Metadata, MetadataData } from '@metaplex-foundation/mpl-token-metadata'
+import { useExtendedArt, useStoreAuctionsList } from '../../../hooks'
+import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 
 export interface ExploreCollectionsProps {
   [x: string]: any
@@ -47,20 +60,57 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   const { push } = useHistory()
   const { search } = useLocation()
   const { pid } = queryString.parse(search) || {}
+
+  const { storeAddress } = useStore()
+
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(true)
   const { isDesktop, isMobile } = useViewport()
 
   ///////////////
   const connection = useConnection()
-  const [activeKey] = useState(ArtworkViewState.Metaplex)
 
-  const userItems = useItems({ activeKey })
+  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All)
 
   const initialValue: any[] = []
   const [dataItems, setDataItems] = useState(initialValue)
 
   useEffect(() => {
     const getUserItems = async () => {
+      const baseFilters = [
+        // Filter for MetadataV1 by key
+        {
+          memcmp: {
+            offset: 0,
+            bytes: bs58.encode(Buffer.from([MetadataKey.MetadataV1])),
+          },
+        },
+      ].filter(Boolean)
+
+      //
+      const auctionManagers = await AuctionManager.findMany(connection, {
+        store: storeAddress,
+      })
+      const auctions = await Promise.all(auctionManagers.map(m => m.getAuction(connection)))
+
+      async function deserializeAuctiondata(rawMetadata: programs.auction.Auction) {
+        const id = pubkeyToString(rawMetadata.pubkey)
+        const meta = AuctionData.deserialize(rawMetadata.info.data)
+        debugger
+        return id
+      }
+
+      async function getAllAuctionMeta(metadatas: any[]): Promise<any[]> {
+        const promises = await Promise.all(
+          auctions.map(async m => {
+            const meta = m.pubkey.toBase58()
+            return { meta }
+          })
+        )
+        return promises.filter(t => !!t)
+      }
+      console.log(await getAllAuctionMeta(auctions))
+      //
+
       async function getHolderByMint(mint: PublicKey): Promise<PublicKey> {
         const tokens = await connection.getTokenLargestAccounts(mint)
         return tokens.value[0].address // since it's an NFT, we just grab the 1st account
@@ -73,6 +123,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
       async function metadatasToTokens(rawMetadatas: any[]): Promise<IToken[]> {
         const promises = await Promise.all(
           rawMetadatas.map(async m => {
+            debugger
             try {
               const metadata = await deserializeMetadata(m)
               const mint = new PublicKey(metadata.data.mint)
@@ -91,16 +142,6 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
         return promises.filter(t => !!t) as IToken[]
       }
 
-      const baseFilters = [
-        // Filter for MetadataV1 by key
-        {
-          memcmp: {
-            offset: 0,
-            bytes: bs58.encode(Buffer.from([MetadataKey.MetadataV1])),
-          },
-        },
-      ].filter(Boolean)
-
       const rawMetadatas = await connection.getProgramAccounts(
         new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as StringPublicKey),
         {
@@ -116,7 +157,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
         }
       )
       const alldata = await metadatasToTokens(rawMetadatas)
-
+      debugger
       const tempArray: any[] = []
       for (const element of alldata) {
         const t = {
@@ -137,13 +178,12 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
       delete group['item']
       delete group['pubkey']
       group = Object.keys(group).map(key => [group[key]])
-      console.log(group)
       setDataItems(group)
 
       setIsCollectionsLoading(false)
     }
     getUserItems()
-  }, [userItems])
+  }, [])
 
   const getMoreData = async (id, itemuri) => {
     const USE_CDN = false
@@ -181,6 +221,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   }
 
   return (
+    ////
     <div className={ExploreCollectionsClasses} {...restProps}>
       <div className='container flex flex-col items-center'>
         <h1 className='text-center text-h2 font-500'>
@@ -272,20 +313,21 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
           <div className='grid grid-cols-1 md:grid-cols-3 gap-x-[32px] gap-y-[32px] pb-[100px] lg:grid-cols-4'>
             {pid === 'trending' &&
               dataItems.map((item: any) => {
-                console.log(item[0][0])
                 const collectionName = item[0][0].extradata?.collection?.name
                 const len = item[0].length
                 item = item[0][0]
                 const temp = {
                   name: collectionName,
                   description: item?.extradata?.description,
-                  itemsCount: len, //hardcoded
+                  itemsCount: len,
                   floorPrice: 100,
                   isVerified: 1,
                   image: item?.extradata?.image,
                 }
                 return (
-                  <Link key={item.pubkey} to='/collection'>
+                  <Link
+                    key={item.pubkey}
+                    to={`/collection?collection=${item.extradata?.collection?.name}`}>
                     <NftCard {...temp} />
                   </Link>
                 )
@@ -293,20 +335,21 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
             {pid === 'collectibles' &&
               dataItems.map((item: any) => {
-                console.log(item[0][0])
                 const collectionName = item[0][0].extradata?.collection?.name
                 const len = item[0].length
                 item = item[0][0]
                 const temp = {
                   name: collectionName,
                   description: item?.extradata?.description,
-                  itemsCount: len, //hardcoded
+                  itemsCount: len,
                   floorPrice: 100,
                   isVerified: 1,
                   image: item?.extradata?.image,
                 }
                 return (
-                  <Link key={item.pubkey} to='/collection'>
+                  <Link
+                    key={item.pubkey}
+                    to={`/collection?collection=${item.extradata?.collection?.name}`}>
                     <NftCard {...temp} />
                   </Link>
                 )
@@ -314,20 +357,21 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
             {pid === 'art' &&
               dataItems.map((item: any) => {
-                console.log(item[0][0])
                 const collectionName = item[0][0].extradata?.collection?.name
                 const len = item[0].length
                 item = item[0][0]
                 const temp = {
                   name: collectionName,
                   description: item?.extradata?.description,
-                  itemsCount: len, //hardcoded
+                  itemsCount: len,
                   floorPrice: 100,
                   isVerified: 1,
                   image: item?.extradata?.image,
                 }
                 return (
-                  <Link key={item.pubkey} to='/collection'>
+                  <Link
+                    key={item.pubkey}
+                    to={`/collection?collection=${item.extradata?.collection?.name}`}>
                     <NftCard {...temp} />
                   </Link>
                 )
@@ -335,20 +379,21 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
             {pid === 'charity' &&
               dataItems.map((item: any) => {
-                console.log(item[0][0])
                 const collectionName = item[0][0].extradata?.collection?.name
                 const len = item[0].length
                 item = item[0][0]
                 const temp = {
                   name: collectionName,
                   description: item?.extradata?.description,
-                  itemsCount: len, //hardcoded
+                  itemsCount: len,
                   floorPrice: 100,
                   isVerified: 1,
                   image: item?.extradata?.image,
                 }
                 return (
-                  <Link key={item.pubkey} to='/collection'>
+                  <Link
+                    key={item.pubkey}
+                    to={`/collection?collection=${item.extradata?.collection?.name}`}>
                     <NftCard {...temp} />
                   </Link>
                 )
@@ -356,20 +401,21 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
             {pid === 'gaming' &&
               dataItems.map((item: any) => {
-                console.log(item[0][0])
                 const collectionName = item[0][0].extradata?.collection?.name
                 const len = item[0].length
                 item = item[0][0]
                 const temp = {
                   name: collectionName,
                   description: item?.extradata?.description,
-                  itemsCount: len, //hardcoded
+                  itemsCount: len,
                   floorPrice: 100,
                   isVerified: 1,
                   image: item?.extradata?.image,
                 }
                 return (
-                  <Link key={item.pubkey} to='/collection'>
+                  <Link
+                    key={item.pubkey}
+                    to={`/collection?collection=${item.extradata?.collection?.name}`}>
                     <NftCard {...temp} />
                   </Link>
                 )
@@ -377,20 +423,21 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
 
             {pid === 'utility' &&
               dataItems.map((item: any) => {
-                console.log(item[0][0])
                 const collectionName = item[0][0].extradata?.collection?.name
                 const len = item[0].length
                 item = item[0][0]
                 const temp = {
                   name: collectionName,
                   description: item?.extradata?.description,
-                  itemsCount: len, //hardcoded
+                  itemsCount: len,
                   floorPrice: 100,
                   isVerified: 1,
                   image: item?.extradata?.image,
                 }
                 return (
-                  <Link key={item.pubkey} to='/collection'>
+                  <Link
+                    key={item.pubkey}
+                    to={`/collection?collection=${item.extradata?.collection?.name}`}>
                     <NftCard {...temp} />
                   </Link>
                 )
