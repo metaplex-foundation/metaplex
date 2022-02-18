@@ -12,6 +12,7 @@ export interface CollectionHeaderProps {
 
 export const CollectionHeader: FC<CollectionHeaderProps> = ({
   className,
+  dataItems,
   ...restProps
 }: CollectionHeaderProps) => {
   const CollectionHeaderClasses = CN(`collection-header bg-white`, className)
@@ -25,8 +26,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
         bgImage={'/img/collection-banner.png'}
         bgImageAlt='Karmaverse'
         strength={200}
-        bgClassName='!object-cover !h-[300px] !w-full'
-      >
+        bgClassName='!object-cover !h-[300px] !w-full'>
         <div className='flex w-full h-[280px]' />
       </Parallax>
 
@@ -41,15 +41,16 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
 
         <div className='flex pt-[16px] w-full'>
           <div className='flex flex-col'>
-            <h1 className='text-h2 font-600 mb-[4px]'>Belugies</h1>
+            <h1 className='text-h2 font-600 mb-[4px]'>{dataItems[0]?.extradata.collection.name}</h1>
 
             <div className='flex items-center w-full gap-[16px]'>
-              <span className='text-B-400'>Created by 0x...2ZUGLUDLEX</span>
+              <span className='text-B-400'>
+                Created by {dataItems[0]?.extradata.properties.creators[0].address.substring(0, 10)}
+              </span>
               <VerifiedBadge width={24} height={24} />
               <button
                 onClick={() => setIsFavorite(!isFavorite)}
-                className='appearance-none text-[24px] inline-flex items-center'
-              >
+                className='appearance-none text-[24px] inline-flex items-center'>
                 {!isFavorite ? (
                   <i className='ri-heart-line' />
                 ) : (
@@ -60,14 +61,14 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
             </div>
 
             <div className='flex w-full max-w-[370px] text-gray-700 pt-[12px]'>
-              {!isShowFullBio ? (
+              <p>{dataItems[0]?.extradata.collection.name}</p>
+              {/* {!isShowFullBio ? (
                 <p>
                   Belugies is a generative NFT collection artistically illustrated by a 14 year old
                   artist. Since its inception October 16th, 2021 Belugies...
                   <a
                     onClick={() => setIsShowFullBio(!isShowFullBio)}
-                    className='text-B-400 pl-[4px] cursor-pointer'
-                  >
+                    className='text-B-400 pl-[4px] cursor-pointer'>
                     Read More
                   </a>
                 </p>
@@ -81,12 +82,11 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
                   around giving back and doing good for the world. #UgieUgie
                   <a
                     onClick={() => setIsShowFullBio(!isShowFullBio)}
-                    className='text-B-400 pl-[4px] cursor-pointer'
-                  >
+                    className='text-B-400 pl-[4px] cursor-pointer'>
                     Show Less
                   </a>
                 </p>
-              )}
+              )} */}
             </div>
 
             <div className='flex text-[24px] items-center gap-[16px] pt-[16px]'>
