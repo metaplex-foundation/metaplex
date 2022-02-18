@@ -351,6 +351,7 @@ const BidLine = (props: {
           'metaplex-flex',
           'metaplex-align-items-center',
           'metaplex-gap-2',
+          'md:w-44',
           {
             'auction-bid-line-item-is-canceled':
               isCancelled && publicKey?.toBase58() === bidder,
@@ -360,16 +361,27 @@ const BidLine = (props: {
         <AmountLabel
           displaySOL={true}
           amount={fromLamports(bid.info.lastBid, mint)}
+          customPrefix={
+            <svg
+              className="mr-[5px] h-4 w-4 text-white"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="8" cy="8" r="7.5" stroke="white" />
+              <circle cx="8" cy="8" r="3.5" stroke="white" />
+            </svg>
+          }
         />
         {isme && <CheckOutlined style={{ marginTop: '-8px' }} />}
       </div>
 
-      <div>
+      <div className="">
         {/* uses milliseconds */}
         {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
       </div>
 
-      <div className="metaplex-flex metaplex-gap-4">
+      <div className="metaplex-flex metaplex-gap-4 md:w-64 truncate justify-end">
         <Identicon size={24} address={bidder} />
         {bidderTwitterHandle ? (
           <a
@@ -502,7 +514,7 @@ export const AuctionBids = ({
             </Tooltip>
           )}
       </div>
-      <div>{bidLines.slice(0, 10)}</div>
+      <div className="space-y-8 md:space-y-0">{bidLines.slice(0, 10)}</div>
       {bids.length > 10 && (
         <Button onClick={() => setShowHistoryModal(true)}>
           View full history

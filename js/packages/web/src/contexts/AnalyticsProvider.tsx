@@ -32,7 +32,8 @@ type EventAttributes = {
   sol_value?: number;
   listingType?: 'auction' | 'instant_sale';
   nftAddress?: string;
-  //   [key: string]: string | number | boolean | any[] | null | undefined;
+  page_path?: string;
+  [key: string]: string | number | boolean | any[] | null | undefined;
 } & Partial<CustomEventDimensions>;
 
 const AnalyticsContext = React.createContext<{
@@ -110,6 +111,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
 
   function pageview(path: string) {
     if (!gtag) return;
+    // @ts-ignore
     track('page_view', {
       page_path: path,
     });
