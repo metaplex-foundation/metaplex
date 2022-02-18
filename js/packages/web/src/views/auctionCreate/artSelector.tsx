@@ -86,7 +86,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           className="content-action"
           style={{ overflowY: 'auto', height: '50vh' }}
         >
-          <div className="artwork-grid">
+          <div className="artwork-grid" style={{ maxHeight: '50%' }}>
             {items.map(m => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
