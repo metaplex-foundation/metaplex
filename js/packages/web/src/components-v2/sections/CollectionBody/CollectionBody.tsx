@@ -18,8 +18,7 @@ export const TabButton = ({ isActive, onClick, children }: any) => {
           'border-B-400 font-500': isActive,
         }
       )}
-      onClick={onClick}
-    >
+      onClick={onClick}>
       {children}
     </button>
   )
@@ -27,6 +26,7 @@ export const TabButton = ({ isActive, onClick, children }: any) => {
 
 export const CollectionBody: FC<CollectionBodyProps> = ({
   className,
+  dataItems,
   ...restProps
 }: CollectionBodyProps) => {
   const CollectionBodyClasses = CN(`collection-body`, className)
@@ -47,13 +47,12 @@ export const CollectionBody: FC<CollectionBodyProps> = ({
               </TabButton>
               <TabButton
                 isActive={activeTab === 'activity'}
-                onClick={() => setActiveTab('activity')}
-              >
+                onClick={() => setActiveTab('activity')}>
                 Activity
               </TabButton>
             </div>
 
-            {activeTab === 'items' && <CollectionItems />}
+            {activeTab === 'items' && <CollectionItems dataItems={dataItems} />}
             {activeTab === 'activity' && <CollectionActivity />}
           </div>
         </div>
