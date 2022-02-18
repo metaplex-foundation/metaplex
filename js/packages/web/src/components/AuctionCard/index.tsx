@@ -70,6 +70,8 @@ import { AmountLabel } from '../AmountLabel';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 import { endSale } from './utils/endSale';
+import { BidLine2 } from '../../views/auction';
+import { DateTime } from 'luxon';
 
 const { Text } = Typography;
 
@@ -343,6 +345,7 @@ export const AuctionCard = ({
     ? (minBid + 0.01).toFixed(2)
     : (minBid + fromLamports(tickSize)).toFixed(2);
 
+  // console.log('minimum bid', minNextBid);
   const belowMinBid = value && minBid && value < parseFloat(minNextBid);
 
   const biddingPower =
@@ -808,8 +811,9 @@ export const AuctionCard = ({
           <InputNumber<number>
             decimalSeparator="."
             className="metaplex-fullwidth"
-            step="0.01"
+            step={minNextBid}
             autoFocus
+            onFocus={() => setValue(Number(minNextBid))}
             onChange={setValue}
             precision={2}
             formatter={value => (value ? `◎ ${value}` : '')}
@@ -905,14 +909,33 @@ export const AuctionCard = ({
     x.auction.info.timeToEnd().minutes === 0 &&
     x.auction.info.timeToEnd().seconds === 0;
 
+  const mint = useMint(auctionView?.auction.info.tokenMint);
+
+  // console.log('auction over', {
+  //   bids,
+  //   mint,
+  // });
+
+  const auctionEnded = auctionView.isInstantSale
+    ? undefined
+    : isAuctionOver(auctionView);
+
+  const someoneWon = bids.length;
   return (
     <div>
       <Card
         bordered={false}
         className="metaplex-margin-bottom-4 auction-card"
         title={
-          auctionView.isInstantSale ? undefined : isAuctionOver(auctionView) ? (
-            'Auction has ended'
+          auctionEnded ? (
+            someoneWon ? (
+              'Owned by'
+            ) : (
+              'Auction ended ' + auctionView.auction?.info?.endedAt &&
+              DateTime.fromMillis(
+                auctionView?.auction?.info?.endedAt.toNumber() * 1000,
+              ).toRelative()
+            )
           ) : (
             <Space direction="horizontal">
               <span>Ends in</span>
@@ -977,6 +1000,9 @@ export const AuctionCard = ({
 
           {action}
         </Space>
+        {/* {auctionEnded && bids.length && mint && (
+          <BidLine2 bid={bids[0]} mint={mint} />
+        )} */}
       </Card>
 
       <MetaplexModal

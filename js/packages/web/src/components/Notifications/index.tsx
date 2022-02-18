@@ -261,7 +261,7 @@ export function Notifications({
 
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
-      <Button className="metaplex-margin-top-2" type={buttonType}>
+      <Button className="" type={buttonType}>
         <BellSvg />
       </Button>
     </Popover>
