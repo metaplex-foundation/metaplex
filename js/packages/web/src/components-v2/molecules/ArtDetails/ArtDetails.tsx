@@ -15,6 +15,7 @@ export interface ArtDetailsProps {
 export const ArtDetails: FC<ArtDetailsProps> = ({
   className,
   art,
+  onSubmit,
   ...restProps
 }: ArtDetailsProps) => {
   const ArtDetailsClasses = CN(`art-details w-full pb-[40px] relative`, className)
@@ -39,34 +40,34 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
   return (
     <div className={ArtDetailsClasses} {...restProps}>
       {isLoading && (
-        <span className='absolute top-0 bottom-0 left-0 right-0 flex items-center justify-center text-B-400 z-[300] bg-white'>
+        <span className='absolute top-0 bottom-0 left-0 right-0 z-[300] flex items-center justify-center bg-white text-B-400'>
           <Spinner width={40} height={40} />
         </span>
       )}
 
       <div className='flex w-full'>
-        <div className='flex w-[300px] h-[300px] rounded-[8px] overflow-hidden flex-shrink-0 bg-gray-100'>
+        <div className='flex h-[300px] w-[300px] flex-shrink-0 overflow-hidden rounded-[8px] bg-gray-100'>
           <img
             src={artImage}
-            className='object-cover object-center w-full h-full'
+            className='h-full w-full object-cover object-center'
             onError={() => setArtImage('/img/art-placeholder.jpg')}
           />
         </div>
 
-        <div className='flex pl-[32px] flex-col w-full'>
-          <div className='flex flex-col mb-[12px]'>
-            <span className='text-lg text-gray-800 font-500'>{name}</span>
-            <span className='text-gray-600 text-md'>
-              Owned by <a className='cursor-pointer text-B-400 font-500'>@kasun.peiris</a>
+        <div className='flex w-full flex-col pl-[32px]'>
+          <div className='mb-[12px] flex flex-col'>
+            <span className='text-lg font-500 text-gray-800'>{name}</span>
+            <span className='text-md text-gray-600'>
+              Owned by <a className='cursor-pointer font-500 text-B-400'>@kasun.peiris</a>
             </span>
           </div>
 
-          <div className='flex flex-col mb-[20px]'>
-            <label className='text-gray-800 text-h6 mb-[4px]'>Current price</label>
+          <div className='mb-[20px] flex flex-col'>
+            <label className='mb-[4px] text-h6 text-gray-800'>Current price</label>
 
-            <div className='flex gap-[4px] items-center'>
-              <i className='text-lg text-B-400 ri-price-tag-3-fill' />
-              <span className='text-gray-800 text-lg font-500 mr-[8px]'>{price} SOL</span>
+            <div className='flex items-center gap-[4px]'>
+              <i className='ri-price-tag-3-fill text-lg text-B-400' />
+              <span className='mr-[8px] text-lg font-500 text-gray-800'>{price} SOL</span>
               <span className='text-base text-gray-500'>{dollarValue}</span>
             </div>
           </div>
@@ -75,32 +76,34 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
         </div>
       </div>
 
-      <div className='flex w-full gap-[20px] py-[40px] relative px-[32px]'>
-        <button className='appearance-none text-base border border-B-400 bg-B-400 hover:bg-B-500 text-white font-500 h-[48px] px-[16px] rounded-[8px] w-full transition-colors relative z-[200]'>
+      <div className='relative flex w-full gap-[20px] py-[40px] px-[32px]'>
+        <button
+          onClick={onSubmit}
+          className='relative z-[200] h-[48px] w-full appearance-none rounded-[8px] border border-B-400 bg-B-400 px-[16px] text-base font-500 text-white transition-colors hover:bg-B-500'>
           Buy Now
         </button>
 
-        <button className='appearance-none text-base border border-B-400 hover:bg-B-400 text-B-400 hover:text-white font-500 h-[48px] px-[16px] rounded-[8px] w-full transition-colors relative z-[200]'>
+        <button className='relative z-[200] h-[48px] w-full appearance-none rounded-[8px] border border-B-400 px-[16px] text-base font-500 text-B-400 transition-colors hover:bg-B-400 hover:text-white'>
           Make offer
         </button>
 
-        <div className='absolute flex left-0 right-0 top-[32px] justify-between z-[100]'>
+        <div className='absolute left-0 right-0 top-[32px] z-[100] flex justify-between'>
           <button
-            className='bg-white flex items-center justify-center w-[60px] h-[60px] shadow-lg rounded-full ml-[-60px] hover:bg-B-400 hover:text-white text-gray-600 pr-[4px]'
+            className='ml-[-60px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white pr-[4px] text-gray-600 shadow-lg hover:bg-B-400 hover:text-white'
             onClick={() => setIsLoading(true)}>
             <LeftIcon />
           </button>
 
           <button
-            className='bg-white flex items-center justify-center w-[60px] h-[60px] shadow-lg rounded-full mr-[-60px] hover:bg-B-400 hover:text-white text-gray-600 pl-[4px]'
+            className='mr-[-60px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white pl-[4px] text-gray-600 shadow-lg hover:bg-B-400 hover:text-white'
             onClick={() => setIsLoading(true)}>
             <RightIcon />
           </button>
         </div>
       </div>
 
-      <div className='flex flex-col w-full py-[20px]'>
-        <div className='flex justify-center w-full border-b border-gray-100'>
+      <div className='flex w-full flex-col py-[20px]'>
+        <div className='flex w-full justify-center border-b border-gray-100'>
           <TabHighlightButton
             isActive={activeTab === 'activity'}
             onClick={() => {
