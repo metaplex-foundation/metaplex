@@ -19,7 +19,7 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
 }: ArtDetailsProps) => {
   const ArtDetailsClasses = CN(`art-details w-full pb-[40px] relative`, className)
 
-  const { image, name = 'Belugie #8758', price = '◎ .09', dollarValue = '$103.31' } = art || {}
+  const { image, name = 'Belugie #8758', price = '◎ .09', dollarValue = price } = art || {}
 
   const [activeTab, setActiveTab] = useState('activity')
   const [artImage, setArtImage] = useState(image)
@@ -87,15 +87,13 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
         <div className='absolute flex left-0 right-0 top-[32px] justify-between z-[100]'>
           <button
             className='bg-white flex items-center justify-center w-[60px] h-[60px] shadow-lg rounded-full ml-[-60px] hover:bg-B-400 hover:text-white text-gray-600 pr-[4px]'
-            onClick={() => setIsLoading(true)}
-          >
+            onClick={() => setIsLoading(true)}>
             <LeftIcon />
           </button>
 
           <button
             className='bg-white flex items-center justify-center w-[60px] h-[60px] shadow-lg rounded-full mr-[-60px] hover:bg-B-400 hover:text-white text-gray-600 pl-[4px]'
-            onClick={() => setIsLoading(true)}
-          >
+            onClick={() => setIsLoading(true)}>
             <RightIcon />
           </button>
         </div>
@@ -107,8 +105,7 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
             isActive={activeTab === 'activity'}
             onClick={() => {
               setActiveTab('activity')
-            }}
-          >
+            }}>
             Activity
           </TabHighlightButton>
 
@@ -116,8 +113,7 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
             isActive={activeTab === 'offers'}
             onClick={() => {
               setActiveTab('offers')
-            }}
-          >
+            }}>
             Offers
           </TabHighlightButton>
         </div>
