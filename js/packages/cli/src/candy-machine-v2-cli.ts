@@ -41,7 +41,6 @@ import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
-import { escapeRegExp } from 'lodash';
 program.version('0.0.2');
 const supportedImageTypes = {
   'image/png': 1,
@@ -496,13 +495,15 @@ programCommand('verify_upload')
             CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * (key + 1),
           );
 
-          const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
-          const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+          const name = fromUTF8Array([
+            ...thisSlice.slice(4, 36).filter(n => n !== 0),
+          ]);
+          const uri = fromUTF8Array([
+            ...thisSlice.slice(40, 240).filter(n => n !== 0),
+          ]);
           const cacheItem = cacheContent.items[key];
-          if (
-            !name.match(escapeRegExp(cacheItem.name)) ||
-            !uri.match(escapeRegExp(cacheItem.link))
-          ) {
+
+          if (name != cacheItem.name || uri != cacheItem.link) {
             //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
             /*log.info(
                 `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
