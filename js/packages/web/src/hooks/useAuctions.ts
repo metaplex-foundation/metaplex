@@ -210,9 +210,15 @@ export const useGroupedAuctions = () => {
         );
       }) as ParsedAccount<AuctionManagerV2>[];
 
+      const hiddenListings = ['7jBFUWrdm1SzL2u71Vz9dFAbjbjXMG7pBpjEVmBV5h85'];
+
+      const isHidden = (x: ParsedAccount<AuctionData>) =>
+        !hiddenListings.includes(x.pubkey);
+
       const initializedAuctions = storeAuctionManagers
         .filter(am => am.info.state.safetyConfigItemsValidated.toNumber())
-        .map(am => auctions[am.info.auction]);
+        .map(am => auctions[am.info.auction])
+        .filter(isHidden);
 
       const groups = {
         live: initializedAuctions
