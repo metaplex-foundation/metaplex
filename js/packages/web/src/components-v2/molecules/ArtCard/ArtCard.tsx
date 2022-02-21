@@ -17,49 +17,47 @@ export const ArtCard: FC<ArtCardProps> = ({
   ...restProps
 }: ArtCardProps) => {
   const ArtCardClasses = CN(
-    `art-card rounded-[8px] overflow-hidden hover:shadow-lg hover:shadow-blue-900/10 cursor-pointer relative group`,
+    `nft-art-card rounded-[8px] hover:shadow-lg hover:shadow-blue-900/10 cursor-pointer relative group overflow-hidden`,
     className
   )
   const [artImage, setArtImage] = useState(image)
 
   return (
     <div className={ArtCardClasses} {...restProps}>
-      <div className='flex flex-col'>
+      <div className='flex flex-col overflow-hidden'>
         <img
           src={artImage}
           alt={name}
           onError={() => setArtImage('/img/art-placeholder-sm.jpg')}
-          className='h-[140px] w-full object-cover object-top'
+          className='h-[130px] w-full object-cover md:h-[unset] lg:h-[140px] lg:object-top'
         />
       </div>
 
       <div
-        className='hidden group-hover:flex absolute top-0 w-full h-[140px] items-center justify-center bg-gray-800/30 text-white gap-[4px] backdrop-blur-sm rounded-t-[8px]'
-        onClick={onClickDetails}
-      >
-        <i className='text-lg ri-eye-fill' />
+        className='absolute top-0 hidden h-[140px] w-full items-center justify-center gap-[4px] rounded-t-[8px] bg-gray-800/30 text-white backdrop-blur-sm group-hover:flex'
+        onClick={onClickDetails}>
+        <i className='ri-eye-fill text-lg' />
         <span className='text-sm'>Show details</span>
       </div>
 
-      <div className='hidden transition-colors group-hover:flex absolute bottom-0 w-full top-[140px]'>
+      <div className='absolute bottom-0 top-[140px] hidden w-full transition-colors group-hover:flex'>
         <button
-          className='w-full text-white appearance-none bg-B-400 hover:bg-B-500 font-600'
-          onClick={onClickBuy}
-        >
+          className='w-full appearance-none bg-B-400 font-600 text-white hover:bg-B-500'
+          onClick={onClickBuy}>
           Buy Now
         </button>
       </div>
 
-      <div className='flex px-[12px] pt-[12px] pb-[12px] flex-col gap-[4px] border rounded-b-[8px]'>
-        <h3 className='flex text-gray-800 text-md font-600'>
-          <span className='line-clamp-1'>{name}</span>
+      <div className='flex w-full flex-col gap-[4px] rounded-b-[8px] border px-[12px] pt-[12px] pb-[12px]'>
+        <h3 className='flex w-full text-md font-600 text-gray-800'>
+          <span className='w-full line-clamp-1'>{name}</span>
         </h3>
 
-        <div className='flex justify-between items-center gap-[6px]'>
-          <span className='text-gray-800 font-500'>{price}</span>
+        <div className='flex items-center justify-between gap-[6px]'>
+          <span className='font-500 text-gray-800'>{price}</span>
 
-          {bid && <span className='text-B-400 text-md'>Bid {bid}</span>}
-          {lastPrice && <span className='text-gray-500 text-md'>Last {lastPrice}</span>}
+          {bid && <span className='text-md text-B-400'>Bid {bid}</span>}
+          {lastPrice && <span className='text-md text-gray-500'>Last {lastPrice}</span>}
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ export interface CollectionProps {
 export const Collection: FC<CollectionProps> = () => {
   return (
     <>
-      <CollectionHeader className='pb-[60px]' />
+      <CollectionHeader className='pb-[32px] mb:pb-[60px]' />
       <CollectionBody className='pb-[100px]' />
     </>
   )

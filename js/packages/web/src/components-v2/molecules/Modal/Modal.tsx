@@ -47,11 +47,11 @@ export const Modal: FC<ModalProps> = ({
 
       <div
         className={CN(
-          'relative bg-white modal__container left-[50%] translate-x-[-50%] rounded-[8px] shadow-lg shadow-blue-900/10',
+          'relative bg-white modal__container left-[50%] translate-x-[-50%] rounded-[8px] shadow-lg shadow-blue-900/10 w-[calc(100%-16px)]',
           {
-            'w-[616px]': size === 'default',
-            'w-[292px]': size === 'sm',
-            'w-[800px]': size === 'lg',
+            'max-w-[616px]': size === 'default',
+            'max-w-[292px]': size === 'sm',
+            'max-w-[800px]': size === 'lg',
             'top-[50%] translate-y-[-50%]': isFixed,
             'mt-[85px] mb-[100px]': !isFixed,
           }

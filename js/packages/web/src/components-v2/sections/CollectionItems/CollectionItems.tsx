@@ -25,7 +25,7 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
 
   return (
     <div className={CollectionItemsClasses} {...restProps}>
-      <div className='flex py-[32px] gap-[8px] flex-wrap'>
+      <div className='flex pt-[16px] pb-[16px] md:py-[32px] gap-[8px] flex-wrap'>
         <Chip onClose={() => {}}>Buy Now</Chip>
         <Chip onClose={() => {}} label='Character'>
           Foxy belugie
@@ -48,14 +48,14 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
         </button>
       </div>
 
-      <div className='flex gap-[20px]'>
+      <div className='flex flex-col md:flex-row gap-[12px] md:gap-[20px]'>
         <TextField
           iconBefore={<i className='ri-search-2-line' />}
           placeholder='Search for traits, tags, item #s, and more...'
           size='sm'
         />
 
-        <Dropdown className='w-[260px]'>
+        <Dropdown className='w-full md:w-[260px]'>
           {({ isOpen, setIsOpen, setInnerValue, innerValue }: any) => {
             const onSelectOption = (value: string) => {
               setIsOpen(false)
@@ -118,7 +118,7 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
         </Dropdown>
       </div>
 
-      <div className='grid grid-cols-4 gap-[28px] pt-[32px]'>
+      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[16px] md:gap-[28px] pt-[32px]'>
         {arts.map((art: any, index: number) => {
           return (
             <ArtCard

@@ -17,10 +17,10 @@ export const CollectionActivityTable: FC<CollectionActivityTableProps> = ({
   return (
     <div className={CollectionActivityTableClasses} {...restProps}>
       <Table>
-        <thead className='font-semibold text-gray-400 text-md'>
+        <thead className='text-md font-semibold text-gray-400'>
           <tr className='group'>
             <Th align='left'>Item</Th>
-            <Th>Price</Th>
+            <Th align='center'>Price</Th>
             <Th>From</Th>
             <Th>To</Th>
             <Th align='right'>Time</Th>
@@ -30,28 +30,30 @@ export const CollectionActivityTable: FC<CollectionActivityTableProps> = ({
           {collectionActivityTable.map(
             ({ image, name, price, from, to, time }: any, index: number) => {
               return (
-                <tr key={index} className='odd:bg-[#F4FAFF] group'>
+                <tr key={index} className='group odd:bg-[#F4FAFF]'>
                   <Td align='left'>
                     <div className='inline-flex items-center gap-[12px]'>
                       <Avatar size='md' image={image} radius='!rounded-[8px]' />
                       <a className='text-B-400'>{name}</a>
                     </div>
                   </Td>
-                  <Td>
-                    <span className='text-gray-800 font-500'>{price}</span>
+                  <Td align='center'>
+                    <div className='inline-flex items-center'>
+                      <span className='font-500 text-gray-800'>{price}</span>
+                    </div>
                   </Td>
                   <Td>
-                    <a href='#' className='truncate cursor-pointer text-B-400'>
+                    <a href='#' className='cursor-pointer truncate text-B-400'>
                       {from}
                     </a>
                   </Td>
                   <Td>
-                    <a href='#' className='truncate cursor-pointer text-B-400'>
+                    <a href='#' className='cursor-pointer truncate text-B-400'>
                       {to}
                     </a>
                   </Td>
                   <Td align='right'>
-                    <a className='cursor-pointer flex w-full font-500 items-center justify-end gap-[4px] text-B-400'>
+                    <a className='flex w-full cursor-pointer items-center justify-end gap-[4px] font-500 text-B-400'>
                       {time} <i className='ri-arrow-right-up-line' />
                     </a>
                   </Td>
