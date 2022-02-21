@@ -942,7 +942,13 @@ export const AuctionCard = ({
         bodyStyle={{ padding: auctionEnded ? 0 : 24 }}
         title={
           <div className="">
-            <span className={auctionEnded ? '' : 'text-sm opacity-75'}>
+            <span
+              className={
+                auctionEnded || auctionView.isInstantSale
+                  ? ''
+                  : 'text-sm opacity-75'
+              }
+            >
               {auctionEnded
                 ? someoneWon
                   ? 'Winner' + (winners.length > 1 ? 's' : '')
@@ -958,7 +964,7 @@ export const AuctionCard = ({
                 ? 'Instant sale'
                 : 'Ends in'}
             </span>
-            {!auctionEnded && (
+            {!auctionEnded && !auctionView.isInstantSale && (
               <div>
                 <AuctionCountdown auctionView={auctionView} labels={false} />
               </div>

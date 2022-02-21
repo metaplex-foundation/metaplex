@@ -262,11 +262,14 @@ export const AuctionView = () => {
                   {art.maxSupply === undefined ? (
                     <Skeleton paragraph={{ rows: 0 }} />
                   ) : (
-                    <span>
+                    <span className="flex justify-center items-center text-sm">
                       {`${(art.maxSupply || 0) - (art.supply || 0)} of ${
                         art.maxSupply || 0
                       } `}
-                      <Tooltip title="Max supply may include items from previous listings">
+                      <Tooltip
+                        title="Max supply may include items from previous listings"
+                        className="ml-2"
+                      >
                         <InfoCircleFilled size={12} />
                       </Tooltip>
                     </span>
@@ -305,7 +308,6 @@ export const AuctionBids = ({
 
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
 
-  const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const winners = useWinningBidsForAuction(auctionPubkey);
   const isWinner = some(
@@ -317,6 +319,7 @@ export const AuctionBids = ({
     : AuctionState.Created;
   const auctionRunning = auctionState !== AuctionState.Ended;
 
+  // I don't think this is actually used
   const activeBidders = useMemo(() => {
     return new Set(activeBids.map(b => b.key));
   }, [activeBids]);
