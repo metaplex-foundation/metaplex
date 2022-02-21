@@ -210,27 +210,25 @@ export const useGroupedAuctions = () => {
         );
       }) as ParsedAccount<AuctionManagerV2>[];
 
-      const initializedAuctions = storeAuctionManagers
-        .filter(am => am.info.state.safetyConfigItemsValidated.toNumber())
-        .map(am => auctions[am.info.auction]);
-
       const hiddenListings = ['7jBFUWrdm1SzL2u71Vz9dFAbjbjXMG7pBpjEVmBV5h85'];
 
       const isHidden = (x: ParsedAccount<AuctionData>) =>
         !hiddenListings.includes(x.pubkey);
 
+      const initializedAuctions = storeAuctionManagers
+        .filter(am => am.info.state.safetyConfigItemsValidated.toNumber())
+        .map(am => auctions[am.info.auction])
+        .filter(isHidden);
+
       const groups = {
         live: initializedAuctions
           .filter(isActiveSale(false))
-          .filter(isHidden)
           .sort(sortByEndingSoon),
         ended: initializedAuctions
           .filter(a => a.info.state === 2)
-          .filter(isHidden)
           .sort(sortByRecentlyEnded),
         resale: initializedAuctions
           .filter(isActiveSale(true))
-          .filter(isHidden)
           .sort(sortByRecentlyEnded),
       };
 
