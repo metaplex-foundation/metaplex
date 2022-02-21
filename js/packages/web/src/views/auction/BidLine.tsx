@@ -11,9 +11,9 @@ import {
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useSolPrice } from '../../contexts';
 import { CheckCircleIcon, ClockIcon } from '@heroicons/react/solid';
 import { DateTime } from 'luxon';
+import { useSolPrice } from '../../contexts';
 
 export default function BidLine(props: {
   bid: ParsedAccount<BidderMetadata>;
@@ -21,15 +21,15 @@ export default function BidLine(props: {
 }) {
   const { bid, mint } = props;
   const { publicKey } = useWallet();
-  const bidder = bid.info.bidderPubkey;
-  const isMe = publicKey?.toBase58() === bidder;
+  const bidderPubkey = bid.info.bidderPubkey;
+  const isMe = publicKey?.toBase58() === bidderPubkey;
 
   const amount = fromLamports(bid.info.lastBid, mint);
 
   const connection = useConnection();
   const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
   useEffect(() => {
-    getTwitterHandle(connection, bidder).then(
+    getTwitterHandle(connection, bidderPubkey).then(
       tw => tw && setBidderTwitterHandle(tw),
     );
   }, []);
@@ -47,24 +47,27 @@ export default function BidLine(props: {
       <div className="flex items-center px-4 py-4 sm:px-6">
         <div className="min-w-0 flex-1 flex items-center">
           <div className="flex-shrink-0 pr-4">
-            <Identicon size={48} address={bidder} />
+            <Identicon size={48} address={bidderPubkey} />
           </div>
-          <div className="min-w-0 flex-1 flex justify-between">
+          <div className="min-w-0 flex-1 flex justify-between items-center">
             <div>
-              <a href={`https://www.holaplex.com/profiles/${bidder}`}>
-                <p className="text-base font-medium text-white hover:text-primary truncate flex items-center">
+              <a
+                href={`https://www.holaplex.com/profiles/${bidderPubkey}`}
+                className="text-base font-medium text-white hover:text-primary truncate flex items-center "
+              >
+                <p className="max-w-[125px] truncate">
                   {bidderTwitterHandle
                     ? `@${bidderTwitterHandle}`
-                    : shortenAddress(bidder)}
-                  {isMe && (
-                    <span>
-                      <CheckCircleIcon
-                        className="flex-shrink-0 ml-1.5 h-5 w-5 text-primary"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  )}
+                    : shortenAddress(bidderPubkey)}
                 </p>
+                {isMe && (
+                  <span>
+                    <CheckCircleIcon
+                      className="flex-shrink-0 ml-1.5 h-5 w-5 text-primary"
+                      aria-hidden="true"
+                    />
+                  </span>
+                )}
               </a>
               <p className="mt-2 flex items-center text-sm text-gray-500">
                 <ClockIcon

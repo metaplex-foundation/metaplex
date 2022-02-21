@@ -1,17 +1,8 @@
-import {
-  CheckOutlined,
-  InfoCircleFilled,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { InfoCircleFilled, LoadingOutlined } from '@ant-design/icons';
 import {
   AuctionState,
-  BidderMetadata,
-  Identicon,
   MetaplexModal,
-  ParsedAccount,
   shortenAddress,
-  StringPublicKey,
-  toPublicKey,
   useConnection,
   useMint,
   useMeta,
@@ -22,18 +13,12 @@ import {
   processMetaplexAccounts,
   VAULT_ID,
   processVaultData,
-  fromLamports,
-  formatUSD,
 } from '@oyster/common';
 import { actions } from '@metaplex/js';
 import { PublicKey } from '@solana/web3.js';
-import cx from 'classnames';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
-import { getHandleAndRegistryKey } from '@solana/spl-name-service';
-import { MintInfo } from '@solana/spl-token';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection } from '@solana/web3.js';
 import {
   Button,
   Carousel,
@@ -47,7 +32,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArtContent } from '../../components/ArtContent';
 import { AuctionCard } from '../../components/AuctionCard';
-import { ClickToCopy } from '../../components/ClickToCopy';
 import { ViewOn } from '../../components/ViewOn';
 import { some } from 'lodash';
 import {
@@ -62,7 +46,6 @@ import {
 import { ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
 import { Card } from 'antd';
-import { useSolPrice } from '../../contexts';
 import BidLine from './BidLine';
 
 export const AuctionItem = ({

@@ -249,7 +249,6 @@ export const AuctionCard = ({
 
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
-  const bids = useBidsForAuction(auctionView.auction.pubkey);
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -258,6 +257,9 @@ export const AuctionCard = ({
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
   const { track } = useAnalytics();
+
+  const bids = useBidsForAuction(auctionView.auction.pubkey);
+  // it looks like winners is calling useBidsForAuction again. Could be pretty easy to refactor, but afraid to touch it 😅
   const winners = useWinningBidsForAuction(auctionView.auction.pubkey);
 
   const { accountByMint } = useUserAccounts();
@@ -994,7 +996,12 @@ export const AuctionCard = ({
       >
         {auctionEnded && bids.length && mint ? (
           someoneWon ? (
-            <WinnerProfile bidderPubkey={bids[0].info.bidderPubkey} />
+            winners.map(bid => (
+              <WinnerProfile
+                bidderPubkey={bid.info.bidderPubkey}
+                key={bid.info.bidderPubkey}
+              />
+            ))
           ) : null
         ) : (
           <Space
@@ -1084,8 +1091,12 @@ const WinnerProfile = ({
             </div>
           </div>
           <div className="flex items-center group-hover:text-primary">
-            View profile
-            <ChevronRightIcon className="h-5 w-5 ml-5 " aria-hidden="true" />
+            <span className="block">View profile</span>
+            <ChevronRightIcon
+              className="h-5 w-5"
+              viewBox="0 0 18 18"
+              aria-hidden="true"
+            />
           </div>
         </div>
       </div>
