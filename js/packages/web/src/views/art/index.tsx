@@ -209,7 +209,9 @@ export const ArtView = () => {
       </div>
       <div className="item-page-right">
         <div className="title-row">
-          <h1>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
+          <h1 className="text-4xl">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h1>
           <ViewOn id={nft} />
         </div>
 

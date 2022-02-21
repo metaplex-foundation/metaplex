@@ -25,6 +25,7 @@ import {
   useWalletModal,
   WinningConfigType,
 } from '@oyster/common';
+import cx from 'classnames';
 import { last } from 'lodash';
 import Bugsnag from '@bugsnag/browser';
 import { useNavigate } from 'react-router-dom';
@@ -940,52 +941,59 @@ export const AuctionCard = ({
         }}
         bodyStyle={{ padding: auctionEnded ? 0 : 24 }}
         title={
-          auctionEnded ? (
-            someoneWon ? (
-              'Winner'
-            ) : (
-              `Auction ended ${
-                auctionView.auction?.info?.endedAt
-                  ? DateTime.fromMillis(
-                      auctionView?.auction?.info?.endedAt.toNumber() * 1000,
-                    ).toRelative()
-                  : ''
-              }`
-            )
-          ) : auctionView.isInstantSale ? (
-            'Instant sale'
-          ) : (
-            <Space direction="horizontal">
-              <span>Ends in</span>
-              <AuctionCountdown auctionView={auctionView} labels={false} />
-            </Space>
-          )
+          <div className="">
+            <span className={auctionEnded ? '' : 'text-xs opacity-75'}>
+              {auctionEnded
+                ? someoneWon
+                  ? 'Winner' + (winners.length > 1 ? 's' : '')
+                  : `Auction ended ${
+                      auctionView.auction?.info?.endedAt
+                        ? DateTime.fromMillis(
+                            auctionView?.auction?.info?.endedAt.toNumber() *
+                              1000,
+                          ).toRelative()
+                        : ''
+                    }`
+                : auctionView.isInstantSale
+                ? 'Instant sale'
+                : 'Ends in'}
+            </span>
+            {!auctionEnded && (
+              <div>
+                <AuctionCountdown auctionView={auctionView} labels={false} />
+              </div>
+            )}
+          </div>
         }
         extra={
-          <span className="flex items-center">
-            {someoneWon
-              ? 'Sold for'
-              : auctionView.isInstantSale
-              ? 'Price'
-              : bids.length
-              ? 'Current bid'
-              : 'Starting bid'}
-            :
-            <svg
-              className="mx-[5px] h-4 w-4 text-white"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle cx="8" cy="8" r="7.5" stroke="white" />
-              <circle cx="8" cy="8" r="3.5" stroke="white" />
-            </svg>
-            {someoneWon
-              ? fromLamports(bids[0].info.lastBid.toNumber())
-              : minBid
-              ? minBid.toFixed(2)
-              : 0}
-          </span>
+          <div className="flex flex-col items-end">
+            <span className="text-xs opacity-75">
+              {someoneWon
+                ? 'Sold for'
+                : auctionView.isInstantSale
+                ? 'Price'
+                : bids.length
+                ? 'Current bid'
+                : 'Starting bid'}
+            </span>
+            {/* todo: reduce opacity if starting bid */}
+            <div className={cx('flex items-center text-xl')}>
+              <svg
+                className="mx-[5px] h-4 w-4 opacity-75 "
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="8" cy="8" r="7.5" stroke="text-color-text" />
+                <circle cx="8" cy="8" r="3.5" stroke="text-color-text" />
+              </svg>
+              {someoneWon
+                ? fromLamports(bids[0].info.lastBid.toNumber())
+                : minBid
+                ? minBid.toFixed(2)
+                : 0}
+            </div>
+          </div>
         }
       >
         {auctionEnded && bids.length && mint ? (

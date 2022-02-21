@@ -11,6 +11,7 @@ module.exports = {
         'primary-hover': 'var(--ant-primary-color-hover)',
         secondary: 'var(--secondary)',
         'color-border': 'var(--color-border, #121212)',
+        'color-text': 'var(--color-text, #fff)',
         main: 'var(--main)',
         background: 'var(--background)',
         header: 'var(--header)',

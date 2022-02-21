@@ -196,7 +196,9 @@ export const AuctionView = () => {
 
       <div className="item-page-right">
         <div className="title-row">
-          <h1>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
+          <h1 className="text-4xl">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h1>
           <ViewOn art={art} />
         </div>
 

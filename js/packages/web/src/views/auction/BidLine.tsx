@@ -49,11 +49,11 @@ export default function BidLine(props: {
           <div className="flex-shrink-0 pr-4">
             <Identicon size={48} address={bidderPubkey} />
           </div>
-          <div className="min-w-0 flex-1 flex justify-between items-center">
+          <div className="min-w-0 flex-1 flex justify-between items-center text-color-text">
             <div>
               <a
                 href={`https://www.holaplex.com/profiles/${bidderPubkey}`}
-                className="text-base font-medium text-white hover:text-primary truncate flex items-center "
+                className="text-base font-medium  hover:text-primary truncate flex items-center "
               >
                 <p className="max-w-[125px] truncate">
                   {bidderTwitterHandle
@@ -69,9 +69,9 @@ export default function BidLine(props: {
                   </span>
                 )}
               </a>
-              <p className="mt-2 flex items-center text-sm text-gray-500">
+              <p className="mt-2 flex items-center text-sm opacity-75">
                 <ClockIcon
-                  className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400"
+                  className="flex-shrink-0 mr-1.5 h-4 w-4 "
                   aria-hidden="true"
                 />
                 <span>
@@ -85,20 +85,20 @@ export default function BidLine(props: {
             </div>
             <div className=" ">
               <div>
-                <p className="text-lg text-white flex justify-end items-center">
+                <p className="text-lg  flex justify-end items-center">
                   <svg
-                    className="mr-[5px] h-4 w-4 text-white"
+                    className="mr-[5px] h-4 w-4 "
                     viewBox="0 0 16 16"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <circle cx="8" cy="8" r="7.5" stroke="white" />
-                    <circle cx="8" cy="8" r="3.5" stroke="white" />
+                    <circle cx="8" cy="8" r="7.5" stroke="text-color-text" />
+                    <circle cx="8" cy="8" r="3.5" stroke="text-color-text" />
                   </svg>
                   {amount.toLocaleString()}
                 </p>
 
-                <p className="mt-2 flex items-center text-sm text-gray-500 justify-end">
+                <p className="mt-2 flex items-center text-sm justify-end opacity-75">
                   {formatUSD.format(priceUSD || 0)}
                 </p>
               </div>
