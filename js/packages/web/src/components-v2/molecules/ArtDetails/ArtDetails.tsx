@@ -20,7 +20,7 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
 }: ArtDetailsProps) => {
   const ArtDetailsClasses = CN(`art-details w-full pb-[40px] relative`, className)
 
-  const { image, name = 'Belugie #8758', price = '◎ .09', dollarValue = '$103.31' } = art || {}
+  const { image, name = 'Belugie #8758', price = '◎ .09', dollarValue = price } = art || {}
 
   const [activeTab, setActiveTab] = useState('activity')
   const [artImage, setArtImage] = useState(image)

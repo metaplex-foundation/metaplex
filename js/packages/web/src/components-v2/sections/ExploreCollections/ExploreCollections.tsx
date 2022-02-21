@@ -437,12 +437,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                 return (
                   <Link
                     key={item.pubkey}
-                    to={{
-                      pathname: `/collection?collection=${item.extradata?.collection?.name}`,
-                      state: {
-                        item: item[0],
-                      },
-                    }}>
+                    to={`/collection?collection=${item.extradata?.collection?.name}`}>
                     <NftCard {...temp} />
                   </Link>
                 )

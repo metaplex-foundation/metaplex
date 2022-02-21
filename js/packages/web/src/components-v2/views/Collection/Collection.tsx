@@ -3,17 +3,6 @@ import { CollectionBody } from '../../sections/CollectionBody'
 import { useLocation } from 'react-router-dom'
 
 import React, { FC, useEffect, useState } from 'react'
-import CN from 'classnames'
-import { useParams } from 'react-router-dom'
-import { Chip } from '../../atoms/Chip'
-import { TextField } from '../../atoms/TextField'
-import { Dropdown, DropDownBody, DropDownToggle, DropDownMenuItem } from '../../atoms/Dropdown'
-import { ArtCard } from '../../molecules/ArtCard'
-import { Modal } from '../../molecules/Modal'
-import { ArtDetails } from '../../molecules/ArtDetails'
-import { QuickBuy } from '../../sections/QuickBuy'
-
-import { arts } from '../../../../dummy-data/arts'
 import { PublicKey } from '@solana/web3.js'
 
 import {
