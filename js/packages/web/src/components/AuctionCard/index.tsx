@@ -383,6 +383,7 @@ export const AuctionCard = ({
   }, [wallet.connected, wallet.publicKey]);
 
   useEffect(() => {
+    // Sets the bid input field to the minimum bid automatically
     if (minNextBid > value) {
       setValue(minNextBid);
     }
@@ -599,9 +600,6 @@ export const AuctionCard = ({
     doesInstantSaleHasNoItems;
 
   const shouldHide = shouldHideInstantSale;
-  // ||
-  // (auctionView.vault.info.state === VaultState.Deactivated &&
-  //   isBidderPotEmpty);
 
   if (shouldHide) {
     return <></>;
@@ -811,15 +809,6 @@ export const AuctionCard = ({
     >
       <h5>{`Bid ${minNextBid} SOL or more`}</h5>
       <Row gutter={8} align="middle">
-        {/* <Col flex="0 0 auto">
-          <Button
-            icon={<CloseOutlined />}
-            type="ghost"
-            disabled={loading}
-            shape="circle"
-            onClick={() => setShowPlaceBidUI(false)}
-          />
-        </Col> */}
         <Col flex="1 0 auto">
           <InputNumber<number>
             decimalSeparator="."
@@ -963,6 +952,8 @@ export const AuctionCard = ({
                   : ''
               }`
             )
+          ) : auctionView.isInstantSale ? (
+            'Instant sale'
           ) : (
             <Space direction="horizontal">
               <span>Ends in</span>
@@ -971,27 +962,30 @@ export const AuctionCard = ({
           )
         }
         extra={
-          someoneWon ? (
-            <span className="flex items-center">
-              Sold for{' '}
-              <svg
-                className="mx-[5px] h-4 w-4 text-white"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="8" cy="8" r="7.5" stroke="white" />
-                <circle cx="8" cy="8" r="3.5" stroke="white" />
-              </svg>{' '}
-              {fromLamports(bids[0].info.lastBid.toNumber())}
-            </span>
-          ) : bids.length ? (
-            'Highest bid: ' + minBid ? (
-              minBid.toFixed(2)
-            ) : (
-              0
-            )
-          ) : null
+          <span className="flex items-center">
+            {someoneWon
+              ? 'Sold for'
+              : auctionView.isInstantSale
+              ? 'Price'
+              : bids.length
+              ? 'Current bid'
+              : 'Starting bid'}
+            :
+            <svg
+              className="mx-[5px] h-4 w-4 text-white"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="8" cy="8" r="7.5" stroke="white" />
+              <circle cx="8" cy="8" r="3.5" stroke="white" />
+            </svg>
+            {someoneWon
+              ? fromLamports(bids[0].info.lastBid.toNumber())
+              : minBid
+              ? minBid.toFixed(2)
+              : 0}
+          </span>
         }
       >
         {auctionEnded && bids.length && mint ? (

@@ -390,7 +390,7 @@ export const AuctionBids = ({
         }
       >
         <div className=" overflow-hidden">
-          <ul role="list" className="divide-y divide-gray-900">
+          <ul role="list" className="divide-y divide-color-border">
             {bidLines}
             {/* {bids.map(bid => (
               
