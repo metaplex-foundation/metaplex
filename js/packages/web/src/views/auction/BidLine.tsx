@@ -85,15 +85,15 @@ export default function BidLine(props: {
             </div>
             <div className=" ">
               <div>
-                <p className="text-lg  flex justify-end items-center">
+                <p className="text-xl font-bold  flex justify-end items-center">
                   <svg
-                    className="mr-[5px] h-4 w-4 "
+                    className="mr-[5px] h-4 w-4 stroke-color-text"
                     viewBox="0 0 16 16"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <circle cx="8" cy="8" r="7.5" stroke="text-color-text" />
-                    <circle cx="8" cy="8" r="3.5" stroke="text-color-text" />
+                    <circle cx="8" cy="8" r="7.5" />
+                    <circle cx="8" cy="8" r="3.5" />
                   </svg>
                   {amount.toLocaleString()}
                 </p>

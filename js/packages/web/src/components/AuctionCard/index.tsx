@@ -942,7 +942,7 @@ export const AuctionCard = ({
         bodyStyle={{ padding: auctionEnded ? 0 : 24 }}
         title={
           <div className="">
-            <span className={auctionEnded ? '' : 'text-xs opacity-75'}>
+            <span className={auctionEnded ? '' : 'text-sm opacity-75'}>
               {auctionEnded
                 ? someoneWon
                   ? 'Winner' + (winners.length > 1 ? 's' : '')
@@ -967,7 +967,7 @@ export const AuctionCard = ({
         }
         extra={
           <div className="flex flex-col items-end">
-            <span className="text-xs opacity-75">
+            <span className="text-sm opacity-75">
               {someoneWon
                 ? 'Sold for'
                 : auctionView.isInstantSale
@@ -979,13 +979,13 @@ export const AuctionCard = ({
             {/* todo: reduce opacity if starting bid */}
             <div className={cx('flex items-center text-xl')}>
               <svg
-                className="mx-[5px] h-4 w-4 opacity-75 "
+                className="mx-[5px] h-4 w-4 opacity-75 stroke-color-text"
                 viewBox="0 0 16 16"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <circle cx="8" cy="8" r="7.5" stroke="text-color-text" />
-                <circle cx="8" cy="8" r="3.5" stroke="text-color-text" />
+                <circle cx="8" cy="8" r="7.5" />
+                <circle cx="8" cy="8" r="3.5" />
               </svg>
               {someoneWon
                 ? fromLamports(bids[0].info.lastBid.toNumber())
