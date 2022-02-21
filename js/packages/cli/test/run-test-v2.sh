@@ -6,25 +6,27 @@
 #
 # ENV_URL="mainnet-beta"
 # RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
-# RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
-
 # STORAGE="arweave-sol"
+
+# ENV_URL="devnet"
+# RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
+# STORAGE="arweave"
+
+# ITEMS=10
+# MULTIPLE=0
+
+# RESET="Y"
+# EXT="png"
+# CLOSE="Y"
+# CHANGE="Y"
+# TEST_IMAGE="Y"
+
 # ARWEAVE_JWK="null"
 # INFURA_ID="null"
 # INFURA_SECRET="null"
 # AWS_BUCKET="null"
-# EXT="png"
-# ITEMS=10
-# MULTIPLE=2
-# RESET="Y"
-# CLOSE="Y"
-# CHANGE="Y"
-#
-# The custom RPC server option can be specified either by the flag -r <url>
-# Good RPCs:
 
-# "https://ssc-dao.genesysgo.net/" 
-# "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/"
+# The custom RPC server option can be specified either by the flag -r <url>
 
 # colors!
 red=$'\e[1;31m'
@@ -34,20 +36,20 @@ mag=$'\e[1;35m'
 cyn=$'\e[1;36m'
 white=$'\e[0m'
 
-function red() { 
-    echo $red"$1"$white 
+function red() {
+    echo $red"$1"$white
 }
-function grn() { 
-    echo $grn"$1"$white 
+function grn() {
+    echo $grn"$1"$white
 }
-function blu() { 
-    echo $blu"$1"$white 
+function blu() {
+    echo $blu"$1"$white
 }
-function mag() { 
-    echo $mag"$1"$white 
+function mag() {
+    echo $mag"$1"$white
 }
-function cyn() { 
-    echo $cyn"$1"$white 
+function cyn() {
+    echo $cyn"$1"$white
 }
 
 CURRENT_DIR=$(pwd)
@@ -63,6 +65,7 @@ CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
 PNG="https://rm5fm2cz5z4kww2gbyjwhyfekgcc3qjmz43cw53g6qhwhgcofoyq.arweave.net/izpWaFnueKtbRg4TY-CkUYQtwSzPNit3ZvQPY5hOK7E/?ext=png"
 GIF="https://3shhjbznlupbi4gldnfdzpvulcexrek5fovdtzpo37bxde6au5va.arweave.net/3I50hy1dHhRwyxtKPL60WIl4kV0rqjnl7t_DcZPAp2o/?ext=gif"
 JPG="https://7cvkvtes5uh4h3ud42bi3nl2ivtmnbpqppqmau7pk2p2qykkmbya.arweave.net/-KqqzJLtD8Pug-aCjbV6RWbGhfB74MBT71afqGFKYHA/?ext=jpg"
+MP4="https://sdhj7rx52ch7dhe7znokxv2u6mffsalrzuiwxrd5liekkettqpdq.arweave.net/kM6fxv3Qj_Gcn8tcq9dU8wpZAXHNEWvEfVoIpRJzg8c/?ext=mp4"
 
 blu ""
 blu "Candy Machine CLI - Automated Test"
@@ -98,7 +101,7 @@ fi
 
 while getopts r: flag; do
     case "${flag}" in
-        r) RPC=${OPTARG} ;;
+    r) RPC=${OPTARG} ;;
     esac
 done
 
@@ -157,6 +160,7 @@ fi
 
 # Asset type
 
+ANIMATION=0
 if [ -z ${EXT+x} ]; then
     IMAGE=$PNG
     EXT="png"
@@ -165,6 +169,7 @@ if [ -z ${EXT+x} ]; then
     echo "1. PNG (default)"
     echo "2. JPG"
     echo "3. GIF"
+    echo "4. MP4"
     echo -n "Select the file type [1-3] (default 1): "
     read Input
     case "$Input" in
@@ -180,6 +185,11 @@ if [ -z ${EXT+x} ]; then
         IMAGE=$GIF
         EXT="gif"
         ;;
+    4)
+        IMAGE=$PNG
+        EXT="png"
+        ANIMATION=1
+        ;;
     esac
 else
     case "$EXT" in
@@ -191,6 +201,11 @@ else
         ;;
     gif)
         IMAGE=$GIF
+        ;;
+    mp4)
+        IMAGE=$PNG
+        EXT="png"
+        ANIMATION=1
         ;;
     *)
         red "[$(date "+%T")] Aborting: invalid asset type ${EXT}"
@@ -211,6 +226,17 @@ if [ -z ${ITEMS+x} ]; then
     else
         # make sure we are dealing with a number
         ITEMS=$(($Number + 0))
+    fi
+fi
+
+# Test image.extension instead of index
+
+if [ -z ${TEST_IMAGE+x} ]; then
+    echo ""
+    echo -n "$(cyn "Test image.ext replacement [Y/n]") (default 'Y'): "
+    read TEST_IMAGE
+    if [ -z "$TEST_IMAGE" ]; then
+        TEST_IMAGE="Y"
     fi
 fi
 
@@ -269,7 +295,7 @@ if [ "${RESET}" = "Y" ]; then
     rm -rf .cache 2>/dev/null
 fi
 
-# Creation of the collection. This will generate ITEMS x (json, image)
+# Creation of the collection. This will generate ITEMS x (json, image, animation?)
 # files in the ASSETS_DIR
 
 # preparing the assets to upload
@@ -279,7 +305,7 @@ read -r -d '' METADATA <<-EOM
     "symbol": "TEST",
     "description": "Candy Machine CLI Test #%s",
     "seller_fee_basis_points": 500,
-    "image": "%s.%s",
+    "image": "%s.%s",%b
     "attributes": [{"trait_type": "Background", "value": "True"}],
     "properties": {
         "creators": [
@@ -287,16 +313,24 @@ read -r -d '' METADATA <<-EOM
             "address": "$(solana address)",
             "share": 100
         }],
-        "files": [{"uri":"%s.%s", "type":"image/%s"}]
-    },
-    "collection": { "name": "Candy Machine CLI", "family": "Candy Machine CLI"}
+        "files": []
+    }
 }
 EOM
 
 if [ ! -d $ASSETS_DIR ]; then
     mkdir $ASSETS_DIR
-    curl -s $IMAGE >"$ASSETS_DIR/template.$EXT"
-    SIZE=$(wc -c "$ASSETS_DIR/template.$EXT" | grep -oE '[0-9]+' | head -n 1)
+    if [ "$ANIMATION" -eq 1 ]; then
+        curl -s $MP4 >"$ASSETS_DIR/template_animation.mp4"
+        SIZE=$(wc -c "$ASSETS_DIR/template_animation.mp4" | grep -oE '[0-9]+' | head -n 1)
+
+        if [ $SIZE -eq 0 ]; then
+            red "[$(date "+%T")] Aborting: could not download sample mp4"
+            exit 1
+        fi
+    fi
+    curl -s $IMAGE >"$ASSETS_DIR/template_image.$EXT"
+    SIZE=$(wc -c "$ASSETS_DIR/template_image.$EXT" | grep -oE '[0-9]+' | head -n 1)
 
     if [ $SIZE -eq 0 ]; then
         red "[$(date "+%T")] Aborting: could not download sample image"
@@ -305,11 +339,21 @@ if [ ! -d $ASSETS_DIR ]; then
 
     # initialises the assets - this will be multiple copies of the same
     # image/json pair with a new index
+    INDEX="image"
     for ((i = 0; i < $ITEMS; i++)); do
-        printf "$METADATA" $i $i $i $EXT $i $EXT $EXT >"$ASSETS_DIR/$i.json"
-        cp "$ASSETS_DIR/template.$EXT" "$ASSETS_DIR/$i.$EXT"
+        if [ ! "$TEST_IMAGE" = "Y" ]; then
+            INDEX=$i
+        fi
+        cp "$ASSETS_DIR/template_image.$EXT" "$ASSETS_DIR/$i.$EXT"
+        if [ "$ANIMATION" = 1 ]; then
+            cp "$ASSETS_DIR/template_animation.mp4" "$ASSETS_DIR/$i.mp4"
+            printf "$METADATA" $i $i $INDEX $EXT "\r\t\"animation_url\": \"$i.mp4\"," >"$ASSETS_DIR/$i.json"
+        else
+            printf "$METADATA" $i $i $INDEX $EXT "" >"$ASSETS_DIR/$i.json"
+        fi
     done
-    rm "$ASSETS_DIR/template.$EXT"
+    rm "$ASSETS_DIR/template_image.$EXT"
+    rm "$ASSETS_DIR/template_animation.mp4"
 fi
 
 # Candy Machine configuration
@@ -363,30 +407,8 @@ function change_cache {
         >$CACHE_FILE.tmp && mv $CACHE_FILE.tmp $CACHE_FILE
     if [[ $(cat $CACHE_FILE | grep "Changed #0") ]]; then
         grn "Success: cache file changed"
-    else 
+    else
         red "Failure: cache file was not changed"
-    fi
-}
-
-# check on chain config to make sure it changed
-function check_changed {
-    CANDY="$(cat $CACHE_FILE | jq -c -r ".program.candyMachine")"
-    LAST_LINK="$(cat $CACHE_FILE | jq -c -r ".items.\""$LAST_INDEX"\".link")"
-    echo "$(grn "Candy Machine Id:") $CANDY"
-    echo "$(grn "Changed Link:") $LAST_LINK"
-    temp_file=$(mktemp)
-    echo $CANDY | xargs -I{} solana account {} -u $RPC -o $temp_file
-
-    if [[ $(strings $temp_file | grep -a "Changed #0") ]]; then
-        grn "Success: item 0 found on chain"
-    else
-        red "Failure: new item 0 not found on chain"
-    fi
-
-    if [[ $(strings $temp_file | grep -a "$LAST_LINK") ]]; then
-        grn "Success: last item found on chain"
-    else
-        red "Failure: last item not found on chain"
     fi
 }
 
@@ -434,7 +456,6 @@ if [ "${CHANGE}" = "Y" ]; then
     change_cache
     upload
     verify_upload
-    check_changed
     mag "<<<"
 else
     blu "Skipping 3 (Editing cache and testing reupload)"
@@ -473,7 +494,7 @@ if [ "${CLOSE}" = "Y" ]; then
     mag ">>>"
     $CMD_CMV2 withdraw_all -cp ${CONFIG_FILE} --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
     EXIT_CODE=$?
-    
+
     if [ ! $EXIT_CODE -eq 0 ]; then
         red "[$(date "+%T")] Aborting: withdraw failed"
         exit 1
