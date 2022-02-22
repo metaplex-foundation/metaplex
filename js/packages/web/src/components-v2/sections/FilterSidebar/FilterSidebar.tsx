@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 import { Accordion } from '../../molecules/Accordion'
-import LeftThinIcon from '../../icons/LeftThin'
+// import LeftThinIcon from '../../icons/LeftThin'
 import { TextField } from '../../atoms/TextField'
 import { CheckBox } from '../../atoms/CheckBox'
 
@@ -21,9 +21,9 @@ export const FilterSidebar: FC<FilterSidebarProps> = ({
     <div className={FilterSidebarClasses} {...restProps}>
       <div className='flex items-center justify-between border-b border-gray-200 pb-[16px]'>
         <h3 className='text-lg font-500'>Filters</h3>
-        <button className='appearance-none text-N-800'>
+        {/* <button className='appearance-none text-N-800'>
           <LeftThinIcon width={24} height={24} />
-        </button>
+        </button> */}
       </div>
 
       <div className='flex flex-col w-full'>

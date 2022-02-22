@@ -26,12 +26,12 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
         bgImage={'/img/collection-banner.png'}
         bgImageAlt='Karmaverse'
         strength={200}
-        bgClassName='!object-cover !h-[300px] !w-full'>
-        <div className='flex w-full h-[280px]' />
+        bgClassName='!object-cover !object-center !h-[200px] lg:!h-[300px] !w-full'>
+        <div className='flex h-[180px] w-full lg:h-[280px]' />
       </Parallax>
 
-      <div className='container mt-[-75px] relative z-10'>
-        <div className='flex'>
+      <div className='container relative z-10 mt-[-75px]'>
+        <div className='flex w-full justify-center lg:justify-start'>
           <Avatar
             image='https://www.arweave.net/wIzXN_oLlTdFkooye9xq383psyOgak2s2Q_43sThVps?ext=png'
             size='lg'
@@ -39,28 +39,30 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
           />
         </div>
 
-        <div className='flex pt-[16px] w-full'>
-          <div className='flex flex-col'>
-            <h1 className='text-h2 font-600 mb-[4px]'>{dataItems[0]?.extradata.collection.name}</h1>
+        <div className='flex w-full flex-col pt-[16px] lg:flex-row'>
+          <div className='flex flex-col items-center lg:items-start'>
+            <h1 className='mb-[4px] text-h2 font-600'>{dataItems[0]?.extradata.collection.name}</h1>
 
-            <div className='flex items-center w-full gap-[16px]'>
+            <div className='flex w-full flex-col items-center gap-[16px] lg:flex-row'>
               <span className='text-B-400'>
                 Created by {dataItems[0]?.extradata.properties.creators[0].address.substring(0, 10)}
               </span>
-              <VerifiedBadge width={24} height={24} />
-              <button
-                onClick={() => setIsFavorite(!isFavorite)}
-                className='appearance-none text-[24px] inline-flex items-center'>
-                {!isFavorite ? (
-                  <i className='ri-heart-line' />
-                ) : (
-                  <i className='text-red-400 ri-heart-fill' />
-                )}
-              </button>
-              <IdentityIcon />
+              <div className='flex items-center gap-[16px]'>
+                <VerifiedBadge width={24} height={24} />
+                <button
+                  onClick={() => setIsFavorite(!isFavorite)}
+                  className='inline-flex appearance-none items-center text-[24px]'>
+                  {!isFavorite ? (
+                    <i className='ri-heart-line' />
+                  ) : (
+                    <i className='ri-heart-fill text-red-400' />
+                  )}
+                </button>
+                <IdentityIcon />
+              </div>
             </div>
 
-            <div className='flex w-full max-w-[370px] text-gray-700 pt-[12px]'>
+            <div className='flex justify-center lg:justify-start text-center lg:text-left px-[32px] lg:px-0 w-full lg:max-w-[370px] pt-[12px] text-gray-700'>
               <p>{dataItems[0]?.extradata.collection.name}</p>
               {/* {!isShowFullBio ? (
                 <p>
@@ -89,23 +91,23 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
               )} */}
             </div>
 
-            <div className='flex text-[24px] items-center gap-[16px] pt-[16px]'>
-              <button className='text-gray-700 transition-all appearance-none hover:text-B-400'>
+            <div className='flex items-center gap-[16px] pt-[16px] text-[24px]'>
+              <button className='appearance-none text-gray-700 transition-all hover:text-B-400'>
                 <i className='ri-discord-fill' />
               </button>
 
-              <button className='text-gray-700 transition-all appearance-none hover:text-B-400'>
+              <button className='appearance-none text-gray-700 transition-all hover:text-B-400'>
                 <i className='ri-twitter-fill' />
               </button>
 
-              <button className='text-gray-700 transition-all appearance-none hover:text-B-400'>
+              <button className='appearance-none text-gray-700 transition-all hover:text-B-400'>
                 <i className='ri-global-line' />
               </button>
             </div>
           </div>
 
-          <div className='flex ml-auto pt-[62px]'>
-            <div className='block'>
+          <div className='flex w-full pt-[32px] lg:ml-auto lg:w-[unset] lg:pt-[62px]'>
+            <div className='block w-full'>
               <StatsCard />
             </div>
           </div>
