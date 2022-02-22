@@ -1,30 +1,17 @@
 import React, { useEffect, useState, FC } from 'react'
 import CN from 'classnames'
 import { Link } from 'react-router-dom'
-import { MetadataKey, StringPublicKey, useConnection, Spinner } from '@oyster/common'
+import { Spinner } from '@oyster/common'
 
 import { BlockCarousel } from '../../molecules/BlockCarousel'
 import { NftCard } from '../../molecules/NftCard'
-import { ArtworkViewState } from '../../../views/artworks/types'
-import { useItems } from '../../../views/artworks/hooks/useItems'
 
 import { useViewport } from '../../../utils/useViewport'
-import { PublicKey } from '@solana/web3.js'
-import bs58 from 'bs58'
-
-import { Metadata, MetadataData } from '@metaplex-foundation/mpl-token-metadata'
-import { useGroupedAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import _ from 'lodash'
 
 export interface RecentCollectionsCarouselProps {
   [x: string]: any
-}
-
-interface IToken {
-  mint: PublicKey
-  address: PublicKey
-  metadataPDA?: PublicKey
-  metadataOnchain?: MetadataData
 }
 
 export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
@@ -39,9 +26,10 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
   const [dataItems, setDataItems] = useState<any[]>([])
 
   // new /////
-  const { auctions } = useGroupedAuctionsList()
+  const { auctions } = useAuctionsList()
 
   useEffect(() => {
+    setIsCollectionsLoading(true)
     const newArray: any[] = []
     if (auctions.length > 0) {
       auctions.reduce((r, a) => {
@@ -55,7 +43,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
     let group = _.values(grouped)
     setDataItems(group)
     setIsCollectionsLoading(false)
-  }, [])
+  }, [auctions])
 
   /// end of new
 
@@ -63,15 +51,11 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
     Component: () => (
       <Link
         key={item[0][0].pubkey}
-        to={`/collection?collection=${item[0][0].extradata?.collection?.name}`}>
+        to={`/collection?collection=${item[0][0].thumbnail.metadata.info.data.creators[0].address}`}>
         <NftCard
           {...{
-            name: item[0][0].moredata?.collection?.name,
-            description: item[0][0]?.moredata?.description,
-            itemsCount: item[0].length,
-            floorPrice: 0,
-            isVerified: 1,
-            image: item[0][0]?.moredata?.image,
+            pubkey: item[0][0].thumbnail.metadata.pubkey,
+            itemsCount: item.length,
           }}
         />
       </Link>

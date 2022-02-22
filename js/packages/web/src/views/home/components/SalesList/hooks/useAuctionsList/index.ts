@@ -66,7 +66,7 @@ export const useAuctionsList = (
     return auctions
   }, [auctions])
 
-  return { auctions: getAllCollectionItems, hasResaleAuctions }
+  return { auctions: auctions, hasResaleAuctions }
 }
 
 export const useGroupedAuctionsList = (
