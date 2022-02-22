@@ -59,7 +59,8 @@
     "recharts": "^2.1.8",
     "query-string": "^7.1.1",
     "axios": "0.25.0",
-    "boring-avatars": "^1.6.1"
+    "boring-avatars": "^1.6.1",
+    "loadash": "1.0.0"
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",

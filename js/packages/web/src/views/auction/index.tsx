@@ -86,11 +86,13 @@ export const AuctionView = () => {
   const art = useArt(auction?.thumbnail.metadata.pubkey)
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const creators = useCreators(auction)
-  const { pullAuctionPage } = useMeta()
-  useEffect(() => {
-    pullAuctionPage(id)
-  }, [])
-
+  // const { pullAuctionPage } = useMeta()
+  // useEffect(() => {
+  //   pullAuctionPage(id)
+  // }, [])
+  console.log('auction')
+  console.log(auction)
+  console.log('auction')
   let edition = ''
   if (art.type === ArtType.NFT) {
     edition = 'Unique'
@@ -235,8 +237,7 @@ export const AuctionView = () => {
                     explorerURL.searchParams.set('cluster', cluster)
                   }
                   window.open(explorerURL.href, '_blank')
-                }}
-              >
+                }}>
                 Solana
               </Button>
             </div>
@@ -361,8 +362,7 @@ export const AuctionView = () => {
                           explorerURL.searchParams.set('cluster', cluster)
                         }
                         window.open(explorerURL.href, '_blank')
-                      }}
-                    >
+                      }}>
                       Solana
                     </Button>
                   </div>
@@ -432,8 +432,7 @@ const BidLine = (props: {
                 target='_blank'
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
-                rel='noreferrer'
-              >{`@${bidderTwitterHandle}`}</a>
+                rel='noreferrer'>{`@${bidderTwitterHandle}`}</a>
             ) : (
               shortenAddress(bidder)
             )}
@@ -527,8 +526,7 @@ const BidLine = (props: {
                     target='_blank'
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
-                    rel='noreferrer'
-                  >{`@${bidderTwitterHandle}`}</a>
+                    rel='noreferrer'>{`@${bidderTwitterHandle}`}</a>
                   <ClickToCopy className='copy-pubkey' copyText={bidder as string} />
                 </Row>
               ) : (
@@ -599,8 +597,7 @@ export const AuctionBids = ({ auctionView }: { auctionView?: Auction | null }) =
             onClick={() => setShowHistoryModal(true)}
             style={{
               cursor: 'pointer',
-            }}
-          >
+            }}>
             View full history
           </div>
         )}
@@ -614,15 +611,13 @@ export const AuctionBids = ({ auctionView }: { auctionView?: Auction | null }) =
             borderRadius: 0,
           }}
           centered
-          width={width < 768 ? width - 10 : 600}
-        >
+          width={width < 768 ? width - 10 : 600}>
           <div
             style={{
               maxHeight: 600,
               overflowY: 'scroll',
               width: '100%',
-            }}
-          >
+            }}>
             {bidLines}
           </div>
         </MetaplexModal>

@@ -324,6 +324,7 @@ export const AuctionCard = ({
   const instantSaleAction = () => {
     const isNotEnoughLamports = balance.balanceLamports < (instantSalePrice?.toNumber() || 0)
     if (isNotEnoughLamports && !(canClaimPurchasedItem || canClaimItem || canEndInstantSale)) {
+      alert('not enough funds')
       return
     }
 
@@ -517,8 +518,7 @@ export const AuctionCard = ({
                     setShowRedemptionIssue(true)
                   }
                   setLoading(false)
-                }}
-              >
+                }}>
                 {loading ||
                 auctionView.items.find(i => i.find(it => !it.metadata)) ||
                 !myPayingAccount ? (
@@ -568,8 +568,7 @@ export const AuctionCard = ({
                       }
                       setLoading(false)
                     }}
-                    style={{ marginTop: 20 }}
-                  >
+                    style={{ marginTop: 20 }}>
                     {loading ? <Spin /> : 'Start auction'}
                   </Button>
                 ) : (
@@ -579,8 +578,7 @@ export const AuctionCard = ({
                       onClick={() => {
                         if (wallet.connected) setShowPlaceBid(true)
                         else connect()
-                      }}
-                    >
+                      }}>
                       Place Bid
                     </Button>
                   )
@@ -601,8 +599,7 @@ export const AuctionCard = ({
                 marginBottom: '10px',
                 borderTop: '1px solid rgba(255, 255, 255, 0.1)',
                 paddingTop: '15px',
-              }}
-            >
+              }}>
               <div
                 style={{
                   margin: '0 0 12px 0',
@@ -613,8 +610,7 @@ export const AuctionCard = ({
                   lineHeight: '14px',
                   textTransform: 'uppercase',
                   color: 'rgba(255, 255, 255, 0.7)',
-                }}
-              >
+                }}>
                 your bid
               </div>
               <div className={'bid-container'}>
@@ -624,8 +620,7 @@ export const AuctionCard = ({
                     background: '#242424',
                     borderRadius: 14,
                     color: 'rgba(0, 0, 0, 0.5)',
-                  }}
-                >
+                  }}>
                   <InputNumber
                     autoFocus
                     className='input sol-input-bid'
@@ -651,8 +646,7 @@ export const AuctionCard = ({
                       border: 'none',
                     }}
                     disabled={loading}
-                    onClick={() => setShowPlaceBid(false)}
-                  >
+                    onClick={() => setShowPlaceBid(false)}>
                     Cancel
                   </Button>
                   <Button
@@ -674,8 +668,7 @@ export const AuctionCard = ({
                         setShowBidPlaced(true)
                         setLoading(false)
                       }
-                    }}
-                  >
+                    }}>
                     {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? <Spin /> : 'Bid now'}
                   </Button>
                 </div>
@@ -700,8 +693,7 @@ export const AuctionCard = ({
                 }
                 setLoading(false)
               }}
-              style={{ marginTop: 20 }}
-            >
+              style={{ marginTop: 20 }}>
               {loading ? <Spin /> : 'Start auction'}
             </Button>
           ) : loading ? (
@@ -710,13 +702,12 @@ export const AuctionCard = ({
             auctionView.isInstantSale &&
             !isAlreadyBought && (
               <Button
-                type='primary'
-                size='large'
+                type='dashed'
+                size='small'
                 className='ant-btn secondary-btn'
                 disabled={loading}
                 onClick={instantSaleAction}
-                style={{ marginTop: 20, width: '100%' }}
-              >
+                style={{ marginTop: 20, width: '100%' }}>
                 {actionButtonContent}
               </Button>
             )
@@ -727,8 +718,7 @@ export const AuctionCard = ({
             size='large'
             className='action-btn'
             onClick={connect}
-            style={{ marginTop: 20 }}
-          >
+            style={{ marginTop: 20 }}>
             Connect wallet to {auctionView.isInstantSale ? 'purchase' : 'place bid'}
           </Button>
         )}
@@ -761,8 +751,7 @@ export const AuctionCard = ({
           style={{
             fontSize: '3rem',
             marginBottom: 20,
-          }}
-        >
+          }}>
           Nice bid!
         </h1>
         <p
@@ -770,8 +759,7 @@ export const AuctionCard = ({
             color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
-          }}
-        >
+          }}>
           Your bid of ◎ {formatTokenAmount(lastBid?.amount, mintInfo)} was successful
         </p>
         <Button onClick={() => setShowBidPlaced(false)} className='overlay-btn'>
@@ -786,8 +774,7 @@ export const AuctionCard = ({
           style={{
             fontSize: '3rem',
             marginBottom: 20,
-          }}
-        >
+          }}>
           Congratulations
         </h1>
         <p
@@ -795,8 +782,7 @@ export const AuctionCard = ({
             color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
-          }}
-        >
+          }}>
           Your sale has been ended please view your NFTs in <Link to='/artworks'>My Items</Link>.
         </p>
         <Button onClick={() => setShowEndingBidModal(false)} className='overlay-btn'>
@@ -811,8 +797,7 @@ export const AuctionCard = ({
           style={{
             fontSize: '3rem',
             marginBottom: 20,
-          }}
-        >
+          }}>
           Congratulations
         </h1>
         <p
@@ -820,8 +805,7 @@ export const AuctionCard = ({
             color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
-          }}
-        >
+          }}>
           Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been redeemed please view your
           NFTs in <Link to='/artworks'>My Items</Link>.
         </p>
@@ -835,8 +819,7 @@ export const AuctionCard = ({
         onCancel={() => setShowWarningModal(false)}
         bodyStyle={{
           alignItems: 'start',
-        }}
-      >
+        }}>
         <h3 style={{ color: 'white' }}>
           Warning: There may be some items in this auction that still are required by the auction
           for printing bidders&apos; limited or open edition NFTs. If you wish to withdraw them, you

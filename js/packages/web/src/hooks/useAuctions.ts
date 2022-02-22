@@ -57,6 +57,7 @@ export interface AuctionView {
   vault: ParsedAccount<Vault>
   totallyComplete: boolean
   isInstantSale: boolean
+  moredata: any
 }
 
 type CachedRedemptionKeys = Record<
