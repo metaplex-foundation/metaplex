@@ -26,6 +26,7 @@ import {
   SubmitCollection,
   LaunchPadSubmission,
 } from './components-v2/views'
+import { SalesListView } from './views/home/components/SalesList'
 
 export function Routes() {
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true'
@@ -46,6 +47,7 @@ export function Routes() {
             )}
             <Route exact path='/admin' component={() => <AdminView />} />
             <Route exact path='/analytics' component={() => <AnalyticsView />} />
+            <Route exact path='/allitems' component={() => <SalesListView />} />
             <Route exact path='/art/create/:step_param?' component={() => <ArtCreateView />} />
             <Route exact path='/artworks/:id?' component={() => <ArtworksView />} />
             <Route exact path='/art/:id' component={() => <ArtView />} />

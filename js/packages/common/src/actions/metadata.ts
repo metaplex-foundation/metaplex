@@ -188,6 +188,11 @@ export class Creator {
   }
 }
 
+interface CollectionMeta {
+  name: string
+  family: string
+}
+
 export class Data {
   name: string
   symbol: string

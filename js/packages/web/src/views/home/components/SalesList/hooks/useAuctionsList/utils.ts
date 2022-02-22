@@ -10,7 +10,7 @@ const checkPrimarySale = (auction: AuctionView): boolean =>
 
 // Removed resales from live auctions
 const liveAuctionsFilter = (auction: AuctionView): boolean =>
-  auction.state === AuctionViewState.Live && !checkPrimarySale(auction)
+  auction.state === AuctionViewState.Live //&& !checkPrimarySale(auction)
 
 const participatedAuctionsFilter = (
   auction: AuctionView,

@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useState } from 'react'
 import { Hero } from '../../sections/Hero'
 import { CallToAction } from '../../sections/CallToAction'
 import { Features } from '../../sections/Features'
