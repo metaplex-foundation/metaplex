@@ -18,7 +18,7 @@ export const WalletPreviewCard: FC<WalletPreviewCardProps> = ({
 
   return (
     <div className={WalletPreviewCardClasses} {...restProps}>
-      <div className='flex flex-col items-center justify-center w-full gap-[8px] p-[16px] border-b border-gray-100'>
+      <div className='flex w-full flex-col items-center justify-center gap-[8px] border-b border-gray-100 p-[16px]'>
         <AvatarPreview
           size={40}
           name='Mary Edwards'
@@ -37,21 +37,21 @@ export const WalletPreviewCard: FC<WalletPreviewCardProps> = ({
         </div>
       </div>
 
-      <div className='flex pt-[16px] px-[16px] flex-col'>
-        <label className='text-sm uppercase font-500'>Balance</label>
+      <div className='flex flex-col px-[16px] pt-[16px]'>
+        <label className='text-sm font-500 uppercase'>Balance</label>
 
         <div className='flex items-center gap-[8px] pt-[8px]'>
           <SolanaIcon width={16} height={16} />
-          <span className='text-base text-gray-900 font-500'>0.95 SOL</span>
+          <span className='text-base font-500 text-gray-900'>0.95 SOL</span>
           <span className='text-md'>$106.27</span>
         </div>
       </div>
 
-      <div className='flex p-[16px] gap-[8px]'>
-        <button className='text-white appearance-none font-600 hover:bg-B-500 rounded-[4px] px-[12px] h-[32px] w-full bg-B-400 text-md'>
+      <div className='flex gap-[8px] p-[16px]'>
+        <button className='h-[32px] w-full appearance-none rounded-[4px] bg-B-400 px-[12px] text-md font-600 text-white hover:bg-B-500'>
           Add Funds
         </button>
-        <button className='text-gray-800 appearance-none font-500 hover:bg-gray-200 rounded-[4px] px-[12px] h-[32px] w-full bg-gray-100 text-md'>
+        <button className='h-[32px] w-full appearance-none rounded-[4px] bg-gray-100 px-[12px] text-md font-500 text-gray-800 hover:bg-gray-200'>
           Disconnect
         </button>
       </div>

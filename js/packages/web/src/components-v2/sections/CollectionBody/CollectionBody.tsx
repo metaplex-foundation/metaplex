@@ -28,6 +28,7 @@ export const TabButton = ({ isActive, onClick, children, className }: any) => {
 
 export const CollectionBody: FC<CollectionBodyProps> = ({
   className,
+  dataItems,
   ...restProps
 }: CollectionBodyProps) => {
   const CollectionBodyClasses = CN(`collection-body`, className)
@@ -81,7 +82,7 @@ export const CollectionBody: FC<CollectionBodyProps> = ({
               )}
             </div>
 
-            {activeTab === 'items' && <CollectionItems />}
+            {activeTab === 'items' && <CollectionItems dataItems={dataItems} />}
             {activeTab === 'activity' && <CollectionActivity />}
           </div>
         </div>

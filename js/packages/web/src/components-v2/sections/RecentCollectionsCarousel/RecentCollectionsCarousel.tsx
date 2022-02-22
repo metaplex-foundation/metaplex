@@ -178,7 +178,9 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
 
   const slidesList = (dataItems || []).map((item: any) => ({
     Component: () => (
-      <Link to={``}>
+      <Link
+        key={item[0][0].pubkey}
+        to={`/collection?collection=${item[0][0].extradata?.collection?.name}`}>
         <NftCard
           {...{
             name: item[0][0].extradata?.collection?.name,

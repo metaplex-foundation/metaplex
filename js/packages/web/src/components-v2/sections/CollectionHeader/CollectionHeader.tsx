@@ -12,6 +12,7 @@ export interface CollectionHeaderProps {
 
 export const CollectionHeader: FC<CollectionHeaderProps> = ({
   className,
+  dataItems,
   ...restProps
 }: CollectionHeaderProps) => {
   const CollectionHeaderClasses = CN(`collection-header bg-white`, className)
@@ -40,10 +41,12 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
 
         <div className='flex w-full flex-col pt-[16px] lg:flex-row'>
           <div className='flex flex-col items-center lg:items-start'>
-            <h1 className='mb-[4px] text-h2 font-600'>Belugies</h1>
+            <h1 className='mb-[4px] text-h2 font-600'>{dataItems[0]?.extradata.collection.name}</h1>
 
-            <div className='flex flex-col lg:flex-row w-full items-center gap-[16px]'>
-              <span className='text-B-400'>Created by 0x...2ZUGLUDLEX</span>
+            <div className='flex w-full flex-col items-center gap-[16px] lg:flex-row'>
+              <span className='text-B-400'>
+                Created by {dataItems[0]?.extradata.properties.creators[0].address.substring(0, 10)}
+              </span>
               <div className='flex items-center gap-[16px]'>
                 <VerifiedBadge width={24} height={24} />
                 <button
@@ -59,14 +62,15 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
               </div>
             </div>
 
-            <div className='flex text-center lg:text-left px-[32px] lg:px-0 w-full lg:max-w-[370px] pt-[12px] text-gray-700'>
-              {!isShowFullBio ? (
+            <div className='flex justify-center lg:justify-start text-center lg:text-left px-[32px] lg:px-0 w-full lg:max-w-[370px] pt-[12px] text-gray-700'>
+              <p>{dataItems[0]?.extradata.collection.name}</p>
+              {/* {!isShowFullBio ? (
                 <p>
                   Belugies is a generative NFT collection artistically illustrated by a 14 year old
                   artist. Since its inception October 16th, 2021 Belugies...
                   <a
                     onClick={() => setIsShowFullBio(!isShowFullBio)}
-                    className='cursor-pointer pl-[4px] text-B-400'>
+                    className='text-B-400 pl-[4px] cursor-pointer'>
                     Read More
                   </a>
                 </p>
@@ -80,11 +84,11 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
                   around giving back and doing good for the world. #UgieUgie
                   <a
                     onClick={() => setIsShowFullBio(!isShowFullBio)}
-                    className='cursor-pointer pl-[4px] text-B-400'>
+                    className='text-B-400 pl-[4px] cursor-pointer'>
                     Show Less
                   </a>
                 </p>
-              )}
+              )} */}
             </div>
 
             <div className='flex items-center gap-[16px] pt-[16px] text-[24px]'>
