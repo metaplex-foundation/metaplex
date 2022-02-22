@@ -335,7 +335,7 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <div>
+    <div className="mt-8">
       <Card
         bordered={false}
         className="metaplex-margin-bottom-4 auction-card"
