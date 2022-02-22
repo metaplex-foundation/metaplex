@@ -1,17 +1,8 @@
-import {
-  CheckOutlined,
-  InfoCircleFilled,
-  LoadingOutlined,
-} from '@ant-design/icons';
+import { InfoCircleFilled, LoadingOutlined } from '@ant-design/icons';
 import {
   AuctionState,
-  BidderMetadata,
-  Identicon,
   MetaplexModal,
-  ParsedAccount,
   shortenAddress,
-  StringPublicKey,
-  toPublicKey,
   useConnection,
   useMint,
   useMeta,
@@ -22,17 +13,12 @@ import {
   processMetaplexAccounts,
   VAULT_ID,
   processVaultData,
-  fromLamports,
 } from '@oyster/common';
 import { actions } from '@metaplex/js';
 import { PublicKey } from '@solana/web3.js';
-import cx from 'classnames';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
-import { getHandleAndRegistryKey } from '@solana/spl-name-service';
-import { MintInfo } from '@solana/spl-token';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection } from '@solana/web3.js';
 import {
   Button,
   Carousel,
@@ -44,11 +30,8 @@ import {
 } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { format } from 'timeago.js';
-import { AmountLabel } from '../../components/AmountLabel';
 import { ArtContent } from '../../components/ArtContent';
 import { AuctionCard } from '../../components/AuctionCard';
-import { ClickToCopy } from '../../components/ClickToCopy';
 import { ViewOn } from '../../components/ViewOn';
 import { some } from 'lodash';
 import {
@@ -62,6 +45,8 @@ import {
 } from '../../hooks';
 import { ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
+import { Card } from 'antd';
+import BidLine from './BidLine';
 
 export const AuctionItem = ({
   item,
@@ -200,6 +185,7 @@ export const AuctionView = () => {
       )}
     </div>
   );
+  // const bids = useBidsForAuction(auction.auction.pubkey);
 
   return (
     <div className="item-page-wrapper" ref={ref}>
@@ -210,7 +196,9 @@ export const AuctionView = () => {
 
       <div className="item-page-right">
         <div className="title-row">
-          <h1>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
+          <h1 className="text-3xl">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h1>
           <ViewOn art={art} />
         </div>
 
@@ -274,11 +262,14 @@ export const AuctionView = () => {
                   {art.maxSupply === undefined ? (
                     <Skeleton paragraph={{ rows: 0 }} />
                   ) : (
-                    <span>
+                    <span className="flex justify-center items-center text-sm">
                       {`${(art.maxSupply || 0) - (art.supply || 0)} of ${
                         art.maxSupply || 0
                       } `}
-                      <Tooltip title="Max supply may include items from previous listings">
+                      <Tooltip
+                        title="Max supply may include items from previous listings"
+                        className="ml-2"
+                      >
                         <InfoCircleFilled size={12} />
                       </Tooltip>
                     </span>
@@ -301,104 +292,6 @@ export const AuctionView = () => {
   );
 };
 
-const BidLine = (props: {
-  bid: ParsedAccount<BidderMetadata>;
-  index: number;
-  mint?: MintInfo;
-  isCancelled?: boolean;
-  isActive?: boolean;
-  isLastWinner?: boolean;
-}) => {
-  const { bid, mint, isCancelled, isLastWinner } = props;
-  const { publicKey } = useWallet();
-  const bidder = bid.info.bidderPubkey;
-  const isme = publicKey?.toBase58() === bidder;
-
-  // Get Twitter Handle from address
-  const connection = useConnection();
-  const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
-  useEffect(() => {
-    const getTwitterHandle = async (
-      connection: Connection,
-      bidder: StringPublicKey,
-    ): Promise<string | undefined> => {
-      try {
-        const [twitterHandle] = await getHandleAndRegistryKey(
-          connection,
-          toPublicKey(bidder),
-        );
-        setBidderTwitterHandle(twitterHandle);
-      } catch (err) {
-        console.warn(`err`);
-        return undefined;
-      }
-    };
-    getTwitterHandle(connection, bidder);
-  }, [bidderTwitterHandle]);
-
-  return (
-    <div
-      className={cx(
-        'bid-line-wrapper metaplex-fullwidth',
-        'auction-bid-line-item',
-        {
-          'auction-bid-last-winner': isLastWinner,
-        },
-      )}
-    >
-      <div
-        className={cx(
-          'metaplex-flex',
-          'metaplex-align-items-center',
-          'metaplex-gap-2',
-          'md:w-44',
-          {
-            'auction-bid-line-item-is-canceled':
-              isCancelled && publicKey?.toBase58() === bidder,
-          },
-        )}
-      >
-        <AmountLabel
-          displaySOL={true}
-          amount={fromLamports(bid.info.lastBid, mint)}
-          customPrefix={
-            <svg
-              className="mr-[5px] h-4 w-4 text-white"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle cx="8" cy="8" r="7.5" stroke="white" />
-              <circle cx="8" cy="8" r="3.5" stroke="white" />
-            </svg>
-          }
-        />
-        {isme && <CheckOutlined style={{ marginTop: '-8px' }} />}
-      </div>
-
-      <div className="">
-        {/* uses milliseconds */}
-        {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
-      </div>
-
-      <div className="metaplex-flex metaplex-gap-4 md:w-64 truncate justify-end">
-        <Identicon size={24} address={bidder} />
-        {bidderTwitterHandle ? (
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            title={shortenAddress(bidder)}
-            href={`https://twitter.com/${bidderTwitterHandle}`}
-          >{`@${bidderTwitterHandle}`}</a>
-        ) : (
-          shortenAddress(bidder)
-        )}
-        <ClickToCopy copyText={bidder} />
-      </div>
-    </div>
-  );
-};
-
 export const AuctionBids = ({
   auctionView,
 }: {
@@ -415,7 +308,6 @@ export const AuctionBids = ({
 
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
 
-  const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const winners = useWinningBidsForAuction(auctionPubkey);
   const isWinner = some(
@@ -427,31 +319,14 @@ export const AuctionBids = ({
     : AuctionState.Created;
   const auctionRunning = auctionState !== AuctionState.Ended;
 
+  // I don't think this is actually used
   const activeBidders = useMemo(() => {
     return new Set(activeBids.map(b => b.key));
   }, [activeBids]);
+
   const bidLines = useMemo(() => {
-    let activeBidIndex = 0;
     return bids.map((bid, index) => {
-      const isCancelled =
-        (index < winnersCount && !!bid.info.cancelled) ||
-        (auctionRunning && !!bid.info.cancelled);
-
-      const line = (
-        <BidLine
-          bid={bid}
-          index={activeBidIndex}
-          key={bid.pubkey}
-          mint={mint}
-          isLastWinner={index + 1 === winners.length}
-          isCancelled={isCancelled}
-          isActive={!bid.info.cancelled}
-        />
-      );
-
-      if (!isCancelled) {
-        activeBidIndex++;
-      }
+      const line = <BidLine bid={bid} key={bid.pubkey} mint={mint} />;
 
       return line;
     });
@@ -460,10 +335,14 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <div>
-      <div>
-        <p className="metaplex-margin-bottom-4">Bid History</p>
-        {auctionRunning &&
+    <div className="mt-8">
+      <Card
+        bordered={false}
+        className="metaplex-margin-bottom-4 auction-card"
+        title={'Bid history'}
+        bodyStyle={{ padding: 0 }}
+        extra={
+          auctionRunning &&
           auctionView.myBidderMetadata &&
           !auctionView.myBidderMetadata.info.cancelled && (
             <Tooltip
@@ -512,9 +391,21 @@ export const AuctionBids = ({
                 Cancel Bid
               </Button>
             </Tooltip>
-          )}
-      </div>
-      <div className="space-y-8 md:space-y-0">{bidLines.slice(0, 10)}</div>
+          )
+        }
+      >
+        <div className=" overflow-hidden">
+          <ul role="list" className="divide-y divide-color-border">
+            {bidLines}
+            {/* {bids.map(bid => (
+              
+              <BidLine bid={bid} key={bid.pubkey} mint={mint} />
+            ))} */}
+          </ul>
+        </div>
+      </Card>
+
+      {/* <div className="space-y-8 md:space-y-0">{bidLines.slice(0, 10)}</div> */}
       {bids.length > 10 && (
         <Button onClick={() => setShowHistoryModal(true)}>
           View full history

@@ -72,7 +72,12 @@ export const AuctionNumbers = (props: {
             <AmountLabel
               displaySOL={props.displaySOL}
               title="Highest bid"
-              amount={fromLamports(find(bids, (bid) => !bid.info.cancelled)?.info.lastBid.toNumber() || 0)}
+              amount={fromLamports(
+                find(
+                  bids,
+                  bid => !bid.info.cancelled,
+                )?.info.lastBid.toNumber() || 0,
+              )}
             />
           )}
         </>
@@ -105,21 +110,21 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
       {localState.days > 0 && (
         <Col>
           {localState.days}
-          <Text type="secondary"> days</Text>
+          <Text type="secondary">d</Text>
         </Col>
       )}
       <Col>
         {localState.hours}
-        <Text type="secondary"> hours</Text>
+        <Text type="secondary">h</Text>
       </Col>
       <Col>
         {localState.minutes}
-        <Text type="secondary"> min</Text>
+        <Text type="secondary">m</Text>
       </Col>
       {!localState.days && (
         <Col>
           {localState.seconds}
-          <Text type="secondary"> sec</Text>
+          <Text type="secondary">s</Text>
         </Col>
       )}
     </Row>
