@@ -54,7 +54,7 @@ export const ArtworksView = () => {
         <div className="flex">
           <h2>Owned Artwork</h2>
           <Tooltip
-            title="NFTs minted with the same wallet as created this store shows up here, or ones you have bought from the store"
+            title="NFTs minted with the same wallet that created this store shows up here, or ones you have bought from the store with your connected wallet."
             className="ml-2"
           >
             <InfoCircleFilled size={12} />
