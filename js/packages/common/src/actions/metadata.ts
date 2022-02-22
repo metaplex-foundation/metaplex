@@ -199,24 +199,18 @@ export class Data {
   uri: string
   sellerFeeBasisPoints: number
   creators: Creator[] | null
-  collection: CollectionMeta
-  attributes: any[]
   constructor(args: {
     name: string
     symbol: string
     uri: string
     sellerFeeBasisPoints: number
     creators: Creator[] | null
-    collection: CollectionMeta
-    attributes: any[]
   }) {
     this.name = args.name
     this.symbol = args.symbol
     this.uri = args.uri
     this.sellerFeeBasisPoints = args.sellerFeeBasisPoints
     this.creators = args.creators
-    this.collection = args?.collection
-    this.attributes = args?.attributes
   }
 }
 
