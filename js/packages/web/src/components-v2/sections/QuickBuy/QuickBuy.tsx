@@ -27,30 +27,29 @@ export const QuickBuy: FC<QuickBuyProps> = ({
 
   return (
     <div className={QuickBuyClasses} {...restProps}>
-      <div className='flex justify-between w-full text-base border-b border-gray-100 font-500 pb-[8px] mb-[16px]'>
+      <div className='mb-[16px] flex w-full justify-between border-b border-gray-100 pb-[8px] text-base font-500'>
         <span>Item</span>
         <span>Price</span>
       </div>
 
-      <div className='flex w-full mb-[16px] flex-col gap-[16px] overflow-auto max-h-[208px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
+      <div className='mb-[16px] flex max-h-[208px] w-full flex-col gap-[16px] overflow-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300'>
         <ItemCard {...itemDetails} />
 
-        <span className='bg-red-50 px-[20px] py-[4px] rounded-full text-sm font-500 text-red-500 text-center flex items-center justify-center gap-[4px]'>
-          <i className='text-base ri-error-warning-fill' />
+        <span className='flex items-center justify-center gap-[4px] rounded-full bg-red-50 px-[20px] py-[4px] text-center text-sm font-500 text-red-500'>
+          <i className='ri-error-warning-fill text-base' />
           <span>Insufficient balance</span>
         </span>
       </div>
 
-      <div className='flex items-center justify-between w-full border-t border-gray-100 font-500 pt-[12px] text-gray-800'>
+      <div className='flex w-full items-center justify-between border-t border-gray-100 pt-[12px] font-500 text-gray-800'>
         <span className='text-h6'>You pay</span>
         <span className='text-lg'>◎ .09</span>
       </div>
 
       <div className='flex justify-center pt-[20px]'>
         <button
-          className='appearance-none text-base bg-B-400 hover:bg-B-500 text-white font-500 h-[52px] px-[24px] w-full max-w-[220px] rounded-full'
-          onClick={onSubmit}
-        >
+          className='h-[52px] w-full max-w-[220px] appearance-none rounded-full bg-B-400 px-[24px] text-base font-500 text-white hover:bg-B-500'
+          onClick={onSubmit}>
           Confirm checkout
         </button>
       </div>

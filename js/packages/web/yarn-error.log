@@ -1,30 +1,30 @@
 Arguments: 
-  /Users/khpeiris/.nvm/versions/node/v16.0.0/bin/node /Users/khpeiris/.nvm/versions/node/v16.0.0/bin/yarn add react-select
+  /usr/local/bin/node /usr/local/bin/yarn add @metaplex/js -D
 
 PATH: 
-  /opt/homebrew/opt/php@7.4/sbin:/opt/homebrew/opt/php@7.4/bin:/Users/khpeiris/.nvm/versions/node/v16.0.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/opt/php@7.4/sbin:/opt/homebrew/opt/php@7.4/bin:/Users/khpeiris/.nvm/versions/node/v16.0.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin
+  /usr/local/bin:/opt/homebrew/bin:/Users/nuwangunarathna/.local/share/solana/install/active_release/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
 Yarn version: 
   1.22.17
 
 Node version: 
-  16.0.0
+  16.13.2
 
 Platform: 
   darwin arm64
 
 Trace: 
   Invariant Violation: expected workspace package to exist for "braces"
-      at invariant (/Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:2314:15)
-      at _loop2 (/Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:95111:9)
-      at PackageHoister.init (/Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:95170:19)
-      at PackageLinker.getFlatHoistedTree (/Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:48922:20)
-      at PackageLinker.<anonymous> (/Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:48933:27)
+      at invariant (/usr/local/lib/node_modules/yarn/lib/cli.js:2314:15)
+      at _loop2 (/usr/local/lib/node_modules/yarn/lib/cli.js:95111:9)
+      at PackageHoister.init (/usr/local/lib/node_modules/yarn/lib/cli.js:95170:19)
+      at PackageLinker.getFlatHoistedTree (/usr/local/lib/node_modules/yarn/lib/cli.js:48922:20)
+      at PackageLinker.<anonymous> (/usr/local/lib/node_modules/yarn/lib/cli.js:48933:27)
       at Generator.next (<anonymous>)
-      at step (/Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:310:30)
-      at /Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:328:14
+      at step (/usr/local/lib/node_modules/yarn/lib/cli.js:310:30)
+      at /usr/local/lib/node_modules/yarn/lib/cli.js:328:14
       at new Promise (<anonymous>)
-      at new F (/Users/khpeiris/.nvm/versions/node/v16.0.0/lib/node_modules/yarn/lib/cli.js:5301:28)
+      at new F (/usr/local/lib/node_modules/yarn/lib/cli.js:5301:28)
 
 npm manifest: 
   {
