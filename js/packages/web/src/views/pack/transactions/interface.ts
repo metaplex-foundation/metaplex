@@ -36,7 +36,6 @@ export interface GenerateClaimPackInstructionsParams {
   connection: Connection;
   index: number;
   packSetKey: StringPublicKey;
-  randomOracle: StringPublicKey;
   userToken: StringPublicKey;
   voucherMint: StringPublicKey;
   metadataMint: StringPublicKey;
