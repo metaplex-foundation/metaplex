@@ -79,7 +79,7 @@ export const Collection: FC<CollectionProps> = () => {
       async function metadatasToTokens(rawMetadatas: any[]): Promise<IToken[]> {
         const promises = await Promise.all(
           rawMetadatas.map(async m => {
-            debugger
+            // debugger
             try {
               const metadata = await deserializeMetadata(m)
               const mint = new PublicKey(metadata.data.mint)
@@ -113,7 +113,7 @@ export const Collection: FC<CollectionProps> = () => {
         }
       )
       const alldata = await metadatasToTokens(rawMetadatas)
-      debugger
+      // debugger
       const tempArray: any[] = []
       for (const element of alldata) {
         const t = {
@@ -192,7 +192,7 @@ export const Collection: FC<CollectionProps> = () => {
       )}
       {!isCollectionsLoading && (
         <>
-          <CollectionHeader dataItems={dataItems} className='pb-[60px]' />
+          <CollectionHeader dataItems={dataItems} className='mb:pb-[60px] pb-[32px]' />
           <CollectionBody dataItems={dataItems} className='pb-[100px]' />
         </>
       )}
