@@ -108,6 +108,7 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
     (eligibleParticipations.length + totalWinnerItems)
   )
 }
+
 function useGapTickCheck(
   value: number | undefined,
   gapTick: number | null,
@@ -176,11 +177,13 @@ export const AuctionCard = ({
   style,
   hideDefaultAction,
   action,
+  className,
 }: {
   auctionView: AuctionView
   style?: React.CSSProperties
   hideDefaultAction?: boolean
   action?: JSX.Element
+  className?: string
 }) => {
   const history = useHistory()
   const connection = useConnection()
@@ -445,7 +448,7 @@ export const AuctionCard = ({
   }
 
   return (
-    <div className='auction-container' style={style}>
+    <div className={`${className} auction-container`} style={style}>
       <div className={'time-info'}>
         {!auctionView.isInstantSale && (
           <>
@@ -456,6 +459,7 @@ export const AuctionCard = ({
           </>
         )}
       </div>
+
       <div className={'bid-info'}>
         <div className='bid-info-container'>
           <AuctionNumbers
@@ -464,6 +468,7 @@ export const AuctionCard = ({
             hideCountdown={true}
             displaySymbol={true}
           />
+
           {showPlaceBid &&
             !hideDefaultAction &&
             wallet.connected &&

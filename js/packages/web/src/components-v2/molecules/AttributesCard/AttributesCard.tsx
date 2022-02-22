@@ -17,13 +17,12 @@ export const AttributesCard: FC<AttributesCardProps> = ({
 
   return (
     <div className={AttributesCardClasses} {...restProps}>
-      {(list || []).map(({ id, label, value }: any, index: number) => (
+      {(list || []).map(({ trait_type, value }: any, index: number) => (
         <div
-          key={id || index}
-          className='flex justify-center items-center flex-col border border-B-200 px-[12px] py-[6px] rounded-[8px] bg-B-10'
-        >
-          <span className='w-full text-center text-gray-700 text-md'>{label}</span>
-          <span className='w-full text-center text-gray-900 text-md font-500'>{value}</span>
+          key={value || index}
+          className='flex flex-col items-center justify-center rounded-[8px] border border-B-200 bg-B-10 px-[12px] py-[6px]'>
+          <span className='w-full text-center text-md text-gray-700 capitalize'>{trait_type}</span>
+          <span className='w-full text-center text-md font-500 text-gray-900'>{value}</span>
         </div>
       ))}
     </div>

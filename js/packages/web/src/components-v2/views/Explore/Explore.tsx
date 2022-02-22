@@ -10,11 +10,7 @@ export const Explore: FC<ExploreProps> = () => {
   const wallet = useWallet()
 
   console.log(wallet.publicKey?.toBase58())
-  return (
-    <>
-      <ExploreCollections />
-    </>
-  )
+  return <ExploreCollections />
 }
 
 export default Explore
