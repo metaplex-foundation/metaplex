@@ -210,7 +210,10 @@ export const useGroupedAuctions = () => {
         );
       }) as ParsedAccount<AuctionManagerV2>[];
 
-      const hiddenListings = ['7jBFUWrdm1SzL2u71Vz9dFAbjbjXMG7pBpjEVmBV5h85'];
+      const hiddenListings = [
+        '7jBFUWrdm1SzL2u71Vz9dFAbjbjXMG7pBpjEVmBV5h85',
+        'R9gxVgBr3i7wzr8vN4YdX1bhNqeXxeiGcFWfyGAY2dk',
+      ];
 
       const isHidden = (x: ParsedAccount<AuctionData>) =>
         !hiddenListings.includes(x.pubkey);
