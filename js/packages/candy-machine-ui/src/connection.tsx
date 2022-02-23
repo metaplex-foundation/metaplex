@@ -170,8 +170,8 @@ export const sendTransactions = async (
 
   const partiallySignedTransactions = unsignedTxns.filter((t) => t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)));
   const fullySignedTransactions = unsignedTxns.filter((t) => !t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)));
-  const signedTxns = (await wallet.signAllTransactions(partiallySignedTransactions)).concat(fullySignedTransactions);
-
+  let signedTxns = (await wallet.signAllTransactions(partiallySignedTransactions));
+  signedTxns = fullySignedTransactions.concat(signedTxns);
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 
   let breakEarlyObject = { breakEarly: false, i: 0 };
