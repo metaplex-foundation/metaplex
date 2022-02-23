@@ -86,13 +86,10 @@ export const AuctionView = () => {
   const art = useArt(auction?.thumbnail.metadata.pubkey)
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const creators = useCreators(auction)
-  // const { pullAuctionPage } = useMeta()
-  // useEffect(() => {
-  //   pullAuctionPage(id)
-  // }, [])
-  console.log('auction')
-  console.log(auction)
-  console.log('auction')
+  const { pullAuctionPage } = useMeta()
+  useEffect(() => {
+    pullAuctionPage(id)
+  }, [])
   let edition = ''
   if (art.type === ArtType.NFT) {
     edition = 'Unique'

@@ -28,11 +28,13 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@sola
 
 import { createAssociatedTokenAccountInstruction, toPublicKey } from '@oyster/common'
 import { Account } from '@metaplex-foundation/mpl-core'
+import { Link } from 'react-router-dom'
 export interface CollectionItemsProps {
   [x: string]: any
 }
 
 export const CollectionItems: FC<CollectionItemsProps> = ({
+  dataItems,
   className,
   ...restProps
 }: CollectionItemsProps) => {
@@ -40,170 +42,6 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
   const [showQuickBuyModal, setShowQuickBuyModal] = useState<boolean>(false)
   const [showArtModalModal, setShowArtModalModal] = useState<boolean>(false)
   const [selectedArt, setSelectedArt] = useState<any>(null)
-
-  //************Quick Buy */
-
-  const connection = useConnection()
-  const wallet = useWallet()
-  const handleOnSubmit = async () => {
-    console.log('=====Start Quick Buy====')
-    console.log('wallet2 ', wallet)
-    console.log('connection ', connection)
-
-    /* ==Open the wallet -- faking 
-    //let transaction = new Transaction(transactionCtorFields)
-    //transaction.feePayer(wallet.publicKey?.toBase58)
-
-    //const account = Keypair.generate()
-    //signers.push(account)
-    //const commitment: Commitment = 'singleGossip'
-    //transaction.recentBlockhash = (await connection.getRecentBlockhash(commitment)).blockhash
-    //transaction = await wallet.signTransaction(transaction)
-*/
-
-    const source = new PublicKey('8DJcBvckWKrtWCm8tDkwf1DYsCCizuVv2hdEVNRaSM5J')
-    const destination: PublicKey = new PublicKey('DtSJHek4nczcEaoZ4b3dzEmupGJ9p5KjV7w6KNXpHiVu') //('8bSR11t4bN9QhhNVewJNyQhuz8xvRcdrD8JKHLGtN16V')
-    const mint = new PublicKey('FWoEL7DXbYNkttQyB7QeYvYwft8PAMyVpAxpgsS5qwXm')
-
-    const owner = wallet.publicKey as PublicKey
-
-    const amount = 1
-    const instructions: TransactionInstruction[] = []
-    //const tx = [] as any
-    const signers: Keypair[] = []
-    const destAta = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      mint,
-      toPublicKey(destination)
-    )
-    console.log(
-      'destAta.toBase58',
-      destAta.toBase58(),
-      'ASSOCIATED_TOKEN_PROGRAM_ID: ',
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      'TOKEN_PROGRAM_ID :',
-      TOKEN_PROGRAM_ID.toString
-    )
-    const transactionCtorFields = {
-      feePayer: wallet.publicKey,
-    }
-
-    console.log('Creating  Associate token', destination.toBase58)
-
-    try {
-      // check if the account exists
-      await Account.load(connection, destAta)
-    } catch {
-      console.log('Creating  Associate token')
-      /*
-  instructions: TransactionInstruction[],
-  associatedTokenAddress: PublicKey,
-  payer: PublicKey,
-  walletAddress: PublicKey,
-  splTokenMintAddress: <PublicKey></PublicKey>*/
-
-      createAssociatedTokenAccountInstruction(
-        instructions,
-        destAta,
-        owner,
-        owner,
-        toPublicKey(mint)
-      )
-    }
-
-    /*
-        static createTransferInstruction(
-      programId: PublicKey,
-      source: PublicKey,
-      destination: PublicKey,
-      owner: PublicKey,
-      multiSigners: Array<Signer>,
-      amount: number | u64,
-    ): TransactionInstruction;
-    */
-    //const owner = wallet.publicKey?wallet.publicKey
-    //const multiSigners: Array<Signer> = ['asdf']
-    instructions.push(
-      Token.createTransferInstruction(TOKEN_PROGRAM_ID, source, destAta, owner, [], amount)
-    )
-
-    const { txid, slot } = await sendTransactionWithRetry(connection, wallet, instructions, signers)
-    console.log('Transaction Approved ', txid, slot)
-
-    /*transaction.setSigners(
-      // fee payed by the wallet owner
-      wallet2.publicKey.toBase58,
-      ...signers.map(s => s.publicKey)
-    )
-
-    transaction = await wallet2.signTransaction(transaction)
-*/
-    /*await sendTransactionWithRetry(
-      connection,
-      w,
-      [],
-      [],
-
-      'single'
-    )*/
-  }
-
-  const sendToken = () => {
-    // interface Wallet {
-    //   publicKey: string//PublicKey
-    //   signTransaction(tx: Transaction): Promise<Transaction>
-    //  signAllTransactions(txs: Transaction[]): Promise<Transaction[]>
-    // }
-
-    interface ISendTokenParams {
-      connection: Connection
-      /** Source wallet address **/
-      wallet: Wallet
-      /** Source wallet's associated token account address **/
-      source: PublicKey
-      /** Destination wallet address **/
-      destination: PublicKey
-      /** Mint address of the tokento transfer **/
-      mint: PublicKey
-      /** Amount of tokens to transfer. One important nuance to remember is that each token mint has a different amount of decimals, which need to be accounted while specifying the amount. For instance, to send 1 token with a 0 decimal mint you would provide `1` as the amount, but for a token mint with 6 decimals you would provide `1000000` as the amount to transfer one whole token **/
-      amount: number | u64
-    }
-
-    /*interface SendTokenResponse {
-    txId: string
-  }*/
-
-    //const { wallet, connect, connected } = useWallet()
-    const connection: Connection = useConnection()
-    //const wallet: Wallet = {publicKey:'', };
-    const payer = Keypair.fromSecretKey(
-      new Uint8Array([
-        243, 8, 240, 18, 66, 160, 238, 238, 156, 176, 125, 105, 228, 116, 178, 107, 71, 26, 176, 95,
-        29, 188, 239, 146, 45, 105, 33, 54, 99, 47, 90, 83, 125, 155, 203, 111, 156, 226, 156, 102,
-        35, 114, 123, 76, 15, 208, 83, 199, 153, 212, 254, 96, 190, 114, 175, 80, 233, 182, 103, 83,
-        68, 224, 184, 108,
-      ])
-    )
-
-    // const w: WalletContextState = wallet2
-    const wallet = new NodeWallet(payer)
-    const source = new PublicKey('6MsvXcreTDzWZ69B2q8jyRkef8yQiuFHmWikyraJiERv')
-    const destination = new PublicKey('8bSR11t4bN9QhhNVewJNyQhuz8xvRcdrD8JKHLGtN16V')
-    const mint = new PublicKey('FWoEL7DXbYNkttQyB7QeYvYwft8PAMyVpAxpgsS5qwXm')
-    const amount = 1
-    const signers: Keypair[] = []
-    const tokenParams: ISendTokenParams = {
-      connection,
-      wallet,
-      source,
-      destination,
-      mint,
-      amount,
-    }
-    //const sendTokenResponse = await actions.sendToken(tokenParams)
-  }
-  //****** End quick buy */
 
   return (
     <div className={CollectionItemsClasses} {...restProps}>
@@ -299,20 +137,24 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
       </div>
 
       <div className='grid grid-cols-2 gap-[16px] pt-[32px] md:grid-cols-3 md:gap-[28px] lg:grid-cols-4'>
-        {arts.map((art: any, index: number) => {
+        {dataItems.map((art: any, index: number) => {
+          console.log(art[0])
           return (
-            <ArtCard
-              onClickBuy={() => {
-                setSelectedArt(art)
-                setShowQuickBuyModal(true)
-              }}
-              onClickDetails={() => {
-                setSelectedArt(art)
-                setShowArtModalModal(true)
-              }}
-              key={index}
-              {...art}
-            />
+            <Link to={`/auction/${art[0].auction.pubkey}`}>
+              <ArtCard
+                // onClickBuy={() => {
+                //   setSelectedArt(art)
+                //   setShowQuickBuyModal(true)
+                // }}
+                // onClickDetails={() => {
+                //   setSelectedArt(art)
+                //   setShowArtModalModal(true)
+                // }}
+                key={index}
+                pubkey={art[0].thumbnail.metadata.pubkey}
+                auction={art[0]}
+              />
+            </Link>
           )
         })}
       </div>
@@ -324,7 +166,6 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
               <>
                 <QuickBuy
                   onSubmit={(e: any) => {
-                    handleOnSubmit()
                     modalClose(e)
                     setShowQuickBuyModal(false)
                   }}
@@ -343,7 +184,6 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
               <>
                 <ArtDetails
                   onSubmit={(e: any) => {
-                    handleOnSubmit()
                     modalClose(e)
                     setShowArtModalModal(false)
                   }}

@@ -95,7 +95,7 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
       return
     }
 
-    (async () => {
+    ;(async () => {
       let response: Response
       let blob: Blob
       try {
@@ -166,7 +166,8 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   const account = useMemo(() => metadata.find(a => a.pubkey === key), [key, metadata])
 
   useEffect(() => {
-    if ((inView || width < 768) && id && !data) {
+    if (id && !data) {
+      //(inView || width < 768) &&
       const USE_CDN = false
       const routeCDN = (uri: string) => {
         let result = uri

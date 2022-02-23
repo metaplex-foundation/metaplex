@@ -1,33 +1,49 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useMemo, useState } from 'react'
 import CN from 'classnames'
+import { AuctionView, useAuction, useExtendedArt } from '../../../hooks'
+import {
+  AuctionDataExtended,
+  getAuctionExtended,
+  ParsedAccount,
+  programIds,
+  useMeta,
+} from '@oyster/common'
+import { useAuctionStatus } from '../../../components/AuctionRenderCard/hooks/useAuctionStatus'
+import { useTokenList } from '../../../contexts/tokenList'
+import { AmountLabel } from '../../../components/AmountLabel'
 
 export interface ArtCardProps {
   [x: string]: any
 }
 
 export const ArtCard: FC<ArtCardProps> = ({
+  pubkey,
   className,
-  image,
-  name,
-  price,
-  bid,
-  lastPrice,
   onClickBuy,
   onClickDetails,
+  auction,
   ...restProps
 }: ArtCardProps) => {
   const ArtCardClasses = CN(
     `nft-art-card rounded-[8px] hover:shadow-lg hover:shadow-blue-900/10 cursor-pointer relative group overflow-hidden`,
     className
   )
-  const [artImage, setArtImage] = useState(image)
+  const [artImage, setArtImage] = useState('')
+  const [price, setPrice] = useState<string | number>()
+
+  const { ref, data } = useExtendedArt(pubkey)
+  const tokenInfo = useTokenList().subscribedTokens.filter(
+    m => m.address == auction.auction.info.tokenMint
+  )[0]
+  debugger
+  const { status, amount } = useAuctionStatus(auction)
 
   return (
     <div className={ArtCardClasses} {...restProps}>
       <div className='flex flex-col overflow-hidden'>
         <img
-          src={artImage}
-          alt={name}
+          src={data?.image}
+          alt={data?.image}
           onError={() => setArtImage('/img/art-placeholder-sm.jpg')}
           className='h-[130px] w-full object-cover md:h-[unset] lg:h-[140px] lg:object-top'
         />
@@ -50,18 +66,23 @@ export const ArtCard: FC<ArtCardProps> = ({
 
       <div className='flex w-full flex-col gap-[4px] rounded-b-[8px] border px-[12px] pt-[12px] pb-[12px]'>
         <h3 className='flex w-full text-md font-600 text-gray-800'>
-          <span className='w-full line-clamp-1'>{name}</span>
+          <span className='w-full line-clamp-1'>{data?.name}</span>
         </h3>
 
         <div className='flex items-center justify-between gap-[6px]'>
           <span className='font-500 text-gray-800'>{price}</span>
 
-          {bid && <span className='text-md text-B-400'>Bid {bid}</span>}
-          {lastPrice && <span className='text-md text-gray-500'>Last {lastPrice}</span>}
+          {/* {bid && <span className='text-md text-B-400'>Bid {bid}</span>}*/}
+          {/* {price && <span className='text-md text-gray-500'>Last {price}</span>} */}
+          <AmountLabel
+            containerStyle={{ flexDirection: 'row' }}
+            title={status}
+            amount={amount}
+            iconSize={24}
+            tokenInfo={tokenInfo}
+          />
         </div>
       </div>
     </div>
   )
 }
-
-export default ArtCard
