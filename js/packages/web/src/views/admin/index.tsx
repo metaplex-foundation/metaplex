@@ -156,13 +156,17 @@ export const AdminView = () => {
 function ArtistModal({
   setUpdatedCreators,
   uniqueCreatorsWithUpdates,
+  showAddCreatorModal: modalOpen,
+  setShowAddCreatorModal: setModalOpen,
 }: {
   setUpdatedCreators: React.Dispatch<
     React.SetStateAction<Record<string, WhitelistedCreator>>
   >;
   uniqueCreatorsWithUpdates: Record<string, WhitelistedCreator>;
+  showAddCreatorModal: boolean;
+  setShowAddCreatorModal: (openStatus: boolean) => void;
 }) {
-  const [modalOpen, setModalOpen] = useState(false);
+  // const [modalOpen, setModalOpen] = useState(false);
   const [modalAddress, setModalAddress] = useState<string>('');
   return (
     <>
@@ -209,7 +213,7 @@ function ArtistModal({
           onChange={e => setModalAddress(e.target.value)}
         />
       </Modal>
-      <Button onClick={() => setModalOpen(true)}>Add Creator</Button>
+      {/* <Button onClick={() => setModalOpen(true)}>Add Creator</Button> */}
     </>
   );
 }
@@ -249,6 +253,8 @@ function InnerAdminView({
     unavailable: ParsedAccount<MasterEditionV1>[];
   }>();
   const [cachingAuctions, setCachingAuctions] = useState<boolean>();
+  const [showAddCreatorModal, setShowAddCreatorModal] =
+    useState<boolean>(false);
   const [convertingMasterEditions, setConvertMasterEditions] =
     useState<boolean>();
   const { auctionCaches, storeIndexer, metadata, masterEditions } = useMeta();
@@ -325,199 +331,213 @@ function InnerAdminView({
   ];
 
   return (
-    <div className="metaplex-flex-column metaplex-gap-4">
-      <h2>Whitelisted Creators</h2>
-      <div className="metaplex-flex">
-        <ArtistModal
-          setUpdatedCreators={setUpdatedCreators}
-          uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
-        />
-        <Button
-          onClick={async () => {
-            notify({
-              message: 'Saving...',
-              type: 'info',
-            });
-            await saveAdmin(
-              connection,
-              wallet,
-              newStore.public,
-              Object.values(updatedCreators),
-            );
-            notify({
-              message: 'Saved',
-              type: 'success',
-            });
-          }}
-          type="primary"
-        >
-          Submit
-        </Button>
-      </div>
-      <div>
-        <Switch
-          checkedChildren="Public"
-          unCheckedChildren="Whitelist Only"
-          checked={newStore.public}
-          onChange={val => {
-            setNewStore(() => {
-              const newS = new Store(store.info);
-              newS.public = val;
-              return newS;
-            });
-          }}
-        />
-      </div>
-
-      <Table
-        columns={columns}
-        dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
-          key,
-          address: uniqueCreatorsWithUpdates[key].address,
-          activated: uniqueCreatorsWithUpdates[key].activated,
-          name:
-            uniqueCreatorsWithUpdates[key].name ||
-            shortenAddress(uniqueCreatorsWithUpdates[key].address),
-          image: uniqueCreatorsWithUpdates[key].image,
-        }))}
-      />
-
-      <h2>Listing Notifications</h2>
-      <Table
-        columns={[
-          {
-            key: 'accountPubkey',
-            title: 'Listing',
-            dataIndex: 'accountPubkey',
-          },
-          {
-            key: 'description',
-            title: 'Notification',
-            dataIndex: 'description',
-          },
-          {
-            key: 'action',
-            title: 'Action',
-            render: ({ action, callToAction }) => {
-              const [status, setStatus] = useState<ListingNotificationStatus>(
-                ListingNotificationStatus.Ready,
+    <>
+      <div className="metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap">
+        <h2 className="">Whitelisted Creators</h2>
+        <div>
+          <Button
+            onClick={async () => {
+              notify({
+                message: 'Saving...',
+                type: 'info',
+              });
+              await saveAdmin(
+                connection,
+                wallet,
+                newStore.public,
+                Object.values(updatedCreators),
               );
-
-              const onSubmit = async () => {
-                try {
-                  setStatus(ListingNotificationStatus.Submitting);
-                  await action();
-                  setStatus(ListingNotificationStatus.Complete);
-                } catch (e: any) {
-                  Bugsnag.notify(e);
-                  setStatus(ListingNotificationStatus.Error);
-                }
-              };
-              const isComplete = status === ListingNotificationStatus.Complete;
-
-              const label = isComplete ? 'Done' : callToAction;
-              return (
-                <Button
-                  loading={status === ListingNotificationStatus.Submitting}
-                  disabled={isComplete}
-                  onClick={onSubmit}
-                >
-                  {label}
-                </Button>
-              );
-            },
-          },
-        ]}
-        dataSource={notifications}
-      />
-
-      <div className="metaplex-flex-column metaplex-gap-4">
-        <h2>Administrator Actions</h2>
-        <div className="metaplex-flex metaplex-gap-4">
-          <div className="metaplex-width-50">
-            <h3>Convert Master Editions</h3>
-            <p>
-              You have {filteredMetadata?.available.length} MasterEditionV1s
-              that can be converted right now and{' '}
-              {filteredMetadata?.unavailable.length} still in unfinished
-              auctions that cannot be converted yet.
-            </p>
-            <Button
-              size="large"
-              loading={convertingMasterEditions}
-              onClick={async () => {
-                setConvertMasterEditions(true);
-
-                await convertMasterEditions(
-                  connection,
-                  wallet,
-                  filteredMetadata?.available || [],
-                  accountByMint,
-                );
-
-                setConvertMasterEditions(false);
-              }}
-            >
-              Convert Eligible Master Editions
-            </Button>
-          </div>
-          <div className="metaplex-width-50">
-            <h3>Cache Auctions</h3>
-            <p>
-              Activate your storefront listing caches by pressing &ldquo;build
-              cache&rdquo;. This will reduce page load times for your listings.
-              Your storefront will start looking up listing using the cache on
-              November 17th. To preview the speed improvement visit the Holaplex{' '}
-              <a
-                rel="noopener noreferrer"
-                target="_blank"
-                href={`https://${storefront.subdomain}.holaxplex.dev`}
-              >
-                {' '}
-                staging environment
-              </a>{' '}
-              for your storefront.
-            </p>
-            <Space direction="vertical" size="middle" align="center">
-              <Progress
-                type="circle"
-                status="normal"
-                percent={(auctionCacheTotal / auctionManagerTotal) * 100}
-                format={() => `${auctionManagersToCache.length} left`}
-              />
-              {auctionManagersToCache.length > 0 && (
-                <Button
-                  size="large"
-                  loading={cachingAuctions}
-                  onClick={async () => {
-                    setCachingAuctions(true);
-
-                    try {
-                      await cacheAllAuctions(
-                        wallet,
-                        connection,
-                        auctionManagersToCache,
-                        auctionCaches,
-                        storeIndexer,
-                      );
-                    } finally {
-                      setCachingAuctions(false);
-                    }
-                  }}
-                >
-                  Build Cache
-                </Button>
-              )}
-            </Space>
-          </div>
+              notify({
+                message: 'Saved',
+                type: 'success',
+              });
+            }}
+            size="large"
+            type="primary"
+          >
+            Submit changes
+          </Button>
         </div>
       </div>
-      <h2>Miscellaneous</h2>
-      <div>
-        <Button type="primary" onClick={() => localStorage.clear()}>
-          Clear Local Cache
-        </Button>
+      <div className="metaplex-flex-column metaplex-gap-4 ">
+        <div className="metaplex-flex">
+          <ArtistModal
+            setUpdatedCreators={setUpdatedCreators}
+            uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
+            showAddCreatorModal={showAddCreatorModal}
+            setShowAddCreatorModal={setShowAddCreatorModal}
+          />
+        </div>
+        <div className="flex items-end justify-between">
+          <Switch
+            checkedChildren="Public"
+            unCheckedChildren="Whitelist Only"
+            checked={newStore.public}
+            onChange={val => {
+              setNewStore(() => {
+                const newS = new Store(store.info);
+                newS.public = val;
+                return newS;
+              });
+            }}
+          />
+          <Button onClick={() => setShowAddCreatorModal(true)}>
+            Add Creator
+          </Button>
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
+            key,
+            address: uniqueCreatorsWithUpdates[key].address,
+            activated: uniqueCreatorsWithUpdates[key].activated,
+            name:
+              uniqueCreatorsWithUpdates[key].name ||
+              shortenAddress(uniqueCreatorsWithUpdates[key].address),
+            image: uniqueCreatorsWithUpdates[key].image,
+          }))}
+        />
+
+        <h2>Listing Notifications</h2>
+        <Table
+          columns={[
+            {
+              key: 'accountPubkey',
+              title: 'Listing',
+              dataIndex: 'accountPubkey',
+            },
+            {
+              key: 'description',
+              title: 'Notification',
+              dataIndex: 'description',
+            },
+            {
+              key: 'action',
+              title: 'Action',
+              render: ({ action, callToAction }) => {
+                const [status, setStatus] = useState<ListingNotificationStatus>(
+                  ListingNotificationStatus.Ready,
+                );
+
+                const onSubmit = async () => {
+                  try {
+                    setStatus(ListingNotificationStatus.Submitting);
+                    await action();
+                    setStatus(ListingNotificationStatus.Complete);
+                  } catch (e: any) {
+                    Bugsnag.notify(e);
+                    setStatus(ListingNotificationStatus.Error);
+                  }
+                };
+                const isComplete =
+                  status === ListingNotificationStatus.Complete;
+
+                const label = isComplete ? 'Done' : callToAction;
+                return (
+                  <Button
+                    loading={status === ListingNotificationStatus.Submitting}
+                    disabled={isComplete}
+                    onClick={onSubmit}
+                  >
+                    {label}
+                  </Button>
+                );
+              },
+            },
+          ]}
+          dataSource={notifications}
+        />
+
+        <div className="metaplex-flex-column metaplex-gap-4">
+          <h2>Administrator Actions</h2>
+          <div className="metaplex-flex metaplex-gap-4">
+            <div className="metaplex-width-50">
+              <h3>Convert Master Editions</h3>
+              <p>
+                You have {filteredMetadata?.available.length} MasterEditionV1s
+                that can be converted right now and{' '}
+                {filteredMetadata?.unavailable.length} still in unfinished
+                auctions that cannot be converted yet.
+              </p>
+              <Button
+                size="large"
+                loading={convertingMasterEditions}
+                onClick={async () => {
+                  setConvertMasterEditions(true);
+
+                  await convertMasterEditions(
+                    connection,
+                    wallet,
+                    filteredMetadata?.available || [],
+                    accountByMint,
+                  );
+
+                  setConvertMasterEditions(false);
+                }}
+              >
+                Convert Eligible Master Editions
+              </Button>
+            </div>
+            <div className="metaplex-width-50">
+              <h3>Cache Auctions</h3>
+              <p>
+                Activate your storefront listing caches by pressing &ldquo;build
+                cache&rdquo;. This will reduce page load times for your
+                listings. Your storefront will start looking up listing using
+                the cache on November 17th. To preview the speed improvement
+                visit the Holaplex{' '}
+                <a
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  href={`https://${storefront.subdomain}.holaxplex.dev`}
+                >
+                  {' '}
+                  staging environment
+                </a>{' '}
+                for your storefront.
+              </p>
+              <Space direction="vertical" size="middle" align="center">
+                <Progress
+                  type="circle"
+                  status="normal"
+                  percent={(auctionCacheTotal / auctionManagerTotal) * 100}
+                  format={() => `${auctionManagersToCache.length} left`}
+                />
+                {auctionManagersToCache.length > 0 && (
+                  <Button
+                    size="large"
+                    loading={cachingAuctions}
+                    onClick={async () => {
+                      setCachingAuctions(true);
+
+                      try {
+                        await cacheAllAuctions(
+                          wallet,
+                          connection,
+                          auctionManagersToCache,
+                          auctionCaches,
+                          storeIndexer,
+                        );
+                      } finally {
+                        setCachingAuctions(false);
+                      }
+                    }}
+                  >
+                    Build Cache
+                  </Button>
+                )}
+              </Space>
+            </div>
+          </div>
+        </div>
+        <h2>Miscellaneous</h2>
+        <div>
+          <Button type="primary" onClick={() => localStorage.clear()}>
+            Clear Local Cache
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

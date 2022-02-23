@@ -37,7 +37,7 @@ export const ArtistView = () => {
 
   return (
     <>
-      <div className="metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap">
+      <div className="metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap h-10">
         <h2 className="">Creators</h2>
       </div>
       <Row>

@@ -51,7 +51,7 @@ export const ArtworksView = () => {
   return (
     <>
       <div className="metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap">
-        <div className="flex">
+        <div className="flex items-center">
           <h2>Owned Artwork</h2>
           <Tooltip
             title="NFTs minted with the same wallet that created this store shows up here, or ones you have bought from the store with your connected wallet."
@@ -63,17 +63,19 @@ export const ArtworksView = () => {
         <div>
           <Button
             size="large"
-            type="ghost"
+            type={ownedMetadata.length ? 'ghost' : 'primary'}
             onClick={() => setShowMintModal(true)}
-            className="mr-4"
+            className=""
           >
             Mint NFTs
           </Button>
-          <Link to="/listings/new/0">
-            <Button size="large" type="primary">
-              Sell NFT
-            </Button>
-          </Link>
+          {ownedMetadata.length ? (
+            <Link to="/listings/new/0" className="ml-4">
+              <Button size="large" type="primary">
+                Sell NFT
+              </Button>
+            </Link>
+          ) : null}
         </div>
       </div>
       <Row>
