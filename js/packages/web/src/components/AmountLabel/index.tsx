@@ -52,36 +52,17 @@ export const AmountLabel = (props: IAmountLabel) => {
   const PriceNaN = isNaN(amount)
 
   return (
-    <div style={{ display: 'flex', ...containerStyle }}>
-      {PriceNaN === false && (
-        <Statistic
-          style={style}
-          className='create-statistic'
-          title={title || ''}
-          value={`${formattedAmount} ${displaySymbol || ''}`}
-          prefix={
-            customPrefix || (
-              <TokenCircle
-                iconSize={iconSize}
-                iconFile={tokenInfo?.logoURI == '' ? undefined : tokenInfo?.logoURI}
-              />
-            )
-          }
-        />
-      )}
+    <>
       {displayUSD && (
-        <div className='usd'>
-          {PriceNaN === false ? (
-            priceUSD ? (
-              formatUSD.format(priceUSD)
-            ) : (
-              '$N/A'
-            )
-          ) : (
-            <div className='placebid'>{ended ? 'N/A' : 'Place Bid'}</div>
+        <div className='flex items-center justify-between gap-[6px]'>
+          <span className='font-500 text-gray-800'>{formattedAmount} SOL</span>
+          {(priceUSD ? formatUSD.format(priceUSD) : '$N/A') && (
+            <span className='text-md text-gray-500'>
+              {priceUSD ? formatUSD.format(priceUSD) : '$N/A'}
+            </span>
           )}
         </div>
       )}
-    </div>
+    </>
   )
 }
