@@ -1,5 +1,4 @@
 import { readFile, stat } from 'fs/promises';
-import { readFileSync } from 'fs';
 import path from 'path';
 import Arweave from 'arweave';
 
@@ -15,6 +14,7 @@ import Transaction from 'arweave/node/lib/transaction';
 import Bundlr from '@bundlr-network/client';
 
 import BundlrTransaction from '@bundlr-network/client/build/src/transaction';
+import { getAssetManifest } from '../../commands/upload';
 
 export const LAMPORTS = 1_000_000_000;
 /**
@@ -483,9 +483,8 @@ export function* makeArweaveBundleUploadGenerator(
 
   const filePairs = assets.map((asset: AssetKey) => {
     const manifestPath = path.join(dirname, `${asset.index}.json`);
-    const manifestData: Manifest = JSON.parse(
-      readFileSync(manifestPath).toString(),
-    );
+    const manifestData = getAssetManifest(dirname, asset.index);
+
     return {
       key: asset.index,
       image: path.join(dirname, `${manifestData.image}`),

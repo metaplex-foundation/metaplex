@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 import * as fs from 'fs';
 import * as path from 'path';
-import { program } from 'commander';
+import { InvalidArgumentError, program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 
 import {
@@ -41,7 +41,6 @@ import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
-import { escapeRegExp } from 'lodash';
 program.version('0.0.2');
 const supportedImageTypes = {
   'image/png': 1,
@@ -62,6 +61,17 @@ if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
 log.setLevel(log.levels.INFO);
+
+// From commander examples
+function myParseInt(value) {
+  // parseInt takes a string and a radix
+  const parsedValue = parseInt(value, 10);
+  if (isNaN(parsedValue)) {
+    throw new InvalidArgumentError('Not a number.');
+  }
+  return parsedValue;
+}
+
 programCommand('upload')
   .argument(
     '<directory>',
@@ -78,8 +88,15 @@ programCommand('upload')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
+  .option(
+    '-rl, --rate-limit <number>',
+    'max number of requests per second',
+    myParseInt,
+    5,
+  )
   .action(async (files: string[], options, cmd) => {
-    const { keypair, env, cacheName, configPath, rpcUrl } = cmd.opts();
+    const { keypair, env, cacheName, configPath, rpcUrl, rateLimit } =
+      cmd.opts();
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
@@ -135,11 +152,6 @@ programCommand('upload')
     ) {
       throw new Error(
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
-      );
-    }
-    if (storage === StorageType.NftStorage && !nftStorageKey) {
-      throw new Error(
-        'NftStorage selected as storage option but NftStorage project api key were not provided.',
       );
     }
     if (storage === StorageType.Aws && !awsS3Bucket) {
@@ -237,6 +249,7 @@ programCommand('upload')
         goLiveDate,
         uuid,
         arweaveJwk,
+        rateLimit,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
@@ -496,13 +509,15 @@ programCommand('verify_upload')
             CONFIG_ARRAY_START_V2 + 4 + CONFIG_LINE_SIZE_V2 * (key + 1),
           );
 
-          const name = fromUTF8Array([...thisSlice.slice(2, 34)]);
-          const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+          const name = fromUTF8Array([
+            ...thisSlice.slice(4, 36).filter(n => n !== 0),
+          ]);
+          const uri = fromUTF8Array([
+            ...thisSlice.slice(40, 240).filter(n => n !== 0),
+          ]);
           const cacheItem = cacheContent.items[key];
-          if (
-            !name.match(escapeRegExp(cacheItem.name)) ||
-            !uri.match(escapeRegExp(cacheItem.link))
-          ) {
+
+          if (name != cacheItem.name || uri != cacheItem.link) {
             //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
             /*log.info(
                 `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +

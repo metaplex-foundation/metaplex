@@ -6,7 +6,6 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 import BN from 'bn.js';
-
 import { programIds, toPublicKey, StringPublicKey } from '../../../utils';
 import {
   ClaimPackArgs,
@@ -30,7 +29,6 @@ interface Params extends ClaimPackParams {
   newMint: StringPublicKey;
   metadataMint: StringPublicKey;
   edition: BN;
-  randomOracle: StringPublicKey;
 }
 
 export async function claimPack({
@@ -42,7 +40,6 @@ export async function claimPack({
   newMint,
   metadataMint,
   edition,
-  randomOracle,
 }: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
   const value = new ClaimPackArgs({ index });
@@ -156,21 +153,15 @@ export async function claimPack({
       isSigner: false,
       isWritable: false,
     },
-    // randomness_oracle
-    {
-      pubkey: toPublicKey(randomOracle),
-      isSigner: false,
-      isWritable: false,
-    },
     // metaplex_token_metadata
     {
-      pubkey: toPublicKey(programIds().metadata),
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
     // spl_token program
     {
-      pubkey: programIds().token,
+      pubkey: PROGRAM_IDS.token,
       isSigner: false,
       isWritable: false,
     },
