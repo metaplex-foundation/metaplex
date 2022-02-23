@@ -67,16 +67,15 @@ export const MintButton = ({
       onClick={async () => {
         setClicked(true);
         if (candyMachine?.state.isActive && candyMachine?.state.gatekeeper) {
-          //candyMachine.state.gatekeeper.gatekeeperNetwork === civicNetwork
-          if(true){
+          const network = candyMachine.state.gatekeeper.gatekeeperNetwork.toBase58()
+          if(network === 'ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6'){
             if (gatewayStatus === GatewayStatus.ACTIVE) {
               setClicked(true);
             } else {
               await requestGatewayToken();
             }
           }
-          //candyMachine.state.gatekeeper.gatekeeperNetwork === encoreNetwork
-          else if (true){
+          else if (network === 'tibePmPaoTgrs929rWpu755EXaxC7M3SthVCf6GzjZt'){
             const gatewayToken = await findGatewayToken(
               connection.connection,
               wallet.publicKey!,
@@ -89,6 +88,8 @@ export const MintButton = ({
             } else {
               window.open(`https://verify.encore.fans/?network=${rpcUrl}&gkNetwork=${candyMachine!.state.gatekeeper}`, '_blank')
             }
+          } else {
+            throw new Error(`Unknown Gatekeeper Network: ${network}`);
           }
         } else {
           await onMint();
