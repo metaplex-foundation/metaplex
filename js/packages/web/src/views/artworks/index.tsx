@@ -60,24 +60,21 @@ export const ArtworksView = () => {
             <InfoCircleFilled size={12} />
           </Tooltip>
         </div>
-        {ownedMetadata.length > 0 ||
-          (true && (
-            <div>
-              <Button
-                size="large"
-                type="ghost"
-                onClick={() => setShowMintModal(true)}
-                className="mr-4"
-              >
-                Mint NFTs
-              </Button>
-              <Link to="/listings/new/0">
-                <Button size="large" type="primary">
-                  Sell NFT
-                </Button>
-              </Link>
-            </div>
-          ))}
+        <div>
+          <Button
+            size="large"
+            type="ghost"
+            onClick={() => setShowMintModal(true)}
+            className="mr-4"
+          >
+            Mint NFTs
+          </Button>
+          <Link to="/listings/new/0">
+            <Button size="large" type="primary">
+              Sell NFT
+            </Button>
+          </Link>
+        </div>
       </div>
       <Row>
         <Col span={24}>
