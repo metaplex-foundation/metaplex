@@ -157,12 +157,38 @@
   @apply !bg-white placeholder:text-gray-400;
 
   &-affix-wrapper {
-    @apply !border-2 border-gray-400 bg-white outline-none focus-within:!border-blue-400;
+    @apply !rounded !border-2 border-gray-400 bg-white outline-none focus-within:!border-blue-400;
   }
 
   &-prefix {
   }
 
   &-suffix {
+  }
+}
+
+.ant-input {
+  @apply rounded !border-2 border-gray-400 !bg-white outline-none placeholder:text-gray-400 focus:!border-blue-400 min-h-[38px];
+}
+
+.ant-input-group-wrapper {
+  * {
+    @apply !outline-none;
+  }
+
+  .ant-input-wrapper {
+  }
+
+  .ant-input-group {
+  }
+
+  .ant-input {
+  }
+  .ant-input-group-addon {
+    .ant-select {
+    }
+    .ant-select-selector {
+      @apply flex;
+    }
   }
 }

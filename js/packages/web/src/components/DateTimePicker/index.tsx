@@ -12,7 +12,7 @@ interface IDateTimePicker {
 export const DateTimePicker = (props: IDateTimePicker) => {
   const { momentObj, setMomentObj, datePickerProps = {}, timePickerProps = {} } = props
   return (
-    <>
+    <div className='flex items-center gap-[8px]'>
       <DatePicker
         className='field-date'
         size='large'
@@ -45,6 +45,6 @@ export const DateTimePicker = (props: IDateTimePicker) => {
         }}
         {...timePickerProps}
       />
-    </>
+    </div>
   )
 }
