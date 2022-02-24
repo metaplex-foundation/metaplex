@@ -342,7 +342,6 @@ export const AuctionBids = ({
         title={'Bid history'}
         bodyStyle={{ padding: 0 }}
         extra={
-          auctionRunning &&
           auctionView.myBidderMetadata &&
           !auctionView.myBidderMetadata.info.cancelled && (
             <Tooltip
@@ -388,7 +387,7 @@ export const AuctionBids = ({
                   }
                 }}
               >
-                Cancel Bid
+                {auctionRunning ? 'Cancel Bid' : 'Refund bid'}
               </Button>
             </Tooltip>
           )
