@@ -20,7 +20,7 @@ export const Home: FC<HomeProps> = () => {
       <CallToAction className='mb-[40px] md:mb-[60px] lg:mb-[100px]' />
       <RecentCollectionsCarousel className='mb-[40px] md:mb-[60px] lg:mb-[100px]' />
       <Features className='mb-[40px] md:mb-[60px] lg:mb-[100px]' />
-      <MostActive className='mb-[40px] md:mb-[60px] lg:mb-[100px]' />
+      {/* <MostActive className='mb-[40px] md:mb-[60px] lg:mb-[100px]' /> */}
       <BlogCarousel className='mb-[40px] md:mb-[60px] lg:mb-[100px]' />
       <SubmitCollection className='mb-[40px] md:mb-[60px] lg:mb-[100px]' />
     </>
