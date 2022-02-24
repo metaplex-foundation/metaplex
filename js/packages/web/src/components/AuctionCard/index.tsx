@@ -1002,18 +1002,25 @@ export const AuctionCard = ({
           </div>
         }
       >
-        {auctionEnded && bids.length && mint ? (
-          someoneWon ? (
-            winners.map(bid => (
-              <WinnerProfile
-                bidderPubkey={bid.info.bidderPubkey}
-                key={bid.info.bidderPubkey}
-              />
-            ))
-          ) : null
-        ) : (
+        {someoneWon &&
+          mint &&
+          winners.map(bid => (
+            <WinnerProfile
+              bidderPubkey={bid.info.bidderPubkey}
+              key={bid.info.bidderPubkey}
+            />
+          ))}
+        {/* ugly, but it figures out wether to show the space or not by mirroring the conditions below */}
+        {(!showPlaceBidUI ||
+          (showDefaultNonEndedAction &&
+            showPlaceBidUI &&
+            !auctionView.isInstantSale) ||
+          (showDefaultNonEndedAction && showStartAuctionBtn) ||
+          (!hideDefaultAction && !wallet.connected) ||
+          showRedeemReclaimRefundBtn ||
+          action) && (
           <Space
-            className="metaplex-fullwidth metaplex-space-align-stretch"
+            className="metaplex-fullwidth metaplex-space-align-stretch p-4"
             direction="vertical"
           >
             {!showPlaceBidUI && (
