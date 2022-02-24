@@ -591,7 +591,7 @@ export const AuctionCard = ({
             </div>
           )}
         </div>
-        {showPlaceBid &&
+        {/* {showPlaceBid &&
           !auctionView.isInstantSale &&
           !hideDefaultAction &&
           wallet.connected &&
@@ -679,7 +679,7 @@ export const AuctionCard = ({
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         {!hideDefaultAction &&
           wallet.connected &&
           !auctionView.auction.info.ended() &&
