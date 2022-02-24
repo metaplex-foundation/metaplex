@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react'
-import { Row, Button, Modal, ButtonProps } from 'antd'
+import { Row, Modal, ButtonProps } from 'antd'
 import { useUserArts } from '../../hooks'
 import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import AuctionItemCard from './AuctionItemCard'
+
+import { Button } from '@oyster/common'
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[]
@@ -57,12 +59,11 @@ export const ArtSelector = (props: ArtSelectorProps) => {
             />
           )
         })}
+
         {(allowMultiple || selectedItems.size === 0) && (
           <div
-            className='ant-card ant-card-bordered ant-card-hoverable art-card'
-            style={{ width: 200, height: 300, display: 'flex' }}
-            onClick={open}
-          >
+            className='flex h-[240px] w-[200px] cursor-pointer items-center justify-center rounded border border-gray-200 bg-gray-50 font-600 uppercase hover:bg-gray-100'
+            onClick={open}>
             <span className='text-center'>Add an NFT</span>
           </div>
         )}
@@ -74,11 +75,12 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         onOk={confirm}
         width={1100}
         footer={null}
-        className={'modalp-40 big-modal'}
-      >
-        <Row className='call-to-action' style={{ marginBottom: 0 }}>
-          <h2>Select the NFT you want to sell</h2>
-          <p style={{ fontSize: '1.2rem' }}>Select the NFT that you want to sell copy/copies of.</p>
+        className={'modalp-40 big-modal'}>
+        <Row
+          className='call-to-action flex flex-col gap-[12px] text-white'
+          style={{ marginBottom: 0 }}>
+          <h2 className='text-h5 text-white'>Select the NFT you want to sell</h2>
+          <p>Select the NFT that you want to sell copy/copies of.</p>
         </Row>
         <Row className='content-action' style={{ overflowY: 'auto', height: '50vh' }}>
           <div className='artwork-grid'>
@@ -111,7 +113,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           </div>
         </Row>
         <Row>
-          <Button type='primary' size='large' onClick={confirm} className='action-btn'>
+          <Button type='primary' size='lg' onClick={confirm} className='w-full uppercase'>
             Confirm
           </Button>
         </Row>

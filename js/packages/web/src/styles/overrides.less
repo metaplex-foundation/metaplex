@@ -131,5 +131,64 @@
 
 /* Auction page (Temp CSS) */
 .creator-base-page {
-  @apply !bg-gray-700 !py-[100px];
+  @apply !py-[100px];
+  // @apply bg-black;
+}
+
+/* Auction create page */
+.type-btn {
+  @apply !flex w-full flex-col items-start justify-start rounded-[4px] border border-gray-300 px-[20px] py-[12px] duration-[50ms] ease-in-out;
+
+  &:hover {
+    @apply bg-gray-100;
+  }
+
+  &__heading {
+    @apply !text-h6 font-600;
+  }
+
+  &__description {
+    @apply !text-base text-gray-600;
+  }
+}
+
+/* Ant Input */
+.ant-input {
+  @apply !bg-white placeholder:text-gray-400;
+
+  &-affix-wrapper {
+    @apply !rounded !border-2 border-gray-400 bg-white outline-none focus-within:!border-blue-400;
+  }
+
+  &-prefix {
+  }
+
+  &-suffix {
+  }
+}
+
+.ant-input {
+  @apply rounded !border-2 border-gray-400 !bg-white outline-none placeholder:text-gray-400 focus:!border-blue-400 min-h-[38px];
+}
+
+.ant-input-group-wrapper {
+  * {
+    @apply !outline-none;
+  }
+
+  .ant-input-wrapper {
+  }
+
+  .ant-input-group {
+  }
+
+  .ant-input {
+  }
+  .ant-input-group-addon {
+    .ant-select {
+    }
+    .ant-select-selector {
+      @apply flex;
+    }
+  }
 }
