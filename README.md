@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://metaplex.com">
-   <img alt="Metaplex" src="https://metaplex.com/static/logos/metaplex.svg" width="250" />
+   <img alt="Metaplex" src="js/packages/web/public/metaplex-logo.svg" width="250" />
   </a>
 </p>
 
@@ -29,6 +29,7 @@ $ cd js
 $ yarn install
 $ yarn bootstrap
 $ yarn build
+$ docker-compose up -d
 $ SUBDOMAIN='store-subdomain' yarn start
 ```
 

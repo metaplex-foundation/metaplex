@@ -1,14 +1,8 @@
-import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
+import { InfoCircleFilled, LoadingOutlined } from '@ant-design/icons';
 import {
   AuctionState,
-  BidderMetadata,
-  formatTokenAmount,
-  Identicon,
   MetaplexModal,
-  ParsedAccount,
   shortenAddress,
-  StringPublicKey,
-  toPublicKey,
   useConnection,
   useMint,
   useMeta,
@@ -22,22 +16,22 @@ import {
 } from '@oyster/common';
 import { actions } from '@metaplex/js';
 import { PublicKey } from '@solana/web3.js';
-import cx from 'classnames';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
-import { getHandleAndRegistryKey } from '@solana/spl-name-service';
-import { MintInfo } from '@solana/spl-token';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection } from '@solana/web3.js';
-import { Button, Carousel, Col, List, Row, Skeleton, Space, Spin, Typography, Tooltip, notification } from 'antd';
+import {
+  Button,
+  Carousel,
+  List,
+  Skeleton,
+  Spin,
+  Tooltip,
+  notification,
+} from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { format } from 'timeago.js';
-import { AmountLabel } from '../../components/AmountLabel';
 import { ArtContent } from '../../components/ArtContent';
 import { AuctionCard } from '../../components/AuctionCard';
-import { ClickToCopy } from '../../components/ClickToCopy';
-import { MetaAvatar } from '../../components/MetaAvatar';
 import { ViewOn } from '../../components/ViewOn';
 import { some } from 'lodash';
 import {
@@ -51,8 +45,8 @@ import {
 } from '../../hooks';
 import { ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
-
-const { Text } = Typography;
+import { Card } from 'antd';
+import BidLine from './BidLine';
 
 export const AuctionItem = ({
   item,
@@ -62,18 +56,31 @@ export const AuctionItem = ({
   active?: boolean;
 }) => {
   const id = item.metadata.pubkey;
-  
-  return <ArtContent pubkey={id} active={active} allowMeshRender={true} backdrop="dark" square={false} />;
+
+  return (
+    <ArtContent
+      pubkey={id}
+      active={active}
+      allowMeshRender={true}
+      backdrop="dark"
+      square={false}
+    />
+  );
 };
 
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
+
+  if (!id) {
+    return <></>;
+  }
+
   const { loading, auction } = useAuction(id);
   const connection = useConnection();
   const { patchState } = useMeta();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const art = useArt(auction?.thumbnail.metadata.pubkey);
-  const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
+  const art = useArt(auction?.thumbnail?.metadata?.pubkey);
+  const { ref, data } = useExtendedArt(auction?.thumbnail?.metadata?.pubkey);
   const creators = useCreators(auction);
   const wallet = useWallet();
   let edition = '';
@@ -87,7 +94,6 @@ export const AuctionView = () => {
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
 
-  const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
   const attributes = data?.attributes;
 
@@ -141,171 +147,148 @@ export const AuctionView = () => {
     );
   });
 
-  return (
-    <Row justify="center" ref={ref} gutter={[48, 0]}>
-      <Col span={24} md={{ span: 20 }} lg={9}>
-        <Carousel
-          className="metaplex-spacing-bottom-md"
-          autoplay={false}
-          afterChange={index => setCurrentIndex(index)}
-        >
-          {items}
-        </Carousel>
-        <Space direction="vertical" size="small">
-          <Text>ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}</Text>
-          <p>
-            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description ||
-              (winnerCount !== undefined && <div>No description provided.</div>)}
-          </p>
-        </Space>
-        {attributes && (
-          <div>
-            <Text>Attributes</Text>
-            <List grid={{ column: 4 }}>
-              {attributes.map((attribute, index) => (
-                <List.Item key={`${attribute.value}-${index}`}>
-                  <List.Item.Meta
-                    title={attribute.trait_type}
-                    description={attribute.value}
-                  />
-                </List.Item>
-              ))}
-            </List>
-          </div>
-        )}
-      </Col>
+  const getArt = (className: string) => (
+    <div className={className}>
+      <Carousel
+        className="metaplex-margin-bottom-8"
+        autoplay={false}
+        afterChange={index => setCurrentIndex(index)}
+      >
+        {items}
+      </Carousel>
+    </div>
+  );
 
-      <Col span={24} lg={{ offset: 1, span: 13 }}>
-        <Row justify="space-between">
-          <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
-          {wallet.publicKey?.toBase58() === auction?.auctionManager.authority && (
-            <Link to={`/auction/${id}/billing`}>
-              <Button type="ghost">
-                Billing
-              </Button>
-            </Link>
-          )}
-        </Row>
-        <Row className="metaplex-spacing-bottom-lg">
-          <Col span={12}>
-            <Space direction="horizontal" align="start">
-              <Space direction="vertical" size="small">
-                <Text>CREATED BY</Text>
-                <MetaAvatar creators={creators} />
-              </Space>
-              <Space direction="vertical" size="small">
-                <Text>Edition</Text>
-                {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
-              </Space>
-              <Space direction="vertical" size="small">
-                <Text>Winners</Text>
-                <span>
-                  {winnerCount === undefined ? (
-                    <Skeleton paragraph={{ rows: 0 }} />
-                  ) : (
-                    winnerCount
-                  )}
+  const getDescriptionAndAttributes = (className: string) => (
+    <div className={className}>
+      {description && (
+        <>
+          <h3 className="info-header">Description</h3>
+          <p>{description}</p>
+        </>
+      )}
+
+      {attributes && attributes.length > 0 && (
+        <div>
+          <h3 className="info-header">Attributes</h3>
+          <List grid={{ column: 4 }}>
+            {attributes.map((attribute, index) => (
+              <List.Item key={`${attribute.value}-${index}`}>
+                <List.Item.Meta
+                  title={attribute.trait_type}
+                  description={attribute.value}
+                />
+              </List.Item>
+            ))}
+          </List>
+        </div>
+      )}
+    </div>
+  );
+  // const bids = useBidsForAuction(auction.auction.pubkey);
+
+  return (
+    <div className="item-page-wrapper" ref={ref}>
+      <div className="item-page-left">
+        {getArt('art-desktop')}
+        {getDescriptionAndAttributes('art-desktop')}
+      </div>
+
+      <div className="item-page-right">
+        <div className="title-row">
+          <h1 className="text-3xl">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h1>
+          <ViewOn art={art} />
+        </div>
+
+        {getArt('art-mobile')}
+        {getDescriptionAndAttributes('art-mobile')}
+
+        {wallet.publicKey?.toBase58() === auction?.auctionManager.authority && (
+          <Link to={`/listings/${id}/billing`}>
+            <Button type="ghost" className="metaplex-margin-bottom-8">
+              Billing / Settlement
+            </Button>
+          </Link>
+        )}
+
+        <div className="info-outer-wrapper">
+          <div className="info-items-wrapper">
+            <div className="info-item-wrapper">
+              <span className="item-title">
+                {creators.length > 1 ? 'Creators' : 'Creator'}
+              </span>
+              {creators.map(creator => (
+                <span className="info-address" key={creator.address}>
+                  {shortenAddress(creator.address || '')}
                 </span>
-              </Space>
-              <Space direction="vertical" size="small">
-                <Text>NFTS</Text>
+              ))}
+            </div>
+            <div className="info-item-wrapper">
+              <span className="item-title">Edition</span>
+              <span>
+                {(auction?.items.length || 0) > 1
+                  ? 'Multiple'
+                  : edition === 'NFT 0'
+                  ? 'Master'
+                  : edition}
+              </span>
+            </div>
+            <div className="info-item-wrapper">
+              <span className="item-title">Winners</span>
+              <span>
+                {winnerCount === undefined ? (
+                  <Skeleton paragraph={{ rows: 0 }} />
+                ) : (
+                  winnerCount
+                )}
+              </span>
+            </div>
+            <div className="info-item-wrapper">
+              <span className="item-title">NFTs</span>
+              <span>
                 {nftCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
                 ) : (
                   nftCount
                 )}
-              </Space>
-            </Space>
-          </Col>
-          <Col span={12}>
-            <Row justify="end">
-              <ViewOn art={art} />
-            </Row>
-          </Col>
-        </Row>
+              </span>
+            </div>
+            {(auction?.items.length || 0) > 1 && (
+              <div className="info-item-wrapper">
+                <span className="item-title">Remaining</span>
+                <span>
+                  {art.maxSupply === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    <span className="flex justify-center items-center text-sm">
+                      {`${(art.maxSupply || 0) - (art.supply || 0)} of ${
+                        art.maxSupply || 0
+                      } `}
+                      <Tooltip
+                        title="Max supply may include items from previous listings"
+                        className="ml-2"
+                      >
+                        <InfoCircleFilled size={12} />
+                      </Tooltip>
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
 
-        {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-        {auction && (
-          <AuctionCard auctionView={auction} hideDefaultAction={false} />
-        )}
-        {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
-      </Col>
-    </Row>
-  );
-};
-
-const BidLine = (props: {
-  bid: ParsedAccount<BidderMetadata>;
-  index: number;
-  mint?: MintInfo;
-  isCancelled?: boolean;
-  isActive?: boolean;
-  isLastWinner?: boolean;
-}) => {
-  const { bid, mint, isCancelled, isLastWinner } = props;
-  const { publicKey } = useWallet();
-  const bidder = bid.info.bidderPubkey;
-  const isme = publicKey?.toBase58() === bidder;
-
-  // Get Twitter Handle from address
-  const connection = useConnection();
-  const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
-  useEffect(() => {
-    const getTwitterHandle = async (
-      connection: Connection,
-      bidder: StringPublicKey,
-    ): Promise<string | undefined> => {
-      try {
-        const [twitterHandle] = await getHandleAndRegistryKey(
-          connection,
-          toPublicKey(bidder),
-        );
-        setBidderTwitterHandle(twitterHandle);
-      } catch (err) {
-        console.warn(`err`);
-        return undefined;
-      }
-    };
-    getTwitterHandle(connection, bidder);
-  }, [bidderTwitterHandle]);
-
-  return (
-    <Row wrap={false} align="middle" className={cx("metaplex-fullwidth", "auction-bid-line-item", { "auction-bid-last-winner": isLastWinner })}>
-      <Col span={9}>
-        <Space direction="horizontal" className={cx({ "auction-bid-line-item-is-canceled": isCancelled && publicKey?.toBase58() === bidder })}>
-          {isme && <CheckOutlined />}
-          <AmountLabel
-            displaySOL={true}
-            amount={formatTokenAmount(bid.info.lastBid, mint)}
-          />
-        </Space>
-      </Col>
-      <Col span={6}>
-        {/* uses milliseconds */}
-        {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
-      </Col>
-      <Col span={9}>
-        <Space
-          direction="horizontal"
-          align="center"
-          className="metaplex-fullwidth metaplex-space-justify-end"
-        >
-          <Identicon size={24} address={bidder} />
-          {bidderTwitterHandle ? (
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              title={shortenAddress(bidder)}
-              href={`https://twitter.com/${bidderTwitterHandle}`}
-            >{`@${bidderTwitterHandle}`}</a>
-          ) : (
-            shortenAddress(bidder)
+        <div className="margin-bottom-7">
+          {!auction && <Skeleton paragraph={{ rows: 6 }} />}
+          {auction && (
+            <AuctionCard auctionView={auction} hideDefaultAction={false} />
           )}
-          <ClickToCopy copyText={bidder} />
-        </Space>
-      </Col>
-    </Row>
+        </div>
+        {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
+      </div>
+    </div>
   );
 };
 
@@ -325,40 +308,25 @@ export const AuctionBids = ({
 
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
 
-  const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const winners = useWinningBidsForAuction(auctionPubkey);
-  const isWinner = some(winners, bid => bid.info.bidderPubkey === wallet.publicKey?.toBase58());
+  const isWinner = some(
+    winners,
+    bid => bid.info.bidderPubkey === wallet.publicKey?.toBase58(),
+  );
   const auctionState = auctionView
     ? auctionView.auction.info.state
     : AuctionState.Created;
   const auctionRunning = auctionState !== AuctionState.Ended;
 
+  // I don't think this is actually used
   const activeBidders = useMemo(() => {
     return new Set(activeBids.map(b => b.key));
   }, [activeBids]);
+
   const bidLines = useMemo(() => {
-    let activeBidIndex = 0;
     return bids.map((bid, index) => {
-      const isCancelled =
-        (index < winnersCount && !!bid.info.cancelled) ||
-        (auctionRunning && !!bid.info.cancelled);
-
-      const line = (
-        <BidLine
-          bid={bid}
-          index={activeBidIndex}
-          key={index}
-          mint={mint}
-          isLastWinner={index + 1 === winners.length}
-          isCancelled={isCancelled}
-          isActive={!bid.info.cancelled}
-        />
-      );
-
-      if (!isCancelled) {
-        activeBidIndex++;
-      }
+      const line = <BidLine bid={bid} key={bid.pubkey} mint={mint} />;
 
       return line;
     });
@@ -367,57 +335,76 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <Space direction="vertical" className="metaplex-fullwidth">
-      <Space direction="horizontal" size="middle">
-        <Text>Bid History</Text>
-        {auctionRunning && auctionView.myBidderMetadata && !auctionView.myBidderMetadata.info.cancelled && (
-          <Tooltip
-            placement="right"
-            title="You are currently a winning bid, and thus can not cancel your bid."
-            trigger={isWinner ? ['hover'] : []}
-          >
-            <Button
-              type="ghost"
-              disabled={isWinner}
-              loading={cancellingBid}
-              onClick={async () => {
-                const myBidderPot = auctionView.myBidderPot;
-
-                if (!myBidderPot) {
-                  return;
-                }
-
-                setCancellingBid(true);
-
-                try {
-                  await actions.cancelBid({
-                    connection,
-                    //@ts-ignore
-                    wallet,
-                    auction: new PublicKey(auctionView.auction.pubkey),
-                    bidderPotToken: new PublicKey(myBidderPot.info.bidderPot),
-                  });
-
-                  notification.success({
-                    message: "Bid Cancelled",
-                    description: "Your bid was successfully cancelled. You may rebid to enter the auction again.",
-                  });
-                } catch {
-                  notification.error({
-                    message: "Bid Cancel Error",
-                    description: "There was an issue cancelling your bid. Please check your transaction history and try again.",
-                  });
-                } finally {
-                  setCancellingBid(false);
-                }
-              }}
+    <div className="mt-8">
+      <Card
+        bordered={false}
+        className="metaplex-margin-bottom-4 auction-card"
+        title={'Bid history'}
+        bodyStyle={{ padding: 0 }}
+        extra={
+          auctionView.myBidderMetadata &&
+          !auctionView.myBidderMetadata.info.cancelled && (
+            <Tooltip
+              placement="right"
+              title="You are currently a winning bid, and thus can not cancel your bid."
+              trigger={isWinner ? ['hover'] : []}
             >
-              Cancel Bid
-            </Button>
-          </Tooltip>
-        )}
-      </Space>
-      <div>{bidLines.slice(0, 10)}</div>
+              <Button
+                type="ghost"
+                disabled={isWinner}
+                loading={cancellingBid}
+                onClick={async () => {
+                  const myBidderPot = auctionView.myBidderPot;
+
+                  if (!myBidderPot) {
+                    return;
+                  }
+
+                  setCancellingBid(true);
+
+                  try {
+                    await actions.cancelBid({
+                      connection,
+                      //@ts-ignore
+                      wallet,
+                      auction: new PublicKey(auctionView.auction.pubkey),
+                      bidderPotToken: new PublicKey(myBidderPot.info.bidderPot),
+                    });
+
+                    notification.success({
+                      message: 'Bid Cancelled',
+                      description:
+                        'Your bid was successfully cancelled. You may rebid to enter the auction again.',
+                    });
+                  } catch {
+                    notification.error({
+                      message: 'Bid Cancel Error',
+                      description:
+                        'There was an issue cancelling your bid. Please check your transaction history and try again.',
+                    });
+                  } finally {
+                    setCancellingBid(false);
+                  }
+                }}
+              >
+                {auctionRunning ? 'Cancel Bid' : 'Refund bid'}
+              </Button>
+            </Tooltip>
+          )
+        }
+      >
+        <div className=" overflow-hidden">
+          <ul role="list" className="divide-y divide-color-border">
+            {bidLines}
+            {/* {bids.map(bid => (
+              
+              <BidLine bid={bid} key={bid.pubkey} mint={mint} />
+            ))} */}
+          </ul>
+        </div>
+      </Card>
+
+      {/* <div className="space-y-8 md:space-y-0">{bidLines.slice(0, 10)}</div> */}
       {bids.length > 10 && (
         <Button onClick={() => setShowHistoryModal(true)}>
           View full history
@@ -432,6 +419,6 @@ export const AuctionBids = ({
       >
         {bidLines}
       </MetaplexModal>
-    </Space>
+    </div>
   );
 };

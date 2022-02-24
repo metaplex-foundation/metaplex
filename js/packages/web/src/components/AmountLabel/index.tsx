@@ -1,11 +1,11 @@
 import { formatUSD } from '@oyster/common';
-import { Space, Statistic } from 'antd';
+import { Statistic } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
 
 interface IAmountLabel {
-  amount: number | string;
+  amount: number;
   displayUSD?: boolean;
   displaySOL?: boolean;
   title?: string;
@@ -13,14 +13,7 @@ interface IAmountLabel {
 }
 
 export const AmountLabel = (props: IAmountLabel) => {
-  const {
-    amount: _amount,
-    displayUSD = true,
-    displaySOL = false,
-    title = '',
-    customPrefix,
-  } = props;
-  const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
+  const { amount, displayUSD = true, title = '', customPrefix } = props;
 
   const solPrice = useSolPrice();
 
@@ -33,21 +26,23 @@ export const AmountLabel = (props: IAmountLabel) => {
   const PriceNaN = isNaN(amount);
 
   return (
-    <>
-      <h5>{title}</h5>
-      <Space direction="horizontal" align="baseline">
+    <div className="flex flex-col">
+      <div className="flex space-x-4 items-center">
         {PriceNaN === false && (
           <Statistic
-            value={`${amount}${displaySOL ? ' SOL' : ''}`}
+            className="sol-price"
+            value={amount.toLocaleString()}
             prefix={customPrefix || <SolCircle />}
           />
         )}
+        {displayUSD && <span className="metaplex-opacity-5">|</span>}
         {displayUSD && (
           <div>
             {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
           </div>
         )}
-      </Space>
-    </>
+      </div>
+      <p className="auction-status">{title}</p>
+    </div>
   );
 };

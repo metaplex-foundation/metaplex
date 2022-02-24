@@ -10,3 +10,21 @@
   object-fit: cover;
   object-position: top center;
 }
+
+.content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+
+  @media screen and (max-width: 400px) {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}
+
+.about {
+  margin-top: 1rem;
+  font-style: italic;
+}

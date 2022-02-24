@@ -1,9 +1,13 @@
+import { WRAPPED_SOL_MINT } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Button, Col, Divider, Row, Space, Statistic } from 'antd';
+import { Alert, Button, Col, Divider, Row, Space, Statistic } from 'antd';
 import moment from 'moment';
-import React from 'react';
+import React, { useState } from 'react';
 import { AuctionCategory, AuctionState } from '.';
 import { ArtCard } from '../../components/ArtCard';
+import { useUserBalance } from '../../hooks';
+import { AddFundsModal } from '../../components/CurrentUserBadge';
 
 export const ReviewStep = (props: {
   confirm: () => void;
@@ -11,6 +15,9 @@ export const ReviewStep = (props: {
   setAttributes: Function;
   connection: Connection;
 }) => {
+  const wallet = useWallet();
+  const [isShowingModal, setIsShowingModal] = useState(false);
+  const { balance } = useUserBalance(WRAPPED_SOL_MINT.toString());
   const item = props.attributes.items?.[0];
 
   return (
@@ -71,6 +78,29 @@ export const ReviewStep = (props: {
           }
         />
       </div>
+      {balance < 0.05 ? (
+        <>
+          <Alert
+            message={`Your current SOL balance is currently below 0.05; this transaction may fail.`}
+            type="warning"
+            action={
+              <Space>
+                <Button type="link" onClick={() => setIsShowingModal(true)}>
+                  Get more SOL
+                </Button>
+              </Space>
+            }
+            showIcon
+            closable
+          />
+          <AddFundsModal
+            setShowAddFundsModal={setIsShowingModal}
+            showAddFundsModal={isShowingModal}
+            publicKey={wallet.publicKey!}
+            balance={balance}
+          />
+        </>
+      ) : null}
       <Button
         className="metaplex-fullwidth"
         type="primary"

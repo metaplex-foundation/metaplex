@@ -20,7 +20,7 @@ import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 interface ArtMintingProps {
-  id: string;
+  id?: string;
   onMint: Function;
 }
 
@@ -205,7 +205,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
             <h1>Congratulations</h1>
             <p>
               New editions have been minted please view your NFTs in{' '}
-              <Link to="/artworks">My Items</Link>.
+              <Link to="/owned">My Items</Link>.
             </p>
             <Button
               onClick={async () => {

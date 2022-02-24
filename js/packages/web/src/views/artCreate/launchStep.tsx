@@ -78,7 +78,7 @@ export const LaunchStep = (props: {
             suffix="%"
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} />
+            <AmountLabel title="Cost to Create" amount={cost} />
           ) : (
             <Spin indicator={<LoadingOutlined />} />
           )}
@@ -92,14 +92,6 @@ export const LaunchStep = (props: {
         onClick={props.confirm}
       >
         Pay with SOL
-      </Button>
-      <Button
-        disabled={true}
-        className="metaplex-fullwidth"
-        size="large"
-        onClick={props.confirm}
-      >
-        Pay with Credit Card
       </Button>
     </Space>
   );

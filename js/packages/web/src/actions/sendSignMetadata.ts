@@ -1,5 +1,6 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
+  SendSignedTransactionResult,
   sendTransactionWithRetry,
   signMetadata,
   StringPublicKey,
@@ -11,7 +12,7 @@ export async function sendSignMetadata(
   connection: Connection,
   wallet: WalletSigner,
   metadata: StringPublicKey,
-): Promise<string> {
+): Promise<SendSignedTransactionResult> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const signers: Keypair[] = [];
@@ -19,13 +20,11 @@ export async function sendSignMetadata(
 
   await signMetadata(metadata, wallet.publicKey.toBase58(), instructions);
 
-  const { txid } = await sendTransactionWithRetry(
+  return await sendTransactionWithRetry(
     connection,
     wallet,
     instructions,
     signers,
     'confirmed',
   );
-
-  return txid;
 }

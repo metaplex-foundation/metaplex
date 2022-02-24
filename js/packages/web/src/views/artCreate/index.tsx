@@ -9,9 +9,10 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, Col, Row, Space, Steps } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { mintNFT } from '../../actions';
-import { useAnalytics } from '../../components/Analytics';
+import { useAnalytics } from '../../contexts';
+
 import useWindowDimensions from '../../utils/layout';
 import { CategoryStep } from './categoryStep';
 import { Congrats } from './congrats';
@@ -28,8 +29,8 @@ export const ArtCreateView = () => {
   const { env } = useConnectionConfig();
   const wallet = useWallet();
   const [alertMessage, setAlertMessage] = useState<string>();
-  const { step_param }: { step_param: string } = useParams();
-  const history = useHistory();
+  const { step_param } = useParams<{ step_param: string }>();
+  const navigate = useNavigate();
   const { width } = useWindowDimensions();
   const [nftCreateProgress, setNFTcreateProgress] = useState<number>(0);
 
@@ -53,6 +54,7 @@ export const ArtCreateView = () => {
     seller_fee_basis_points: 0,
     creators: [],
     properties: {
+      maxSupply: 0,
       files: [],
       category: MetadataCategory.Image,
     },
@@ -62,7 +64,7 @@ export const ArtCreateView = () => {
 
   const gotoStep = useCallback(
     (_step: number) => {
-      history.push(`/artworks/new/${_step.toString()}`);
+      navigate(`/nfts/new/${_step.toString()}`);
       if (_step === 0) setStepsVisible(true);
     },
     [history],
@@ -111,9 +113,10 @@ export const ArtCreateView = () => {
 
       try {
         // const mintPriceSol = (await getSolCostForMint(files, connection, attributes))
-        track('nft_created', {
-          category: 'creation',
-          label: metadata.properties.category,
+        // NB: I don't think this is used at all anymore
+        track('NFT Created', {
+          event_category: 'Minter',
+          event_label: metadata.properties.category,
           // sol_value: mintPriceSol.
         });
       } catch (error) {

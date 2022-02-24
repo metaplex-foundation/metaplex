@@ -20,9 +20,9 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Link } from 'react-router-dom';
 import { useMeta, useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
+import MintModal from '../MintModal';
 import CogSvg from '../svgs/cog';
 
 const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
@@ -43,25 +43,18 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
         (props.mobile ? (
           <div>
             {canCreate && (
-              <Link to="/artworks/new">
-                <Button
-                  onClick={() => {
-                    props.onClick ? props.onClick() : null;
-                  }}
-                >
-                  Create
-                </Button>
-              </Link>
+                <Space direction="horizontal">
+                  <Button onClick={props.onClick}>Mint NFTs</Button>
+                </Space>
             )}
           </div>
         ) : (
           <div>
             {canCreate && (
               <>
-                <Link to="/artworks/new">
-                  <Button>Create</Button>
-                </Link>
-                &nbsp;&nbsp;
+                <Space direction="horizontal">
+                  <Button onClick={props.onClick}>Mint NFTs</Button>
+                </Space>
               </>
             )}
           </div>
@@ -70,7 +63,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
   );
 };
 
-const AddFundsModal = (props: {
+export const AddFundsModal = (props: {
   showAddFundsModal: boolean;
   setShowAddFundsModal: Dispatch<SetStateAction<boolean>>;
   balance: number;
@@ -132,10 +125,12 @@ export const CurrentUserBadge = (props: {
   const solPrice = useSolPrice();
 
   const [showAddFundsModal, setShowAddFundsModal] = useState<boolean>(false);
+  const [showMintModal, setShowMintModal] = useState<boolean>(false);
 
   if (!wallet || !publicKey || !solPrice) {
     return null;
   }
+
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
 
@@ -172,7 +167,7 @@ export const CurrentUserBadge = (props: {
                   </Button>
                   <Button onClick={disconnect}>Disconnect</Button>
                 </Space>
-                <UserActions />
+                <UserActions onClick={() => setShowMintModal(true)} />
               </Space>
             }
           />
@@ -199,6 +194,7 @@ export const CurrentUserBadge = (props: {
         publicKey={publicKey}
         balance={balance}
       />
+      <MintModal show={showMintModal} onClose={() => setShowMintModal(false)} />
     </>
   );
 };
@@ -228,7 +224,9 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
       }
     >
       <Button className="metaplex-button-appbar" type={buttonType}>
-        <CogSvg />
+        <div className="metaplex-flex metaplex-align-items-center metaplex-gap-2">
+          <CogSvg />
+        </div>
       </Button>
     </Popover>
   );

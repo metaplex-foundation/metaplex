@@ -1,14 +1,14 @@
-import { LoadingOutlined, CloseOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import {
   AuctionDataExtended,
   AuctionState,
   BidderMetadata,
   BidRedemptionTicket,
   BidStateType,
-  formatAmount,
   formatTokenAmount,
   fromLamports,
   getAuctionExtended,
+  getTwitterHandle,
   Identicon,
   loadMultipleAccounts,
   MAX_EDITION_LEN,
@@ -18,16 +18,17 @@ import {
   ParsedAccount,
   PriceFloorType,
   programIds,
+  shortenAddress,
   useConnection,
   useMint,
   useUserAccounts,
   useWalletModal,
-  VaultState,
   WinningConfigType,
 } from '@oyster/common';
+import cx from 'classnames';
 import { last } from 'lodash';
 import Bugsnag from '@bugsnag/browser';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -43,7 +44,13 @@ import {
   notification,
 } from 'antd';
 import moment from 'moment';
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { sendCancelBid } from '../../actions/cancelBid';
 import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -53,7 +60,7 @@ import {
 } from '../../actions/sendRedeemBid';
 import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
-import { useMeta } from '../../contexts';
+import { useAnalytics, useMeta } from '../../contexts';
 import {
   AuctionView,
   AuctionViewState,
@@ -61,30 +68,32 @@ import {
   useUserBalance,
   useWinningBidsForAuction,
 } from '../../hooks';
-import { AmountLabel } from '../AmountLabel';
-import { useAnalytics } from '../Analytics';
-import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
+
+import { AuctionCountdown } from '../AuctionNumbers';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 import { endSale } from './utils/endSale';
+import { DateTime } from 'luxon';
+import { ChevronRightIcon } from '@heroicons/react/solid';
 
 const { Text } = Typography;
 
 type NotificationMessage = {
   message: string;
   description: string | ReactNode;
-}
+};
 type CancelSuccessMessages = {
   refunded: NotificationMessage;
   redeemed: NotificationMessage;
-}
+};
 
 const cancelBidMessages = {
   refunded: {
-    message: "Bid Refunded",
-    description: "Your bid was refunded. Check your wallet for the transaction history."
+    message: 'Bid Refunded',
+    description:
+      'Your bid was refunded. Check your wallet for the transaction history.',
   },
   redeemed: {
-    message: "NFT Recovered",
+    message: 'NFT Recovered',
     description: (
       <Space direction="vertical">
         <Text>Your NFT was recovered from the listing vault.</Text>
@@ -237,13 +246,11 @@ export const AuctionCard = ({
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
     [wallet.wallet, wallet.connect, setVisible],
   );
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
-  const bids = useBidsForAuction(auctionView.auction.pubkey);
 
-  const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
 
   const [showPlaceBidUI, setShowPlaceBidUI] = useState<boolean>(false);
@@ -251,6 +258,9 @@ export const AuctionCard = ({
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
   const { track } = useAnalytics();
+
+  const bids = useBidsForAuction(auctionView.auction.pubkey);
+  // it looks like winners is calling useBidsForAuction again. Could be pretty easy to refactor, but afraid to touch it 😅
   const winners = useWinningBidsForAuction(auctionView.auction.pubkey);
 
   const { accountByMint } = useUserAccounts();
@@ -278,23 +288,11 @@ export const AuctionCard = ({
   );
   const auctionExtended = useAuctionExtended(auctionView);
 
-  const isAuctioneer = wallet?.publicKey && auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+  const isAuctioneer =
+    wallet?.publicKey &&
+    auctionView.auctionManager.authority === wallet.publicKey.toBase58();
 
   const eligibleForAnything = winnerIndex !== null || eligibleForOpenEdition;
-  const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
-  const gapTick = auctionExtended
-    ? auctionExtended.info.gapTickSizePercentage
-    : 0;
-  const tickSize = auctionExtended ? auctionExtended.info.tickSize : 0;
-  const tickSizeInvalid = !!(
-    tickSize &&
-    value &&
-    (value * LAMPORTS_PER_SOL) % tickSize.toNumber() != 0
-  );
-
-  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
-  const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !== walletPublickKey;
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
@@ -306,24 +304,66 @@ export const AuctionCard = ({
     auctionView.auctionManager.numWinners.toNumber() === 0;
 
   const lowestWinner = last(winners);
-  const hasAllWinners = auctionView.auctionManager.numWinners.toNumber() === winners.length;
+  const hasAllWinners =
+    auctionView.auctionManager.numWinners.toNumber() === winners.length;
 
   let minBid = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
     mintInfo,
   );
+  const tickSize = auctionExtended ? auctionExtended.info.tickSize : 0;
 
   if (isStarted && hasAllWinners) {
-    minBid = parseFloat(formatTokenAmount(lowestWinner?.info.lastBid.toNumber(), mintInfo));
+    minBid = parseFloat(
+      formatTokenAmount(lowestWinner?.info.lastBid.toNumber(), mintInfo),
+    );
 
     if (tickSize) {
-      minBid += tickSize.toNumber() / LAMPORTS_PER_SOL;
+      minBid += fromLamports(tickSize) / LAMPORTS_PER_SOL;
     }
   }
 
-  const biddingPower = balance.balance + (auctionView.myBidderMetadata && !auctionView.myBidderMetadata.info.cancelled ? (auctionView.myBidderMetadata.info.lastBid.toNumber() / LAMPORTS_PER_SOL) : 0);
+  const isFirstBid = !auctionView.auction.info.bidState.bids.length;
 
-  const notEnoughFundsToBid = !!value && (value > biddingPower);
+  const minNextBid = parseFloat(
+    isFirstBid
+      ? minBid.toFixed(2)
+      : !tickSize
+      ? (minBid + 0.01).toFixed(2)
+      : (minBid + fromLamports(tickSize)).toFixed(2),
+  );
+
+  const [value, setValue] = useState<number>(minBid);
+
+  const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
+  const gapTick = auctionExtended
+    ? auctionExtended.info.gapTickSizePercentage
+    : 0;
+
+  // JS MODULO OPERATOR DOES NOT WORK HOW YOU EXPECT IT TO
+  // BREAKS WITH FLOATS, MULTIPLY AWAY ALL FLOATS
+  // see this for some info https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript
+  const multiplier = 1000;
+  const tickSizeInvalid = !!(
+    tickSize &&
+    value &&
+    (value * multiplier) % (fromLamports(tickSize) * multiplier) != 0
+  );
+
+  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
+  const isAuctionManagerAuthorityNotWalletOwner =
+    auctionView.auctionManager.authority !== walletPublickKey;
+
+  const belowMinBid = value && minBid && value < minNextBid;
+
+  const biddingPower =
+    balance.balance +
+    (auctionView.myBidderMetadata &&
+    !auctionView.myBidderMetadata.info.cancelled
+      ? auctionView.myBidderMetadata.info.lastBid.toNumber() / LAMPORTS_PER_SOL
+      : 0);
+
+  const notEnoughFundsToBid = !!value && value > biddingPower;
   const invalidBid =
     notEnoughFundsToBid ||
     gapBidInvalid ||
@@ -331,7 +371,7 @@ export const AuctionCard = ({
     !myPayingAccount ||
     value === undefined ||
     value * LAMPORTS_PER_SOL < priceFloor ||
-    (minBid && value < minBid) ||
+    belowMinBid ||
     loading ||
     !accountByMint.get(QUOTE_MINT.toBase58());
 
@@ -342,6 +382,13 @@ export const AuctionCard = ({
       if (showPlaceBidUI) setShowPlaceBidUI(false);
     }
   }, [wallet.connected, wallet.publicKey]);
+
+  useEffect(() => {
+    // Sets the bid input field to the minimum bid automatically
+    if (minNextBid > value) {
+      setValue(minNextBid);
+    }
+  }, [minNextBid]);
 
   const endInstantSale = async () => {
     setLoading(true);
@@ -360,33 +407,37 @@ export const AuctionCard = ({
         });
       } catch (e: any) {
         notification.error({
-          message: "End Sale Error",
+          message: 'End Sale Error',
           duration: 30,
-          description: "Unable to end the sale an error occured. Please try again or reach out to support."
+          description:
+            'Unable to end the sale as an error occured. Please try again or reach out to support.',
         });
         Bugsnag.notify(e);
         return;
       }
 
-      track('instant_sale_canceled', {
-        category: 'auction',
-        label: 'canceled',
+      track('Listing Cancelled', {
+        event_category: 'Listings',
+        listingType: 'instant_sale',
+        // nftAddress
+        // auctionAddress
+        // event_label: '' nft address
       });
 
       notification.success({
-        message: "Listing Ended",
+        message: 'Listing Ended',
         description: (
           <Space direction="vertical">
-            <Text>The listing was successfully ended and the NFT reclaimed.</Text>
-            <Button type="primary">
-              View Owned
-            </Button>
+            <Text>
+              The listing was successfully ended and the NFT reclaimed.
+            </Text>
+            <Button type="primary">View Owned</Button>
           </Space>
         ),
         onClick: () => {
-          history.push('/owned');
+          navigate('/owned');
         },
-      })
+      });
     } finally {
       setLoading(false);
     }
@@ -429,9 +480,12 @@ export const AuctionCard = ({
             'confirmed',
           );
           bidTxid = txid;
-          track('instant_sale_bid_submitted', {
-            category: 'auction',
-            label: 'instant_sale',
+          track('Listing Bid Submitted', {
+            event_category: 'Listings',
+            listingType: 'instant_sale',
+            event_label: 'instant_sale',
+            // nftAddress
+            // auctionAddress
             sol_value: value,
           });
         } catch (e) {
@@ -502,30 +556,30 @@ export const AuctionCard = ({
         );
 
         notification.success({
-          message: "Purchase Success",
+          message: 'Purchase Success',
           description: (
             <Space direction="vertical">
-              <Text>Congratulations, your purchase ticket was exchanged for the NFT.</Text>
-              <Button type="primary">
-                View Owned
-              </Button>
+              <Text>
+                Congratulations, your purchase ticket was exchanged for the NFT.
+              </Text>
+              <Button type="primary">View Owned</Button>
             </Space>
           ),
           onClick: () => {
-            history.push("/owned");
-          }
-        })
-      } catch (e: any) {
-        Bugsnag.notify(e);
+            navigate('/owned');
+          },
+        });
+      } catch (err: any) {
+        Bugsnag.notify(err);
 
         notification.error({
-          message: "Purchase Error",
+          message: 'Purchase Error',
           duration: 20,
-          description: "Your purchase ticket was not redeemed for the NFT. Please try again or wait for support."
-        })
+          description:
+            'Your purchase ticket was not redeemed for the NFT. Please try again or wait for support.',
+        });
         return;
       }
-
     } finally {
       setLoading(false);
     }
@@ -546,10 +600,7 @@ export const AuctionCard = ({
     isAuctionManagerAuthorityNotWalletOwner &&
     doesInstantSaleHasNoItems;
 
-  const shouldHide =
-    shouldHideInstantSale ||
-    (auctionView.vault.info.state === VaultState.Deactivated &&
-      isBidderPotEmpty);
+  const shouldHide = shouldHideInstantSale;
 
   if (shouldHide) {
     return <></>;
@@ -606,26 +657,28 @@ export const AuctionCard = ({
               );
 
               notification.success({
-                message: "Bid Redeemed",
+                message: 'Bid Redeemed',
                 duration: 30,
                 description: (
                   <Space direction="vertical">
-                    <Text>Congratulations, your bid was redeemed for the NFT! See it in your owned tab.</Text>
-                      <Button type="primary">
-                        View Owned
-                      </Button>
+                    <Text>
+                      Congratulations, your bid was redeemed for the NFT! See it
+                      in your owned tab.
+                    </Text>
+                    <Button type="primary">View Owned</Button>
                   </Space>
                 ),
                 onClick: () => {
-                  history.push('/owned');
-                }
+                  navigate('/owned');
+                },
               });
             } catch (e: any) {
               Bugsnag.notify(e);
               notification.error({
-                message: "Bid Redemption Error",
+                message: 'Bid Redemption Error',
                 duration: 20,
-                description: "There was an error redeeming your bid. Please try again or reach out to support.",
+                description:
+                  'There was an error redeeming your bid. Please try again or reach out to support.',
               });
             }
           } else {
@@ -641,13 +694,15 @@ export const AuctionCard = ({
                 prizeTrackingTickets,
               );
 
-              const message = cancelBidMessages[isAuctioneer ? "redeemed" : "refunded"];
+              const message =
+                cancelBidMessages[isAuctioneer ? 'redeemed' : 'refunded'];
 
               notification.success(message);
             } catch (e: any) {
               notification.error({
-                message: "Bid Refund Error",
-                description: "There was an error refunding your bid. Please try again or reach out to support.",
+                message: 'Bid Refund Error',
+                description:
+                  'There was an error refunding your bid. Please try again or reach out to support.',
               });
             }
           }
@@ -657,16 +712,13 @@ export const AuctionCard = ({
       }}
     >
       {loading ||
-        auctionView.items.find(i => i.find(it => !it.metadata)) ||
-        !myPayingAccount ? (
+      auctionView.items.find(i => i.find(it => !it.metadata)) ||
+      !myPayingAccount ? (
         <Spin indicator={<LoadingOutlined />} />
       ) : eligibleForAnything ? (
         `Redeem bid`
       ) : (
-        `${isAuctioneer
-          ? 'Reclaim Items'
-          : 'Refund bid'
-        }`
+        `${isAuctioneer ? 'Reclaim Items' : 'Refund bid'}`
       )}
     </Button>
   );
@@ -745,8 +797,8 @@ export const AuctionCard = ({
           ? 'End Sale & Claim Item'
           : 'Claim Item'
         : auctionView.myBidderPot
-          ? 'Claim Purchase'
-          : 'Buy Now'}
+        ? 'Claim Purchase'
+        : 'Buy Now'}
     </Button>
   );
 
@@ -756,29 +808,19 @@ export const AuctionCard = ({
       className="metaplex-fullwidth metaplex-space-align-stretch"
       direction="vertical"
     >
-      <h5>your bid</h5>
+      <h5>{`Bid ${minNextBid} SOL or more`}</h5>
       <Row gutter={8} align="middle">
-        <Col flex="0 0 auto">
-          <Button
-            icon={<CloseOutlined />}
-            type="ghost"
-            disabled={loading}
-            shape="circle"
-            onClick={() => setShowPlaceBidUI(false)}
-          />
-        </Col>
         <Col flex="1 0 auto">
           <InputNumber<number>
-            decimalSeparator='.'
+            decimalSeparator="."
             className="metaplex-fullwidth"
-            step="0.0001"
+            step={minNextBid}
             autoFocus
-            onChange={setValue}
-            precision={4}
-            formatter={value =>
-              value ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''
-            }
-            placeholder={`Bid ${minBid} SOL or more`}
+            value={value}
+            onChange={v => setValue(v)}
+            precision={2}
+            formatter={value => (value ? `◎ ${value}` : '')}
+            placeholder={`Bid ${minNextBid} SOL or more`}
           />
         </Col>
         <Col flex="0 0 auto">
@@ -804,20 +846,22 @@ export const AuctionCard = ({
                 );
 
                 notification.success({
-                  message: "Bid Submitted",
-                  description: "Your bid was accepted by the auctioneer. You may raise your bid at any time."
+                  message: 'Bid Submitted',
+                  description:
+                    'Your bid was accepted by the auctioneer. You may raise your bid at any time.',
                 });
                 setShowPlaceBidUI(false);
-                track('bid_submitted', {
-                  category: 'auction',
-                  // label: '',
+                track('Listing Bid Submitted', {
+                  event_category: 'Listings',
+                  listingType: 'auction',
+                  event_label: 'auction',
                   sol_value: value,
                 });
-
               } catch (e: any) {
                 notification.error({
-                  message: "Bid Error",
-                  description: "There was an issue placing your bid. The bid was not accepted. Please try again or reach out to support."
+                  message: 'Bid Error',
+                  description:
+                    'There was an issue placing your bid. The bid was not accepted. Please try again or reach out to support.',
                 });
 
                 Bugsnag.notify(e);
@@ -825,121 +869,189 @@ export const AuctionCard = ({
                 setShowPlaceBidUI(false);
                 setLoading(false);
               }
-
             }}
           >
             Submit Bid
           </Button>
+          <Button
+            disabled={loading}
+            type="text"
+            onClick={() => setShowPlaceBidUI(false)}
+          >
+            Cancel
+          </Button>
         </Col>
-        <Col span={24}>
+      </Row>
+      {invalidBid && (
+        <div className="metaplex-margin-top-4">
           {!loading && (
-            <Space direction="vertical" size="middle">
+            <>
               {notEnoughFundsToBid && (
-                <Text type="danger">
-                  You do not have enough funds to fulfill the bid. Your current bidding power is {biddingPower} SOL.
+                <Text className="danger" type="danger">
+                  You do not have enough funds to fulfill the bid. Your current
+                  bidding power is {biddingPower} SOL.
                 </Text>
               )}
-              {tickSizeInvalid && tickSize && (
-                <Text type="danger">
+              {value !== undefined && !!belowMinBid && (
+                <Text className="danger" type="danger">
+                  The bid must be at least {minNextBid} SOL.
+                </Text>
+              )}
+              {!!value && tickSizeInvalid && tickSize && (
+                <Text className="danger" type="danger">
                   Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
                 </Text>
               )}
-              {value !== undefined && invalidBid && (
-                <Text type="danger">The bid must be at least {minBid} SOL.</Text>
-              )}
               {gapBidInvalid && (
-                <Text type="danger">
-                  Your bid needs to be at least {gapTick}% larger than an existing
-                  bid during gap periods to be eligible.
+                <Text className="danger" type="danger">
+                  Your bid needs to be at least {gapTick}% larger than an
+                  existing bid during gap periods to be eligible.
                 </Text>
               )}
-            </Space>
+            </>
           )}
-        </Col>
-      </Row>
+        </div>
+      )}
     </Space>
   );
+
+  const isAuctionOver = (x: AuctionView) =>
+    x.auction.info.timeToEnd().days === 0 &&
+    x.auction.info.timeToEnd().hours === 0 &&
+    x.auction.info.timeToEnd().minutes === 0 &&
+    x.auction.info.timeToEnd().seconds === 0;
+
+  const mint = useMint(auctionView?.auction.info.tokenMint);
+
+  const auctionEnded = auctionView.isInstantSale
+    ? undefined
+    : isAuctionOver(auctionView);
+
+  const someoneWon = auctionEnded && bids.length;
 
   return (
     <div>
       <Card
         bordered={false}
-        className="metaplex-spacing-bottom-md"
+        className="metaplex-margin-bottom-4 auction-card"
+        headStyle={{
+          borderBottom: !someoneWon
+            ? '0'
+            : '1px solid var(--color-border, #121212)',
+        }}
+        bodyStyle={{ padding: auctionEnded ? 0 : 24 }}
         title={
-          auctionView.isInstantSale ? undefined : (
-            <Space direction="horizontal">
-              <span>Auction ends in</span>
-              <AuctionCountdown auctionView={auctionView} labels={false} />
-            </Space>
-          )
+          <div className="">
+            <span
+              className={
+                auctionEnded || auctionView.isInstantSale
+                  ? ''
+                  : 'text-sm opacity-75'
+              }
+            >
+              {auctionEnded
+                ? someoneWon
+                  ? 'Winner' + (winners.length > 1 ? 's' : '')
+                  : `Auction ended ${
+                      auctionView.auction?.info?.endedAt
+                        ? DateTime.fromMillis(
+                            auctionView?.auction?.info?.endedAt.toNumber() *
+                              1000,
+                          ).toRelative()
+                        : ''
+                    }`
+                : auctionView.isInstantSale
+                ? 'Instant sale'
+                : 'Ends in'}
+            </span>
+            {!auctionEnded && !auctionView.isInstantSale && (
+              <div>
+                <AuctionCountdown auctionView={auctionView} labels={false} />
+              </div>
+            )}
+          </div>
+        }
+        extra={
+          <div className="flex flex-col items-end">
+            <span className="text-sm opacity-75">
+              {someoneWon
+                ? 'Sold for'
+                : auctionView.isInstantSale
+                ? 'Price'
+                : bids.length
+                ? 'Current bid'
+                : 'Starting bid'}
+            </span>
+            {/* todo: reduce opacity if starting bid */}
+            <div className={cx('flex items-center text-xl')}>
+              <svg
+                className="mx-[5px] h-4 w-4 opacity-75 stroke-color-text"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="8" cy="8" r="7.5" />
+                <circle cx="8" cy="8" r="3.5" />
+              </svg>
+              {someoneWon
+                ? fromLamports(bids[0].info.lastBid.toNumber())
+                : minBid
+                ? minBid.toFixed(2)
+                : 0}
+            </div>
+          </div>
         }
       >
-        <Space
-          className="metaplex-fullwidth metaplex-space-align-stretch"
-          direction="vertical"
-        >
-          <Row gutter={8} align="middle">
-            <Col span={12}>
-              <AuctionNumbers
-                auctionView={auctionView}
-                showAsRow={true}
-                hideCountdown={true}
-                displaySOL={true}
+        {auctionEnded && bids.length && mint ? (
+          someoneWon ? (
+            winners.map(bid => (
+              <WinnerProfile
+                bidderPubkey={bid.info.bidderPubkey}
+                key={bid.info.bidderPubkey}
               />
-            </Col>
-            {showPlaceBidUI ? (
-              <Col span={12}>
-                <AmountLabel
-                  title="in your wallet"
-                  displaySOL={true}
-                  amount={formatAmount(balance.balance, 2)}
-                  customPrefix={
-                    <Identicon
-                      size={24}
-                      address={wallet?.publicKey?.toBase58()}
-                    />
-                  }
-                />
-              </Col>
-            ) : (
-              <>
-                <Col flex="1 0 auto">
+            ))
+          ) : null
+        ) : (
+          <Space
+            className="metaplex-fullwidth metaplex-space-align-stretch"
+            direction="vertical"
+          >
+            {!showPlaceBidUI && (
+              <div className="space-y-4">
+                {!auctionView.isInstantSale && (
                   <HowAuctionsWorkModal buttonBlock buttonSize="large" />
-                </Col>
-                {showStartOrPlaceBidBtns && (
-                  <Col flex="0 0 auto">
-                    {showStartAuctionBtn ? startAuctionBtn : placeBidBtn}
-                  </Col>
                 )}
-              </>
+                {showStartOrPlaceBidBtns && (
+                  <>{showStartAuctionBtn ? startAuctionBtn : placeBidBtn}</>
+                )}
+              </div>
             )}
-          </Row>
 
-          {showDefaultNonEndedAction &&
-            showPlaceBidUI &&
-            !auctionView.isInstantSale &&
-            placeBidUI}
-          {showDefaultNonEndedAction &&
-            (showStartAuctionBtn
-              ? startAuctionBtn
-              : auctionView.isInstantSale && instantSaleBtn)}
-          {!hideDefaultAction && !wallet.connected && (
-            <Button
-              className="metaplex-fullwidth"
-              type="primary"
-              size="large"
-              onClick={connect}
-            >
-              Connect wallet to{' '}
-              {auctionView.isInstantSale ? 'purchase' : 'place bid'}
-            </Button>
-          )}
+            {showDefaultNonEndedAction &&
+              showPlaceBidUI &&
+              !auctionView.isInstantSale &&
+              placeBidUI}
+            {showDefaultNonEndedAction &&
+              (showStartAuctionBtn
+                ? startAuctionBtn
+                : auctionView.isInstantSale && instantSaleBtn)}
+            {!hideDefaultAction && !wallet.connected && (
+              <Button
+                className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
+                type="primary"
+                size="large"
+                onClick={connect}
+              >
+                Connect wallet to{' '}
+                {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+              </Button>
+            )}
 
-          {showRedeemReclaimRefundBtn && redeemReclaimRefundBtn}
+            {showRedeemReclaimRefundBtn && redeemReclaimRefundBtn}
 
-          {action}
-
-        </Space>
+            {action}
+          </Space>
+        )}
       </Card>
 
       <MetaplexModal
@@ -956,5 +1068,46 @@ export const AuctionCard = ({
         </h3>
       </MetaplexModal>
     </div>
+  );
+};
+
+const WinnerProfile = ({
+  bidderPubkey,
+}: {
+  handle?: string;
+  bidderPubkey: string;
+}) => {
+  const connection = useConnection();
+  const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
+  useEffect(() => {
+    getTwitterHandle(connection, bidderPubkey).then(
+      tw => tw && setBidderTwitterHandle(tw),
+    );
+  }, []);
+  return (
+    <a href={`https://www.holaplex.com/profiles/${bidderPubkey}`}>
+      <div className="flex items-center px-4 py-4 sm:px-6 cursor-pointer rounded-lg  group">
+        <div className="min-w-0 flex-1 flex items-center">
+          <div className="flex-shrink-0 pr-4">
+            <Identicon size={48} address={bidderPubkey} />
+          </div>
+          <div className="min-w-0 flex-1 flex justify-between group-hover:text-primary">
+            <div>
+              <p className="text-base font-medium  truncate flex items-center">
+                {bidderTwitterHandle || shortenAddress(bidderPubkey)}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center group-hover:text-primary">
+            <span className="block">View profile</span>
+            <ChevronRightIcon
+              className="h-5 w-5"
+              viewBox="0 0 18 18"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </div>
+    </a>
   );
 };

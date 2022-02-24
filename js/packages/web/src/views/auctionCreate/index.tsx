@@ -17,6 +17,8 @@ import {
   processAuctions,
   VAULT_ID,
   processVaultData,
+  SendAndConfirmError,
+  notify,
 } from '@oyster/common';
 import Bugsnag from '@bugsnag/browser';
 import {
@@ -24,17 +26,17 @@ import {
   WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Button, Col, Row, Space, Steps } from 'antd';
 import BN from 'bn.js';
 import React, { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   createAuctionManager,
   SafetyDepositDraft,
 } from '../../actions/createAuctionManager';
-import { useAnalytics } from '../../components/Analytics';
-import { useMeta } from '../../contexts';
+
+import { useAnalytics, useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { QUOTE_MINT } from './../../constants';
 import { CategoryStep } from './categoryStep';
@@ -129,13 +131,14 @@ export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
   const { whitelistedCreatorsByCreator, storeIndexer, patchState } = useMeta();
-  const { step_param }: { step_param: string } = useParams();
-  const history = useHistory();
+  const { step_param } = useParams<{ step_param: string }>();
+
+  const navigate = useNavigate();
   const { track } = useAnalytics();
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
   const [percentComplete, setPercentComplete] = useState(0);
-  const [rejection, setRejection] = useState<string>()
+  const [rejection, setRejection] = useState<SendAndConfirmError | undefined>();
   const [step, setStep] = useState<number>(1);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [auctionObj, setAuctionObj] = useState<
@@ -146,16 +149,20 @@ export const AuctionCreateView = () => {
       }
     | undefined
   >(undefined);
-  const [attributes, setAttributes] = useState<AuctionState>({
+
+  const freshAttributes: AuctionState = {
     reservationPrice: 0,
     items: [],
     category: AuctionCategory.Open,
-    auctionDurationType: 'minutes',
+    auctionDurationType: 'hours',
+    auctionDuration: 24,
     gapTimeType: 'minutes',
     winnersCount: 1,
     startSaleTS: undefined,
     startListTS: undefined,
-  });
+  };
+
+  const [attributes, setAttributes] = useState<AuctionState>(freshAttributes);
 
   const [tieredAttributes, setTieredAttributes] = useState<TieredAuctionState>({
     items: [],
@@ -176,8 +183,8 @@ export const AuctionCreateView = () => {
       },
       {
         programId: VAULT_ID,
-        processAccount: processVaultData
-      }
+        processAccount: processVaultData,
+      },
     );
   }, [connection]);
 
@@ -188,12 +195,14 @@ export const AuctionCreateView = () => {
 
   const gotoNextStep = (_step?: number) => {
     const nextStep = _step === undefined ? step + 1 : _step;
-    history.push(`/auction/create/${nextStep.toString()}`);
+    navigate(`/listings/new/${nextStep.toString()}`);
   };
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
-    let auctionInfo: { vault: string, auction: string, auctionManager: string } | undefined;
+    let auctionInfo:
+      | { vault: string; auction: string; auctionManager: string }
+      | undefined;
 
     if (
       attributes.category === AuctionCategory.InstantSale &&
@@ -218,11 +227,7 @@ export const AuctionCreateView = () => {
         const item = items[0];
 
         if (!editions) {
-          item.winningConfigType =
-            item.metadata.info.updateAuthority ===
-            (wallet?.publicKey || SystemProgram.programId).toBase58()
-              ? WinningConfigType.FullRightsTransfer
-              : WinningConfigType.TokenOnlyTransfer;
+          item.winningConfigType = WinningConfigType.TokenOnlyTransfer;
         }
 
         item.amountRanges = [
@@ -260,11 +265,7 @@ export const AuctionCreateView = () => {
           attributes.category == AuctionCategory.Single &&
           item.masterEdition
         ) {
-          item.winningConfigType =
-            item.metadata.info.updateAuthority ===
-            (wallet?.publicKey || SystemProgram.programId).toBase58()
-              ? WinningConfigType.FullRightsTransfer
-              : WinningConfigType.TokenOnlyTransfer;
+          item.winningConfigType = WinningConfigType.TokenOnlyTransfer;
         }
         item.amountRanges = [
           new AmountRange({
@@ -500,13 +501,28 @@ export const AuctionCreateView = () => {
     const participationSafetyDepositDraft = isOpenEdition
       ? attributes.items[0]
       : attributes.participationNFT;
-    
+
+    // Track useState updates across this callback for rejection
+    let tmpRejection = undefined;
+    setRejection(undefined);
+
     try {
       auctionInfo = await createAuctionManager(
         connection,
         wallet,
         setPercentComplete,
-        setRejection,
+        () => {
+          notify({
+            message: 'New signature needed...',
+            description:
+              'Please re-sign the current transaction again to continue.',
+            type: 'info',
+          });
+        },
+        rej => {
+          setRejection(r => r ?? rej);
+          tmpRejection ??= rej;
+        },
         whitelistedCreatorsByCreator,
         auctionSettings,
         safetyDepositDrafts,
@@ -515,16 +531,24 @@ export const AuctionCreateView = () => {
         storeIndexer,
       );
     } catch (e: any) {
-      setRejection(e.message);
-      Bugsnag.notify(e);
-      return;  
+      const rej: SendAndConfirmError = { type: 'misc-error', inner: e };
+      setRejection(r => r ?? rej);
+      tmpRejection ??= rej;
+    }
+
+    if (tmpRejection) {
+      Bugsnag.notify({
+        name: 'createAuctionManager failure',
+        message: JSON.stringify(rejection),
+      });
+      return;
     }
 
     try {
-
-      track('new_listing', {
-        category: 'creation',
-        label: isInstantSale ? 'instant sale' : 'auction',
+      track('Listing Created', {
+        event_category: 'Listings',
+        event_label: isInstantSale ? 'instant_sale' : 'auction',
+        listingType: isInstantSale ? 'instant_sale' : 'auction',
         // sol_value: isInstantSale
         //   ? auctionSettings.instantSalePrice?.toNumber() // this price is like 100x the real sol price. Is it in lamports?
         //   : auctionSettings.priceFloor.minPrice?.toNumber(),
@@ -539,13 +563,10 @@ export const AuctionCreateView = () => {
 
   const categoryStep = (
     <CategoryStep
-      confirm={(category: AuctionCategory) => {
-        setAttributes({
-          ...attributes,
-          category,
-        });
-        gotoNextStep();
-      }}
+      confirm={() => gotoNextStep()}
+      attributes={attributes}
+      freshAttributes={freshAttributes}
+      setAttributes={setAttributes}
     />
   );
 

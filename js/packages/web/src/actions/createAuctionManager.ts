@@ -3,14 +3,13 @@ import {
   Connection,
   TransactionInstruction,
   SystemProgram,
+  Commitment,
 } from '@solana/web3.js';
 import {
   Metadata,
   ParsedAccount,
   MasterEditionV1,
   MasterEditionV2,
-  SequenceType,
-  sendTransactions,
   getSafetyDepositBox,
   Edition,
   getEdition,
@@ -18,13 +17,13 @@ import {
   Creator,
   getSafetyDepositBoxAddress,
   createAssociatedTokenAccountInstruction,
-  sendTransactionWithRetry,
   findProgramAddress,
   IPartialCreateAuctionArgs,
   MetadataKey,
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  SendAndConfirmError,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -49,6 +48,7 @@ import {
   addTokensToVault,
   SafetyDepositInstructionTemplate,
 } from './addTokensToVault';
+import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 import { makeAuction } from './makeAuction';
 import { createExternalPriceAccount } from './createExternalPriceAccount';
 import { deprecatedValidateParticipation } from '@oyster/common/dist/lib/models/metaplex/deprecatedValidateParticipation';
@@ -106,7 +106,8 @@ export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
   progressCallback: Dispatch<SetStateAction<number>>,
-  failureCallback: Dispatch<SetStateAction<string | undefined>>,
+  reSignCallback: () => void,
+  failureCallback: (err: SendAndConfirmError) => void,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -335,39 +336,37 @@ export async function createAuctionManager(
   });
 
   const filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
-  let rejection: string | undefined;
+  let rejection: SendAndConfirmError | undefined;
 
-  if (instructions.length === 1) {
-    await sendTransactionWithRetry(
-      connection,
-      wallet,
-      instructions[0],
-      filteredSigners[0],
-      'single',
-    );
-  } else {
-    await sendTransactions(
-      connection,
-      wallet,
-      instructions,
-      filteredSigners,
-      SequenceType.StopOnFailure,
-      'confirmed',
-      (_, index) => {
-        const step = index + 1;
-        const total = instructions.length;
-
-        progressCallback(Math.round((step / total) * 100));
-      },
-      (reason: any) => {
-        rejection = reason;
-        return false;
-      },
-    );
-  }
+  const config = {
+    abortOnFailure: true,
+    maxSigningAttempts: 10,
+    commitment: 'confirmed' as Commitment,
+  };
+  const instructionSets = instructions.map((ix, i) => ({
+    instructions: ix,
+    signers: filteredSigners[i],
+  }));
+  await SmartInstructionSender.build(wallet, connection)
+    .config(config)
+    .withInstructionSets(instructionSets)
+    .onProgress(index => {
+      const step = index + 1;
+      const total = instructions.length;
+      progressCallback(Math.round((step / total) * 100));
+    })
+    .onReSign(reSignCallback)
+    .onFailure(err => {
+      rejection = err;
+      return false;
+    })
+    .send();
 
   if (rejection) {
-    throw new Error(rejection);
+    failureCallback(rejection);
+    throw new Error(
+      `Failed to create auction manager: ${JSON.stringify(rejection)}`,
+    );
   }
 
   return { vault, auction, auctionManager };

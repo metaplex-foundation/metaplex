@@ -640,6 +640,19 @@ export interface AuctionViewItem {
   safetyDeposit: ParsedAccount<SafetyDepositBox>;
   masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
 }
+
+export enum View {
+  live = 'live',
+  resale = 'resale',
+  ended = 'ended',
+}
+
+export interface AuctionsCount {
+  [View.live]: number | null;
+  [View.resale]: number | null;
+  [View.ended]: number | null;
+}
+
 export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   key: MetaplexKey = MetaplexKey.BidRedemptionTicketV2;
   winnerIndex: BN | null;

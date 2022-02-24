@@ -914,16 +914,28 @@ export async function mintNewEditionFromMasterEditionViaToken(
   );
 }
 
-export async function updatePrimarySaleHappenedViaToken(
+export function updatePrimarySaleHappenedViaToken(
   metadata: StringPublicKey,
   owner: StringPublicKey,
   tokenAccount: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
+  instructions.push(
+    createUpdatePrimarySaleHappenedViaTokenInstructions(
+      metadata,
+      owner,
+      tokenAccount,
+    ),
+  );
+}
+
+export function createUpdatePrimarySaleHappenedViaTokenInstructions(
+  metadata: StringPublicKey,
+  owner: StringPublicKey,
+  tokenAccount: StringPublicKey,
+) {
   const metadataProgramId = programIds().metadata;
-
   const data = Buffer.from([4]);
-
   const keys = [
     {
       pubkey: toPublicKey(metadata),
@@ -941,13 +953,11 @@ export async function updatePrimarySaleHappenedViaToken(
       isWritable: false,
     },
   ];
-  instructions.push(
-    new TransactionInstruction({
-      keys,
-      programId: toPublicKey(metadataProgramId),
-      data,
-    }),
-  );
+  return new TransactionInstruction({
+    keys,
+    programId: toPublicKey(metadataProgramId),
+    data,
+  });
 }
 
 export async function deprecatedCreateReservationList(

@@ -1,4 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+  ReactElement,
+  ReactNode,
+  useCallback,
+} from 'react';
 
 const CopyIcon = () => (
   <svg
@@ -44,7 +50,22 @@ const Checkmark = () => (
   </svg>
 );
 
-export const ClickToCopy = ({ copyText }: { copyText: string }) => {
+export const ClickToCopy = ({
+  copyText,
+  render,
+}: {
+  copyText: string;
+  render?: (icon: ReactNode, onClick: () => void) => ReactElement<any, any> | null;
+}) => {
+  const el = useCallback(
+    render ??
+      ((icon: ReactNode, click: () => void) => (
+        <div onClick={click} title="Click to copy pubkey">
+          {icon}
+        </div>
+      )),
+    [render],
+  );
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
@@ -59,9 +80,5 @@ export const ClickToCopy = ({ copyText }: { copyText: string }) => {
     setClicked(true);
   };
 
-  return (
-    <div onClick={onClick} title="Click to copy pubkey">
-      {clicked ? <Checkmark /> : <CopyIcon />}
-    </div>
-  );
+  return el(clicked ? <Checkmark /> : <CopyIcon />, onClick);
 };

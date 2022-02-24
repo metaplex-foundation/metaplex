@@ -296,6 +296,10 @@ export const loadAccounts = async (
       const setMetadata = auctionCache.info.metadata.map(async metadataKey => {
         const metadata = state.metadataByMetadata[metadataKey];
 
+        if (!metadata) {
+          return Promise.resolve();
+        }
+
         let auctionMetadata =
           state.metadataByAuction[auctionCache.info.auction];
 
@@ -305,10 +309,12 @@ export const loadAccounts = async (
         updateState('metadataByMint', metadata.info.mint, metadata);
         updateState('metadata', '', metadata);
 
-        state.metadataByAuction[auctionCache.info.auction] = [
-          ...auctionMetadata,
-          metadata,
-        ];
+        const priorMetadata =
+          state.metadataByAuction[auctionCache.info.auction];
+
+        state.metadataByAuction[auctionCache.info.auction] = priorMetadata
+          ? [...priorMetadata, ...auctionMetadata, metadata]
+          : [...auctionMetadata, metadata];
       });
 
       return [...memo, ...setMetadata];
@@ -1099,6 +1105,7 @@ export const makeSetter =
         a.info.page.sub(b.info.page).toNumber(),
       );
     } else {
+      // @ts-ignore
       state[prop][key] = value;
     }
     return state;

@@ -4,30 +4,92 @@ import {
   useConnection,
   useMeta,
   loadMultipleAccounts,
+  useConnectionConfig,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Col, Divider, List, Row, Skeleton, Space, Tag, Typography, Card } from 'antd';
+import { PublicKey } from '@solana/web3.js';
+import { Button, List, Skeleton, Tag, Space, Row, Col } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
+
+import { META_PROGRAM_ID, SigningStatus } from '../../components/ArtCard';
 import { ArtContent } from '../../components/ArtContent';
 import { ArtMinting } from '../../components/ArtMinting';
-import { MetaAvatar } from '../../components/MetaAvatar';
+import { Spinner } from '../../components/Loader';
+import { holaSignMetadata } from '../../components/MintModal/sign-meta';
 import { ViewOn } from '../../components/ViewOn';
+import { useAnalytics } from '../../contexts';
 import { useArt, useExtendedArt } from '../../hooks';
 import { ArtType } from '../../types';
 
-const { Text } = Typography;
-
 export const ArtView = () => {
-  const { id } = useParams<{ id: string }>();
+  const { nft } = useParams<{ nft: string }>();
   const wallet = useWallet();
   const { patchState, whitelistedCreatorsByCreator } = useMeta();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
   const [validating, setValidating] = useState(false);
 
   const connection = useConnection();
-  const art = useArt(id);
+  const art = useArt(nft);
+  const { track } = useAnalytics();
+  const isUnverified = !!art.creators?.find(c => !c.verified);
+  const holaplexCreator = art.creators?.find(
+    c => c.address === process.env.NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY,
+  );
+  const isHolaplexUnverified = !!(holaplexCreator && !holaplexCreator.verified);
+  const { metadataByMetadata } = useMeta();
+  const metaDataKey = metadataByMetadata[nft as string];
+  const { endpoint } = useConnectionConfig();
+  const [signingStatus, setSigningStatus] = useState<SigningStatus>(
+    isHolaplexUnverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED,
+  );
+  const showRetryMessage =
+    signingStatus === SigningStatus.PENDING ||
+    signingStatus === SigningStatus.VERIFICATION_SENT;
+
+  // If we use this in a third place it would be good to turn into a hook and DRY up
+  const retrySigning = async () => {
+    const metaProgramId = new PublicKey(META_PROGRAM_ID);
+    const metadata = new PublicKey(metaDataKey.pubkey);
+    if (!endpoint) {
+      throw new Error('solanaEndpoint is required for retrySigning');
+    }
+
+    track('Holaplex signing Initiated', {
+      event_category: 'Minter',
+      nftAddress: pubkey,
+      event_label: 'art page',
+      // nftAddress
+    });
+    await holaSignMetadata({
+      solanaEndpoint: endpoint,
+      metadata,
+      metaProgramId,
+      onComplete: () => {
+        setSigningStatus(SigningStatus.VERIFICATION_SENT);
+        console.log('signing call sent');
+      },
+      onProgress: status => {
+        setSigningStatus(SigningStatus.PENDING);
+        console.log('signing progress', status);
+      },
+      onError: (msg: string) => {
+        setSigningStatus(SigningStatus.UNVERIFIED);
+        throw new Error(msg);
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (
+      isHolaplexUnverified &&
+      endpoint &&
+      signingStatus === SigningStatus.UNVERIFIED
+    ) {
+      retrySigning();
+    }
+  }, [retrySigning, isHolaplexUnverified, signingStatus]);
 
   let badge = '';
   let maxSupply = '';
@@ -43,14 +105,18 @@ export const ArtView = () => {
   } else if (art.type === ArtType.Print) {
     badge = `${art.edition} of ${art.supply}`;
   }
-  const { ref, data } = useExtendedArt(id);
+  const { ref, data } = useExtendedArt(nft);
 
   useEffect(() => {
     (async () => {
+      if (!nft) {
+        return;
+      }
+
       const artState = await loadArtwork(
         connection,
         whitelistedCreatorsByCreator,
-        id,
+        nft,
       );
 
       patchState(artState);
@@ -82,78 +148,93 @@ export const ArtView = () => {
     </>
   );
 
-  return (
-    <Row ref={ref} gutter={32}>
-      <Col xs={{ span: 24 }} md={{ span: 8 }}>
-        <Row>
-          <Col xs={{ span: 24 }}>
-            <ArtContent
-              pubkey={id}
-              active={true}
-              allowMeshRender={true}
-              artView={true}
-              backdrop="dark"
-              square={false}
-            />
-          </Col>
-          <Col span="24">
-            <Divider />
-            {art.creators?.find(c => !c.verified) && unverified}
-            <br />
-            <div>ABOUT THE CREATION</div>
-            <div>{description}</div>
-            <br />
-            {/*
-              TODO: add info about artist
-            <div>ABOUT THE CREATOR</div>
-            <div>{art.about}</div> */}
-          </Col>
-          <Col span="24">
-            {attributes && (
-              <>
-                <Divider />
-                <br />
-                <div>Attributes</div>
+  const getArt = (className: string) => (
+    <div className={className + ' metaplex-margin-bottom-8'}>
+      <ArtContent
+        pubkey={nft}
+        active={true}
+        allowMeshRender={true}
+        artView={true}
+        backdrop="dark"
+        square={false}
+      />
+    </div>
+  );
 
-                <List>
-                  {attributes.map((attribute, i) => {
-                    return (
-                      <List.Item key={i}>
-                        <List.Item.Meta
-                          title={<Text type="secondary"> {attribute.trait_type} </Text>}
-                          description={<Text> {attribute.value} </Text>} />
-                      </List.Item>
-                    );
-                  })}
-                </List>
-              </>
-            )}
-          </Col>
-        </Row>
-      </Col>
-      <Col xs={{ span: 24 }} md={{ span: 14, offset: 2 }}>
-        <Space direction="vertical" className="metaplex-fullwidth">
-          <h1>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
-          <Row>
-            <Col span={6}>
-              <Text>Royalties</Text>
-              <div>
-                {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
-              </div>
-            </Col>
-            <Col span={12}>
-              <ViewOn id={id} />
-            </Col>
-          </Row>
-          <Space direction="vertical">
-            {(art.creators || []).map((creator, idx) => {
-              return (
-                <Space direction="horizontal" key={idx}>
-                  <MetaAvatar creators={[creator]} size={64} />
-                  <div>
-                    <span>
-                      {creator.name || shortenAddress(creator.address || '')}
-                    </span>
+  const getDescriptionAndAttributes = (className: string) => (
+    <div className={className}>
+      {description && (
+        <>
+          <h3 className="info-header">Description</h3>
+          <p>{description}</p>
+        </>
+      )}
+
+      {attributes && (
+        <div>
+          <h3 className="info-header">Attributes</h3>
+          <List grid={{ column: 4 }}>
+            {attributes.map((attribute, index) => (
+              <List.Item key={`${attribute.value}-${index}`}>
+                <List.Item.Meta
+                  title={attribute.trait_type}
+                  description={attribute.value}
+                />
+              </List.Item>
+            ))}
+          </List>
+        </div>
+      )}
+    </div>
+  );
+
+  const RetryMessage = () => (
+    <Row style={{ marginTop: 20 }}>
+      <Space align="start" size={24}>
+        <Spinner />
+        <Col>
+          <h2 style={{ fontSize: 16 }}>Auto-verification in progress</h2>
+          <p style={{ fontSize: 12 }}>Check back in 5 minutes</p>
+        </Col>
+      </Space>
+    </Row>
+  );
+
+  return (
+    <div className="item-page-wrapper" ref={ref}>
+      <div className="item-page-left">
+        {getArt('art-desktop')}
+        {isUnverified && unverified}
+        {getDescriptionAndAttributes('art-desktop')}
+      </div>
+      <div className="item-page-right">
+        <div className="title-row">
+          <h1 className="text-3xl">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h1>
+          <ViewOn id={nft} />
+        </div>
+
+        {getArt('art-mobile')}
+        {isUnverified && unverified}
+        {getDescriptionAndAttributes('art-mobile')}
+
+        <div className="info-outer-wrapper">
+          <div className="info-items-wrapper">
+            <div className="info-item-wrapper">
+              <span className="item-title">Royalties</span>
+              {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
+            </div>
+
+            <div className="info-item-wrapper">
+              <span className="item-title">
+                {art?.creators?.length || 0 > 1 ? 'Creators' : 'Creator'}
+              </span>
+              {(art.creators || []).map(creator => {
+                return (
+                  <>
+                    {creator.name || shortenAddress(creator.address || '')}
+
                     <div>
                       {!creator.verified &&
                         (creator.address === pubkey ? (
@@ -162,14 +243,29 @@ export const ArtView = () => {
                             onClick={async () => {
                               setValidating(true);
 
+                              if (!nft) {
+                                return;
+                              }
+
                               try {
-                                const txid = await sendSignMetadata(connection, wallet, id);
+                                const res = await sendSignMetadata(
+                                  connection,
+                                  wallet,
+                                  nft,
+                                );
 
-                                const tx = await connection.getTransaction(txid, {
-                                  commitment: 'confirmed',
-                                });
+                                if (res.err) throw res.err.inner;
 
-                                const keys = tx?.transaction.message.accountKeys || [];
+                                const { txid } = res;
+                                const tx = await connection.getTransaction(
+                                  txid,
+                                  {
+                                    commitment: 'confirmed',
+                                  },
+                                );
+
+                                const keys =
+                                  tx?.transaction.message.accountKeys || [];
 
                                 const patch = await loadMultipleAccounts(
                                   connection,
@@ -193,55 +289,34 @@ export const ArtView = () => {
                           tag
                         ))}
                     </div>
-                  </div>
-                </Space>
-              );
-            })}
-          </Space>
-          <div>
-            <Text>Edition</Text>
-            <div>{badge}</div>
-          </div>
-          {art.type === ArtType.Master && (
-            <div>
-              <Text>Max Supply</Text>
-              <div>{maxSupply}</div>
+                  </>
+                );
+              })}
             </div>
-          )}
-          {/* <Button
-                  onClick={async () => {
-                    if(!art.mint) {
-                      return;
-                    }
-                    const mint = new PublicKey(art.mint);
 
-                    const account = accountByMint.get(art.mint);
-                    if(!account) {
-                      return;
-                    }
+            <div className="info-item-wrapper">
+              <span className="item-title">Edition</span>
+              {badge}
+            </div>
 
-                    const owner = wallet.publicKey;
+            {art.type === ArtType.Master && (
+              <div className="info-item-wrapper">
+                <span className="item-title">Max Supply</span>
+                {maxSupply}
+              </div>
+            )}
+          </div>
+        </div>
 
-                    if(!owner) {
-                      return;
-                    }
-                    const instructions: any[] = [];
-                    await updateMetadata(undefined, undefined, true, mint, owner, instructions)
-
-                    sendTransaction(connection, wallet, instructions, [], true);
-                  }}
-                >
-                  Mark as Sold
-                </Button> */}
-
-          {/* TODO: Add conversion of MasterEditionV1 to MasterEditionV2 */}
+        <Space>
           <ArtMinting
-            id={id}
+            id={nft}
             key={remountArtMinting}
             onMint={async () => await setRemountArtMinting(prev => prev + 1)}
           />
         </Space>
-      </Col>
-    </Row >
+        {showRetryMessage && <RetryMessage />}
+      </div>
+    </div>
   );
 };

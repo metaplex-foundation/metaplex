@@ -6,7 +6,6 @@ export { Info } from './Icons/info';
 export { NumericInput } from './Input/numeric';
 export { Settings } from './Settings/index';
 export { ActionConfirmation } from './ActionConfirmation/index';
-export { BackButton } from './BackButton/index';
 export { TokenIcon } from './TokenIcon';
 export { TokenDisplay } from './TokenDisplay';
 export { EtherscanLink } from './EtherscanLink';

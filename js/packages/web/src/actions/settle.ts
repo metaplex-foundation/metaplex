@@ -1,8 +1,6 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   ParsedAccount,
-  SequenceType,
-  sendTransactions,
   sendTransactionWithRetry,
   BidderPot,
   createAssociatedTokenAccountInstruction,
@@ -21,6 +19,7 @@ import { emptyPaymentAccount } from '@oyster/common/dist/lib/models/metaplex/emp
 import { QUOTE_MINT } from '../constants';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 
 const BATCH_SIZE = 10;
 const SETTLE_TRANSACTION_SIZE = 6;
@@ -63,7 +62,7 @@ export async function settle(
   await emptyPaymentAccountForAllTokens(connection, wallet, auctionView);
 }
 
-async function emptyPaymentAccountForAllTokens(
+export async function createEmptyPaymentAccountForAllTokensIX(
   connection: Connection,
   wallet: WalletSigner,
   auctionView: AuctionView,
@@ -184,20 +183,47 @@ async function emptyPaymentAccountForAllTokens(
     instructions.push(currInstrBatch);
   }
 
+  return { signers, instructions };
+}
+
+async function emptyPaymentAccountForAllTokens(
+  connection: Connection,
+  wallet: WalletSigner,
+  auctionView: AuctionView,
+) {
+  const { instructions, signers } =
+    await createEmptyPaymentAccountForAllTokensIX(
+      connection,
+      wallet,
+      auctionView,
+    );
   for (let i = 0; i < instructions.length; i++) {
     const instructionBatch = instructions[i];
     const signerBatch = signers[i];
-    if (instructionBatch.length >= 2)
-      // Pump em through!
-      await sendTransactions(
-        connection,
-        wallet,
-        instructionBatch,
-        signerBatch,
-        SequenceType.StopOnFailure,
-        'single',
-      );
-    else
+    let emptyPaymentTokenError: Error | null = null;
+
+    if (instructionBatch.length >= 2) {
+      await SmartInstructionSender.build(wallet, connection)
+        .config({
+          abortOnFailure: true,
+          maxSigningAttempts: 3,
+          commitment: 'single',
+        })
+        .withInstructionSets(
+          instructionBatch.map((ixs, i) => ({
+            instructions: ixs,
+            signers: signerBatch[i],
+          })),
+        )
+        .onFailure(err => {
+          emptyPaymentTokenError = err;
+        })
+        .send();
+
+      if (emptyPaymentTokenError) {
+        throw emptyPaymentTokenError;
+      }
+    } else {
       await sendTransactionWithRetry(
         connection,
         wallet,
@@ -205,6 +231,7 @@ async function emptyPaymentAccountForAllTokens(
         signerBatch[0],
         'single',
       );
+    }
   }
 }
 
@@ -272,17 +299,25 @@ async function claimAllBids(
     const instructionBatch = instructions[i];
     const signerBatch = signers[i];
     console.log('Running batch', i);
-    if (instructionBatch.length >= 2)
+    if (instructionBatch.length >= 2) {
       // Pump em through!
-      await sendTransactions(
-        connection,
-        wallet,
-        instructionBatch,
-        signerBatch,
-        SequenceType.StopOnFailure,
-        'single',
-      );
-    else
+      await SmartInstructionSender.build(wallet, connection)
+        .config({
+          abortOnFailure: true,
+          maxSigningAttempts: 3,
+          commitment: 'single',
+        })
+        .withInstructionSets(
+          instructionBatch.map((ixs, i) => ({
+            instructions: ixs,
+            signers: signerBatch[i],
+          })),
+        )
+        .onFailure(err => {
+          throw err;
+        })
+        .send();
+    } else {
       await sendTransactionWithRetry(
         connection,
         wallet,
@@ -290,6 +325,7 @@ async function claimAllBids(
         signerBatch[0],
         'single',
       );
+    }
     console.log('Done');
   }
 }

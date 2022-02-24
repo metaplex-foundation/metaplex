@@ -1,5 +1,9 @@
 @import '~antd/lib/style/variable.less';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 // Theme variables
 @theme-color-base: var(--color-base, black);
 @theme-color-base-bold: var(--color-base-bold, #121212);
@@ -17,6 +21,10 @@
 
 @theme-family-title: var(--family-title, 'Graphik Web', sans-serif);
 @theme-family-text: var(--family-text, 'Graphik Web', sans-serif);
+
+@theme-neutral-gray: #777;
+@theme-neutral-gray-semi-transparent: #7777;
+@theme-neutral-gray-very-transparent: #7772;
 
 // antd theme config
 html {
@@ -61,30 +69,39 @@ html {
 @menu-item-color: @theme-color-text;
 @menu-dark-color: @theme-color-text; // For some reason ant uses the dark styles anyway
 
+@info-color: @theme-color-text;
+@alert-info-border-color: @info-color;
+@alert-info-bg-color: @theme-color-base;
+@alert-info-icon-color: @info-color;
+
 @btn-primary-color: @theme-color-text-accent;
 @menu-highlight-color: @theme-color-text-accent;
 @menu-dark-highlight-color: @theme-color-text-accent;
+@menu-item-active-bg: @theme-color-base-bold;
+@menu-bg: @theme-color-base;
 
 @statistic-font-family: @theme-family-title;
 
 // Other config
 @content-padding: 32px;
-@content-max-width: 1440px;
+@content-max-width: 1344px;
 @loading-background: @body-background;
 @loading-filter: none;
 @overlay-filter: blur(32px);
 @masonry-gutter: 32px;
+@border-radius: 6px;
 
 // Dependency stylesheets
 @import '~antd/lib/style/components.less';
 @import './ant-overrides.less';
 @import '@oyster/common/styles.css';
+@import '~react-toastify/dist/ReactToastify.css';
 
 // Global styles for web
 @import './styles.less';
 
 // Component styles for web
-@import '../components/AppBar/styles.less';
+@import '../components/SecondaryMenu/styles.less';
 @import '../components/ArtContent/styles.less';
 @import '../components/ArtistCard/styles.less';
 @import '../components/Banner/styles.less';
@@ -92,10 +109,15 @@ html {
 @import '../components/Notifications/styles.less';
 @import '../components/MeshViewer/styles.less';
 @import '../components/AmountLabel/styles.less';
+@import '../components/AuctionCard/styles.less';
 @import '../components/InstructionsModal/styles.less';
 @import '../components/Layout/styles.less';
 @import '../components/Loader/styles.less';
 @import '../components/MetaplexMasonry/styles.less';
-@import '../pages/404.less';
+@import '../components/ViewOn/styles.less';
+@import '../components/AppBar/styles.less';
+
 @import '../views/auctionCreate/styles.less';
 @import '../views/auction/styles.less';
+@import '../views/Listings/styles.less';
+@import './minter-package-overrides.less';

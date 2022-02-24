@@ -1,155 +1,87 @@
-import { ConnectButton, useStore } from '@oyster/common';
+import { useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Menu, Row, Space } from 'antd';
-import React, { ReactNode, useMemo } from 'react';
-import { Link, matchPath, useLocation } from 'react-router-dom';
-import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
-import { HowToBuyModal } from '../HowToBuyModal';
-import { Notifications } from '../Notifications';
-type P = {
-  logo: string;
-};
+import React from 'react';
+import { Link, useResolvedPath, useMatch } from 'react-router-dom';
+import cx from 'classnames';
+import { SecondaryMenu } from '../SecondaryMenu';
 
-export const AppBar = (props: P) => {
+export const AppBar = () => {
   const { connected, publicKey } = useWallet();
-  const location = useLocation();
-  const locationPath = location.pathname.toLowerCase();
-  const { ownerAddress } = useStore();
+  const { ownerAddress, storefront } = useStore();
+  const logo = storefront?.theme?.logo || '';
 
-  // Array of menu item descriptions
-  const menuInfo: {
-    /** The React iterator key prop for this item */
-    key: string;
-    /** The content of this item */
-    title: ReactNode;
-    /**
-     * The link target for this item.
-     *
-     * Any routes matching this link (and, if `exact` is false, any child
-     * routes) will cause the menu item to appear highlighted.
-     */
-    link: string;
-    /** Whether child routes should match against the value of `link` */
-    exact: boolean;
-    /**
-     * Zero or more alternate routes to check against for highlighting this
-     * item.
-     *
-     * The item will never link to these routes, but they will be queried for
-     * highlighting similar to the `link` property.
-     */
-    alt: {
-      /**
-       * An alternate route path or prefix to match against.
-       *
-       * See the `link` property for more info.
-       */
-      path: string;
-      /** Whether child routes should match against the value of `path` */
-      exact: boolean;
-    }[];
-  }[] = useMemo(() => {
-    let menu = [
-      {
-        key: 'listings',
-        title: 'Listings',
-        link: '/',
-        exact: true,
-        alt: [{ path: '/auction', exact: false }],
-      },
-      {
-        key: 'artists',
-        title: 'Artists',
-        link: `/artists/${ownerAddress}`,
-        exact: true,
-        alt: [
-          { path: '/artists', exact: false },
-          { path: '/artworks', exact: false },
-        ],
-      },
-    ];
+  const getMenuItem = (key: string, linkAppend?: string, title?: string) => {
+    return {
+      key,
+      title: title || key[0].toUpperCase() + key.substring(1),
+      link: `/${key + (linkAppend ? linkAppend : '')}`,
+      group: `/${key}`,
+    };
+  };
 
-    if (connected) {
-      menu = [
-        ...menu,
-        {
-          key: 'owned',
-          title: 'Owned',
-          link: '/owned',
-          exact: true,
-          alt: [],
-        },
-      ];
-    }
+  let menu = [
+    getMenuItem('listings', '?view=live'),
+    getMenuItem('creators', `/${ownerAddress}`),
+  ];
 
-    if (publicKey?.toBase58() === ownerAddress) {
-      menu = [
-        ...menu,
-        {
-          key: 'admin',
-          title: 'Admin',
-          link: '/admin',
-          exact: true,
-          alt: [],
-        },
-      ];
-    }
+  if (connected) {
+    menu = [...menu, getMenuItem('owned')];
+  }
 
-    return menu;
-  }, [connected]);
+  if (publicKey?.toBase58() === ownerAddress) {
+    menu = [...menu, getMenuItem('admin')];
+  }
 
-  const menuItems = useMemo(
-    () =>
-      menuInfo.map(({ key, link, title }) => (
-        <Menu.Item key={key}>
-          <Link to={link}>{title}</Link>
-        </Menu.Item>
-      )),
-    [menuInfo],
-  );
+  interface MenuItemProps {
+    to: string;
+    itemKey: string;
+    group?: string;
+    title: string;
+  }
 
-  const activeItems = useMemo(
-    () =>
-      menuInfo
-        .filter(({ link, alt, exact }) =>
-          [{ path: link, exact }, ...alt].find(({ path, exact }) =>
-            matchPath(locationPath, { path, exact }),
-          ),
-        )
-        .map(({ key }) => key),
-    [locationPath, menuInfo],
-  );
+  const MenuItem = ({ to, title, itemKey, group }: MenuItemProps) => {
+    const resolved = useResolvedPath(group || to);
+    const match = useMatch({ path: resolved.pathname, end: false });
+
+    return (
+      <Link
+        to={to}
+        key={itemKey}
+        className={cx('main-menu-item', {
+          active: match,
+        })}
+      >
+        {title}
+      </Link>
+    );
+  };
 
   return (
-    <>
-      <Row wrap={false} align="middle">
-        <Col flex="0 0 auto">
-          <Link to="/" id="metaplex-header-logo">
-            <img src={props.logo} />
+    <div className="outer-wrapper">
+      <div className="app-bar-wrapper">
+        <div className="app-bar-left-wrapper">
+          <Link
+            to="/"
+            className={cx('app-bar-logo-wrapper', {
+              hide: useMatch('listings'),
+            })}
+          >
+            <img src={logo || ''} className="app-bar-logo" />
           </Link>
-        </Col>
-        <Col flex="1 0 0" style={{ overflow: 'hidden' }}>
-          <Menu theme="dark" mode="horizontal" selectedKeys={activeItems}>
-            {menuItems}
-          </Menu>
-        </Col>
-        <Col flex="0 1 auto">
-          <Space className="metaplex-display-flex" align="center">
-            {connected ? (
-              <>
-                <CurrentUserBadge showAddress={true} buttonType="text" />
-                <Notifications buttonType="text" />
-                <Cog buttonType="text" />
-              </>
-            ) : (
-              <>
-                <HowToBuyModal buttonType="text" />
-                <ConnectButton type="text" allowWalletChange={false} />
-              </>
-            )}
-          </Space>
-        </Col>
-      </Row>
-    </>
+          <div className="main-menu-wrapper">
+            {menu.map(({ key, title, link, group }) => (
+              <MenuItem
+                to={link}
+                key={key}
+                itemKey={key}
+                group={group}
+                title={title}
+              />
+            ))}
+          </div>
+        </div>
+        <SecondaryMenu />
+      </div>
+    </div>
   );
 };

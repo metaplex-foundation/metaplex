@@ -1,14 +1,34 @@
 import { useStore } from '@oyster/common';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useMeta } from '../../contexts';
-import { AuctionListView } from './auctionList';
-import { SetupView } from './setup';
+import { split } from 'lodash';
+import {  useNavigate, useLocation } from 'react-router-dom';
 
 export const HomeView = () => {
   const { isLoading, store } = useMeta();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const { isConfigured } = useStore();
 
-  const showAuctions = (store && isConfigured) || isLoading;
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    const [_, auction] = split(location.hash, `#/auction/`);
 
-  return showAuctions ? <AuctionListView /> : <SetupView />;
+
+    if (!store || !isConfigured) {
+      navigate("/setup");
+      return;
+    }
+    
+    if (auction) {
+      navigate(`/listings/${auction}`);
+    } else {
+      navigate("/listings?view=live");
+    }
+  }, [isLoading, store, isConfigured]);
+
+  return <></>;
 };

@@ -9,46 +9,46 @@ import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { useCreatorArts } from '../../hooks';
 
 export const ArtistView = () => {
-  const { id } = useParams<{ id: string }>();
+  const { creator } = useParams<{ creator: string }>();
   const { whitelistedCreatorsByCreator, patchState } = useMeta();
   const [loadingArt, setLoadingArt] = useState(true);
-  const artwork = useCreatorArts(id);
+  const artwork = useCreatorArts(creator);
   const connection = useConnection();
   const creators = Object.values(whitelistedCreatorsByCreator);
 
   useEffect(() => {
-    if (!id) {
+    if (!creator) {
       return;
     }
 
     (async () => {
       setLoadingArt(true);
-      const creator = whitelistedCreatorsByCreator[id];
+      const active = whitelistedCreatorsByCreator[creator];
 
       const artistMetadataState = await loadMetadataForCreator(
         connection,
-        creator,
+        active,
       );
 
       patchState(artistMetadataState);
       setLoadingArt(false);
     })();
-  }, [connection, id]);
+  }, [connection, creator]);
 
   return (
     <Row>
       <Col span={24}>
-        <h2>Artists</h2>
+        <h2 className="metaplex-margin-y-4">Creators</h2>
         <MetaplexMasonry>
           {creators.map((m, idx) => {
-            const address = m.info.address;
+            const current = m.info.address;
             return (
-              <Link to={`/artists/${address}`} key={idx}>
+              <Link to={`/creators/${current}`} key={idx}>
                 <ArtistCard
-                  key={address}
-                  active={address === id}
+                  key={current}
+                  active={current === creator}
                   artist={{
-                    address,
+                    address: current,
                     name: m.info.name || '',
                     image: m.info.image || '',
                     link: m.info.twitter || '',
@@ -70,7 +70,7 @@ export const ArtistView = () => {
             {artwork.map((m, idx) => {
               const id = m.pubkey;
               return (
-                <Link to={`/artworks/${id}`} key={idx}>
+                <Link to={`/creators/${creator}/nfts/${id}`} key={idx}>
                   <ArtCard key={id} pubkey={m.pubkey} preview={false} />
                 </Link>
               );

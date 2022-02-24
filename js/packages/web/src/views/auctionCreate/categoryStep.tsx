@@ -1,9 +1,12 @@
 import { Button, Col, Row, Space } from 'antd';
 import React from 'react';
-import { AuctionCategory } from '.';
+import { AuctionCategory, AuctionState } from '.';
 
 export const CategoryStep = (props: {
-  confirm: (category: AuctionCategory) => void;
+  confirm: () => void;
+  attributes: AuctionState;
+  freshAttributes: AuctionState;
+  setAttributes: (state: AuctionState) => void;
 }) => {
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
@@ -43,7 +46,15 @@ export const CategoryStep = (props: {
                 className="metaplex-button-jumbo metaplex-fullwidth"
                 type="ghost"
                 size="large"
-                onClick={() => props.confirm(cat)}
+                onClick={() => {
+                  if (cat !== props.attributes.category) {
+                    props.setAttributes({
+                      ...props.freshAttributes,
+                      category: cat,
+                    });
+                  }
+                  props.confirm();
+                }}
               >
                 <div>{title}</div>
                 <div>{desc}</div>

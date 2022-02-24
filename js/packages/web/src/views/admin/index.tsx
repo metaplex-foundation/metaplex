@@ -1,8 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Layout,
-  Row,
-  Col,
   Table,
   Switch,
   Spin,
@@ -49,7 +46,6 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { useAuctionManagersToCache, useNotifications } from '../../hooks';
 import Bugsnag from '@bugsnag/browser';
 
-const { Content } = Layout;
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator, isLoading, patchState } =
     useMeta();
@@ -75,14 +71,10 @@ export const AdminView = () => {
   }, [store, storeAddress, wallet.publicKey]);
 
   useEffect(() => {
-    return subscribeProgramChanges(
-      connection,
-      patchState,
-      {
-        programId: METAPLEX_ID,
-        processAccount: processMetaplexAccounts,
-      },
-    );
+    return subscribeProgramChanges(connection, patchState, {
+      programId: METAPLEX_ID,
+      processAccount: processMetaplexAccounts,
+    });
   }, [connection]);
 
   useEffect(() => {
@@ -333,71 +325,63 @@ function InnerAdminView({
   ];
 
   return (
-    <Content>
-      <Col>
-        <Row>
-          <h2>Whitelisted Creators</h2>
-          <Col span={22}>
-            <ArtistModal
-              setUpdatedCreators={setUpdatedCreators}
-              uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
-            />
-            <Button
-              onClick={async () => {
-                notify({
-                  message: 'Saving...',
-                  type: 'info',
-                });
-                await saveAdmin(
-                  connection,
-                  wallet,
-                  newStore.public,
-                  Object.values(updatedCreators),
-                );
-                notify({
-                  message: 'Saved',
-                  type: 'success',
-                });
-              }}
-              type="primary"
-            >
-              Submit
-            </Button>
-          </Col>
-          <Col>
-            <Row justify="end">
-              <Col>
-                <Switch
-                  checkedChildren="Public"
-                  unCheckedChildren="Whitelist Only"
-                  checked={newStore.public}
-                  onChange={val => {
-                    setNewStore(() => {
-                      const newS = new Store(store.info);
-                      newS.public = val;
-                      return newS;
-                    });
-                  }}
-                />
-              </Col>
-            </Row>
-          </Col>
-          <Col span={24}>
-            <Table
-              columns={columns}
-              dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
-                key,
-                address: uniqueCreatorsWithUpdates[key].address,
-                activated: uniqueCreatorsWithUpdates[key].activated,
-                name:
-                  uniqueCreatorsWithUpdates[key].name ||
-                  shortenAddress(uniqueCreatorsWithUpdates[key].address),
-                image: uniqueCreatorsWithUpdates[key].image,
-              }))}
-            />
-          </Col>
-        </Row>
-      </Col>
+    <div className="metaplex-flex-column metaplex-gap-4">
+      <h2>Whitelisted Creators</h2>
+      <div className="metaplex-flex">
+        <ArtistModal
+          setUpdatedCreators={setUpdatedCreators}
+          uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
+        />
+        <Button
+          onClick={async () => {
+            notify({
+              message: 'Saving...',
+              type: 'info',
+            });
+            await saveAdmin(
+              connection,
+              wallet,
+              newStore.public,
+              Object.values(updatedCreators),
+            );
+            notify({
+              message: 'Saved',
+              type: 'success',
+            });
+          }}
+          type="primary"
+        >
+          Submit
+        </Button>
+      </div>
+      <div>
+        <Switch
+          checkedChildren="Public"
+          unCheckedChildren="Whitelist Only"
+          checked={newStore.public}
+          onChange={val => {
+            setNewStore(() => {
+              const newS = new Store(store.info);
+              newS.public = val;
+              return newS;
+            });
+          }}
+        />
+      </div>
+
+      <Table
+        columns={columns}
+        dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
+          key,
+          address: uniqueCreatorsWithUpdates[key].address,
+          activated: uniqueCreatorsWithUpdates[key].activated,
+          name:
+            uniqueCreatorsWithUpdates[key].name ||
+            shortenAddress(uniqueCreatorsWithUpdates[key].address),
+          image: uniqueCreatorsWithUpdates[key].image,
+        }))}
+      />
+
       <h2>Listing Notifications</h2>
       <Table
         columns={[
@@ -446,11 +430,11 @@ function InnerAdminView({
         ]}
         dataSource={notifications}
       />
-      <Row></Row>
-      <h2>Adminstrator Actions</h2>
-      <Row>
-        {!store.info.public && (
-          <Col xs={24} md={12}>
+
+      <div className="metaplex-flex-column metaplex-gap-4">
+        <h2>Administrator Actions</h2>
+        <div className="metaplex-flex metaplex-gap-4">
+          <div className="metaplex-width-50">
             <h3>Convert Master Editions</h3>
             <p>
               You have {filteredMetadata?.available.length} MasterEditionV1s
@@ -476,56 +460,64 @@ function InnerAdminView({
             >
               Convert Eligible Master Editions
             </Button>
-          </Col>
-        )}
-        <Col span={11} offset={1}>
-          <h3>Cache Auctions</h3>
-          <p>
-            Activate your storefront listing caches by pressing &ldquo;build
-            cache&rdquo;. This will reduce page load times for your listings.
-            Your storefront will start looking up listing using the cache on
-            November 17th. To preview the speed improvement visit the Holaplex{' '}
-            <a
-              rel="noopener noreferrer"
-              target="_blank"
-              href={`https://${storefront.subdomain}.holaxplex.dev`}
-            >
-              {' '}
-              staging environment
-            </a>{' '}
-            for your storefront.
-          </p>
-          <Space direction="vertical" size="middle" align="center">
-            <Progress
-              type="circle"
-              status="normal"
-              percent={(auctionCacheTotal / auctionManagerTotal) * 100}
-              format={() => `${auctionManagersToCache.length} left`}
-            />
-            {auctionManagersToCache.length > 0 && (
-              <Button
-                size="large"
-                loading={cachingAuctions}
-                onClick={async () => {
-                  setCachingAuctions(true);
-
-                  await cacheAllAuctions(
-                    wallet,
-                    connection,
-                    auctionManagersToCache,
-                    auctionCaches,
-                    storeIndexer,
-                  );
-
-                  setCachingAuctions(false);
-                }}
+          </div>
+          <div className="metaplex-width-50">
+            <h3>Cache Auctions</h3>
+            <p>
+              Activate your storefront listing caches by pressing &ldquo;build
+              cache&rdquo;. This will reduce page load times for your listings.
+              Your storefront will start looking up listing using the cache on
+              November 17th. To preview the speed improvement visit the Holaplex{' '}
+              <a
+                rel="noopener noreferrer"
+                target="_blank"
+                href={`https://${storefront.subdomain}.holaxplex.dev`}
               >
-                Build Cache
-              </Button>
-            )}
-          </Space>
-        </Col>
-      </Row>
-    </Content>
+                {' '}
+                staging environment
+              </a>{' '}
+              for your storefront.
+            </p>
+            <Space direction="vertical" size="middle" align="center">
+              <Progress
+                type="circle"
+                status="normal"
+                percent={(auctionCacheTotal / auctionManagerTotal) * 100}
+                format={() => `${auctionManagersToCache.length} left`}
+              />
+              {auctionManagersToCache.length > 0 && (
+                <Button
+                  size="large"
+                  loading={cachingAuctions}
+                  onClick={async () => {
+                    setCachingAuctions(true);
+
+                    try {
+                      await cacheAllAuctions(
+                        wallet,
+                        connection,
+                        auctionManagersToCache,
+                        auctionCaches,
+                        storeIndexer,
+                      );
+                    } finally {
+                      setCachingAuctions(false);
+                    }
+                  }}
+                >
+                  Build Cache
+                </Button>
+              )}
+            </Space>
+          </div>
+        </div>
+      </div>
+      <h2>Miscellaneous</h2>
+      <div>
+        <Button type="primary" onClick={() => localStorage.clear()}>
+          Clear Local Cache
+        </Button>
+      </div>
+    </div>
   );
 }

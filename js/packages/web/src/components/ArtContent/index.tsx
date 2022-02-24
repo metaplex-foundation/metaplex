@@ -8,6 +8,7 @@ import cx from 'classnames';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { getLast } from '../../utils/utils';
 import { MeshViewer } from '../MeshViewer';
+import { maybeCDN } from '../../utils/cdn';
 
 const MeshArtContent = ({
   uri,
@@ -28,11 +29,7 @@ const MeshArtContent = ({
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
-    return <CachedImageContent
-      backdrop={backdrop}
-      uri={uri}
-      preview={false}
-    />;
+    return <CachedImageContent backdrop={backdrop} uri={uri} preview={false} />;
   }
 
   return (
@@ -45,7 +42,7 @@ const MeshArtContent = ({
 const CachedImageContent = ({
   uri,
   preview,
-  backdrop = "dark",
+  backdrop = 'dark',
 }: {
   uri?: string;
   preview?: boolean;
@@ -57,15 +54,9 @@ const CachedImageContent = ({
     <Image
       preview={preview}
       src={cachedBlob}
-      wrapperClassName={
-        cx(
-          "metaplex-image",
-          `metaplex-loader-${backdrop}`,
-          {
-            "metaplex-image-loading": isLoading,
-          }
-        )
-      }
+      wrapperClassName={cx('metaplex-image', `metaplex-loader-${backdrop}`, {
+        'metaplex-image-loading': isLoading,
+      })}
       loading="lazy"
       placeholder={<Loading type="bars" color="inherit" />}
     />
@@ -109,7 +100,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <Stream
         streamRef={(e: any) => playerRef(e)}
         src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
@@ -130,12 +121,12 @@ const VideoArtContent = ({
         poster={uri}
       >
         {likelyVideo && <source src={likelyVideo} type="video/mp4" />}
-        {animationURL && <source src={animationURL} type="video/mp4" />}
-        {(files?.filter(f => !!f && typeof f !== 'string') as MetadataFile[])?.map(
-          (f: MetadataFile, i) => (
-            <source key={i} src={f.uri} type={f.type} />
-          ),
-        )}
+        {animationURL && <source src={maybeCDN(animationURL)} type="video/mp4" />}
+        {(
+          files?.filter(f => !!f && typeof f !== 'string') as MetadataFile[]
+        )?.map((f: MetadataFile, i) => (
+          <source key={i} src={f.uri} type={f.type} />
+        ))}
       </video>
     );
 
@@ -158,7 +149,9 @@ const HTMLContent = ({
   backdrop: string;
 }) => {
   if (!artView) {
-    return <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />;
+    return (
+      <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />
+    );
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
@@ -198,7 +191,7 @@ export const ArtContent = ({
   animationURL?: string;
   files?: (MetadataFile | string)[];
   artView?: boolean;
-  backdrop: "dark" | "light";
+  backdrop: 'dark' | 'light';
   square: boolean;
 }) => {
   const id = pubkeyToString(pubkey);
@@ -237,47 +230,39 @@ export const ArtContent = ({
   } else if (category === 'html' || animationUrlExt === 'html') {
     content = (
       <HTMLContent
-      uri={uri}
-      animationUrl={animationURL}
-      preview={preview}
-      files={files}
-      artView={artView}
-      backdrop={backdrop}
-    />
-    )
-  } else if (allowMeshRender &&
+        uri={uri}
+        animationUrl={animationURL}
+        preview={preview}
+        files={files}
+        artView={artView}
+        backdrop={backdrop}
+      />
+    );
+  } else if (
+    allowMeshRender &&
     (category === 'vr' ||
       animationUrlExt === 'glb' ||
-      animationUrlExt === 'gltf')) {
-        content = (
-          <MeshArtContent
+      animationUrlExt === 'gltf')
+  ) {
+    content = (
+      <MeshArtContent
         backdrop={backdrop}
         uri={uri}
         animationUrl={animationURL}
         files={files}
       />
-        );
+    );
   } else {
     content = (
-      <CachedImageContent
-          backdrop={backdrop}
-          uri={uri}
-          preview={preview}
-        />
-
+      <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />
     );
   }
 
   return (
     <div
-      className={
-        cx(
-          "metaplex-art-content",
-          {
-            "metaplex-square-aspect": squareAspect,
-          }
-        )
-      }
+      className={cx('metaplex-art-content', {
+        'metaplex-square-aspect': squareAspect,
+      })}
       ref={ref}
     >
       {content}

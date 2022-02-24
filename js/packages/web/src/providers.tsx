@@ -11,7 +11,7 @@ import { AppLayout } from './components/Layout';
 import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
 import { Storefront } from '@oyster/common';
-import { AnalyticsProvider } from './components/Analytics';
+import { AnalyticsProvider } from './contexts';
 
 interface ProvidersProps {
   storefront: Storefront;

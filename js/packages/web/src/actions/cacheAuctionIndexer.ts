@@ -48,7 +48,7 @@ export async function cacheAuctionIndexer(
 
   if (storeIndexer.length > 0) {
     above = storeIndexer[0].info.auctionCaches[offset];
-    below = below = storeIndexer[0].info.auctionCaches[offset - 1];
+    below = storeIndexer[0].info.auctionCaches[offset - 1];
   }
 
   const storeIndexKey = await getStoreIndexer(0);

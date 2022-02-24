@@ -2,6 +2,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import {
   loadMetadataForUsers,
   useConnection,
+  useConnectionConfig,
   useUserAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -20,7 +21,7 @@ export const ArtworksView = () => {
   const connection = useConnection();
   const wallet = useWallet();
   const { userAccounts } = useUserAccounts();
-
+  const { endpoint } = useConnectionConfig();
   useEffect(() => {
     (async () => {
       setLoadingArt(true);
@@ -45,23 +46,33 @@ export const ArtworksView = () => {
 
   return (
     <>
-      <Row justify="space-between" align="middle">
+      <div className="metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap">
         <h2>Owned Artwork</h2>
-        <Link to="/auction/create/0">
-          <Button size="large" type="primary">Sell NFT</Button>
+        <Link to="/listings/new/0">
+          <Button size="large" type="primary">
+            Sell NFT
+          </Button>
         </Link>
-      </Row>
+      </div>
       <Row>
         <Col span={24}>
           <MetaplexMasonry>
             {ownedMetadata.map(m => {
               const id = m.metadata.pubkey;
+              const creators = m.metadata.info.data.creators;
+              let address: string = '';
+
+              if (creators) {
+                address = creators[0].address;
+              }
               return (
-                <Link to={`/artworks/${id}`} key={id}>
+                <Link to={`/creators/${address}/nfts/${id}`} key={id}>
                   <ArtCard
                     key={id}
                     pubkey={m.metadata.pubkey}
                     preview={false}
+                    solanaEndpoint={endpoint}
+                    allowRetrySigning={true}
                   />
                 </Link>
               );
