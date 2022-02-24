@@ -1,10 +1,12 @@
 /* Swiper bullets */
 .swiper-pagination {
-  @apply !w-[unset];
-  @apply !left-[unset];
+  @apply !w-[300px];
+  @apply !left-[0];
+  @apply !mx-auto;
   @apply !right-[0];
-  @apply lg:!bottom-[4px];
   @apply !bottom-[2px];
+  @apply lg:!bottom-[24px];
+  @apply !z-[1000];
 
   &-bullet {
     @apply !w-[20px];
@@ -12,12 +14,10 @@
     @apply !h-[6px];
     @apply !rounded-[8px];
     @apply !bg-gray-900/20;
-    @apply md:!bg-white/50;
     @apply !opacity-100;
 
     &-active {
       @apply !bg-gray-900;
-      @apply md:!bg-white;
     }
   }
 }

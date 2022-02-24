@@ -1,8 +1,9 @@
 import React, { FC, useEffect } from 'react'
 import CN from 'classnames'
 import ReactTooltip from 'react-tooltip'
-import Swiper, { Navigation, Autoplay, Mousewheel } from 'swiper'
+import Swiper, { Navigation, Autoplay, Mousewheel, Pagination } from 'swiper'
 import 'swiper/css'
+import 'swiper/css/pagination'
 
 export interface SlideProps {
   Component?: any
@@ -23,7 +24,7 @@ export interface BlockCarouselProps {
 
 const SampleComponent = ({ children }: any) => {
   return (
-    <div className='w-full h-[400px] bg-[#C2D0DE] text-[40px] font-[600] uppercase text-white flex items-center justify-center'>
+    <div className='flex h-[400px] w-full items-center justify-center bg-[#C2D0DE] text-[40px] font-[600] uppercase text-white'>
       {children}
     </div>
   )
@@ -37,6 +38,7 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
   prevButton,
   slides,
   loop,
+  pagination,
   ...restProps
 }: BlockCarouselProps) => {
   const BlockCarouselClasses = CN(`block-carousel w-full flex flex-col overflow-hidden`, className)
@@ -55,7 +57,7 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
   } = options || {}
 
   useEffect(() => {
-    Swiper.use([Navigation, Autoplay, Mousewheel])
+    Swiper.use([Navigation, Autoplay, Mousewheel, Pagination])
 
     const swiper = new Swiper(`#${id}` || '.block-carousel', {
       autoplay:
@@ -101,19 +103,20 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
 
   return (
     <div id={id} className={BlockCarouselClasses} {...restProps}>
-      <ul className='flex p-0 m-0 list-none block-carousel__wrapper'>
+      <ul className='block-carousel__wrapper m-0 flex list-none p-0'>
         {(slides || sampleSlides).map(
           ({ id, Component, ...restProps }: SlideProps, index: number) => (
             <li
               key={id || index}
-              className='flex flex-col flex-shrink-0 block-carousel__item'
-              {...restProps}
-            >
+              className='block-carousel__item flex flex-shrink-0 flex-col'
+              {...restProps}>
               <Component />
             </li>
           )
         )}
       </ul>
+
+      <div className='swiper-pagination'></div>
     </div>
   )
 }
