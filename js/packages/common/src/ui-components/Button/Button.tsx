@@ -4,12 +4,13 @@ import CN from 'classnames'
 export interface ButtonProps {
   [x: string]: any
   view?: 'outline' | 'solid'
-  appearance?: 'primary' | 'secondary' | 'ghost' | 'ghost-invert'
+  appearance?: 'primary' | 'complimentary' | 'secondary' | 'ghost' | 'ghost-invert'
   children?: any
   iconAfter?: any
   iconBefore?: any
   onClick?: any
-  size?: 'sm' | 'md' | 'lg'
+  isRounded?: boolean
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 export const Button: FC<ButtonProps> = ({
@@ -21,6 +22,7 @@ export const Button: FC<ButtonProps> = ({
   onClick,
   size,
   appearance,
+  isRounded,
   ...restProps
 }: ButtonProps) => {
   const ButtonClasses = CN(
@@ -30,7 +32,10 @@ export const Button: FC<ButtonProps> = ({
       'h-[30px] px-[12px] text-sm': size === 'sm',
       'h-[38px] px-[12px] text-base': size === 'md',
       'h-[42px] px-[16px]': size === 'lg',
+      'h-[52px] px-[16px]': size === 'xl',
       'bg-white': view === 'outline',
+
+      '!rounded-full': isRounded,
 
       'border-B-400 hover:bg-B-400 hover:text-white':
         view === 'outline' && appearance === 'primary',
@@ -54,6 +59,9 @@ export const Button: FC<ButtonProps> = ({
 
       'bg-white text-B-400 hover:bg-B-400 hover:text-white':
         view === 'solid' && appearance === 'ghost-invert',
+
+      'bg-P-400 hover:bg-P-500 text-white bg-no-repeat bg-center bg-cover':
+        view === 'solid' && appearance === 'complimentary',
     }
   )
 

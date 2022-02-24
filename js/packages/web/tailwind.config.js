@@ -1,6 +1,6 @@
-const defaultTheme = require('tailwindcss/defaultTheme');
-const { palette } = require('./config/colors');
-const appTypography = require('./config/typography');
+const defaultTheme = require('tailwindcss/defaultTheme')
+const { palette } = require('./config/colors')
+const appTypography = require('./config/typography')
 
 module.exports = {
   content: [
@@ -9,6 +9,7 @@ module.exports = {
     './src/components-v2/**/*.{js,ts,jsx,tsx}',
     './src/views/**/*.{js,ts,jsx,tsx}',
     '../common/src/**/*.{js,ts,jsx,tsx}',
+    './dummy-data/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     screens: {
@@ -48,4 +49,4 @@ module.exports = {
     require('@tailwindcss/typography'),
     require('tailwind-scrollbar'),
   ],
-};
+}
