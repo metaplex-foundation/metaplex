@@ -169,18 +169,16 @@ export const AuctionView = () => {
       )}
 
       {attributes && attributes.length > 0 && (
-        <div>
+        <div className="mt-8">
           <h3 className="info-header">Attributes</h3>
-          <List grid={{ column: 4 }}>
+          <div className="grid grid-cols-2 gap-6">
             {attributes.map((attribute, index) => (
-              <List.Item key={`${attribute.value}-${index}`}>
-                <List.Item.Meta
-                  title={attribute.trait_type}
-                  description={attribute.value}
-                />
-              </List.Item>
+              <div key={`${attribute.value}-${index}`}>
+                <h4 className="mb-1">{attribute.trait_type}</h4>
+                <span className="truncate">{attribute.value}</span>
+              </div>
             ))}
-          </List>
+          </div>
         </div>
       )}
     </div>
@@ -343,53 +341,48 @@ export const AuctionBids = ({
         bodyStyle={{ padding: 0 }}
         extra={
           auctionView.myBidderMetadata &&
-          !auctionView.myBidderMetadata.info.cancelled && (
-            <Tooltip
-              placement="right"
-              title="You are currently a winning bid, and thus can not cancel your bid."
-              trigger={isWinner ? ['hover'] : []}
+          !auctionView.myBidderMetadata.info.cancelled &&
+          !isWinner && (
+            <Button
+              type={auctionRunning ? 'ghost' : 'primary'}
+              disabled={isWinner}
+              loading={cancellingBid}
+              onClick={async () => {
+                const myBidderPot = auctionView.myBidderPot;
+
+                if (!myBidderPot) {
+                  return;
+                }
+
+                setCancellingBid(true);
+
+                try {
+                  await actions.cancelBid({
+                    connection,
+                    //@ts-ignore
+                    wallet,
+                    auction: new PublicKey(auctionView.auction.pubkey),
+                    bidderPotToken: new PublicKey(myBidderPot.info.bidderPot),
+                  });
+
+                  notification.success({
+                    message: 'Bid Cancelled',
+                    description:
+                      'Your bid was successfully cancelled. You may rebid to enter the auction again.',
+                  });
+                } catch {
+                  notification.error({
+                    message: 'Bid Cancel Error',
+                    description:
+                      'There was an issue cancelling your bid. Please check your transaction history and try again.',
+                  });
+                } finally {
+                  setCancellingBid(false);
+                }
+              }}
             >
-              <Button
-                type="ghost"
-                disabled={isWinner}
-                loading={cancellingBid}
-                onClick={async () => {
-                  const myBidderPot = auctionView.myBidderPot;
-
-                  if (!myBidderPot) {
-                    return;
-                  }
-
-                  setCancellingBid(true);
-
-                  try {
-                    await actions.cancelBid({
-                      connection,
-                      //@ts-ignore
-                      wallet,
-                      auction: new PublicKey(auctionView.auction.pubkey),
-                      bidderPotToken: new PublicKey(myBidderPot.info.bidderPot),
-                    });
-
-                    notification.success({
-                      message: 'Bid Cancelled',
-                      description:
-                        'Your bid was successfully cancelled. You may rebid to enter the auction again.',
-                    });
-                  } catch {
-                    notification.error({
-                      message: 'Bid Cancel Error',
-                      description:
-                        'There was an issue cancelling your bid. Please check your transaction history and try again.',
-                    });
-                  } finally {
-                    setCancellingBid(false);
-                  }
-                }}
-              >
-                {auctionRunning ? 'Cancel Bid' : 'Refund bid'}
-              </Button>
-            </Tooltip>
+              {auctionRunning ? 'Cancel Bid' : 'Refund bid'}
+            </Button>
           )
         }
       >
