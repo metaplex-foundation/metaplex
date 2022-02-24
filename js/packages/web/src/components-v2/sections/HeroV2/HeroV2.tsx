@@ -71,8 +71,13 @@ export const HeroV2: FC<HeroV2Props> = ({ className, ...restProps }: HeroV2Props
               </div>
             </div>
 
-            <div className='flex w-full px-[16px] pt-[40px] md:pt-[80px] lg:w-[unset] lg:pt-0'>
-              <TrendingCard size='lg' image={nft?.image} trendingPercentage={nft?.rate} />
+            <div className='flex w-full justify-center px-[16px] pt-[40px] md:pt-[80px] lg:w-[unset] lg:pt-0'>
+              <TrendingCard
+                size='lg'
+                image={nft?.image}
+                trendingPercentage={nft?.rate}
+                name={nft?.name}
+              />
             </div>
           </div>
         </Parallax>
