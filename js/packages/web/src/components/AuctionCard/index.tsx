@@ -716,7 +716,7 @@ export const AuctionCard = ({
       !myPayingAccount ? (
         <Spin indicator={<LoadingOutlined />} />
       ) : eligibleForAnything ? (
-        `Redeem bid`
+        `Claim NFT`
       ) : (
         `${isAuctioneer ? 'Reclaim Items' : 'Refund bid'}`
       )}
@@ -1012,15 +1012,15 @@ export const AuctionCard = ({
           ))}
         {/* ugly, but it figures out wether to show the space or not by mirroring the conditions below */}
         {(!showPlaceBidUI ||
+          showDefaultNonEndedAction ||
           (showDefaultNonEndedAction &&
             showPlaceBidUI &&
             !auctionView.isInstantSale) ||
           (showDefaultNonEndedAction && showStartAuctionBtn) ||
           (!hideDefaultAction && !wallet.connected) ||
-          showRedeemReclaimRefundBtn ||
-          action) && (
+          showRedeemReclaimRefundBtn) && (
           <Space
-            className="metaplex-fullwidth metaplex-space-align-stretch p-4"
+            className="metaplex-fullwidth metaplex-space-align-stretch "
             direction="vertical"
           >
             {!showPlaceBidUI && (
@@ -1055,7 +1055,6 @@ export const AuctionCard = ({
             )}
 
             {showRedeemReclaimRefundBtn && redeemReclaimRefundBtn}
-
             {action}
           </Space>
         )}
