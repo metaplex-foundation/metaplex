@@ -25,9 +25,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
   const CollectionHeaderClasses = CN(`collection-header bg-white`, className)
   const [isFavorite, setIsFavorite] = useState(true)
   const [isShowFullBio, setIsShowFullBio] = useState(false)
-  console.log('PUBG')
-  console.log(pubkey)
-  console.log('PUBG')
+
   const { ref, data } = useExtendedArt(pubkey)
 
   // return <></>

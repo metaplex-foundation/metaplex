@@ -8,26 +8,6 @@ import { Modal } from '../../molecules/Modal'
 import { ArtDetails } from '../../molecules/ArtDetails'
 import { QuickBuy } from '../../sections/QuickBuy'
 
-import { arts } from '../../../../dummy-data/arts'
-import { actions, NodeWallet, Wallet } from '@metaplex/js'
-//import { Crypto } from '@metaplex/js/lib/utils/'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { useConnection, sendTransactions, sendTransactionWithRetry } from '@oyster/common'
-import { WalletContextState } from '@solana/wallet-adapter-react'
-import {
-  AccountInfo,
-  Connection,
-  PublicKey,
-  Keypair,
-  Transaction,
-  Commitment,
-  TransactionInstruction,
-} from '@solana/web3.js'
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token'
-//import CreateAssociatedTokenAccount from '@metaplex/js/lib/CreateAssociatedTokenAccount'
-
-import { createAssociatedTokenAccountInstruction, toPublicKey } from '@oyster/common'
-import { Account } from '@metaplex-foundation/mpl-core'
 import { Link } from 'react-router-dom'
 export interface CollectionItemsProps {
   [x: string]: any
@@ -138,24 +118,25 @@ export const CollectionItems: FC<CollectionItemsProps> = ({
 
       <div className='grid grid-cols-2 gap-[16px] pt-[32px] md:grid-cols-3 md:gap-[28px] lg:grid-cols-4'>
         {dataItems.map((art: any, index: number) => {
-          console.log(art[0])
-          return (
-            <Link to={`/auction/${art[0].auction.pubkey}`}>
-              <ArtCard
-                // onClickBuy={() => {
-                //   setSelectedArt(art)
-                //   setShowQuickBuyModal(true)
-                // }}
-                // onClickDetails={() => {
-                //   setSelectedArt(art)
-                //   setShowArtModalModal(true)
-                // }}
-                key={index}
-                pubkey={art[0].thumbnail.metadata.pubkey}
-                auction={art[0]}
-              />
-            </Link>
-          )
+          if (art[0].state == '0') {
+            return (
+              <Link to={`/auction/${art[0].auction.pubkey}`}>
+                <ArtCard
+                  // onClickBuy={() => {
+                  //   setSelectedArt(art)
+                  //   setShowQuickBuyModal(true)
+                  // }}
+                  // onClickDetails={() => {
+                  //   setSelectedArt(art)
+                  //   setShowArtModalModal(true)
+                  // }}
+                  key={index}
+                  pubkey={art[0].thumbnail.metadata.pubkey}
+                  auction={art[0]}
+                />
+              </Link>
+            )
+          }
         })}
       </div>
 
