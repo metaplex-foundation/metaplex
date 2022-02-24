@@ -20,7 +20,7 @@ export const Header: FC<HeaderProps> = ({ className, ...restProps }: HeaderProps
   const { connected } = useWallet()
   const { isDesktop } = useViewport()
   const HeaderClasses = CN(
-    `header flex gap-[16px] items-center bg-B-400 py-[8px] lg:py-[20px] px-[16px] lg:px-[32px] fixed top-0 left-0 right-0 z-50 shadow-lg shadow-blue-700/10`,
+    `header flex gap-[16px] items-center bg-B-400 py-[8px] lg:py-[20px] px-[16px] lg:px-[32px] fixed top-0 left-0 right-0 z-50 shadow-lg shadow-blue-700/10 z-[1900]`,
     className
   )
 

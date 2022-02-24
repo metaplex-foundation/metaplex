@@ -13,8 +13,8 @@ export interface HeroV2Props {
 }
 
 export const HeroV2: FC<HeroV2Props> = ({ className, ...restProps }: HeroV2Props) => {
-  const { isMobile } = useViewport()
-  const HeroV2Classes = CN(`hero-v2 relative border-b border-gray-200`, className)
+  const { isDesktop } = useViewport()
+  const HeroV2Classes = CN(`hero-v2 relative border-b border-gray-200 relative`, className)
 
   const slidesList = (heroSlider || []).map(
     (
@@ -54,21 +54,30 @@ export const HeroV2: FC<HeroV2Props> = ({ className, ...restProps }: HeroV2Props
 
               <div className='flex w-full max-w-[472px] items-center gap-[16px] md:flex-row lg:gap-[28px]'>
                 {primaryCTA && primaryCTA?.label && (
-                  <Button isRounded size='xl' className='w-[200px]'>
+                  <Button isRounded size={isDesktop ? 'xl' : 'md'} className='w-full lg:w-[200px]'>
                     {primaryCTA?.label}
                   </Button>
                 )}
 
                 {secondaryCTA && secondaryCTA?.label && (
-                  <Button isRounded size='xl' className='w-[200px]' appearance='complimentary'>
+                  <Button
+                    isRounded
+                    size={isDesktop ? 'xl' : 'md'}
+                    className='w-full lg:w-[200px]'
+                    appearance='complimentary'>
                     {secondaryCTA?.label}
                   </Button>
                 )}
               </div>
             </div>
 
-            <div className='flex w-full px-[16px] pt-[40px] md:pt-[80px] lg:w-[unset] lg:pt-0'>
-              <TrendingCard size='lg' image={nft?.image} trendingPercentage={nft?.rate} />
+            <div className='flex w-full justify-center px-[16px] pt-[40px] md:pt-[80px] lg:w-[unset] lg:pt-0'>
+              <TrendingCard
+                size='lg'
+                image={nft?.image}
+                trendingPercentage={nft?.rate}
+                name={nft?.name}
+              />
             </div>
           </div>
         </Parallax>
