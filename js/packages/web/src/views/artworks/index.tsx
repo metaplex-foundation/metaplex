@@ -123,18 +123,22 @@ export const ArtworksView = () => {
                   NFTs you create wiht the same wallet that created this store
                   will show up here.
                 </p>
-                <p className="mt-1 text-sm opacity-75">
-                  Get started by minting some NFTs.
-                </p>
-                <div className="mt-6">
-                  <Button
-                    size="large"
-                    type="primary"
-                    onClick={() => setShowMintModal(true)}
-                  >
-                    Mint NFTs
-                  </Button>
-                </div>
+                {canCreate && (
+                  <>
+                    <p className="mt-1 text-sm opacity-75">
+                      Get started by minting some NFTs.
+                    </p>
+                    <div className="mt-6">
+                      <Button
+                        size="large"
+                        type="primary"
+                        onClick={() => setShowMintModal(true)}
+                      >
+                        Mint NFTs
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             </Card>
           )}
