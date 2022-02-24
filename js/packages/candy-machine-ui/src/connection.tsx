@@ -189,10 +189,13 @@ export const sendTransactions = async (
 
     signedTxnPromise
       .then(({ txid, slot }) => {
+        console.log('Civic [06]', { txid, slot });
         successCallback(txid, i);
+        return { txid, slot };
       })
       .catch(reason => {
         // @ts-ignore
+        console.log('Civic [05]', reason);
         failCallback(signedTxns[i], i);
         if (sequenceType === SequenceType.StopOnFailure) {
           breakEarlyObject.breakEarly = true;
@@ -203,6 +206,7 @@ export const sendTransactions = async (
     if (sequenceType !== SequenceType.Parallel) {
       try {
         await signedTxnPromise;
+        pendingTxns.push(signedTxnPromise);
       } catch (e) {
         console.log('Caught failure', e);
         if (breakEarlyObject.breakEarly) {
@@ -220,7 +224,9 @@ export const sendTransactions = async (
   }
 
   if (sequenceType !== SequenceType.Parallel) {
-    await Promise.all(pendingTxns);
+    const result = await Promise.all(pendingTxns);
+    console.log('Civic [04]', result);
+    return { number: signedTxns.length, txs: result };
   }
 
   return { number: signedTxns.length, txs: await Promise.all(pendingTxns) };

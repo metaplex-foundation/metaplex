@@ -79,6 +79,7 @@ export const awaitTransactionSignatureConfirmation = async (
       }
       done = true;
       console.log('Rejecting for timeout...');
+      console.log('Civic [04]', 'Rejecting for timeout...');
       reject({ timeout: true });
     }, timeout);
 
@@ -89,6 +90,7 @@ export const awaitTransactionSignatureConfirmation = async (
           const signatureStatuses = await connection.getSignatureStatuses([
             txid,
           ]);
+          console.log('Civic [05]', signatureStatuses);
           status = signatureStatuses && signatureStatuses.value[0];
           if (!done) {
             if (!status) {
@@ -106,6 +108,7 @@ export const awaitTransactionSignatureConfirmation = async (
             }
           }
         } catch (e) {
+          console.log('Civic [05]', e);
           if (!done) {
             console.log('REST connection error: txid', txid, e);
           }
@@ -121,6 +124,7 @@ export const awaitTransactionSignatureConfirmation = async (
   }
   done = true;
   console.log('Returning status', status);
+  console.log('Civic [07]', status);
   return status;
 };
 
@@ -437,7 +441,7 @@ export const mintOneToken = async (
   );
 
   try {
-    return (
+    const result = (
       await sendTransactions(
         candyMachine.program.provider.connection,
         candyMachine.program.provider.wallet,
@@ -451,7 +455,9 @@ export const mintOneToken = async (
         beforeTransactions,
         afterTransactions,
       )
-    ).txs.map(t => t.txid);
+    )
+    console.log('Civic [03]', result);
+    return result.txs.map(t => t.txid);
   } catch (e) {
     console.log(e);
   }
