@@ -129,8 +129,8 @@ export function useCollapseWrappedSol({
           setShowNotification(true);
         }
       } catch (e) {
-        console.error(e);
-        Bugsnag.notify(e);
+        // console.error(e);
+        // Bugsnag.notify(e); // this overloads bugsnag a bit
       }
     }
     setTimeout(fn, 60000);
@@ -261,7 +261,7 @@ export function Notifications({
 
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
-      <Button className="metaplex-margin-top-2" type={buttonType}>
+      <Button className="" type={buttonType}>
         <BellSvg />
       </Button>
     </Popover>

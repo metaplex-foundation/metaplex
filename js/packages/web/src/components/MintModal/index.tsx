@@ -3,7 +3,6 @@ import { Modal } from 'antd';
 import { BulkMinter } from '@holaplex/ui';
 import styled from 'styled-components';
 import { holaSignMetadata } from './sign-meta';
-import { useAnalytics } from '../Analytics';
 import {
   ENDPOINTS,
   useLocalStorageState,
@@ -13,6 +12,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Wallet } from '@metaplex/js';
 import { Connection } from '@solana/web3.js';
 import { useNavigate } from 'react-router-dom';
+import { useAnalytics } from '../../contexts';
 
 const StyledModal = styled(Modal)`
   margin: 0;

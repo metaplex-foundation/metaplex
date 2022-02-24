@@ -35,8 +35,8 @@ import {
   createAuctionManager,
   SafetyDepositDraft,
 } from '../../actions/createAuctionManager';
-import { useAnalytics } from '../../components/Analytics';
-import { useMeta } from '../../contexts';
+
+import { useAnalytics, useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { QUOTE_MINT } from './../../constants';
 import { CategoryStep } from './categoryStep';
@@ -545,9 +545,10 @@ export const AuctionCreateView = () => {
     }
 
     try {
-      track('new_listing', {
-        category: 'creation',
-        label: isInstantSale ? 'instant sale' : 'auction',
+      track('Listing Created', {
+        event_category: 'Listings',
+        event_label: isInstantSale ? 'instant_sale' : 'auction',
+        listingType: isInstantSale ? 'instant_sale' : 'auction',
         // sol_value: isInstantSale
         //   ? auctionSettings.instantSalePrice?.toNumber() // this price is like 100x the real sol price. Is it in lamports?
         //   : auctionSettings.priceFloor.minPrice?.toNumber(),

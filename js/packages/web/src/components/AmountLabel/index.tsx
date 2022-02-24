@@ -26,8 +26,8 @@ export const AmountLabel = (props: IAmountLabel) => {
   const PriceNaN = isNaN(amount);
 
   return (
-    <div className="metaplex-flex-column">
-      <div className="amount-label-wrapper">
+    <div className="flex flex-col">
+      <div className="flex space-x-4 items-center">
         {PriceNaN === false && (
           <Statistic
             className="sol-price"

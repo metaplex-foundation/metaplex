@@ -3,9 +3,9 @@ import { PublicKey } from '@solana/web3.js';
 import { Badge, Button, Card, CardProps, Space, Tag } from 'antd';
 import React, { useState } from 'react';
 import { useEffect } from 'react';
+import { useAnalytics } from '../../contexts';
 import { useArt } from '../../hooks';
 import { Artist, ArtType } from '../../types';
-import { useAnalytics } from '../Analytics';
 import { MetaAvatar } from '../MetaAvatar';
 import { holaSignMetadata } from '../MintModal/sign-meta';
 import { ArtContent } from './../ArtContent';
@@ -76,7 +76,11 @@ export const ArtCard = ({
       throw new Error('solanaEndpoint is required for retrySigning');
     }
 
-    track('Holaplex signing Initiated', {});
+    track('Holaplex signing Initiated', {
+      event_category: 'Minter',
+      nftAddress: pubkey,
+      event_label: 'art card', // nft address
+    });
     await holaSignMetadata({
       solanaEndpoint,
       metadata,
@@ -171,7 +175,11 @@ export const ArtCard = ({
   );
 
   return unverified ? (
-    <Badge.Ribbon text="Unverified">{card}</Badge.Ribbon>
+    <Badge.Ribbon
+      text={SigningStatus.UNVERIFIED ? 'Unverified' : 'Verifying...'}
+    >
+      {card}
+    </Badge.Ribbon>
   ) : (
     card
   );

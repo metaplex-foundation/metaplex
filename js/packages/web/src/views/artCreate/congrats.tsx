@@ -4,6 +4,7 @@ import { Button, Space } from 'antd';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Confetti } from '../../components/Confetti';
+import { useAnalytics } from '../../contexts';
 
 export const Congrats = (props: {
   nft?: {
@@ -13,6 +14,7 @@ export const Congrats = (props: {
 }) => {
   const navigate = useNavigate();
   const wallet = useWallet();
+  const { track } = useAnalytics();
 
   const path = `/creators/${wallet.publicKey?.toBase58()}/nfts/${props.nft?.metadataAccount.toString()}`;
 
@@ -50,7 +52,12 @@ export const Congrats = (props: {
           className="metaplex-fullwidth"
           size="large"
           type="primary"
-          onClick={() => window.open(newTweetURL(), '_blank')}
+          onClick={() => {
+            track('Share NFT', {
+              event_category: 'Minter',
+            });
+            window.open(newTweetURL(), '_blank');
+          }}
         >
           Share it on Twitter
         </ArrowButton>

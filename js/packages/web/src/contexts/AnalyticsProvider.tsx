@@ -2,10 +2,8 @@ import React, { useContext, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ENDPOINTS, useConnectionConfig, useStore } from '@oyster/common';
 import { useLocation } from 'react-router';
-import { useSolPrice } from '../../contexts';
 import mixpanel from 'mixpanel-browser';
-import Bugsnag from '@bugsnag/js';
-import BugsnagPluginReact from '@bugsnag/plugin-react';
+import { useSolPrice } from '.';
 
 export const GOOGLE_ANALYTICS_ID =
   process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
@@ -27,10 +25,19 @@ interface CustomEventDimensions {
   sol_value?: number;
 }
 
+type EventAttributes = {
+  event_category: 'Listings' | 'Minter';
+  event_label?: string;
+  value?: number;
+  sol_value?: number;
+  listingType?: 'auction' | 'instant_sale';
+  nftAddress?: string;
+  page_path?: string;
+  [key: string]: string | number | boolean | any[] | null | undefined;
+} & Partial<CustomEventDimensions>;
+
 const AnalyticsContext = React.createContext<{
-  configureAnalytics: (options: CustomEventDimensions) => void;
-  pageview: (path: string) => void;
-  track: (action: string, attributes: { [key: string]: any }) => void;
+  track: (action: string, attributes: EventAttributes) => void;
 } | null>(null);
 
 // @ts-ignore
@@ -51,7 +58,9 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
   useEffect(() => {
     if (MIXPANEL_TOKEN) {
       mixpanel.init(MIXPANEL_TOKEN, {
-        debug: window.location.host.includes('localhost'),
+        debug:
+          window.location.host.includes('localhost') ||
+          window.location.host.includes('.dev'),
       });
     }
   }, []);
@@ -102,27 +111,16 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
 
   function pageview(path: string) {
     if (!gtag) return;
+    // @ts-ignore
     track('page_view', {
-      path,
+      page_path: path,
     });
   }
 
-  function track(
-    action: string,
-    attributes: {
-      category?: string;
-      label?: string;
-      value?: number;
-      sol_value?: number;
-      [key: string]: string | number | undefined;
-    } & Partial<CustomEventDimensions> = {},
-  ) {
+  function track(action: string, attributes: EventAttributes) {
     if (!gtag) return;
-    const { category, label, sol_value, value, ...otherAttributes } =
-      attributes;
+    const { sol_value, value, ...otherAttributes } = attributes;
     const attrs = {
-      event_category: category,
-      event_label: label,
       page_location: window.location.href,
       subdomain: storefront.subdomain,
       storeTitle: storefront.meta.title,
@@ -157,9 +155,7 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
   return (
     <AnalyticsContext.Provider
       value={{
-        configureAnalytics,
         track,
-        pageview,
       }}
     >
       {props.children}
