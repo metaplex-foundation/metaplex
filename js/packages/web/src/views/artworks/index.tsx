@@ -120,8 +120,8 @@ export const ArtworksView = () => {
               <div className="text-center text-color-text">
                 <h3 className="mt-2 text-2xl font-medium ">No NFTs detected</h3>
                 <p className="mt-1 text-sm opacity-75">
-                  NFTs you create wiht the same wallet that created this store
-                  will show up here.
+                  NFTs created with the same wallet that created this store will
+                  show up here, as well as any bought from the store.
                 </p>
                 {canCreate && (
                   <>
