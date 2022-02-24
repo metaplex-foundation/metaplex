@@ -85,7 +85,7 @@ export default function TokenDialog({
 
   return (
     <MetaplexModal visible={open} onCancel={onClose} bodyStyle={{ padding: '25px 0 0 0' }}>
-      <Col className={'dialog-header'}>
+      <Col className={'dialog-header px-[16px]'}>
         <Typography
           style={{
             paddingBottom: '16px',
@@ -93,7 +93,7 @@ export default function TokenDialog({
             textTransform: 'uppercase',
             fontWeight: 600,
           }}
-        >
+          className='text-white'>
           Select a token as your auction mint
         </Typography>
         <Input
@@ -105,7 +105,8 @@ export default function TokenDialog({
           onChange={e => setTokenFilter(e.target.value)}
         />
       </Col>
-      <div className={'dialog-content'}>
+
+      <div className={'dialog-content px-[16px]'}>
         <List style={{ padding: '16px 0' }}>
           {tokens.map((tokenInfo: TokenInfo) => (
             <TokenListItem
@@ -132,8 +133,7 @@ export default function TokenDialog({
       <Tabs
         activeKey={tabSelection}
         onTabClick={key => setTabSelection(key as TokenViewState)}
-        className={'token-tabs'}
-      >
+        className={'token-tabs'}>
         <TabPane
           key={TokenViewState.Main}
           className={'token-tab'}
@@ -182,8 +182,7 @@ export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
         display: 'flex',
         justifyContent: 'center',
         flexDirection: 'column',
-      }}
-    >
+      }}>
       {tokenInfo?.logoURI ? (
         <img alt='Logo' style={style} src={tokenInfo?.logoURI} />
       ) : (
@@ -200,19 +199,16 @@ function TokenName({ mint }: { mint: PublicKey }) {
 
   return (
     <div style={{ marginLeft: '16px', overflow: 'hidden' }}>
-      <div style={{ fontWeight: 500, color: 'white' }}>
-        {tokenInfo ? tokenName : `${shortenAddress(mint.toBase58())}`}
-      </div>
+      <div className='font-500'>{tokenInfo ? tokenName : `${shortenAddress(mint.toBase58())}`}</div>
       <div
         color='textSecondary'
         style={{
           fontSize: '14px',
-          color: '#797A8C',
+          // color: '#797A8C',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-        }}
-      >
+        }}>
         {tokenName}
       </div>
     </div>
