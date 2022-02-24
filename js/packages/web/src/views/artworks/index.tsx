@@ -7,7 +7,7 @@ import {
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, Col, Row, Spin, Card, Tooltip } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
@@ -18,13 +18,22 @@ import MintModal from '../../components/MintModal';
 export const ArtworksView = () => {
   const ownedMetadata = useUserArts();
   const [loadingArt, setLoadingArt] = useState(true);
-  const { whitelistedCreatorsByCreator, patchState } = useMeta();
+  const { whitelistedCreatorsByCreator, patchState, store } = useMeta();
   const connection = useConnection();
   const wallet = useWallet();
   const { userAccounts } = useUserAccounts();
   const { endpoint } = useConnectionConfig();
 
   const [showMintModal, setShowMintModal] = useState<boolean>(false);
+
+  const pubkey = wallet.publicKey?.toBase58() || '';
+
+  const canCreate = useMemo(() => {
+    return (
+      store?.info?.public ||
+      whitelistedCreatorsByCreator[pubkey]?.info?.activated
+    );
+  }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   useEffect(() => {
     (async () => {
@@ -61,14 +70,17 @@ export const ArtworksView = () => {
           </Tooltip>
         </div>
         <div>
-          <Button
-            size="large"
-            type={ownedMetadata.length ? 'ghost' : 'primary'}
-            onClick={() => setShowMintModal(true)}
-            className=""
-          >
-            Mint NFTs
-          </Button>
+          {canCreate && (
+            <Button
+              size="large"
+              type={ownedMetadata.length ? 'ghost' : 'primary'}
+              onClick={() => setShowMintModal(true)}
+              className=""
+            >
+              Mint NFTs
+            </Button>
+          )}
+
           {ownedMetadata.length ? (
             <Link to="/listings/new/0" className="ml-4">
               <Button size="large" type="primary">
