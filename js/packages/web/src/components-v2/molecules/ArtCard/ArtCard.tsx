@@ -1,13 +1,6 @@
 import React, { FC, useMemo, useState } from 'react'
 import CN from 'classnames'
-import { AuctionView, useAuction, useExtendedArt } from '../../../hooks'
-import {
-  AuctionDataExtended,
-  getAuctionExtended,
-  ParsedAccount,
-  programIds,
-  useMeta,
-} from '@oyster/common'
+import { useExtendedArt } from '../../../hooks'
 import { useAuctionStatus } from '../../../components/AuctionRenderCard/hooks/useAuctionStatus'
 import { useTokenList } from '../../../contexts/tokenList'
 import { AmountLabel } from '../../../components/AmountLabel'
@@ -29,13 +22,11 @@ export const ArtCard: FC<ArtCardProps> = ({
     className
   )
   const [artImage, setArtImage] = useState('')
-  const [price, setPrice] = useState<string | number>()
 
   const { ref, data } = useExtendedArt(pubkey)
   const tokenInfo = useTokenList().subscribedTokens.filter(
     m => m.address == auction.auction.info.tokenMint
   )[0]
-  debugger
   const { status, amount } = useAuctionStatus(auction)
 
   return (
@@ -70,10 +61,6 @@ export const ArtCard: FC<ArtCardProps> = ({
         </h3>
 
         <div className='flex items-center justify-between gap-[6px]'>
-          <span className='font-500 text-gray-800'>{price}</span>
-
-          {/* {bid && <span className='text-md text-B-400'>Bid {bid}</span>}*/}
-          {/* {price && <span className='text-md text-gray-500'>Last {price}</span>} */}
           <AmountLabel
             containerStyle={{ flexDirection: 'row' }}
             title={status}
