@@ -1036,7 +1036,7 @@ export const AuctionCard = ({
             ))
           : null}
 
-        {showRedeemReclaimRefundBtn || (true && RedeemReclaimRefundBtn)}
+        {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
 
         {/* before auction */}
         {actuallyShowStartAuctionBtn && StartAuctionBtn}
