@@ -53,11 +53,11 @@ export default function BidLine(props: {
             <div>
               <a
                 href={`https://www.holaplex.com/profiles/${bidderPubkey}`}
-                className="text-base font-medium  text-color-text hover:text-primary truncate flex items-center "
+                className="text-base font-medium   truncate flex items-center "
                 target="_blank"
                 rel="noreferrer"
               >
-                <p className="max-w-[125px] truncate">
+                <p className="max-w-[125px] truncate text-color-text hover:text-primary">
                   {bidderTwitterHandle
                     ? `@${bidderTwitterHandle}`
                     : shortenAddress(bidderPubkey)}

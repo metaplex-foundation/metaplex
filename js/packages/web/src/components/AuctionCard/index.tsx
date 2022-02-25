@@ -613,105 +613,109 @@ export const AuctionCard = ({
 
   // Refund, reclaim, or redeem a bid
   const RedeemReclaimRefundBtn = (
-    <Button
-      className="metaplex-fullwidth p-4"
-      type="primary"
-      size="large"
-      block
-      disabled={disableRedeemReclaimRefundBtn}
-      onClick={async () => {
-        setLoading(true);
-        if (
-          wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority
-        ) {
-          const totalCost = await calculateTotalCostOfRedeemingOtherPeoplesBids(
-            connection,
-            auctionView,
-            bids,
-            bidRedemptions,
-          );
-          setPrintingCost(totalCost);
-          setShowWarningModal(true);
-        }
-        try {
-          if (eligibleForAnything) {
-            try {
-              await sendRedeemBid(
+    <div className="p-4">
+      <Button
+        className="metaplex-fullwidth"
+        type="primary"
+        size="large"
+        block
+        disabled={disableRedeemReclaimRefundBtn}
+        onClick={async () => {
+          setLoading(true);
+          if (
+            wallet?.publicKey?.toBase58() ===
+            auctionView.auctionManager.authority
+          ) {
+            const totalCost =
+              await calculateTotalCostOfRedeemingOtherPeoplesBids(
                 connection,
-                wallet,
-                myPayingAccount.pubkey,
                 auctionView,
-                accountByMint,
-                prizeTrackingTickets,
-                bidRedemptions,
-                bids,
-              );
-
-              notification.success({
-                message: 'Bid Redeemed',
-                duration: 30,
-                description: (
-                  <Space direction="vertical">
-                    <Text>
-                      Congratulations, your bid was redeemed for the NFT! See it
-                      in your owned tab.
-                    </Text>
-                    <Button type="primary">View Owned</Button>
-                  </Space>
-                ),
-                onClick: () => {
-                  navigate('/owned');
-                },
-              });
-            } catch (e: any) {
-              Bugsnag.notify(e);
-              notification.error({
-                message: 'Bid Redemption Error',
-                duration: 20,
-                description:
-                  'There was an error redeeming your bid. Please try again or reach out to support.',
-              });
-            }
-          } else {
-            try {
-              await sendCancelBid(
-                connection,
-                wallet,
-                myPayingAccount.pubkey,
-                auctionView,
-                accountByMint,
                 bids,
                 bidRedemptions,
-                prizeTrackingTickets,
               );
-
-              const message =
-                cancelBidMessages[isAuctioneer ? 'redeemed' : 'refunded'];
-
-              notification.success(message);
-            } catch (e: any) {
-              notification.error({
-                message: 'Bid Refund Error',
-                description:
-                  'There was an error refunding your bid. Please try again or reach out to support.',
-              });
-            }
+            setPrintingCost(totalCost);
+            setShowWarningModal(true);
           }
-        } finally {
-          setLoading(false);
-        }
-      }}
-    >
-      {loading ||
-      auctionView.items.find(i => i.find(it => !it.metadata)) ||
-      !myPayingAccount ? (
-        <Spin indicator={<LoadingOutlined />} />
-      ) : eligibleForAnything ? (
-        `Claim NFT`
-      ) : (
-        `${isAuctioneer ? 'Reclaim Items' : 'Refund bid'}`
-      )}
-    </Button>
+          try {
+            if (eligibleForAnything) {
+              try {
+                await sendRedeemBid(
+                  connection,
+                  wallet,
+                  myPayingAccount.pubkey,
+                  auctionView,
+                  accountByMint,
+                  prizeTrackingTickets,
+                  bidRedemptions,
+                  bids,
+                );
+
+                notification.success({
+                  message: 'Bid Redeemed',
+                  duration: 30,
+                  description: (
+                    <Space direction="vertical">
+                      <Text>
+                        Congratulations, your bid was redeemed for the NFT! See
+                        it in your owned tab.
+                      </Text>
+                      <Button type="primary">View Owned</Button>
+                    </Space>
+                  ),
+                  onClick: () => {
+                    navigate('/owned');
+                  },
+                });
+              } catch (e: any) {
+                Bugsnag.notify(e);
+                notification.error({
+                  message: 'Bid Redemption Error',
+                  duration: 20,
+                  description:
+                    'There was an error redeeming your bid. Please try again or reach out to support.',
+                });
+              }
+            } else {
+              try {
+                await sendCancelBid(
+                  connection,
+                  wallet,
+                  myPayingAccount.pubkey,
+                  auctionView,
+                  accountByMint,
+                  bids,
+                  bidRedemptions,
+                  prizeTrackingTickets,
+                );
+
+                const message =
+                  cancelBidMessages[isAuctioneer ? 'redeemed' : 'refunded'];
+
+                notification.success(message);
+              } catch (e: any) {
+                notification.error({
+                  message: 'Bid Refund Error',
+                  description:
+                    'There was an error refunding your bid. Please try again or reach out to support.',
+                });
+              }
+            }
+          } finally {
+            setLoading(false);
+          }
+        }}
+      >
+        {loading ||
+        auctionView.items.find(i => i.find(it => !it.metadata)) ||
+        !myPayingAccount ? (
+          <Spin indicator={<LoadingOutlined />} />
+        ) : eligibleForAnything ? (
+          `Claim NFT`
+        ) : (
+          `${isAuctioneer ? 'Reclaim Items' : 'Refund bid'}`
+        )}
+      </Button>
+    </div>
   );
 
   // If the user is currently capable of acting on a live (or unstarted) listing
@@ -1032,7 +1036,7 @@ export const AuctionCard = ({
             ))
           : null}
 
-        {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
+        {showRedeemReclaimRefundBtn || (true && RedeemReclaimRefundBtn)}
 
         {/* before auction */}
         {actuallyShowStartAuctionBtn && StartAuctionBtn}
@@ -1096,18 +1100,18 @@ const WinnerProfile = ({
   return (
     <a href={`https://www.holaplex.com/profiles/${bidderPubkey}`}>
       <div className="flex items-center px-4 py-4 sm:px-6 cursor-pointer rounded-lg  group">
-        <div className="min-w-0 flex-1 flex items-center">
+        <div className="min-w-0 flex-1 flex items-center transition-colors">
           <div className="flex-shrink-0 pr-4">
             <Identicon size={48} address={bidderPubkey} />
           </div>
-          <div className="min-w-0 flex-1 flex justify-between group-hover:text-primary">
-            <div>
-              <p className="text-base font-medium  truncate flex items-center">
+          <div className="min-w-0 flex-1 flex justify-between group-hover:text-primary text-color-text">
+            <div className="text-color-text">
+              <p className=" font-medium  truncate flex items-center  group-hover:text-primary text-color-text">
                 {bidderTwitterHandle || shortenAddress(bidderPubkey)}
               </p>
             </div>
           </div>
-          <div className="flex items-center group-hover:text-primary">
+          <div className="flex items-center group-hover:text-primary text-color-text">
             <span className="block">View profile</span>
             <ChevronRightIcon
               className="h-5 w-5"

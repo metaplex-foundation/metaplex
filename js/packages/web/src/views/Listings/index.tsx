@@ -179,10 +179,10 @@ export const Listings = () => {
               >
                 Listings search
               </label>
-              <div className="relative rounded-md transition-all group opacity-75 focus-within:opacity-100">
+              <div className="relative rounded-md transition-all group opacity-50 focus-within:opacity-100">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all">
                   <SearchIcon
-                    className="h-5 w-5 text-color-text opacity-75 group-focus:opacity-100 z-50"
+                    className="h-5 w-5 text-color-text opacity-50 group-focus:opacity-100 z-50"
                     aria-hidden="true"
                   />
                 </div>
@@ -193,7 +193,7 @@ export const Listings = () => {
                   value={listingNameFilter}
                   onChange={e => setListingNameFilter(e.target.value)}
                   className={cx(
-                    'bg-base text-color-text py-2 px-4 ring-0 opacity-75 focus:opacity-100 outline-none transition-all',
+                    'bg-base text-color-text py-2 px-4 ring-0 opacity-50 focus:opacity-100 outline-none transition-all',
                     'block w-full pl-10 sm:text-sm border border-color-text rounded-lg max-w-full',
                     view === View.ended ? 'md:max-w-xs' : 'md:max-w-sm',
                   )}
@@ -202,8 +202,8 @@ export const Listings = () => {
               </div>
             </div>
             {showShowAllEndedListingsToggle && (
-              <div className="flex ml-4 w-full max-w-fit">
-                <span className="opacity-75">Show all</span>
+              <div className="flex ml-8 w-full max-w-fit">
+                <span className="opacity-50">Show all</span>
                 <Switch
                   checked={showAllEndedListings}
                   onChange={setShowAllEndedListings}
