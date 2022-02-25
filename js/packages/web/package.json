@@ -8,6 +8,7 @@
     "@bugsnag/plugin-react": "^7.11.0",
     "@bugsnag/source-maps": "^2.3.0",
     "@cloudflare/stream-react": "^1.1.0",
+    "@crossmint/client-sdk-react-ui": "0.0.8-alpha.4",
     "@google/model-viewer": "^1.7.2",
     "@headlessui/react": "^1.5.0",
     "@heroicons/react": "^1.0.5",

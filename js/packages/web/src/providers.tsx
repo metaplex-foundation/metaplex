@@ -12,6 +12,7 @@ import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
 import { Storefront } from '@oyster/common';
 import { AnalyticsProvider } from './contexts';
+import { CrossMintProvider } from '@crossmint/client-sdk-react-ui';
 
 interface ProvidersProps {
   storefront: Storefront;
@@ -32,7 +33,21 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
                 <LoaderProvider>
                   <ConfettiProvider>
                     <AnalyticsProvider>
-                      <AppLayout storefront={storefront}>{children}</AppLayout>
+                      {storefront.integrations?.crossmintClientId ? (
+                        <CrossMintProvider
+                          clientId={storefront.integrations?.crossmintClientId!}
+                          auctionId={storefront.pubkey}
+                          hideMintOnInactiveClient={true}
+                        >
+                          <AppLayout storefront={storefront}>
+                            {children}
+                          </AppLayout>
+                        </CrossMintProvider>
+                      ) : (
+                        <AppLayout storefront={storefront}>
+                          {children}
+                        </AppLayout>
+                      )}
                     </AnalyticsProvider>
                   </ConfettiProvider>
                 </LoaderProvider>

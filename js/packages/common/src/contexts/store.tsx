@@ -43,6 +43,7 @@ export interface StorefrontIntegrations {
   twitterVerification?: string;
   hotjar?: string;
   segment?: string;
+  crossmintClientId?: string;
 }
 
 export interface Storefront {

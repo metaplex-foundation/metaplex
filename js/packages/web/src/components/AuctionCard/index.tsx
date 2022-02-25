@@ -21,6 +21,7 @@ import {
   shortenAddress,
   useConnection,
   useMint,
+  useStore,
   useUserAccounts,
   useWalletModal,
   WinningConfigType,
@@ -74,6 +75,7 @@ import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 import { endSale } from './utils/endSale';
 import { DateTime } from 'luxon';
 import { ChevronRightIcon } from '@heroicons/react/solid';
+import { CrossMintButton } from '@crossmint/client-sdk-react-ui';
 
 const { Text } = Typography;
 
@@ -235,6 +237,7 @@ export const AuctionCard = ({
   auctionView: AuctionView;
   hideDefaultAction?: boolean;
 }) => {
+  const { storefront } = useStore();
   const connection = useConnection();
   const { patchState } = useMeta();
 
@@ -797,6 +800,23 @@ export const AuctionCard = ({
     </Button>
   );
 
+  // Crossmint credit card checkout
+  const CrossmintBtn = (
+    <CrossMintButton
+      listingId={auctionView.auction.pubkey}
+      collectionDescription={storefront.meta.description}
+      collectionTitle={storefront.meta.title}
+      collectionPhoto={storefront.theme.logo}
+      // todo -- rmv inline styles once this component is testable.
+      style={{
+        width: '100%',
+        height: '40px',
+        borderRadius: '2px',
+        marginTop: '12px',
+      }}
+    />
+  );
+
   // Components for inputting bid amount and placing a bid
   const PlaceBidUI = (
     <Space
@@ -1048,21 +1068,31 @@ export const AuctionCard = ({
               <HowAuctionsWorkModal buttonBlock buttonSize="large" />
             )}
             {showConnectToBidBtn && (
-              <Button
-                className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
-                type="primary"
-                size="large"
-                onClick={connect}
-              >
-                Connect wallet to{' '}
-                {auctionView.isInstantSale ? 'purchase' : 'place bid'}
-              </Button>
+              <>
+                <Button
+                  className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
+                  type="primary"
+                  size="large"
+                  onClick={connect}
+                >
+                  Connect wallet to{' '}
+                  {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+                </Button>
+                {auctionView.isInstantSale &&
+                  storefront.integrations?.crossmintClientId &&
+                  CrossmintBtn}
+              </>
             )}
           </>
         )}
 
         {/*  During auction, connected */}
-        {showInstantSaleButton && InstantSaleBtn}
+        {showInstantSaleButton && (
+          <>
+            {InstantSaleBtn}
+            {storefront.integrations?.crossmintClientId && CrossmintBtn}
+          </>
+        )}
         {showPlaceBidButton && PlaceBidBtn}
         {actuallyShowPlaceBidUI && PlaceBidUI}
       </Card>

@@ -45,6 +45,15 @@ import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useAuctionManagersToCache, useNotifications } from '../../hooks';
 import Bugsnag from '@bugsnag/browser';
+import { CrossMintStatusButton } from '@crossmint/client-sdk-react-ui';
+import styled from 'styled-components';
+
+const StyledLink = styled(Link)`
+  text-decoration: underline;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
 
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator, isLoading, patchState } =
@@ -448,6 +457,46 @@ function InnerAdminView({
           ]}
           dataSource={notifications}
         />
+
+        <h2>Credit Card Payments</h2>
+        <div className="metaplex-flex-column metaplex-gap-4">
+          <p>
+            Increase your sales by accepting credit and debit card payments
+            using&nbsp;
+            <StyledLink
+              to="https://www.crossmint.io/creators"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Crossmint
+            </StyledLink>
+            . Crossmint is 100% free for sellers.
+          </p>
+          <div>
+            {storefront.integrations?.crossmintClientId ? (
+              <CrossMintStatusButton style={{ fontWeight: 'normal' }} />
+            ) : (
+              <p>
+                NOTE: Your store is not yet ready to use Crossmint. To get
+                started, please visit{' '}
+                <StyledLink
+                  to="https://www.holaplex.com/storefront/edit"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  https://www.holaplex.com/storefront/edit
+                </StyledLink>
+                , connect your wallet, and click on the Update button. Once your
+                store is successfully updated, return here to finish setting up
+                Crossmint.
+              </p>
+            )}
+          </div>
+          <p>
+            Please note that credit card payments are currently only supported
+            for instant sale auctions. More sale types are coming soon.
+          </p>
+        </div>
 
         <div className="metaplex-flex-column metaplex-gap-4">
           <h2>Administrator Actions</h2>
