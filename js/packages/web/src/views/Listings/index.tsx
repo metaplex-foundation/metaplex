@@ -96,8 +96,8 @@ export const Listings = () => {
   const filteredAuctions: AuctionView[] = auctions.filter(
     a =>
       !listingNameFilter ||
-      a.thumbnail.metadata.info.data.name
-        .toLowerCase()
+      a?.thumbnail?.metadata?.info?.data?.name
+        ?.toLowerCase()
         .includes(listingNameFilter.toLowerCase()),
   );
 
