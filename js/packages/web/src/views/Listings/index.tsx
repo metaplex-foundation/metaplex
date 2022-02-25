@@ -174,10 +174,10 @@ export const Listings = () => {
           >
             <div className="w-full">
               <label
-                htmlFor="listings-filter"
+                htmlFor="listings-search"
                 className="block text-sm font-medium text-gray-700 sr-only"
               >
-                Listings filter
+                Listings search
               </label>
               <div className="relative rounded-md transition-all group opacity-75 focus-within:opacity-100">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all">
@@ -188,8 +188,8 @@ export const Listings = () => {
                 </div>
                 <input
                   type="search"
-                  name="listings-filter"
-                  id="listings-filter"
+                  name="listings-search"
+                  id="listings-search"
                   value={listingNameFilter}
                   onChange={e => setListingNameFilter(e.target.value)}
                   className={cx(
@@ -197,7 +197,7 @@ export const Listings = () => {
                     'block w-full pl-10 sm:text-sm border border-color-text rounded-lg max-w-full',
                     view === View.ended ? 'md:max-w-xs' : 'md:max-w-sm',
                   )}
-                  placeholder="Filter"
+                  placeholder="Search"
                 />
               </div>
             </div>
@@ -208,7 +208,7 @@ export const Listings = () => {
                   checked={showAllEndedListings}
                   onChange={setShowAllEndedListings}
                   className={`ml-4 ${
-                    showAllEndedListings ? 'bg-primary' : 'bg-[#7772]'
+                    showAllEndedListings ? 'bg-primary' : 'bg-base-bold'
                   } relative inline-flex items-center h-6 rounded-full w-11`}
                 >
                   <span className="sr-only">Show all listings</span>
@@ -233,8 +233,7 @@ export const Listings = () => {
             <Card>
               <div className="text-center text-color-text">
                 <h3 className="mt-2 text-2xl font-medium ">
-                  No listings found{' '}
-                  {listingNameFilter.length ? ' for this filter' : ''}
+                  No listings found
                 </h3>
                 <p className="mt-1 text-sm opacity-75">
                   {/* {listingNameFilter.length
