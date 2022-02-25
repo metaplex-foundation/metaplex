@@ -231,11 +231,9 @@ function useAuctionExtended(
 export const AuctionCard = ({
   auctionView,
   hideDefaultAction,
-  action,
 }: {
   auctionView: AuctionView;
   hideDefaultAction?: boolean;
-  action?: JSX.Element;
 }) => {
   const connection = useConnection();
   const { patchState } = useMeta();
@@ -616,7 +614,7 @@ export const AuctionCard = ({
   // Refund, reclaim, or redeem a bid
   const RedeemReclaimRefundBtn = (
     <Button
-      className="metaplex-fullwidth"
+      className="metaplex-fullwidth p-4"
       type="primary"
       size="large"
       block
@@ -738,7 +736,7 @@ export const AuctionCard = ({
   // Start the auction
   const StartAuctionBtn = (
     <Button
-      className="metaplex-fullwidth"
+      className="metaplex-fullwidth p-4"
       type="primary"
       size="large"
       loading={loading}
@@ -763,7 +761,7 @@ export const AuctionCard = ({
   // Show the place-bid UI
   const PlaceBidBtn = (
     <Button
-      className="metaplex-fullwidth"
+      className="metaplex-fullwidth p-4"
       type="primary"
       size="large"
       onClick={() => {
@@ -778,7 +776,7 @@ export const AuctionCard = ({
   // Conduct an instant sale
   const InstantSaleBtn = (
     <Button
-      className="metaplex-fullwidth"
+      className="metaplex-fullwidth p-4"
       type="primary"
       size="large"
       block
@@ -798,7 +796,7 @@ export const AuctionCard = ({
   // Components for inputting bid amount and placing a bid
   const PlaceBidUI = (
     <Space
-      className="metaplex-fullwidth metaplex-space-align-stretch"
+      className="metaplex-fullwidth metaplex-space-align-stretch p-4"
       direction="vertical"
     >
       <h5>{`Bid ${minNextBid} SOL or more`}</h5>
@@ -949,6 +947,8 @@ export const AuctionCard = ({
     !auctionView.myBidderMetadata?.info.cancelled &&
     !disableRedeemReclaimRefundBtn;
 
+  const duringAuctionNotConnected = !auctionEnded && !wallet.connected;
+
   return (
     <div>
       <Card
@@ -1022,6 +1022,7 @@ export const AuctionCard = ({
           </div>
         }
       >
+        {/* After auction (comes first because winner list is on top) */}
         {someoneWon &&
           mint &&
           winners.map(bid => (
@@ -1030,29 +1031,18 @@ export const AuctionCard = ({
               key={bid.info.bidderPubkey}
             />
           ))}
-        {/* ugly, but it figures out wether to show the space or not by mirroring the conditions below */}
-        {(showHowAuctionsWorkBtn ||
-          showPlaceBidButton ||
-          actuallyShowPlaceBidUI ||
-          actuallyShowStartAuctionBtn ||
-          showInstantSaleButton ||
-          showConnectToBidBtn ||
-          showRedeemReclaimRefundBtn) && (
-          <Space
-            className="metaplex-fullwidth metaplex-space-align-stretch p-4"
-            direction="vertical"
-          >
+
+        {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
+
+        {/* before auction */}
+        {actuallyShowStartAuctionBtn && StartAuctionBtn}
+
+        {/* During auction, not connected */}
+        {duringAuctionNotConnected && (
+          <div className="p-4">
             {showHowAuctionsWorkBtn && !auctionView.isInstantSale && (
               <HowAuctionsWorkModal buttonBlock buttonSize="large" />
             )}
-
-            {showPlaceBidButton && PlaceBidBtn}
-
-            {actuallyShowPlaceBidUI && PlaceBidUI}
-
-            {actuallyShowStartAuctionBtn && StartAuctionBtn}
-            {showInstantSaleButton && InstantSaleBtn}
-
             {showConnectToBidBtn && (
               <Button
                 className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
@@ -1064,11 +1054,13 @@ export const AuctionCard = ({
                 {auctionView.isInstantSale ? 'purchase' : 'place bid'}
               </Button>
             )}
-
-            {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
-            {action}
-          </Space>
+          </div>
         )}
+
+        {/*  During auction, connected */}
+        {showInstantSaleButton && InstantSaleBtn}
+        {showPlaceBidButton && PlaceBidBtn}
+        {actuallyShowPlaceBidUI && PlaceBidUI}
       </Card>
 
       <MetaplexModal
