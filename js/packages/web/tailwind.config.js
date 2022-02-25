@@ -13,6 +13,7 @@ module.exports = {
         'color-border': 'var(--color-border, #121212)',
         'color-text': 'var(--color-text, #fff)',
         main: 'var(--main)',
+        base: 'var(--color-base)',
         background: 'var(--background)',
         header: 'var(--header)',
         accent: 'var(--accent)',

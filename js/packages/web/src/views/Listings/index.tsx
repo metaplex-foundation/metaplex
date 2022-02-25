@@ -1,10 +1,10 @@
-import { useStore, View } from '@oyster/common';
-import React, { useEffect } from 'react';
+import { useMeta, useStore, View } from '@oyster/common';
+import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Alert, Button, Spin, Anchor } from 'antd';
+import { Alert, Anchor, Button, Card, Spin } from 'antd';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useAuctionManagersToCache } from '../../hooks';
+import { AuctionView, useAuctionManagersToCache } from '../../hooks';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { MetaplexMasonry } from './../../components/MetaplexMasonry';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
@@ -12,21 +12,28 @@ import { useSearchParams } from 'react-router-dom';
 import { useInfiniteScrollAuctions, useGroupedAuctions } from '../../hooks';
 import { Banner } from './../../components/Banner';
 import cx from 'classnames';
+import { SearchIcon } from '@heroicons/react/solid';
+import { Switch } from '@headlessui/react';
 
 export const Listings = () => {
   const { storefront } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
-
+  const { whitelistedCreatorsByCreator, store } = useMeta();
   const view = searchParams.get('view') as View;
   const { ownerAddress } = useStore();
   const wallet = useWallet();
   const { auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
-  const isStoreOwner = ownerAddress === wallet.publicKey?.toBase58();
+  const pubkey = wallet.publicKey?.toBase58() || '';
+  const isStoreOwner = ownerAddress === pubkey;
   const notAllAuctionsCached = auctionManagerTotal !== auctionCacheTotal;
   const showCacheAuctionsAlert = isStoreOwner && notAllAuctionsCached;
+  const [showAllEndedListings, setShowAllEndedListings] = useState(false);
+  const [listingNameFilter, setListingNameFilter] = useState('');
 
-  const { groups, fetching } = useGroupedAuctions();
+  const { groups, fetching } = useGroupedAuctions({
+    showAllEndedListings,
+  });
   const activeGroup = groups[view] || [];
 
   const { auctions, loading, hasNextPage, loadMore } =
@@ -84,6 +91,23 @@ export const Listings = () => {
     },
   ];
 
+  const showShowAllEndedListingsToggle = view === View.ended;
+
+  const filteredAuctions: AuctionView[] = auctions.filter(
+    a =>
+      !listingNameFilter ||
+      a.thumbnail.metadata.info.data.name
+        .toLowerCase()
+        .includes(listingNameFilter.toLowerCase()),
+  );
+
+  const canList = useMemo(() => {
+    return (
+      store?.info?.public ||
+      whitelistedCreatorsByCreator[pubkey]?.info?.activated
+    );
+  }, [pubkey, whitelistedCreatorsByCreator, store]);
+
   return (
     <>
       {showCacheAuctionsAlert && (
@@ -126,21 +150,77 @@ export const Listings = () => {
         ownerAddress={ownerAddress}
       />
       <Anchor showInkInFixed={false} className="metaplex-anchor">
-        <div className="listings-menu-wrapper">
-          {views.map(({ key, title }) => {
-            const count = groups[key].length;
+        <div className="flex justify-between">
+          <div className="listings-menu-wrapper">
+            {views.map(({ key, title }) => {
+              const count = groups[key].length;
 
-            return (
-              <button
-                key={key}
-                className={cx('listings-menu-item', { active: view === key })}
-                onClick={() => setSearchParams({ view: key })}
-                disabled={count === 0}
+              return (
+                <button
+                  key={key}
+                  className={cx('listings-menu-item', { active: view === key })}
+                  onClick={() => setSearchParams({ view: key })}
+                  disabled={count === 0}
+                >
+                  {title} <span className="auctions-count">| {count}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div
+            className={cx('flex items-center max-w-lg', {
+              'w-full transition-all': true,
+            })}
+          >
+            <div className="w-full">
+              <label
+                htmlFor="listings-filter"
+                className="block text-sm font-medium text-gray-700 sr-only"
               >
-                {title} <span className="auctions-count">| {count}</span>
-              </button>
-            );
-          })}
+                Listings filter
+              </label>
+              <div className="relative rounded-md transition-all group opacity-75 focus-within:opacity-100">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all">
+                  <SearchIcon
+                    className="h-5 w-5 text-color-text opacity-75 group-focus:opacity-100 z-50"
+                    aria-hidden="true"
+                  />
+                </div>
+                <input
+                  type="search"
+                  name="listings-filter"
+                  id="listings-filter"
+                  value={listingNameFilter}
+                  onChange={e => setListingNameFilter(e.target.value)}
+                  className={cx(
+                    'bg-base text-color-text py-2 px-4 ring-0 opacity-75 focus:opacity-100 outline-none transition-all',
+                    ' block w-full pl-10 sm:text-sm border border-color-text rounded-lg',
+                    view === View.ended ? 'max-w-md' : 'max-w-xl',
+                  )}
+                  placeholder="Filter"
+                />
+              </div>
+            </div>
+            {showShowAllEndedListingsToggle && (
+              <div className="flex ml-4 w-full max-w-fit">
+                <span className="opacity-75">Show all</span>
+                <Switch
+                  checked={showAllEndedListings}
+                  onChange={setShowAllEndedListings}
+                  className={`ml-4 ${
+                    showAllEndedListings ? 'bg-primary' : 'bg-[#7772]'
+                  } relative inline-flex items-center h-6 rounded-full w-11`}
+                >
+                  <span className="sr-only">Show all listings</span>
+                  <span
+                    className={`${
+                      showAllEndedListings ? 'translate-x-6' : 'translate-x-1'
+                    } inline-block w-4 h-4 transform transition bg-white rounded-full`}
+                  />
+                </Switch>
+              </div>
+            )}
+          </div>
         </div>
       </Anchor>
       {fetching ? (
@@ -149,8 +229,42 @@ export const Listings = () => {
         </div>
       ) : (
         <>
+          {!filteredAuctions.length && !fetching && !hasNextPage && (
+            <Card>
+              <div className="text-center text-color-text">
+                <h3 className="mt-2 text-2xl font-medium ">
+                  No listings found{' '}
+                  {listingNameFilter.length ? ' for this filter' : ''}
+                </h3>
+                <p className="mt-1 text-sm opacity-75">
+                  {/* {listingNameFilter.length
+                ? 'Try a different one'
+                : "Create a listing to have it show up here. If you don't have an NFT to list, you can mint a new one."} */}
+                </p>
+                {canList && (
+                  <>
+                    <p className="mt-1 text-sm opacity-75">
+                      Get started by creating a listing
+                    </p>
+                    <div className="mt-6 flex space-x-4 justify-center">
+                      <Link to="/listings/new/0">
+                        <Button size="large" type="primary">
+                          Create a listing
+                        </Button>
+                      </Link>
+                      <Link to="/owned">
+                        <Button size="large" type={'primary'} className="">
+                          Mint NFTs
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Card>
+          )}
           <MetaplexMasonry>
-            {auctions.map(m => {
+            {filteredAuctions.map(m => {
               const id = m.auction.pubkey;
               return (
                 <Link to={`/listings/${id}`} key={id}>

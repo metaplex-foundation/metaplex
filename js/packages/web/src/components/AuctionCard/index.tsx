@@ -1023,14 +1023,14 @@ export const AuctionCard = ({
         }
       >
         {/* After auction (comes first because winner list is on top) */}
-        {someoneWon &&
-          mint &&
-          winners.map(bid => (
-            <WinnerProfile
-              bidderPubkey={bid.info.bidderPubkey}
-              key={bid.info.bidderPubkey}
-            />
-          ))}
+        {someoneWon && mint
+          ? winners.map(bid => (
+              <WinnerProfile
+                bidderPubkey={bid.info.bidderPubkey}
+                key={bid.info.bidderPubkey}
+              />
+            ))
+          : null}
 
         {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
 
@@ -1039,7 +1039,7 @@ export const AuctionCard = ({
 
         {/* During auction, not connected */}
         {duringAuctionNotConnected && (
-          <div className="p-4">
+          <>
             {showHowAuctionsWorkBtn && !auctionView.isInstantSale && (
               <HowAuctionsWorkModal buttonBlock buttonSize="large" />
             )}
@@ -1054,7 +1054,7 @@ export const AuctionCard = ({
                 {auctionView.isInstantSale ? 'purchase' : 'place bid'}
               </Button>
             )}
-          </div>
+          </>
         )}
 
         {/*  During auction, connected */}
