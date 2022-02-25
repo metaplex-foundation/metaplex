@@ -150,8 +150,8 @@ export const Listings = () => {
         ownerAddress={ownerAddress}
       />
       <Anchor showInkInFixed={false} className="metaplex-anchor">
-        <div className="flex justify-between">
-          <div className="listings-menu-wrapper">
+        <div className="flex justify-between flex-wrap">
+          <div className="listings-menu-wrapper w-full sm:w-auto justify-between mt-2 ">
             {views.map(({ key, title }) => {
               const count = groups[key].length;
 
@@ -168,7 +168,7 @@ export const Listings = () => {
             })}
           </div>
           <div
-            className={cx('flex items-center max-w-lg', {
+            className={cx('flex items-center max-w-full md:max-w-sm mt-2', {
               'w-full transition-all': true,
             })}
           >
@@ -194,8 +194,8 @@ export const Listings = () => {
                   onChange={e => setListingNameFilter(e.target.value)}
                   className={cx(
                     'bg-base text-color-text py-2 px-4 ring-0 opacity-75 focus:opacity-100 outline-none transition-all',
-                    ' block w-full pl-10 sm:text-sm border border-color-text rounded-lg',
-                    view === View.ended ? 'max-w-md' : 'max-w-xl',
+                    'block w-full pl-10 sm:text-sm border border-color-text rounded-lg max-w-full',
+                    view === View.ended ? 'md:max-w-xs' : 'md:max-w-sm',
                   )}
                   placeholder="Filter"
                 />
