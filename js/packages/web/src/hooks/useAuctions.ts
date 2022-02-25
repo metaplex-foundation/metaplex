@@ -151,7 +151,6 @@ export function useCachedRedemptionKeysByWallet() {
 
 export const useGroupedAuctions = (options: {
   showAllEndedListings: boolean;
-  listingNameFilter: string;
 }) => {
   const [fetching, setFetching] = useState(true);
   const [groups, SetListingGroups] = useState<ListingsGroups>({
