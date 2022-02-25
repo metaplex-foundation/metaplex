@@ -949,6 +949,7 @@ export const AuctionCard = ({
     wallet.connected &&
     auctionView.auction.info.ended() &&
     !auctionView.myBidderMetadata?.info.cancelled &&
+    !isBidderPotEmpty &&
     !disableRedeemReclaimRefundBtn;
 
   const duringAuctionNotConnected = !auctionEnded && !wallet.connected;
