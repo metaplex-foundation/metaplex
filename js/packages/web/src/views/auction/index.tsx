@@ -175,7 +175,7 @@ export const AuctionView = () => {
             {attributes.map((attribute, index) => (
               <div key={`${attribute.value}-${index}`}>
                 <h4 className="mb-1">{attribute.trait_type}</h4>
-                <span className="truncate">{attribute.value}</span>
+                <span className="max-w-fit">{attribute.value}</span>
               </div>
             ))}
           </div>

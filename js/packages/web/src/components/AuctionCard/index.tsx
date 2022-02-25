@@ -606,28 +606,21 @@ export const AuctionCard = ({
     return <></>;
   }
 
-  // Show the refund/reclaim/redeem bid button
-  const showRedeemReclaimRefundBtn =
-    showPlaceBidUI &&
-    !hideDefaultAction &&
-    wallet.connected &&
-    !auctionView.myBidderMetadata?.info.cancelled &&
-    auctionView.auction.info.ended();
+  const disableRedeemReclaimRefundBtn =
+    !myPayingAccount ||
+    (!auctionView.myBidderMetadata &&
+      isAuctionManagerAuthorityNotWalletOwner) ||
+    loading ||
+    !!auctionView.items.find(i => i.find(it => !it.metadata));
 
   // Refund, reclaim, or redeem a bid
-  const redeemReclaimRefundBtn = (
+  const RedeemReclaimRefundBtn = (
     <Button
       className="metaplex-fullwidth"
       type="primary"
       size="large"
       block
-      disabled={
-        !myPayingAccount ||
-        (!auctionView.myBidderMetadata &&
-          isAuctionManagerAuthorityNotWalletOwner) ||
-        loading ||
-        !!auctionView.items.find(i => i.find(it => !it.metadata))
-      }
+      disabled={disableRedeemReclaimRefundBtn}
       onClick={async () => {
         setLoading(true);
         if (
@@ -743,7 +736,7 @@ export const AuctionCard = ({
     !auctionView.auction.info.ended();
 
   // Start the auction
-  const startAuctionBtn = (
+  const StartAuctionBtn = (
     <Button
       className="metaplex-fullwidth"
       type="primary"
@@ -768,7 +761,7 @@ export const AuctionCard = ({
   );
 
   // Show the place-bid UI
-  const placeBidBtn = (
+  const PlaceBidBtn = (
     <Button
       className="metaplex-fullwidth"
       type="primary"
@@ -783,7 +776,7 @@ export const AuctionCard = ({
   );
 
   // Conduct an instant sale
-  const instantSaleBtn = (
+  const InstantSaleBtn = (
     <Button
       className="metaplex-fullwidth"
       type="primary"
@@ -803,7 +796,7 @@ export const AuctionCard = ({
   );
 
   // Components for inputting bid amount and placing a bid
-  const placeBidUI = (
+  const PlaceBidUI = (
     <Space
       className="metaplex-fullwidth metaplex-space-align-stretch"
       direction="vertical"
@@ -929,6 +922,33 @@ export const AuctionCard = ({
 
   const someoneWon = auctionEnded && bids.length;
 
+  const showHowAuctionsWorkBtn = !showPlaceBidUI && !auctionView.isInstantSale;
+
+  const actuallyShowStartAuctionBtn =
+    showDefaultNonEndedAction && showStartAuctionBtn;
+
+  const showInstantSaleButton =
+    showDefaultNonEndedAction &&
+    !showStartAuctionBtn &&
+    auctionView.isInstantSale;
+
+  const actuallyShowPlaceBidUI =
+    showDefaultNonEndedAction && showPlaceBidUI && !auctionView.isInstantSale;
+
+  const showPlaceBidButton =
+    !showPlaceBidUI && showStartOrPlaceBidBtns && !showStartAuctionBtn;
+
+  const showConnectToBidBtn = !hideDefaultAction && !wallet.connected;
+
+  // Show the refund/reclaim/redeem bid button
+  const showRedeemReclaimRefundBtn =
+    showPlaceBidUI &&
+    !hideDefaultAction &&
+    wallet.connected &&
+    auctionView.auction.info.ended() &&
+    !auctionView.myBidderMetadata?.info.cancelled &&
+    !disableRedeemReclaimRefundBtn;
+
   return (
     <div>
       <Card
@@ -1011,38 +1031,29 @@ export const AuctionCard = ({
             />
           ))}
         {/* ugly, but it figures out wether to show the space or not by mirroring the conditions below */}
-        {(!showPlaceBidUI ||
-          showDefaultNonEndedAction ||
-          (showDefaultNonEndedAction &&
-            showPlaceBidUI &&
-            !auctionView.isInstantSale) ||
-          (showDefaultNonEndedAction && showStartAuctionBtn) ||
-          (!hideDefaultAction && !wallet.connected) ||
+        {(showHowAuctionsWorkBtn ||
+          showPlaceBidButton ||
+          actuallyShowPlaceBidUI ||
+          actuallyShowStartAuctionBtn ||
+          showInstantSaleButton ||
+          showConnectToBidBtn ||
           showRedeemReclaimRefundBtn) && (
           <Space
-            className="metaplex-fullwidth metaplex-space-align-stretch "
+            className="metaplex-fullwidth metaplex-space-align-stretch p-4"
             direction="vertical"
           >
-            {!showPlaceBidUI && (
-              <div className="space-y-4">
-                {!auctionView.isInstantSale && (
-                  <HowAuctionsWorkModal buttonBlock buttonSize="large" />
-                )}
-                {showStartOrPlaceBidBtns && (
-                  <>{showStartAuctionBtn ? startAuctionBtn : placeBidBtn}</>
-                )}
-              </div>
+            {showHowAuctionsWorkBtn && !auctionView.isInstantSale && (
+              <HowAuctionsWorkModal buttonBlock buttonSize="large" />
             )}
 
-            {showDefaultNonEndedAction &&
-              showPlaceBidUI &&
-              !auctionView.isInstantSale &&
-              placeBidUI}
-            {showDefaultNonEndedAction &&
-              (showStartAuctionBtn
-                ? startAuctionBtn
-                : auctionView.isInstantSale && instantSaleBtn)}
-            {!hideDefaultAction && !wallet.connected && (
+            {showPlaceBidButton && PlaceBidBtn}
+
+            {actuallyShowPlaceBidUI && PlaceBidUI}
+
+            {actuallyShowStartAuctionBtn && StartAuctionBtn}
+            {showInstantSaleButton && InstantSaleBtn}
+
+            {showConnectToBidBtn && (
               <Button
                 className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
                 type="primary"
@@ -1054,7 +1065,7 @@ export const AuctionCard = ({
               </Button>
             )}
 
-            {showRedeemReclaimRefundBtn && redeemReclaimRefundBtn}
+            {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
             {action}
           </Space>
         )}
