@@ -395,6 +395,57 @@ export const pullPack = async ({
   return newState;
 };
 
+const forEach =
+  (fn: ProcessAccountsFunc, updateTemp: UpdateStateValueFunc<MetaState>) =>
+  async (accounts: AccountAndPubkey[]) => {
+    for (const account of accounts) {
+      await fn(account, updateTemp);
+    }
+  };
+
+export const pullAuctionData = async (
+  connection: Connection,
+  auction: StringPublicKey,
+  tempCache: MetaState,
+) => {
+  const updateTemp = makeSetter(tempCache);
+  let cacheKey;
+  try {
+    cacheKey = await getAuctionCache(auction);
+  } catch (e) {
+    return tempCache;
+  }
+  const cache = tempCache.auctionCaches[cacheKey]?.info;
+  if (!cache) {
+    console.log('-----> No auction cache exists for', auction, 'returning');
+    return tempCache;
+  }
+
+  const auctionExtKey = await getAuctionExtended({
+    auctionProgramId: AUCTION_ID,
+    resource: cache.vault,
+  });
+  await connection
+    .getAccountInfo(toPublicKey(auctionExtKey))
+    .then(a =>
+      a
+        ? processAuctions({ pubkey: auctionExtKey, account: a }, updateTemp)
+        : null,
+    );
+  await getProgramAccounts(connection, AUCTION_ID, {
+    filters: [
+      {
+        memcmp: {
+          offset: 32,
+          bytes: auction,
+        },
+      },
+    ],
+  }).then(forEach(processAuctions, updateTemp));
+
+  return tempCache;
+};
+
 export const pullAuctionSubaccounts = async (
   connection: Connection,
   auction: StringPublicKey,
@@ -414,12 +465,6 @@ export const pullAuctionSubaccounts = async (
     console.log('-----> No auction cache exists for', auction, 'returning');
     return tempCache;
   }
-  const forEach =
-    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
-      for (const account of accounts) {
-        await fn(account, updateTemp);
-      }
-    };
   const auctionExtKey = await getAuctionExtended({
     auctionProgramId: AUCTION_ID,
     resource: cache.vault,
@@ -450,7 +495,7 @@ export const pullAuctionSubaccounts = async (
           },
         },
       ],
-    }).then(forEach(processAuctions)),
+    }).then(forEach(processAuctions, updateTemp)),
 
     // bidder pot pull
     getProgramAccounts(connection, AUCTION_ID, {
@@ -462,7 +507,7 @@ export const pullAuctionSubaccounts = async (
           },
         },
       ],
-    }).then(forEach(processAuctions)),
+    }).then(forEach(processAuctions, updateTemp)),
     // safety deposit pull
     getProgramAccounts(connection, VAULT_ID, {
       filters: [
@@ -473,7 +518,7 @@ export const pullAuctionSubaccounts = async (
           },
         },
       ],
-    }).then(forEach(processVaultData)),
+    }).then(forEach(processVaultData, updateTemp)),
 
     // bid redemptions
     getProgramAccounts(connection, METAPLEX_ID, {
@@ -485,7 +530,7 @@ export const pullAuctionSubaccounts = async (
           },
         },
       ],
-    }).then(forEach(processMetaplexAccounts)),
+    }).then(forEach(processMetaplexAccounts, updateTemp)),
     // bdis where you arent winner
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
@@ -496,7 +541,7 @@ export const pullAuctionSubaccounts = async (
           },
         },
       ],
-    }).then(forEach(processMetaplexAccounts)),
+    }).then(forEach(processMetaplexAccounts, updateTemp)),
     // safety deposit configs
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
@@ -507,7 +552,7 @@ export const pullAuctionSubaccounts = async (
           },
         },
       ],
-    }).then(forEach(processMetaplexAccounts)),
+    }).then(forEach(processMetaplexAccounts, updateTemp)),
     // prize tracking tickets
     ...cache.metadata
       .map(md =>
@@ -520,7 +565,7 @@ export const pullAuctionSubaccounts = async (
               },
             },
           ],
-        }).then(forEach(processMetaplexAccounts)),
+        }).then(forEach(processMetaplexAccounts, updateTemp)),
       )
       .flat(),
   ];
