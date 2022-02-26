@@ -342,6 +342,7 @@ async function processFiles({
   const imageContentType = getType(filePair.image);
   const imageBuffer = await readFile(filePair.image);
   if (storageType === StorageType.ArweaveSol) {
+    //@ts-ignore
     imageDataItem = bundlr.createTransaction(imageBuffer, {
       tags: imageTags.concat({
         name: 'Content-Type',
@@ -363,6 +364,7 @@ async function processFiles({
     animationContentType = getType(filePair.animation);
     const animationBuffer = await readFile(filePair.animation);
     if (storageType === StorageType.ArweaveSol) {
+      //@ts-ignore
       animationDataItem = bundlr.createTransaction(animationBuffer, {
         tags: imageTags.concat({
           name: 'Content-Type',
@@ -396,6 +398,7 @@ async function processFiles({
   );
 
   if (storageType === StorageType.ArweaveSol) {
+    //@ts-ignore
     manifestDataItem = bundlr.createTransaction(JSON.stringify(manifest), {
       tags: manifestTags,
     });
@@ -415,6 +418,7 @@ async function processFiles({
   );
 
   if (storageType === StorageType.ArweaveSol) {
+    //@ts-ignore
     arweavePathManifestDataItem = bundlr.createTransaction(
       JSON.stringify(arweavePathManifest),
       { tags: arweavePathManifestTags },
