@@ -1,16 +1,15 @@
-name: 'Remove "needs more information"'
+name: Remove needs more information
 on: 
-  workflow_dispatch:
   issue_comment:
     types: [created]
 jobs:
   issue_commented:
     if: ${{ !github.event.issue.pull_request && github.event.issue.user.login == github.event.comment.user.login }}
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
-        uses: andymckay/labeler@5c59dabdfd4dd5bd9c6e6d255b01b9d764af4414
+      - uses: andymckay/labeler@5c59dabdfd4dd5bd9c6e6d255b01b9d764af4414
         with:
           remove-labels: "needs more information"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+permissions:
+  issues: write
