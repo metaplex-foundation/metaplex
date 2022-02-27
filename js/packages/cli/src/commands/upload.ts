@@ -176,7 +176,24 @@ export async function uploadV2({
     );
   }
 
-  console.log('Uploading Size', dedupedAssetKeys.length, dedupedAssetKeys[0]);
+  const uploadedItems = cacheContent.items
+    ? Object.values(cacheContent.items).filter(
+        (f: { link: string }) => !!f.link,
+      ).length
+    : 0;
+  log.info(
+    `[${uploadedItems}] out of [${
+      dedupedAssetKeys.length + uploadedItems
+    }] items have been uploaded`,
+  );
+
+  if (dedupedAssetKeys.length) {
+    log.info(
+      `Starting upload for [${
+        dedupedAssetKeys.length
+      }] items, format ${JSON.stringify(dedupedAssetKeys[0])}`,
+    );
+  }
 
   if (dedupedAssetKeys.length) {
     if (
@@ -215,12 +232,11 @@ export async function uploadV2({
       log.info('Upload done.');
     } else {
       const assetsPerBatch = batchSize || 10;
+      const batchedAssets = chunks(dedupedAssetKeys, assetsPerBatch);
 
       log.info(
-        `Splitting ${dedupedAssetKeys.length} assets in batches of ${assetsPerBatch}`,
+        `Splitting [${dedupedAssetKeys.length}] assets in batches of [${assetsPerBatch}], created [${batchedAssets.length}] batch(es)`,
       );
-
-      const batchedAssets = chunks(dedupedAssetKeys, assetsPerBatch);
 
       for (const batch of batchedAssets) {
         log.info(
@@ -231,7 +247,7 @@ export async function uploadV2({
           {},
           cliProgress.Presets.shades_classic,
         );
-        progressBar.start(dedupedAssetKeys.length, 0);
+        progressBar.start(assetsPerBatch, 0);
 
         await Promise.all(
           batch.map(async asset => {
