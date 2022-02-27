@@ -11,7 +11,7 @@ program.version('1.1.0');
 log.setLevel('info');
 
 programCommand('mint')
-  .option('-u, --url <string>', 'metadata url')
+  .requiredOption('-u, --url <string>', 'metadata url')
   .option(
     '-c, --collection <string>',
     'Optional: Set this NFT as a part of a collection, Note you must be the update authority for this to work.',
@@ -62,7 +62,7 @@ programCommand('mint')
   });
 
 programCommand('update-metadata')
-  .option('-m, --mint <string>', 'base58 mint key')
+  .requiredOption('-m, --mint <string>', 'base58 mint key')
   .option('-u, --url <string>', 'metadata url')
   .option(
     '-c, --collection <string>',
