@@ -133,6 +133,21 @@ export async function getAccountsByCreatorAddress(creatorAddress, connection) {
   return decodedAccounts;
 }
 
+export async function getAddressesByCreatorAddress(
+  candyMachineAddr,
+  connection,
+) {
+  const accountsByCreatorAddress = await getAccountsByCreatorAddress(
+    candyMachineAddr,
+    connection,
+  );
+  const addresses = accountsByCreatorAddress.map(it => {
+    return new PublicKey(it[0].mint).toBase58();
+  });
+
+  return addresses;
+}
+
 async function getProgramAccounts(
   connection: Connection,
   programId: String,
