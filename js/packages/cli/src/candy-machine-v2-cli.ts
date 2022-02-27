@@ -1008,7 +1008,7 @@ function programCommand(
   name: string,
   options: { requireWallet: boolean } = { requireWallet: true },
 ) {
-  let customProgram = program
+  let cmProgram = program
     .command(name)
     .option(
       '-e, --env <string>',
@@ -1019,13 +1019,13 @@ function programCommand(
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
 
   if (options.requireWallet) {
-    customProgram = customProgram.requiredOption(
+    cmProgram = cmProgram.requiredOption(
       '-k, --keypair <path>',
       `Solana wallet location`,
     );
   }
 
-  return customProgram;
+  return cmProgram;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
