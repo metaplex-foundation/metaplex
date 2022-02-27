@@ -589,12 +589,15 @@ export function* makeArweaveBundleUploadGenerator(
         log.info(`Successfully funded Arweave Bundler, starting upload`);
 
         const progressBar = new cliProgress.SingleBar(
-          {},
+          {
+            format:
+              'TX Upload Progress: [{bar}] {percentage}% | {value}/{total}',
+          },
           cliProgress.Presets.shades_classic,
         );
         progressBar.start(bundlrTransactions.length, 0);
 
-        const bundlerTransactionsChunks = chunks(bundlrTransactions, 10);
+        const bundlerTransactionsChunks = chunks(bundlrTransactions, 20);
 
         for (const txs of bundlerTransactionsChunks) {
           await Promise.all(

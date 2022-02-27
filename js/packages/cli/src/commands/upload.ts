@@ -231,7 +231,7 @@ export async function uploadV2({
       }
       log.info('Upload done.');
     } else {
-      const assetsPerBatch = batchSize || 10;
+      const assetsPerBatch = batchSize || 20;
       const batchedAssets = chunks(dedupedAssetKeys, assetsPerBatch);
 
       log.info(
@@ -244,10 +244,12 @@ export async function uploadV2({
         );
 
         const progressBar = new cliProgress.SingleBar(
-          {},
+          {
+            format: 'Upload Progress: [{bar}] {percentage}% | {value}/{total}',
+          },
           cliProgress.Presets.shades_classic,
         );
-        progressBar.start(assetsPerBatch, 0);
+        progressBar.start(batch.length, 0);
 
         await Promise.all(
           batch.map(async asset => {
