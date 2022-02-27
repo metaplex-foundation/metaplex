@@ -1,3 +1,4 @@
+import * as cliProgress from 'cli-progress';
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
 import Arweave from 'arweave';
@@ -585,6 +586,13 @@ export function* makeArweaveBundleUploadGenerator(
         const cost = await bundlr.utils.getPrice('solana', bytes);
         log.info(`${cost.toNumber() / LAMPORTS} SOL to upload`);
         await bundlr.fund(cost.toNumber());
+        log.info(`Successfully funded Arweave Bundler, starting upload`);
+
+        const progressBar = new cliProgress.SingleBar(
+          {},
+          cliProgress.Presets.shades_classic,
+        );
+        progressBar.start(bundlrTransactions.length, 0);
 
         const bundlerTransactionsChunks = chunks(bundlrTransactions, 10);
 
@@ -609,10 +617,12 @@ export function* makeArweaveBundleUploadGenerator(
               };
 
               await uploadTransaction();
+              progressBar.increment();
             }),
           );
         }
 
+        progressBar.stop();
         log.info('Bundle uploaded!');
       }
 

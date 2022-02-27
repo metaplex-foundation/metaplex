@@ -45,6 +45,7 @@
     "arbundles": "^0.6.12",
     "arweave": "^1.10.16",
     "borsh": "^0.4.0",
+    "cli-progress": "^3.10.0",
     "canvas": "^2.8.0",
     "commander": "^8.1.0",
     "form-data": "^4.0.0",

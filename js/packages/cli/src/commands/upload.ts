@@ -1,3 +1,4 @@
+import * as cliProgress from 'cli-progress';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import log from 'loglevel';
@@ -226,6 +227,12 @@ export async function uploadV2({
           `Uploading assets ${batch[0].index}-${batch[batch.length - 1].index}`,
         );
 
+        const progressBar = new cliProgress.SingleBar(
+          {},
+          cliProgress.Presets.shades_classic,
+        );
+        progressBar.start(dedupedAssetKeys.length, 0);
+
         await Promise.all(
           batch.map(async asset => {
             const manifest = getAssetManifest(
@@ -304,6 +311,7 @@ export async function uploadV2({
                   onChain: false,
                 };
                 saveCache(cacheName, env, cacheContent);
+                progressBar.increment();
               }
             } catch (err) {
               log.error(
@@ -314,6 +322,8 @@ export async function uploadV2({
             }
           }),
         );
+
+        progressBar.stop();
       }
     }
     saveCache(cacheName, env, cacheContent);
