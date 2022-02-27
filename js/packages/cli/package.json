@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@solana/web3.js": "1.33.0",
+    "@supercharge/promise-pool": "2.1.0",
     "@aws-sdk/client-s3": "^3.36.0",
     "@bundlr-network/client": "^0.5.16",
     "@metaplex/arweave-cost": "^1.0.4",

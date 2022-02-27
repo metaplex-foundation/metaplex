@@ -8,9 +8,11 @@ import {
   loadWalletKey,
 } from '../helpers/accounts';
 import { PublicKey } from '@solana/web3.js';
-import fs from 'fs';
 import { BN, Program, web3 } from '@project-serum/anchor';
 
+import fs from 'fs';
+
+import { PromisePool } from '@supercharge/promise-pool';
 import { loadCache, saveCache } from '../helpers/cache';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
@@ -85,7 +87,6 @@ export async function uploadV2({
   arweaveJwk: string;
   rateLimit: number;
 }): Promise<boolean> {
-  let uploadSuccessful = true;
   const savedContent = loadCache(cacheName, env);
   const cacheContent = savedContent || {};
 
@@ -176,21 +177,18 @@ export async function uploadV2({
     );
   }
 
-  const uploadedItems = cacheContent.items
-    ? Object.values(cacheContent.items).filter(
-        (f: { link: string }) => !!f.link,
-      ).length
-    : 0;
+  const uploadedItems = Object.values(cacheContent.items).filter(
+    (f: { link: string }) => !!f.link,
+  ).length;
+  const allItemsCount = dedupedAssetKeys.length + uploadedItems;
+
   log.info(
-    `[${uploadedItems}] out of [${
-      dedupedAssetKeys.length + uploadedItems
-    }] items have been uploaded`,
+    `[${uploadedItems}] out of [${allItemsCount}] items have been uploaded`,
   );
 
   if (dedupedAssetKeys.length) {
     log.info(
-      `Starting upload for [${
-        dedupedAssetKeys.length
+      `Starting upload for [${dedupedAssetKeys.length
       }] items, format ${JSON.stringify(dedupedAssetKeys[0])}`,
     );
   }
@@ -231,122 +229,112 @@ export async function uploadV2({
       }
       log.info('Upload done.');
     } else {
-      const assetsPerBatch = batchSize || 20;
-      const batchedAssets = chunks(dedupedAssetKeys, assetsPerBatch);
-
-      log.info(
-        `Splitting [${dedupedAssetKeys.length}] assets in batches of [${assetsPerBatch}], created [${batchedAssets.length}] batch(es)`,
+      const progressBar = new cliProgress.SingleBar(
+        {
+          format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
+        },
+        cliProgress.Presets.shades_classic,
       );
+      progressBar.start(dedupedAssetKeys.length, 0);
 
-      for (const batch of batchedAssets) {
-        log.info(
-          `Uploading assets ${batch[0].index}-${batch[batch.length - 1].index}`,
-        );
+      await PromisePool
+        .withConcurrency(batchSize || 10)
+        .for(dedupedAssetKeys)
+        .handleError(async (err, asset) => {
+          log.error(
+            `Error uploading ${JSON.stringify(asset)} asset (skipping)`,
+            err,
+          );
+          await sleep(5000);
+        })
+        .process(async (asset) => {
+          const manifest = getAssetManifest(
+            dirname,
+            asset.index.includes('json')
+              ? asset.index
+              : `${asset.index}.json`,
+          );
 
-        const progressBar = new cliProgress.SingleBar(
-          {
-            format: 'Upload Progress: [{bar}] {percentage}% | {value}/{total}',
-          },
-          cliProgress.Presets.shades_classic,
-        );
-        progressBar.start(batch.length, 0);
+          const image = path.join(dirname, `${manifest.image}`);
+          const animation =
+            'animation_url' in manifest
+              ? path.join(dirname, `${manifest.animation_url}`)
+              : undefined;
+          const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
-        await Promise.all(
-          batch.map(async asset => {
-            const manifest = getAssetManifest(
-              dirname,
-              asset.index.includes('json')
-                ? asset.index
-                : `${asset.index}.json`,
+          if (
+            animation &&
+            (!fs.existsSync(animation) || !fs.lstatSync(animation).isFile())
+          ) {
+            throw new Error(
+              `Missing file for the animation_url specified in ${asset.index}.json`,
             );
+          }
 
-            const image = path.join(dirname, `${manifest.image}`);
-            const animation =
-              'animation_url' in manifest
-                ? path.join(dirname, `${manifest.animation_url}`)
-                : undefined;
-            const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
+          let link, imageLink, animationLink;
+          try {
+            switch (storage) {
+              case StorageType.NftStorage:
+                [link, imageLink, animationLink] = await nftStorageUpload(
+                  image,
+                  animation,
+                  manifestBuffer,
+                  walletKeyPair,
+                  env,
+                  nftStorageKey,
+                );
+                break;
+              case StorageType.Ipfs:
+                [link, imageLink, animationLink] = await ipfsUpload(
+                  ipfsCredentials,
+                  image,
+                  animation,
+                  manifestBuffer,
+                );
+                break;
+              case StorageType.Aws:
+                [link, imageLink, animationLink] = await awsUpload(
+                  awsS3Bucket,
+                  image,
+                  animation,
+                  manifestBuffer,
+                );
+                break;
+              case StorageType.Arweave:
+              default:
+                [link, imageLink] = await arweaveUpload(
+                  walletKeyPair,
+                  anchorProgram,
+                  env,
+                  image,
+                  manifestBuffer,
+                  manifest,
+                  asset.index,
+                );
+            }
             if (
-              animation &&
-              (!fs.existsSync(animation) || !fs.lstatSync(animation).isFile())
+              animation
+                ? link && imageLink && animationLink
+                : link && imageLink
             ) {
-              throw new Error(
-                `Missing file for the animation_url specified in ${batch[0].index}.json`,
-              );
+              log.debug('Updating cache for ', asset.index);
+              cacheContent.items[asset.index] = {
+                link,
+                name: manifest.name,
+                onChain: false,
+              };
+              saveCache(cacheName, env, cacheContent);
             }
-
-            let link, imageLink, animationLink;
-            try {
-              switch (storage) {
-                case StorageType.NftStorage:
-                  [link, imageLink, animationLink] = await nftStorageUpload(
-                    image,
-                    animation,
-                    manifestBuffer,
-                    walletKeyPair,
-                    env,
-                    nftStorageKey,
-                  );
-                  break;
-                case StorageType.Ipfs:
-                  [link, imageLink, animationLink] = await ipfsUpload(
-                    ipfsCredentials,
-                    image,
-                    animation,
-                    manifestBuffer,
-                  );
-                  break;
-                case StorageType.Aws:
-                  [link, imageLink, animationLink] = await awsUpload(
-                    awsS3Bucket,
-                    image,
-                    animation,
-                    manifestBuffer,
-                  );
-                  break;
-                case StorageType.Arweave:
-                default:
-                  [link, imageLink] = await arweaveUpload(
-                    walletKeyPair,
-                    anchorProgram,
-                    env,
-                    image,
-                    manifestBuffer,
-                    manifest,
-                    asset.index,
-                  );
-              }
-              if (
-                animation
-                  ? link && imageLink && animationLink
-                  : link && imageLink
-              ) {
-                log.debug('Updating cache for ', asset.index);
-                cacheContent.items[asset.index] = {
-                  link,
-                  name: manifest.name,
-                  onChain: false,
-                };
-                saveCache(cacheName, env, cacheContent);
-                progressBar.increment();
-              }
-            } catch (err) {
-              log.error(
-                `Error uploading ${JSON.stringify(asset)} asset (skipping)`,
-                err,
-              );
-              await sleep(5000);
-            }
-          }),
-        );
-
-        progressBar.stop();
-      }
+          } finally {
+            progressBar.increment();
+          }
+        })
+      progressBar.stop();
     }
     saveCache(cacheName, env, cacheContent);
   }
 
+  let uploadSuccessful = true;
   if (!hiddenSettings) {
     uploadSuccessful = await writeIndices({
       anchorProgram,
@@ -355,9 +343,13 @@ export async function uploadV2({
       env,
       candyMachine,
       walletKeyPair,
-      uploadSuccessful,
       rateLimit,
     });
+
+    const uploadedItems = Object.values(cacheContent.items).filter(
+      (f: { link: string }) => !!f.link,
+    ).length;
+    uploadSuccessful = uploadSuccessful && uploadedItems === allItemsCount;
   } else {
     log.info('Skipping upload to chain as this is a hidden Candy Machine');
   }
@@ -469,7 +461,6 @@ async function writeIndices({
   env,
   candyMachine,
   walletKeyPair,
-  uploadSuccessful,
   rateLimit,
 }: {
   anchorProgram: Program;
@@ -478,9 +469,9 @@ async function writeIndices({
   env: any;
   candyMachine: any;
   walletKeyPair: web3.Keypair;
-  uploadSuccessful: boolean;
   rateLimit: number;
 }) {
+  let uploadSuccessful = true;
   const keys = Object.keys(cacheContent.items);
 
   try {
@@ -537,8 +528,7 @@ async function writeIndices({
             })
             .catch(err => {
               log.error(
-                `Saving config line ${ind}-${
-                  keys[indexes[indexes.length - 1]]
+                `Saving config line ${ind}-${keys[indexes[indexes.length - 1]]
                 } failed`,
                 err,
               );
@@ -779,7 +769,6 @@ export async function upload({
       env,
       candyMachine: config,
       walletKeyPair,
-      uploadSuccessful: true,
       rateLimit: 10,
     });
   }

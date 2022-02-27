@@ -1,5 +1,6 @@
 import * as cliProgress from 'cli-progress';
 import { readFile, stat } from 'fs/promises';
+import { PromisePool } from '@supercharge/promise-pool';
 import path from 'path';
 import Arweave from 'arweave';
 
@@ -10,7 +11,7 @@ import { StorageType } from '../storage-type';
 import { Keypair } from '@solana/web3.js';
 import { getType, getExtension } from 'mime';
 import { AssetKey } from '../../types';
-import { chunks, sleep } from '../various';
+import { sleep } from '../various';
 import Transaction from 'arweave/node/lib/transaction';
 import Bundlr from '@bundlr-network/client';
 
@@ -388,8 +389,8 @@ async function processFiles({
     .replace('.', '')}`;
   const animationLink = filePair.animation
     ? `https://arweave.net/${animationDataItem.id}?ext=${path
-        .extname(filePair.animation)
-        .replace('.', '')}`
+      .extname(filePair.animation)
+      .replace('.', '')}`
     : undefined;
 
   const manifest = await getUpdatedManifest(
@@ -480,10 +481,10 @@ export function* makeArweaveBundleUploadGenerator(
   const bundlr =
     storageType === StorageType.ArweaveSol
       ? new Bundlr(
-          'https://node1.bundlr.network',
-          'solana',
-          walletKeyPair.secretKey,
-        )
+        'https://node1.bundlr.network',
+        'solana',
+        walletKeyPair.secretKey,
+      )
       : undefined;
 
   const filePairs = assets.map((asset: AssetKey) => {
@@ -597,33 +598,36 @@ export function* makeArweaveBundleUploadGenerator(
         );
         progressBar.start(bundlrTransactions.length, 0);
 
-        const bundlerTransactionsChunks = chunks(bundlrTransactions, 20);
+        await PromisePool
+          .withConcurrency(10)
+          .for(bundlrTransactions)
+          .handleError(async (err) => {
+            log.error(
+              `Could not complete the bundler upload successfully, exiting`,
+              err,
+            );
+            throw err;
+          })
+          .process(async (tx) => {
+            let attempts = 0;
+            const uploadTransaction = async () => {
+              await tx.upload().catch(async (err: Error) => {
+                attempts++;
+                if (attempts >= 3) {
+                  throw err;
+                }
+                log.warn(
+                  `Failed bundlr tx upload, retrying transaction (attempt: ${attempts})`,
+                  err,
+                );
+                await sleep(5 * 1000);
+                await uploadTransaction();
+              });
+            };
 
-        for (const txs of bundlerTransactionsChunks) {
-          await Promise.all(
-            txs.map(async tx => {
-              let attempts = 0;
-
-              const uploadTransaction = async () => {
-                await tx.upload().catch(async (err: Error) => {
-                  attempts++;
-                  if (attempts >= 3) {
-                    throw err;
-                  }
-                  log.warn(
-                    `Failed bundlr tx upload, retrying transaction (attempt: ${attempts})`,
-                    err,
-                  );
-                  await sleep(5 * 1000);
-                  await uploadTransaction();
-                });
-              };
-
-              await uploadTransaction();
-              progressBar.increment();
-            }),
-          );
-        }
+            await uploadTransaction();
+            progressBar.increment();
+          });
 
         progressBar.stop();
         log.info('Bundle uploaded!');
@@ -637,8 +641,7 @@ export function* makeArweaveBundleUploadGenerator(
         const bundle = await bundleAndSignData(dataItems, signer);
         const endBundleTime = Date.now();
         log.info(
-          `Bundled ${dataItems.length} data items in ${
-            (endBundleTime - startBundleTime) / 1000
+          `Bundled ${dataItems.length} data items in ${(endBundleTime - startBundleTime) / 1000
           }s`,
         );
         // @ts-ignore
