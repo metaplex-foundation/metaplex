@@ -125,11 +125,7 @@ export function MetaProvider({
   }
 
   async function pullAuctionListData(auctionAddress: StringPublicKey) {
-    const nextState = await pullAuctionData(
-      connection,
-      auctionAddress,
-      state,
-    );
+    const nextState = await pullAuctionData(connection, auctionAddress, state);
     setState(nextState);
     await updateMints(nextState.metadataByMint);
     return nextState;
