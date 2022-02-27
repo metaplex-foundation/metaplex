@@ -133,7 +133,10 @@ export async function getAccountsByCreatorAddress(creatorAddress, connection) {
   return decodedAccounts;
 }
 
-export async function getAddressesByCreatorAddress(candyMachineAddr, connection) {
+export async function getAddressesByCreatorAddress(
+  candyMachineAddr,
+  connection,
+) {
   const accountsByCreatorAddress = await getAccountsByCreatorAddress(
     candyMachineAddr,
     connection,

@@ -1,17 +1,16 @@
 import { TOKEN_PROGRAM_ID } from '../helpers/constants';
 import log from 'loglevel';
 
-
 export async function getOwnersByMintAddresses(addresses, connection) {
-	const owners = [];
+  const owners = [];
 
   log.debug("Recuperation of the owners' addresses");
-	for (const address of addresses) {
-		owners.push(await getOwnerOfTokenAddress(address, connection));
-		await delay(500);
-	}
+  for (const address of addresses) {
+    owners.push(await getOwnerOfTokenAddress(address, connection));
+    await delay(500);
+  }
 
-	return owners;
+  return owners;
 }
 
 async function getOwnerOfTokenAddress(address, connection) {
@@ -27,14 +26,16 @@ async function getOwnerOfTokenAddress(address, connection) {
             bytes: address,
           },
         },
-      ]
+      ],
     };
     const results = await connection.getParsedProgramAccounts(
       TOKEN_PROGRAM_ID,
-      programAccountsConfig
-	);  
+      programAccountsConfig,
+    );
 
-    const tokenOwner = results.find(token => token.account.data.parsed.info.tokenAmount.amount == 1);
+    const tokenOwner = results.find(
+      token => token.account.data.parsed.info.tokenAmount.amount == 1,
+    );
     const ownerAddress = tokenOwner.account.data.parsed.info.owner;
 
     return ownerAddress;
