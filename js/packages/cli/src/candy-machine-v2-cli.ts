@@ -1012,12 +1012,13 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
     candyMachineId,
   );
 
+  log.info('Getting mint addresses...');
   const addresses = await getAddressesByCreatorAddress(
     candyMachineAddr.toBase58(),
     anchorProgram.provider.connection,
   );
-
-  console.log(JSON.stringify(addresses, null, 2));
+  fs.writeFileSync('./mint-addresses.json', JSON.stringify(addresses, null, 2));
+  log.info('Successfully saved mint addresses to ./mint-addresses.json');
 });
 
 programCommand('get_all_owners_addresses').action(async (directory, cmd) => {
@@ -1032,13 +1033,19 @@ programCommand('get_all_owners_addresses').action(async (directory, cmd) => {
     candyMachineId,
   );
 
+  log.info('Getting mint addresses...');
   const addresses = await getAddressesByCreatorAddress(
     candyMachineAddr.toBase58(),
     anchorProgram.provider.connection,
   );
 
-  const owners = await getOwnersByMintAddresses(addresses, anchorProgram.provider.connection);
-  console.log(JSON.stringify(owners, null, 2));
+  log.info('Getting owner addresses...');
+  const owners = await getOwnersByMintAddresses(
+    addresses,
+    anchorProgram.provider.connection,
+  );
+  fs.writeFileSync('./owner-addresses.json', JSON.stringify(owners, null, 2));
+  log.info('Successfully saved owner addresses to ./owner-addresses.json');
 });
 
 function programCommand(name: string) {
