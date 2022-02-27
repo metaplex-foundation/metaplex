@@ -51,6 +51,7 @@ export async function withdrawV2(
   charityPercent: number,
 ): Promise<string> {
   const signers = [keypair];
+  //TODO: add collection PDA account
   const instructions = [
     anchorProgram.instruction.withdrawFunds({
       accounts: {
