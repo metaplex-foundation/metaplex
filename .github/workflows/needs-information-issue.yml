@@ -13,3 +13,4 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 permissions:
   issues: write
+  
