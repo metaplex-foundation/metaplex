@@ -97,8 +97,6 @@ export async function uploadV2({
   }
 
   const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
-  const SIZE = dedupedAssetKeys.length;
-
   const dirname = path.dirname(files[0]);
   let candyMachine = cacheContent.program.candyMachine
     ? new PublicKey(cacheContent.program.candyMachine)
@@ -177,7 +175,7 @@ export async function uploadV2({
     );
   }
 
-  console.log('Uploading Size', SIZE, dedupedAssetKeys[0]);
+  console.log('Uploading Size', dedupedAssetKeys.length, dedupedAssetKeys[0]);
 
   if (dedupedAssetKeys.length) {
     if (
@@ -215,116 +213,108 @@ export async function uploadV2({
       }
       log.info('Upload done.');
     } else {
-      let lastPrinted = 0;
-      const tick = SIZE / 100; //print every one percent
+      const assetsPerBatch = batchSize || 10;
 
-      await Promise.all(
-        chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
-          async allIndexesInSlice => {
-            for (let i = 0; i < allIndexesInSlice.length; i++) {
-              const assetKey = dedupedAssetKeys[allIndexesInSlice[i]];
-              const manifest = getAssetManifest(
-                dirname,
-                assetKey.index.includes('json')
-                  ? assetKey.index
-                  : `${assetKey.index}.json`,
-              );
-
-              if (
-                allIndexesInSlice[i] >= lastPrinted + tick ||
-                allIndexesInSlice[i] === 0
-              ) {
-                lastPrinted = allIndexesInSlice[i];
-                log.info(`Processing asset: ${allIndexesInSlice[i]}`);
-              }
-
-              const image = path.join(dirname, `${manifest.image}`);
-
-              let animation = undefined;
-              if ('animation_url' in manifest) {
-                const animationPath = path.join(
-                  dirname,
-                  `${manifest.animation_url}`,
-                );
-                if (
-                  fs.existsSync(animationPath) &&
-                  fs.lstatSync(animationPath).isFile()
-                ) {
-                  animation = animationPath;
-                }
-              }
-
-              const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
-              let link, imageLink, animationLink;
-              try {
-                switch (storage) {
-                  case StorageType.NftStorage:
-                    [link, imageLink, animationLink] = await nftStorageUpload(
-                      image,
-                      animation,
-                      manifestBuffer,
-                      walletKeyPair,
-                      env,
-                      nftStorageKey,
-                    );
-                    break;
-                  case StorageType.Ipfs:
-                    [link, imageLink, animationLink] = await ipfsUpload(
-                      ipfsCredentials,
-                      image,
-                      animation,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Aws:
-                    [link, imageLink, animationLink] = await awsUpload(
-                      awsS3Bucket,
-                      image,
-                      animation,
-                      manifestBuffer,
-                    );
-                    break;
-                  case StorageType.Arweave:
-                  default:
-                    [link, imageLink] = await arweaveUpload(
-                      walletKeyPair,
-                      anchorProgram,
-                      env,
-                      image,
-                      manifestBuffer,
-                      manifest,
-                      assetKey.index,
-                    );
-                }
-                if (
-                  animation
-                    ? link && imageLink && animationLink
-                    : link && imageLink
-                ) {
-                  log.debug('Updating cache for ', allIndexesInSlice[i]);
-                  cacheContent.items[assetKey.index] = {
-                    link,
-                    name: manifest.name,
-                    onChain: false,
-                  };
-                  saveCache(cacheName, env, cacheContent);
-                }
-              } catch (err) {
-                if (animation) {
-                  log.error(
-                    `Error uploading files ${manifest.image} + ${manifest.animation_url}`,
-                    err,
-                  );
-                } else {
-                  log.error(`Error uploading file ${manifest.image}`, err);
-                }
-                i--;
-              }
-            }
-          },
-        ),
+      log.info(
+        `Splitting ${dedupedAssetKeys.length} assets in batches of ${assetsPerBatch}`,
       );
+
+      const batchedAssets = chunks(dedupedAssetKeys, assetsPerBatch);
+
+      for (const batch of batchedAssets) {
+        log.info(
+          `Uploading assets ${batch[0].index}-${batch[batch.length - 1].index}`,
+        );
+
+        await Promise.all(
+          batch.map(async asset => {
+            const manifest = getAssetManifest(
+              dirname,
+              asset.index.includes('json')
+                ? asset.index
+                : `${asset.index}.json`,
+            );
+
+            const image = path.join(dirname, `${manifest.image}`);
+            const animation =
+              'animation_url' in manifest
+                ? path.join(dirname, `${manifest.animation_url}`)
+                : undefined;
+            const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+
+            if (
+              animation &&
+              (!fs.existsSync(animation) || !fs.lstatSync(animation).isFile())
+            ) {
+              throw new Error(
+                `Missing file for the animation_url specified in ${batch[0].index}.json`,
+              );
+            }
+
+            let link, imageLink, animationLink;
+            try {
+              switch (storage) {
+                case StorageType.NftStorage:
+                  [link, imageLink, animationLink] = await nftStorageUpload(
+                    image,
+                    animation,
+                    manifestBuffer,
+                    walletKeyPair,
+                    env,
+                    nftStorageKey,
+                  );
+                  break;
+                case StorageType.Ipfs:
+                  [link, imageLink, animationLink] = await ipfsUpload(
+                    ipfsCredentials,
+                    image,
+                    animation,
+                    manifestBuffer,
+                  );
+                  break;
+                case StorageType.Aws:
+                  [link, imageLink, animationLink] = await awsUpload(
+                    awsS3Bucket,
+                    image,
+                    animation,
+                    manifestBuffer,
+                  );
+                  break;
+                case StorageType.Arweave:
+                default:
+                  [link, imageLink] = await arweaveUpload(
+                    walletKeyPair,
+                    anchorProgram,
+                    env,
+                    image,
+                    manifestBuffer,
+                    manifest,
+                    asset.index,
+                  );
+              }
+              if (
+                animation
+                  ? link && imageLink && animationLink
+                  : link && imageLink
+              ) {
+                log.debug('Updating cache for ', asset.index);
+                cacheContent.items[asset.index] = {
+                  link,
+                  name: manifest.name,
+                  onChain: false,
+                };
+                saveCache(cacheName, env, cacheContent);
+              }
+            } catch (err) {
+              log.error(
+                `Error uploading ${JSON.stringify(asset)} asset (skipping)`,
+                err,
+              );
+              await sleep(5000);
+            }
+          }),
+        );
+      }
     }
     saveCache(cacheName, env, cacheContent);
   }
@@ -409,7 +399,9 @@ function getAssetKeysNeedingUpload(
       }
       return acc;
     }, [])
-    .sort((a, b) => Number.parseInt(a.key, 10) - Number.parseInt(b.key, 10));
+    .sort(
+      (a, b) => Number.parseInt(a.index, 10) - Number.parseInt(b.index, 10),
+    );
 }
 
 /**
@@ -426,6 +418,7 @@ export function getAssetManifest(dirname: string, assetKey: string): Manifest {
     fs.readFileSync(manifestPath).toString(),
   );
   manifest.image = manifest.image.replace('image', assetIndex);
+
   if ('animation_url' in manifest) {
     manifest.animation_url = manifest.animation_url.replace(
       'animation_url',
@@ -461,6 +454,7 @@ async function writeIndices({
   rateLimit: number;
 }) {
   const keys = Object.keys(cacheContent.items);
+
   try {
     let promiseArray = [];
     const allIndexesInSlice = Array.from(Array(keys.length).keys());

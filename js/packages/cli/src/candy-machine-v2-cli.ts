@@ -71,6 +71,14 @@ function myParseInt(value) {
   return parsedValue;
 }
 
+programCommand('version', { requireWallet: false }).action(async () => {
+  const revision = require('child_process')
+    .execSync('git rev-parse HEAD')
+    .toString()
+    .trim();
+  log.info(`Candy Machine Version: ${revision}`);
+});
+
 programCommand('upload')
   .argument(
     '<directory>',
@@ -996,17 +1004,28 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   console.log(JSON.stringify(addresses, null, 2));
 });
 
-function programCommand(name: string) {
-  return program
+function programCommand(
+  name: string,
+  options: { requireWallet: boolean } = { requireWallet: true },
+) {
+  let customProgram = program
     .command(name)
     .option(
       '-e, --env <string>',
       'Solana cluster env name',
       'devnet', //mainnet-beta, testnet, devnet
     )
-    .requiredOption('-k, --keypair <path>', `Solana wallet location`)
     .option('-l, --log-level <string>', 'log level', setLogLevel)
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
+
+  if (options.requireWallet) {
+    customProgram = customProgram.requiredOption(
+      '-k, --keypair <path>',
+      `Solana wallet location`,
+    );
+  }
+
+  return customProgram;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
