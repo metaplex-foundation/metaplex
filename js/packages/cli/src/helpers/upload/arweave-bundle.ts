@@ -9,7 +9,7 @@ import { StorageType } from '../storage-type';
 import { Keypair } from '@solana/web3.js';
 import { getType, getExtension } from 'mime';
 import { AssetKey } from '../../types';
-import { sleep } from '../various';
+import { chunks, sleep } from '../various';
 import Transaction from 'arweave/node/lib/transaction';
 import Bundlr from '@bundlr-network/client';
 
@@ -585,26 +585,32 @@ export function* makeArweaveBundleUploadGenerator(
         const cost = await bundlr.utils.getPrice('solana', bytes);
         log.info(`${cost.toNumber() / LAMPORTS} SOL to upload`);
         await bundlr.fund(cost.toNumber());
-        for (const tx of bundlrTransactions) {
-          let attempts = 0;
 
-          const uploadTransaction = async () => {
-            await tx.upload().catch(async (err: Error) => {
-              attempts++;
-              if (attempts >= 3) {
-                throw err;
-              }
+        const bundlerTransactionsChunks = chunks(bundlrTransactions, 10);
 
-              log.warn(
-                `Failed bundlr upload, automatically retrying transaction in 10s (attempt: ${attempts})`,
-                err,
-              );
-              await sleep(10 * 1000);
+        for (const txs of bundlerTransactionsChunks) {
+          await Promise.all(
+            txs.map(async tx => {
+              let attempts = 0;
+
+              const uploadTransaction = async () => {
+                await tx.upload().catch(async (err: Error) => {
+                  attempts++;
+                  if (attempts >= 3) {
+                    throw err;
+                  }
+                  log.warn(
+                    `Failed bundlr tx upload, retrying transaction (attempt: ${attempts})`,
+                    err,
+                  );
+                  await sleep(5 * 1000);
+                  await uploadTransaction();
+                });
+              };
+
               await uploadTransaction();
-            });
-          };
-
-          await uploadTransaction();
+            }),
+          );
         }
 
         log.info('Bundle uploaded!');
