@@ -11,7 +11,7 @@ import {
   getSolletWallet,
   getSolongWallet,
 } from '@solana/wallet-adapter-wallets';
-import { Button, Collapse, Space } from 'antd';
+import { Button, Collapse, Space, Card } from 'antd';
 import React, {
   createContext,
   FC,
@@ -51,57 +51,41 @@ export const WalletModal = () => {
 
   return (
     <MetaplexModal title="Connect Wallet" visible={visible} onCancel={close}>
-      <h4>RECOMMENDED</h4>
-
-      <Button
-        className="metaplex-button-jumbo"
-        size="large"
-        onClick={() => {
-          console.log(phatomWallet.name);
-          select(phatomWallet.name);
-          close();
-        }}
-      >
-        <img src={phatomWallet?.icon} />
-        &nbsp;Connect to Phantom
-      </Button>
+      <Card>
+        <Button
+          className="metaplex-button-jumbo flex items-center p-4"
+          size="large"
+          onClick={() => {
+            console.log(phatomWallet.name);
+            select(phatomWallet.name);
+            close();
+          }}
+        >
+          <img src={phatomWallet?.icon} className="mr-4" />
+          &nbsp;Connect to Phantom
+        </Button>
+      </Card>
       <Collapse
         ghost
-        expandIcon={panelProps =>
-          panelProps.isActive ? (
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M15 7.5L10 12.5L5 7.5"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          ) : (
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M7.5 5L12.5 10L7.5 15"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )
-        }
+        className="padding-0"
+        expandIcon={panelProps => (
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={panelProps.isActive ? 'rotate-90' : ''}
+          >
+            <path
+              d="M15 7.5L10 12.5L5 7.5"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       >
         <Panel header={<strong>Other Wallets</strong>} key="1">
           <Space wrap>

@@ -950,7 +950,10 @@ export const AuctionCard = ({
     !hideDefaultAction &&
     wallet.connected &&
     auctionView.auction.info.ended() &&
-    !auctionView.myBidderMetadata?.info.cancelled;
+    !auctionView.myBidderMetadata?.info.cancelled &&
+    // reoves the redeem bid button if you never placed a bid in the first place
+    // bids.some(bid => bid.info.bidderPubkey === wallet.publicKey?.toBase58())
+    !(!eligibleForAnything && !isAuctioneer);
   // &&!isBidderPotEmpty;
 
   const duringAuctionNotConnected = !auctionEnded && !wallet.connected;
