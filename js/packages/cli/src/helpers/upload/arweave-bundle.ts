@@ -592,7 +592,7 @@ export function* makeArweaveBundleUploadGenerator(
         const progressBar = new cliProgress.SingleBar(
           {
             format:
-              'TX Upload Progress: [{bar}] {percentage}% | {value}/{total}',
+              'Progress: [{bar}] {percentage}% | {value}/{total}',
           },
           cliProgress.Presets.shades_classic,
         );
@@ -602,7 +602,7 @@ export function* makeArweaveBundleUploadGenerator(
           .for(bundlrTransactions)
           .handleError(async err => {
             log.error(
-              `Could not complete the bundler upload successfully, exiting`,
+              `Could not complete bundler tx upload successfully, exiting due to: `,
               err,
             );
             throw err;
@@ -615,7 +615,7 @@ export function* makeArweaveBundleUploadGenerator(
                 if (attempts >= 3) {
                   throw err;
                 }
-                log.warn(
+                log.debug(
                   `Failed bundlr tx upload, retrying transaction (attempt: ${attempts})`,
                   err,
                 );

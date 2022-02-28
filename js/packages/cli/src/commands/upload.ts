@@ -180,10 +180,9 @@ export async function uploadV2({
   const uploadedItems = Object.values(cacheContent.items).filter(
     (f: { link: string }) => !!f.link,
   ).length;
-  const allItemsCount = dedupedAssetKeys.length + uploadedItems;
 
   log.info(
-    `[${uploadedItems}] out of [${allItemsCount}] items have been uploaded`,
+    `[${uploadedItems}] out of [${totalNFTs}] items have been uploaded`,
   );
 
   if (dedupedAssetKeys.length) {
@@ -217,6 +216,7 @@ export async function uploadV2({
       while (!result.done) {
         const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
           await result.value;
+          
         updateCacheAfterUpload(
           cacheContent,
           cacheKeys,
@@ -345,7 +345,7 @@ export async function uploadV2({
     const uploadedItems = Object.values(cacheContent.items).filter(
       (f: { link: string }) => !!f.link,
     ).length;
-    uploadSuccessful = uploadSuccessful && uploadedItems === allItemsCount;
+    uploadSuccessful = uploadSuccessful && uploadedItems === totalNFTs;
   } else {
     log.info('Skipping upload to chain as this is a hidden Candy Machine');
   }
