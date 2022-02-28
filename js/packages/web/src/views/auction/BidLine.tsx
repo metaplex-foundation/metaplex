@@ -57,7 +57,7 @@ export default function BidLine(props: {
                 target="_blank"
                 rel="noreferrer"
               >
-                <p className="max-w-[125px] truncate text-color-text hover:text-primary">
+                <p className="max-w-fit truncate text-color-text hover:text-primary">
                   {bidderTwitterHandle
                     ? `@${bidderTwitterHandle}`
                     : shortenAddress(bidderPubkey)}
