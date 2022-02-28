@@ -181,9 +181,7 @@ export async function uploadV2({
     (f: { link: string }) => !!f.link,
   ).length;
 
-  log.info(
-    `[${uploadedItems}] out of [${totalNFTs}] items have been uploaded`,
-  );
+  log.info(`[${uploadedItems}] out of [${totalNFTs}] items have been uploaded`);
 
   if (dedupedAssetKeys.length) {
     log.info(
@@ -216,7 +214,7 @@ export async function uploadV2({
       while (!result.done) {
         const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
           await result.value;
-          
+
         updateCacheAfterUpload(
           cacheContent,
           cacheKeys,

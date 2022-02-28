@@ -591,8 +591,7 @@ export function* makeArweaveBundleUploadGenerator(
 
         const progressBar = new cliProgress.SingleBar(
           {
-            format:
-              'Progress: [{bar}] {percentage}% | {value}/{total}',
+            format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
           },
           cliProgress.Presets.shades_classic,
         );
