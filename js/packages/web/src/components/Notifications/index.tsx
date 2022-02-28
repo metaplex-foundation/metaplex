@@ -20,6 +20,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { Badge, Popover, List } from 'antd';
 import { Link } from 'react-router-dom';
+import { i18n } from '@lingui/core';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
 import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
@@ -417,11 +418,14 @@ export function Notifications() {
 
   notifications.push({
     id: 'none',
-    title: 'Search for other auctions.',
+    title: /*i18n*/ i18n._('Search for other auctions.'),
     description: (
       <span>
-        Load all auctions (including defectives) by pressing here. Then you can
-        close them.
+        {
+          /*i18n*/ i18n._(
+            'Load all auctions (including defectives) by pressing here. Then you can close them.',
+          )
+        }
       </span>
     ),
     action: async () => {
@@ -440,11 +444,14 @@ export function Notifications() {
     .forEach(v => {
       notifications.push({
         id: v.auctionManager.pubkey,
-        title: 'You have items locked in a defective auction!',
+        title: /*i18n*/ i18n._('You have items locked in a defective auction!'),
         description: (
           <span>
-            During an auction creation process that probably had some issues,
-            you lost an item. Reclaim it now.
+            {
+              /*i18n*/ i18n._(
+                'During an auction creation process that probably had some issues, you lost an item. Reclaim it now.',
+              )
+            }
           </span>
         ),
         action: async () => {
@@ -483,7 +490,7 @@ export function Notifications() {
   metaNeedsApproving.forEach(m => {
     notifications.push({
       id: m.pubkey,
-      title: 'You have a new artwork to approve!',
+      title: /*i18n*/ i18n._('You have a new artwork to approve!'),
       description: (
         <span>
           {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.name ||
@@ -509,8 +516,10 @@ export function Notifications() {
     .forEach(v => {
       notifications.push({
         id: v.auctionManager.pubkey,
-        title: 'You have an auction which is not started yet!',
-        description: <span>You can activate it now if you wish.</span>,
+        title: /*i18n*/ i18n._('You have an auction which is not started yet!'),
+        description: (
+          <span>{/*i18n*/ i18n._('You can activate it now if you wish.')}</span>
+        ),
         action: async () => {
           try {
             await startAuctionManually(connection, wallet, v);
@@ -564,7 +573,7 @@ export function Notifications() {
       />
     </div>
   ) : (
-    <span>No notifications</span>
+    <span>{/*i18n*/ i18n._('No notifications')}</span>
   );
 
   const justContent = (

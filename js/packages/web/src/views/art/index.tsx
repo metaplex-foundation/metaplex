@@ -11,6 +11,7 @@ import {
   Card,
 } from 'antd';
 import { useParams } from 'react-router-dom';
+import { i18n } from '@lingui/core';
 import { useArt, useExtendedArt } from '../../hooks';
 
 import { ArtContent } from '../../components/ArtContent';
@@ -61,7 +62,7 @@ export const ArtView = () => {
 
   const tag = (
     <div className="info-header">
-      <Tag color="blue">UNVERIFIED</Tag>
+      <Tag color="blue">{/*i18n*/ i18n._('UNVERIFIED')}</Tag>
     </div>
   );
 
@@ -112,7 +113,7 @@ export const ArtView = () => {
             </Row>
             <Row>
               <Col span={6}>
-                <h6>Royalties</h6>
+                <h6>{/*i18n*/ i18n._('Royalties')}</h6>
                 <div className="royalties">
                   {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
                 </div>
@@ -123,7 +124,9 @@ export const ArtView = () => {
             </Row>
             <Row>
               <Col>
-                <h6 style={{ marginTop: 5 }}>Created By</h6>
+                <h6 style={{ marginTop: 5 }}>
+                  {/*i18n*/ i18n._('Created By')}
+                </h6>
                 <div className="creators">
                   {(art.creators || []).map((creator, idx) => {
                     return (
@@ -159,7 +162,7 @@ export const ArtView = () => {
                                     return true;
                                   }}
                                 >
-                                  Approve
+                                  {/*i18n*/ i18n._('Approve')}
                                 </Button>
                               ) : (
                                 tag
@@ -174,14 +177,16 @@ export const ArtView = () => {
             </Row>
             <Row>
               <Col>
-                <h6 style={{ marginTop: 5 }}>Edition</h6>
+                <h6 style={{ marginTop: 5 }}>{/*i18n*/ i18n._('Edition')}</h6>
                 <div className="art-edition">{badge}</div>
               </Col>
             </Row>
             {art.type === ArtType.Master && (
               <Row>
                 <Col>
-                  <h6 style={{ marginTop: 5 }}>Max Supply</h6>
+                  <h6 style={{ marginTop: 5 }}>
+                    {/*i18n*/ i18n._('Max Supply')}
+                  </h6>
                   <div className="art-edition">{maxSupply}</div>
                 </Col>
               </Row>
@@ -223,7 +228,9 @@ export const ArtView = () => {
             <Divider />
             {art.creators?.find(c => !c.verified) && unverified}
             <br />
-            <div className="info-header">ABOUT THE CREATION</div>
+            <div className="info-header">
+              {/*i18n*/ i18n._('ABOUT THE CREATION')}
+            </div>
             <div className="info-content">{description}</div>
             <br />
             {/*
@@ -236,7 +243,9 @@ export const ArtView = () => {
               <>
                 <Divider />
                 <br />
-                <div className="info-header">Attributes</div>
+                <div className="info-header">
+                  {/*i18n*/ i18n._('Attributes')}
+                </div>
                 <List size="large" grid={{ column: 4 }}>
                   {attributes.map(attribute => (
                     <List.Item key={attribute.trait_type}>

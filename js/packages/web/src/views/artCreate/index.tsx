@@ -16,6 +16,7 @@ import {
   Card,
   Checkbox,
 } from 'antd';
+import { i18n } from '@lingui/core';
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
 import { Confetti } from './../../components/Confetti';
@@ -229,7 +230,9 @@ export const ArtCreateView = () => {
           )}
           {0 < step && step < 5 && (
             <div style={{ margin: 'auto', width: 'fit-content' }}>
-              <Button onClick={() => gotoStep(step - 1)}>Back</Button>
+              <Button onClick={() => gotoStep(step - 1)}>
+                {/*i18n*/ i18n._('Back')}
+              </Button>
             </div>
           )}
         </Col>
@@ -250,13 +253,13 @@ const CategoryStep = (props: {
       <Row className="call-to-action">
         <h2>Create a new item</h2>
         <p>
-          First time creating on Metaplex?{' '}
+          {/*i18n*/ i18n._('First time creating on Metaplex?')}{' '}
           <a
             href="https://docs.metaplex.com/storefront/create"
             target="_blank"
             rel="noreferrer"
           >
-            Read our creators’ guide.
+            {/*i18n*/ i18n._('Read our creators’ guide.')}
           </a>
         </p>
       </Row>
@@ -269,7 +272,7 @@ const CategoryStep = (props: {
               onClick={() => props.confirm(MetadataCategory.Image)}
             >
               <div>
-                <div>Image</div>
+                <div>{/*i18n*/ i18n._('Image')}</div>
                 <div className="type-btn-description">JPG, PNG, GIF</div>
               </div>
             </Button>
@@ -281,7 +284,7 @@ const CategoryStep = (props: {
               onClick={() => props.confirm(MetadataCategory.Video)}
             >
               <div>
-                <div>Video</div>
+                <div>{/*i18n*/ i18n._('Video')}</div>
                 <div className="type-btn-description">MP4, MOV</div>
               </div>
             </Button>
@@ -293,7 +296,7 @@ const CategoryStep = (props: {
               onClick={() => props.confirm(MetadataCategory.Audio)}
             >
               <div>
-                <div>Audio</div>
+                <div>{/*i18n*/ i18n._('Audio')}</div>
                 <div className="type-btn-description">MP3, WAV, FLAC</div>
               </div>
             </Button>
@@ -305,7 +308,7 @@ const CategoryStep = (props: {
               onClick={() => props.confirm(MetadataCategory.VR)}
             >
               <div>
-                <div>AR/3D</div>
+                <div>{/*i18n*/ i18n._('AR/3D')}</div>
                 <div className="type-btn-description">GLB</div>
               </div>
             </Button>
@@ -317,7 +320,7 @@ const CategoryStep = (props: {
               onClick={() => props.confirm(MetadataCategory.HTML)}
             >
               <div>
-                <div>HTML Asset</div>
+                <div>{/*i18n*/ i18n._('HTML Asset')}</div>
                 <div className="type-btn-description">HTML</div>
               </div>
             </Button>
@@ -358,17 +361,17 @@ const UploadStep = (props: {
   const uploadMsg = (category: MetadataCategory) => {
     switch (category) {
       case MetadataCategory.Audio:
-        return 'Upload your audio creation (MP3, FLAC, WAV)';
+        return /*i18n*/ i18n._('Upload your audio creation (MP3, FLAC, WAV)');
       case MetadataCategory.Image:
-        return 'Upload your image creation (PNG, JPG, GIF)';
+        return /*i18n*/ i18n._('Upload your image creation (PNG, JPG, GIF)');
       case MetadataCategory.Video:
-        return 'Upload your video creation (MP4, MOV, GLB)';
+        return /*i18n*/ i18n._('Upload your video creation (MP4, MOV, GLB)');
       case MetadataCategory.VR:
-        return 'Upload your AR/VR creation (GLB)';
+        return /*i18n*/ i18n._('Upload your AR/VR creation (GLB)');
       case MetadataCategory.HTML:
-        return 'Upload your HTML File (HTML)';
+        return /*i18n*/ i18n._('Upload your HTML File (HTML)');
       default:
-        return 'Please go back and choose a category';
+        return /*i18n*/ i18n._('Please go back and choose a category');
     }
   };
 

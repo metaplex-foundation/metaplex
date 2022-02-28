@@ -21,6 +21,8 @@ import {
 import { useMeta, useSolPrice } from '../../contexts';
 import { useTokenList } from '../../contexts/tokenList';
 import { TokenCircle } from '../Custom';
+import { i18n } from '@lingui/core';
+import { LOCALES } from '../../constants/locales';
 
 ('@solana/wallet-adapter-base');
 
@@ -54,7 +56,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
                   }}
                   className="black-btn"
                 >
-                  Create
+                  {/*i18n*/ i18n._('Create')}
                 </Button>
               </Link>
             )}
@@ -65,7 +67,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
                 }}
                 className="black-btn"
               >
-                Sell
+                {/*i18n*/ i18n._('Sell')}
               </Button>
             </Link>
           </div>
@@ -79,7 +81,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
               <>
                 <Link to={`/art/create`} style={{ width: '100%' }}>
                   <Button className="metaplex-button-default" style={btnStyle}>
-                    Create
+                    {/*i18n*/ i18n._('Create')}
                   </Button>
                 </Link>
                 &nbsp;&nbsp;
@@ -87,7 +89,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
             )}
             <Link to={`/auction/create/0`} style={{ width: '100%' }}>
               <Button className="metaplex-button-default" style={btnStyle}>
-                Sell
+                {/*i18n*/ i18n._('Sell')}
               </Button>
             </Link>
           </div>
@@ -106,7 +108,7 @@ const AddFundsModal = (props: {
     <MetaplexModal
       visible={props.showAddFundsModal}
       onCancel={() => props.setShowAddFundsModal(false)}
-      title="Add Funds"
+      title={/*i18n*/ i18n._('Add Funds')}
       bodyStyle={{
         alignItems: 'start',
       }}
@@ -130,7 +132,9 @@ const AddFundsModal = (props: {
             fontWeight: 700,
           }}
         >
-          <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Balance</span>
+          <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+            {/*i18n*/ i18n._('Balance')}
+          </span>
           <span>
             {formatNumber.format(props.balance)}&nbsp;&nbsp;
             <span
@@ -148,8 +152,11 @@ const AddFundsModal = (props: {
           </span>
         </div>
         <p>
-          If you have not used FTX Pay before, it may take a few moments to get
-          set up.
+          {
+            /*i18n*/ i18n._(
+              'If you have not used FTX Pay before, it may take a few moments to get set up.',
+            )
+          }
         </p>
         <Button
           onClick={() => props.setShowAddFundsModal(false)}
@@ -161,7 +168,7 @@ const AddFundsModal = (props: {
             height: 'auto',
           }}
         >
-          Close
+          {/*i18n*/ i18n._('Close')}
         </Button>
         <Button
           onClick={() => {
@@ -191,7 +198,9 @@ const AddFundsModal = (props: {
               fontSize: 16,
             }}
           >
-            <span style={{ marginRight: 5 }}>Sign with</span>
+            <span style={{ marginRight: 5 }}>
+              {/*i18n*/ i18n._('Sign with')}
+            </span>
             <img src="/ftxpay.png" width="80" />
           </div>
         </Button>
@@ -260,7 +269,7 @@ export const CurrentUserBadge = (props: {
                     letterSpacing: '0.02em',
                   }}
                 >
-                  BALANCE
+                  {/*i18n*/ i18n._('BALANCE')}
                 </h5>
                 <div
                   style={{
@@ -300,7 +309,7 @@ export const CurrentUserBadge = (props: {
                     onClick={() => setShowAddFundsModal(true)}
                     style={btnStyle}
                   >
-                    Add Funds
+                    {/*i18n*/ i18n._('Add Funds')}
                   </Button>
                   &nbsp;&nbsp;
                   <Button
@@ -308,7 +317,7 @@ export const CurrentUserBadge = (props: {
                     onClick={disconnect}
                     style={btnStyle}
                   >
-                    Disconnect
+                    {/*i18n*/ i18n._('Disconnect')}
                   </Button>
                 </div>
                 <UserActions />
@@ -364,7 +373,7 @@ export const Cog = () => {
                 letterSpacing: '0.02em',
               }}
             >
-              NETWORK
+              {/*i18n*/ i18n._('NETWORK')}
             </h5>
             <Select
               onSelect={network => {
@@ -404,12 +413,40 @@ export const Cog = () => {
               ))}
             </Select>
 
+            <h5
+              style={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {/*i18n*/ i18n._('LANGUAGE')}
+            </h5>
+            <Select
+              onSelect={language => {
+                i18n.activate(language);
+              }}
+              value={i18n.locale}
+              bordered={false}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: 8,
+                width: '100%',
+                marginBottom: 10,
+              }}
+            >
+              {LOCALES.map(({ name, displayName }) => (
+                <Select.Option value={name} key={name}>
+                  {displayName}
+                </Select.Option>
+              ))}
+            </Select>
+
             <Button
               className="metaplex-button-default"
               style={btnStyle}
               onClick={open}
             >
-              Change wallet
+              {/*i18n*/ i18n._('Change wallet')}
             </Button>
           </div>
         }
@@ -474,7 +511,7 @@ export const CurrentUserBadgeMobile = (props: {
         )}
       </div>
       <div className="balance-container">
-        <span className="balance-title">Balance</span>
+        <span className="balance-title">{/*i18n*/ i18n._('Balance')}</span>
         <span>
           <span className="sol-img-wrapper">
             <img src="/sol.svg" width="10" />
@@ -499,11 +536,11 @@ export const CurrentUserBadgeMobile = (props: {
             setShowAddFundsModal(true);
           }}
         >
-          Add Funds
+          {/*i18n*/ i18n._('Add Funds')}
         </Button>
         &nbsp;&nbsp;
         <Button className="black-btn" onClick={disconnect}>
-          Disconnect
+          {/*i18n*/ i18n._('Disconnect')}
         </Button>
       </div>
       <div className="actions-buttons">

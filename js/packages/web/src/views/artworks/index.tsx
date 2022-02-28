@@ -1,6 +1,7 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
 import { Layout, Row, Col, Tabs, Dropdown, Menu } from 'antd';
+import { i18n } from '@lingui/core';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
 
@@ -71,12 +72,12 @@ export const ArtworksView = () => {
       overlay={
         <Menu className="gray-dropdown">
           <Menu.Item onClick={() => pullAllMetadata()}>
-            Load All Metadata
+            {/*i18n*/ i18n._('Load All Metadata')}
           </Menu.Item>
         </Menu>
       }
     >
-      Refresh
+      {/*i18n*/ i18n._('Refresh')}
     </Dropdown.Button>
   );
 
@@ -91,14 +92,20 @@ export const ArtworksView = () => {
               tabBarExtraContent={refreshButton}
             >
               <TabPane
-                tab={<span className="tab-title">All</span>}
+                tab={
+                  <span className="tab-title">{/*i18n*/ i18n._('All')}</span>
+                }
                 key={ArtworkViewState.Metaplex}
               >
                 {artworkGrid}
               </TabPane>
               {connected && (
                 <TabPane
-                  tab={<span className="tab-title">Owned</span>}
+                  tab={
+                    <span className="tab-title">
+                      {/*i18n*/ i18n._('Owned')}
+                    </span>
+                  }
                   key={ArtworkViewState.Owned}
                 >
                   {artworkGrid}
@@ -106,7 +113,11 @@ export const ArtworksView = () => {
               )}
               {connected && (
                 <TabPane
-                  tab={<span className="tab-title">Created</span>}
+                  tab={
+                    <span className="tab-title">
+                      {/*i18n*/ i18n._('Created')}
+                    </span>
+                  }
                   key={ArtworkViewState.Created}
                 >
                   {artworkGrid}

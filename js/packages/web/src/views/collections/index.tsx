@@ -3,13 +3,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { CollectionCard } from '../../components/CollectionCard';
 import { useCollections } from '../../hooks/useCollections';
+import { i18n } from '@lingui/core';
 
 export const CollectionsView = () => {
   const { liveCollections } = useCollections();
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      <span className={'collections-title'}>Collections</span>
+      <span className={'collections-title'}>
+        {/*i18n*/ i18n._('Collections')}
+      </span>
       <Row className={'collections-layout-container'} gutter={32}>
         {liveCollections.map(collection => {
           const pubkey = collection.pubkey;

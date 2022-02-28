@@ -13,20 +13,23 @@ import {
 } from '../CurrentUserBadge';
 import { ConnectButton } from '@oyster/common';
 import { MobileNavbar } from '../MobileNavbar';
+import { i18n } from '@lingui/core';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
     <Link to={`/`} key={'explore'}>
-      <Button className="app-btn">Explore</Button>
+      <Button className="app-btn">{/*i18n*/ i18n._('Explore')}</Button>
     </Link>,
     <Link to={`/collections`} key={'collections'}>
-      <Button className="app-btn">Collections</Button>
+      <Button className="app-btn">{/*i18n*/ i18n._('Collections')}</Button>
     </Link>,
     <Link to={`/artworks`} key={'artwork'}>
-      <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
+      <Button className="app-btn">
+        {connected ? /*i18n*/ i18n._('My Items') : /*i18n*/ i18n._('Artwork')}
+      </Button>
     </Link>,
     <Link to={`/artists`} key={'artists'}>
-      <Button className="app-btn">Creators</Button>
+      <Button className="app-btn">{/*i18n*/ i18n._('Creators')}</Button>
     </Link>,
   ];
 };
