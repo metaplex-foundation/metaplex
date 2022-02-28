@@ -215,6 +215,7 @@ export const useGroupedAuctions = (options: {
       const hiddenListings = [
         '7jBFUWrdm1SzL2u71Vz9dFAbjbjXMG7pBpjEVmBV5h85',
         '29dULhc1LeaaZpjwasq4oY5Lo1WiuQCgfW6u7uG27b5F',
+        'GLfHGEumxoXu7Ad1htBFeaK31HG9FBMJ37BCLxsaWrN5',
       ];
 
       const isHidden = (x: ParsedAccount<AuctionData>) =>
