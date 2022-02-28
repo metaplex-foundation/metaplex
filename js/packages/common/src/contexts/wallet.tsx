@@ -51,23 +51,35 @@ export const WalletModal = () => {
 
   return (
     <MetaplexModal title="Connect Wallet" visible={visible} onCancel={close}>
-      <Card>
-        <Button
-          className="metaplex-button-jumbo flex items-center p-4"
-          size="large"
-          onClick={() => {
-            console.log(phatomWallet.name);
-            select(phatomWallet.name);
-            close();
-          }}
-        >
-          <img src={phatomWallet?.icon} className="mr-4" />
-          &nbsp;Connect to Phantom
-        </Button>
-      </Card>
+      <Button
+        className="metaplex-button-jumbo "
+        size="large"
+        style={{
+          display: 'flex',
+          width: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 16,
+        }}
+        onClick={() => {
+          console.log(phatomWallet.name);
+          select(phatomWallet.name);
+          close();
+        }}
+      >
+        <img
+          src={phatomWallet?.icon}
+          className=""
+          style={{ marginRight: 16 }}
+        />
+        &nbsp;Connect to Phantom
+      </Button>
+      {/* <Card bordered={false}>
+      </Card> */}
       <Collapse
         ghost
         className="padding-0"
+        style={{ padding: 0 }}
         expandIcon={panelProps => (
           <svg
             width="20"
@@ -75,7 +87,7 @@ export const WalletModal = () => {
             viewBox="0 0 20 20"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className={panelProps.isActive ? 'rotate-90' : ''}
+            className={'transform ' + panelProps.isActive ? '' : '-rotate-90'}
           >
             <path
               d="M15 7.5L10 12.5L5 7.5"
@@ -87,7 +99,11 @@ export const WalletModal = () => {
           </svg>
         )}
       >
-        <Panel header={<strong>Other Wallets</strong>} key="1">
+        <Panel
+          header={<strong>Other Wallets</strong>}
+          key="1"
+          style={{ padding: 0 }}
+        >
           <Space wrap>
             {wallets.map((wallet, idx) => {
               if (wallet.name === 'Phantom') return null;
