@@ -23,6 +23,7 @@ import {
   useMint,
   useUserAccounts,
   useWalletModal,
+  VaultState,
   WinningConfigType,
 } from '@oyster/common';
 import cx from 'classnames';
@@ -598,11 +599,10 @@ export const AuctionCard = ({
     isAuctionManagerAuthorityNotWalletOwner &&
     doesInstantSaleHasNoItems;
 
-  const shouldHide = shouldHideInstantSale;
-
-  if (shouldHide) {
-    return <></>;
-  }
+  const shouldHide =
+    shouldHideInstantSale ||
+    (auctionView.vault.info.state === VaultState.Deactivated &&
+      isBidderPotEmpty);
 
   const disableRedeemReclaimRefundBtn =
     !myPayingAccount ||
@@ -800,7 +800,7 @@ export const AuctionCard = ({
   // Components for inputting bid amount and placing a bid
   const PlaceBidUI = (
     <Space
-      className="metaplex-fullwidth metaplex-space-align-stretch p-4"
+      className="metaplex-fullwidth metaplex-space-align-stretch"
       direction="vertical"
     >
       <h5>{`Bid ${minNextBid} SOL or more`}</h5>
@@ -933,6 +933,8 @@ export const AuctionCard = ({
     showDefaultNonEndedAction &&
     !showStartAuctionBtn &&
     auctionView.isInstantSale;
+  // bidderpot did not seem to affect anything
+  //  &&!isBidderPotEmpty;
 
   const actuallyShowPlaceBidUI =
     showDefaultNonEndedAction && showPlaceBidUI && !auctionView.isInstantSale;
@@ -948,8 +950,8 @@ export const AuctionCard = ({
     !hideDefaultAction &&
     wallet.connected &&
     auctionView.auction.info.ended() &&
-    !auctionView.myBidderMetadata?.info.cancelled &&
-    !isBidderPotEmpty;
+    !auctionView.myBidderMetadata?.info.cancelled;
+  // &&!isBidderPotEmpty;
 
   const duringAuctionNotConnected = !auctionEnded && !wallet.connected;
 
@@ -963,7 +965,9 @@ export const AuctionCard = ({
             ? '0'
             : '1px solid var(--color-border, #121212)',
         }}
-        bodyStyle={{ padding: auctionEnded ? 0 : 24 }}
+        bodyStyle={{
+          padding: auctionEnded || (shouldHide && !winners.length) ? 0 : 24,
+        }}
         title={
           <div className="">
             <span
@@ -1036,35 +1040,39 @@ export const AuctionCard = ({
             ))
           : null}
 
-        {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
-
-        {/* before auction */}
-        {actuallyShowStartAuctionBtn && StartAuctionBtn}
-
-        {/* During auction, not connected */}
-        {duringAuctionNotConnected && (
+        {!shouldHide && (
           <>
-            {showHowAuctionsWorkBtn && !auctionView.isInstantSale && (
-              <HowAuctionsWorkModal buttonBlock buttonSize="large" />
+            {showRedeemReclaimRefundBtn && RedeemReclaimRefundBtn}
+
+            {/* before auction */}
+            {actuallyShowStartAuctionBtn && StartAuctionBtn}
+
+            {/* During auction, not connected */}
+            {duringAuctionNotConnected && (
+              <>
+                {showHowAuctionsWorkBtn && !auctionView.isInstantSale && (
+                  <HowAuctionsWorkModal buttonBlock buttonSize="large" />
+                )}
+                {showConnectToBidBtn && (
+                  <Button
+                    className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
+                    type="primary"
+                    size="large"
+                    onClick={connect}
+                  >
+                    Connect wallet to{' '}
+                    {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+                  </Button>
+                )}
+              </>
             )}
-            {showConnectToBidBtn && (
-              <Button
-                className="metaplex-fullwidth metaplex-margin-top-4 metaplex-round-corners"
-                type="primary"
-                size="large"
-                onClick={connect}
-              >
-                Connect wallet to{' '}
-                {auctionView.isInstantSale ? 'purchase' : 'place bid'}
-              </Button>
-            )}
+
+            {/*  During auction, connected */}
+            {showInstantSaleButton && InstantSaleBtn}
+            {showPlaceBidButton && PlaceBidBtn}
+            {actuallyShowPlaceBidUI && PlaceBidUI}
           </>
         )}
-
-        {/*  During auction, connected */}
-        {showInstantSaleButton && InstantSaleBtn}
-        {showPlaceBidButton && PlaceBidBtn}
-        {actuallyShowPlaceBidUI && PlaceBidUI}
       </Card>
 
       <MetaplexModal
