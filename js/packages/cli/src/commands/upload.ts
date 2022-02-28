@@ -188,7 +188,8 @@ export async function uploadV2({
 
   if (dedupedAssetKeys.length) {
     log.info(
-      `Starting upload for [${dedupedAssetKeys.length
+      `Starting upload for [${
+        dedupedAssetKeys.length
       }] items, format ${JSON.stringify(dedupedAssetKeys[0])}`,
     );
   }
@@ -237,8 +238,7 @@ export async function uploadV2({
       );
       progressBar.start(dedupedAssetKeys.length, 0);
 
-      await PromisePool
-        .withConcurrency(batchSize || 10)
+      await PromisePool.withConcurrency(batchSize || 10)
         .for(dedupedAssetKeys)
         .handleError(async (err, asset) => {
           log.error(
@@ -247,12 +247,10 @@ export async function uploadV2({
           );
           await sleep(5000);
         })
-        .process(async (asset) => {
+        .process(async asset => {
           const manifest = getAssetManifest(
             dirname,
-            asset.index.includes('json')
-              ? asset.index
-              : `${asset.index}.json`,
+            asset.index.includes('json') ? asset.index : `${asset.index}.json`,
           );
 
           const image = path.join(dirname, `${manifest.image}`);
@@ -313,9 +311,7 @@ export async function uploadV2({
                 );
             }
             if (
-              animation
-                ? link && imageLink && animationLink
-                : link && imageLink
+              animation ? link && imageLink && animationLink : link && imageLink
             ) {
               log.debug('Updating cache for ', asset.index);
               cacheContent.items[asset.index] = {
@@ -328,7 +324,7 @@ export async function uploadV2({
           } finally {
             progressBar.increment();
           }
-        })
+        });
       progressBar.stop();
     }
     saveCache(cacheName, env, cacheContent);
@@ -528,7 +524,8 @@ async function writeIndices({
             })
             .catch(err => {
               log.error(
-                `Saving config line ${ind}-${keys[indexes[indexes.length - 1]]
+                `Saving config line ${ind}-${
+                  keys[indexes[indexes.length - 1]]
                 } failed`,
                 err,
               );

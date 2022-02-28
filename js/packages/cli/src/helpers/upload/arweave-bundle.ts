@@ -389,8 +389,8 @@ async function processFiles({
     .replace('.', '')}`;
   const animationLink = filePair.animation
     ? `https://arweave.net/${animationDataItem.id}?ext=${path
-      .extname(filePair.animation)
-      .replace('.', '')}`
+        .extname(filePair.animation)
+        .replace('.', '')}`
     : undefined;
 
   const manifest = await getUpdatedManifest(
@@ -481,10 +481,10 @@ export function* makeArweaveBundleUploadGenerator(
   const bundlr =
     storageType === StorageType.ArweaveSol
       ? new Bundlr(
-        'https://node1.bundlr.network',
-        'solana',
-        walletKeyPair.secretKey,
-      )
+          'https://node1.bundlr.network',
+          'solana',
+          walletKeyPair.secretKey,
+        )
       : undefined;
 
   const filePairs = assets.map((asset: AssetKey) => {
@@ -598,17 +598,16 @@ export function* makeArweaveBundleUploadGenerator(
         );
         progressBar.start(bundlrTransactions.length, 0);
 
-        await PromisePool
-          .withConcurrency(10)
+        await PromisePool.withConcurrency(10)
           .for(bundlrTransactions)
-          .handleError(async (err) => {
+          .handleError(async err => {
             log.error(
               `Could not complete the bundler upload successfully, exiting`,
               err,
             );
             throw err;
           })
-          .process(async (tx) => {
+          .process(async tx => {
             let attempts = 0;
             const uploadTransaction = async () => {
               await tx.upload().catch(async (err: Error) => {
@@ -641,7 +640,8 @@ export function* makeArweaveBundleUploadGenerator(
         const bundle = await bundleAndSignData(dataItems, signer);
         const endBundleTime = Date.now();
         log.info(
-          `Bundled ${dataItems.length} data items in ${(endBundleTime - startBundleTime) / 1000
+          `Bundled ${dataItems.length} data items in ${
+            (endBundleTime - startBundleTime) / 1000
           }s`,
         );
         // @ts-ignore
