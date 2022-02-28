@@ -10,31 +10,36 @@ import * as plurals from 'make-plural/plurals';
 import '../styles/index.less';
 
 export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter()
-  const { locale } = router
+  const router = useRouter();
+  const { locale } = router;
 
   useEffect(() => {
     // @ts-ignore TYPE NEEDS FIXING
     async function load(locale) {
       // @ts-ignore TYPE NEEDS FIXING
-      i18n.loadLocaleData(locale, { plurals: plurals[locale.split('_')[0]] })
+      i18n.loadLocaleData(locale, { plurals: plurals[locale.split('_')[0]] });
 
       try {
         const remoteMessages = import(`../../locale/${locale}.json`);
 
-        const messages = remoteLoader({ messages: remoteMessages, format: 'minimal' })
-        i18n.load(locale, messages)
+        const messages = remoteLoader({
+          messages: remoteMessages,
+          format: 'minimal',
+        });
+        i18n.load(locale, messages);
       } catch {
         // Load fallback messages
-        const { messages } = await import(`@lingui/loader!./../../locale/${locale}.json?raw-lingui`)
-        i18n.load(locale, messages)
+        const { messages } = await import(
+          `@lingui/loader!./../../locale/${locale}.json?raw-lingui`
+        );
+        i18n.load(locale, messages);
       }
 
-      i18n.activate(locale)
+      i18n.activate(locale);
     }
 
-    load(locale)
-  }, [locale])
+    load(locale);
+  }, [locale]);
 
   return (
     <I18nProvider i18n={i18n}>

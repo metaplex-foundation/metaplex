@@ -12,10 +12,7 @@ module.exports = {
   format: 'minimal',
   formatOptions: { origins: false, lineNumbers: false },
   sourceLocale: 'en',
-  locales: [
-    'en',
-    'ja',
-  ],
+  locales: ['en', 'ja'],
   orderBy: 'messageId',
   pseudoLocale: '',
   rootDir: '.',
@@ -23,4 +20,4 @@ module.exports = {
     i18n: ['@lingui/core', 'i18n'],
     Trans: ['@lingui/react', 'Trans'],
   },
-}
+};

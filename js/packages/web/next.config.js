@@ -24,16 +24,16 @@ const plugins = [
 ];
 
 module.exports = withPlugins(plugins, {
-  webpack: (config) => {
+  webpack: config => {
     config.module.rules = [
       ...config.module.rules,
       {
         resourceQuery: /raw-lingui/,
         type: 'javascript/auto',
       },
-    ]
+    ];
 
-    return config
+    return config;
   },
   assetPrefix,
   reactStrictMode: true,
