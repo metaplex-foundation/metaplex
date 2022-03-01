@@ -457,6 +457,7 @@ export function* makeArweaveBundleUploadGenerator(
   storage: StorageType,
   dirname: string,
   assets: AssetKey[],
+  env: 'mainnet-beta' | 'devnet',
   jwk?: any,
   walletKeyPair?: Keypair,
   batchSize?: number,
@@ -481,11 +482,21 @@ export function* makeArweaveBundleUploadGenerator(
   const arweave = getArweave();
   const bundlr =
     storageType === StorageType.ArweaveSol
-      ? new Bundlr(
-          'https://node1.bundlr.network',
-          'solana',
-          walletKeyPair.secretKey,
-        )
+      ? env === 'mainnet-beta'
+        ? new Bundlr(
+            'https://node1.bundlr.network',
+            'solana',
+            walletKeyPair.secretKey,
+          )
+        : new Bundlr(
+            'https://devnet.bundlr.network',
+            'solana',
+            walletKeyPair.secretKey,
+            {
+              timeout: 60000,
+              providerUrl: 'https://metaplex.devnet.rpcpool.com',
+            },
+          )
       : undefined;
 
   const filePairs = assets.map((asset: AssetKey) => {

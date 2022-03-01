@@ -55,7 +55,7 @@ export async function uploadV2({
 }: {
   files: string[];
   cacheName: string;
-  env: string;
+  env: 'mainnet-beta' | 'devnet';
   totalNFTs: number;
   storage: string;
   retainAuthority: boolean;
@@ -205,6 +205,7 @@ export async function uploadV2({
         storage,
         dirname,
         dedupedAssetKeys,
+        env,
         storage === StorageType.ArweaveBundle
           ? JSON.parse((await readFile(arweaveJwk)).toString())
           : undefined,
@@ -231,7 +232,7 @@ export async function uploadV2({
         result = arweaveBundleUploadGenerator.next();
       }
       log.info('Upload done. Cleaning up...');
-      if (storage === StorageType.ArweaveSol) {
+      if (storage === StorageType.ArweaveSol && env !== 'devnet') {
         log.info('Waiting 5 seconds to check Bundlr balance.');
         await sleep(5000);
         await withdraw_bundlr(walletKeyPair);
@@ -590,7 +591,7 @@ function updateCacheAfterUpload(
 type UploadParams = {
   files: string[];
   cacheName: string;
-  env: string;
+  env: 'mainnet-beta' | 'devnet';
   keypair: string;
   storage: string;
   rpcUrl: string;
@@ -662,6 +663,7 @@ export async function upload({
         storage,
         dirname,
         dedupedAssetKeys,
+        env,
         storage === StorageType.ArweaveBundle
           ? JSON.parse((await readFile(arweaveJwk)).toString())
           : undefined,

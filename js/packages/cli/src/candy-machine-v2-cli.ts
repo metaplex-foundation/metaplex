@@ -133,8 +133,9 @@ programCommand('upload')
     } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
-      throw new Error(
-        'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
+      log.info(
+        '\x1b[31m%s\x1b[0m',
+        'WARNING: On Devnet, the arweave-sol storage option only stores your files for 1 week. Please upload via Mainnet Beta for your final collection.\n',
       );
     }
 
