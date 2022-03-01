@@ -41,6 +41,8 @@ import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
+import { withdraw_bundlr } from './helpers/upload/arweave-bundle';
+
 program.version('0.0.2');
 const supportedImageTypes = {
   'image/png': 1,
@@ -72,6 +74,14 @@ function myParseInt(value) {
   return parsedValue;
 }
 
+programCommand('version', { requireWallet: false }).action(async () => {
+  const revision = require('child_process')
+    .execSync('git rev-parse HEAD')
+    .toString()
+    .trim();
+  log.info(`Candy Machine Version: ${revision}`);
+});
+
 programCommand('upload')
   .argument(
     '<directory>',
@@ -90,7 +100,7 @@ programCommand('upload')
   )
   .option(
     '-rl, --rate-limit <number>',
-    'max number of requests per second',
+    'max number of concurrent requests for the write indices command',
     myParseInt,
     5,
   )
@@ -124,8 +134,9 @@ programCommand('upload')
     } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
 
     if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
-      throw new Error(
-        'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
+      log.info(
+        '\x1b[31m%s\x1b[0m',
+        'WARNING: On Devnet, the arweave-sol storage option only stores your files for 1 week. Please upload via Mainnet Beta for your final collection.\n',
       );
     }
 
@@ -442,6 +453,12 @@ programCommand('withdraw_all')
       );
     }
   });
+
+programCommand('withdraw_bundlr').action(async (_, cmd) => {
+  const { keypair } = cmd.opts();
+  const walletKeyPair = loadWalletKey(keypair);
+  await withdraw_bundlr(walletKeyPair);
+});
 
 program
   .command('verify_assets')
@@ -1022,17 +1039,28 @@ programCommand('get_all_owners_addresses').action(async (directory, cmd) => {
   log.info('Successfully saved owner addresses to ./owner-addresses.json');
 });
 
-function programCommand(name: string) {
-  return program
+function programCommand(
+  name: string,
+  options: { requireWallet: boolean } = { requireWallet: true },
+) {
+  let cmProgram = program
     .command(name)
     .option(
       '-e, --env <string>',
       'Solana cluster env name',
       'devnet', //mainnet-beta, testnet, devnet
     )
-    .requiredOption('-k, --keypair <path>', `Solana wallet location`)
     .option('-l, --log-level <string>', 'log level', setLogLevel)
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
+
+  if (options.requireWallet) {
+    cmProgram = cmProgram.requiredOption(
+      '-k, --keypair <path>',
+      `Solana wallet location`,
+    );
+  }
+
+  return cmProgram;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
