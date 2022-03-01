@@ -52,7 +52,10 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
       MetadataKey.MasterEditionV1
     : false;
   const renderMintEdition =
-    isArtMasterEdition && isArtOwnedByUser && !isMasterEditionV1;
+    isArtMasterEdition &&
+    isArtOwnedByUser &&
+    !isMasterEditionV1 &&
+    maxEditionsToMint > 0;
 
   const mintingDestinationErr = useMemo(() => {
     if (!mintingDestination) return 'Required';
