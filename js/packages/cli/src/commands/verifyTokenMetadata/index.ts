@@ -138,7 +138,7 @@ export const verifyCreatorCollation = (
 
 export const verifyImageURL = (image, files, manifestFile) => {
   // The image is expected to have the same name as the index
-  const fileIndex = manifestFile.split('/').pop().split('.')[0];
+  const fileIndex = path.basename(manifestFile, path.extname(manifestFile));
   const ext = path.extname(image);
   const expectedImagePath = `${fileIndex}${ext}`;
   if (image !== expectedImagePath) {
