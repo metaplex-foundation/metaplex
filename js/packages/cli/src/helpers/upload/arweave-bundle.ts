@@ -612,13 +612,17 @@ export function* makeArweaveBundleUploadGenerator(
         );
         progressBar.start(bundlrTransactions.length, 0);
 
+        let errored = false;
         await PromisePool.withConcurrency(batchSize || 20)
           .for(bundlrTransactions)
           .handleError(async err => {
-            log.error(
-              `Could not complete Bundlr tx upload successfully, exiting due to: `,
-              err.name,
-            );
+            if (!errored) {
+              errored = true;
+              log.error(
+                `\nCould not complete Bundlr tx upload successfully, exiting due to: `,
+                err,
+              );
+            }
             throw err;
           })
           .process(async tx => {

@@ -511,44 +511,43 @@ async function writeIndices({
     cliProgress.Presets.shades_classic,
   );
   progressBar.start(poolArray.length, 0);
+
   const addConfigLines = async ({ index, configLines }) => {
-    try {
-      const response = await anchorProgram.rpc.addConfigLines(
-        index,
-        configLines.map(i => ({
-          uri: cacheContent.items[keys[i]].link,
-          name: cacheContent.items[keys[i]].name,
-        })),
-        {
-          accounts: {
-            candyMachine,
-            authority: walletKeyPair.publicKey,
-          },
-          signers: [walletKeyPair],
+    const response = await anchorProgram.rpc.addConfigLines(
+      index,
+      configLines.map(i => ({
+        uri: cacheContent.items[keys[i]].link,
+        name: cacheContent.items[keys[i]].name,
+      })),
+      {
+        accounts: {
+          candyMachine,
+          authority: walletKeyPair.publicKey,
         },
-      );
-      log.debug(response);
-      configLines.forEach(i => {
-        cacheContent.items[keys[i]] = {
-          ...cacheContent.items[keys[i]],
-          onChain: true,
-          verifyRun: false,
-        };
-      });
-      saveCache(cacheName, env, cacheContent);
-      progressBar.increment();
-    } catch (err) {
-      log.info('hi?');
-    }
+        signers: [walletKeyPair],
+      },
+    );
+    log.debug(response);
+    configLines.forEach(i => {
+      cacheContent.items[keys[i]] = {
+        ...cacheContent.items[keys[i]],
+        onChain: true,
+        verifyRun: false,
+      };
+    });
+    saveCache(cacheName, env, cacheContent);
+    progressBar.increment();
   };
+
   await PromisePool.withConcurrency(rateLimit || 5)
     .for(poolArray)
     .handleError(async (err, { index, configLines }) => {
       log.error(
-        `Error writing indices ${index}-${
+        `\nFailed writing indices ${index}-${
           keys[configLines[configLines.length - 1]]
         }: ${err.message}`,
       );
+      await sleep(5000);
       uploadSuccessful = false;
     })
     .process(async ({ index, configLines }) => {
