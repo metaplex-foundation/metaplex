@@ -1100,7 +1100,6 @@ function programCommand(
   options: { requireWallet: boolean } = { requireWallet: true },
 ) {
   let cmProgram = program
-
     .command(name)
     .option(
       '-e, --env <string>',
