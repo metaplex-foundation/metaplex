@@ -40,6 +40,8 @@ import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
 import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
+import { withdraw_bundlr } from './helpers/upload/arweave-bundle';
+
 program.version('0.0.2');
 const supportedImageTypes = {
   'image/png': 1,
@@ -97,7 +99,7 @@ programCommand('upload')
   )
   .option(
     '-rl, --rate-limit <number>',
-    'max number of requests per second',
+    'max number of concurrent requests for the write indices command',
     myParseInt,
     5,
   )
@@ -449,6 +451,12 @@ programCommand('withdraw_all')
       );
     }
   });
+
+programCommand('withdraw_bundlr').action(async (_, cmd) => {
+  const { keypair } = cmd.opts();
+  const walletKeyPair = loadWalletKey(keypair);
+  await withdraw_bundlr(walletKeyPair);
+});
 
 program
   .command('verify_assets')

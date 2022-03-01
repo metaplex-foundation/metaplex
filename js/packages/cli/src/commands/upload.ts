@@ -15,7 +15,10 @@ import fs from 'fs';
 import { PromisePool } from '@supercharge/promise-pool';
 import { loadCache, saveCache } from '../helpers/cache';
 import { arweaveUpload } from '../helpers/upload/arweave';
-import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
+import {
+  makeArweaveBundleUploadGenerator,
+  withdraw_bundlr,
+} from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 
@@ -206,6 +209,7 @@ export async function uploadV2({
           ? JSON.parse((await readFile(arweaveJwk)).toString())
           : undefined,
         storage === StorageType.ArweaveSol ? walletKeyPair : undefined,
+        batchSize,
       );
 
       let result = arweaveBundleUploadGenerator.next();
@@ -226,7 +230,12 @@ export async function uploadV2({
         log.info('Saved bundle upload result to cache.');
         result = arweaveBundleUploadGenerator.next();
       }
-      log.info('Upload done.');
+      log.info('Upload done. Cleaning up...');
+      if (storage === StorageType.ArweaveSol) {
+        log.info('Waiting 5 seconds to check Bundlr balance.');
+        await sleep(5000);
+        await withdraw_bundlr(walletKeyPair);
+      }
     } else {
       const progressBar = new cliProgress.SingleBar(
         {
@@ -240,8 +249,8 @@ export async function uploadV2({
         .for(dedupedAssetKeys)
         .handleError(async (err, asset) => {
           log.error(
-            `Error uploading ${JSON.stringify(asset)} asset (skipping)`,
-            err,
+            `\nError uploading ${JSON.stringify(asset)} asset (skipping)`,
+            err.message,
           );
           await sleep(5000);
         })
@@ -467,83 +476,86 @@ async function writeIndices({
 }) {
   let uploadSuccessful = true;
   const keys = Object.keys(cacheContent.items);
-
-  try {
-    let promiseArray = [];
-    const allIndexesInSlice = Array.from(Array(keys.length).keys());
-    let offset = 0;
-    while (offset < allIndexesInSlice.length) {
-      let length = 0;
-      let index = 0;
-      let indexes = allIndexesInSlice.slice(offset, offset + 16);
-      while (length < 850 && index < 16 && indexes[index] !== undefined) {
-        length +=
-          cacheContent.items[keys[indexes[index]]].link.length +
-          cacheContent.items[keys[indexes[index]]].name.length;
-        if (length < 850) index++;
-      }
-      indexes = allIndexesInSlice.slice(offset, offset + index);
-      offset += index;
-      const onChain = indexes.filter(i => {
-        const index = keys[i];
-        return cacheContent.items[index]?.onChain || false;
-      });
-      const ind = keys[indexes[0]];
-
-      if (onChain.length != indexes.length) {
-        promiseArray.push(() => {
-          log.info(
-            `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
-          );
-          return anchorProgram.rpc
-            .addConfigLines(
-              ind,
-              indexes.map(i => ({
-                uri: cacheContent.items[keys[i]].link,
-                name: cacheContent.items[keys[i]].name,
-              })),
-              {
-                accounts: {
-                  candyMachine,
-                  authority: walletKeyPair.publicKey,
-                },
-                signers: [walletKeyPair],
-              },
-            )
-            .then(() => {
-              indexes.forEach(i => {
-                cacheContent.items[keys[i]] = {
-                  ...cacheContent.items[keys[i]],
-                  onChain: true,
-                  verifyRun: false,
-                };
-              });
-              saveCache(cacheName, env, cacheContent);
-            })
-            .catch(err => {
-              log.error(
-                `Saving config line ${ind}-${
-                  keys[indexes[indexes.length - 1]]
-                } failed`,
-                err,
-              );
-              uploadSuccessful = false;
-            });
-        });
-      }
+  const poolArray = [];
+  const allIndicesInSlice = Array.from(Array(keys.length).keys());
+  let offset = 0;
+  while (offset < allIndicesInSlice.length) {
+    let length = 0;
+    let lineSize = 0;
+    let configLines = allIndicesInSlice.slice(offset, offset + 16);
+    while (
+      length < 850 &&
+      lineSize < 16 &&
+      configLines[lineSize] !== undefined
+    ) {
+      length +=
+        cacheContent.items[keys[configLines[lineSize]]].link.length +
+        cacheContent.items[keys[configLines[lineSize]]].name.length;
+      if (length < 850) lineSize++;
     }
-    promiseArray = promiseArray.map((p, i) => {
-      return async () => {
-        await sleep(1000 * Math.floor(i / rateLimit));
-        await p();
-      };
-    });
-    await Promise.allSettled(promiseArray.map(p => p()));
-  } catch (e) {
-    log.error(e);
-  } finally {
-    saveCache(cacheName, env, cacheContent);
+    configLines = allIndicesInSlice.slice(offset, offset + lineSize);
+    offset += lineSize;
+    const onChain = configLines.filter(
+      i => cacheContent.items[keys[i]]?.onChain || false,
+    );
+    const index = keys[configLines[0]];
+    if (onChain.length != configLines.length) {
+      poolArray.push({ index, configLines });
+    }
   }
+  log.info(`Writing all indices in ${poolArray.length} transactions...`);
+  const progressBar = new cliProgress.SingleBar(
+    {
+      format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
+    },
+    cliProgress.Presets.shades_classic,
+  );
+  progressBar.start(poolArray.length, 0);
+  const addConfigLines = async ({ index, configLines }) => {
+    try {
+      const response = await anchorProgram.rpc.addConfigLines(
+        index,
+        configLines.map(i => ({
+          uri: cacheContent.items[keys[i]].link,
+          name: cacheContent.items[keys[i]].name,
+        })),
+        {
+          accounts: {
+            candyMachine,
+            authority: walletKeyPair.publicKey,
+          },
+          signers: [walletKeyPair],
+        },
+      );
+      log.debug(response);
+      configLines.forEach(i => {
+        cacheContent.items[keys[i]] = {
+          ...cacheContent.items[keys[i]],
+          onChain: true,
+          verifyRun: false,
+        };
+      });
+      saveCache(cacheName, env, cacheContent);
+      progressBar.increment();
+    } catch (err) {
+      log.info('hi?');
+    }
+  };
+  await PromisePool.withConcurrency(rateLimit || 5)
+    .for(poolArray)
+    .handleError(async (err, { index, configLines }) => {
+      log.error(
+        `Error writing indices ${index}-${
+          keys[configLines[configLines.length - 1]]
+        }: ${err.message}`,
+      );
+      uploadSuccessful = false;
+    })
+    .process(async ({ index, configLines }) => {
+      await addConfigLines({ index, configLines });
+    });
+  progressBar.stop();
+  saveCache(cacheName, env, cacheContent);
   return uploadSuccessful;
 }
 
@@ -655,6 +667,7 @@ export async function upload({
           ? JSON.parse((await readFile(arweaveJwk)).toString())
           : undefined,
         storage === StorageType.ArweaveSol ? walletKeyPair : undefined,
+        batchSize,
       );
 
       let result = arweaveBundleUploadGenerator.next();
@@ -682,8 +695,8 @@ export async function upload({
 
       await Promise.all(
         chunks(Array.from(Array(SIZE).keys()), batchSize || 50).map(
-          async allIndexesInSlice => {
-            for (let i = 0; i < allIndexesInSlice.length; i++) {
+          async allIndicesInSlice => {
+            for (let i = 0; i < allIndicesInSlice.length; i++) {
               const assetKey = dedupedAssetKeys[i];
               const image = path.join(
                 dirname,

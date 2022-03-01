@@ -182,8 +182,8 @@ const dummyAreaveManifestByteSize = (() => {
     'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
     'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
     '.png',
-    undefined,
-    undefined,
+    'akBSbAEWTf6xDDnrG_BHKaxXjxoGuBnuhMnoYKUCDZo',
+    '.mp4',
   );
   return Buffer.byteLength(JSON.stringify(dummyAreaveManifest));
 })();
@@ -459,6 +459,7 @@ export function* makeArweaveBundleUploadGenerator(
   assets: AssetKey[],
   jwk?: any,
   walletKeyPair?: Keypair,
+  batchSize?: number,
 ): Generator<Promise<UploadGeneratorResult>> {
   let signer: ArweaveSigner;
   const storageType: StorageType = storage;
@@ -523,7 +524,16 @@ export function* makeArweaveBundleUploadGenerator(
         )}MB.`,
       );
       const bundleFilePairs = filePairs.splice(0, count);
+      log.info('Processing file groups...');
 
+      const progressBar = new cliProgress.SingleBar(
+        {
+          format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
+        },
+        cliProgress.Presets.shades_classic,
+      );
+
+      progressBar.start(bundleFilePairs.length, 0);
       const {
         cacheKeys,
         dataItems,
@@ -565,6 +575,7 @@ export function* makeArweaveBundleUploadGenerator(
           acc.updatedManifests.push(manifest);
 
           log.debug('Processed File Pair', filePair.key);
+          progressBar.increment();
           return acc;
         },
         Promise.resolve({
@@ -574,19 +585,23 @@ export function* makeArweaveBundleUploadGenerator(
           updatedManifests: [],
         }),
       );
-
+      progressBar.stop();
       if (storageType === StorageType.ArweaveSol) {
         const bundlrTransactions = [
           ...dataItems,
         ] as unknown as BundlrTransaction[];
-        log.info('Uploading bundle via bundlr... in multiple transactions');
+        log.info('Uploading bundle via Bundlr... in multiple transactions');
         const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
           (c, d) => c + d.data.length,
           0,
         );
         const cost = await bundlr.utils.getPrice('solana', bytes);
-        log.info(`${cost.toNumber() / LAMPORTS} SOL to upload`);
-        await bundlr.fund(cost.toNumber());
+        log.info(
+          `${(cost.toNumber() * 2) / LAMPORTS} SOL to upload ${sizeMB(
+            bytes,
+          )}MB with buffer. Sending fund txn...`,
+        );
+        await bundlr.fund(cost.multipliedBy(2));
         log.info(`Successfully funded Arweave Bundler, starting upload`);
 
         const progressBar = new cliProgress.SingleBar(
@@ -597,12 +612,12 @@ export function* makeArweaveBundleUploadGenerator(
         );
         progressBar.start(bundlrTransactions.length, 0);
 
-        await PromisePool.withConcurrency(10)
+        await PromisePool.withConcurrency(batchSize || 20)
           .for(bundlrTransactions)
           .handleError(async err => {
             log.error(
-              `Could not complete bundler tx upload successfully, exiting due to: `,
-              err,
+              `Could not complete Bundlr tx upload successfully, exiting due to: `,
+              err.name,
             );
             throw err;
           })
@@ -615,7 +630,7 @@ export function* makeArweaveBundleUploadGenerator(
                   throw err;
                 }
                 log.debug(
-                  `Failed bundlr tx upload, retrying transaction (attempt: ${attempts})`,
+                  `Failed Bundlr tx upload, retrying transaction (attempt: ${attempts})`,
                   err,
                 );
                 await sleep(5 * 1000);
@@ -661,3 +676,47 @@ export function* makeArweaveBundleUploadGenerator(
     yield result;
   }
 }
+
+export const withdraw_bundlr = async (walletKeyPair: Keypair) => {
+  const bundlr = new Bundlr(
+    'https://node1.bundlr.network',
+    'solana',
+    walletKeyPair.secretKey,
+  );
+  const balance = await bundlr.getLoadedBalance();
+  if (balance.minus(5000).lte(0)) {
+    log.error(
+      `Error: Balance in Bundlr node (${balance.dividedBy(
+        LAMPORTS,
+      )} SOL) is too low to withdraw.`,
+    );
+  } else {
+    log.info(
+      `Requesting a withdrawal of ${balance
+        .minus(5000)
+        .dividedBy(LAMPORTS)} SOL from Bundlr...`,
+    );
+    try {
+      const withdrawResponse = await bundlr.withdrawBalance(
+        balance.minus(5000),
+      );
+      if (withdrawResponse.status == 200) {
+        log.info(
+          `Successfully withdrew ${
+            withdrawResponse.data.final / LAMPORTS
+          } SOL.`,
+        );
+      } else if (withdrawResponse.status == 400) {
+        log.info(withdrawResponse.data);
+        log.info(
+          'Withdraw unsucessful. An additional attempt will be made after all files are uploaded.',
+        );
+      }
+    } catch (err) {
+      log.error(
+        'Error processing withdrawal request. Please try again using the withdraw_bundlr command in our CLI',
+      );
+      log.error('Error: ', err);
+    }
+  }
+};
