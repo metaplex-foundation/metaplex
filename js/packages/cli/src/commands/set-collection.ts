@@ -149,24 +149,6 @@ export async function setCollection(
     );
   }
 
-  if (
-    !(await anchorProgram.account.collectionPda.fetchNullable(
-      collectionPDAPubkey,
-    ))
-  ) {
-    instructions.push(
-      await anchorProgram.instruction.initializeCollectionPda({
-        accounts: {
-          candyMachine: candyMachineAddress,
-          authority: wallet.publicKey,
-          collectionPda: collectionPDAPubkey,
-          payer: wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-        },
-      }),
-    );
-  }
-
   instructions.push(
     await anchorProgram.instruction.setCollection({
       accounts: {

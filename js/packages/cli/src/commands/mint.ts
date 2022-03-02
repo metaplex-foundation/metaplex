@@ -321,7 +321,10 @@ export async function mintV2(
         collectionPDA,
       )) as { mint: PublicKey };
       const collectionAuthorityRecord = (
-        await getCollectionAuthorityRecordPDA(mint.publicKey, collectionPDA)
+        await getCollectionAuthorityRecordPDA(
+          collectionMint.mint,
+          collectionPDA,
+        )
       )[0];
       if (collectionMint) {
         const collectionMetadata = await getMetadata(collectionMint.mint);
@@ -331,7 +334,7 @@ export async function mintV2(
         remainingAccounts = remainingAccounts.concat([
           {
             pubkey: collectionPDA,
-            isWritable: false,
+            isWritable: true,
             isSigner: false,
           },
           {
@@ -341,7 +344,7 @@ export async function mintV2(
           },
           {
             pubkey: collectionMetadata,
-            isWritable: false,
+            isWritable: true,
             isSigner: false,
           },
           {
@@ -360,11 +363,10 @@ export async function mintV2(
       console.error(error);
     }
   }
-
+  console.log(remainingAccounts.map(i => i.pubkey.toBase58()));
   const [candyMachineCreator, creatorBump] = await getCandyMachineCreator(
     candyMachineAddress,
   );
-
   instructions.push(
     await anchorProgram.instruction.mintNft(creatorBump, {
       accounts: {
