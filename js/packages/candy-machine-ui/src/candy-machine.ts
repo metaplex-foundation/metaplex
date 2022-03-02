@@ -13,7 +13,8 @@ import {
 } from './utils';
 
 export const CANDY_MACHINE_PROGRAM = new anchor.web3.PublicKey(
-  'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+  // 'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+  'GdjsqG2jVHjKdwgXXnpWXzWnSVkomQJrWUBz4cZuGpNa',
 );
 
 const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
@@ -244,7 +245,8 @@ export const getCollectionPDA = async (
   );
 };
 export interface CollectionData {
-  collectionMint: null | anchor.web3.PublicKey;
+  mint: anchor.web3.PublicKey;
+  candyMachine: anchor.web3.PublicKey;
 }
 
 export const getCollectionAuthorityRecordPDA = async (
@@ -450,7 +452,7 @@ export const mintOneToken = async (
         mint.publicKey,
         collectionPDA,
       );
-      const collectionMint = collectionData.collectionMint;
+      const collectionMint = collectionData.mint;
       if (collectionMint) {
         const collectionMetadata = await getMetadata(collectionMint);
         const collectionMasterEdition = await getMasterEdition(collectionMint);
