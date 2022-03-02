@@ -3,17 +3,14 @@ import Button from '@material-ui/core/Button';
 import { CandyMachineAccount } from './candy-machine';
 import { CircularProgress } from '@material-ui/core';
 import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
-import {findGatewayToken} from "@identity.com/solana-gateway-ts";
-import {PublicKey} from "@solana/web3.js";
-//import {getGatewayTokenAddressForOwnerAndGatekeeperNetwork} from "@identity.com/solana-gateway-ts/src/lib/util";
-//import {GATEWAY_TOKEN_ADDRESS_SEED, PROGRAM_ID} from "@identity.com/solana-gateway-ts/src/lib/constants";
-
-const GATEWAY_TOKEN_ADDRESS_SEED = "gateway";
-const PROGRAM_ID: PublicKey = new PublicKey(
-  "gatem74V238djXdzWnJf94Wo1DcnuGkfijbf3AuBhfs"
-);
+import {
+  findGatewayToken,
+  getGatewayTokenAddressForOwnerAndGatekeeperNetwork,
+  onGatewayTokenChange,
+  removeAccountChangeListener
+} from "@identity.com/solana-gateway-ts";
 
 export const CTAButton = styled(Button)`
   width: 100%;
@@ -45,6 +42,7 @@ export const MintButton = (
   const { requestGatewayToken, gatewayStatus } = useGateway();
   const [clicked, setClicked] = useState(false);
   const [verified, setVerified] = useState(false)
+  const [webSocketSubscriptionId, setWebSocketSubscriptionId] = useState(-1)
 
   const wallet = useWallet();
   const connection = useConnection();
@@ -61,7 +59,12 @@ export const MintButton = (
 
   useEffect(() => {
     const mint = async () => {
+      await removeAccountChangeListener(
+        connection.connection,
+        webSocketSubscriptionId
+      )
       await onMint();
+
       setClicked(false);
       setVerified(false)
     }
@@ -69,32 +72,6 @@ export const MintButton = (
       mint()
     }
   }, [verified, clicked])
-
-  const getGatewayTokenAddressForOwnerAndGatekeeperNetwork = async (
-    owner: PublicKey,
-    gatekeeperNetwork: PublicKey,
-    seed?: Uint8Array
-  ): Promise<PublicKey> => {
-    const additionalSeed = seed
-      ? Buffer.from(seed)
-      : Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]);
-    if (additionalSeed.length != 8) {
-      throw new Error(
-        "Additional Seed has length " +
-        additionalSeed.length +
-        " instead of 8 when calling getGatewayTokenAddressForOwnerAndGatekeeperNetwork."
-      );
-    }
-    const seeds = [
-      owner.toBuffer(),
-      Buffer.from(GATEWAY_TOKEN_ADDRESS_SEED, "utf8"),
-      additionalSeed,
-      gatekeeperNetwork.toBuffer(),
-    ];
-
-    const publicKeyNonce = await PublicKey.findProgramAddress(seeds, PROGRAM_ID);
-    return publicKeyNonce[0];
-  };
 
   const getMintButtonContent = () => {
     if (candyMachine?.state.isSoldOut) {
@@ -149,13 +126,14 @@ export const MintButton = (
                 candyMachine.state.gatekeeper.gatekeeperNetwork
               );
 
-              connection.connection.onAccountChange(
+              const subId = onGatewayTokenChange(
+                connection.connection,
                 gatewayTokenAddress,
-                async (accountInfo,context) => {
-                  setVerified(true)
-                },
+                () => setVerified(true),
                 'confirmed'
               )
+
+              setWebSocketSubscriptionId(subId)
             }
           } else {
             setClicked(false)
