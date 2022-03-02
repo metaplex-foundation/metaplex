@@ -1,0 +1,16 @@
+name: Remove needs more information
+on: 
+  issue_comment:
+    types: [created]
+jobs:
+  issue_commented:
+    if: ${{ !github.event.issue.pull_request && github.event.issue.user.login == github.event.comment.user.login }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: andymckay/labeler@e6c4322d0397f3240f0e7e30a33b5c5df2d39e90
+        with:
+          remove-labels: "needs more information"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+permissions:
+  issues: write
+  

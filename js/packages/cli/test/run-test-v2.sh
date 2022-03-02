@@ -4,22 +4,22 @@
 #
 # To suppress prompts, you will need to set/export the following variables:
 #
-ENV_URL="mainnet-beta"
-RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
-STORAGE="arweave-sol"
+# ENV_URL="mainnet-beta"
+# RPC="https://ssc-dao.genesysgo.net/" # mainnet-beta
+# STORAGE="arweave-sol"
 
 # ENV_URL="devnet"
 # RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/" # devnet
 # STORAGE="arweave"
 
-ITEMS=3000
-MULTIPLE=0
+# ITEMS=10
+# MULTIPLE=0
 
-RESET="Y"
-EXT="mp4"
-CLOSE="Y"
-CHANGE="N"
-TEST_IMAGE="N"
+# RESET="Y"
+# EXT="png"
+# CLOSE="Y"
+# CHANGE="Y"
+# TEST_IMAGE="Y"
 
 # ARWEAVE_JWK="null"
 # INFURA_ID="null"
@@ -412,36 +412,6 @@ function change_cache {
     fi
 }
 
-# check on chain config to make sure everything is correct
-function check_changed {
-    CANDY="$(cat $CACHE_FILE | jq -c -r ".program.candyMachine")"
-    LAST_LINK="$(cat $CACHE_FILE | jq -c -r ".items.\""$LAST_INDEX"\".link")"
-    echo "$(grn "Candy Machine Id:") $CANDY"
-    echo "$(grn "Changed Link:") $LAST_LINK"
-    temp_file=$(mktemp)
-    echo $CANDY | xargs -I{} solana account {} -u $RPC -o $temp_file
-
-    FAILED=0
-    for ((i = 0; i <= $LAST_INDEX; i++)); do
-        LINK="$(cat $CACHE_FILE | jq -c -r ".items.\""$i"\".link")"
-        if [[ $(($i % $(($LAST_INDEX / 20)))) -eq 0 ]]; then
-            echo -ne "\033[2K\r"
-            echo -ne $cyn"Checked $i of $(($LAST_INDEX + 1))"$white
-        fi
-        if [[ ! $(strings $temp_file | grep -a "$LINK") ]]; then
-            # red "Failure: item $i not found on chain"
-            FAILED=$(($FAILED + 1))
-        fi
-    done
-    echo -ne "\033[2K\r"
-    if [[ $(($FAILED)) -eq 0 ]]; then
-        echo -e $grn"Success: all $(($LAST_INDEX + 1)) items found on chain"$white
-    else
-        echo -e $red"Failure: $FAILED out of $(($LAST_INDEX + 1)) items were not found on chain"$white
-    fi
-
-}
-
 # run the verify upload command
 function verify_upload {
     $CMD_CMV2 verify_upload --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME -r $RPC
@@ -486,7 +456,6 @@ if [ "${CHANGE}" = "Y" ]; then
     change_cache
     upload
     verify_upload
-    check_changed
     mag "<<<"
 else
     blu "Skipping 3 (Editing cache and testing reupload)"
