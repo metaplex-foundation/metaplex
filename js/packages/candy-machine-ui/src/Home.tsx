@@ -21,6 +21,7 @@ import { AlertState, toDate, formatNumber, getAtaForMint } from './utils';
 import { MintCountdown } from './MintCountdown';
 import { MintButton } from './MintButton';
 import { GatewayProvider } from '@civic/solana-gateway-react';
+import {sendTransaction} from './connection';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -415,13 +416,61 @@ const Home = (props: HomeProps) => {
                       candyMachine?.state?.gatekeeper?.gatekeeperNetwork
                     }
                     clusterUrl={rpcUrl}
-                    handleTransaction={async (transaction: Transaction) => await onMint([transaction])}
+                    handleTransaction={async (transaction: Transaction) => {
+                      setIsUserMinting(true);
+                      const userMustSign = transaction.signatures.find(sig => sig.publicKey.equals(wallet.publicKey!));
+                      if (userMustSign) {
+                        setAlertState({
+                          open: true,
+                          message: "Please sign one-time Civic Pass issuance",
+                          severity: 'info',
+                        });
+                        try {
+                          transaction = await wallet.signTransaction!(transaction);
+                        } catch (e){
+                          setAlertState({
+                            open: true,
+                            message: "User cancelled signing",
+                            severity: 'error',
+                          });
+                          // setTimeout(() => window.location.reload(), 2000);
+                          setIsUserMinting(false);
+                          throw e;
+                        }
+                      } else {
+                        setAlertState({
+                          open: true,
+                          message: "Refreshing Civic Pass",
+                          severity: 'info',
+                        });
+                      }
+                      try {
+                        await sendTransaction(props.connection, wallet, transaction, [], true, 'confirmed');
+                        setAlertState({
+                          open: true,
+                          message: "Please sign minting",
+                          severity: 'info',
+                        });
+                      } catch (e){
+                        setAlertState({
+                          open: true,
+                          message: "Solana dropped the transaction, please try again",
+                          severity: 'warning',
+                        });
+                        console.error(e);
+                        // setTimeout(() => window.location.reload(), 2000);
+                        setIsUserMinting(false);
+                        throw e;
+                      }
+                      await onMint()
+                    }}
                     broadcastTransaction={false}
                     options={{ autoShowModal: false }}
                   >
                     <MintButton
                       candyMachine={candyMachine}
                       isMinting={isUserMinting}
+                      setIsMinting={(val) => setIsUserMinting(val)}
                       onMint={onMint}
                       isActive={isActive || (isPresale && isWhitelistUser)}
                     />
@@ -430,6 +479,7 @@ const Home = (props: HomeProps) => {
                   <MintButton
                     candyMachine={candyMachine}
                     isMinting={isUserMinting}
+                    setIsMinting={(val) => setIsUserMinting(val)}
                     onMint={onMint}
                     isActive={isActive || (isPresale && isWhitelistUser)}
                   />

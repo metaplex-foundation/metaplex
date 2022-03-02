@@ -235,7 +235,7 @@ export const sendTransactions = async (
 export const sendTransaction = async (
   connection: Connection,
   wallet: any,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[] | Transaction,
   signers: Keypair[],
   awaitConfirmation = true,
   commitment: Commitment = 'singleGossip',
@@ -244,27 +244,32 @@ export const sendTransaction = async (
 ) => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let transaction = new Transaction();
-  instructions.forEach(instruction => transaction.add(instruction));
-  transaction.recentBlockhash = (
-    block || (await connection.getRecentBlockhash(commitment))
-  ).blockhash;
-
-  if (includesFeePayer) {
-    transaction.setSigners(...signers.map(s => s.publicKey));
+  let transaction: Transaction;
+  if (instructions instanceof Transaction){
+    transaction = instructions;
   } else {
-    transaction.setSigners(
-      // fee payed by the wallet owner
-      wallet.publicKey,
-      ...signers.map(s => s.publicKey),
-    );
-  }
+    transaction = new Transaction();
+    instructions.forEach(instruction => transaction.add(instruction));
+    transaction.recentBlockhash = (
+      block || (await connection.getRecentBlockhash(commitment))
+    ).blockhash;
 
-  if (signers.length > 0) {
-    transaction.partialSign(...signers);
-  }
-  if (!includesFeePayer) {
-    transaction = await wallet.signTransaction(transaction);
+    if (includesFeePayer) {
+      transaction.setSigners(...signers.map(s => s.publicKey));
+    } else {
+      transaction.setSigners(
+        // fee payed by the wallet owner
+        wallet.publicKey,
+        ...signers.map(s => s.publicKey),
+      );
+    }
+
+    if (signers.length > 0) {
+      transaction.partialSign(...signers);
+    }
+    if (!includesFeePayer) {
+      transaction = await wallet.signTransaction(transaction);
+    }
   }
 
   const rawTransaction = transaction.serialize();
