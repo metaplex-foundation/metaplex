@@ -541,21 +541,22 @@ export const AuctionCreateView = () => {
         name: 'createAuctionManager failure',
         message: JSON.stringify(rejection),
       });
-      return;
-    }
-
-    try {
-      track('Listing Created', {
+      track('Error Listing Created', {
         event_category: 'Listings',
         event_label: isInstantSale ? 'instant_sale' : 'auction',
         listingType: isInstantSale ? 'instant_sale' : 'auction',
-        // sol_value: isInstantSale
-        //   ? auctionSettings.instantSalePrice?.toNumber() // this price is like 100x the real sol price. Is it in lamports?
-        //   : auctionSettings.priceFloor.minPrice?.toNumber(),
       });
-    } catch (error) {
-      console.error('failed tracking new_listing');
+      return;
     }
+
+    track('Listing Created', {
+      event_category: 'Listings',
+      event_label: isInstantSale ? 'instant_sale' : 'auction',
+      listingType: isInstantSale ? 'instant_sale' : 'auction',
+      // sol_value: isInstantSale
+      //   ? auctionSettings.instantSalePrice?.toNumber() // this price is like 100x the real sol price. Is it in lamports?
+      //   : auctionSettings.priceFloor.minPrice?.toNumber(),
+    });
 
     setAuctionObj(auctionInfo);
     gotoNextStep();
