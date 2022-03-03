@@ -31,7 +31,7 @@ export async function setCollection(
 ) {
   const signers = [walletKeyPair];
   const wallet = new anchor.Wallet(walletKeyPair);
-  let instructions = [];
+  const instructions = [];
   let mintPubkey: PublicKey;
   let metadataPubkey;
   let masterEditionPubkey;
@@ -59,41 +59,43 @@ export async function setCollection(
       wallet.publicKey,
     );
 
-    instructions = instructions.concat([
-      anchor.web3.SystemProgram.createAccount({
-        fromPubkey: wallet.publicKey,
-        newAccountPubkey: mintPubkey,
-        space: MintLayout.span,
-        lamports:
-          await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
-            MintLayout.span,
-          ),
-        programId: TOKEN_PROGRAM_ID,
-      }),
-      Token.createInitMintInstruction(
-        TOKEN_PROGRAM_ID,
-        mintPubkey,
-        0,
-        wallet.publicKey,
-        wallet.publicKey,
-      ),
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mintPubkey,
-        userTokenAccountAddress,
-        wallet.publicKey,
-        wallet.publicKey,
-      ),
-      Token.createMintToInstruction(
-        TOKEN_PROGRAM_ID,
-        mintPubkey,
-        userTokenAccountAddress,
-        wallet.publicKey,
-        [],
-        1,
-      ),
-    ]);
+    instructions.push(
+      ...[
+        anchor.web3.SystemProgram.createAccount({
+          fromPubkey: wallet.publicKey,
+          newAccountPubkey: mintPubkey,
+          space: MintLayout.span,
+          lamports:
+            await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
+              MintLayout.span,
+            ),
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitMintInstruction(
+          TOKEN_PROGRAM_ID,
+          mintPubkey,
+          0,
+          wallet.publicKey,
+          wallet.publicKey,
+        ),
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          mintPubkey,
+          userTokenAccountAddress,
+          wallet.publicKey,
+          wallet.publicKey,
+        ),
+        Token.createMintToInstruction(
+          TOKEN_PROGRAM_ID,
+          mintPubkey,
+          userTokenAccountAddress,
+          wallet.publicKey,
+          [],
+          1,
+        ),
+      ],
+    );
     const data = new DataV2({
       symbol: candyMachine.data.symbol ?? '',
       name: 'Collection NFT',
@@ -110,8 +112,8 @@ export async function setCollection(
       uses: null,
     });
 
-    instructions = instructions.concat(
-      new CreateMetadataV2(
+    instructions.push(
+      ...new CreateMetadataV2(
         { feePayer: wallet.publicKey },
         {
           metadata: metadataPubkey,
@@ -123,8 +125,8 @@ export async function setCollection(
       ).instructions,
     );
 
-    instructions = instructions.concat(
-      new CreateMasterEditionV3(
+    instructions.push(
+      ...new CreateMasterEditionV3(
         {
           feePayer: wallet.publicKey,
         },

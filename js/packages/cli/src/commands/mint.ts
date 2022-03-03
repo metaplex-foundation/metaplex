@@ -177,7 +177,7 @@ export async function mintV2(
   const candyMachine: any = await anchorProgram.account.candyMachine.fetch(
     candyMachineAddress,
   );
-  let remainingAccounts = [];
+  const remainingAccounts = [];
   const signers = [mint, userKeyPair];
   const cleanupInstructions = [];
   const instructions = [
@@ -331,33 +331,35 @@ export async function mintV2(
         const collectionMasterEdition = await getMasterEdition(
           collectionMint.mint,
         );
-        remainingAccounts = remainingAccounts.concat([
-          {
-            pubkey: collectionPDA,
-            isWritable: true,
-            isSigner: false,
-          },
-          {
-            pubkey: collectionMint.mint,
-            isWritable: false,
-            isSigner: false,
-          },
-          {
-            pubkey: collectionMetadata,
-            isWritable: true,
-            isSigner: false,
-          },
-          {
-            pubkey: collectionMasterEdition,
-            isWritable: false,
-            isSigner: false,
-          },
-          {
-            pubkey: collectionAuthorityRecord,
-            isWritable: false,
-            isSigner: false,
-          },
-        ]);
+        remainingAccounts.push(
+          ...[
+            {
+              pubkey: collectionPDA,
+              isWritable: true,
+              isSigner: false,
+            },
+            {
+              pubkey: collectionMint.mint,
+              isWritable: false,
+              isSigner: false,
+            },
+            {
+              pubkey: collectionMetadata,
+              isWritable: true,
+              isSigner: false,
+            },
+            {
+              pubkey: collectionMasterEdition,
+              isWritable: false,
+              isSigner: false,
+            },
+            {
+              pubkey: collectionAuthorityRecord,
+              isWritable: false,
+              isSigner: false,
+            },
+          ],
+        );
       }
     } catch (error) {
       console.error(error);

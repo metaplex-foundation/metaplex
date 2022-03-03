@@ -9,6 +9,7 @@ import * as anchor from '@project-serum/anchor';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
 import log from 'loglevel';
 import { Program } from '@project-serum/anchor';
+import { CollectionData } from '../types';
 
 //TODO: get this working. Not sure what it needs
 export async function removeCollection(
@@ -19,9 +20,16 @@ export async function removeCollection(
   const wallet = new anchor.Wallet(walletKeyPair);
   const signers = [walletKeyPair];
   const [collectionPDAPubkey] = await getCollectionPDA(candyMachineAddress);
+  const collectionPDAAccount =
+    await anchorProgram.provider.connection.getAccountInfo(collectionPDAPubkey);
+  if (!collectionPDAAccount) {
+    throw new Error(
+      'Candy machine does not have a collection associated with it. You can add a collection using the set_collection command.',
+    );
+  }
   const collectionMint = (await anchorProgram.account.collectionPda.fetch(
     collectionPDAPubkey,
-  )) as { mint: PublicKey };
+  )) as CollectionData;
   const mint = collectionMint.mint;
 
   const metadataPubkey = await getMetadata(mint);

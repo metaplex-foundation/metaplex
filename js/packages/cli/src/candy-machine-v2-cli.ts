@@ -25,6 +25,7 @@ import {
   loadWalletKey,
   AccountAndPubkey,
   deriveCandyMachineV2ProgramAddress,
+  getCollectionPDA,
 } from './helpers/accounts';
 
 import { uploadV2 } from './commands/upload';
@@ -45,6 +46,7 @@ import { getType } from 'mime';
 import { removeCollection } from './commands/remove-collection';
 import { setCollection } from './commands/set-collection';
 import { withdraw_bundlr } from './helpers/upload/arweave-bundle';
+import { CollectionData } from './types';
 
 program.version('0.0.2');
 const supportedImageTypes = {
@@ -111,6 +113,10 @@ programCommand('upload')
     '-m, --collection-mint <string>',
     'optional collection mint ID. Will be randomly generated if not provided',
   )
+  .option(
+    '-nc, --no-collection',
+    'optional flag to prevent the candy machine from using an on chain collection',
+  )
   .action(async (files: string[], options, cmd) => {
     const {
       keypair,
@@ -120,6 +126,7 @@ programCommand('upload')
       rpcUrl,
       rateLimit,
       collectionMint,
+      setCollectionMint,
     } = cmd.opts();
 
     const walletKeyPair = loadWalletKey(keypair);
@@ -279,6 +286,7 @@ programCommand('upload')
         arweaveJwk,
         rateLimit,
         collectionMintPubkey,
+        setCollectionMint,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
@@ -673,6 +681,20 @@ programCommand('show')
       const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
         new PublicKey(cacheContent.program.candyMachine),
       );
+      const [collectionPDAPubkey] = await getCollectionPDA(
+        new PublicKey(cacheContent.program.candyMachine),
+      );
+      let collectionData: null | CollectionData = null;
+      const collectionPDAAccount =
+        await anchorProgram.provider.connection.getAccountInfo(
+          collectionPDAPubkey,
+        );
+      if (collectionPDAAccount) {
+        log.info('hi');
+        collectionData = (await anchorProgram.account.collectionPda.fetch(
+          collectionPDAPubkey,
+        )) as CollectionData;
+      }
       log.info('...Candy Machine...');
       log.info('Key:', cacheContent.program.candyMachine);
       log.info('1st creator :', candyMachineAddr.toBase58());
@@ -680,6 +702,7 @@ programCommand('show')
       log.info('authority: ', machine.authority.toBase58());
       //@ts-ignore
       log.info('wallet: ', machine.wallet.toBase58());
+      log.info('collection mint: ', collectionData?.mint.toBase58());
       //@ts-ignore
       log.info(
         'tokenMint: ',

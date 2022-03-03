@@ -54,6 +54,7 @@ export async function uploadV2({
   arweaveJwk,
   rateLimit,
   collectionMintPubkey,
+  setCollectionMint,
 }: {
   files: string[];
   cacheName: string;
@@ -92,6 +93,7 @@ export async function uploadV2({
   arweaveJwk: string;
   rateLimit: number;
   collectionMintPubkey: null | PublicKey;
+  setCollectionMint: boolean;
 }): Promise<boolean> {
   const savedContent = loadCache(cacheName, env);
   const cacheContent = savedContent || {};
@@ -164,18 +166,23 @@ export async function uploadV2({
           }),
         },
       );
-      const collection = await setCollection(
-        walletKeyPair,
-        anchorProgram,
-        res.candyMachine,
-        collectionMintPubkey,
-      );
       cacheContent.program.uuid = res.uuid;
       cacheContent.program.candyMachine = res.candyMachine.toBase58();
       candyMachine = res.candyMachine;
-      console.log('Collection: ', collection);
-      cacheContent.program.collection =
-        collection.collectionMetadata.toBase58();
+
+      if (setCollectionMint) {
+        const collection = await setCollection(
+          walletKeyPair,
+          anchorProgram,
+          res.candyMachine,
+          collectionMintPubkey,
+        );
+        console.log('Collection: ', collection);
+        cacheContent.program.collection =
+          collection.collectionMetadata.toBase58();
+      } else {
+        console.log('No collection set');
+      }
 
       log.info(
         `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
