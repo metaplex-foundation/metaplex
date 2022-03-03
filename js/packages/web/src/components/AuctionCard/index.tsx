@@ -19,6 +19,7 @@ import {
   PriceFloorType,
   programIds,
   shortenAddress,
+  Storefront,
   useConnection,
   useMint,
   useStore,
@@ -801,21 +802,27 @@ export const AuctionCard = ({
   );
 
   // Crossmint credit card checkout
-  const CrossmintBtn = (
-    <CrossMintButton
-      listingId={auctionView.auction.pubkey}
-      collectionDescription={storefront.meta.description}
-      collectionTitle={storefront.meta.title}
-      collectionPhoto={storefront.theme.logo}
-      // todo -- rmv inline styles once this component is testable.
-      style={{
-        width: '100%',
-        height: '40px',
-        borderRadius: '2px',
-        marginTop: '12px',
-      }}
-    />
-  );
+  const maybeCrossMintButton = (auctionView: AuctionView, storefront: Storefront) => {
+    if (auctionView.isInstantSale && storefront.integrations?.crossmintClientId) {
+
+      return (
+        <CrossMintButton
+          listingId={auctionView.auction.pubkey}
+          collectionDescription={storefront.meta.description}
+          collectionTitle={storefront.meta.title}
+          collectionPhoto={storefront.theme.logo}
+          // todo -- rmv inline styles once this component is testable.
+          style={{
+            width: '100%',
+            height: '40px',
+            borderRadius: '2px',
+            marginTop: '12px',
+          }}
+        />
+
+      )
+    }
+  }
 
   // Components for inputting bid amount and placing a bid
   const PlaceBidUI = (
@@ -1087,9 +1094,7 @@ export const AuctionCard = ({
                     Connect wallet to{' '}
                     {auctionView.isInstantSale ? 'purchase' : 'place bid'}
                   </Button>)}
-                  {auctionView.isInstantSale &&
-                    storefront.integrations?.crossmintClientId &&
-                    CrossmintBtn}
+                  {maybeCrossMintButton(auctionView, storefront)}
               </>
             )}
 
@@ -1097,11 +1102,11 @@ export const AuctionCard = ({
             {showInstantSaleButton && (
                 <>
                   {InstantSaleBtn}
-                  {storefront.integrations?.crossmintClientId && CrossmintBtn}
                 </>
               )}
             {showPlaceBidButton && PlaceBidBtn}
-            {actuallyShowPlaceBidUI && PlaceBidUI}
+            {actuallyShowPlaceBidUI && PlaceBidUI} 
+            {maybeCrossMintButton(auctionView, storefront)}
           </>
         )}
       </Card>
