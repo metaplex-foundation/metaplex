@@ -23,7 +23,7 @@ import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
 
-export async function sendCancelBid(
+export async function sendCancelBidOrReclaimItems(
   connection: Connection,
   wallet: WalletSigner,
   payingAccount: StringPublicKey,
@@ -69,7 +69,7 @@ export async function sendCancelBid(
 
   if (
     wallet.publicKey.equals(
-      toPublicKey(auctionView.auctionManager.authority),
+      toPublicKey(auctionView.auctionManager.authority), // isAuctioneer
     ) &&
     auctionView.auction.info.ended()
   ) {
