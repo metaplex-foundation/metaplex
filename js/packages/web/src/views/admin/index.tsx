@@ -48,7 +48,7 @@ import Bugsnag from '@bugsnag/browser';
 import { CrossMintStatusButton } from '@crossmint/client-sdk-react-ui';
 import styled from 'styled-components';
 
-const StyledLink = styled(Link)`
+const StyledLink = styled.a`
   text-decoration: underline;
   &:hover {
     text-decoration: underline;
@@ -464,7 +464,7 @@ function InnerAdminView({
             Increase your sales by accepting credit and debit card payments
             using&nbsp;
             <StyledLink
-              to="https://www.crossmint.io/creators"
+              href="https://www.crossmint.io/creators"
               target="_blank"
               rel="noreferrer"
             >
@@ -480,7 +480,7 @@ function InnerAdminView({
                 NOTE: Your store is not yet ready to use Crossmint. To get
                 started, please visit{' '}
                 <StyledLink
-                  to="https://www.holaplex.com/storefront/edit"
+                  href="https://www.holaplex.com/storefront/edit"
                   target="_blank"
                   rel="noreferrer"
                 >
