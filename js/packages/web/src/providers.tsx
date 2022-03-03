@@ -36,7 +36,7 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
                       {storefront.integrations?.crossmintClientId ? (
                         <CrossMintProvider
                           clientId={storefront.integrations?.crossmintClientId!}
-                          auctionId={storefront.pubkey}
+                          auctionId={process.env.NEXT_PUBLIC_STORE_ADDRESS}
                           hideMintOnInactiveClient={true}
                         >
                           <AppLayout storefront={storefront}>
