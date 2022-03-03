@@ -1,4 +1,3 @@
-import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import Loading from 'react-loading';
@@ -74,42 +73,9 @@ const VideoArtContent = ({
   animationURL?: string;
   active?: boolean;
 }) => {
-  const [playerApi, setPlayerApi] = useState<StreamPlayerApi>();
 
-  const playerRef = useCallback(
-    ref => {
-      setPlayerApi(ref);
-    },
-    [setPlayerApi],
-  );
-
-  useEffect(() => {
-    if (playerApi) {
-      playerApi.currentTime = 0;
-    }
-  }, [active, playerApi]);
-
-  const likelyVideo = (files || []).filter((f, index, arr) => {
-    if (typeof f !== 'string') {
-      return false;
-    }
-
-    // TODO: filter by fileType
-    return arr.length >= 2 ? index === 1 : index === 0;
-  })?.[0] as string;
 
   const content =
-    likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
-      <Stream
-        streamRef={(e: any) => playerRef(e)}
-        src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
-        loop={true}
-        controls={false}
-        autoplay={true}
-        muted={true}
-      />
-    ) : (
       <video
         className="metaplex-video-content"
         playsInline={true}
@@ -120,7 +86,6 @@ const VideoArtContent = ({
         loop={true}
         poster={uri}
       >
-        {likelyVideo && <source src={likelyVideo} type="video/mp4" />}
         {animationURL && <source src={maybeCDN(animationURL)} type="video/mp4" />}
         {(
           files?.filter(f => !!f && typeof f !== 'string') as MetadataFile[]
@@ -128,7 +93,6 @@ const VideoArtContent = ({
           <source key={i} src={f.uri} type={f.type} />
         ))}
       </video>
-    );
 
   return <div className="metaplex-video-content">{content}</div>;
 };
