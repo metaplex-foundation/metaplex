@@ -4946,6 +4946,15 @@
     "@solana/spl-token" "^0.1.8"
     "@solana/web3.js" "^1.31.0"
 
+"@metaplex-foundation/mpl-token-metadata@1.2.4":
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-token-metadata/-/mpl-token-metadata-1.2.4.tgz#b764c7bafb17d8a8733d5094abe0350de8120bd8"
+  integrity sha512-FI+VOI5ctlny4UiotvF/xGcSHuXYO0ihgR/GnZfwF5hJ+dx/fhsKmOZsABshMBKUpANhU/3O2TIM5scAGExTEw==
+  dependencies:
+    "@metaplex-foundation/mpl-core" "^0.0.2"
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.31.0"
+
 "@metaplex/arweave-cost@^1.0.4":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@metaplex/arweave-cost/-/arweave-cost-1.0.4.tgz#35d5d10dfc855463fc7fe18594e175506a4a35d4"

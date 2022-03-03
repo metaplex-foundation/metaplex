@@ -411,6 +411,31 @@ export const getMetadata = async (
   )[0];
 };
 
+export const getCollectionPDA = async (
+  candyMachineAddress: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('collection'), candyMachineAddress.toBuffer()],
+    CANDY_MACHINE_PROGRAM_V2_ID,
+  );
+};
+
+export const getCollectionAuthorityRecordPDA = async (
+  mint: anchor.web3.PublicKey,
+  newAuthority: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('metadata'),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from('collection_authority'),
+      newAuthority.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID,
+  );
+};
+
 export const getMasterEdition = async (
   mint: anchor.web3.PublicKey,
 ): Promise<anchor.web3.PublicKey> => {
