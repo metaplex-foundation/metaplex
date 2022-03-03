@@ -19,8 +19,10 @@ import {
   PriceFloorType,
   programIds,
   shortenAddress,
+  Storefront,
   useConnection,
   useMint,
+  useStore,
   useUserAccounts,
   useWalletModal,
   VaultState,
@@ -75,6 +77,7 @@ import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 import { endSale } from './utils/endSale';
 import { DateTime } from 'luxon';
 import { ChevronRightIcon } from '@heroicons/react/solid';
+import { CrossMintButton } from '@crossmint/client-sdk-react-ui';
 
 const { Text } = Typography;
 
@@ -236,6 +239,7 @@ export const AuctionCard = ({
   auctionView: AuctionView;
   hideDefaultAction?: boolean;
 }) => {
+  const { storefront } = useStore();
   const connection = useConnection();
   const { patchState } = useMeta();
 
@@ -820,6 +824,29 @@ export const AuctionCard = ({
     </Button>
   );
 
+  // Crossmint credit card checkout
+  const maybeCrossMintButton = (auctionView: AuctionView, storefront: Storefront) => {
+    if (auctionView.isInstantSale && storefront.integrations?.crossmintClientId) {
+
+      return (
+        <CrossMintButton
+          listingId={auctionView.auction.pubkey}
+          collectionDescription={storefront.meta.description}
+          collectionTitle={storefront.meta.title}
+          collectionPhoto={storefront.theme.logo}
+          // todo -- rmv inline styles once this component is testable.
+          style={{
+            width: '100%',
+            height: '40px',
+            borderRadius: '2px',
+            marginTop: '12px',
+          }}
+        />
+
+      )
+    }
+  }
+
   // Components for inputting bid amount and placing a bid
   const PlaceBidUI = (
     <Space
@@ -1095,15 +1122,20 @@ export const AuctionCard = ({
                   >
                     Connect wallet to{' '}
                     {auctionView.isInstantSale ? 'purchase' : 'place bid'}
-                  </Button>
-                )}
+                  </Button>)}
+                  {maybeCrossMintButton(auctionView, storefront)}
               </>
             )}
 
             {/*  During auction, connected */}
-            {showInstantSaleButton && InstantSaleBtn}
+            {showInstantSaleButton && (
+                <>
+                  {InstantSaleBtn}
+                </>
+              )}
             {showPlaceBidButton && PlaceBidBtn}
-            {actuallyShowPlaceBidUI && PlaceBidUI}
+            {actuallyShowPlaceBidUI && PlaceBidUI} 
+            {maybeCrossMintButton(auctionView, storefront)}
           </>
         )}
       </Card>

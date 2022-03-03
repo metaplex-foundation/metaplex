@@ -4,6 +4,7 @@ import {
   StoreProvider,
   WalletProvider,
   MetaProvider,
+  useStore,
 } from '@oyster/common';
 import React, { FC } from 'react';
 import { ConfettiProvider } from './components/Confetti';
@@ -12,6 +13,7 @@ import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
 import { Storefront } from '@oyster/common';
 import { AnalyticsProvider } from './contexts';
+import { CrossMintProvider } from '@crossmint/client-sdk-react-ui';
 
 interface ProvidersProps {
   storefront: Storefront;
@@ -32,7 +34,17 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
                 <LoaderProvider>
                   <ConfettiProvider>
                     <AnalyticsProvider>
-                      <AppLayout storefront={storefront}>{children}</AppLayout>
+                      {storefront.integrations?.crossmintClientId ? (
+                        <CrossmintWrapper>
+                          <AppLayout storefront={storefront}>
+                            {children}
+                          </AppLayout>
+                        </CrossmintWrapper>
+                      ) : (
+                        <AppLayout storefront={storefront}>
+                          {children}
+                        </AppLayout>
+                      )}
                     </AnalyticsProvider>
                   </ConfettiProvider>
                 </LoaderProvider>
@@ -42,5 +54,19 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
         </WalletProvider>
       </StoreProvider>
     </ConnectionProvider>
+  );
+};
+
+const CrossmintWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { storefront, storeAddress } = useStore();
+
+  return (
+    <CrossMintProvider
+      clientId={storefront.integrations?.crossmintClientId!}
+      auctionId={storeAddress}
+      hideMintOnInactiveClient={true}
+    >
+      {children}
+    </CrossMintProvider>
   );
 };

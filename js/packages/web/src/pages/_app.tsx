@@ -3,6 +3,8 @@ import Head from 'next/head';
 import React from 'react';
 import '../styles/index.less';
 
+require('@crossmint/client-sdk-react-ui/styles.css');
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
