@@ -235,9 +235,15 @@ function useAuctionExtended(
 export const AuctionCard = ({
   auctionView,
   hideDefaultAction,
+  artDescription,
+  artTitle,
+  artImage
 }: {
   auctionView: AuctionView;
   hideDefaultAction?: boolean;
+  artDescription?: string
+  artTitle?: string
+  artImage?: string
 }) => {
   const { storefront } = useStore();
   const connection = useConnection();
@@ -831,9 +837,9 @@ export const AuctionCard = ({
       return (
         <CrossMintButton
           listingId={auctionView.auction.pubkey}
-          collectionDescription={storefront.meta.description}
-          collectionTitle={storefront.meta.title}
-          collectionPhoto={storefront.theme.logo}
+          collectionDescription={artDescription || storefront.meta.description}
+          collectionTitle={artTitle || storefront.meta.title}
+          collectionPhoto={artImage || storefront.theme.logo}
           // todo -- rmv inline styles once this component is testable.
           style={{
             width: '100%',
@@ -1134,7 +1140,7 @@ export const AuctionCard = ({
                 </>
               )}
             {showPlaceBidButton && PlaceBidBtn}
-            {actuallyShowPlaceBidUI && PlaceBidUI} 
+            {actuallyShowPlaceBidUI && PlaceBidUI}
             {maybeCrossMintButton(auctionView, storefront)}
           </>
         )}
