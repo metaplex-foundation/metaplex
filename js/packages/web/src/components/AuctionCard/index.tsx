@@ -1123,7 +1123,6 @@ export const AuctionCard = ({
                     Connect wallet to{' '}
                     {auctionView.isInstantSale ? 'purchase' : 'place bid'}
                   </Button>)}
-                  {maybeCrossMintButton(auctionView, storefront)}
               </>
             )}
 
@@ -1134,7 +1133,7 @@ export const AuctionCard = ({
                 </>
               )}
             {showPlaceBidButton && PlaceBidBtn}
-            {actuallyShowPlaceBidUI && PlaceBidUI} 
+            {actuallyShowPlaceBidUI && PlaceBidUI}
             {maybeCrossMintButton(auctionView, storefront)}
           </>
         )}
