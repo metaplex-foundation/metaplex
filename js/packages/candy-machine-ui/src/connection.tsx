@@ -168,9 +168,15 @@ export const sendTransactions = async (
   }
   unsignedTxns.push(...afterTransactions);
 
-  const partiallySignedTransactions = unsignedTxns.filter((t) => t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)));
-  const fullySignedTransactions = unsignedTxns.filter((t) => !t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)));
-  let signedTxns = (await wallet.signAllTransactions(partiallySignedTransactions));
+  const partiallySignedTransactions = unsignedTxns.filter(t =>
+    t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)),
+  );
+  const fullySignedTransactions = unsignedTxns.filter(
+    t => !t.signatures.find(sig => sig.publicKey.equals(wallet.publicKey)),
+  );
+  let signedTxns = await wallet.signAllTransactions(
+    partiallySignedTransactions,
+  );
   signedTxns = fullySignedTransactions.concat(signedTxns);
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 
@@ -241,7 +247,7 @@ export const sendTransaction = async (
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   let transaction: Transaction;
-  if (instructions instanceof Transaction){
+  if (instructions instanceof Transaction) {
     transaction = instructions;
   } else {
     transaction = new Transaction();

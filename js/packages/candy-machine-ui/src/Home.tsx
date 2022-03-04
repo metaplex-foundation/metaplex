@@ -21,7 +21,7 @@ import { AlertState, toDate, formatNumber, getAtaForMint } from './utils';
 import { MintCountdown } from './MintCountdown';
 import { MintButton } from './MintButton';
 import { GatewayProvider } from '@civic/solana-gateway-react';
-import {sendTransaction} from './connection';
+import { sendTransaction } from './connection';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -178,13 +178,19 @@ const Home = (props: HomeProps) => {
     }
   }, [anchorWallet, props.candyMachineId, props.connection]);
 
-  const onMint = async (beforeTransactions: Transaction[] = [], afterTransactions: Transaction[] = []) => {
+  const onMint = async (
+    beforeTransactions: Transaction[] = [],
+    afterTransactions: Transaction[] = [],
+  ) => {
     try {
       setIsUserMinting(true);
       document.getElementById('#identity')?.click();
       if (wallet.connected && candyMachine?.program && wallet.publicKey) {
-        let mintOne = (
-          await mintOneToken(candyMachine, wallet.publicKey, beforeTransactions, afterTransactions)
+        let mintOne = await mintOneToken(
+          candyMachine,
+          wallet.publicKey,
+          beforeTransactions,
+          afterTransactions,
         );
 
         const mintTxId = mintOne[0];
@@ -411,19 +417,23 @@ const Home = (props: HomeProps) => {
                     clusterUrl={rpcUrl}
                     handleTransaction={async (transaction: Transaction) => {
                       setIsUserMinting(true);
-                      const userMustSign = transaction.signatures.find(sig => sig.publicKey.equals(wallet.publicKey!));
+                      const userMustSign = transaction.signatures.find(sig =>
+                        sig.publicKey.equals(wallet.publicKey!),
+                      );
                       if (userMustSign) {
                         setAlertState({
                           open: true,
-                          message: "Please sign one-time Civic Pass issuance",
+                          message: 'Please sign one-time Civic Pass issuance',
                           severity: 'info',
                         });
                         try {
-                          transaction = await wallet.signTransaction!(transaction);
-                        } catch (e){
+                          transaction = await wallet.signTransaction!(
+                            transaction,
+                          );
+                        } catch (e) {
                           setAlertState({
                             open: true,
-                            message: "User cancelled signing",
+                            message: 'User cancelled signing',
                             severity: 'error',
                           });
                           // setTimeout(() => window.location.reload(), 2000);
@@ -433,21 +443,29 @@ const Home = (props: HomeProps) => {
                       } else {
                         setAlertState({
                           open: true,
-                          message: "Refreshing Civic Pass",
+                          message: 'Refreshing Civic Pass',
                           severity: 'info',
                         });
                       }
                       try {
-                        await sendTransaction(props.connection, wallet, transaction, [], true, 'confirmed');
+                        await sendTransaction(
+                          props.connection,
+                          wallet,
+                          transaction,
+                          [],
+                          true,
+                          'confirmed',
+                        );
                         setAlertState({
                           open: true,
-                          message: "Please sign minting",
+                          message: 'Please sign minting',
                           severity: 'info',
                         });
-                      } catch (e){
+                      } catch (e) {
                         setAlertState({
                           open: true,
-                          message: "Solana dropped the transaction, please try again",
+                          message:
+                            'Solana dropped the transaction, please try again',
                           severity: 'warning',
                         });
                         console.error(e);
@@ -455,7 +473,7 @@ const Home = (props: HomeProps) => {
                         setIsUserMinting(false);
                         throw e;
                       }
-                      await onMint()
+                      await onMint();
                     }}
                     broadcastTransaction={false}
                     options={{ autoShowModal: false }}
@@ -463,7 +481,7 @@ const Home = (props: HomeProps) => {
                     <MintButton
                       candyMachine={candyMachine}
                       isMinting={isUserMinting}
-                      setIsMinting={(val) => setIsUserMinting(val)}
+                      setIsMinting={val => setIsUserMinting(val)}
                       onMint={onMint}
                       isActive={isActive || (isPresale && isWhitelistUser)}
                     />
@@ -472,7 +490,7 @@ const Home = (props: HomeProps) => {
                   <MintButton
                     candyMachine={candyMachine}
                     isMinting={isUserMinting}
-                    setIsMinting={(val) => setIsUserMinting(val)}
+                    setIsMinting={val => setIsUserMinting(val)}
                     onMint={onMint}
                     isActive={isActive || (isPresale && isWhitelistUser)}
                   />

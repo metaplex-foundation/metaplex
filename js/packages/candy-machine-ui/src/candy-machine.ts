@@ -1,7 +1,11 @@
 import * as anchor from '@project-serum/anchor';
 
 import { MintLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
-import { SystemProgram, Transaction, SYSVAR_SLOT_HASHES_PUBKEY } from '@solana/web3.js';
+import {
+  SystemProgram,
+  Transaction,
+  SYSVAR_SLOT_HASHES_PUBKEY,
+} from '@solana/web3.js';
 import { sendTransactions, SequenceType } from './connection';
 
 import {

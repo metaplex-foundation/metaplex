@@ -1,9 +1,9 @@
 import styled from 'styled-components';
 import Button from '@material-ui/core/Button';
-import {CandyMachineAccount} from './candy-machine';
-import {CircularProgress} from '@material-ui/core';
-import {GatewayStatus, useGateway} from '@civic/solana-gateway-react';
-import {useEffect, useRef} from 'react';
+import { CandyMachineAccount } from './candy-machine';
+import { CircularProgress } from '@material-ui/core';
+import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
+import { useEffect, useRef } from 'react';
 
 export const CTAButton = styled(Button)`
   width: 100%;
@@ -51,17 +51,14 @@ export const MintButton = ({
       GatewayStatus.NOT_REQUESTED,
       GatewayStatus.REFRESH_TOKEN_REQUIRED,
     ];
-    const invalidToStates = [
-      ...fromStates,
-      GatewayStatus.UNKNOWN,
-    ]
-    if(
-      fromStates.find((state) => previousGatewayStatus === state) &&
-      !invalidToStates.find((state) => gatewayStatus === state)
-    ){
+    const invalidToStates = [...fromStates, GatewayStatus.UNKNOWN];
+    if (
+      fromStates.find(state => previousGatewayStatus === state) &&
+      !invalidToStates.find(state => gatewayStatus === state)
+    ) {
       setIsMinting(true);
     }
-    console.log("change: ", gatewayStatus);
+    console.log('change: ', gatewayStatus);
   }, [setIsMinting, previousGatewayStatus, gatewayStatus]);
 
   return (
@@ -74,7 +71,7 @@ export const MintButton = ({
           } else {
             // setIsMinting(true);
             await requestGatewayToken();
-            console.log("after: ", gatewayStatus);
+            console.log('after: ', gatewayStatus);
           }
         } else {
           await onMint();
