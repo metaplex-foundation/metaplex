@@ -1,9 +1,8 @@
 import { BinaryReader, BinaryWriter, deserializeUnchecked } from 'borsh';
 import base58 from 'bs58';
 import { PublicKey } from '@solana/web3.js';
-type StringPublicKey = string;
-
 import { BN } from '@project-serum/anchor';
+type StringPublicKey = string;
 
 export enum MetadataKey {
   Uninitialized = 0,
@@ -26,6 +25,36 @@ export class Creator {
     this.address = args.address;
     this.verified = args.verified;
     this.share = args.share;
+  }
+}
+export class TokenStandard {
+  NonFungible: number;
+  FungibleAsset: number;
+  Fungible: number;
+  NonFungibleEdition: number;
+
+  constructor(args: {
+    NonFungible: number;
+    FungibleAsset: number;
+    Fungible: number;
+    NonFungibleEdition: number;
+  }) {
+    this.NonFungible = args.NonFungible;
+    this.FungibleAsset = args.FungibleAsset;
+    this.Fungible = args.Fungible;
+    this.NonFungibleEdition = args.NonFungibleEdition;
+  }
+}
+export class Collection {
+  verified: boolean;
+  key: StringPublicKey;
+
+  constructor(args: {
+    verified: boolean;
+    key: StringPublicKey;
+  }) {
+    this.verified = args.verified;
+    this.key = args.key;
   }
 }
 
@@ -74,7 +103,6 @@ export class UpdateMetadataArgs {
   }) {
     this.data = args.data ? args.data : null;
     this.updateAuthority = args.updateAuthority ? args.updateAuthority : null;
-    this.primarySaleHappened = args.primarySaleHappened;
   }
 }
 
@@ -94,10 +122,11 @@ export class Metadata {
   primarySaleHappened: boolean;
   isMutable: boolean;
   editionNonce: number | null;
-
+  edition?: StringPublicKey | null;
   // set lazy
   masterEdition?: StringPublicKey;
-  edition?: StringPublicKey;
+  tokenStandard?: TokenStandard;
+  collection?: Collection;
 
   constructor(args: {
     updateAuthority: StringPublicKey;
@@ -106,6 +135,8 @@ export class Metadata {
     primarySaleHappened: boolean;
     isMutable: boolean;
     editionNonce: number | null;
+    //tokenStandard: TokenStandard | null;
+    collection: Collection | null;
   }) {
     this.key = MetadataKey.MetadataV1;
     this.updateAuthority = args.updateAuthority;
@@ -114,6 +145,8 @@ export class Metadata {
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
     this.editionNonce = args.editionNonce ?? null;
+    //this.tokenStandard = args.tokenStandard ?? null;
+    this.collection = args.collection ?? null;
   }
 }
 
@@ -176,6 +209,28 @@ export const METADATA_SCHEMA = new Map<any, any>([
     },
   ],
   [
+    Collection,
+    {
+      kind: 'struct',
+      fields: [
+        ['verified', 'u8'], // bool
+        ['key', 'pubkeyAsString'],
+      ],
+    },
+  ],
+  [
+    TokenStandard,
+    {
+      kind: 'struct',
+      fields: [
+        ['NonFungible', 'u8'],
+        ['FungibleAsset', 'u8'],
+        ['Fungible', 'u8'],
+        ['NonFungibleEdition', 'u8'],
+      ],
+    },
+  ],
+  [
     Metadata,
     {
       kind: 'struct',
@@ -187,6 +242,8 @@ export const METADATA_SCHEMA = new Map<any, any>([
         ['primarySaleHappened', 'u8'], // bool
         ['isMutable', 'u8'], // bool
         ['editionNonce', { kind: 'option', type: 'u8' }],
+        ['tokenStandard', { kind: 'option', type: TokenStandard }],
+        ['collection', { kind: 'option', type: Collection }],
       ],
     },
   ],
