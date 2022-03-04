@@ -1,7 +1,7 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import { Link } from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { useMeta } from '../../../../contexts';
 import { CardLoader } from '../../../../components/MyLoader';
@@ -22,21 +22,34 @@ export enum LiveAuctionViewState {
   Own = '4',
 }
 
-export const SalesListView = () => {
+export const SalesListView = (props: { collectionMintFilter?: string }) => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
   const { connected } = useWallet();
   const { auctions, hasResaleAuctions } = useAuctionsList(activeKey);
 
+  const filteredAuctions = useMemo(() => {
+    if (props.collectionMintFilter) {
+      return auctions.filter(
+        auction =>
+          auction.thumbnail.metadata.info.collection?.key ===
+          props.collectionMintFilter,
+      );
+    }
+    return auctions;
+  }, [auctions, props.collectionMintFilter]);
+
   return (
     <>
-      <Banner
-        src="/main-banner.svg"
-        headingText="The amazing world of Metaplex."
-        subHeadingText="Buy exclusive Metaplex NFTs."
-        actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
-        useBannerBg
-      />
+      {!props.collectionMintFilter && (
+        <Banner
+          src="/main-banner.svg"
+          headingText="The amazing world of Metaplex."
+          subHeadingText="Buy exclusive Metaplex NFTs."
+          actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
+          useBannerBg
+        />
+      )}
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 32 }}>
@@ -79,7 +92,7 @@ export const SalesListView = () => {
                 {isLoading &&
                   [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
                 {!isLoading &&
-                  auctions.map(auction => (
+                  filteredAuctions.map(auction => (
                     <Link
                       key={auction.auction.pubkey}
                       to={`/auction/${auction.auction.pubkey}`}

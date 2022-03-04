@@ -4,6 +4,7 @@ export const getEmptyMetaState = (): MetaState => ({
   metadata: [],
   metadataByMetadata: {},
   metadataByMint: {},
+  metadataByCollection: {},
   metadataByAuction: {},
   masterEditions: {},
   masterEditionsByPrintingMint: {},

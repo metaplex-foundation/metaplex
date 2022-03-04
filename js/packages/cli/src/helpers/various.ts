@@ -1,4 +1,4 @@
-import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, AccountInfo, PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 import weighted from 'weighted';
 import path from 'path';
@@ -531,4 +531,18 @@ export function parseUses(useMethod: string, total: number): Uses | null {
     return new Uses({ useMethod: realUseMethod, total, remaining: total });
   }
   return null;
+}
+
+export function parseCollectionMintPubkey(collectionMint: null | PublicKey) {
+  let collectionMintPubkey: null | PublicKey = null;
+  if (collectionMint) {
+    try {
+      collectionMintPubkey = new PublicKey(collectionMint);
+    } catch (error) {
+      throw new Error(
+        'Invalid Pubkey option. Please enter it as a base58 mint id',
+      );
+    }
+  }
+  return collectionMintPubkey;
 }
