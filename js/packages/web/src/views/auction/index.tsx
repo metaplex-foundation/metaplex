@@ -281,7 +281,13 @@ export const AuctionView = () => {
         <div className="margin-bottom-7">
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
           {auction && (
-            <AuctionCard auctionView={auction} hideDefaultAction={false} />
+            <AuctionCard
+              auctionView={auction}
+              hideDefaultAction={false}
+              artDescription={description}
+              artTitle={art.title}
+              artImage={data?.image}
+            />
           )}
         </div>
         {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
@@ -390,7 +396,7 @@ export const AuctionBids = ({
           <ul role="list" className="divide-y divide-color-border">
             {bidLines}
             {/* {bids.map(bid => (
-              
+
               <BidLine bid={bid} key={bid.pubkey} mint={mint} />
             ))} */}
           </ul>
