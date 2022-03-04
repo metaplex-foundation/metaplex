@@ -187,8 +187,6 @@ const Home = (props: HomeProps) => {
           await mintOneToken(candyMachine, wallet.publicKey, beforeTransactions, afterTransactions)
         );
 
-        console.log('Civic [00]', mintOne);
-        
         const mintTxId = mintOne[0];
 
         let status: any = { err: true };
@@ -200,8 +198,6 @@ const Home = (props: HomeProps) => {
             true,
           );
         }
-
-        console.log('Civic [01]', { mintTxId, status });
 
         if (status && !status.err) {
           // manual update since the refresh might not detect
@@ -225,7 +221,6 @@ const Home = (props: HomeProps) => {
       }
     } catch (error: any) {
       let message = error.msg || 'Minting failed! Please try again!';
-      console.log('Civic [02]', { error });
       if (!error.msg) {
         if (!error.message) {
           message = 'Transaction Timeout! Please try again.';
@@ -244,8 +239,6 @@ const Home = (props: HomeProps) => {
           message = `Minting period hasn't started yet.`;
         }
       }
-
-      console.log('Civic [03]', { message });
 
       setAlertState({
         open: true,
