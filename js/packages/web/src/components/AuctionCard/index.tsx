@@ -1129,7 +1129,6 @@ export const AuctionCard = ({
                     Connect wallet to{' '}
                     {auctionView.isInstantSale ? 'purchase' : 'place bid'}
                   </Button>)}
-                  {maybeCrossMintButton(auctionView, storefront)}
               </>
             )}
 
