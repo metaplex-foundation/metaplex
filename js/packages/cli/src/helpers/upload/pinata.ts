@@ -4,71 +4,67 @@ import FormData from 'form-data';
 import fs from 'fs';
 
 async function sleep(ms: number): Promise<void> {
-  console.log("waiting");
+  console.log('waiting');
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function uploadMedia(media, jwt) {
+  const data = new FormData();
+  data.append('file', fs.createReadStream(media));
+
+  const res = await fetch(`https://api.pinata.cloud/pinning/pinFileToIPFS`, {
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+    method: 'POST',
+    body: data,
+  });
+
+  const json = await res.json();
+  return json.IpfsHash;
+}
+
 export async function pinataUpload(
+  image: string,
+  animation: string,
+  manifestBuffer: Buffer,
   jwt: string,
   gateway: string | null,
-  image: string,
-  manifestBuffer: Buffer,
 ) {
   const gatewayUrl = gateway ? gateway : `https://ipfs.io`;
 
   const manifestJson = JSON.parse(fs.readFileSync(manifestBuffer, 'utf-8'));
 
-  const data = new FormData();
-  data.append('file', fs.createReadStream(image));
-
-  const resImage = await fetch(
-    `https://api.pinata.cloud/pinning/pinFileToIPFS`,
-    {
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-      method: 'POST',
-      body: data,
-    },
-  );
-
-  const imageJson = await resImage.json();
-
+  const imageCid = await uploadMedia(image, jwt);
+  log.info('uploaded image: ', imageCid);
   await sleep(500);
 
-  const { IpfsHash: imageHash } = imageJson;
+  let animationCid = undefined;
+  let animationUrl = undefined;
+  if (animation) {
+    animationCid = await uploadMedia(animation, jwt);
+    log.info('uploaded image: ', animationCid);
+  }
 
-  const mediaUrl = `${gatewayUrl}/ipfs/${imageHash}`;
+  const mediaUrl = `${gatewayUrl}/ipfs/${imageCid}`;
   manifestJson.image = mediaUrl;
   manifestJson.properties.files = manifestJson.properties.files.map(f => {
     return { ...f, uri: mediaUrl };
   });
 
-  log.info('uploaded image: ', mediaUrl);
+  if (animationCid) {
+    animationUrl = `${gatewayUrl}/ipfs/${animationCid}`;
+    manifestJson.animation_url = animationUrl;
+  }
 
   fs.writeFileSync('tempJson.json', JSON.stringify(manifestJson));
 
-  const jsonData = new FormData();
-  jsonData.append('file', fs.createReadStream('tempJson.json'));
-
-  const resJson = await fetch(
-    `https://api.pinata.cloud/pinning/pinFileToIPFS`,
-    {
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-      method: 'POST',
-      body: jsonData,
-    },
-  );
-
-  const hashJson = await resJson.json();
-  const { IpfsHash: jsonHash } = hashJson;
+  const metadataCid = await uploadMedia('tempJson.json', jwt);
 
   await sleep(500);
 
-  const link = `${gatewayUrl}/ipfs/${jsonHash}`;
+  const link = `${gatewayUrl}/ipfs/${metadataCid}`;
   log.info('uploaded manifest: ', link);
 
-  return [link, mediaUrl];
+  return [link, mediaUrl, animationUrl];
 }

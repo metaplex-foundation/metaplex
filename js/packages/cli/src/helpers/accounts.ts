@@ -122,6 +122,10 @@ export const createCandyMachineV2 = async function (
   const candyAccount = Keypair.generate();
   candyData.uuid = uuidFromConfigPubkey(candyAccount.publicKey);
 
+  if (!candyData.symbol) {
+    throw new Error(`Invalid config, there must be a symbol.`);
+  }
+
   if (!candyData.creators || candyData.creators.length === 0) {
     throw new Error(`Invalid config, there must be at least one creator.`);
   }
@@ -405,6 +409,31 @@ export const getMetadata = async (
       TOKEN_METADATA_PROGRAM_ID,
     )
   )[0];
+};
+
+export const getCollectionPDA = async (
+  candyMachineAddress: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('collection'), candyMachineAddress.toBuffer()],
+    CANDY_MACHINE_PROGRAM_V2_ID,
+  );
+};
+
+export const getCollectionAuthorityRecordPDA = async (
+  mint: anchor.web3.PublicKey,
+  newAuthority: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('metadata'),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from('collection_authority'),
+      newAuthority.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID,
+  );
 };
 
 export const getMasterEdition = async (

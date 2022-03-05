@@ -31,7 +31,7 @@ import {
   BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { MintInfo, Token } from '@solana/spl-token';
+import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
@@ -110,7 +110,7 @@ export const AuctionView = () => {
   const description = data?.description;
   const attributes = data?.attributes;
 
-  const tokenInfo = useTokenList()?.mainnetTokens.filter(
+  const tokenInfo = useTokenList()?.subscribedTokens.filter(
     m => m.address == auction?.auction.info.tokenMint,
   )[0];
 
@@ -416,7 +416,7 @@ export const AuctionView = () => {
           {auction && (
             <AuctionCard auctionView={auction} hideDefaultAction={false} />
           )}
-          {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
+          <AuctionBids auctionView={auction} />
         </Col>
       </Row>
     );
@@ -431,11 +431,11 @@ const BidLine = (props: {
   isActive?: boolean;
   mintKey: string;
 }) => {
-  const { bid, index, mint, isCancelled, isActive, mintKey } = props;
+  const { bid, mint, isCancelled, mintKey } = props;
   const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
   const isme = publicKey?.toBase58() === bidder;
-  const tokenInfo = useTokenList().mainnetTokens.filter(
+  const tokenInfo = useTokenList().subscribedTokens.filter(
     m => m.address == mintKey,
   )[0];
 
@@ -480,6 +480,7 @@ const BidLine = (props: {
                 target="_blank"
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
+                rel="noreferrer"
               >{`@${bidderTwitterHandle}`}</a>
             ) : (
               shortenAddress(bidder)
@@ -574,6 +575,7 @@ const BidLine = (props: {
                     target="_blank"
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
+                    rel="noreferrer"
                   >{`@${bidderTwitterHandle}`}</a>
                   <ClickToCopy
                     className="copy-pubkey"
@@ -649,7 +651,9 @@ export const AuctionBids = ({
   return (
     <Row>
       <Col className="bids-lists">
-        <h6 className={'info-title'}>Bid History</h6>
+        <h6 className={'info-title'}>
+          {auctionView.isInstantSale ? 'Sale' : 'Bid'} History
+        </h6>
         {bidLines.slice(0, 10)}
         {bids.length > 10 && (
           <div

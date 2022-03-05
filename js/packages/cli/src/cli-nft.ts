@@ -14,13 +14,27 @@ programCommand('mint')
   .option('-u, --url <string>', 'metadata url')
   .option(
     '-c, --collection <string>',
-    'Optional: Set this NFT as a part of a collection, Note you must be updat authority for this to work.',
+    'Optional: Set this NFT as a part of a collection, Note you must be the update authority for this to work.',
   )
   .option('-um, --use-method <string>', 'Optional: Single, Multiple, or Burn')
   .option('-tum, --total-uses <number>', 'Optional: Allowed Number of Uses')
+  .option('-ms, --max-supply <number>', 'Optional: Max Supply')
+  .option(
+    '-nvc, --no-verify-creators',
+    'Optional: Disable Verification of Creators',
+  )
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (directory, cmd) => {
-    const { keypair, env, url, collection, useMethod, totalUses } = cmd.opts();
+    const {
+      keypair,
+      env,
+      url,
+      collection,
+      useMethod,
+      totalUses,
+      maxSupply,
+      verifyCreators,
+    } = cmd.opts();
     const solConnection = new web3.Connection(getCluster(env));
     let structuredUseMethod;
     try {
@@ -33,12 +47,16 @@ programCommand('mint')
     if (collection !== undefined) {
       collectionKey = new PublicKey(collection);
     }
+    const supply = maxSupply || 0;
+
     await mintNFT(
       solConnection,
       walletKeyPair,
       url,
       true,
       collectionKey,
+      supply,
+      verifyCreators,
       structuredUseMethod,
     );
   });
@@ -52,10 +70,22 @@ programCommand('update-metadata')
   )
   .option('-um, --use-method <string>', 'Optional: Single, Multiple, or Burn')
   .option('-tum, --total-uses <number>', 'Optional: Allowed Number of Uses')
+  .option(
+    '-nvc, --no-verify-creators',
+    'Optional: Disable Verification of Creators',
+  )
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (directory, cmd) => {
-    const { keypair, env, mint, url, collection, useMethod, totalUses } =
-      cmd.opts();
+    const {
+      keypair,
+      env,
+      mint,
+      url,
+      collection,
+      useMethod,
+      totalUses,
+      verifyCreators,
+    } = cmd.opts();
     const mintKey = new PublicKey(mint);
     const solConnection = new web3.Connection(getCluster(env));
     const walletKeyPair = loadWalletKey(keypair);
@@ -79,12 +109,14 @@ programCommand('update-metadata')
     if (collection) {
       collectionKey = new PublicKey(collection);
     }
+
     await updateMetadata(
       mintKey,
       solConnection,
       walletKeyPair,
       url,
       collectionKey,
+      verifyCreators,
       structuredUseMethod,
     );
   });

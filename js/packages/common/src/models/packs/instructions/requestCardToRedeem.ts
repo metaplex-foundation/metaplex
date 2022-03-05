@@ -6,7 +6,6 @@ import {
   SystemProgram,
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
-
 import { programIds, toPublicKey, StringPublicKey } from '../../../utils';
 import { PACKS_SCHEMA, RequestCardToRedeemArgs } from '../../..';
 import { RequestCardToRedeemParams } from '..';
@@ -22,7 +21,6 @@ interface Params extends RequestCardToRedeemParams {
   voucherKey: StringPublicKey;
   tokenAccount?: StringPublicKey;
   wallet: PublicKey;
-  randomOracle: StringPublicKey;
 }
 
 export async function requestCardToRedeem({
@@ -33,7 +31,6 @@ export async function requestCardToRedeem({
   voucherKey,
   tokenAccount,
   wallet,
-  randomOracle,
 }: Params): Promise<TransactionInstruction> {
   const PROGRAM_IDS = programIds();
 
@@ -103,9 +100,9 @@ export async function requestCardToRedeem({
       isSigner: true,
       isWritable: true,
     },
-    // randomness_oracle
+    // slot hash
     {
-      pubkey: toPublicKey(randomOracle),
+      pubkey: toPublicKey(PROGRAM_IDS.oracle),
       isSigner: false,
       isWritable: false,
     },
@@ -123,7 +120,7 @@ export async function requestCardToRedeem({
     },
     // spl_token program
     {
-      pubkey: programIds().token,
+      pubkey: PROGRAM_IDS.token,
       isSigner: false,
       isWritable: false,
     },

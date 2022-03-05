@@ -12,7 +12,7 @@ export interface ArtSelectorProps extends ButtonProps {
 }
 
 export const ArtSelector = (props: ArtSelectorProps) => {
-  const { selected, setSelected, allowMultiple, ...rest } = props;
+  const { selected, setSelected, allowMultiple } = props;
   let items = useUserArts();
   if (props.filter) items = items.filter(props.filter);
   const selectedItems = useMemo<Set<string>>(
@@ -86,7 +86,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           className="content-action"
           style={{ overflowY: 'auto', height: '50vh' }}
         >
-          <div className="artwork-grid">
+          <div className="artwork-grid" style={{ maxHeight: '50%' }}>
             {items.map(m => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
@@ -112,12 +112,14 @@ export const ArtSelector = (props: ArtSelectorProps) => {
               };
 
               return (
-                <AuctionItemCard
-                  key={id}
-                  isSelected={isSelected}
-                  current={m}
-                  onSelect={onSelect}
-                />
+                <div key={id}>
+                  <AuctionItemCard
+                    key={id}
+                    isSelected={isSelected}
+                    current={m}
+                    onSelect={onSelect}
+                  />
+                </div>
               );
             })}
           </div>

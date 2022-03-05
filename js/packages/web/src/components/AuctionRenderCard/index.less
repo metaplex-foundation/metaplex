@@ -9,10 +9,13 @@
 .auction-image {
   width: 100%;
   aspect-ratio: 1/1;
-  height: 0;
-  padding-bottom: 100%;
+  height: auto;
+  /* padding-bottom: 100%; */
   overflow: hidden;
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   & > video {
     max-width: 100%;
     height: auto;
@@ -126,10 +129,6 @@
     h4 {
       opacity: 0.7;
     }
-  }
-
-  .ant-image {
-    display: block;
   }
 
   .card-art-info {

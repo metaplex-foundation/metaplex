@@ -17,6 +17,10 @@ import {
   METADATA_SCHEMA,
   UpdateMetadataArgs,
 } from '../helpers/schema';
+import {
+  getCandyMachineCreator,
+  deriveCandyMachineV2ProgramAddress,
+} from '../helpers/accounts';
 
 const SIGNING_INTERVAL = 60 * 1000; //60s
 
@@ -62,8 +66,14 @@ export async function updateMetadataFromCache(
   cacheContent: any,
   newCacheContent: any,
 ) {
+  const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+    new PublicKey(candyMachineAddress),
+  );
+  candyMachineAddress = candyMachineAddr.toBase58();
   const metadataByCandyMachine = await getAccountsByCreatorAddress(
-    candyMachineAddress,
+    (
+      await getCandyMachineCreator(new PublicKey(candyMachineAddress))
+    )[0].toBase58(),
     connection,
   );
   const differences = {};
