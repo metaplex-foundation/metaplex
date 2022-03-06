@@ -33,17 +33,17 @@ export async function pinataUpload(
 ) {
   const gatewayUrl = gateway ? gateway : `https://ipfs.io`;
 
-  const manifestJson = JSON.parse(fs.readFileSync(manifestBuffer, 'utf-8'));
+  const manifestJson = JSON.parse(manifestBuffer.toString('utf8')); //JSON.parse(fs.readFileSync(manifestBuffer, 'utf-8'));
 
   const imageCid = await uploadMedia(image, jwt);
-  log.info('uploaded image: ', imageCid);
+  log.info('uploaded image: ', `${gatewayUrl}/ipfs/${imageCid}`);
   await sleep(500);
 
   let animationCid = undefined;
   let animationUrl = undefined;
   if (animation) {
     animationCid = await uploadMedia(animation, jwt);
-    log.info('uploaded image: ', animationCid);
+    log.info('uploaded image: ', `${gatewayUrl}/ipfs/${animationCid}`);
   }
 
   const mediaUrl = `${gatewayUrl}/ipfs/${imageCid}`;

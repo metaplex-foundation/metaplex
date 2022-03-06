@@ -305,7 +305,6 @@ export async function uploadV2({
           try {
             switch (storage) {
               case StorageType.Pinata:
-                console.log('Pinata upload');
                 [link, imageLink, animationLink] = await pinataUpload(
                   image,
                   animation,
