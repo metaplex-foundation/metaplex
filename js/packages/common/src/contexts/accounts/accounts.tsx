@@ -1,32 +1,32 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
-import { AccountLayout, MintInfo, u64 } from '@solana/spl-token';
-import { useConnection } from '../../contexts/connection';
-import { TokenAccount } from '../../models';
-import { StringPublicKey, WRAPPED_SOL_MINT } from '../../utils/ids';
-import { programIds } from '../../utils/programIds';
-import { genericCache, cache } from './cache';
-import { deserializeAccount } from './deserialize';
-import { TokenAccountParser, MintParser } from './parsesrs';
+import React, { useCallback, useContext, useEffect, useState } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { AccountInfo, Connection, PublicKey } from '@solana/web3.js'
+import { AccountLayout, MintInfo, u64 } from '@solana/spl-token'
+import { useConnection } from '../../contexts/connection'
+import { TokenAccount } from '../../models'
+import { StringPublicKey, WRAPPED_SOL_MINT } from '../../utils/ids'
+import { programIds } from '../../utils/programIds'
+import { genericCache, cache } from './cache'
+import { deserializeAccount } from './deserialize'
+import { TokenAccountParser, MintParser } from './parsesrs'
 
-const AccountsContext = React.createContext<any>(null);
+const AccountsContext = React.createContext<any>(null)
 
 export const useAccountsContext = () => {
-  const context = useContext(AccountsContext);
+  const context = useContext(AccountsContext)
 
-  return context;
-};
+  return context
+}
 
 function wrapNativeAccount(
   pubkey: StringPublicKey,
-  account?: AccountInfo<Buffer>,
+  account?: AccountInfo<Buffer>
 ): TokenAccount | undefined {
   if (!account) {
-    return undefined;
+    return undefined
   }
 
-  const key = new PublicKey(pubkey);
+  const key = new PublicKey(pubkey)
 
   return {
     pubkey: pubkey,
@@ -44,133 +44,124 @@ function wrapNativeAccount(
       rentExemptReserve: null,
       closeAuthority: null,
     },
-  };
+  }
 }
 
 const UseNativeAccount = () => {
-  const connection = useConnection();
-  const { publicKey } = useWallet();
+  const connection = useConnection()
+  const { publicKey } = useWallet()
 
-  const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
+  const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>()
 
   const updateCache = useCallback(
     account => {
       if (publicKey) {
-        const wrapped = wrapNativeAccount(publicKey.toBase58(), account);
+        const wrapped = wrapNativeAccount(publicKey.toBase58(), account)
         if (wrapped !== undefined) {
-          const id = publicKey.toBase58();
-          cache.registerParser(id, TokenAccountParser);
-          genericCache.set(id, wrapped as TokenAccount);
-          cache.emitter.raiseCacheUpdated(id, false, TokenAccountParser, true);
+          const id = publicKey.toBase58()
+          cache.registerParser(id, TokenAccountParser)
+          genericCache.set(id, wrapped as TokenAccount)
+          cache.emitter.raiseCacheUpdated(id, false, TokenAccountParser, true)
         }
       }
     },
-    [publicKey],
-  );
+    [publicKey]
+  )
 
   useEffect(() => {
-    let subId = 0;
+    let subId = 0
     const updateAccount = (account: AccountInfo<Buffer> | null) => {
       if (account) {
-        updateCache(account);
-        setNativeAccount(account);
+        updateCache(account)
+        setNativeAccount(account)
       }
-    };
+    }
 
-    (async () => {
+    ;(async () => {
       if (!connection || !publicKey) {
-        return;
+        return
       }
 
-      const account = await connection.getAccountInfo(publicKey);
-      updateAccount(account);
+      const account = await connection.getAccountInfo(publicKey)
+      updateAccount(account)
 
-      subId = connection.onAccountChange(publicKey, updateAccount);
-    })();
+      subId = connection.onAccountChange(publicKey, updateAccount)
+    })()
 
     return () => {
       if (subId) {
-        connection.removeAccountChangeListener(subId);
+        connection.removeAccountChangeListener(subId)
       }
-    };
-  }, [setNativeAccount, publicKey, connection, updateCache]);
+    }
+  }, [setNativeAccount, publicKey, connection, updateCache])
 
-  return { nativeAccount };
-};
+  return { nativeAccount }
+}
 
-const PRECACHED_OWNERS = new Set<string>();
-const precacheUserTokenAccounts = async (
-  connection: Connection,
-  owner?: PublicKey,
-) => {
+const PRECACHED_OWNERS = new Set<string>()
+const precacheUserTokenAccounts = async (connection: Connection, owner?: PublicKey) => {
   if (!owner) {
-    return;
+    return
   }
 
   // used for filtering account updates over websocket
-  PRECACHED_OWNERS.add(owner.toBase58());
+  PRECACHED_OWNERS.add(owner.toBase58())
 
   // user accounts are updated via ws subscription
   const accounts = await connection.getTokenAccountsByOwner(owner, {
     programId: programIds().token,
-  });
+  })
 
   accounts.value.forEach(info => {
-    cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
-  });
-};
+    cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser)
+  })
+}
 
-export function AccountsProvider({
-  children = null,
-}: {
-  children: React.ReactNode;
-}) {
-  const connection = useConnection();
-  const { publicKey } = useWallet();
-  const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
-  const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
-  const { nativeAccount } = UseNativeAccount();
-  const walletKey = publicKey?.toBase58();
+export function AccountsProvider({ children = null }: { children: React.ReactNode }) {
+  const connection = useConnection()
+  const { publicKey } = useWallet()
+  const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([])
+  const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([])
+  const { nativeAccount } = UseNativeAccount()
+  const walletKey = publicKey?.toBase58()
 
   const selectUserAccounts = useCallback(() => {
     return cache
       .byParser(TokenAccountParser)
       .map(id => cache.get(id))
       .filter(a => a && a.info.owner.toBase58() === walletKey)
-      .map(a => a as TokenAccount);
-  }, [walletKey, nativeAccount]);
+      .map(a => a as TokenAccount)
+  }, [walletKey, nativeAccount])
 
   useEffect(() => {
-    const accounts = selectUserAccounts().filter(
-      a => a !== undefined,
-    ) as TokenAccount[];
-    setUserAccounts(accounts);
-  }, [nativeAccount, tokenAccounts, selectUserAccounts]);
+    const accounts = selectUserAccounts().filter(a => a !== undefined) as TokenAccount[]
+    setUserAccounts(accounts)
+  }, [nativeAccount, tokenAccounts, selectUserAccounts])
 
   useEffect(() => {
-    const subs: number[] = [];
+    const subs: number[] = []
     cache.emitter.onCache(args => {
       if (args.isNew && args.isActive) {
-        const id = args.id;
-        const deserialize = args.parser;
+        const id = args.id
+        const deserialize = args.parser
         connection.onAccountChange(new PublicKey(id), info => {
-          cache.add(id, info, deserialize);
-        });
+          cache.add(id, info, deserialize)
+        })
       }
-    });
+    })
 
     return () => {
-      subs.forEach(id => connection.removeAccountChangeListener(id));
-    };
-  }, [connection]);
+      subs.forEach(id => connection.removeAccountChangeListener(id))
+    }
+  }, [connection])
 
   useEffect(() => {
     if (!connection || !publicKey) {
-      setTokenAccounts([]);
+      setTokenAccounts([])
     } else {
       precacheUserTokenAccounts(connection, publicKey).then(() => {
-        setTokenAccounts(selectUserAccounts());
-      });
+        setTokenAccounts(selectUserAccounts())
+      })
 
       // This can return different types of accounts: token-account, mint, multisig
       // TODO: web3.js expose ability to filter.
@@ -179,25 +170,25 @@ export function AccountsProvider({
         programIds().token,
         info => {
           // TODO: fix type in web3.js
-          const id = info.accountId as unknown as string;
+          const id = info.accountId as unknown as string
           // TODO: do we need a better way to identify layout (maybe a enum identifing type?)
           if (info.accountInfo.data.length === AccountLayout.span) {
-            const data = deserializeAccount(info.accountInfo.data);
+            const data = deserializeAccount(info.accountInfo.data)
 
             if (PRECACHED_OWNERS.has(data.owner.toBase58())) {
-              cache.add(id, info.accountInfo, TokenAccountParser);
-              setTokenAccounts(selectUserAccounts());
+              cache.add(id, info.accountInfo, TokenAccountParser)
+              setTokenAccounts(selectUserAccounts())
             }
           }
         },
-        'singleGossip',
-      );
+        'singleGossip'
+      )
 
       return () => {
-        connection.removeProgramAccountChangeListener(tokenSubID);
-      };
+        connection.removeProgramAccountChangeListener(tokenSubID)
+      }
     }
-  }, [connection, publicKey, selectUserAccounts]);
+  }, [connection, publicKey, selectUserAccounts])
 
   return (
     <AccountsContext.Provider
@@ -208,83 +199,81 @@ export function AccountsProvider({
     >
       {children}
     </AccountsContext.Provider>
-  );
+  )
 }
 
 export function useNativeAccount() {
-  const context = useContext(AccountsContext);
+  const context = useContext(AccountsContext)
   return {
     account: context.nativeAccount as AccountInfo<Buffer>,
-  };
+  }
 }
 
 export function useMint(key?: string | PublicKey) {
-  const connection = useConnection();
-  const [mint, setMint] = useState<MintInfo>();
+  const connection = useConnection()
+  const [mint, setMint] = useState<MintInfo>()
 
-  const id = typeof key === 'string' ? key : key?.toBase58();
+  const id = typeof key === 'string' ? key : key?.toBase58()
 
   useEffect(() => {
     if (!id) {
-      return;
+      return
     }
 
     cache
       .query(connection, id, MintParser)
       .then(acc => setMint(acc.info as any))
-      .catch(err => console.log(err));
+      .catch(err => console.log(err))
 
     const dispose = cache.emitter.onCache(e => {
-      const event = e;
+      const event = e
       if (event.id === id) {
-        cache
-          .query(connection, id, MintParser)
-          .then(mint => setMint(mint.info as any));
+        cache.query(connection, id, MintParser).then(mint => setMint(mint.info as any))
       }
-    });
+    })
     return () => {
-      dispose();
-    };
-  }, [connection, id]);
+      dispose()
+    }
+  }, [connection, id])
 
-  return mint;
+  return mint
 }
 
 export function useAccount(pubKey?: PublicKey) {
-  const connection = useConnection();
-  const [account, setAccount] = useState<TokenAccount>();
+  const connection = useConnection()
+  const [account, setAccount] = useState<TokenAccount>()
 
-  const key = pubKey?.toBase58();
+  const key = pubKey?.toBase58()
   useEffect(() => {
     const query = async () => {
       try {
         if (!key) {
-          return;
+          return
         }
 
         const acc = await cache
           .query(connection, key, TokenAccountParser)
-          .catch(err => console.log(err));
+          .catch(err => console.log(err))
         if (acc) {
-          setAccount(acc);
+          setAccount(acc)
         }
       } catch (err) {
-        console.error(err);
+        console.error(err)
       }
-    };
+    }
 
-    query();
+    query()
 
     const dispose = cache.emitter.onCache(e => {
-      const event = e;
+      const event = e
       if (event.id === key) {
-        query();
+        query()
       }
-    });
+    })
     return () => {
-      dispose();
-    };
-  }, [connection, key]);
+      dispose()
+    }
+  }, [connection, key])
 
-  return account;
+  return account
 }

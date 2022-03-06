@@ -1,12 +1,12 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
-import { Layout, Button, Col, Spin } from 'antd';
-import { useMeta } from '../../contexts';
+import React, { Dispatch, SetStateAction, useState } from 'react'
+import { Layout, Button, Col, Spin } from 'antd'
+import { useMeta } from '../../contexts'
 import {
   AuctionManagerV1,
   AuctionManagerV2,
   WinningConfigType,
-} from '@oyster/common/dist/lib/models/metaplex/index';
-import { Pie, Bar } from 'react-chartjs-2';
+} from '@oyster/common/dist/lib/models/metaplex/index'
+import { Pie, Bar } from 'react-chartjs-2'
 import {
   AuctionDataExtended,
   BidderPot,
@@ -16,16 +16,16 @@ import {
   ParsedAccount,
   programIds,
   useMint,
-} from '@oyster/common';
-import { AuctionView, useAuctions } from '../../hooks';
-import { QUOTE_MINT } from '../../constants';
-import { MintInfo } from '@solana/spl-token';
+} from '@oyster/common'
+import { AuctionView, useAuctions } from '../../hooks'
+import { QUOTE_MINT } from '../../constants'
+import { MintInfo } from '@solana/spl-token'
 
-const { Content } = Layout;
+const { Content } = Layout
 export const AnalyticsView = () => {
-  const mint = useMint(QUOTE_MINT);
-  return mint ? <InnerAnalytics mint={mint} /> : <Spin />;
-};
+  const mint = useMint(QUOTE_MINT)
+  return mint ? <InnerAnalytics mint={mint} /> : <Spin />
+}
 
 enum AuctionType {
   Open,
@@ -34,7 +34,7 @@ enum AuctionType {
   OneOfKind,
 }
 
-const LOOKUP: Record<string, string> = {};
+const LOOKUP: Record<string, string> = {}
 
 const rerun = async ({
   auctionViews,
@@ -53,124 +53,114 @@ const rerun = async ({
   setUsersBid,
   setUsersEngaged,
 }: {
-  auctionViews: AuctionView[];
-  auctionManagersByAuction: Record<
-    string,
-    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
-  >;
-  usersEngaged: Record<string, boolean>;
-  auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>;
-  bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>;
-  metadata: ParsedAccount<Metadata>[];
-  setByType: (rec: Record<AuctionType, number>) => void;
-  setAverageBids: (num: number) => void;
-  setUsersPublished: (rec: Record<string, boolean>) => void;
-  setAverageSale: (num: number) => void;
-  setHighestSale: (num: number) => void;
-  setSortedSales: (num: number[]) => void;
-  setUsersWithMetadata: (rec: Record<string, boolean>) => void;
-  setUsersBid: (rec: Record<string, boolean>) => void;
-  setUsersEngaged: Dispatch<SetStateAction<Record<string, boolean>>>;
+  auctionViews: AuctionView[]
+  auctionManagersByAuction: Record<string, ParsedAccount<AuctionManagerV1 | AuctionManagerV2>>
+  usersEngaged: Record<string, boolean>
+  auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>
+  bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>
+  metadata: ParsedAccount<Metadata>[]
+  setByType: (rec: Record<AuctionType, number>) => void
+  setAverageBids: (num: number) => void
+  setUsersPublished: (rec: Record<string, boolean>) => void
+  setAverageSale: (num: number) => void
+  setHighestSale: (num: number) => void
+  setSortedSales: (num: number[]) => void
+  setUsersWithMetadata: (rec: Record<string, boolean>) => void
+  setUsersBid: (rec: Record<string, boolean>) => void
+  setUsersEngaged: Dispatch<SetStateAction<Record<string, boolean>>>
 }) => {
-  let averageBidders = 0;
-  let newAverageSale = 0;
-  let newHighestSale = 0;
-  let totalAuctions = 0;
+  let averageBidders = 0
+  let newAverageSale = 0
+  let newHighestSale = 0
+  let totalAuctions = 0
   const newByType: Record<AuctionType, number> = {
     [AuctionType.Open]: 0,
     [AuctionType.Limited]: 0,
     [AuctionType.Tiered]: 0,
     [AuctionType.OneOfKind]: 0,
-  };
-  const newUsersPublished: Record<string, boolean> = {};
-  const existingUsersEngaged = { ...usersEngaged };
-  let newSortedSales: number[] = [];
-  const PROGRAM_IDS = programIds();
+  }
+  const newUsersPublished: Record<string, boolean> = {}
+  const existingUsersEngaged = { ...usersEngaged }
+  let newSortedSales: number[] = []
+  const PROGRAM_IDS = programIds()
 
   for (let i = 0; i < auctionViews.length; i++) {
-    const auction = auctionViews[i];
+    const auction = auctionViews[i]
     // Not entirely correct because we're not covering open edition auction bids
     // and their amounts which are super hard to track, but I think they
     // are probably a minority anyway.
-    if (
-      auction.auction.info.ended() &&
-      auction.auction.info.tokenMint === QUOTE_MINT.toBase58()
-    ) {
+    if (auction.auction.info.ended() && auction.auction.info.tokenMint === QUOTE_MINT.toBase58()) {
       if (!LOOKUP[auction.auction.pubkey]) {
         LOOKUP[auction.auction.pubkey] = await getAuctionExtended({
           auctionProgramId: PROGRAM_IDS.auction,
           resource: auction.vault.pubkey,
-        });
+        })
       }
-      const extended = auctionDataExtended[LOOKUP[auction.auction.pubkey]];
+      const extended = auctionDataExtended[LOOKUP[auction.auction.pubkey]]
       if (extended && extended.info.totalUncancelledBids.toNumber() > 0) {
-        totalAuctions++;
-        averageBidders += extended.info.totalUncancelledBids.toNumber();
-        const bids = auction.auction.info.bidState;
-        const highestBid = bids.getAmountAt(0);
+        totalAuctions++
+        averageBidders += extended.info.totalUncancelledBids.toNumber()
+        const bids = auction.auction.info.bidState
+        const highestBid = bids.getAmountAt(0)
         if (highestBid && highestBid.toNumber() > newHighestSale) {
-          newHighestSale = highestBid.toNumber();
+          newHighestSale = highestBid.toNumber()
         }
         const allWinningBids = bids.bids
           .slice(bids.bids.length - bids.max.toNumber())
-          .map(i => i.amount.toNumber());
-        newAverageSale += allWinningBids.reduce((acc, r) => (acc += r), 0);
-        newSortedSales = newSortedSales.concat(allWinningBids);
+          .map(i => i.amount.toNumber())
+        newAverageSale += allWinningBids.reduce((acc, r) => (acc += r), 0)
+        newSortedSales = newSortedSales.concat(allWinningBids)
       }
     }
 
-    newUsersPublished[auction.auctionManager.authority] = true;
-    existingUsersEngaged[auction.auctionManager.authority] = true;
+    newUsersPublished[auction.auctionManager.authority] = true
+    existingUsersEngaged[auction.auctionManager.authority] = true
 
-    let type: AuctionType | undefined = undefined;
+    let type: AuctionType | undefined = undefined
     if (auction.items.find(set => set.length > 1)) {
-      type = AuctionType.Tiered;
+      type = AuctionType.Tiered
     } else if (auction.items.length && auction.items[0].length) {
       type =
-        auction.items[0][0].winningConfigType ==
-        WinningConfigType.TokenOnlyTransfer
+        auction.items[0][0].winningConfigType == WinningConfigType.TokenOnlyTransfer
           ? AuctionType.OneOfKind
-          : AuctionType.Limited;
+          : AuctionType.Limited
     } else {
-      type = AuctionType.Open;
+      type = AuctionType.Open
     }
 
-    newByType[type]++;
+    newByType[type]++
   }
 
-  const newUsersBid: Record<string, boolean> = {};
+  const newUsersBid: Record<string, boolean> = {}
   Object.values(bidderPotsByAuctionAndBidder).forEach(acct => {
     if (auctionManagersByAuction[acct.info.auctionAct]) {
-      newUsersBid[acct.info.bidderAct] = true;
-      existingUsersEngaged[acct.info.bidderAct] = true;
+      newUsersBid[acct.info.bidderAct] = true
+      existingUsersEngaged[acct.info.bidderAct] = true
     }
-  });
+  })
 
-  const newBuild: Record<string, boolean> = {};
+  const newBuild: Record<string, boolean> = {}
   metadata.forEach(acct => {
-    newBuild[acct.info.updateAuthority] = true;
-    existingUsersEngaged[acct.info.updateAuthority] = true;
+    newBuild[acct.info.updateAuthority] = true
+    existingUsersEngaged[acct.info.updateAuthority] = true
     acct.info.data.creators?.forEach(c => {
-      newBuild[c.address] = true;
-      existingUsersEngaged[c.address] = true;
-    });
-  });
+      newBuild[c.address] = true
+      existingUsersEngaged[c.address] = true
+    })
+  })
 
-  setByType(newByType);
-  setAverageBids(averageBidders / totalAuctions);
-  setUsersPublished(newUsersPublished);
-  setAverageSale(newAverageSale / totalAuctions);
-  setHighestSale(newHighestSale);
-  setSortedSales(newSortedSales.sort());
-  setUsersWithMetadata(newBuild);
-  setUsersBid(newUsersBid);
-  setUsersEngaged(engaged => ({ ...engaged, ...existingUsersEngaged }));
-};
+  setByType(newByType)
+  setAverageBids(averageBidders / totalAuctions)
+  setUsersPublished(newUsersPublished)
+  setAverageSale(newAverageSale / totalAuctions)
+  setHighestSale(newHighestSale)
+  setSortedSales(newSortedSales.sort())
+  setUsersWithMetadata(newBuild)
+  setUsersBid(newUsersBid)
+  setUsersEngaged(engaged => ({ ...engaged, ...existingUsersEngaged }))
+}
 
-const MemoizedBar = React.memo(function BarImpl(props: {
-  sortedSales: number[];
-  mint: MintInfo;
-}) {
+const MemoizedBar = React.memo(function BarImpl(props: { sortedSales: number[]; mint: MintInfo }) {
   const histogrammedData: Record<number, number> = {
     0: 0,
     5: 0,
@@ -180,23 +170,21 @@ const MemoizedBar = React.memo(function BarImpl(props: {
     500: 0,
     1000: 0,
     10000: 0,
-  };
-  const asArray = [0, 5, 20, 50, 100, 500, 1000, 10000];
+  }
+  const asArray = [0, 5, 20, 50, 100, 500, 1000, 10000]
 
   for (let i = 0; i < asArray.length; i++) {
-    const currRange = asArray[i];
+    const currRange = asArray[i]
 
     if (i < asArray.length - 1) {
-      const nextRange = asArray[i + 1];
+      const nextRange = asArray[i + 1]
       histogrammedData[currRange] = props.sortedSales.filter(
-        s =>
-          fromLamports(s, props.mint) >= currRange &&
-          fromLamports(s, props.mint) < nextRange,
-      ).length;
+        s => fromLamports(s, props.mint) >= currRange && fromLamports(s, props.mint) < nextRange
+      ).length
     } else {
       histogrammedData[currRange] = props.sortedSales.filter(
-        s => fromLamports(s, props.mint) >= currRange,
-      ).length;
+        s => fromLamports(s, props.mint) >= currRange
+      ).length
     }
   }
 
@@ -238,7 +226,7 @@ const MemoizedBar = React.memo(function BarImpl(props: {
         borderWidth: 1,
       },
     ],
-  };
+  }
 
   const histoOptions = {
     scales: {
@@ -250,14 +238,12 @@ const MemoizedBar = React.memo(function BarImpl(props: {
         },
       ],
     },
-  };
+  }
   // @ts-ignore
-  return <Bar data={histoData} options={histoOptions} />;
-});
+  return <Bar data={histoData} options={histoOptions} />
+})
 
-const MemoizedPie = React.memo(function PieImpl(props: {
-  byType: Record<AuctionType, number>;
-}) {
+const MemoizedPie = React.memo(function PieImpl(props: { byType: Record<AuctionType, number> }) {
   const pieData = {
     labels: ['Open', 'Limited', 'Tiered', 'One of a Kind'],
     datasets: [
@@ -284,52 +270,48 @@ const MemoizedPie = React.memo(function PieImpl(props: {
         borderWidth: 1,
       },
     ],
-  };
+  }
 
-  return <Pie data={pieData} />;
-});
+  return <Pie data={pieData} />
+})
 
 function InnerAnalytics({ mint }: { mint: MintInfo }) {
-  const [usersWithMetadata, setUsersWithMetadata] = useState<
-    Record<string, boolean>
-  >({});
-  const [usersPublished, setUsersPublished] = useState<Record<string, boolean>>(
-    {},
-  );
-  const [usersBid, setUsersBid] = useState<Record<string, boolean>>({});
+  const [usersWithMetadata, setUsersWithMetadata] = useState<Record<string, boolean>>({})
+  const [usersPublished, setUsersPublished] = useState<Record<string, boolean>>({})
+  const [usersBid, setUsersBid] = useState<Record<string, boolean>>({})
 
-  const [usersEngaged, setUsersEngaged] = useState<Record<string, boolean>>({});
+  const [usersEngaged, setUsersEngaged] = useState<Record<string, boolean>>({})
   const [byType, setByType] = useState<Record<AuctionType, number>>({
     [AuctionType.Open]: 0,
     [AuctionType.Limited]: 0,
     [AuctionType.Tiered]: 0,
     [AuctionType.OneOfKind]: 0,
-  });
-  const [averageBids, setAverageBids] = useState<number>(0);
-  const [averageSale, setAverageSale] = useState<number>(0);
-  const [highestSale, setHighestSale] = useState<number>(0);
+  })
+  const [averageBids, setAverageBids] = useState<number>(0)
+  const [averageSale, setAverageSale] = useState<number>(0)
+  const [highestSale, setHighestSale] = useState<number>(0)
 
-  const [sortedSales, setSortedSales] = useState<number[]>([]);
+  const [sortedSales, setSortedSales] = useState<number[]>([])
   const {
     metadata,
     // stores,
     auctionManagersByAuction,
     bidderPotsByAuctionAndBidder,
     auctionDataExtended,
-  } = useMeta();
+  } = useMeta()
 
-  const totalNFTs = metadata.length;
+  const totalNFTs = metadata.length
   // const totalMarketplaces = Object.values(stores).length;
 
-  const auctionViews = useAuctions();
+  const auctionViews = useAuctions()
 
   return (
     <Content>
       <Col style={{ marginTop: 10 }}>
         <Button
-          type="primary"
-          size="large"
-          className="action-btn"
+          type='primary'
+          size='large'
+          className='action-btn'
           onClick={() =>
             rerun({
               auctionViews,
@@ -367,7 +349,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
           Total Sales: ◎
           {fromLamports(
             sortedSales.reduce((acc, r) => (acc += r), 0),
-            mint,
+            mint
           )}
         </h3>
         <MemoizedBar sortedSales={sortedSales} mint={mint} />
@@ -379,5 +361,5 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
         <MemoizedPie byType={byType} />
       </Col>
     </Content>
-  );
+  )
 }

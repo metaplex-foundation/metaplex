@@ -1,9 +1,5 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
 import {
   getAuctionKeys,
@@ -13,14 +9,9 @@ import {
   RedeemBidArgs,
   RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
   SCHEMA,
-} from '.';
-import { VAULT_PREFIX, getAuctionExtended } from '../../actions';
-import {
-  findProgramAddress,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-} from '../../utils';
+} from '.'
+import { VAULT_PREFIX, getAuctionExtended } from '../../actions'
+import { findProgramAddress, programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function redeemBid(
   vault: StringPublicKey,
@@ -37,20 +28,17 @@ export async function redeemBid(
   // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
   // and this will instead call the proxy route instead of the real one, wrapping the original
   // redemption call in an override call that forces the winning index if the auctioneer is authorized.
-  auctioneerReclaimIndex?: number,
+  auctioneerReclaimIndex?: number
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
-  const { bidRedemption, bidMetadata } = await getBidderKeys(
-    auctionKey,
-    bidder,
-  );
+  const { bidRedemption, bidMetadata } = await getBidderKeys(auctionKey, bidder)
 
   const transferAuthority: StringPublicKey = (
     await findProgramAddress(
@@ -59,19 +47,16 @@ export async function redeemBid(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault),
+      toPublicKey(PROGRAM_IDS.vault)
     )
-  )[0];
+  )[0]
 
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
+  const safetyDepositConfig = await getSafetyDepositConfig(auctionManagerKey, safetyDeposit)
 
   const auctionExtended = await getAuctionExtended({
     auctionProgramId: PROGRAM_IDS.auction,
     resource: vault,
-  });
+  })
 
   const value =
     auctioneerReclaimIndex !== undefined
@@ -79,8 +64,8 @@ export async function redeemBid(
           winningConfigItemIndex: auctioneerReclaimIndex,
           proxyCall: ProxyCallAddress.RedeemBid,
         })
-      : new RedeemBidArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+      : new RedeemBidArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
   const keys = [
     {
       pubkey: toPublicKey(auctionManagerKey),
@@ -182,19 +167,19 @@ export async function redeemBid(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   if (isPrintingType && masterEdition && reservationList) {
     keys.push({
       pubkey: toPublicKey(masterEdition),
       isSigner: false,
       isWritable: true,
-    });
+    })
     keys.push({
       pubkey: toPublicKey(reservationList),
       isSigner: false,
       isWritable: true,
-    });
+    })
   }
 
   instructions.push(
@@ -202,6 +187,6 @@ export async function redeemBid(
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

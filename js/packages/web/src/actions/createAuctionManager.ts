@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  TransactionInstruction,
-  SystemProgram,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction, SystemProgram } from '@solana/web3.js'
 import {
   Metadata,
   ParsedAccount,
@@ -25,10 +20,10 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
-} from '@oyster/common';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { AccountLayout, Token } from '@solana/spl-token';
-import BN from 'bn.js';
+} from '@oyster/common'
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
+import { AccountLayout, Token } from '@solana/spl-token'
+import BN from 'bn.js'
 import {
   WinningConfigType,
   getAuctionKeys,
@@ -41,62 +36,59 @@ import {
   SafetyDepositConfig,
   ParticipationStateV2,
   StoreIndexer,
-} from '@oyster/common/dist/lib/models/metaplex/index';
-import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
-import { createVault } from './createVault';
-import { closeVault } from './closeVault';
-import {
-  addTokensToVault,
-  SafetyDepositInstructionTemplate,
-} from './addTokensToVault';
-import { makeAuction } from './makeAuction';
-import { createExternalPriceAccount } from './createExternalPriceAccount';
-import { deprecatedValidateParticipation } from '@oyster/common/dist/lib/models/metaplex/deprecatedValidateParticipation';
-import { deprecatedCreateReservationListForTokens } from './deprecatedCreateReservationListsForTokens';
-import { deprecatedPopulatePrintingTokens } from './deprecatedPopulatePrintingTokens';
-import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
-import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
-import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV2';
-import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2';
-import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
+} from '@oyster/common/dist/lib/models/metaplex/index'
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account'
+import { createVault } from './createVault'
+import { closeVault } from './closeVault'
+import { addTokensToVault, SafetyDepositInstructionTemplate } from './addTokensToVault'
+import { makeAuction } from './makeAuction'
+import { createExternalPriceAccount } from './createExternalPriceAccount'
+import { deprecatedValidateParticipation } from '@oyster/common/dist/lib/models/metaplex/deprecatedValidateParticipation'
+import { deprecatedCreateReservationListForTokens } from './deprecatedCreateReservationListsForTokens'
+import { deprecatedPopulatePrintingTokens } from './deprecatedPopulatePrintingTokens'
+import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities'
+import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold'
+import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV2'
+import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2'
+import { cacheAuctionIndexer } from './cacheAuctionInIndexer'
 
 interface normalPattern {
-  instructions: TransactionInstruction[];
-  signers: Keypair[];
+  instructions: TransactionInstruction[]
+  signers: Keypair[]
 }
 
 interface arrayPattern {
-  instructions: TransactionInstruction[][];
-  signers: Keypair[][];
+  instructions: TransactionInstruction[][]
+  signers: Keypair[][]
 }
 
 interface byType {
-  markItemsThatArentMineAsSold: arrayPattern;
-  addTokens: arrayPattern;
-  deprecatedCreateReservationList: arrayPattern;
-  validateBoxes: arrayPattern;
-  createVault: normalPattern;
-  closeVault: normalPattern;
-  makeAuction: normalPattern;
-  initAuctionManager: normalPattern;
-  startAuction: normalPattern;
-  setVaultAndAuctionAuthorities: normalPattern;
-  externalPriceAccount: normalPattern;
-  deprecatedValidateParticipation?: normalPattern;
-  deprecatedBuildAndPopulateOneTimeAuthorizationAccount?: normalPattern;
-  deprecatedPopulatePrintingTokens: arrayPattern;
-  cacheAuctionIndexer: arrayPattern;
+  markItemsThatArentMineAsSold: arrayPattern
+  addTokens: arrayPattern
+  deprecatedCreateReservationList: arrayPattern
+  validateBoxes: arrayPattern
+  createVault: normalPattern
+  closeVault: normalPattern
+  makeAuction: normalPattern
+  initAuctionManager: normalPattern
+  startAuction: normalPattern
+  setVaultAndAuctionAuthorities: normalPattern
+  externalPriceAccount: normalPattern
+  deprecatedValidateParticipation?: normalPattern
+  deprecatedBuildAndPopulateOneTimeAuthorizationAccount?: normalPattern
+  deprecatedPopulatePrintingTokens: arrayPattern
+  cacheAuctionIndexer: arrayPattern
 }
 
 export interface SafetyDepositDraft {
-  metadata: ParsedAccount<Metadata>;
-  masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
-  edition?: ParsedAccount<Edition>;
-  holding: StringPublicKey;
-  printingMintHolding?: StringPublicKey;
-  winningConfigType: WinningConfigType;
-  amountRanges: AmountRange[];
-  participationConfig?: ParticipationConfigV2;
+  metadata: ParsedAccount<Metadata>
+  masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>
+  edition?: ParsedAccount<Edition>
+  holding: StringPublicKey
+  printingMintHolding?: StringPublicKey
+  winningConfigType: WinningConfigType
+  amountRanges: AmountRange[]
+  participationConfig?: ParticipationConfigV2
 }
 
 // This is a super command that executes many transactions to create a Vault, Auction, and AuctionManager starting
@@ -104,30 +96,25 @@ export interface SafetyDepositDraft {
 export async function createAuctionManager(
   connection: Connection,
   wallet: WalletSigner,
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >,
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>,
   auctionSettings: IPartialCreateAuctionArgs,
   safetyDepositDrafts: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
   paymentMint: StringPublicKey,
-  storeIndexer: ParsedAccount<StoreIndexer>[],
+  storeIndexer: ParsedAccount<StoreIndexer>[]
 ): Promise<{
-  vault: StringPublicKey;
-  auction: StringPublicKey;
-  auctionManager: StringPublicKey;
+  vault: StringPublicKey
+  auction: StringPublicKey
+  auctionManager: StringPublicKey
 }> {
-  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span)
 
   const {
     externalPriceAccount,
     priceMint,
     instructions: epaInstructions,
     signers: epaSigners,
-  } = await createExternalPriceAccount(connection, wallet);
+  } = await createExternalPriceAccount(connection, wallet)
 
   const {
     instructions: createVaultInstructions,
@@ -136,20 +123,19 @@ export async function createAuctionManager(
     fractionalMint,
     redeemTreasury,
     fractionTreasury,
-  } = await createVault(connection, wallet, priceMint, externalPriceAccount);
+  } = await createVault(connection, wallet, priceMint, externalPriceAccount)
 
   const {
     instructions: makeAuctionInstructions,
     signers: makeAuctionSigners,
     auction,
-  } = await makeAuction(wallet, vault, auctionSettings);
+  } = await makeAuction(wallet, vault, auctionSettings)
 
-  const safetyDepositConfigsWithPotentiallyUnsetTokens =
-    await buildSafetyDepositArray(
-      wallet,
-      safetyDepositDrafts,
-      participationSafetyDepositDraft,
-    );
+  const safetyDepositConfigsWithPotentiallyUnsetTokens = await buildSafetyDepositArray(
+    wallet,
+    safetyDepositDrafts,
+    participationSafetyDepositDraft
+  )
 
   // Only creates for PrintingV1 deprecated configs
   const {
@@ -159,8 +145,8 @@ export async function createAuctionManager(
   } = await deprecatedPopulatePrintingTokens(
     connection,
     wallet,
-    safetyDepositConfigsWithPotentiallyUnsetTokens,
-  );
+    safetyDepositConfigsWithPotentiallyUnsetTokens
+  )
 
   const {
     instructions: auctionManagerInstructions,
@@ -172,30 +158,21 @@ export async function createAuctionManager(
     paymentMint,
     accountRentExempt,
     safetyDepositConfigs,
-    auctionSettings,
-  );
+    auctionSettings
+  )
 
   const {
     instructions: addTokenInstructions,
     signers: addTokenSigners,
     safetyDepositTokenStores,
-  } = await addTokensToVault(connection, wallet, vault, safetyDepositConfigs);
+  } = await addTokensToVault(connection, wallet, vault, safetyDepositConfigs)
 
   // Only creates for deprecated PrintingV1 configs
-  const {
-    instructions: createReservationInstructions,
-    signers: createReservationSigners,
-  } = await deprecatedCreateReservationListForTokens(
-    wallet,
-    auctionManager,
-    safetyDepositConfigs,
-  );
+  const { instructions: createReservationInstructions, signers: createReservationSigners } =
+    await deprecatedCreateReservationListForTokens(wallet, auctionManager, safetyDepositConfigs)
 
   const lookup: byType = {
-    markItemsThatArentMineAsSold: await markItemsThatArentMineAsSold(
-      wallet,
-      safetyDepositDrafts,
-    ),
+    markItemsThatArentMineAsSold: await markItemsThatArentMineAsSold(wallet, safetyDepositDrafts),
     externalPriceAccount: {
       instructions: epaInstructions,
       signers: epaSigners,
@@ -212,7 +189,7 @@ export async function createAuctionManager(
       fractionTreasury,
       redeemTreasury,
       priceMint,
-      externalPriceAccount,
+      externalPriceAccount
     ),
     addTokens: { instructions: addTokenInstructions, signers: addTokenSigners },
     deprecatedCreateReservationList: {
@@ -231,7 +208,7 @@ export async function createAuctionManager(
       wallet,
       vault,
       auction,
-      auctionManager,
+      auctionManager
     ),
     startAuction: await setupStartAuction(wallet, vault),
     deprecatedValidateParticipation: participationSafetyDepositDraft
@@ -242,19 +219,17 @@ export async function createAuctionManager(
           vault,
           safetyDepositTokenStores[safetyDepositTokenStores.length - 1], // The last one is always the participation
           participationSafetyDepositDraft,
-          accountRentExempt,
+          accountRentExempt
         )
       : undefined,
-    deprecatedBuildAndPopulateOneTimeAuthorizationAccount:
-      participationSafetyDepositDraft
-        ? await deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
-            connection,
-            wallet,
-            (
-              participationSafetyDepositDraft?.masterEdition as ParsedAccount<MasterEditionV1>
-            )?.info.oneTimePrintingAuthorizationMint,
-          )
-        : undefined,
+    deprecatedBuildAndPopulateOneTimeAuthorizationAccount: participationSafetyDepositDraft
+      ? await deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
+          connection,
+          wallet,
+          (participationSafetyDepositDraft?.masterEdition as ParsedAccount<MasterEditionV1>)?.info
+            .oneTimePrintingAuthorizationMint
+        )
+      : undefined,
     validateBoxes: await validateBoxes(
       wallet,
       whitelistedCreatorsByCreator,
@@ -264,14 +239,11 @@ export async function createAuctionManager(
         c =>
           !participationSafetyDepositDraft ||
           // Only V1s need to skip normal validation and use special endpoint
-          (participationSafetyDepositDraft.masterEdition?.info.key ==
-            MetadataKey.MasterEditionV1 &&
-            c.draft.metadata.pubkey !==
-              participationSafetyDepositDraft.metadata.pubkey) ||
-          participationSafetyDepositDraft.masterEdition?.info.key ==
-            MetadataKey.MasterEditionV2,
+          (participationSafetyDepositDraft.masterEdition?.info.key == MetadataKey.MasterEditionV1 &&
+            c.draft.metadata.pubkey !== participationSafetyDepositDraft.metadata.pubkey) ||
+          participationSafetyDepositDraft.masterEdition?.info.key == MetadataKey.MasterEditionV2
       ),
-      safetyDepositTokenStores,
+      safetyDepositTokenStores
     ),
     deprecatedPopulatePrintingTokens: {
       instructions: populateInstr,
@@ -283,9 +255,9 @@ export async function createAuctionManager(
       auction,
       auctionManager,
       safetyDepositConfigs.map(s => s.draft.metadata.info.mint),
-      storeIndexer,
+      storeIndexer
     ),
-  };
+  }
 
   const signers: Keypair[][] = [
     ...lookup.markItemsThatArentMineAsSold.signers,
@@ -303,13 +275,12 @@ export async function createAuctionManager(
     ...lookup.validateBoxes.signers,
     lookup.startAuction.signers,
     ...lookup.cacheAuctionIndexer.signers,
-  ];
-  const toRemoveSigners: Record<number, boolean> = {};
+  ]
+  const toRemoveSigners: Record<number, boolean> = {}
   let instructions: TransactionInstruction[][] = [
     ...lookup.markItemsThatArentMineAsSold.instructions,
     lookup.externalPriceAccount.instructions,
-    lookup.deprecatedBuildAndPopulateOneTimeAuthorizationAccount
-      ?.instructions || [],
+    lookup.deprecatedBuildAndPopulateOneTimeAuthorizationAccount?.instructions || [],
     ...lookup.deprecatedPopulatePrintingTokens.instructions,
     lookup.createVault.instructions,
     ...lookup.addTokens.instructions,
@@ -324,24 +295,24 @@ export async function createAuctionManager(
     ...lookup.cacheAuctionIndexer.instructions,
   ].filter((instr, i) => {
     if (instr.length > 0) {
-      return true;
+      return true
     } else {
-      toRemoveSigners[i] = true;
-      return false;
+      toRemoveSigners[i] = true
+      return false
     }
-  });
+  })
 
-  let filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
+  let filteredSigners = signers.filter((_, i) => !toRemoveSigners[i])
 
-  let stopPoint = 0;
-  let tries = 0;
-  let lastInstructionsLength: number | null = null;
+  let stopPoint = 0
+  let tries = 0
+  let lastInstructionsLength: number | null = null
   while (stopPoint < instructions.length && tries < 3) {
-    instructions = instructions.slice(stopPoint, instructions.length);
-    filteredSigners = filteredSigners.slice(stopPoint, filteredSigners.length);
+    instructions = instructions.slice(stopPoint, instructions.length)
+    filteredSigners = filteredSigners.slice(stopPoint, filteredSigners.length)
 
-    if (instructions.length === lastInstructionsLength) tries = tries + 1;
-    else tries = 0;
+    if (instructions.length === lastInstructionsLength) tries = tries + 1
+    else tries = 0
 
     try {
       if (instructions.length === 1) {
@@ -350,9 +321,9 @@ export async function createAuctionManager(
           wallet,
           instructions[0],
           filteredSigners[0],
-          'single',
-        );
-        stopPoint = 1;
+          'single'
+        )
+        stopPoint = 1
       } else {
         stopPoint = await sendTransactions(
           connection,
@@ -360,11 +331,11 @@ export async function createAuctionManager(
           instructions,
           filteredSigners,
           SequenceType.StopOnFailure,
-          'single',
-        );
+          'single'
+        )
       }
     } catch (e) {
-      console.error(e);
+      console.error(e)
     }
     console.log(
       'Died on ',
@@ -372,114 +343,82 @@ export async function createAuctionManager(
       'retrying from instruction',
       instructions[stopPoint],
       'instructions length is',
-      instructions.length,
-    );
-    lastInstructionsLength = instructions.length;
+      instructions.length
+    )
+    lastInstructionsLength = instructions.length
   }
 
-  if (stopPoint < instructions.length) throw new Error('Failed to create');
+  if (stopPoint < instructions.length) throw new Error('Failed to create')
 
-  return { vault, auction, auctionManager };
+  return { vault, auction, auctionManager }
 }
 
 async function buildSafetyDepositArray(
   wallet: WalletSigner,
   safetyDeposits: SafetyDepositDraft[],
-  participationSafetyDepositDraft: SafetyDepositDraft | undefined,
+  participationSafetyDepositDraft: SafetyDepositDraft | undefined
 ): Promise<SafetyDepositInstructionTemplate[]> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const safetyDepositTemplates: SafetyDepositInstructionTemplate[] = [];
+  const safetyDepositTemplates: SafetyDepositInstructionTemplate[] = []
   safetyDeposits.forEach((s, i) => {
-    const maxAmount = [...s.amountRanges.map(a => a.amount)]
-      .sort()
-      .reverse()[0];
+    const maxAmount = [...s.amountRanges.map(a => a.amount)].sort().reverse()[0]
 
-    const maxLength = [...s.amountRanges.map(a => a.length)]
-      .sort()
-      .reverse()[0];
+    const maxLength = [...s.amountRanges.map(a => a.length)].sort().reverse()[0]
     safetyDepositTemplates.push({
       box: {
         tokenAccount:
-          s.winningConfigType !== WinningConfigType.PrintingV1
-            ? s.holding
-            : s.printingMintHolding,
+          s.winningConfigType !== WinningConfigType.PrintingV1 ? s.holding : s.printingMintHolding,
         tokenMint:
           s.winningConfigType !== WinningConfigType.PrintingV1
             ? s.metadata.info.mint
-            : (s.masterEdition as ParsedAccount<MasterEditionV1>)?.info
-                .printingMint,
+            : (s.masterEdition as ParsedAccount<MasterEditionV1>)?.info.printingMint,
         amount:
           s.winningConfigType == WinningConfigType.PrintingV2 ||
           s.winningConfigType == WinningConfigType.FullRightsTransfer
             ? new BN(1)
-            : new BN(
-                s.amountRanges.reduce(
-                  (acc, r) => acc.add(r.amount.mul(r.length)),
-                  new BN(0),
-                ),
-              ),
+            : new BN(s.amountRanges.reduce((acc, r) => acc.add(r.amount.mul(r.length)), new BN(0))),
       },
       config: new SafetyDepositConfig({
         directArgs: {
           auctionManager: SystemProgram.programId.toBase58(),
           order: new BN(i),
           amountRanges: s.amountRanges,
-          amountType: maxAmount.gte(new BN(254))
-            ? TupleNumericType.U16
-            : TupleNumericType.U8,
-          lengthType: maxLength.gte(new BN(254))
-            ? TupleNumericType.U16
-            : TupleNumericType.U8,
+          amountType: maxAmount.gte(new BN(254)) ? TupleNumericType.U16 : TupleNumericType.U8,
+          lengthType: maxLength.gte(new BN(254)) ? TupleNumericType.U16 : TupleNumericType.U8,
           winningConfigType: s.winningConfigType,
           participationConfig: null,
           participationState: null,
         },
       }),
       draft: s,
-    });
-  });
+    })
+  })
 
-  if (
-    participationSafetyDepositDraft &&
-    participationSafetyDepositDraft.masterEdition
-  ) {
-    const maxAmount = [
-      ...participationSafetyDepositDraft.amountRanges.map(s => s.amount),
-    ]
+  if (participationSafetyDepositDraft && participationSafetyDepositDraft.masterEdition) {
+    const maxAmount = [...participationSafetyDepositDraft.amountRanges.map(s => s.amount)]
       .sort()
-      .reverse()[0];
-    const maxLength = [
-      ...participationSafetyDepositDraft.amountRanges.map(s => s.length),
-    ]
+      .reverse()[0]
+    const maxLength = [...participationSafetyDepositDraft.amountRanges.map(s => s.length)]
       .sort()
-      .reverse()[0];
+      .reverse()[0]
     const config = new SafetyDepositConfig({
       directArgs: {
         auctionManager: SystemProgram.programId.toBase58(),
         order: new BN(safetyDeposits.length),
         amountRanges: participationSafetyDepositDraft.amountRanges,
-        amountType: maxAmount?.gte(new BN(255))
-          ? TupleNumericType.U32
-          : TupleNumericType.U8,
-        lengthType: maxLength?.gte(new BN(255))
-          ? TupleNumericType.U32
-          : TupleNumericType.U8,
+        amountType: maxAmount?.gte(new BN(255)) ? TupleNumericType.U32 : TupleNumericType.U8,
+        lengthType: maxLength?.gte(new BN(255)) ? TupleNumericType.U32 : TupleNumericType.U8,
         winningConfigType: WinningConfigType.Participation,
-        participationConfig:
-          participationSafetyDepositDraft.participationConfig || null,
+        participationConfig: participationSafetyDepositDraft.participationConfig || null,
         participationState: new ParticipationStateV2({
           collectedToAcceptPayment: new BN(0),
         }),
       },
-    });
+    })
 
-    if (
-      participationSafetyDepositDraft.masterEdition.info.key ==
-      MetadataKey.MasterEditionV1
-    ) {
-      const me =
-        participationSafetyDepositDraft.masterEdition as ParsedAccount<MasterEditionV1>;
+    if (participationSafetyDepositDraft.masterEdition.info.key == MetadataKey.MasterEditionV1) {
+      const me = participationSafetyDepositDraft.masterEdition as ParsedAccount<MasterEditionV1>
       safetyDepositTemplates.push({
         box: {
           tokenAccount: (
@@ -487,11 +426,9 @@ async function buildSafetyDepositArray(
               [
                 wallet.publicKey.toBuffer(),
                 programIds().token.toBuffer(),
-                toPublicKey(
-                  me?.info.oneTimePrintingAuthorizationMint,
-                ).toBuffer(),
+                toPublicKey(me?.info.oneTimePrintingAuthorizationMint).toBuffer(),
               ],
-              programIds().associatedToken,
+              programIds().associatedToken
             )
           )[0],
           tokenMint: me?.info.oneTimePrintingAuthorizationMint,
@@ -499,7 +436,7 @@ async function buildSafetyDepositArray(
         },
         config,
         draft: participationSafetyDepositDraft,
-      });
+      })
     } else {
       safetyDepositTemplates.push({
         box: {
@@ -509,11 +446,11 @@ async function buildSafetyDepositArray(
         },
         config,
         draft: participationSafetyDepositDraft,
-      });
+      })
     }
   }
-  console.log('Temps', safetyDepositTemplates);
-  return safetyDepositTemplates;
+  console.log('Temps', safetyDepositTemplates)
+  return safetyDepositTemplates
 }
 
 async function setupAuctionManagerInstructions(
@@ -522,23 +459,23 @@ async function setupAuctionManagerInstructions(
   paymentMint: StringPublicKey,
   accountRentExempt: number,
   safetyDeposits: SafetyDepositInstructionTemplate[],
-  auctionSettings: IPartialCreateAuctionArgs,
+  auctionSettings: IPartialCreateAuctionArgs
 ): Promise<{
-  instructions: TransactionInstruction[];
-  signers: Keypair[];
-  auctionManager: StringPublicKey;
+  instructions: TransactionInstruction[]
+  signers: Keypair[]
+  auctionManager: StringPublicKey
 }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const store = programIds().store?.toBase58();
+  const store = programIds().store?.toBase58()
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const signers: Keypair[] = [];
-  const instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = []
+  const instructions: TransactionInstruction[] = []
 
-  const { auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionManagerKey } = await getAuctionKeys(vault)
 
   const acceptPayment = createTokenAccount(
     instructions,
@@ -546,16 +483,12 @@ async function setupAuctionManagerInstructions(
     accountRentExempt,
     toPublicKey(paymentMint),
     toPublicKey(auctionManagerKey),
-    signers,
-  ).toBase58();
+    signers
+  ).toBase58()
 
-  let maxRanges = [
-    auctionSettings.winners.usize.toNumber(),
-    safetyDeposits.length,
-    100,
-  ].sort()[0];
+  let maxRanges = [auctionSettings.winners.usize.toNumber(), safetyDeposits.length, 100].sort()[0]
   if (maxRanges < 10) {
-    maxRanges = 10;
+    maxRanges = 10
   }
 
   await initAuctionManagerV2(
@@ -565,81 +498,73 @@ async function setupAuctionManagerInstructions(
     acceptPayment,
     store,
     safetyDeposits.length >= 254 ? TupleNumericType.U16 : TupleNumericType.U8,
-    auctionSettings.winners.usize.toNumber() >= 254
-      ? TupleNumericType.U16
-      : TupleNumericType.U8,
+    auctionSettings.winners.usize.toNumber() >= 254 ? TupleNumericType.U16 : TupleNumericType.U8,
     new BN(maxRanges),
-    instructions,
-  );
+    instructions
+  )
 
-  return { instructions, signers, auctionManager: auctionManagerKey };
+  return { instructions, signers, auctionManager: auctionManagerKey }
 }
 
 async function setupStartAuction(
   wallet: WalletSigner,
-  vault: StringPublicKey,
+  vault: StringPublicKey
 ): Promise<{
-  instructions: TransactionInstruction[];
-  signers: Keypair[];
+  instructions: TransactionInstruction[]
+  signers: Keypair[]
 }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const signers: Keypair[] = [];
-  const instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = []
+  const instructions: TransactionInstruction[] = []
 
-  await startAuction(vault, wallet.publicKey.toBase58(), instructions);
+  await startAuction(vault, wallet.publicKey.toBase58(), instructions)
 
-  return { instructions, signers };
+  return { instructions, signers }
 }
 
 async function deprecatedValidateParticipationHelper(
   wallet: WalletSigner,
   auctionManager: StringPublicKey,
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >,
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>,
   vault: StringPublicKey,
   tokenStore: StringPublicKey,
   participationSafetyDepositDraft: SafetyDepositDraft,
-  accountRentExempt: number,
+  accountRentExempt: number
 ): Promise<{ instructions: TransactionInstruction[]; signers: Keypair[] }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const store = programIds().store?.toBase58();
+  const store = programIds().store?.toBase58()
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const instructions: TransactionInstruction[] = [];
-  const signers: Keypair[] = [];
-  const whitelistedCreator = participationSafetyDepositDraft.metadata.info.data
-    .creators
+  const instructions: TransactionInstruction[] = []
+  const signers: Keypair[] = []
+  const whitelistedCreator = participationSafetyDepositDraft.metadata.info.data.creators
     ? await findValidWhitelistedCreator(
         whitelistedCreatorsByCreator,
         //@ts-ignore
-        participationSafetyDepositDraft.metadata.info.data.creators,
+        participationSafetyDepositDraft.metadata.info.data.creators
       )
-    : undefined;
+    : undefined
 
-  const { auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionManagerKey } = await getAuctionKeys(vault)
 
   // V2s do not need to call this special endpoint.
   if (
     participationSafetyDepositDraft.masterEdition &&
-    participationSafetyDepositDraft.masterEdition.info.key ==
-      MetadataKey.MasterEditionV1
+    participationSafetyDepositDraft.masterEdition.info.key == MetadataKey.MasterEditionV1
   ) {
-    const me =
-      participationSafetyDepositDraft.masterEdition as ParsedAccount<MasterEditionV1>;
+    const me = participationSafetyDepositDraft.masterEdition as ParsedAccount<MasterEditionV1>
     const printingTokenHoldingAccount = createTokenAccount(
       instructions,
       wallet.publicKey,
       accountRentExempt,
       toPublicKey(me.info.printingMint),
       toPublicKey(auctionManagerKey),
-      signers,
-    ).toBase58();
+      signers
+    ).toBase58()
     await deprecatedValidateParticipation(
       auctionManager,
       participationSafetyDepositDraft.metadata.pubkey,
@@ -648,102 +573,87 @@ async function deprecatedValidateParticipationHelper(
       wallet.publicKey.toBase58(),
       whitelistedCreator,
       store,
-      await getSafetyDepositBoxAddress(
-        vault,
-        me.info.oneTimePrintingAuthorizationMint,
-      ),
+      await getSafetyDepositBoxAddress(vault, me.info.oneTimePrintingAuthorizationMint),
       tokenStore,
       vault,
-      instructions,
-    );
+      instructions
+    )
   }
 
-  return { instructions, signers };
+  return { instructions, signers }
 }
 
 async function findValidWhitelistedCreator(
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >,
-  creators: Creator[],
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>,
+  creators: Creator[]
 ): Promise<StringPublicKey> {
   for (let i = 0; i < creators.length; i++) {
-    const creator = creators[i];
+    const creator = creators[i]
 
     if (whitelistedCreatorsByCreator[creator.address]?.info.activated)
-      return whitelistedCreatorsByCreator[creator.address].pubkey;
+      return whitelistedCreatorsByCreator[creator.address].pubkey
   }
-  return await getWhitelistedCreator(creators[0]?.address);
+  return await getWhitelistedCreator(creators[0]?.address)
 }
 
 async function validateBoxes(
   wallet: WalletSigner,
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >,
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>,
   vault: StringPublicKey,
   safetyDeposits: SafetyDepositInstructionTemplate[],
-  safetyDepositTokenStores: StringPublicKey[],
+  safetyDepositTokenStores: StringPublicKey[]
 ): Promise<{
-  instructions: TransactionInstruction[][];
-  signers: Keypair[][];
+  instructions: TransactionInstruction[][]
+  signers: Keypair[][]
 }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const store = programIds().store?.toBase58();
+  const store = programIds().store?.toBase58()
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
-  const signers: Keypair[][] = [];
-  const instructions: TransactionInstruction[][] = [];
+  const signers: Keypair[][] = []
+  const instructions: TransactionInstruction[][] = []
 
   for (let i = 0; i < safetyDeposits.length; i++) {
-    const tokenSigners: Keypair[] = [];
-    const tokenInstructions: TransactionInstruction[] = [];
+    const tokenSigners: Keypair[] = []
+    const tokenInstructions: TransactionInstruction[] = []
 
-    let safetyDepositBox: StringPublicKey;
+    let safetyDepositBox: StringPublicKey
 
-    const me = safetyDeposits[i].draft
-      .masterEdition as ParsedAccount<MasterEditionV1>;
+    const me = safetyDeposits[i].draft.masterEdition as ParsedAccount<MasterEditionV1>
     if (
-      safetyDeposits[i].config.winningConfigType ===
-        WinningConfigType.PrintingV1 &&
+      safetyDeposits[i].config.winningConfigType === WinningConfigType.PrintingV1 &&
       me &&
       me.info.printingMint
     ) {
       safetyDepositBox = await getSafetyDepositBox(
         vault,
         //@ts-ignore
-        safetyDeposits[i].draft.masterEdition.info.printingMint,
-      );
+        safetyDeposits[i].draft.masterEdition.info.printingMint
+      )
     } else {
       safetyDepositBox = await getSafetyDepositBox(
         vault,
-        safetyDeposits[i].draft.metadata.info.mint,
-      );
+        safetyDeposits[i].draft.metadata.info.mint
+      )
     }
-    const edition: StringPublicKey = await getEdition(
-      safetyDeposits[i].draft.metadata.info.mint,
-    );
+    const edition: StringPublicKey = await getEdition(safetyDeposits[i].draft.metadata.info.mint)
 
-    const whitelistedCreator = safetyDeposits[i].draft.metadata.info.data
-      .creators
+    const whitelistedCreator = safetyDeposits[i].draft.metadata.info.data.creators
       ? await findValidWhitelistedCreator(
           whitelistedCreatorsByCreator,
           //@ts-ignore
-          safetyDeposits[i].draft.metadata.info.data.creators,
+          safetyDeposits[i].draft.metadata.info.data.creators
         )
-      : undefined;
+      : undefined
 
     await validateSafetyDepositBoxV2(
       vault,
       safetyDeposits[i].draft.metadata.pubkey,
       safetyDepositBox,
       safetyDepositTokenStores[i],
-      safetyDeposits[i].config.winningConfigType ===
-        WinningConfigType.PrintingV1
+      safetyDeposits[i].config.winningConfigType === WinningConfigType.PrintingV1
         ? me?.info.printingMint
         : safetyDeposits[i].draft.metadata.info.mint,
       wallet.publicKey.toBase58(),
@@ -753,29 +663,28 @@ async function validateBoxes(
       edition,
       whitelistedCreator,
       store,
-      safetyDeposits[i].config,
-    );
+      safetyDeposits[i].config
+    )
 
-    signers.push(tokenSigners);
-    instructions.push(tokenInstructions);
+    signers.push(tokenSigners)
+    instructions.push(tokenInstructions)
   }
-  return { instructions, signers };
+  return { instructions, signers }
 }
 
 async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
   connection: Connection,
   wallet: WalletSigner,
-  oneTimePrintingAuthorizationMint: StringPublicKey | undefined,
+  oneTimePrintingAuthorizationMint: StringPublicKey | undefined
 ): Promise<{
-  instructions: TransactionInstruction[];
-  signers: Keypair[];
+  instructions: TransactionInstruction[]
+  signers: Keypair[]
 }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  if (!oneTimePrintingAuthorizationMint)
-    return { instructions: [], signers: [] };
-  const signers: Keypair[] = [];
-  const instructions: TransactionInstruction[] = [];
+  if (!oneTimePrintingAuthorizationMint) return { instructions: [], signers: [] }
+  const signers: Keypair[] = []
+  const instructions: TransactionInstruction[] = []
   const recipientKey: StringPublicKey = (
     await findProgramAddress(
       [
@@ -783,9 +692,9 @@ async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
         programIds().token.toBuffer(),
         toPublicKey(oneTimePrintingAuthorizationMint).toBuffer(),
       ],
-      programIds().associatedToken,
+      programIds().associatedToken
     )
-  )[0];
+  )[0]
 
   if (!(await connection.getAccountInfo(toPublicKey(recipientKey)))) {
     createAssociatedTokenAccountInstruction(
@@ -793,8 +702,8 @@ async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
       toPublicKey(recipientKey),
       wallet.publicKey,
       wallet.publicKey,
-      toPublicKey(oneTimePrintingAuthorizationMint),
-    );
+      toPublicKey(oneTimePrintingAuthorizationMint)
+    )
   }
 
   instructions.push(
@@ -804,9 +713,9 @@ async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
       toPublicKey(recipientKey),
       wallet.publicKey,
       [],
-      1,
-    ),
-  );
+      1
+    )
+  )
 
-  return { instructions, signers };
+  return { instructions, signers }
 }

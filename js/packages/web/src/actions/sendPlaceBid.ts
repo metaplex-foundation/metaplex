@@ -1,10 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  TransactionInstruction,
-  PublicKey,
-  Commitment,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction, PublicKey, Commitment } from '@solana/web3.js'
 import {
   sendTransactionWithRetry,
   placeBid,
@@ -18,16 +12,16 @@ import {
   programIds,
   pubkeyToString,
   WRAPPED_SOL_MINT,
-} from '@oyster/common';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { approve } from '@oyster/common/dist/lib/models/account';
-import { TokenAccount } from '@oyster/common/dist/lib/models/account';
+} from '@oyster/common'
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
+import { approve } from '@oyster/common/dist/lib/models/account'
+import { TokenAccount } from '@oyster/common/dist/lib/models/account'
 
-import { AccountLayout, MintInfo } from '@solana/spl-token';
-import { AuctionView } from '../hooks';
-import BN from 'bn.js';
-import { setupCancelBid } from './cancelBid';
-import { QUOTE_MINT } from '../constants';
+import { AccountLayout, MintInfo } from '@solana/spl-token'
+import { AuctionView } from '../hooks'
+import BN from 'bn.js'
+import { setupCancelBid } from './cancelBid'
+import { QUOTE_MINT } from '../constants'
 
 export async function sendPlaceBid(
   connection: Connection,
@@ -37,10 +31,10 @@ export async function sendPlaceBid(
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
   amount: number | BN,
-  commitment?: Commitment,
+  commitment?: Commitment
 ) {
-  const signers: Keypair[][] = [];
-  const instructions: TransactionInstruction[][] = [];
+  const signers: Keypair[][] = []
+  const instructions: TransactionInstruction[][] = []
   const bid = await setupPlaceBid(
     connection,
     wallet,
@@ -49,24 +43,24 @@ export async function sendPlaceBid(
     accountsByMint,
     amount,
     instructions,
-    signers,
-  );
+    signers
+  )
 
   const { txid } = await sendTransactionWithRetry(
     connection,
     wallet,
     instructions[0],
     signers[0],
-    commitment,
-  );
+    commitment
+  )
 
   if (commitment) {
-    await connection.confirmTransaction(txid, commitment);
+    await connection.confirmTransaction(txid, commitment)
   }
 
   return {
     amount: bid,
-  };
+  }
 }
 
 export async function setupPlaceBid(
@@ -79,37 +73,33 @@ export async function setupPlaceBid(
   // If BN, then assume instant sale and decimals already adjusted.
   amount: number | BN,
   overallInstructions: TransactionInstruction[][],
-  overallSigners: Keypair[][],
+  overallSigners: Keypair[][]
 ): Promise<BN> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
-  const cleanupInstructions: TransactionInstruction[] = [];
+  let signers: Keypair[] = []
+  let instructions: TransactionInstruction[] = []
+  const cleanupInstructions: TransactionInstruction[] = []
 
-  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span)
 
   const tokenAccount = bidderTokenAccount
     ? (cache.get(bidderTokenAccount) as TokenAccount)
-    : undefined;
+    : undefined
   const mint = cache.get(
-    tokenAccount ? tokenAccount.info.mint : QUOTE_MINT,
-  ) as ParsedAccount<MintInfo>;
+    tokenAccount ? tokenAccount.info.mint : QUOTE_MINT
+  ) as ParsedAccount<MintInfo>
 
   const lamports =
     accountRentExempt +
-    (typeof amount === 'number'
-      ? toLamports(amount, mint.info)
-      : amount.toNumber());
+    (typeof amount === 'number' ? toLamports(amount, mint.info) : amount.toNumber())
 
-  let bidderPotTokenAccount: string | undefined;
+  let bidderPotTokenAccount: string | undefined
   if (auctionView.myBidderPot) {
-    bidderPotTokenAccount = auctionView.myBidderPot?.info.bidderPot;
+    bidderPotTokenAccount = auctionView.myBidderPot?.info.bidderPot
     if (!auctionView.auction.info.ended()) {
-      const cancelSigners: Keypair[][] = [];
-      const cancelInstr: TransactionInstruction[][] = [];
+      const cancelSigners: Keypair[][] = []
+      const cancelInstr: TransactionInstruction[][] = []
       await setupCancelBid(
         auctionView,
         accountsByMint,
@@ -117,14 +107,14 @@ export async function setupPlaceBid(
         wallet,
         cancelSigners,
         cancelInstr,
-        connection,
-      );
-      signers = [...signers, ...cancelSigners[0]];
-      instructions = [...cancelInstr[0], ...instructions];
+        connection
+      )
+      signers = [...signers, ...cancelSigners[0]]
+      instructions = [...cancelInstr[0], ...instructions]
     }
   }
 
-  let receivingSolAccountOrAta = '';
+  let receivingSolAccountOrAta = ''
   if (auctionView.auction.info.tokenMint == WRAPPED_SOL_MINT.toBase58()) {
     receivingSolAccountOrAta = ensureWrappedAccount(
       instructions,
@@ -132,22 +122,22 @@ export async function setupPlaceBid(
       tokenAccount,
       wallet.publicKey,
       lamports + accountRentExempt * 2,
-      signers,
-    );
+      signers
+    )
   } else {
-    receivingSolAccountOrAta = await findAta(auctionView, wallet, connection);
+    receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
   }
   const transferAuthority = approve(
     instructions,
     cleanupInstructions,
     toPublicKey(receivingSolAccountOrAta),
     wallet.publicKey,
-    lamports - accountRentExempt,
-  );
+    lamports - accountRentExempt
+  )
 
-  signers.push(transferAuthority);
+  signers.push(transferAuthority)
 
-  const bid = new BN(lamports - accountRentExempt);
+  const bid = new BN(lamports - accountRentExempt)
   await placeBid(
     wallet.publicKey.toBase58(),
     pubkeyToString(receivingSolAccountOrAta),
@@ -157,50 +147,46 @@ export async function setupPlaceBid(
     wallet.publicKey.toBase58(),
     auctionView.auctionManager.vault,
     bid,
-    instructions,
-  );
+    instructions
+  )
 
-  overallInstructions.push([...instructions, ...cleanupInstructions.reverse()]);
-  overallSigners.push(signers);
-  return bid;
+  overallInstructions.push([...instructions, ...cleanupInstructions.reverse()])
+  overallSigners.push(signers)
+  return bid
 }
 
 export const findAta = async (
   auctionView: AuctionView,
   wallet: WalletSigner,
-  connection: Connection,
+  connection: Connection
 ) => {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
-  let receivingSolAccountOrAta = '';
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
+  let receivingSolAccountOrAta = ''
   // if alternative currency is set, go for it
-  const PROGRAM_IDS = programIds();
-  const auctionTokenMint = new PublicKey(auctionView.auction.info.tokenMint);
+  const PROGRAM_IDS = programIds()
+  const auctionTokenMint = new PublicKey(auctionView.auction.info.tokenMint)
   const ata = (
     await PublicKey.findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        PROGRAM_IDS.token.toBuffer(),
-        auctionTokenMint.toBuffer(),
-      ],
-      PROGRAM_IDS.associatedToken,
+      [wallet.publicKey.toBuffer(), PROGRAM_IDS.token.toBuffer(), auctionTokenMint.toBuffer()],
+      PROGRAM_IDS.associatedToken
     )
-  )[0];
-  receivingSolAccountOrAta = pubkeyToString(ata);
-  const settleInstructions: TransactionInstruction[] = [];
+  )[0]
+  receivingSolAccountOrAta = pubkeyToString(ata)
+  const settleInstructions: TransactionInstruction[] = []
 
-  const existingAta = await connection.getAccountInfo(ata);
+  const existingAta = await connection.getAccountInfo(ata)
 
   // create a new ATA if there is none
-  console.log('Looking for existing ata?', existingAta);
+  console.log('Looking for existing ata?', existingAta)
   if (!existingAta) {
     createAssociatedTokenAccountInstruction(
       settleInstructions,
       toPublicKey(receivingSolAccountOrAta),
       wallet.publicKey,
       wallet.publicKey,
-      auctionTokenMint,
-    );
+      auctionTokenMint
+    )
   }
 
-  return receivingSolAccountOrAta;
-};
+  return receivingSolAccountOrAta
+}

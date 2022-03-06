@@ -1,5 +1,5 @@
-import { CreatePackSteps } from '../../types';
-import { HeaderContentRecord } from './interface';
+import { CreatePackSteps } from '../../types'
+import { HeaderContentRecord } from './interface'
 
 export const HEADER_CONTENT: Record<CreatePackSteps, HeaderContentRecord> = {
   [CreatePackSteps.SelectItems]: {
@@ -14,4 +14,4 @@ export const HEADER_CONTENT: Record<CreatePackSteps, HeaderContentRecord> = {
   [CreatePackSteps.ReviewAndMint]: {
     title: 'Review and mint your pack',
   },
-};
+}

@@ -1,10 +1,10 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement } from 'react'
 
-import SmallLoader from '../../../../components/SmallLoader';
-import ItemRow from '../ItemRow';
+import SmallLoader from '../../../../components/SmallLoader'
+import ItemRow from '../ItemRow'
 
-import { SelectItemsStepProps } from './interface';
-import { isSelected } from './utils';
+import { SelectItemsStepProps } from './interface'
+import { isSelected } from './utils'
 
 const SelectItemsStep = ({
   handleSelectItem,
@@ -14,10 +14,10 @@ const SelectItemsStep = ({
   emptyMessage,
   isLoading,
 }: SelectItemsStepProps): ReactElement => {
-  const shouldShowEmptyMessage = !items?.length && emptyMessage;
+  const shouldShowEmptyMessage = !items?.length && emptyMessage
 
   if (isLoading) {
-    return <SmallLoader />;
+    return <SmallLoader />
   }
 
   return (
@@ -36,7 +36,7 @@ const SelectItemsStep = ({
       ))}
       {shouldShowEmptyMessage && <p>{emptyMessage}</p>}
     </div>
-  );
-};
+  )
+}
 
-export default SelectItemsStep;
+export default SelectItemsStep

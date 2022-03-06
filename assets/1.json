@@ -1,0 +1,18 @@
+{
+    "name": "Number #0002",
+    "symbol": "NB",
+    "description": "Collection of 10 numbers on the blockchain. This is the number 2/10.",
+    "seller_fee_basis_points": 500,
+    "image": "1.png",
+    "attributes": [
+        {"trait_type": "Layer-1", "value": "0"},
+        {"trait_type": "Layer-2", "value": "0"}, 
+        {"trait_type": "Layer-3", "value": "0"},
+        {"trait_type": "Layer-4", "value": "2"}
+    ],
+    "properties": {
+        "creators": [{"address": "6j4nNrozTJkk1zatiXHezSLZArnRUq3WkGKHACThXGpZ", "share": 100}],
+        "files": [{"uri": "1.png", "type": "image/png"}]
+    },
+    "collection": {"name": "numbers", "family": "numbers"}
+}

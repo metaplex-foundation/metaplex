@@ -4,26 +4,26 @@ import {
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
   Keypair,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+} from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { TokenAccount } from '../..';
-import { getEdition, getMetadata } from '../../..';
-import { StringPublicKey, programIds, toPublicKey } from '../../../utils';
-import { AddCardToPackArgs, PACKS_SCHEMA } from '../../../actions/packs';
-import { AddCardToPackParams } from '../interface';
+import { TokenAccount } from '../..'
+import { getEdition, getMetadata } from '../../..'
+import { StringPublicKey, programIds, toPublicKey } from '../../../utils'
+import { AddCardToPackArgs, PACKS_SCHEMA } from '../../../actions/packs'
+import { AddCardToPackParams } from '../interface'
 import {
   findPackCardProgramAddress,
   findPackConfigProgramAddress,
   getProgramAuthority,
-} from '../find';
+} from '../find'
 
 interface Params extends AddCardToPackParams {
-  packSetKey: PublicKey;
-  authority: string;
-  mint: StringPublicKey;
-  tokenAccount: TokenAccount;
-  toAccount: Keypair;
+  packSetKey: PublicKey
+  authority: string
+  mint: StringPublicKey
+  tokenAccount: TokenAccount
+  toAccount: Keypair
 }
 
 export async function addCardToPack({
@@ -36,27 +36,27 @@ export async function addCardToPack({
   tokenAccount,
   toAccount,
 }: Params): Promise<TransactionInstruction> {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
   const value = new AddCardToPackArgs({
     maxSupply,
     weight,
     index,
-  });
+  })
 
-  const store = PROGRAM_IDS.store;
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const masterMetadataKey = await getMetadata(mint);
-  const masterEdition = await getEdition(mint);
-  const programAuthority = await getProgramAuthority();
-  const packCard = await findPackCardProgramAddress(packSetKey, index);
-  const packConfig = await findPackConfigProgramAddress(packSetKey);
-  const { pubkey: sourceKey } = tokenAccount;
+  const masterMetadataKey = await getMetadata(mint)
+  const masterEdition = await getEdition(mint)
+  const programAuthority = await getProgramAuthority()
+  const packCard = await findPackCardProgramAddress(packSetKey, index)
+  const packConfig = await findPackConfigProgramAddress(packSetKey)
+  const { pubkey: sourceKey } = tokenAccount
 
-  const data = Buffer.from(serialize(PACKS_SCHEMA, value));
+  const data = Buffer.from(serialize(PACKS_SCHEMA, value))
   const keys = [
     // pack_set
     {
@@ -142,11 +142,11 @@ export async function addCardToPack({
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   return new TransactionInstruction({
     keys,
     programId: toPublicKey(PROGRAM_IDS.pack_create),
     data,
-  });
+  })
 }

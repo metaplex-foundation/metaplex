@@ -1,10 +1,6 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import BN from 'bn.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import BN from 'bn.js'
+import { serialize } from 'borsh'
 
 import {
   getAuctionKeys,
@@ -12,8 +8,8 @@ import {
   InitAuctionManagerV2Args,
   SCHEMA,
   TupleNumericType,
-} from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+} from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function initAuctionManagerV2(
   vault: StringPublicKey,
@@ -24,22 +20,20 @@ export async function initAuctionManagerV2(
   amountType: TupleNumericType,
   lengthType: TupleNumericType,
   maxRanges: BN,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const PROGRAM_IDS = programIds()
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
   const value = new InitAuctionManagerV2Args({
     amountType,
     lengthType,
     maxRanges,
-  });
+  })
 
-  const tokenTracker = await getAuctionWinnerTokenTypeTracker(
-    auctionManagerKey,
-  );
+  const tokenTracker = await getAuctionWinnerTokenTypeTracker(auctionManagerKey)
 
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -93,12 +87,12 @@ export async function initAuctionManagerV2(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

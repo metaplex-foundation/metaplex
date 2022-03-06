@@ -1,0 +1,10 @@
+{
+  "arrowParens": "avoid",
+  "jsxBracketSameLine": true,
+  "jsxSingleQuote": true,
+  "quoteProps": "consistent",
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "printWidth": 100
+}

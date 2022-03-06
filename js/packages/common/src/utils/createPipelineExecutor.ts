@@ -6,49 +6,49 @@ export async function createPipelineExecutor<T>(
     jobsCount = 1,
     sequence = 1,
   }: {
-    delay?: number;
-    jobsCount?: number;
-    sequence?: number;
-  } = {},
+    delay?: number
+    jobsCount?: number
+    sequence?: number
+  } = {}
 ) {
   function execute<T>(iter: IteratorResult<T, any>) {
-    executor(iter.value);
+    executor(iter.value)
   }
 
   async function next() {
     if (sequence <= 1) {
-      const iter = data.next();
+      const iter = data.next()
       if (iter.done) {
-        return;
+        return
       }
-      await execute(iter);
+      await execute(iter)
     } else {
-      const promises: any[] = [];
-      let isDone = false;
+      const promises: any[] = []
+      let isDone = false
       for (let i = 0; i < sequence; i++) {
-        const iter = data.next();
+        const iter = data.next()
         if (!iter.done) {
-          promises.push(execute(iter));
+          promises.push(execute(iter))
         } else {
-          isDone = true;
-          break;
+          isDone = true
+          break
         }
       }
-      await Promise.all(promises);
+      await Promise.all(promises)
       if (isDone) {
-        return;
+        return
       }
     }
     if (delay > 0) {
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay))
     } else {
-      await Promise.resolve();
+      await Promise.resolve()
     }
-    await next();
+    await next()
   }
-  const result = new Array<Promise<void>>(jobsCount);
+  const result = new Array<Promise<void>>(jobsCount)
   for (let i = 0; i < jobsCount; i++) {
-    result[i] = next();
+    result[i] = next()
   }
-  await Promise.all(result);
+  await Promise.all(result)
 }

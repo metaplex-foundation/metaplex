@@ -1,30 +1,30 @@
 export function decodeLength(bytes: Array<number>): number {
-  let len = 0;
-  let size = 0;
+  let len = 0
+  let size = 0
   for (;;) {
-    const elem = bytes.shift();
+    const elem = bytes.shift()
     //@ts-ignore
-    len |= (elem & 0x7f) << (size * 7);
-    size += 1;
+    len |= (elem & 0x7f) << (size * 7)
+    size += 1
     //@ts-ignore
     if ((elem & 0x80) === 0) {
-      break;
+      break
     }
   }
-  return len;
+  return len
 }
 
 export function encodeLength(bytes: Array<number>, len: number) {
-  let rem_len = len;
+  let rem_len = len
   for (;;) {
-    let elem = rem_len & 0x7f;
-    rem_len >>= 7;
+    let elem = rem_len & 0x7f
+    rem_len >>= 7
     if (rem_len === 0) {
-      bytes.push(elem);
-      break;
+      bytes.push(elem)
+      break
     } else {
-      elem |= 0x80;
-      bytes.push(elem);
+      elem |= 0x80
+      bytes.push(elem)
     }
   }
 }

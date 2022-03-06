@@ -1,6 +1,6 @@
-import React from 'react';
-import { StoreProvider } from '@oyster/common';
-import { FC } from 'react';
+import React from 'react'
+import { StoreProvider } from '@oyster/common'
+import { FC } from 'react'
 export const Providers: FC = ({ children }) => {
   return (
     <StoreProvider
@@ -9,5 +9,5 @@ export const Providers: FC = ({ children }) => {
     >
       {children}
     </StoreProvider>
-  );
-};
+  )
+}

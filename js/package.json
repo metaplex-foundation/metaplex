@@ -5,7 +5,8 @@
       "packages/cli",
       "packages/common",
       "packages/gumdrop",
-      "packages/web"
+      "packages/web",
+      "packages/ui"
     ]
   },
   "keywords": [],
@@ -16,8 +17,8 @@
   "scripts": {
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build --ignore=token-entangler --ignore=candy-machine-ui",
-    "build-web": "lerna run build --stream --scope @oyster/common --scope web",
-    "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
+    "build-web": "lerna run build --stream --scope @oyster/common --scope web --scope ui",
+    "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web --scope ui",
     "lint": "prettier -c 'packages/*/{src,test}/**/*.{ts,tsx}' && npm run lint:eslint",
     "lint:eslint": "eslint 'packages/*/{src,test}/**/*.{ts,tsx}'",
     "lint:fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && eslint --fix 'packages/*/{src,test}/**/*.{ts,tsx}'",
@@ -28,7 +29,7 @@
     "test": "lerna run test --concurrency 1 --stream"
   },
   "lint-staged": {
-    "packages/*/{src,test}/**/*.{ts,tsx}": [
+    "packages/*/{src,test}/**/*.{ts}": [
       "prettier --write",
       "eslint --cache --fix --max-warnings=0"
     ]
@@ -57,7 +58,7 @@
   "dependencies": {
     "@metaplex/arweave-cost": "^1.0.4",
     "cross-env": "^7.0.3",
-    "next": "^11.0.1",
+    "next": "12.0.7",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
   },
@@ -84,6 +85,7 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^24.0.0",
     "ts-node": "^9.0.0",
-    "typescript": "^4.1.3"
+    "typescript": "^4.1.3",
+    "@metaplex/js": "4.12.0"
   }
 }

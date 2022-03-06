@@ -1,85 +1,84 @@
-.instructions-modal{
+.instructions-modal {
   width: 80% !important;
 }
-
 
 .modal-box {
   position: relative;
   box-sizing: border-box;
   border-radius: 12px;
-  background-color: #2A2A2A;
+  background-color: #2a2a2a;
   cursor: auto;
   padding-bottom: 0px;
   .ant-modal-footer {
     border-top: 0;
   }
   .ant-input {
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   @media (max-width: @screen-sm-min) {
     width: 100% !important;
-    top:0 !important;
+    top: 0 !important;
     max-width: 100% !important;
-    .ant-modal-content{
+    .ant-modal-content {
       min-height: 100vh;
     }
-    .mobile-menu-modal{
+    .mobile-menu-modal {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       height: 80vh;
-      .actions{
+      .actions {
         display: flex;
         justify-content: space-around;
         flex-direction: row;
         flex-wrap: wrap;
-        .actions-buttons{
+        .actions-buttons {
           display: flex;
           width: 100%;
-          button{
+          button {
             flex: auto;
           }
         }
-        .actions-user{
+        .actions-user {
           margin-top: 10px;
 
-          a{
+          a {
             display: flex;
             flex: 1;
             padding: 5px;
           }
         }
-        .ant-badge{
+        .ant-badge {
           margin-top: 25px;
         }
       }
-      .ant-dropdown-menu{
+      .ant-dropdown-menu {
         background-color: transparent !important;
       }
-      .app-btn{
+      .app-btn {
         background-color: transparent !important;
       }
-      .ant-menu{
+      .ant-menu {
         width: 100%;
         background-color: transparent !important;
         border-right: 0 !important;
-        .ant-menu-item{
+        .ant-menu-item {
           border-bottom: 1px solid #f0f0f0 !important;
           padding: 0;
-          .app-btn{
+          .app-btn {
             font-size: 18px;
             font-weight: 600;
             padding: 0 0 24px;
           }
         }
       }
-      .current-user-mobile-badge{
+      .current-user-mobile-badge {
         width: 100%;
-        .mobile-badge{
+        .mobile-badge {
           display: flex;
         }
-        .balance-container{
+        .balance-container {
           width: 100%;
           margin-top: 10px;
           border-radius: 12px;
@@ -88,14 +87,14 @@
           display: flex;
           font-weight: 700;
           flex-direction: column;
-          .balance-title{
+          .balance-title {
             font-weight: normal;
             font-size: 14px;
             line-height: 14px;
             text-transform: uppercase;
             color: rgba(255, 255, 255, 0.7);
           }
-          .sol-img-wrapper{
+          .sol-img-wrapper {
             border-radius: 50%;
             background: black;
             display: inline-block;
@@ -129,7 +128,6 @@
   }
 
   .ant-modal-close-x {
-
     width: fit-content;
     height: fit-content;
     margin-right: 24px;
@@ -181,7 +179,7 @@
         font-weight: normal;
         font-size: 16px;
         line-height: 20px;
-        color: rgba(255, 255, 255, 0.7)
+        color: rgba(255, 255, 255, 0.7);
       }
 
       .ant-card-body {
@@ -210,20 +208,19 @@
             width: 156px;
             right: 0;
             bottom: 8px;
-            background: #B388F5;
+            background: #b388f5;
             box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
             border-radius: 8px;
             font-style: normal;
             font-weight: 600;
             font-size: 16px;
-            line-height: 16px
+            line-height: 16px;
           }
         }
       }
     }
   }
 }
-
 
 @media screen and (min-width: 800px) {
   .modal-box {
@@ -242,5 +239,5 @@
 }
 
 .ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
-  background-color: rgba(255, 255, 255, 0.08)
+  background-color: rgba(255, 255, 255, 0.08);
 }

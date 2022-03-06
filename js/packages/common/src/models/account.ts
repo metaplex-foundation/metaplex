@@ -1,31 +1,26 @@
-import {
-  AccountInfo,
-  Keypair,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { AccountInfo, Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js'
 
-import { AccountInfo as TokenAccountInfo, Token } from '@solana/spl-token';
-import { TOKEN_PROGRAM_ID } from '../utils/ids';
-import BufferLayout from 'buffer-layout';
+import { AccountInfo as TokenAccountInfo, Token } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID } from '../utils/ids'
+import BufferLayout from 'buffer-layout'
 
 export interface TokenAccount {
-  pubkey: string;
-  account: AccountInfo<Buffer>;
-  info: TokenAccountInfo;
+  pubkey: string
+  account: AccountInfo<Buffer>
+  info: TokenAccountInfo
 }
 
 export interface ParsedDataAccount {
-  amount: number;
-  rawAmount: string;
-  parsedAssetAddress: string;
-  parsedAccount: any;
-  assetDecimals: number;
-  assetIcon: any;
-  name: string;
-  symbol: string;
-  sourceAddress: string;
-  targetAddress: string;
+  amount: number
+  rawAmount: string
+  parsedAssetAddress: string
+  parsedAccount: any
+  assetDecimals: number
+  assetIcon: any
+  name: string
+  symbol: string
+  sourceAddress: string
+  targetAddress: string
 }
 
 export const ParsedDataLayout = BufferLayout.struct([
@@ -45,7 +40,7 @@ export const ParsedDataLayout = BufferLayout.struct([
   BufferLayout.u8('pokeCounter'),
   BufferLayout.blob(32, 'signatureAccount'),
   BufferLayout.u8('initialized'),
-]);
+])
 
 export function approve(
   instructions: TransactionInstruction[],
@@ -57,11 +52,11 @@ export function approve(
 
   // if delegate is not passed ephemeral transfer authority is used
   delegate?: PublicKey,
-  existingTransferAuthority?: Keypair,
+  existingTransferAuthority?: Keypair
 ): Keypair {
-  const tokenProgram = TOKEN_PROGRAM_ID;
+  const tokenProgram = TOKEN_PROGRAM_ID
 
-  const transferAuthority = existingTransferAuthority || Keypair.generate();
+  const transferAuthority = existingTransferAuthority || Keypair.generate()
   //const delegateKey = delegate ?? transferAuthority.publicKey;
 
   instructions.push(
@@ -71,15 +66,13 @@ export function approve(
       delegate ?? transferAuthority.publicKey,
       owner,
       [],
-      amount,
-    ),
-  );
+      amount
+    )
+  )
 
   if (autoRevoke) {
-    cleanupInstructions.push(
-      Token.createRevokeInstruction(tokenProgram, account, owner, []),
-    );
+    cleanupInstructions.push(Token.createRevokeInstruction(tokenProgram, account, owner, []))
   }
 
-  return transferAuthority;
+  return transferAuthority
 }

@@ -1,4 +1,4 @@
-import { Keypair, TransactionInstruction } from '@solana/web3.js';
+import { Keypair, TransactionInstruction } from '@solana/web3.js'
 import {
   utils,
   findProgramAddress,
@@ -7,29 +7,26 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
-} from '@oyster/common';
-import {
-  AUCTION_PREFIX,
-  createAuction,
-} from '@oyster/common/dist/lib/actions/auction';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+} from '@oyster/common'
+import { AUCTION_PREFIX, createAuction } from '@oyster/common/dist/lib/actions/auction'
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
 
 // This command makes an auction
 export async function makeAuction(
   wallet: WalletSigner,
   vault: StringPublicKey,
-  auctionSettings: IPartialCreateAuctionArgs,
+  auctionSettings: IPartialCreateAuctionArgs
 ): Promise<{
-  auction: StringPublicKey;
-  instructions: TransactionInstruction[];
-  signers: Keypair[];
+  auction: StringPublicKey
+  instructions: TransactionInstruction[]
+  signers: Keypair[]
 }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  if (!wallet.publicKey) throw new WalletNotConnectedError()
 
-  const PROGRAM_IDS = utils.programIds();
+  const PROGRAM_IDS = utils.programIds()
 
-  const signers: Keypair[] = [];
-  const instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = []
+  const instructions: TransactionInstruction[] = []
   const auctionKey = (
     await findProgramAddress(
       [
@@ -37,17 +34,17 @@ export async function makeAuction(
         toPublicKey(PROGRAM_IDS.auction).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.auction),
+      toPublicKey(PROGRAM_IDS.auction)
     )
-  )[0];
+  )[0]
 
   const fullSettings = new CreateAuctionArgs({
     ...auctionSettings,
     authority: wallet.publicKey.toBase58(),
     resource: vault,
-  });
+  })
 
-  createAuction(fullSettings, wallet.publicKey.toBase58(), instructions);
+  createAuction(fullSettings, wallet.publicKey.toBase58(), instructions)
 
-  return { instructions, signers, auction: auctionKey };
+  return { instructions, signers, auction: auctionKey }
 }

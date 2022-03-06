@@ -1,5 +1,5 @@
-import { SystemProgram, TransactionInstruction } from '@solana/web3.js';
-import { GetCreateAccountParams } from './interface';
+import { SystemProgram, TransactionInstruction } from '@solana/web3.js'
+import { GetCreateAccountParams } from './interface'
 
 export const getCreateAccount = async ({
   connection,
@@ -8,9 +8,7 @@ export const getCreateAccount = async ({
   space,
   programId,
 }: GetCreateAccountParams): Promise<TransactionInstruction> => {
-  const packSetRentExempt = await connection.getMinimumBalanceForRentExemption(
-    space,
-  );
+  const packSetRentExempt = await connection.getMinimumBalanceForRentExemption(space)
 
   return SystemProgram.createAccount({
     fromPubkey: walletPublicKey,
@@ -18,5 +16,5 @@ export const getCreateAccount = async ({
     lamports: packSetRentExempt,
     space,
     programId,
-  });
-};
+  })
+}

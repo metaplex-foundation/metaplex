@@ -1,39 +1,39 @@
-import { ParsedAccount, useMeta } from '@oyster/common';
-import { PackVoucher } from '@oyster/common/dist/lib/models/packs/accounts/PackVoucher';
-import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
-import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet';
+import { ParsedAccount, useMeta } from '@oyster/common'
+import { PackVoucher } from '@oyster/common/dist/lib/models/packs/accounts/PackVoucher'
+import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess'
+import { PackSet } from '@oyster/common/dist/lib/models/packs/accounts/PackSet'
 
-import { ExtendedPack } from '../../../types/packs';
+import { ExtendedPack } from '../../../types/packs'
 
 export const usePacksBasedOnProvingProcesses = (): ExtendedPack[] => {
-  const { provingProcesses, packs, vouchers } = useMeta();
+  const { provingProcesses, packs, vouchers } = useMeta()
 
-  const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
+  const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true'
 
   if (!shouldEnableNftPacks) {
-    return [];
+    return []
   }
 
-  return getPacksBasedOnProvingProcesses({ provingProcesses, packs, vouchers });
-};
+  return getPacksBasedOnProvingProcesses({ provingProcesses, packs, vouchers })
+}
 
 const getPacksBasedOnProvingProcesses = ({
   provingProcesses,
   vouchers,
   packs,
 }: {
-  provingProcesses: Record<string, ParsedAccount<ProvingProcess>>;
-  vouchers: Record<string, ParsedAccount<PackVoucher>>;
-  packs: Record<string, ParsedAccount<PackSet>>;
+  provingProcesses: Record<string, ParsedAccount<ProvingProcess>>
+  vouchers: Record<string, ParsedAccount<PackVoucher>>
+  packs: Record<string, ParsedAccount<PackSet>>
 }): ExtendedPack[] =>
   Object.values(provingProcesses).reduce<ExtendedPack[]>((acc, process) => {
-    const pack = packs[process.info.packSet];
+    const pack = packs[process.info.packSet]
     const voucher = Object.values(vouchers).find(
-      ({ info }) => info.packSet === process.info.packSet,
-    );
+      ({ info }) => info.packSet === process.info.packSet
+    )
 
     if (!voucher) {
-      return acc;
+      return acc
     }
 
     return [
@@ -45,5 +45,5 @@ const getPacksBasedOnProvingProcesses = ({
         cardsRedeemed: process.info.cardsRedeemed,
         provingProcessKey: process.pubkey,
       },
-    ];
-  }, []);
+    ]
+  }, [])

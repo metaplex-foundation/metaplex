@@ -1,13 +1,9 @@
-import {
-  SYSVAR_CLOCK_PUBKEY,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import BN from 'bn.js';
-import { serialize } from 'borsh';
+import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import BN from 'bn.js'
+import { serialize } from 'borsh'
 
-import { SCHEMA, SetAuctionCacheArgs } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { SCHEMA, SetAuctionCacheArgs } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function setAuctionCache(
   auctionCache: StringPublicKey,
@@ -16,16 +12,16 @@ export async function setAuctionCache(
   safetyDepositBox: StringPublicKey,
   auctionManager: StringPublicKey,
   page: BN,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const value = new SetAuctionCacheArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new SetAuctionCacheArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -76,13 +72,13 @@ export async function setAuctionCache(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }
