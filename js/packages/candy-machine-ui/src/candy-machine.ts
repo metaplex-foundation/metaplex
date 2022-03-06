@@ -528,7 +528,7 @@ export const mintOneToken = async (
         candyMachine.program.provider.connection,
         candyMachine.program.provider.wallet,
         [instructions, cleanupInstructions],
-        [signers],
+        [signers, []],
       )
     ).txs.map(t => t.txid);
   } catch (e) {
