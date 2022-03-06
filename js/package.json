@@ -11,7 +11,8 @@
   "keywords": [],
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=14.17"
+    "node": ">=14.17",
+    "yarn": "^1.19.0"
   },
   "scripts": {
     "bootstrap": "lerna link && lerna bootstrap",
@@ -25,8 +26,7 @@
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
     "deploy:docs": "lerna run docs",
     "deploy:apps": "lerna run deploy:app",
-    "test": "lerna run test --concurrency 1 --stream",
-    "preinstall": "yarn policies set-version 1.19.0"
+    "test": "lerna run test --concurrency 1 --stream"
   },
   "lint-staged": {
     "packages/*/{src,test}/**/*.{ts,tsx}": [
