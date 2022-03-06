@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ts-node": "^10.6.0"
+  }
+}
