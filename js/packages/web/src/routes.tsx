@@ -10,15 +10,15 @@ import {
   AnalyticsView,
   ArtCreateView,
   StaticPageView,
-AuctionCreateView,
-HomeView
+  AuctionCreateView,
+  HomeView,
 } from './views'
-import { AdminView } from './views/admin';
-import PackView from './views/pack';
-import { PackCreateView } from './views/packCreate';
-import { BillingView } from './views/auction/billing';
-import { CollectionsView } from './views/collections';
-import { CollectionDetailView } from './views/collections/collectionDetail';
+import { AdminView } from './views/admin'
+import PackView from './views/pack'
+import { PackCreateView } from './views/packCreate'
+import { BillingView } from './views/auction/billing'
+import { CollectionsView } from './views/collections'
+import { CollectionDetailView } from './views/collections/collectionDetail'
 
 /* New view components */
 import {
@@ -62,32 +62,22 @@ export function Routes() {
               path='/auction/create/:step_param?'
               component={() => <AuctionCreateView />}
             />
-            <Route
-              exact
-              path="/auction/:id"
-              component={() => <AuctionView />}
-            />
-            <Route
-              exact
-              path="/auction/:id/billing"
-              component={() => <BillingView />}
-            />
-            <Route path="/about" component={() => <StaticPageView />} />
-            {/* <Route path="/collections" component={() => <CollectionsView />} /> */}
-            {/* <Route
-              path="/collection/:id"
-              component={() => <CollectionDetailView />}
-            /> */}
-            <Route path="/" component={() => <HomeView />} />
+            <Route exact path='/auction/:id' component={() => <AuctionView />} />
+            <Route exact path='/auction/:id/billing' component={() => <BillingView />} />
+            <Route path='/about' component={() => <StaticPageView />} />
+            <Route path='/collections' component={() => <CollectionsView />} />
+            <Route path='/explore' component={() => <Explore />} />
+            {/* <Route path='/collection/:id' component={() => <CollectionDetailView />} /> */}
+            <Route path='/collection' component={() => <Collection />} />
+            <Route path='/' component={() => <Home />} />
             {/* <Route exact path='/auction/:id' component={() => <AuctionView />} />
             <Route exact path='/auction/:id/billing' component={() => <BillingView />} /> */}
-            <Route path='/about' component={() => <StaticPageView />} />
+            {/* <Route path='/about' component={() => <StaticPageView />} />
             <Route path='/explore' component={() => <Explore />} />
             <Route path='/collection' component={() => <Collection />} />
             <Route path='/static-content' component={() => <StaticContent />} />
             <Route path='/submit-collection' component={() => <SubmitCollection />} />
-            <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} />
-            <Route path='/' component={() => <Home />} />
+            <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} /> */}
           </Switch>
         </Providers>
       </HashRouter>
