@@ -1,19 +1,14 @@
-import { useMeta } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useMeta, useWallet} from '@oyster/common'
+import { useCreatorArts } from '../../../hooks'
 
-import { useCreatorArts } from '../../../hooks';
-import { ArtworkViewState, Item } from '../types';
+import { ArtworkViewState, Item } from '../types'
+import { usePacksBasedOnProvingProcesses } from './usePacksBasedOnProvingProcesses'
+import { useUserMetadataWithPacks } from './useUserMetadataWithPacks'
 
-import { useUserMetadataWithPacks } from './useUserMetadataWithPacks';
-import { usePacksBasedOnProvingProcesses } from './usePacksBasedOnProvingProcesses';
-
-export const useItems = ({
-  activeKey,
-}: {
-  activeKey: ArtworkViewState;
-}): Item[] => {
+export const useItems = ({ activeKey }: { activeKey: ArtworkViewState }): Item[] => {
   const { publicKey } = useWallet();
-  const { metadata } = useMeta();
+  console.log(activeKey)
+  const { metadata } = useMeta()
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   const userMetadataWithPacks = useUserMetadataWithPacks();
   const packsBasedOnProvingProcesses = usePacksBasedOnProvingProcesses();
@@ -26,5 +21,5 @@ export const useItems = ({
     return createdMetadata;
   }
 
-  return metadata;
-};
+  return metadata
+}

@@ -1,24 +1,24 @@
 export interface Auction {
-  name: string;
-  auctionerName: string;
-  auctionerLink: string;
-  highestBid: number;
-  solAmt: number;
-  link: string;
-  image: string;
+  name: string
+  auctionerName: string
+  auctionerLink: string
+  highestBid: number
+  solAmt: number
+  link: string
+  image: string
 }
 
 export interface Artist {
-  address?: string;
-  name: string;
-  link: string;
-  image: string;
-  itemsAvailable?: number;
-  itemsSold?: number;
-  about?: string;
-  verified?: boolean;
-  background?: string;
-  share?: number;
+  address?: string
+  name: string
+  link: string
+  image: string
+  itemsAvailable?: number
+  itemsSold?: number
+  about?: string
+  verified?: boolean
+  background?: string
+  share?: number
 }
 
 export enum ArtType {
@@ -27,21 +27,21 @@ export enum ArtType {
   NFT,
 }
 export interface Art {
-  uri: string | undefined;
-  mint: string | undefined;
-  link: string;
-  title: string;
-  artist: string;
-  seller_fee_basis_points?: number;
-  creators?: Artist[];
-  type: ArtType;
-  edition?: number;
-  supply?: number;
-  maxSupply?: number;
+  uri: string | undefined
+  mint: string | undefined
+  link: string
+  title: string
+  artist: string
+  seller_fee_basis_points?: number
+  creators?: Artist[]
+  type: ArtType
+  edition?: number
+  supply?: number
+  maxSupply?: number
 }
 
 export interface Presale {
-  targetPricePerShare?: number;
-  pricePerShare?: number;
-  marketCap?: number;
+  targetPricePerShare?: number
+  pricePerShare?: number
+  marketCap?: number
 }

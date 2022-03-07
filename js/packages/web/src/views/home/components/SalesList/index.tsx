@@ -42,13 +42,15 @@ export const SalesListView = (props: { collectionMintFilter?: string }) => {
   return (
     <>
       {!props.collectionMintFilter && (
-        <Banner
-          src="/main-banner.svg"
-          headingText="The amazing world of Metaplex."
-          subHeadingText="Buy exclusive Metaplex NFTs."
-          actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
-          useBannerBg
-        />
+ <Banner
+        src='/banner.png'
+        headingText='A Community Focused Solana NFT Marketplace'
+        subHeadingText='Karmaverse is an eco-friendly NFT exchange that 
+        rewards users for their activity and donates a portion
+        of every trade to charitable causes.'
+        actionComponent={<HowToBuyModal buttonClassName='secondary-btn' />}
+        useBannerBg
+      />
       )}
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>

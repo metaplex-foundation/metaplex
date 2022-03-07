@@ -2,8 +2,47 @@ export const footerConf = {
   showShopName: true,
   showEmailSubscriber: true,
   emailSubscriberText:
-    'Join our mailing list for updates about our artists and more.',
+    'Subscribe to our newsletter to be on top of updates, announcements and more!',
   components: [
+    {
+      title: 'Market Place',
+      links: [
+        {
+          label: 'Explore',
+          url: 'www.solana.com',
+        },
+        {
+          label: 'Donate',
+          url: 'www.solana.com',
+        },
+      ],
+    },
+    {
+      title: 'Resources',
+      links: [
+        {
+          label: 'Learn',
+          url: 'www.solana.com',
+        },
+        {
+          label: 'FAQ',
+          url: 'www.solana.com',
+        },
+        {
+          label: 'Blog',
+          url: 'www.solana.com',
+        },
+      ],
+    },
+    {
+      title: 'Stats',
+      links: [
+        {
+          label: 'Activity',
+          url: 'www.solana.com',
+        },
+      ],
+    },
     {
       title: 'Company',
       links: [
@@ -12,45 +51,11 @@ export const footerConf = {
           url: 'www.solana.com',
         },
         {
-          label: 'Terms of service',
-          url: 'www.solana.com',
-        },
-      ],
-    },
-    {
-      title: 'Help',
-      links: [
-        {
-          label: 'FAQ',
+          label: 'Mission',
           url: 'www.solana.com',
         },
         {
-          label: 'Support',
-          url: 'www.solana.com',
-        },
-        {
-          label: 'Privacy policy',
-          url: 'www.solana.com',
-        },
-        {
-          label: 'Your purchases',
-          url: 'www.solana.com',
-        },
-      ],
-    },
-    {
-      title: 'Follow us',
-      links: [
-        {
-          label: 'Instagram',
-          url: 'www.solana.com',
-        },
-        {
-          label: 'Twitter',
-          url: 'www.solana.com',
-        },
-        {
-          label: 'Discord',
+          label: 'Team',
           url: 'www.solana.com',
         },
       ],

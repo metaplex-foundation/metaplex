@@ -1,11 +1,9 @@
-import { PackDistributionType } from '@oyster/common';
-import { PackState } from '../interface';
-import { CreatePackSteps } from '../types';
+import { PackDistributionType } from '@oyster/common'
+import { PackState } from '../interface'
+import { CreatePackSteps } from '../types'
 
-const hasMappedPubkeys = (
-  pubkeys: string[],
-  mappedPubkeys: string[],
-): boolean => pubkeys.every(element => mappedPubkeys.includes(element));
+const hasMappedPubkeys = (pubkeys: string[], mappedPubkeys: string[]): boolean =>
+  pubkeys.every(element => mappedPubkeys.includes(element))
 
 const isValidQuantities = (attributes: PackState) => {
   const {
@@ -14,45 +12,43 @@ const isValidQuantities = (attributes: PackState) => {
     selectedItems,
     weightByMetadataKey,
     supplyByMetadataKey,
-  } = attributes;
+  } = attributes
 
-  const isValidAmountOfCardsInPack = allowedAmountToRedeem > 0;
-  const selectedItemsPubkeys = Object.keys(selectedItems);
+  const isValidAmountOfCardsInPack = allowedAmountToRedeem > 0
+  const selectedItemsPubkeys = Object.keys(selectedItems)
 
   const hasMappedSupply = (): boolean =>
-    hasMappedPubkeys(selectedItemsPubkeys, Object.keys(supplyByMetadataKey));
+    hasMappedPubkeys(selectedItemsPubkeys, Object.keys(supplyByMetadataKey))
   const hasMappedWeight = (): boolean =>
-    hasMappedPubkeys(selectedItemsPubkeys, Object.keys(weightByMetadataKey));
+    hasMappedPubkeys(selectedItemsPubkeys, Object.keys(weightByMetadataKey))
 
   switch (distributionType) {
     case PackDistributionType.Unlimited:
-      return isValidAmountOfCardsInPack && hasMappedWeight();
+      return isValidAmountOfCardsInPack && hasMappedWeight()
     case PackDistributionType.MaxSupply:
-      return isValidAmountOfCardsInPack && hasMappedSupply();
+      return isValidAmountOfCardsInPack && hasMappedSupply()
     case PackDistributionType.Fixed:
-      return (
-        isValidAmountOfCardsInPack && hasMappedSupply() && hasMappedWeight()
-      );
+      return isValidAmountOfCardsInPack && hasMappedSupply() && hasMappedWeight()
   }
-};
+}
 
 export const useValidation = ({
   attributes,
   step,
 }: {
-  attributes: PackState;
-  step: CreatePackSteps;
+  attributes: PackState
+  step: CreatePackSteps
 }): boolean => {
-  const { selectedItems, selectedVouchers } = attributes;
+  const { selectedItems, selectedVouchers } = attributes
 
   switch (step) {
     case CreatePackSteps.SelectItems:
-      return Object.values(selectedItems).length > 0;
+      return Object.values(selectedItems).length > 0
     case CreatePackSteps.SelectVoucher:
-      return Object.values(selectedVouchers).length > 0;
+      return Object.values(selectedVouchers).length > 0
     case CreatePackSteps.AdjustQuantities:
-      return isValidQuantities(attributes);
+      return isValidQuantities(attributes)
     default:
-      return true;
+      return true
   }
-};
+}

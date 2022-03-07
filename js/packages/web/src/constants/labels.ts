@@ -1,9 +1,8 @@
 export const LABELS = {
-  STORE_NAME: 'Metaplex',
+  STORE_NAME: 'Karmaverse',
   CONNECT_LABEL: 'Connect Wallet',
   GIVE_SOL: 'Give me SOL',
-  FAUCET_INFO:
-    'This faucet will help you fund your accounts outside of Solana main network.',
+  FAUCET_INFO: 'This faucet will help you fund your accounts outside of Solana main network.',
   ACCOUNT_FUNDED: 'Account funded.',
   MENU_HOME: 'Home',
   MENU_FAUCET: 'Faucet',
@@ -16,4 +15,4 @@ export const LABELS = {
   ENTER_AMOUNT: 'Enter an amount',
   TRANSFER: 'Transfer',
   SET_CORRECT_WALLET_NETWORK: 'Set correct wallet network',
-};
+}

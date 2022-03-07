@@ -1,16 +1,16 @@
-import { initPackSet } from '@oyster/common';
-import { TransactionInstruction } from '@solana/web3.js';
-import { BN } from 'bn.js';
+import { initPackSet } from '@oyster/common'
+import { TransactionInstruction } from '@solana/web3.js'
+import { BN } from 'bn.js'
 
-import { GetInitPackSetParams } from './interface';
+import { GetInitPackSetParams } from './interface'
 
 const stringToUint8Array = (str: string, size: number): Uint8Array => {
-  const array = new Uint8Array(size);
+  const array = new Uint8Array(size)
 
-  [...str].forEach((char, index) => (array[index] = char.charCodeAt(0)));
+  ;[...str].forEach((char, index) => (array[index] = char.charCodeAt(0)))
 
-  return array;
-};
+  return array
+}
 
 export const getInitPackSet = async ({
   data,
@@ -26,15 +26,11 @@ export const getInitPackSet = async ({
     redeemStartDate: momentRedeemStartDate,
     redeemEndDate: momentRedeemEndDate,
     distributionType,
-  } = data;
+  } = data
 
-  const allowedAmountToRedeem = new BN(allowedAmountToRedeemNumber);
-  const redeemStartDate = momentRedeemStartDate
-    ? new BN(momentRedeemStartDate.valueOf())
-    : null;
-  const redeemEndDate = momentRedeemEndDate
-    ? new BN(momentRedeemEndDate.valueOf())
-    : null;
+  const allowedAmountToRedeem = new BN(allowedAmountToRedeemNumber)
+  const redeemStartDate = momentRedeemStartDate ? new BN(momentRedeemStartDate.valueOf()) : null
+  const redeemEndDate = momentRedeemEndDate ? new BN(momentRedeemEndDate.valueOf()) : null
 
   return initPackSet({
     name: stringToUint8Array(name, 32),
@@ -47,5 +43,5 @@ export const getInitPackSet = async ({
     redeemEndDate,
     packSetKey,
     authority: walletPublicKey.toBase58(),
-  });
-};
+  })
+}

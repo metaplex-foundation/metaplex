@@ -1,38 +1,17 @@
-@import '~antd/es/style/themes/dark.less';
-@import '~antd/dist/antd.dark.less';
+@import '~antd/es/style/themes/default.less';
+@import '~antd/dist/antd.less';
 
-html {
-  overflow-y: scroll;
-  width: 100%;
-  overflow-x: hidden;
-}
-#root {
-  height: 100%;
-  font-family: 'Graphik Web', sans-serif;
-}
-
-#root::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  min-width: 100%;
-  min-height: 100%;
-  filter: grayscale(100%);
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
-body {
-  --row-highlight: @background-color-base;
-  margin: 0;
-
-  font-style: normal;
-  font-weight: normal;
-  font-family: 'Graphik Web' !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+// #root::before {
+//   content: '';
+//   position: absolute;
+//   top: 0;
+//   left: 0;
+//   min-width: 100%;
+//   min-height: 100%;
+//   filter: grayscale(100%);
+//   background-repeat: no-repeat;
+//   background-size: cover;
+// }
 
 .no-events {
   pointer-events: none;
@@ -53,9 +32,9 @@ img:not([src]) {
   pointer-events: none;
   width: 100%;
 }
+
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .app-logo {
@@ -112,15 +91,6 @@ code {
   :hover {
     background-color: #434343;
   }
-}
-
-.text-center {
-  align-self: center;
-  margin-left: auto;
-  margin-right: auto;
-}
-.text-uppercase {
-  text-transform: uppercase;
 }
 
 .ant-upload.ant-upload-drag {
@@ -202,37 +172,27 @@ code {
   padding-top: 5px;
 }
 
-h1 {
-  font-style: normal;
-  font-weight: 600;
-  font-size: 2rem;
-}
 .ant-btn:hover {
   background-color: transparent !important;
 }
-.ant-steps-item-process
-  > .ant-steps-item-container
-  > .ant-steps-item-content
-  > .ant-steps-item-title {
-  color: hsla(0, 0%, 100%, 0.85);
-}
-.ant-steps-item-wait
-  > .ant-steps-item-container
-  > .ant-steps-item-content
-  > .ant-steps-item-title {
-  color: hsla(0, 0%, 100%, 0.45);
-}
-.ant-steps-item-wait
-  .ant-steps-item-icon
-  > .ant-steps-icon
-  .ant-steps-icon-dot {
-  background: hsla(0, 0%, 100%, 0.3);
-}
-.ant-card {
-  background: #141414;
-}
+// .ant-steps-item-process
+//   > .ant-steps-item-container
+//   > .ant-steps-item-content
+//   > .ant-steps-item-title {
+//   color: hsla(0, 0%, 100%, 0.85);
+// }
+// .ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title {
+//   color: hsla(0, 0%, 100%, 0.45);
+// }
+// .ant-steps-item-wait .ant-steps-item-icon > .ant-steps-icon .ant-steps-icon-dot {
+//   background: hsla(0, 0%, 100%, 0.3);
+// }
+// .ant-card {
+//   background: #141414;
+// }
+
 .ant-card-bordered {
-  border: 1px solid #303030;
+  @apply !border !rounded !border-gray-200;
 }
 
 .ant-card-meta-title {

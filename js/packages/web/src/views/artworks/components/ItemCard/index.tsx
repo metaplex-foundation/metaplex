@@ -1,12 +1,12 @@
-import React, { ReactElement } from 'react';
-import { Link } from 'react-router-dom';
+import React, { ReactElement } from 'react'
+import { Link } from 'react-router-dom'
 
-import { ArtCard } from '../../../../components/ArtCard';
-import PackCard from '../../../../components/PackCard';
-import { Item } from '../../types';
-import { isMetadata, isPack } from '../../utils';
+import { ArtCard } from '../../../../components/ArtCard'
+import PackCard from '../../../../components/PackCard'
+import { Item } from '../../types'
+import { isMetadata, isPack } from '../../utils'
 
-const ART_CARD_SIZE = 250;
+const ART_CARD_SIZE = 250
 
 const ItemCard = ({ item }: { item: Item }): ReactElement => {
   if (isPack(item)) {
@@ -17,11 +17,9 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
       info: { authority, allowedAmountToRedeem, uri },
       provingProcessKey,
       voucherMetadataKey,
-    } = item;
+    } = item
 
-    const search = mint
-      ? `voucherMint=${mint}`
-      : `provingProcessKey=${provingProcessKey}`;
+    const search = mint ? `voucherMint=${mint}` : `provingProcessKey=${provingProcessKey}`
 
     return (
       <Link to={`/pack/${pubkey}?${search}`}>
@@ -35,10 +33,10 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
           artView
         />
       </Link>
-    );
+    )
   }
 
-  const pubkey = isMetadata(item) ? item.pubkey : item.metadata.pubkey;
+  const pubkey = isMetadata(item) ? item.pubkey : item.metadata.pubkey
 
   return (
     <Link to={`/art/${pubkey}`}>
@@ -50,7 +48,7 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
         artView
       />
     </Link>
-  );
-};
+  )
+}
 
-export default ItemCard;
+export default ItemCard

@@ -1,4 +1,4 @@
-import { LABELS } from '../../constants';
+import { LABELS } from '../../constants'
 
 export const textContent = {
   mainTitle: `Get an exclusive ${LABELS.STORE_NAME} NFT before anyone else.`,
@@ -12,4 +12,4 @@ export const textContent = {
 
   comingSoonTitle: `${LABELS.STORE_NAME} NFTs are on the way.`,
   comingSoonTitleDescription: `Sign up for the latest updates on our NFT drop.`,
-};
+}

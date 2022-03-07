@@ -1,9 +1,5 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
 import {
   getAuctionKeys,
@@ -13,8 +9,8 @@ import {
   SafetyDepositConfig,
   SCHEMA,
   ValidateSafetyDepositBoxV2Args,
-} from '.';
-import { programIds, toPublicKey, StringPublicKey } from '../../utils';
+} from '.'
+import { programIds, toPublicKey, StringPublicKey } from '../../utils'
 
 export async function validateSafetyDepositBoxV2(
   vault: StringPublicKey,
@@ -29,28 +25,20 @@ export async function validateSafetyDepositBoxV2(
   edition: StringPublicKey,
   whitelistedCreator: StringPublicKey | undefined,
   store: StringPublicKey,
-  safetyDepositConfig: SafetyDepositConfig,
+  safetyDepositConfig: SafetyDepositConfig
 ) {
-  const PROGRAM_IDS = programIds();
+  const PROGRAM_IDS = programIds()
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
-  const originalAuthorityLookup = await getOriginalAuthority(
-    auctionKey,
-    metadata,
-  );
+  const originalAuthorityLookup = await getOriginalAuthority(auctionKey, metadata)
 
-  const safetyDepositConfigKey = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDepositBox,
-  );
+  const safetyDepositConfigKey = await getSafetyDepositConfig(auctionManagerKey, safetyDepositBox)
 
-  const tokenTracker = await getAuctionWinnerTokenTypeTracker(
-    auctionManagerKey,
-  );
+  const tokenTracker = await getAuctionWinnerTokenTypeTracker(auctionManagerKey)
 
-  const value = new ValidateSafetyDepositBoxV2Args(safetyDepositConfig);
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new ValidateSafetyDepositBoxV2Args(safetyDepositConfig)
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -144,13 +132,13 @@ export async function validateSafetyDepositBoxV2(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

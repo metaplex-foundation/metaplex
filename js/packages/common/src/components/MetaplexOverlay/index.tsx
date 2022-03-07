@@ -1,8 +1,8 @@
-import React from 'react';
-import { Modal } from 'antd';
+import React from 'react'
+import { Modal } from 'antd'
 
 export const MetaplexOverlay = (props: any) => {
-  const { children, ...rest } = props;
+  const { children, ...rest } = props
 
   const content = (
     <div
@@ -16,15 +16,7 @@ export const MetaplexOverlay = (props: any) => {
     >
       {children}
     </div>
-  );
+  )
 
-  return (
-    <Modal
-      centered
-      modalRender={() => content}
-      width={'100vw'}
-      mask={false}
-      {...rest}
-    ></Modal>
-  );
-};
+  return <Modal centered modalRender={() => content} width={'100vw'} mask={false} {...rest}></Modal>
+}

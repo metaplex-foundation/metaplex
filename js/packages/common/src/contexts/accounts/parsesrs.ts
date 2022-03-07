@@ -1,16 +1,13 @@
-import { AccountInfo } from '@solana/web3.js';
-import { TokenAccount } from '../../models';
-import { ParsedAccountBase } from './types';
-import { deserializeMint, deserializeAccount } from './deserialize';
-import { StringPublicKey } from '../../utils';
+import { AccountInfo } from '@solana/web3.js'
+import { TokenAccount } from '../../models'
+import { ParsedAccountBase } from './types'
+import { deserializeMint, deserializeAccount } from './deserialize'
+import { StringPublicKey } from '../../utils'
 
-export const MintParser = (
-  pubKey: StringPublicKey,
-  info: AccountInfo<Buffer>,
-) => {
-  const buffer = Buffer.from(info.data);
+export const MintParser = (pubKey: StringPublicKey, info: AccountInfo<Buffer>) => {
+  const buffer = Buffer.from(info.data)
 
-  const data = deserializeMint(buffer);
+  const data = deserializeMint(buffer)
 
   const details = {
     pubkey: pubKey,
@@ -18,21 +15,18 @@ export const MintParser = (
       ...info,
     },
     info: data,
-  } as ParsedAccountBase;
+  } as ParsedAccountBase
 
-  return details;
-};
+  return details
+}
 
-export const TokenAccountParser = (
-  pubKey: StringPublicKey,
-  info: AccountInfo<Buffer>,
-) => {
+export const TokenAccountParser = (pubKey: StringPublicKey, info: AccountInfo<Buffer>) => {
   // Sometimes a wrapped sol account gets closed, goes to 0 length,
   // triggers an update over wss which triggers this guy to get called
   // since your UI already logged that pubkey as a token account. Check for length.
   if (info.data.length > 0) {
-    const buffer = Buffer.from(info.data);
-    const data = deserializeAccount(buffer);
+    const buffer = Buffer.from(info.data)
+    const data = deserializeAccount(buffer)
 
     const details = {
       pubkey: pubKey,
@@ -40,17 +34,14 @@ export const TokenAccountParser = (
         ...info,
       },
       info: data,
-    } as TokenAccount;
+    } as TokenAccount
 
-    return details;
+    return details
   }
-};
+}
 
-export const GenericAccountParser = (
-  pubKey: StringPublicKey,
-  info: AccountInfo<Buffer>,
-) => {
-  const buffer = Buffer.from(info.data);
+export const GenericAccountParser = (pubKey: StringPublicKey, info: AccountInfo<Buffer>) => {
+  const buffer = Buffer.from(info.data)
 
   const details = {
     pubkey: pubKey,
@@ -58,7 +49,7 @@ export const GenericAccountParser = (
       ...info,
     },
     info: buffer,
-  } as ParsedAccountBase;
+  } as ParsedAccountBase
 
-  return details;
-};
+  return details
+}

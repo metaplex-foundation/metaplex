@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
-import { useMeta } from '../contexts';
-import { Artist } from '../types';
-import { AuctionView } from './useAuctions';
+import { useMemo } from 'react'
+import { useMeta } from '../contexts'
+import { Artist } from '../types'
+import { AuctionView } from './useAuctions'
 
 export const useCreators = (auction?: AuctionView) => {
-  const { whitelistedCreatorsByCreator } = useMeta();
+  const { whitelistedCreatorsByCreator } = useMeta()
 
   const creators = useMemo(
     () =>
@@ -20,13 +20,13 @@ export const useCreators = (auction?: AuctionView) => {
         )
           .filter(creator => creator.verified)
           .reduce((agg, item) => {
-            agg.set(item.address, item.share);
-            return agg;
+            agg.set(item.address, item.share)
+            return agg
           }, new Map<string, number>())
           .entries(),
       ].map(creatorArray => {
-        const [creator, share] = creatorArray;
-        const knownCreator = whitelistedCreatorsByCreator[creator];
+        const [creator, share] = creatorArray
+        const knownCreator = whitelistedCreatorsByCreator[creator]
 
         return {
           address: creator,
@@ -35,10 +35,10 @@ export const useCreators = (auction?: AuctionView) => {
           image: knownCreator?.info.image || '',
           name: knownCreator?.info.name || '',
           link: knownCreator?.info.twitter || '',
-        } as Artist;
+        } as Artist
       }),
-    [auction, whitelistedCreatorsByCreator],
-  );
+    [auction, whitelistedCreatorsByCreator]
+  )
 
-  return creators;
-};
+  return creators
+}

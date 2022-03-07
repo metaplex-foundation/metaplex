@@ -1,26 +1,26 @@
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { getWhitelistedCreator, SCHEMA, SetWhitelistedCreatorArgs } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { getWhitelistedCreator, SCHEMA, SetWhitelistedCreatorArgs } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function setWhitelistedCreator(
   creator: StringPublicKey,
   activated: boolean,
   admin: StringPublicKey,
   payer: StringPublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const whitelistedCreatorPDAKey = await getWhitelistedCreator(creator);
+  const whitelistedCreatorPDAKey = await getWhitelistedCreator(creator)
 
-  const value = new SetWhitelistedCreatorArgs({ activated });
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new SetWhitelistedCreatorArgs({ activated })
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -58,13 +58,13 @@ export async function setWhitelistedCreator(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

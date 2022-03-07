@@ -3,10 +3,10 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  background-color: @bg-color;
+  background-color: #9AA6B9; //@bg-color;  rgba(255, 255, 255, 0.7);
   padding-top: 40px;
-  padding-left: 40px;
-  padding-right: 40px;
+  padding-left: 100px;
+  padding-right: 100px;
   .block-access-footer-image {
     margin-top: 15px;
   }
@@ -20,14 +20,16 @@
     font-size: 1.2em;
   }
   .footer-input {
-    border-bottom: solid @subtext-color;
-    color: @subtext-color;
+    border-bottom: solid;
+    color: black; //@subtext-color;
+    background-color:white;
+
   }
   .footer-input::placeholder{
-    color: @subtext-color;
+    color:  white;//@subtext-color;
   }
   .footer-link {
-    color: @subtext-color;
+    color:  white;//@subtext-color;
   }
   .footer-button {
     width: fit-content !important;
@@ -42,7 +44,7 @@
     }
   }
   .subscriber-container {
-    max-width: 20%;
+    max-width: 30%;
     @media (max-width: @mobile-breakpoint) {
       max-width: 100%;
     }
@@ -108,6 +110,44 @@
     }
   }
 
+  .footer-inner-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .social-photo {
+    height: 60px;
+    width: 60px;
+
+  }
+
+  .footer-logo {
+    height: 50px;
+    width: 240px;
+
+  }
+
+  .img-paddin{
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .btn-padding{
+    padding-left: 10px;
+  }
+
+  .logo-paddin{
+    padding-top: 10px;
+    padding-bottom: 20px;
+  }
+
+  .social-media-bar{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
   .footer-info {
     display: flex;
     justify-content: space-between;
@@ -182,4 +222,52 @@
     }
   }
 
+}
+
+.email-btn {
+  height: 46px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16px;
+  background-color: transparent !important;
+  color: white;
+  padding-left: 20px;
+  &.secondary-btn {
+    padding-left: 20px;
+    color: @black-100;
+    background: @metaplex-primary-color !important;
+    border-color: @metaplex-primary-color !important;
+    box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+    border-radius: 8px;
+    //width: fit-content;
+
+    &:hover,
+    &:focus {
+      background: transparent !important;
+      border-color: @metaplex-primary-color !important;
+      color: @metaplex-primary-color !important;
+    }
+
+    &:disabled,
+    &:disabled &:hover {
+      color: rgba(255, 255, 255, 0.5) !important;
+      background: #1e1e1e !important;
+      border: none;
+    }
+  }
+
+  &.black-btn {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    width: fit-content;
+
+    &:hover,
+    &:focus {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+  }
 }

@@ -1,24 +1,20 @@
-import React, { useContext, useEffect, useMemo, useRef } from 'react';
-import confetti from 'canvas-confetti';
+import React, { useContext, useEffect, useMemo, useRef } from 'react'
+import confetti from 'canvas-confetti'
 
 export interface ConfettiContextState {
-  dropConfetti: () => void;
+  dropConfetti: () => void
 }
 
-const ConfettiContext = React.createContext<ConfettiContextState | null>(null);
+const ConfettiContext = React.createContext<ConfettiContextState | null>(null)
 
-export const ConfettiProvider = ({
-  children = null,
-}: {
-  children: React.ReactNode;
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>();
-  const confettiRef = useRef<confetti.CreateTypes>();
+export const ConfettiProvider = ({ children = null }: { children: React.ReactNode }) => {
+  const canvasRef = useRef<HTMLCanvasElement>()
+  const confettiRef = useRef<confetti.CreateTypes>()
 
   const dropConfetti = useMemo(
     () => () => {
       if (confettiRef.current && canvasRef.current) {
-        canvasRef.current.style.visibility = 'visible';
+        canvasRef.current.style.visibility = 'visible'
         confettiRef
           .current({
             particleCount: 400,
@@ -27,23 +23,23 @@ export const ConfettiProvider = ({
           })
           ?.finally(() => {
             if (canvasRef.current) {
-              canvasRef.current.style.visibility = 'hidden';
+              canvasRef.current.style.visibility = 'hidden'
             }
-          });
+          })
       }
     },
-    [],
-  );
+    []
+  )
 
   useEffect(() => {
     if (canvasRef.current && !confettiRef.current) {
-      canvasRef.current.style.visibility = 'hidden';
+      canvasRef.current.style.visibility = 'hidden'
       confettiRef.current = confetti.create(canvasRef.current, {
         resize: true,
         useWorker: true,
-      });
+      })
     }
-  }, []);
+  }, [])
 
   const canvasStyle: React.CSSProperties = {
     width: '100vw',
@@ -52,27 +48,27 @@ export const ConfettiProvider = ({
     zIndex: 1,
     top: 0,
     left: 0,
-  };
+  }
 
   return (
     <ConfettiContext.Provider value={{ dropConfetti }}>
       <canvas ref={canvasRef as any} style={canvasStyle} />
       {children}
     </ConfettiContext.Provider>
-  );
-};
+  )
+}
 
 export const Confetti = () => {
-  const { dropConfetti } = useConfetti();
+  const { dropConfetti } = useConfetti()
 
   useEffect(() => {
-    dropConfetti();
-  }, [dropConfetti]);
+    dropConfetti()
+  }, [dropConfetti])
 
-  return <></>;
-};
+  return <></>
+}
 
 export const useConfetti = () => {
-  const context = useContext(ConfettiContext);
-  return context as ConfettiContextState;
-};
+  const context = useContext(ConfettiContext)
+  return context as ConfettiContextState
+}

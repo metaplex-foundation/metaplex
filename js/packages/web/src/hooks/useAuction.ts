@@ -1,21 +1,15 @@
-import { StringPublicKey } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useEffect, useState } from 'react';
-import {
-  AuctionView,
-  processAccountsIntoAuctionView,
-  useCachedRedemptionKeysByWallet,
-} from '.';
-import { useMeta } from '../contexts';
+import { StringPublicKey } from '@oyster/common'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useEffect, useState } from 'react'
+import { AuctionView, processAccountsIntoAuctionView, useCachedRedemptionKeysByWallet } from '.'
+import { useMeta } from '../contexts'
 
 export const useAuction = (id: StringPublicKey) => {
-  const { publicKey } = useWallet();
-  const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
+  const { publicKey } = useWallet()
+  const cachedRedemptionKeys = useCachedRedemptionKeysByWallet()
 
-  const [existingAuctionView, setAuctionView] = useState<
-    AuctionView | undefined
-  >(undefined);
-  const walletPubkey = publicKey?.toBase58();
+  const [existingAuctionView, setAuctionView] = useState<AuctionView | undefined>(undefined)
+  const walletPubkey = publicKey?.toBase58()
   const {
     auctions,
     auctionManagersByAuction,
@@ -33,10 +27,10 @@ export const useAuction = (id: StringPublicKey) => {
     auctionDataExtended,
     metadataByAuction,
     isLoading,
-  } = useMeta();
+  } = useMeta()
 
   useEffect(() => {
-    const auction = auctions[id];
+    const auction = auctions[id]
     if (!isLoading && auction) {
       const auctionView = processAccountsIntoAuctionView(
         walletPubkey,
@@ -56,10 +50,10 @@ export const useAuction = (id: StringPublicKey) => {
         metadataByMasterEdition,
         cachedRedemptionKeys,
         metadataByAuction,
-        undefined,
-      );
+        undefined
+      )
 
-      if (auctionView) setAuctionView(auctionView);
+      if (auctionView) setAuctionView(auctionView)
     }
   }, [
     auctions,
@@ -79,6 +73,6 @@ export const useAuction = (id: StringPublicKey) => {
     cachedRedemptionKeys,
     metadataByAuction,
     isLoading,
-  ]);
-  return existingAuctionView;
-};
+  ])
+  return existingAuctionView
+}

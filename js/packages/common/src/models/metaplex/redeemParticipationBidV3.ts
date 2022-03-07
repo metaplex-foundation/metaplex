@@ -1,10 +1,6 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import BN from 'bn.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import BN from 'bn.js'
+import { serialize } from 'borsh'
 
 import {
   getAuctionKeys,
@@ -13,14 +9,9 @@ import {
   SCHEMA,
   getPrizeTrackingTicket,
   getSafetyDepositConfig,
-} from '.';
-import {
-  getAuctionExtended,
-  getEdition,
-  getEditionMarkPda,
-  getMetadata,
-} from '../../actions';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+} from '.'
+import { getAuctionExtended, getEdition, getEditionMarkPda, getMetadata } from '../../actions'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function redeemParticipationBidV3(
   vault: StringPublicKey,
@@ -38,42 +29,33 @@ export async function redeemParticipationBidV3(
   newMint: StringPublicKey,
   edition: BN,
   winIndex: BN | null,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
   const auctionDataExtended = await getAuctionExtended({
     auctionProgramId: PROGRAM_IDS.auction,
     resource: vault,
-  });
+  })
 
-  const { bidRedemption, bidMetadata } = await getBidderKeys(
-    auctionKey,
-    bidder,
-  );
+  const { bidRedemption, bidMetadata } = await getBidderKeys(auctionKey, bidder)
 
-  const prizeTrackingTicket = await getPrizeTrackingTicket(
-    auctionManagerKey,
-    originalMint,
-  );
+  const prizeTrackingTicket = await getPrizeTrackingTicket(auctionManagerKey, originalMint)
 
-  const newMetadata = await getMetadata(newMint);
-  const newEdition = await getEdition(newMint);
+  const newMetadata = await getMetadata(newMint)
+  const newEdition = await getEdition(newMint)
 
-  const editionMarkPda = await getEditionMarkPda(originalMint, edition);
+  const editionMarkPda = await getEditionMarkPda(originalMint, edition)
 
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
+  const safetyDepositConfig = await getSafetyDepositConfig(auctionManagerKey, safetyDeposit)
 
-  const value = new RedeemParticipationBidV3Args({ winIndex });
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new RedeemParticipationBidV3Args({ winIndex })
+  const data = Buffer.from(serialize(SCHEMA, value))
   const keys = [
     {
       pubkey: toPublicKey(auctionManagerKey),
@@ -225,13 +207,13 @@ export async function redeemParticipationBidV3(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

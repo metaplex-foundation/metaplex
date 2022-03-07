@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
 import {
   BidderMetadata,
   BidderMetadataParser,
@@ -7,18 +7,16 @@ import {
   StringPublicKey,
   useMeta,
   USE_SPEED_RUN,
-} from '@oyster/common';
+} from '@oyster/common'
 
-export const useHighestBidForAuction = (
-  auctionPubkey: StringPublicKey | string,
-) => {
-  const bids = useBidsForAuction(auctionPubkey);
+export const useHighestBidForAuction = (auctionPubkey: StringPublicKey | string) => {
+  const bids = useBidsForAuction(auctionPubkey)
   const winner = useMemo(() => {
-    return bids?.[0];
-  }, [bids]);
+    return bids?.[0]
+  }, [bids])
 
-  return winner;
-};
+  return winner
+}
 
 export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
   const id = useMemo(
@@ -28,70 +26,65 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
           ? auctionPubkey
           : undefined
         : auctionPubkey,
-    [auctionPubkey],
-  );
-  const { bidderMetadataByAuctionAndBidder } = useMeta();
+    [auctionPubkey]
+  )
+  const { bidderMetadataByAuctionAndBidder } = useMeta()
 
-  const [bids, setBids] = useState<ParsedAccount<BidderMetadata>[]>([]);
+  const [bids, setBids] = useState<ParsedAccount<BidderMetadata>[]>([])
 
   useEffect(() => {
     const dispose = cache.emitter.onCache(args => {
       if (args.parser === BidderMetadataParser) {
-        setBids(getBids(bidderMetadataByAuctionAndBidder, id));
+        setBids(getBids(bidderMetadataByAuctionAndBidder, id))
       }
-    });
+    })
 
-    setBids(getBids(bidderMetadataByAuctionAndBidder, id));
+    setBids(getBids(bidderMetadataByAuctionAndBidder, id))
 
     return () => {
-      dispose();
-    };
-  }, [id]);
+      dispose()
+    }
+  }, [id])
 
-  return bids;
-};
+  return bids
+}
 
 const getBids = (
-  bidderMetadataByAuctionAndBidder: Record<
-    string,
-    ParsedAccount<BidderMetadata>
-  >,
-  id?: StringPublicKey,
+  bidderMetadataByAuctionAndBidder: Record<string, ParsedAccount<BidderMetadata>>,
+  id?: StringPublicKey
 ) => {
   // I have no idea why, but cache doesnt work with speed run and i couldnt figure it out for the life of me,
   // because that file is so confusing I have no idea how it works.
   // so we use the tempCache for pulling bids. B come save me.- J
-  let bids;
+  let bids
   if (USE_SPEED_RUN) {
-    bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
-      b => b.info.auctionPubkey === id,
-    );
+    bids = Object.values(bidderMetadataByAuctionAndBidder).filter(b => b.info.auctionPubkey === id)
   } else {
     bids = cache
       .byParser(BidderMetadataParser)
       .filter(key => {
-        const bidder = cache.get(key) as ParsedAccount<BidderMetadata>;
+        const bidder = cache.get(key) as ParsedAccount<BidderMetadata>
 
         if (!bidder) {
-          return false;
+          return false
         }
-        return id === bidder.info.auctionPubkey;
+        return id === bidder.info.auctionPubkey
       })
       .map(key => {
-        const bidder = cache.get(key) as ParsedAccount<BidderMetadata>;
-        return bidder;
-      });
+        const bidder = cache.get(key) as ParsedAccount<BidderMetadata>
+        return bidder
+      })
   }
   return bids
     .sort((a, b) => {
-      const lastBidDiff = b.info.lastBid.sub(a.info.lastBid).toNumber();
+      const lastBidDiff = b.info.lastBid.sub(a.info.lastBid).toNumber()
       if (lastBidDiff === 0) {
-        return a.info.lastBidTimestamp.sub(b.info.lastBidTimestamp).toNumber();
+        return a.info.lastBidTimestamp.sub(b.info.lastBidTimestamp).toNumber()
       }
 
-      return lastBidDiff;
+      return lastBidDiff
     })
     .map(item => {
-      return item;
-    });
-};
+      return item
+    })
+}

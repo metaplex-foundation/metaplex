@@ -1,34 +1,34 @@
-import React from 'react';
-import { Card, CardProps, Button, Badge } from 'antd';
-import { MetadataCategory, StringPublicKey } from '@oyster/common';
-import { ArtContent } from '../ArtContent';
-import { useArt } from '../../hooks';
-import { Artist, ArtType } from '../../types';
-import { MetaAvatar } from '../MetaAvatar';
+import React from 'react'
+import { Card, CardProps, Button, Badge } from 'antd'
+import { MetadataCategory, StringPublicKey } from '@oyster/common'
+import { ArtContent } from '../ArtContent'
+import { useArt } from '../../hooks'
+import { Artist, ArtType } from '../../types'
+import { MetaAvatar } from '../MetaAvatar'
 
-const { Meta } = Card;
+const { Meta } = Card
 
 export interface ArtCardProps extends CardProps {
-  pubkey?: StringPublicKey;
+  pubkey?: StringPublicKey
 
-  image?: string;
-  animationURL?: string;
+  image?: string
+  animationURL?: string
 
-  category?: MetadataCategory;
+  category?: MetadataCategory
 
-  name?: string;
-  symbol?: string;
-  description?: string;
-  creators?: Artist[];
-  preview?: boolean;
-  small?: boolean;
-  onClose?: () => void;
+  name?: string
+  symbol?: string
+  description?: string
+  creators?: Artist[]
+  preview?: boolean
+  small?: boolean
+  onClose?: () => void
 
-  height?: number;
-  artView?: boolean;
-  width?: number;
+  height?: number
+  artView?: boolean
+  width?: number
 
-  count?: string;
+  count?: string
 }
 
 export const ArtCard = (props: ArtCardProps) => {
@@ -50,19 +50,19 @@ export const ArtCard = (props: ArtCardProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     creators: _creators,
     ...rest
-  } = props;
-  const art = useArt(pubkey);
-  let { name, creators } = props;
-  creators = art?.creators || creators || [];
-  name = art?.title || name || ' ';
+  } = props
+  const art = useArt(pubkey)
+  let { name, creators } = props
+  creators = art?.creators || creators || []
+  name = art?.title || name || ' '
 
-  let badge = '';
+  let badge = ''
   if (art.type === ArtType.NFT) {
-    badge = 'Unique';
+    badge = 'Unique'
   } else if (art.type === ArtType.Master) {
-    badge = 'NFT 0';
+    badge = 'NFT 0'
   } else if (art.type === ArtType.Print) {
-    badge = `${art.edition} of ${art.supply}`;
+    badge = `${art.edition} of ${art.supply}`
   }
 
   const card = (
@@ -73,22 +73,22 @@ export const ArtCard = (props: ArtCardProps) => {
     >
       {onClose && (
         <Button
-          className="card-close-button"
-          shape="circle"
+          className='card-close-button'
+          shape='circle'
           onClick={e => {
-            e.stopPropagation();
-            e.preventDefault();
-            onClose && onClose();
+            e.stopPropagation()
+            e.preventDefault()
+            onClose && onClose()
           }}
         >
           X
         </Button>
       )}
-      <div className="art-card__header">
+      <div className='art-card__header'>
         <MetaAvatar creators={creators} size={32} />
-        <div className="edition-badge">{badge}</div>
+        <div className='edition-badge'>{badge}</div>
       </div>
-      <div className="art-content__wrapper">
+      <div className='art-content__wrapper'>
         <ArtContent
           pubkey={pubkey}
           uri={image}
@@ -116,18 +116,16 @@ export const ArtCard = (props: ArtCardProps) => {
               </>
             )} */}
 
-            {count && (
-              <div className="edition-badge">Selected count: {count}</div>
-            )}
+            {count && <div className='edition-badge'>Selected count: {count}</div>}
           </>
         }
       />
     </Card>
-  );
+  )
 
   return art.creators?.find(c => !c.verified) ? (
-    <Badge.Ribbon text="Unverified">{card}</Badge.Ribbon>
+    <Badge.Ribbon text='Unverified'>{card}</Badge.Ribbon>
   ) : (
     card
-  );
-};
+  )
+}
