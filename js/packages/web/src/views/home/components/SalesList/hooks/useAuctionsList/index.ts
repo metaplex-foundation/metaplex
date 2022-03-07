@@ -97,7 +97,7 @@ import { getFilterFunction, resaleAuctionsFilter } from './utils'
 import { useMeta } from '@oyster/common'
 
 export const useAuctionsList = (
-  activeKey: LiveAuctionViewState
+  activeKey: LiveAuctionViewState = LiveAuctionViewState.All
 ): { auctions: AuctionView[]; hasResaleAuctions: boolean } => {
   const { publicKey } = useWallet()
   const auctions = useAuctions()
