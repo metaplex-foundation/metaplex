@@ -1,0 +1,48 @@
+import dedent from 'ts-dedent'
+import { ArgsTable, Canvas, Description, Meta, Preview, Source, Story } from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+
+import { Logo } from './Logo'
+
+<Meta title='01. Atoms / Logo' component={Logo} />
+
+# Logo
+
+`import { Logo } from '@labfriend/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex bg-white p-[20px] items-center gap-4'>
+      <Logo />
+    </div>
+  </div>
+</Story>
+
+<br />
+<br />
+
+### isInverted
+
+<br />
+
+<Story name='isInverted'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex bg-black p-[20px] items-center gap-4'>
+      <Logo isInverted />
+    </div>
+  </div>
+</Story>
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={Logo} />

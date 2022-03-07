@@ -1,16 +1,9 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { getAuctionKeys, SCHEMA } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
-import {
-  AuctionManagerSettingsV1,
-  DeprecatedInitAuctionManagerV1Args,
-} from './deprecatedStates';
+import { getAuctionKeys, SCHEMA } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
+import { AuctionManagerSettingsV1, DeprecatedInitAuctionManagerV1Args } from './deprecatedStates'
 
 export async function deprecatedInitAuctionManagerV1(
   vault: StringPublicKey,
@@ -19,16 +12,16 @@ export async function deprecatedInitAuctionManagerV1(
   acceptPaymentAccount: StringPublicKey,
   store: StringPublicKey,
   settings: AuctionManagerSettingsV1,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const PROGRAM_IDS = programIds()
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
   const value = new DeprecatedInitAuctionManagerV1Args({
     settings,
-  });
+  })
 
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -77,12 +70,12 @@ export async function deprecatedInitAuctionManagerV1(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

@@ -1,19 +1,19 @@
-import React, { useState, ReactNode } from 'react';
-import { Card, Modal, Button, Col, Row } from 'antd';
-import { CreditCardOutlined } from '@ant-design/icons';
+import React, { useState, ReactNode } from 'react'
+import { Card, Modal, Button, Col, Row } from 'antd'
+import { CreditCardOutlined } from '@ant-design/icons'
 
 export const ContentCard = (props: {
-  title: string;
-  description: string;
-  endElement?: any;
-  imgSrc?: string;
+  title: string
+  description: string
+  endElement?: any
+  imgSrc?: string
 }) => {
   const {
     title = '',
     description = '',
     endElement = <div className={'line'} />,
     imgSrc = '',
-  } = props;
+  } = props
   return (
     <Card
       cover={
@@ -35,16 +35,16 @@ export const ContentCard = (props: {
       <div className={'body-content'}>{description}</div>
       {endElement}
     </Card>
-  );
-};
+  )
+}
 
 interface ModalContentProps {
-  children: ReactNode[];
+  children: ReactNode[]
 }
 
 export const ModalContent: React.FC<ModalContentProps> = ({ children }) => {
   return (
-    <div className="site-card-wrapper">
+    <div className='site-card-wrapper'>
       <Row gutter={16}>
         <Col span={24} xl={8}>
           {children[0]}{' '}
@@ -57,15 +57,15 @@ export const ModalContent: React.FC<ModalContentProps> = ({ children }) => {
         </Col>
       </Row>
     </div>
-  );
-};
+  )
+}
 
 interface ModalProps {
-  buttonClassName: string;
-  buttonText: string;
-  modalTitle: string;
-  cardProps: any[];
-  onClick?: any;
+  buttonClassName: string
+  buttonText: string
+  modalTitle: string
+  cardProps: any[]
+  onClick?: any
 }
 
 export const InstructionsModal: React.FC<ModalProps> = ({
@@ -75,20 +75,20 @@ export const InstructionsModal: React.FC<ModalProps> = ({
   cardProps,
   onClick,
 }) => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false)
 
   const showModal = () => {
-    onClick ? onClick() : null;
-    setIsModalVisible(true);
-  };
+    onClick ? onClick() : null
+    setIsModalVisible(true)
+  }
 
   const handleOk = () => {
-    setIsModalVisible(false);
-  };
+    setIsModalVisible(false)
+  }
 
   const handleCancel = () => {
-    setIsModalVisible(false);
-  };
+    setIsModalVisible(false)
+  }
 
   return (
     <>
@@ -126,5 +126,5 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}

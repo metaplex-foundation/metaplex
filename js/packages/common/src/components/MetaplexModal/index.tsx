@@ -1,8 +1,8 @@
-import React from 'react';
-import { Modal } from 'antd';
+import React from 'react'
+import { Modal } from 'antd'
 
 export const MetaplexModal = (props: any) => {
-  const { children, bodyStyle, className, ...rest } = props;
+  const { children, bodyStyle, className, ...rest } = props
 
   return (
     <Modal
@@ -14,12 +14,12 @@ export const MetaplexModal = (props: any) => {
 
         ...bodyStyle,
       }}
-      className={`modal-box small-modal ${className}`}
+      className={`modal-box small-modal wallet-modal ${className}`}
       footer={null}
       width={500}
       {...rest}
     >
       {children}
     </Modal>
-  );
-};
+  )
+}

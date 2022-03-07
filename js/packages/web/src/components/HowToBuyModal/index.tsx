@@ -1,21 +1,18 @@
-import { InstructionsModal } from '../InstructionsModal';
-import React from 'react';
-import { LABELS } from '../../constants';
-import { ConnectButton } from '@oyster/common';
+import { InstructionsModal } from '../InstructionsModal'
+import React from 'react'
+import { LABELS } from '../../constants'
+import { ConnectButton } from '@oyster/common'
 
 interface HowToBuyModalProps {
-  buttonClassName: string;
-  onClick?: any;
+  buttonClassName: string
+  onClick?: any
 }
 
-export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
-  buttonClassName,
-  onClick,
-}) => {
+export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({ buttonClassName, onClick }) => {
   return (
     <InstructionsModal
       buttonClassName={buttonClassName}
-      buttonText="How to Buy"
+      buttonText='How to Buy'
       modalTitle={`Buying NFTs on ${LABELS.STORE_NAME}`}
       cardProps={[
         {
@@ -37,5 +34,5 @@ export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
       ]}
       onClick={onClick}
     />
-  );
-};
+  )
+}

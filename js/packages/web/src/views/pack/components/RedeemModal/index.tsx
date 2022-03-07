@@ -1,17 +1,17 @@
-import React, { ReactElement, useCallback, useState } from 'react';
-import { Modal } from 'antd';
-import { shortenAddress } from '@oyster/common';
+import React, { ReactElement, useCallback, useState } from 'react'
+import { Modal } from 'antd'
+import { shortenAddress } from '@oyster/common'
 
-import InitialStep from './components/InitialStep';
-import TransactionApprovalStep from './components/TransactionApprovalStep';
-import { useArt } from '../../../../hooks';
-import { usePack } from '../../contexts/PackContext';
-import ClaimingStep from './components/ClaimingStep';
-import ClaimingError from './components/ClaimingStep/ClaimingError';
+import InitialStep from './components/InitialStep'
+import TransactionApprovalStep from './components/TransactionApprovalStep'
+import { useArt } from '../../../../hooks'
+import { usePack } from '../../contexts/PackContext'
+import ClaimingStep from './components/ClaimingStep'
+import ClaimingError from './components/ClaimingStep/ClaimingError'
 
 interface RedeemModalProps {
-  isModalVisible: boolean;
-  onClose: () => void;
+  isModalVisible: boolean
+  onClose: () => void
 }
 
 enum openState {
@@ -21,10 +21,7 @@ enum openState {
   Error,
 }
 
-const RedeemModal = ({
-  isModalVisible,
-  onClose,
-}: RedeemModalProps): ReactElement => {
+const RedeemModal = ({ isModalVisible, onClose }: RedeemModalProps): ReactElement => {
   const {
     handleOpenPack,
     pack,
@@ -32,55 +29,52 @@ const RedeemModal = ({
     voucherMetadataKey,
     provingProcess,
     isLoading,
-  } = usePack();
-  const [modalState, setModalState] = useState<openState>(openState.Initial);
-  const [error, setError] = useState('');
+  } = usePack()
+  const [modalState, setModalState] = useState<openState>(openState.Initial)
+  const [error, setError] = useState('')
 
-  const numberOfNFTs = pack?.info?.packCards || 0;
-  const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0;
-  const shouldEnableRedeem =
-    process.env.NEXT_ENABLE_NFT_PACKS_REDEEM === 'true';
+  const numberOfNFTs = pack?.info?.packCards || 0
+  const numberOfAttempts = pack?.info?.allowedAmountToRedeem || 0
+  const shouldEnableRedeem = process.env.NEXT_ENABLE_NFT_PACKS_REDEEM === 'true'
 
-  const art = useArt(voucherMetadataKey);
+  const art = useArt(voucherMetadataKey)
   const creators = (art.creators || []).map(
-    creator => creator.name || shortenAddress(creator.address || ''),
-  );
+    creator => creator.name || shortenAddress(creator.address || '')
+  )
 
   const handleOpen = async () => {
-    setModalState(openState.Claiming);
+    setModalState(openState.Claiming)
 
     try {
-      await handleOpenPack();
+      await handleOpenPack()
     } catch (e: any) {
-      setModalState(openState.Error);
-      setError(e?.message || '');
+      setModalState(openState.Error)
+      setError(e?.message || '')
     }
-  };
+  }
 
   const handleClose = useCallback(() => {
-    onClose();
-    setModalState(openState.Initial);
-  }, [modalState, onClose, setModalState]);
+    onClose()
+    setModalState(openState.Initial)
+  }, [modalState, onClose, setModalState])
 
   const onClickOpen = useCallback(() => {
     if (modalState === openState.Initial) {
-      return setModalState(openState.TransactionApproval);
+      return setModalState(openState.TransactionApproval)
     }
 
-    handleOpen();
-  }, [modalState]);
+    handleOpen()
+  }, [modalState])
 
-  const isModalClosable = modalState === openState.Initial;
-  const isClaiming = modalState === openState.Claiming;
-  const isClaimingError = modalState === openState.Error;
+  const isModalClosable = modalState === openState.Initial
+  const isClaiming = modalState === openState.Claiming
+  const isClaimingError = modalState === openState.Error
   const isLoadingMetadata =
-    isLoading ||
-    Object.values(metadataByPackCard || {}).length !==
-      (pack?.info.packCards || 0);
+    isLoading || Object.values(metadataByPackCard || {}).length !== (pack?.info.packCards || 0)
 
   return (
     <Modal
-      className="modal-redeem-wr"
+      className='modal-redeem-wr'
       centered
       width={575}
       mask={false}
@@ -90,7 +84,7 @@ const RedeemModal = ({
       closable={isModalClosable}
       maskClosable={false}
     >
-      <div className="modal-redeem">
+      <div className='modal-redeem'>
         {isClaiming && <ClaimingStep onClose={handleClose} />}
         {!isClaiming && (
           <>
@@ -105,30 +99,21 @@ const RedeemModal = ({
               />
             )}
             {modalState === openState.TransactionApproval && (
-              <TransactionApprovalStep
-                goBack={() => setModalState(openState.Initial)}
-              />
+              <TransactionApprovalStep goBack={() => setModalState(openState.Initial)} />
             )}
             {isClaimingError && (
-              <ClaimingError
-                onDismiss={() => setModalState(openState.Initial)}
-                error={error}
-              />
+              <ClaimingError onDismiss={() => setModalState(openState.Initial)} error={error} />
             )}
             {shouldEnableRedeem && !isClaimingError && (
-              <div className="modal-redeem__footer">
-                <p className="general-desc">
-                  Once opened, a Pack cannot be resealed.
-                </p>
+              <div className='modal-redeem__footer'>
+                <p className='general-desc'>Once opened, a Pack cannot be resealed.</p>
 
                 <button
-                  className="modal-redeem__open-nft"
+                  className='modal-redeem__open-nft'
                   disabled={isLoadingMetadata}
                   onClick={onClickOpen}
                 >
-                  <span>
-                    {provingProcess ? 'Resume Opening Pack' : 'Open Pack'}
-                  </span>
+                  <span>{provingProcess ? 'Resume Opening Pack' : 'Open Pack'}</span>
                 </button>
               </div>
             )}
@@ -136,7 +121,7 @@ const RedeemModal = ({
         )}
       </div>
     </Modal>
-  );
-};
+  )
+}
 
-export default RedeemModal;
+export default RedeemModal

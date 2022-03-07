@@ -1,19 +1,25 @@
-import { Layout } from 'antd';
-import React from 'react';
-import { useStore } from '@oyster/common';
-import { useMeta } from '../../contexts';
-import { SalesListView } from './components/SalesList';
-import { SetupView } from './setup';
+import { Layout } from 'antd'
+import React from 'react'
+// import { useStore } from '@oyster/common';
+// import { useMeta } from '../../contexts';
+import { SalesListView } from './components/SalesList'
 
 export const HomeView = () => {
-  const { isLoading, store } = useMeta();
-  const { isConfigured } = useStore();
+  // const { isLoading, store } = useMeta();
+  // const { isConfigured } = useStore();
 
-  const showAuctions = (store && isConfigured) || isLoading;
+  // const showAuctions = (store && isConfigured) || isLoading;
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      {showAuctions ? <SalesListView /> : <SetupView />}
+    <Layout
+      style={{
+        margin: 0,
+        alignItems: 'center',
+        backgroundColor: 'white !important',
+      }}
+    >
+      <SalesListView />
+      {/* {showAuctions ? <SalesListView /> : <SetupView />} */}
     </Layout>
-  );
-};
+  )
+}

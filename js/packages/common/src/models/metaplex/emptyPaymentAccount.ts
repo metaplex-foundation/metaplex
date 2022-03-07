@@ -1,9 +1,5 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
 import {
   EmptyPaymentAccountArgs,
@@ -11,8 +7,8 @@ import {
   getPayoutTicket,
   getSafetyDepositConfig,
   SCHEMA,
-} from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+} from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function emptyPaymentAccount(
   acceptPayment: StringPublicKey,
@@ -28,28 +24,25 @@ export async function emptyPaymentAccount(
   winningConfigIndex: number | null,
   winningConfigItemIndex: number | null,
   creatorIndex: number | null,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManager,
-    safetyDepositBox,
-  );
+  const safetyDepositConfig = await getSafetyDepositConfig(auctionManager, safetyDepositBox)
 
-  const tokenTracker = await getAuctionWinnerTokenTypeTracker(auctionManager);
+  const tokenTracker = await getAuctionWinnerTokenTypeTracker(auctionManager)
 
   const value = new EmptyPaymentAccountArgs({
     winningConfigIndex,
     winningConfigItemIndex,
     creatorIndex,
-  });
+  })
 
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -75,8 +68,8 @@ export async function emptyPaymentAccount(
           winningConfigItemIndex,
           creatorIndex,
           safetyDepositBox,
-          recipient,
-        ),
+          recipient
+        )
       ),
       isSigner: false,
       isWritable: true,
@@ -143,13 +136,13 @@ export async function emptyPaymentAccount(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

@@ -1,0 +1,194 @@
+/* Swiper bullets */
+.swiper-pagination {
+  @apply !w-[300px];
+  @apply !left-[0];
+  @apply !mx-auto;
+  @apply !right-[0];
+  @apply !bottom-[12px];
+  @apply lg:!bottom-[24px];
+  @apply !z-[1000];
+
+  &-bullet {
+    @apply !w-[20px];
+    @apply lg:!w-[34px];
+    @apply !h-[6px];
+    @apply !rounded-[8px];
+    @apply !bg-gray-900/20;
+    @apply !opacity-100;
+
+    &-active {
+      @apply !bg-gray-900;
+    }
+  }
+}
+
+/* Ant Design Modal */
+.wallet-modal {
+  .ant-modal-close,
+  .ant-modal-close-x {
+    @apply !text-white;
+  }
+}
+
+/* Ant Modal */
+.ant-modal-body {
+  width: 100%;
+}
+
+/* Ant Design Select Dropdown */
+.network-select {
+  .ant-select-arrow {
+    @apply !text-white;
+  }
+}
+
+/* Ant Select Dropdown */
+.ant-select {
+  &-selector {
+    @apply !h-[46px] !rounded-[4px] !border-N-200 !duration-[50ms] !ease-in-out;
+
+    .ant-select-focused & {
+      @apply focus-within:!border-B-400 focus-within:!shadow-[0px_0px_0px_1px_#2492F6];
+    }
+  }
+
+  &-arrow {
+    @apply !text-N-700;
+  }
+
+  &-dropdown {
+    @apply !rounded-[4px] !bg-white p-[8px];
+  }
+
+  &-item {
+    &-option {
+      @apply !rounded-[4px] font-500 !text-N-700;
+
+      &-active {
+        @apply !bg-B-400 !text-white;
+      }
+    }
+  }
+}
+
+.ant-select-selection {
+  &-placeholder {
+    @apply !text-N-300;
+  }
+
+  &-item {
+    @apply !flex !items-center !text-N-700;
+
+    &-remove {
+      @apply !inline-flex items-center;
+    }
+  }
+}
+
+/* Ant Select DatePicker */
+.ant-picker {
+  &-input {
+    input {
+      @apply !text-N-800 placeholder:!text-N-300;
+    }
+  }
+
+  &-suffix {
+    @apply !text-N-300;
+  }
+}
+
+/* Ant Upload */
+.ant-upload-list-text {
+  @apply !flex flex-col !gap-[8px];
+}
+
+.ant-upload-span {
+  @apply !flex !items-center;
+}
+
+.ant-upload-text-icon {
+  @apply !flex !items-center;
+
+  svg {
+    @apply !text-N-700;
+  }
+}
+
+.ant-upload-list-item-card-actions {
+  button {
+    @apply !opacity-100;
+  }
+}
+
+.ant-upload-list-text-container {
+  @apply flex flex-col !rounded-[4px] !bg-gray-100 p-[8px];
+
+  .ant-upload-list-item {
+    @apply !m-[0px] !h-[auto];
+  }
+}
+
+/* Auction page (Temp CSS) */
+.creator-base-page {
+  @apply !py-[100px];
+  // @apply bg-black;
+}
+
+/* Auction create page */
+.type-btn {
+  @apply !flex w-full flex-col items-start justify-start rounded-[4px] border border-gray-300 px-[20px] py-[12px] duration-[50ms] ease-in-out;
+
+  &:hover {
+    @apply bg-gray-100;
+  }
+
+  &__heading {
+    @apply !text-h6 font-600;
+  }
+
+  &__description {
+    @apply !text-base text-gray-600;
+  }
+}
+
+/* Ant Input */
+.ant-input {
+  @apply !bg-white placeholder:text-gray-400;
+
+  &-affix-wrapper {
+    @apply !rounded !border-2 border-gray-400 bg-white outline-none focus-within:!border-blue-400;
+  }
+
+  &-prefix {
+  }
+
+  &-suffix {
+  }
+}
+
+.ant-input {
+  @apply rounded !border-2 border-gray-400 !bg-white outline-none placeholder:text-gray-400 focus:!border-blue-400 min-h-[38px];
+}
+
+.ant-input-group-wrapper {
+  * {
+    @apply !outline-none;
+  }
+
+  .ant-input-wrapper {
+  }
+
+  .ant-input-group {
+  }
+
+  .ant-input {
+  }
+  .ant-input-group-addon {
+    .ant-select {
+    }
+    .ant-select-selector {
+      @apply flex;
+    }
+  }
+}

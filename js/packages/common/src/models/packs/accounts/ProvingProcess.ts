@@ -1,41 +1,41 @@
-import { Connection, PublicKey } from '@solana/web3.js';
-import { deserializeUnchecked } from 'borsh';
+import { Connection, PublicKey } from '@solana/web3.js'
+import { deserializeUnchecked } from 'borsh'
 
-import { PackKey, MAX_PACK_PROVING_PROCESS_SIZE } from '..';
+import { PackKey, MAX_PACK_PROVING_PROCESS_SIZE } from '..'
 import {
   AccountAndPubkey,
   PACK_CREATE_ID,
   ParsedAccount,
   StringPublicKey,
   toPublicKey,
-} from '../../..';
-import { getProgramAccounts } from '../../../contexts/meta/web3';
+} from '../../..'
+import { getProgramAccounts } from '../../../contexts/meta/web3'
 
 export class ProvingProcess {
-  key: PackKey = PackKey.ProvingProcess;
-  walletKey: StringPublicKey;
-  isExhausted: Boolean;
-  voucherMint: StringPublicKey;
-  packSet: StringPublicKey;
-  cardsToRedeem: Map<number, number>;
-  cardsRedeemed: number;
+  key: PackKey = PackKey.ProvingProcess
+  walletKey: StringPublicKey
+  isExhausted: Boolean
+  voucherMint: StringPublicKey
+  packSet: StringPublicKey
+  cardsToRedeem: Map<number, number>
+  cardsRedeemed: number
 
   constructor(args: {
-    key: PackKey;
-    walletKey: StringPublicKey;
-    isExhausted: Boolean;
-    voucherMint: StringPublicKey;
-    packSet: StringPublicKey;
-    cardsToRedeem: Map<number, number>;
-    cardsRedeemed: number;
+    key: PackKey
+    walletKey: StringPublicKey
+    isExhausted: Boolean
+    voucherMint: StringPublicKey
+    packSet: StringPublicKey
+    cardsToRedeem: Map<number, number>
+    cardsRedeemed: number
   }) {
-    this.key = PackKey.PackSet;
-    this.walletKey = args.walletKey;
-    this.isExhausted = Boolean(args.isExhausted);
-    this.voucherMint = args.voucherMint;
-    this.packSet = args.packSet;
-    this.cardsToRedeem = args.cardsToRedeem;
-    this.cardsRedeemed = args.cardsRedeemed;
+    this.key = PackKey.PackSet
+    this.walletKey = args.walletKey
+    this.isExhausted = Boolean(args.isExhausted)
+    this.voucherMint = args.voucherMint
+    this.packSet = args.packSet
+    this.cardsToRedeem = args.cardsToRedeem
+    this.cardsRedeemed = args.cardsRedeemed
   }
 }
 
@@ -55,24 +55,20 @@ export const PACK_PROVING_PROCESS_SCHEMA = new Map<any, any>([
       ],
     },
   ],
-]);
+])
 
 export const decodePackProvingProcess = (buffer: Buffer) => {
-  return deserializeUnchecked(
-    PACK_PROVING_PROCESS_SCHEMA,
-    ProvingProcess,
-    buffer,
-  ) as ProvingProcess;
-};
+  return deserializeUnchecked(PACK_PROVING_PROCESS_SCHEMA, ProvingProcess, buffer) as ProvingProcess
+}
 
 export const getProvingProcessByPackSetAndWallet = ({
   connection,
   packSetKey,
   walletKey,
 }: {
-  connection: Connection;
-  packSetKey: StringPublicKey;
-  walletKey: PublicKey;
+  connection: Connection
+  packSetKey: StringPublicKey
+  walletKey: PublicKey
 }): Promise<AccountAndPubkey[]> =>
   getProgramAccounts(connection, PACK_CREATE_ID.toString(), {
     commitment: 'processed', // don't wait for cluster approval
@@ -93,24 +89,24 @@ export const getProvingProcessByPackSetAndWallet = ({
         },
       },
     ],
-  });
+  })
 
 export const getProvingProcessByPubkey = async (
   connection: Connection,
-  pubkey: StringPublicKey,
+  pubkey: StringPublicKey
 ): Promise<ParsedAccount<ProvingProcess>> => {
   const info = await connection.getAccountInfo(
     new PublicKey(pubkey),
-    'processed', // don't wait for cluster approval
-  );
+    'processed' // don't wait for cluster approval
+  )
 
   if (!info) {
-    throw new Error(`Unable to find account: ${pubkey}`);
+    throw new Error(`Unable to find account: ${pubkey}`)
   }
 
   return {
     pubkey,
     account: info,
     info: decodePackProvingProcess(Buffer.from(info?.data)),
-  };
-};
+  }
+}

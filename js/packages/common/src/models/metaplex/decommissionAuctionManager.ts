@@ -1,24 +1,24 @@
-import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import { DecommissionAuctionManagerArgs, SCHEMA } from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { DecommissionAuctionManagerArgs, SCHEMA } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
 
 export async function decommissionAuctionManager(
   auctionManager: StringPublicKey,
   auction: StringPublicKey,
   authority: StringPublicKey,
   vault: StringPublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const value = new DecommissionAuctionManagerArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new DecommissionAuctionManagerArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
 
   const keys = [
     {
@@ -63,13 +63,13 @@ export async function decommissionAuctionManager(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

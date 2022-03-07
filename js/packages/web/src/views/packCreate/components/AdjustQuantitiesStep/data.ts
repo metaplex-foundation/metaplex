@@ -1,4 +1,4 @@
-import { PackDistributionType } from '@oyster/common';
+import { PackDistributionType } from '@oyster/common'
 
 export const DISTRIBUTION_TYPES_DATA: Record<
   PackDistributionType,
@@ -6,8 +6,7 @@ export const DISTRIBUTION_TYPES_DATA: Record<
 > = {
   [PackDistributionType.MaxSupply]: {
     title: 'Supply',
-    subtitle:
-      "The chance of getting a card will be based on the card's supply that is left",
+    subtitle: "The chance of getting a card will be based on the card's supply that is left",
   },
   [PackDistributionType.Fixed]: {
     title: 'Weighted Supply',
@@ -17,4 +16,4 @@ export const DISTRIBUTION_TYPES_DATA: Record<
     title: 'Weighted',
     subtitle: 'Weighted chance of getting each card',
   },
-};
+}

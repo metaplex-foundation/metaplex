@@ -1,6 +1,6 @@
-import { PublicKey } from '@solana/web3.js';
-import { ORACLE_ID } from '..';
-import { findProgramAddress } from '../utils';
+import { PublicKey } from '@solana/web3.js'
+import { ORACLE_ID } from '..'
+import { findProgramAddress } from '../utils'
 
 import {
   METADATA_PROGRAM_ID,
@@ -14,32 +14,32 @@ import {
   AUCTION_ID,
   PACK_CREATE_ID,
   toPublicKey,
-} from './ids';
+} from './ids'
 
 export const getStoreID = async (storeOwnerAddress?: string) => {
   if (!storeOwnerAddress) {
-    return undefined;
+    return undefined
   }
 
-  console.log('Store owner', storeOwnerAddress, METAPLEX_ID);
+  console.log('Store owner', storeOwnerAddress, METAPLEX_ID)
   const programs = await findProgramAddress(
     [
       Buffer.from('metaplex'),
       toPublicKey(METAPLEX_ID).toBuffer(),
       toPublicKey(storeOwnerAddress).toBuffer(),
     ],
-    toPublicKey(METAPLEX_ID),
-  );
-  const storeAddress = programs[0];
+    toPublicKey(METAPLEX_ID)
+  )
+  const storeAddress = programs[0]
 
-  return storeAddress;
-};
+  return storeAddress
+}
 
 export const setProgramIds = async (store?: string) => {
-  STORE = store ? toPublicKey(store) : undefined;
-};
+  STORE = store ? toPublicKey(store) : undefined
+}
 
-let STORE: PublicKey | undefined;
+let STORE: PublicKey | undefined
 
 export const programIds = () => {
   return {
@@ -55,5 +55,5 @@ export const programIds = () => {
     pack_create: PACK_CREATE_ID,
     oracle: ORACLE_ID,
     store: STORE,
-  };
-};
+  }
+}

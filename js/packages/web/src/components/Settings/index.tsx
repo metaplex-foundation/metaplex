@@ -1,14 +1,14 @@
-import React from 'react';
-import { Button, Select } from 'antd';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { contexts, useQuerySearch } from '@oyster/common';
+import React from 'react'
+import { Button, Select } from 'antd'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { contexts, useQuerySearch } from '@oyster/common'
 
-const { ENDPOINTS, useConnectionConfig } = contexts.Connection;
+const { ENDPOINTS, useConnectionConfig } = contexts.Connection
 
 export const Settings = () => {
-  const { connected, disconnect } = useWallet();
-  const { endpoint } = useConnectionConfig();
-  const routerSearchParams = useQuerySearch();
+  const { connected, disconnect } = useWallet()
+  const { endpoint } = useConnectionConfig()
+  const routerSearchParams = useQuerySearch()
 
   return (
     <>
@@ -28,13 +28,11 @@ export const Settings = () => {
 
             // doesn't work: https://localhost/?network=devnet#/
             // works: https://localhost/#/?network=devnet
-            const windowHash = window.location.hash;
-            routerSearchParams.set('network', network);
-            const nextLocationHash = `${
-              windowHash.split('?')[0]
-            }?${routerSearchParams.toString()}`;
-            window.location.hash = nextLocationHash;
-            window.location.reload();
+            const windowHash = window.location.hash
+            routerSearchParams.set('network', network)
+            const nextLocationHash = `${windowHash.split('?')[0]}?${routerSearchParams.toString()}`
+            window.location.hash = nextLocationHash
+            window.location.reload()
           }}
           value={endpoint.name}
           style={{ marginBottom: 20 }}
@@ -46,11 +44,11 @@ export const Settings = () => {
           ))}
         </Select>
         {connected && (
-          <Button type="primary" onClick={disconnect}>
+          <Button type='primary' onClick={disconnect}>
             Disconnect
           </Button>
         )}
       </div>
     </>
-  );
-};
+  )
+}

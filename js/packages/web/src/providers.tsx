@@ -4,13 +4,13 @@ import {
   StoreProvider,
   WalletProvider,
   MetaProvider,
-} from '@oyster/common';
-import React, { FC } from 'react';
-import { ConfettiProvider } from './components/Confetti';
-import { AppLayout } from './components/Layout';
-import { LoaderProvider } from './components/Loader';
-import { CoingeckoProvider } from './contexts/coingecko';
-import { SPLTokenListProvider } from './contexts/tokenList';
+} from '@oyster/common'
+import React, { FC } from 'react'
+import { ConfettiProvider } from './components/Confetti'
+import { AppLayout } from './components/Layout'
+import { LoaderProvider } from './components/Loader'
+import { CoingeckoProvider } from './contexts/coingecko'
+import { SPLTokenListProvider } from './contexts/tokenList'
 
 export const Providers: FC = ({ children }) => {
   return (
@@ -36,5 +36,5 @@ export const Providers: FC = ({ children }) => {
         </AccountsProvider>
       </WalletProvider>
     </ConnectionProvider>
-  );
-};
+  )
+}

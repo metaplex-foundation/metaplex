@@ -1,18 +1,9 @@
-import {
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
-import {
-  getAuctionKeys,
-  getBidderKeys,
-  SCHEMA,
-  getSafetyDepositConfig,
-} from '.';
-import { programIds, StringPublicKey, toPublicKey } from '../../utils';
-import { DeprecatedRedeemParticipationBidArgs } from './deprecatedStates';
+import { getAuctionKeys, getBidderKeys, SCHEMA, getSafetyDepositConfig } from '.'
+import { programIds, StringPublicKey, toPublicKey } from '../../utils'
+import { DeprecatedRedeemParticipationBidArgs } from './deprecatedStates'
 
 export async function deprecatedRedeemParticipationBid(
   vault: StringPublicKey,
@@ -25,28 +16,22 @@ export async function deprecatedRedeemParticipationBid(
   participationPrintingAccount: StringPublicKey,
   transferAuthority: StringPublicKey,
   acceptPaymentAccount: StringPublicKey,
-  tokenPaymentAccount: StringPublicKey,
+  tokenPaymentAccount: StringPublicKey
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
-  const { bidRedemption, bidMetadata } = await getBidderKeys(
-    auctionKey,
-    bidder,
-  );
+  const { bidRedemption, bidMetadata } = await getBidderKeys(auctionKey, bidder)
 
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
+  const safetyDepositConfig = await getSafetyDepositConfig(auctionManagerKey, safetyDeposit)
 
-  const value = new DeprecatedRedeemParticipationBidArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new DeprecatedRedeemParticipationBidArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
   const keys = [
     {
       pubkey: toPublicKey(auctionManagerKey),
@@ -153,13 +138,13 @@ export async function deprecatedRedeemParticipationBid(
       isSigner: false,
       isWritable: true,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }

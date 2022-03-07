@@ -1,22 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react'
 
-import { Button, Input, Layout, Modal, Form, Spin } from 'antd';
-import { ModalProps } from 'antd/lib/modal';
-import { LogoLink } from '../../components/AppBar';
-import { textContent } from './textContent';
-import useMagicLink from '../../hooks/magicLink/useMagicLink';
-import { shortenAddress } from '@oyster/common';
-import { getUser, getWalletAddress, saveUser } from './userInfo';
+import { Button, Input, Layout, Modal, Form, Spin } from 'antd'
+import { ModalProps } from 'antd/lib/modal'
+import { LogoLink } from '../../components/AppBar'
+import { textContent } from './textContent'
+import useMagicLink from '../../hooks/magicLink/useMagicLink'
+import { shortenAddress } from '@oyster/common'
+import { getUser, getWalletAddress, saveUser } from './userInfo'
 
-const { Content } = Layout;
+const { Content } = Layout
 
-export interface GotEmailButtonProps
-  extends ModalProps,
-    React.RefAttributes<HTMLElement> {
-  titleText: string;
-  descriptionText: string;
-  visible?: boolean;
-  extraButton?: JSX.Element;
+export interface GotEmailButtonProps extends ModalProps, React.RefAttributes<HTMLElement> {
+  titleText: string
+  descriptionText: string
+  visible?: boolean
+  extraButton?: JSX.Element
 }
 
 const DiscordButton = () => (
@@ -24,29 +22,21 @@ const DiscordButton = () => (
     className={'discord-button'}
     target={'_blank'}
     href={'https://discord.com/invite/metaplex'}
-    rel="noreferrer"
+    rel='noreferrer'
   >
     <span></span> Join our Discord
   </a>
-);
+)
 
 const PreLaunchModal = (props: GotEmailButtonProps) => {
-  const {
-    onCancel,
-    visible,
-    titleText,
-    descriptionText,
-    extraButton,
-    className,
-    ...rest
-  } = props;
+  const { onCancel, visible, titleText, descriptionText, extraButton, className, ...rest } = props
   const handleOnCancel = useCallback(
     e => {
-      if (onCancel) return onCancel(e);
-      return null;
+      if (onCancel) return onCancel(e)
+      return null
     },
-    [onCancel],
-  );
+    [onCancel]
+  )
 
   return (
     <Modal
@@ -64,48 +54,48 @@ const PreLaunchModal = (props: GotEmailButtonProps) => {
       <div className={'got-description'}>{descriptionText}</div>
       {extraButton && extraButton}
     </Modal>
-  );
-};
+  )
+}
 
 export const PreLaunchView = () => {
-  const [email, setEmail] = useState('');
-  const [walletAddress, setWalletAddress] = useState('');
-  const [verified, setVerified] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [gotVisible, setGotVisible] = useState(false);
-  const [sentVisible, setSentVisible] = useState(false);
-  const [loadingUser, setLoadingUser] = useState(false);
-  const auth = useMagicLink();
+  const [email, setEmail] = useState('')
+  const [walletAddress, setWalletAddress] = useState('')
+  const [verified, setVerified] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [gotVisible, setGotVisible] = useState(false)
+  const [sentVisible, setSentVisible] = useState(false)
+  const [loadingUser, setLoadingUser] = useState(false)
+  const auth = useMagicLink()
 
   const handleSaveWallet = async (verifiedEmail, wallet) => {
     await saveUser(verifiedEmail, wallet, () => {
-      setSentVisible(true);
-      setSubmitted(true);
-      auth.logout();
-    });
-  };
+      setSentVisible(true)
+      setSubmitted(true)
+      auth.logout()
+    })
+  }
 
   const verifyUser = async () => {
     if (auth.loggedIn) {
-      setLoadingUser(true);
-      const verifiedEmail = (await auth.magic.user.getMetadata()).email;
-      setEmail(verifiedEmail);
-      const user = await getUser(verifiedEmail);
-      setVerified(true);
+      setLoadingUser(true)
+      const verifiedEmail = (await auth.magic.user.getMetadata()).email
+      setEmail(verifiedEmail)
+      const user = await getUser(verifiedEmail)
+      setVerified(true)
       if (user) {
-        const wallet = await getWalletAddress(user);
-        setWalletAddress(wallet);
-        setSentVisible(true);
-        setSubmitted(true);
-        auth.logout();
+        const wallet = await getWalletAddress(user)
+        setWalletAddress(wallet)
+        setSentVisible(true)
+        setSubmitted(true)
+        auth.logout()
       }
-      setLoadingUser(false);
+      setLoadingUser(false)
     }
-  };
+  }
 
   useEffect(() => {
-    verifyUser();
-  }, [auth.loggedIn]);
+    verifyUser()
+  }, [auth.loggedIn])
   return (
     <Layout id={'pre-launch-layout'}>
       <div className={'main-asset-banner'}>
@@ -116,7 +106,7 @@ export const PreLaunchView = () => {
         descriptionText={textContent.gotEmailDescription}
         visible={gotVisible}
         onCancel={() => {
-          setGotVisible(false);
+          setGotVisible(false)
           //setVerified(true) //remove later
         }}
       />
@@ -125,8 +115,8 @@ export const PreLaunchView = () => {
         descriptionText={textContent.sentNFTDescription}
         visible={sentVisible}
         onCancel={() => {
-          setSentVisible(false);
-          setSubmitted(true);
+          setSentVisible(false)
+          setSubmitted(true)
         }}
         extraButton={<DiscordButton />}
       />
@@ -138,9 +128,7 @@ export const PreLaunchView = () => {
                 <LogoLink />
               </div>
               <div className={'pre-title'}>{textContent.mainTitle}</div>
-              <div className={'pre-context'}>
-                {textContent.titleDescription}
-              </div>
+              <div className={'pre-context'}>{textContent.titleDescription}</div>
               <div className={'pre-input'}>
                 {auth.loading || loadingUser ? (
                   <Spin />
@@ -148,12 +136,12 @@ export const PreLaunchView = () => {
                   <Form
                     className={'footer-sign-up'}
                     onFinish={values => {
-                      auth.login(values.email);
-                      setGotVisible(true);
+                      auth.login(values.email)
+                      setGotVisible(true)
                     }}
                   >
                     <Form.Item
-                      name="email"
+                      name='email'
                       rules={[
                         {
                           type: 'email',
@@ -163,16 +151,9 @@ export const PreLaunchView = () => {
                       ]}
                       style={{ display: 'flex !important' }}
                     >
-                      <Input
-                        className={'footer-input'}
-                        placeholder="Email Address"
-                        name="email"
-                      />
+                      <Input className={'footer-input'} placeholder='Email Address' name='email' />
                     </Form.Item>
-                    <Button
-                      className={'secondary-btn sign-up'}
-                      htmlType="submit"
-                    >
+                    <Button className={'secondary-btn sign-up'} htmlType='submit'>
                       Sign Up
                     </Button>
                   </Form>
@@ -184,15 +165,15 @@ export const PreLaunchView = () => {
               <div className={'how-to-step fst'}>
                 <span className={'how-to-logo email'}></span>
                 <span className={'how-to-description'}>
-                  Enter your email address. We&apos;ll send you an email so you
-                  can verify your account. (One entry per email.)
+                  Enter your email address. We&apos;ll send you an email so you can verify your
+                  account. (One entry per email.)
                 </span>
               </div>
               <div className={'how-to-step'}>
                 <span className={'how-to-logo wallet'}></span>
                 <span className={'how-to-description'}>
-                  After verification, we&apos;ll help you set up a Solana
-                  crypto-wallet. This is where we&apos;ll send the NFT.
+                  After verification, we&apos;ll help you set up a Solana crypto-wallet. This is
+                  where we&apos;ll send the NFT.
                 </span>
               </div>
             </div>
@@ -221,7 +202,7 @@ export const PreLaunchView = () => {
                 <Button
                   className={'secondary-btn sign-up'}
                   onClick={async () => {
-                    await handleSaveWallet(email, walletAddress);
+                    await handleSaveWallet(email, walletAddress)
                   }}
                 >
                   Submit
@@ -237,8 +218,8 @@ export const PreLaunchView = () => {
                 <span className={'step-desc'}>Install Phantom.</span>
                 <div className={'step-asset step1'}></div>
                 <span className={'step-desc'}>
-                  Install the Phantom wallet in Google Chrome, Firefox, Brave,
-                  or Edge via Phantom’s website. It’s free to use!
+                  Install the Phantom wallet in Google Chrome, Firefox, Brave, or Edge via Phantom’s
+                  website. It’s free to use!
                 </span>
               </div>
               <div className={'step'}>
@@ -254,10 +235,9 @@ export const PreLaunchView = () => {
                 <span className={'step-desc'}>Copy your wallet address.</span>
                 <div className={'step-asset step3'}></div>
                 <span className={'step-desc'}>
-                  Once you’re signed in click the top bar to copy your wallet
-                  address. In Phantom it displays a condensed version (ex:
-                  CRWJ...ch67), but when you paste it here, you should see a
-                  long string of letters and numbers.
+                  Once you’re signed in click the top bar to copy your wallet address. In Phantom it
+                  displays a condensed version (ex: CRWJ...ch67), but when you paste it here, you
+                  should see a long string of letters and numbers.
                 </span>
               </div>
             </div>
@@ -269,23 +249,19 @@ export const PreLaunchView = () => {
             </div>
 
             <div className={'verify-message'}>
-              <span className={'display-block mb32'}>
-                Your NFT is on the way.
-              </span>
+              <span className={'display-block mb32'}>Your NFT is on the way.</span>
               <span className={'high-light'} style={{ marginLeft: 0 }}>
                 {email}
               </span>
-              <span className={'high-light'}>
-                {shortenAddress(walletAddress)}
-              </span>
+              <span className={'high-light'}>{shortenAddress(walletAddress)}</span>
             </div>
             <DiscordButton />
           </Content>
         )}
       </Layout>
     </Layout>
-  );
-};
+  )
+}
 
 export const ComingSoonView = () => {
   return (
@@ -301,18 +277,16 @@ export const ComingSoonView = () => {
           </div>
           <div className={'full-height-content'}>
             <div className={'pre-title'}>{textContent.comingSoonTitle}</div>
-            <div className={'pre-context'}>
-              {textContent.comingSoonTitleDescription}
-            </div>
+            <div className={'pre-context'}>{textContent.comingSoonTitleDescription}</div>
             <div className={'pre-input'}>
               <Form
                 className={'footer-sign-up'}
                 onFinish={values => {
-                  console.log(values);
+                  console.log(values)
                 }}
               >
                 <Form.Item
-                  name="email"
+                  name='email'
                   rules={[
                     {
                       type: 'email',
@@ -322,13 +296,9 @@ export const ComingSoonView = () => {
                   ]}
                   style={{ display: 'flex !important' }}
                 >
-                  <Input
-                    className={'footer-input'}
-                    placeholder="Email Address"
-                    name="email"
-                  />
+                  <Input className={'footer-input'} placeholder='Email Address' name='email' />
                 </Form.Item>
-                <Button className={'secondary-btn sign-up'} htmlType="submit">
+                <Button className={'secondary-btn sign-up'} htmlType='submit'>
                   Sign Up
                 </Button>
               </Form>
@@ -340,5 +310,5 @@ export const ComingSoonView = () => {
         </Content>
       </Layout>
     </Layout>
-  );
-};
+  )
+}

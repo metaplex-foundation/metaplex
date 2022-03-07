@@ -10,26 +10,23 @@ import {
   BIDDER_METADATA_LEN,
   BIDDER_POT_LEN,
   MAX_AUCTION_DATA_EXTENDED_SIZE,
-} from '../../actions';
-import { AUCTION_ID, pubkeyToString } from '../../utils';
-import { ParsedAccount } from '../accounts';
-import { cache } from '../accounts';
-import { CheckAccountFunc, ProcessAccountsFunc } from './types';
+} from '../../actions'
+import { AUCTION_ID, pubkeyToString } from '../../utils'
+import { ParsedAccount } from '../accounts'
+import { cache } from '../accounts'
+import { CheckAccountFunc, ProcessAccountsFunc } from './types'
 
-export const processAuctions: ProcessAccountsFunc = (
-  { account, pubkey },
-  setter,
-) => {
-  if (!isAuctionAccount(account)) return;
+export const processAuctions: ProcessAccountsFunc = ({ account, pubkey }, setter) => {
+  if (!isAuctionAccount(account)) return
 
   try {
     const parsedAccount = cache.add(
       pubkey,
       account,
       AuctionParser,
-      false,
-    ) as ParsedAccount<AuctionData>;
-    setter('auctions', pubkey, parsedAccount);
+      false
+    ) as ParsedAccount<AuctionData>
+    setter('auctions', pubkey, parsedAccount)
   } catch (e) {
     // ignore errors
     // add type as first byte for easier deserialization
@@ -41,9 +38,9 @@ export const processAuctions: ProcessAccountsFunc = (
         pubkey,
         account,
         AuctionDataExtendedParser,
-        false,
-      ) as ParsedAccount<AuctionDataExtended>;
-      setter('auctionDataExtended', pubkey, parsedAccount);
+        false
+      ) as ParsedAccount<AuctionDataExtended>
+      setter('auctionDataExtended', pubkey, parsedAccount)
     }
   } catch {
     // ignore errors
@@ -56,15 +53,13 @@ export const processAuctions: ProcessAccountsFunc = (
         pubkey,
         account,
         BidderMetadataParser,
-        false,
-      ) as ParsedAccount<BidderMetadata>;
+        false
+      ) as ParsedAccount<BidderMetadata>
       setter(
         'bidderMetadataByAuctionAndBidder',
-        parsedAccount.info.auctionPubkey +
-          '-' +
-          parsedAccount.info.bidderPubkey,
-        parsedAccount,
-      );
+        parsedAccount.info.auctionPubkey + '-' + parsedAccount.info.bidderPubkey,
+        parsedAccount
+      )
     }
   } catch {
     // ignore errors
@@ -77,28 +72,27 @@ export const processAuctions: ProcessAccountsFunc = (
         pubkey,
         account,
         BidderPotParser,
-        false,
-      ) as ParsedAccount<BidderPot>;
+        false
+      ) as ParsedAccount<BidderPot>
       setter(
         'bidderPotsByAuctionAndBidder',
         parsedAccount.info.auctionAct + '-' + parsedAccount.info.bidderAct,
-        parsedAccount,
-      );
+        parsedAccount
+      )
     }
   } catch {
     // ignore errors
     // add type as first byte for easier deserialization
   }
-};
+}
 
 const isAuctionAccount: CheckAccountFunc = account =>
-  account && pubkeyToString(account.owner) === AUCTION_ID;
+  account && pubkeyToString(account.owner) === AUCTION_ID
 
 const isExtendedAuctionAccount: CheckAccountFunc = account =>
-  account.data.length === MAX_AUCTION_DATA_EXTENDED_SIZE;
+  account.data.length === MAX_AUCTION_DATA_EXTENDED_SIZE
 
 const isBidderMetadataAccount: CheckAccountFunc = account =>
-  account.data.length === BIDDER_METADATA_LEN;
+  account.data.length === BIDDER_METADATA_LEN
 
-const isBidderPotAccount: CheckAccountFunc = account =>
-  account.data.length === BIDDER_POT_LEN;
+const isBidderPotAccount: CheckAccountFunc = account => account.data.length === BIDDER_POT_LEN

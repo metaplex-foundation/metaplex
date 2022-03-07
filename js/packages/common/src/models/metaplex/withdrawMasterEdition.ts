@@ -1,5 +1,5 @@
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
-import { serialize } from 'borsh';
+import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js'
+import { serialize } from 'borsh'
 
 import {
   getAuctionKeys,
@@ -7,14 +7,9 @@ import {
   SCHEMA,
   getPrizeTrackingTicket,
   getSafetyDepositConfig,
-} from '.';
-import { AUCTION_PREFIX, EXTENDED, VAULT_PREFIX } from '../../actions';
-import {
-  findProgramAddress,
-  programIds,
-  toPublicKey,
-  StringPublicKey,
-} from '../../utils';
+} from '.'
+import { AUCTION_PREFIX, EXTENDED, VAULT_PREFIX } from '../../actions'
+import { findProgramAddress, programIds, toPublicKey, StringPublicKey } from '../../utils'
 
 export async function withdrawMasterEdition(
   vault: StringPublicKey,
@@ -23,20 +18,17 @@ export async function withdrawMasterEdition(
   safetyDeposit: StringPublicKey,
   fractionMint: StringPublicKey,
   mint: StringPublicKey,
-  instructions: TransactionInstruction[],
+  instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const PROGRAM_IDS = programIds()
+  const store = PROGRAM_IDS.store
   if (!store) {
-    throw new Error('Store not initialized');
+    throw new Error('Store not initialized')
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault)
 
-  const prizeTrackingTicket = await getPrizeTrackingTicket(
-    auctionManagerKey,
-    mint,
-  );
+  const prizeTrackingTicket = await getPrizeTrackingTicket(auctionManagerKey, mint)
   const vaultAuthority = (
     await findProgramAddress(
       [
@@ -44,9 +36,9 @@ export async function withdrawMasterEdition(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault),
+      toPublicKey(PROGRAM_IDS.vault)
     )
-  )[0];
+  )[0]
 
   const auctionExtended = (
     await findProgramAddress(
@@ -56,17 +48,14 @@ export async function withdrawMasterEdition(
         toPublicKey(vault).toBuffer(),
         Buffer.from(EXTENDED),
       ],
-      toPublicKey(PROGRAM_IDS.auction),
+      toPublicKey(PROGRAM_IDS.auction)
     )
-  )[0];
+  )[0]
 
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
+  const safetyDepositConfig = await getSafetyDepositConfig(auctionManagerKey, safetyDeposit)
 
-  const value = new WithdrawMasterEditionArgs();
-  const data = Buffer.from(serialize(SCHEMA, value));
+  const value = new WithdrawMasterEditionArgs()
+  const data = Buffer.from(serialize(SCHEMA, value))
   const keys = [
     {
       pubkey: toPublicKey(auctionManagerKey),
@@ -143,13 +132,13 @@ export async function withdrawMasterEdition(
       isSigner: false,
       isWritable: false,
     },
-  ];
+  ]
 
   instructions.push(
     new TransactionInstruction({
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    }),
-  );
+    })
+  )
 }
