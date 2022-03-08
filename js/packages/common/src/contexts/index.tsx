@@ -6,3 +6,5 @@ export * as Wallet from './wallet';
 export * from './wallet';
 export * from './store';
 export * from './meta';
+export {WalletContext, useWallet} from "@solana/wallet-adapter-react";
+export {WalletMultiButton, WalletModalContext, useWalletModal} from "@solana/wallet-adapter-react-ui";

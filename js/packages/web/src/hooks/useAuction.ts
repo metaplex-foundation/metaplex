@@ -5,7 +5,7 @@ import {
   loadMetadataAndEditionsBySafetyDepositBoxes,
   loadPrizeTrackingTickets,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { useEffect, useState } from 'react';
 import {
   AuctionView,

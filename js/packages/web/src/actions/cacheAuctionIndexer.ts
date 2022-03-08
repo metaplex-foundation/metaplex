@@ -1,6 +1,6 @@
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { ParsedAccount, StringPublicKey, WalletSigner } from '@oyster/common';
+import { ParsedAccount, StringPublicKey } from '@oyster/common';
 import { getSafetyDepositBoxAddress } from '@oyster/common/dist/lib/actions/vault';
 import {
   StoreIndexer,
@@ -11,10 +11,11 @@ import {
 import { setStoreIndex } from '@oyster/common/dist/lib/models/metaplex/setStoreIndex';
 import { setAuctionCache } from '@oyster/common/dist/lib/models/metaplex/setAuctionCache';
 import BN from 'bn.js';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // This command caches an auction at position 0, page 0, and moves everything up
 export async function cacheAuctionIndexer(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   vault: StringPublicKey,
   auction: StringPublicKey,
   auctionManager: StringPublicKey,
@@ -82,7 +83,7 @@ export async function cacheAuctionIndexer(
 
 const INDEX_TRANSACTION_SIZE = 10;
 async function propagateIndex(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   storeIndexer: ParsedAccount<StoreIndexer>[],
 ): Promise<{ instructions: TransactionInstruction[][]; signers: Keypair[][] }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -155,7 +156,7 @@ async function propagateIndex(
 const TRANSACTION_SIZE = 10;
 
 async function createAuctionCache(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   vault: StringPublicKey,
   auction: StringPublicKey,
   auctionManager: StringPublicKey,

@@ -33,7 +33,7 @@ import {
 } from '@oyster/common';
 import { merge, some, map } from 'lodash';
 import { Connection } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import BN from 'bn.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useMeta } from '../contexts';

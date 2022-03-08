@@ -1,5 +1,4 @@
-import { useStore } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useStore, useWallet } from '@oyster/common';
 import React from 'react';
 import { Link, useResolvedPath, useMatch } from 'react-router-dom';
 import cx from 'classnames';

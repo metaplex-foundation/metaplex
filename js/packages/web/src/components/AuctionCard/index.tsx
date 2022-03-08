@@ -27,13 +27,13 @@ import {
   useWalletModal,
   VaultState,
   WinningConfigType,
+  useWallet,
 } from '@oyster/common';
 import cx from 'classnames';
 import { last } from 'lodash';
 import Bugsnag from '@bugsnag/browser';
 import { useNavigate } from 'react-router-dom';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   Button,

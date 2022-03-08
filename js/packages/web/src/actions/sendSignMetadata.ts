@@ -4,13 +4,13 @@ import {
   sendTransactionWithRetry,
   signMetadata,
   StringPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function sendSignMetadata(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   metadata: StringPublicKey,
 ): Promise<SendSignedTransactionResult> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();

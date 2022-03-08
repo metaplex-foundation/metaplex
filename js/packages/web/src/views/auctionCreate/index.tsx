@@ -25,7 +25,7 @@ import {
   AmountRange,
   WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Button, Col, Row, Space, Steps } from 'antd';
 import BN from 'bn.js';

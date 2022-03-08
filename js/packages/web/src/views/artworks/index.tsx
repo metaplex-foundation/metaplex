@@ -5,7 +5,7 @@ import {
   useConnectionConfig,
   useUserAccounts,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { Button, Col, Row, Spin, Card, Tooltip } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';

@@ -8,7 +8,7 @@ import {
   useLocalStorageState,
   useStore,
 } from '../../../../common/dist/lib';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { Wallet } from '@metaplex/js';
 import { Connection } from '@solana/web3.js';
 import { useNavigate } from 'react-router-dom';

@@ -9,7 +9,6 @@ import {
   AuctionState,
   TokenAccount,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
@@ -19,14 +18,18 @@ import { emptyPaymentAccount } from '@oyster/common/dist/lib/models/metaplex/emp
 import { QUOTE_MINT } from '../constants';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
+import {
+  SmartInstructionSender,
+  WalletSigner,
+} from '@holaplex/solana-web3-tools';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 const BATCH_SIZE = 10;
 const SETTLE_TRANSACTION_SIZE = 6;
 const CLAIM_TRANSACTION_SIZE = 6;
 export async function settle(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
   payingAccount: string | undefined,
@@ -64,7 +67,7 @@ export async function settle(
 
 export async function createEmptyPaymentAccountForAllTokensIX(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionView: AuctionView,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -188,7 +191,7 @@ export async function createEmptyPaymentAccountForAllTokensIX(
 
 async function emptyPaymentAccountForAllTokens(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionView: AuctionView,
 ) {
   const { instructions, signers } =
@@ -203,7 +206,7 @@ async function emptyPaymentAccountForAllTokens(
     let emptyPaymentTokenError: Error | null = null;
 
     if (instructionBatch.length >= 2) {
-      await SmartInstructionSender.build(wallet, connection)
+      await SmartInstructionSender.build(wallet as WalletSigner, connection)
         .config({
           abortOnFailure: true,
           maxSigningAttempts: 3,
@@ -237,7 +240,7 @@ async function emptyPaymentAccountForAllTokens(
 
 async function claimAllBids(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionView: AuctionView,
   bids: ParsedAccount<BidderPot>[],
 ) {
@@ -301,7 +304,7 @@ async function claimAllBids(
     console.log('Running batch', i);
     if (instructionBatch.length >= 2) {
       // Pump em through!
-      await SmartInstructionSender.build(wallet, connection)
+      await SmartInstructionSender.build(wallet as WalletSigner, connection)
         .config({
           abortOnFailure: true,
           maxSigningAttempts: 3,

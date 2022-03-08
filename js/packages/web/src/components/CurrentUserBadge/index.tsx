@@ -10,7 +10,7 @@ import {
   useNativeAccount,
   useWalletModal,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Button, ButtonProps, Popover, Select, Space } from 'antd';
 import React, {

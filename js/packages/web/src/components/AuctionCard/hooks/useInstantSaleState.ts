@@ -1,4 +1,4 @@
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { AuctionView } from '../../../hooks';
 
 interface ActionButtonContentProps {

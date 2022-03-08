@@ -10,7 +10,7 @@ import {
   useConnection,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { CheckCircleIcon, ClockIcon } from '@heroicons/react/solid';
 import { DateTime } from 'luxon';
 import { useSolPrice } from '../../contexts';

@@ -10,17 +10,17 @@ import {
   sendTransactions,
   SequenceType,
   StoreIndexer,
-  WalletSigner,
   AuctionCache,
   loadSafeteyDepositBoxesForVaults,
   loadStoreIndexers,
 } from '@oyster/common';
 import { cacheAuctionIndexer } from './cacheAuctionIndexer';
 import { buildListWhileNonZero } from '../hooks';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // This command caches an auction at position 0, page 0, and moves everything up
 export async function cacheAllAuctions(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   connection: Connection,
   auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
   auctionCaches: Record<string, ParsedAccount<AuctionCache>>,

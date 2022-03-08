@@ -2,7 +2,7 @@ import React from 'react';
 import { Typography, Button, Alert } from 'antd';
 import { TwitterOutlined } from '@ant-design/icons';
 import { StorefrontSocialInfo } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 const { Text } = Typography;
 import { Link } from 'react-router-dom';
 

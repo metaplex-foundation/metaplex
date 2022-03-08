@@ -4,7 +4,7 @@ import {
   MetaplexModal,
   shortenAddress,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { Button, Col, InputNumber, Row, Slider, Space, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { UserSearch, UserValue } from '../../components/UserSearch';

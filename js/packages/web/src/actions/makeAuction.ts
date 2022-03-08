@@ -6,17 +6,17 @@ import {
   CreateAuctionArgs,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import {
   AUCTION_PREFIX,
   createAuction,
 } from '@oyster/common/dist/lib/actions/auction';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // This command makes an auction
 export async function makeAuction(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   vault: StringPublicKey,
   auctionSettings: IPartialCreateAuctionArgs,
 ): Promise<{

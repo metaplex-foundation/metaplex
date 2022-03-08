@@ -11,7 +11,6 @@ import {
   MetadataKey,
   BidderMetadata,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
@@ -32,6 +31,7 @@ import {
   setupRedeemParticipationInstructions,
   setupRedeemPrintingV2Instructions,
 } from './sendRedeemBid';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function findEligibleParticipationBidsForRedemption(
   auctionView: AuctionView,
@@ -74,7 +74,7 @@ export async function findEligibleParticipationBidsForRedemption(
 
 export async function claimUnusedPrizes(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   bids: ParsedAccount<BidderMetadata>[],
@@ -265,7 +265,7 @@ async function setupRedeemInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
@@ -318,7 +318,7 @@ async function setupRedeemFullRightsTransferInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
@@ -368,7 +368,7 @@ async function setupRedeemFullRightsTransferInstructions(
 async function setupWithdrawMasterEditionInstructions(
   connection: Connection,
   auctionView: AuctionView,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
@@ -423,7 +423,7 @@ async function deprecatedSetupRedeemPrintingInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
