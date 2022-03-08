@@ -179,7 +179,7 @@ export const mintNFT = async (
 
   // Generate a mint
   const mint = anchor.web3.Keypair.generate();
-  let instructions: TransactionInstruction[] = [];
+  const instructions: TransactionInstruction[] = [];
   const signers: anchor.web3.Keypair[] = [mint, walletKeypair];
 
   instructions.push(
@@ -219,8 +219,8 @@ export const mintNFT = async (
   // Create metadata
   const metadataAccount = await getMetadata(mint.publicKey);
 
-  instructions = instructions.concat(
-    new CreateMetadataV2(
+  instructions.push(
+    ...new CreateMetadataV2(
       { feePayer: wallet.publicKey },
       {
         metadata: metadataAccount,
@@ -246,8 +246,8 @@ export const mintNFT = async (
   // Create master edition
   const editionAccount = await getMasterEdition(mint.publicKey);
 
-  instructions = instructions.concat(
-    new CreateMasterEditionV3(
+  instructions.push(
+    ...new CreateMasterEditionV3(
       {
         feePayer: wallet.publicKey,
       },
@@ -263,8 +263,8 @@ export const mintNFT = async (
   );
 
   if (!mutableMetadata) {
-    instructions = instructions.concat(
-      new UpdateMetadataV2(
+    instructions.push(
+      ...new UpdateMetadataV2(
         {},
         {
           metadata: metadataAccount,
