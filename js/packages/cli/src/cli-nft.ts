@@ -1,17 +1,26 @@
 import { program } from 'commander';
 import log from 'loglevel';
-import { mintNFT, updateMetadata, verifyCollection } from './commands/mint-nft';
+import {
+  createMetadata,
+  createMetadataAccount,
+  mintNFT,
+  updateMetadata,
+  validateMetadata,
+  verifyCollection,
+} from './commands/mint-nft';
 import { getMetadata, loadWalletKey } from './helpers/accounts';
 import { parseUses } from './helpers/various';
 import { web3 } from '@project-serum/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { getCluster } from './helpers/various';
-import { MetadataData } from '@metaplex-foundation/mpl-token-metadata';
+import { DataV2, MetadataData } from '@metaplex-foundation/mpl-token-metadata';
+import * as fs from 'fs';
+
 program.version('1.1.0');
 log.setLevel('info');
 
 programCommand('mint')
-  .option('-u, --url <string>', 'metadata url')
+  .requiredOption('-u, --url <string>', 'metadata url')
   .option(
     '-c, --collection <string>',
     'Optional: Set this NFT as a part of a collection, Note you must be the update authority for this to work.',
@@ -61,8 +70,53 @@ programCommand('mint')
     );
   });
 
+programCommand('create-metadata')
+  .requiredOption('-m, --mint <string>', 'base58 mint key')
+  .option('-u, --uri <string>', 'metadata uri')
+  .option('-f, --file <string>', 'local file')
+  .option(
+    '-nvc, --no-verify-creators',
+    'Optional: Disable Verification of Creators',
+  )
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const { keypair, env, mint, uri, file, verifyCreators } = cmd.opts();
+    const mintKey = new PublicKey(mint);
+    const connection = new web3.Connection(web3.clusterApiUrl(env));
+    const walletKeypair = loadWalletKey(keypair);
+
+    let data: DataV2;
+
+    if (uri) {
+      data = await createMetadata(uri, verifyCreators);
+      if (!data) {
+        log.error('No metadata found at URI.');
+        return;
+      }
+    } else if (file) {
+      const fileData = JSON.parse(fs.readFileSync(file).toString());
+      log.info('Read from file', fileData);
+      data = validateMetadata({ metadata: fileData, uri: '' });
+    } else {
+      log.error('No metadata source provided.');
+      return;
+    }
+
+    if (!data) {
+      log.error('Metadata not constructed.');
+      return;
+    }
+
+    await createMetadataAccount({
+      connection,
+      data,
+      mintKey,
+      walletKeypair,
+    });
+  });
+
 programCommand('update-metadata')
-  .option('-m, --mint <string>', 'base58 mint key')
+  .requiredOption('-m, --mint <string>', 'base58 mint key')
   .option('-u, --url <string>', 'metadata url')
   .option(
     '-c, --collection <string>',
@@ -109,7 +163,6 @@ programCommand('update-metadata')
     if (collection) {
       collectionKey = new PublicKey(collection);
     }
-
     await updateMetadata(
       mintKey,
       solConnection,
