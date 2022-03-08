@@ -4,7 +4,6 @@
   "dependencies": {
     "@ant-design/icons": "^4.4.0",
     "@babel/preset-typescript": "^7.12.13",
-    "@bundlr-network/client": "^0.2.4",
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
     "@magic-ext/solana": "^0.2.0",
@@ -45,7 +44,6 @@
     "react-masonry-css": "^1.0.16",
     "react-router-dom": "^5.2.0",
     "react-transition-group": "^4.4.2",
-    "react-virtualized": "^9.22.3",
     "styled-components": "^5.0.0",
     "three": "^0.128.0",
     "timeago.js": "^4.0.2"
