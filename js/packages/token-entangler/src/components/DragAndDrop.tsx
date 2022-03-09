@@ -74,7 +74,7 @@ export const DragAndDrop = (
     <div
       ref={dropRef}
       style={dragging ? { backgroundColor: shade} : {}}
-    >
+      >
       {props.children}
     </div>
   );
