@@ -1245,7 +1245,7 @@ export const Claim = (props: RouteComponentProps<ClaimProps>) => {
               });
               return;
             }
-            localStorage.setItem('commMethod', e.target.value);
+            localStorage.setItem('commMethod', e?.target?.value.toString());
             setCommMethod(e.target.value);
           }}
           style={{ textAlign: 'left' }}
