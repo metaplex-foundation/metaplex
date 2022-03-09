@@ -5,4 +5,5 @@ export enum StorageType {
   Ipfs = 'ipfs',
   Aws = 'aws',
   NftStorage = 'nft-storage',
+  Pinata = 'pinata',
 }

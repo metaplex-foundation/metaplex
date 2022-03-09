@@ -4,7 +4,6 @@
   "dependencies": {
     "@ant-design/icons": "^4.4.0",
     "@babel/preset-typescript": "^7.12.13",
-    "@bundlr-network/client": "^0.2.4",
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
     "@magic-ext/solana": "^0.2.0",

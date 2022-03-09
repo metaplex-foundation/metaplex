@@ -26,6 +26,7 @@ import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks, sleep } from '../helpers/various';
 import { nftStorageUpload } from '../helpers/upload/nft-storage';
+import { pinataUpload } from '../helpers/upload/pinata';
 import { setCollection } from './set-collection';
 
 export async function uploadV2({
@@ -38,6 +39,8 @@ export async function uploadV2({
   mutable,
   nftStorageKey,
   ipfsCredentials,
+  pinataJwt,
+  pinataGateway,
   awsS3Bucket,
   batchSize,
   price,
@@ -65,6 +68,8 @@ export async function uploadV2({
   mutable: boolean;
   nftStorageKey: string;
   ipfsCredentials: ipfsCreds;
+  pinataJwt: string;
+  pinataGateway: string;
   awsS3Bucket: string;
   batchSize: number;
   price: BN;
@@ -299,6 +304,15 @@ export async function uploadV2({
           let link, imageLink, animationLink;
           try {
             switch (storage) {
+              case StorageType.Pinata:
+                [link, imageLink, animationLink] = await pinataUpload(
+                  image,
+                  animation,
+                  manifestBuffer,
+                  pinataJwt,
+                  pinataGateway,
+                );
+                break;
               case StorageType.NftStorage:
                 [link, imageLink, animationLink] = await nftStorageUpload(
                   image,
