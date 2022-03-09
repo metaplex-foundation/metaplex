@@ -427,7 +427,7 @@ async function processFiles({
     );
 
     await (arweavePathManifestDataItem as unknown as BundlrTransaction).sign();
-    await arweavePathManifestDataItem.sign();
+    await arweavePathManifestDataItem.sign(signer);
   } else if (storageType === StorageType.ArweaveBundle) {
     arweavePathManifestDataItem = getArweavePathManifestDataItem(
       signer,
