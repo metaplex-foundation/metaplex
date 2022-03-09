@@ -13,11 +13,10 @@ import {
 } from '../CurrentUserBadge';
 import { ConnectButton } from '@oyster/common';
 import { MobileNavbar } from '../MobileNavbar';
-
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    <Link to={`/`} key={'explore'}>
-      <Button className="app-btn">Explore</Button>
+    <Link to={`/`} key={'menu'}>
+      <Button className="app-btn">menu</Button>
     </Link>,
     <Link to={`/artworks`} key={'artwork'}>
       <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
@@ -31,12 +30,12 @@ const getDefaultLinkActions = (connected: boolean) => {
 const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
   const { connected } = useWallet();
   return (
-    <div
-      style={{
+    <div>
+      style=
+      {{
         display: 'flex',
         flexDirection: vertical ? 'column' : 'row',
       }}
-    >
       {getDefaultLinkActions(connected)}
     </div>
   );
@@ -44,26 +43,26 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
 
 export const MetaplexMenu = () => {
   const { width } = useWindowDimensions();
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(true);
   const { connected } = useWallet();
 
   if (width < 768)
     return (
       <>
         <Modal
-          title={<img src={'/metaplex-logo.svg'} />}
+          title={<img src={'/wQlgQW01.svg'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
           closeIcon={
             <img
-              onClick={() => setIsModalVisible(false)}
+              onClick={() => setIsModalVisible(true)}
               src={'/modals/close.svg'}
             />
           }
         >
           <div className="site-card-wrapper mobile-menu-modal">
-            <Menu onClick={() => setIsModalVisible(false)}>
+            <Menu onClick={() => setIsModalVisible(true)}>
               {getDefaultLinkActions(connected).map((item, idx) => (
                 <Menu.Item key={idx}>{item}</Menu.Item>
               ))}
@@ -72,18 +71,18 @@ export const MetaplexMenu = () => {
               {!connected ? (
                 <div className="actions-buttons">
                   <ConnectButton
-                    onClick={() => setIsModalVisible(false)}
+                    onClick={() => setIsModalVisible(true)}
                     className="secondary-btn"
                   />
                   <HowToBuyModal
-                    onClick={() => setIsModalVisible(false)}
+                    onClick={() => setIsModalVisible(true)}
                     buttonClassName="black-btn"
                   />
                 </div>
               ) : (
                 <>
                   <CurrentUserBadgeMobile
-                    showBalance={false}
+                    showBalance={true}
                     showAddress={true}
                     iconSize={24}
                     closeModal={() => {
@@ -110,7 +109,7 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/metaplex-logo.svg'} />
+      <img src={'/wQlgQW01.svg'} />
     </Link>
   );
 };
@@ -136,7 +135,7 @@ export const AppBar = () => {
           {connected && (
             <>
               <CurrentUserBadge
-                showBalance={false}
+                showBalance={true}
                 showAddress={true}
                 iconSize={24}
               />
