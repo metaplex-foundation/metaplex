@@ -24,6 +24,9 @@ const getDefaultLinkActions = (connected: boolean) => {
     <Link to={`/artists`} key={'artists'}>
       <Button className="app-btn">Creators</Button>
     </Link>,
+    <Link to={`/`} key={'auction'}>
+      <Button className="app-btn">auction</Button>
+    </Link>,
   ];
 };
 
@@ -50,7 +53,7 @@ export const MetaplexMenu = () => {
     return (
       <>
         <Modal
-          title={<img src={'/wQlgQW01.svg'} />}
+          title={<img alt="wQlgQW01" src={'/wQlgQW01.svg'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
@@ -109,7 +112,7 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/wQlgQW01.svg'} />
+      <img alt="wQlgQW01" src={'/wQlgQW01.svg'} />
     </Link>
   );
 };
