@@ -53,7 +53,7 @@ export const MetaplexMenu = () => {
     return (
       <>
         <Modal
-          title={<img alt="wQlgQW01" src={'/wQlgQW01.svg'} />}
+          title={<img alt="logo" src={'/metaplex-logo.svg'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
@@ -112,7 +112,7 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img alt="wQlgQW01" src={'/wQlgQW01.svg'} />
+      <img alt="logo" src={'/metaplex-logo.svg'} />
     </Link>
   );
 };
