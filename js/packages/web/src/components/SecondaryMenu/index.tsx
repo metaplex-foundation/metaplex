@@ -19,6 +19,7 @@ export const SecondaryMenu = () => {
       ) : (
         <>
           <HowToBuyModal buttonType="text" />
+          <Cog buttonType="text" />
           <WalletMultiButton />
         </>
       )}
