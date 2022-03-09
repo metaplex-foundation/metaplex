@@ -16,7 +16,7 @@ const getDefaultLinkActions = (connected: boolean) => {
       <Button className='app-btn'>Explore</Button>
     </Link>,
     <Link to={`/collections`} key={'collections'}>
-      <Button className="app-btn">Collections</Button>
+      <Button className='app-btn'>Collections</Button>
     </Link>,
     <Link to={`/artworks`} key={'artwork'}>
       <Button className='app-btn'>{connected ? 'My Items' : 'Artwork'}</Button>
@@ -34,8 +34,7 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       style={{
         display: 'flex',
         flexDirection: vertical ? 'column' : 'row',
-      }}
-    >
+      }}>
       {getDefaultLinkActions(connected)}
     </div>
   )
@@ -54,8 +53,7 @@ export const MetaplexMenu = () => {
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
-          closeIcon={<img onClick={() => setIsModalVisible(false)} src={'/modals/close.svg'} />}
-        >
+          closeIcon={<img onClick={() => setIsModalVisible(false)} src={'/modals/close.svg'} />}>
           <div className='site-card-wrapper mobile-menu-modal'>
             <Menu onClick={() => setIsModalVisible(false)}>
               {getDefaultLinkActions(connected).map((item, idx) => (
