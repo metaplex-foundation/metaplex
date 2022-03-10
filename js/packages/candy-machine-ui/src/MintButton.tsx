@@ -28,16 +28,14 @@ export const MintButton = (
     onMint,
     candyMachine,
     isMinting,
-    rpcUrl
-  isActive,
-                           }: {
-  }:
-    {
+    rpcUrl,
+    isActive,
+  }: {
       onMint: () => Promise<void>;
       candyMachine?: CandyMachineAccount;
       isMinting: boolean;
   isActive: boolean;
-      rpcUrl: string
+      rpcUrl: string;
     }) => {
   const { requestGatewayToken, gatewayStatus } = useGateway();
   const [clicked, setClicked] = useState(false);
@@ -126,14 +124,14 @@ export const MintButton = (
                 candyMachine.state.gatekeeper.gatekeeperNetwork
               );
 
-              const subId = onGatewayTokenChange(
-                connection.connection,
-                gatewayTokenAddress,
-                () => setVerified(true),
-                'confirmed'
+              setWebSocketSubscriptionId(
+                onGatewayTokenChange(
+                  connection.connection,
+                  gatewayTokenAddress,
+                  () => setVerified(true),
+                  'confirmed'
+                )
               )
-
-              setWebSocketSubscriptionId(subId)
             }
           } else {
             setClicked(false)
