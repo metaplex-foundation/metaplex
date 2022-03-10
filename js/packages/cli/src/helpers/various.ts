@@ -1,4 +1,4 @@
-import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, AccountInfo, PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 import weighted from 'weighted';
 import path from 'path';
@@ -21,6 +21,8 @@ export async function getCandyMachineV2Config(
   ipfsInfuraProjectId: string;
   number: number;
   ipfsInfuraSecret: string;
+  pinataJwt: string;
+  pinataGateway: string;
   awsS3Bucket: string;
   retainAuthority: boolean;
   mutable: boolean;
@@ -62,6 +64,8 @@ export async function getCandyMachineV2Config(
     ipfsInfuraProjectId,
     number,
     ipfsInfuraSecret,
+    pinataJwt,
+    pinataGateway,
     awsS3Bucket,
     noRetainAuthority,
     noMutable,
@@ -191,6 +195,8 @@ export async function getCandyMachineV2Config(
     ipfsInfuraProjectId,
     number,
     ipfsInfuraSecret,
+    pinataJwt,
+    pinataGateway: pinataGateway ? pinataGateway : null,
     awsS3Bucket,
     retainAuthority: !noRetainAuthority,
     mutable: !noMutable,
@@ -531,4 +537,18 @@ export function parseUses(useMethod: string, total: number): Uses | null {
     return new Uses({ useMethod: realUseMethod, total, remaining: total });
   }
   return null;
+}
+
+export function parseCollectionMintPubkey(collectionMint: null | PublicKey) {
+  let collectionMintPubkey: null | PublicKey = null;
+  if (collectionMint) {
+    try {
+      collectionMintPubkey = new PublicKey(collectionMint);
+    } catch (error) {
+      throw new Error(
+        'Invalid Pubkey option. Please enter it as a base58 mint id',
+      );
+    }
+  }
+  return collectionMintPubkey;
 }

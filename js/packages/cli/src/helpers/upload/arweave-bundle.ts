@@ -15,8 +15,8 @@ import { sleep } from '../various';
 import Transaction from 'arweave/node/lib/transaction';
 import Bundlr from '@bundlr-network/client';
 
-import BundlrTransaction from '@bundlr-network/client/build/src/transaction';
 import { getAssetManifest } from '../../commands/upload';
+import BundlrTransaction from '@bundlr-network/client/build/common/transaction';
 
 export const LAMPORTS = 1_000_000_000;
 /**

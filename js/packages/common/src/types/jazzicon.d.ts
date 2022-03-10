@@ -1,4 +1,4 @@
-declare module 'jazzicon' {
-  const jazzicon: any
-  export = jazzicon
+declare module '@metamask/jazzicon' {
+  const jazzicon: any;
+  export = jazzicon;
 }
