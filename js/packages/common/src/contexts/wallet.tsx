@@ -53,7 +53,8 @@ export const WalletModal: FC = () => {
   return (
     <MetaplexModal title="Connect Wallet" visible={visible} onCancel={close}>
       <span>
-        style={{
+        style=
+        {{
           color: 'rgba(255, 255, 255, 0.75)',
           fontSize: '14px',
           lineHeight: '14px',
