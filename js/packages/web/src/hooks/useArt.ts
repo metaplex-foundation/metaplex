@@ -229,3 +229,60 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 
   return { ref, data }
 }
+
+export const useExtendedCollection = () => {
+  const { metadata } = useMeta()
+
+  const getData = async (group: any) => {
+    try {
+      const key = pubkeyToString(group[0][0].thumbnail.metadata.pubkey)
+      const account = metadata.find(a => a.pubkey === key)
+      //(inView || width < 768) &&
+      const USE_CDN = false
+      const routeCDN = (uri: string) => {
+        let result = uri
+        if (USE_CDN) {
+          result = uri.replace('https://arweave.net/', 'https://coldcdn.com/api/cdn/bronil/')
+        }
+
+        return result
+      }
+
+      if (account && account.info.data.uri) {
+        const uri = routeCDN(account.info.data.uri)
+
+        const processJson = (extended: any) => {
+          if (!extended || extended?.properties?.files?.length === 0) {
+            return
+          }
+
+          if (extended?.image) {
+            const file = extended.image.startsWith('http')
+              ? extended.image
+              : `${account.info.data.uri}/${extended.image}`
+            extended.image = routeCDN(file)
+          }
+
+          return extended
+        }
+        try {
+          const cached = localStorage.getItem(uri)
+          if (cached) {
+            return { ...group, ...processJson(JSON.parse(cached)) }
+          } else {
+            const fetchArt = await fetch(uri)
+            const data = await fetchArt.json()
+            localStorage.setItem(uri, JSON.stringify(data))
+            return { ...group, ...processJson(data) }
+          }
+        } catch (ex) {
+          return {}
+        }
+      }
+    } catch (error) {
+      return {}
+    }
+  }
+
+  return { getData }
+}

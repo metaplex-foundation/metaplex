@@ -1298,7 +1298,6 @@ export async function getAuctionCache(auction: StringPublicKey) {
   if (!store) {
     throw new Error('Store not initialized')
   }
-  console.log('Auction', auction)
   return (
     await findProgramAddress(
       [

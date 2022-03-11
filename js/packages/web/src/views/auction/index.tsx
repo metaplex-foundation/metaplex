@@ -118,9 +118,6 @@ export const AuctionView = () => {
   // useEffect(() => {
   //   pullAuctionPage(id)
   // }, [])
-  console.log('auction')
-  console.log(auction)
-  console.log('auction')
   let edition = ''
   if (art.type === ArtType.NFT) {
     edition = 'Unique'
@@ -143,12 +140,6 @@ export const AuctionView = () => {
   // if (auction) {
   //   let { status, amount } = useAuctionStatus(auction)
   // }
-
-  console.log('auction *********')
-  console.log(auction)
-  console.log(attributes)
-  console.log(tokenInfo)
-  console.log('auction *********')
 
   // const myPayingAccount = balance.accounts[0]
   // const instantSalePrice = useMemo(

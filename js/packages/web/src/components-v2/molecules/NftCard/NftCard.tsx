@@ -8,17 +8,13 @@ export interface NftCardProps {
 }
 
 export const NftCard: FC<NftCardProps> = forwardRef(
-  ({ className, image, pubkey, itemsCount, ...restProps }: NftCardProps) => {
+  ({ className, pubkey, itemsCount, ...restProps }: NftCardProps) => {
     const NftCardClasses = CN(
       `nft-card flex flex-col bg-gray-50 rounded-[8px] overflow-hidden h-full cursor-pointer hover:bg-gray-100 transition-all`,
       className
     )
-    console.log('NFTCARD')
-    console.log(pubkey)
-    console.log('NFTCARD')
     const { ref, data } = useExtendedArt(pubkey)
 
-    console.log(data)
     const isVerified = true
 
     return (
