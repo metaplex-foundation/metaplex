@@ -56,8 +56,12 @@ const StyledLink = styled.a`
 `;
 
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, isLoading, patchState } =
-    useMeta();
+  const {
+    store,
+    whitelistedCreatorsByCreator,
+    isLoading,
+    patchState,
+  } = useMeta();
   const connection = useConnection();
   const wallet = useWallet();
   const [loadingAdmin, setLoadingAdmin] = useState(true);
@@ -111,7 +115,7 @@ export const AdminView = () => {
 
   if (loadingAdmin) {
     return (
-      <div className="app-section--loading">
+      <div className='app-section--loading'>
         <Spin indicator={<LoadingOutlined />} />
       </div>
     );
@@ -121,7 +125,7 @@ export const AdminView = () => {
     <>
       {!wallet.connected ? (
         <p>
-          <Button type="primary" onClick={connect}>
+          <Button type='primary' onClick={connect}>
             Connect
           </Button>{' '}
           to admin store.
@@ -155,14 +159,14 @@ export const AdminView = () => {
       ) : (
         <>
           <p>Store is not initialized</p>
-          <Link to="/">Go to initialize</Link>
+          <Link to='/'>Go to initialize</Link>
         </>
       )}
     </>
   );
 };
 
-function ArtistModal({
+function ArtistModal ({
   setUpdatedCreators,
   uniqueCreatorsWithUpdates,
   showAddCreatorModal: modalOpen,
@@ -180,7 +184,7 @@ function ArtistModal({
   return (
     <>
       <Modal
-        title="Add New Artist Address"
+        title='Add New Artist Address'
         visible={modalOpen}
         onOk={() => {
           const addressToAdd = modalAddress;
@@ -234,7 +238,7 @@ enum ListingNotificationStatus {
   Error,
 }
 
-function InnerAdminView({
+function InnerAdminView ({
   store,
   whitelistedCreatorsByCreator,
   connection,
@@ -262,13 +266,18 @@ function InnerAdminView({
     unavailable: ParsedAccount<MasterEditionV1>[];
   }>();
   const [cachingAuctions, setCachingAuctions] = useState<boolean>();
-  const [showAddCreatorModal, setShowAddCreatorModal] =
-    useState<boolean>(false);
-  const [convertingMasterEditions, setConvertMasterEditions] =
-    useState<boolean>();
+  const [showAddCreatorModal, setShowAddCreatorModal] = useState<boolean>(
+    false,
+  );
+  const [convertingMasterEditions, setConvertMasterEditions] = useState<
+    boolean
+  >();
   const { auctionCaches, storeIndexer, metadata, masterEditions } = useMeta();
-  const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } =
-    useAuctionManagersToCache();
+  const {
+    auctionManagersToCache,
+    auctionManagerTotal,
+    auctionCacheTotal,
+  } = useAuctionManagersToCache();
   const notifications = useNotifications(wallet);
 
   const { accountByMint } = useUserAccounts();
@@ -322,8 +331,8 @@ function InnerAdminView({
         },
       ) => (
         <Switch
-          checkedChildren="Active"
-          unCheckedChildren="Inactive"
+          checkedChildren='Active'
+          unCheckedChildren='Inactive'
           checked={value}
           onChange={val =>
             setUpdatedCreators(u => ({
@@ -341,8 +350,8 @@ function InnerAdminView({
 
   return (
     <>
-      <div className="metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap">
-        <h2 className="">Whitelisted Creators</h2>
+      <div className='metaplex-flex metaplex-align-items-center metaplex-justify-content-sb metaplex-margin-bottom-8 metaplex-gap-4 metaplex-flex-wrap'>
+        <h2 className=''>Whitelisted Creators</h2>
         <div>
           <Button
             onClick={async () => {
@@ -361,15 +370,15 @@ function InnerAdminView({
                 type: 'success',
               });
             }}
-            size="large"
-            type="primary"
+            size='large'
+            type='primary'
           >
             Submit changes
           </Button>
         </div>
       </div>
-      <div className="metaplex-flex-column metaplex-gap-4 ">
-        <div className="metaplex-flex">
+      <div className='metaplex-flex-column metaplex-gap-4 '>
+        <div className='metaplex-flex'>
           <ArtistModal
             setUpdatedCreators={setUpdatedCreators}
             uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
@@ -377,10 +386,10 @@ function InnerAdminView({
             setShowAddCreatorModal={setShowAddCreatorModal}
           />
         </div>
-        <div className="flex items-end justify-between">
+        <div className='flex items-end justify-between'>
           <Switch
-            checkedChildren="Public"
-            unCheckedChildren="Whitelist Only"
+            checkedChildren='Public'
+            unCheckedChildren='Whitelist Only'
             checked={newStore.public}
             onChange={val => {
               setNewStore(() => {
@@ -409,64 +418,68 @@ function InnerAdminView({
         />
 
         <h2>Listing Notifications</h2>
-        <Table
-          columns={[
-            {
-              key: 'accountPubkey',
-              title: 'Listing',
-              dataIndex: 'accountPubkey',
-            },
-            {
-              key: 'description',
-              title: 'Notification',
-              dataIndex: 'description',
-            },
-            {
-              key: 'action',
-              title: 'Action',
-              render: ({ action, callToAction }) => {
-                const [status, setStatus] = useState<ListingNotificationStatus>(
-                  ListingNotificationStatus.Ready,
-                );
+        <div className='flex flex-col'>
+          <div className='overflow-x-auto sm:-mx-6 lg:-mx-8'>
+            <div className='inline-block min-w-full py-2 sm:px-6 lg:px-8'>
+              <div className='overflow-hidden shadow-md sm:rounded-lg'>
+                <table className='min-w-full'>
+                  <thead className='bg-gray-700'>
+                    <tr>
+                      <th
+                        scope='col'
+                        className='px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase'
+                      >
+                        Listing
+                      </th>
+                      <th
+                        scope='col'
+                        className='px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase'
+                      >
+                        Notification
+                      </th>
+                      <th scope='col' className='relative px-6 py-3'>
+                        <span className='sr-only'>Action</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {notifications.map(n => (
+                      <tr className='border-b'>
+                        <td className='px-6 py-4 text-sm text-white font-mediumwhitespace-nowrap'>
+                          {n.accountPubkey}{' '}
+                        </td>
+                        <td className='px-6 py-4 text-sm text-gray-400 whitespace-nowrap'>
+                          {n.description}
+                        </td>
 
-                const onSubmit = async () => {
-                  try {
-                    setStatus(ListingNotificationStatus.Submitting);
-                    await action();
-                    setStatus(ListingNotificationStatus.Complete);
-                  } catch (e: any) {
-                    Bugsnag.notify(e);
-                    setStatus(ListingNotificationStatus.Error);
-                  }
-                };
-                const isComplete =
-                  status === ListingNotificationStatus.Complete;
-
-                const label = isComplete ? 'Done' : callToAction;
-                return (
-                  <Button
-                    loading={status === ListingNotificationStatus.Submitting}
-                    disabled={isComplete}
-                    onClick={onSubmit}
-                  >
-                    {label}
-                  </Button>
-                );
-              },
-            },
-          ]}
-          dataSource={notifications}
-        />
+                        <td className='px-6 py-4 text-sm font-medium text-right whitespace-nowrap'>
+                          <Button
+                            onClick={async () => {
+                              await n.action();
+                            }}
+                            className='text-blue-600 dark:text-blue-500 hover:underline'
+                          >
+                            Action
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <h2>Credit Card Payments</h2>
-        <div className="metaplex-flex-column metaplex-gap-4">
+        <div className='metaplex-flex-column metaplex-gap-4'>
           <p>
             Increase your sales by accepting credit and debit card payments
             using&nbsp;
             <StyledLink
-              href="https://www.crossmint.io/creators"
-              target="_blank"
-              rel="noreferrer"
+              href='https://www.crossmint.io/creators'
+              target='_blank'
+              rel='noreferrer'
             >
               Crossmint
             </StyledLink>
@@ -480,9 +493,9 @@ function InnerAdminView({
                 NOTE: Your store is not yet ready to use Crossmint. To get
                 started, please visit{' '}
                 <StyledLink
-                  href="https://www.holaplex.com/storefront/edit"
-                  target="_blank"
-                  rel="noreferrer"
+                  href='https://www.holaplex.com/storefront/edit'
+                  target='_blank'
+                  rel='noreferrer'
                 >
                   https://www.holaplex.com/storefront/edit
                 </StyledLink>
@@ -498,10 +511,10 @@ function InnerAdminView({
           </p>
         </div>
 
-        <div className="metaplex-flex-column metaplex-gap-4">
+        <div className='metaplex-flex-column metaplex-gap-4'>
           <h2>Administrator Actions</h2>
-          <div className="metaplex-flex metaplex-gap-4">
-            <div className="metaplex-width-50">
+          <div className='metaplex-flex metaplex-gap-4'>
+            <div className='metaplex-width-50'>
               <h3>Convert Master Editions</h3>
               <p>
                 You have {filteredMetadata?.available.length} MasterEditionV1s
@@ -510,7 +523,7 @@ function InnerAdminView({
                 auctions that cannot be converted yet.
               </p>
               <Button
-                size="large"
+                size='large'
                 loading={convertingMasterEditions}
                 onClick={async () => {
                   setConvertMasterEditions(true);
@@ -528,7 +541,7 @@ function InnerAdminView({
                 Convert Eligible Master Editions
               </Button>
             </div>
-            <div className="metaplex-width-50">
+            <div className='metaplex-width-50'>
               <h3>Cache Auctions</h3>
               <p>
                 Activate your storefront listing caches by pressing &ldquo;build
@@ -537,8 +550,8 @@ function InnerAdminView({
                 the cache on November 17th. To preview the speed improvement
                 visit the Holaplex{' '}
                 <a
-                  rel="noopener noreferrer"
-                  target="_blank"
+                  rel='noopener noreferrer'
+                  target='_blank'
                   href={`https://${storefront.subdomain}.holaxplex.dev`}
                 >
                   {' '}
@@ -546,16 +559,16 @@ function InnerAdminView({
                 </a>{' '}
                 for your storefront.
               </p>
-              <Space direction="vertical" size="middle" align="center">
+              <Space direction='vertical' size='middle' align='center'>
                 <Progress
-                  type="circle"
-                  status="normal"
+                  type='circle'
+                  status='normal'
                   percent={(auctionCacheTotal / auctionManagerTotal) * 100}
                   format={() => `${auctionManagersToCache.length} left`}
                 />
                 {auctionManagersToCache.length > 0 && (
                   <Button
-                    size="large"
+                    size='large'
                     loading={cachingAuctions}
                     onClick={async () => {
                       setCachingAuctions(true);
@@ -582,7 +595,7 @@ function InnerAdminView({
         </div>
         <h2>Miscellaneous</h2>
         <div>
-          <Button type="primary" onClick={() => localStorage.clear()}>
+          <Button type='primary' onClick={() => localStorage.clear()}>
             Clear Local Cache
           </Button>
         </div>
