@@ -90,9 +90,6 @@ export const AuctionView = () => {
   // useEffect(() => {
   //   pullAuctionPage(id)
   // }, [])
-  console.log('auction *********')
-  console.log(auction)
-  console.log('auction *********')
   let edition = ''
   if (art.type === ArtType.NFT) {
     edition = 'Unique'

@@ -1,16 +1,9 @@
+import React, { useEffect, useState, FC, useCallback } from 'react'
+import { Link, useHistory, useLocation } from 'react-router-dom'
 import CN from 'classnames'
 import queryString from 'query-string'
-import { Link, useHistory, useLocation } from 'react-router-dom'
-
-import { categories } from '../../../../dummy-data/categories'
-
-import { TextField } from '../../atoms/TextField'
-import { TabHighlightButton } from '../../atoms/TabHighlightButton'
-
-import React, { useEffect, useState, FC } from 'react'
-import { NftCard } from '../../molecules/NftCard'
+import _ from 'lodash'
 import {
-  useStore,
   Spinner,
   useViewport,
   Dropdown,
@@ -19,22 +12,15 @@ import {
   DropDownMenuItem,
   Button,
 } from '@oyster/common'
-import { PublicKey } from '@solana/web3.js'
-
-import { MetadataData } from '@metaplex-foundation/mpl-token-metadata'
-
+import { categories } from '../../../../dummy-data/categories'
+import { TextField } from '../../atoms/TextField'
+import { TabHighlightButton } from '../../atoms/TabHighlightButton'
+import { NftCard } from '../../molecules/NftCard'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
-import _ from 'lodash'
+import { useExtendedCollection } from '../../../hooks'
 
 export interface ExploreCollectionsProps {
   [x: string]: any
-}
-
-interface IToken {
-  mint: PublicKey
-  address: PublicKey
-  metadataPDA?: PublicKey
-  metadataOnchain?: MetadataData
 }
 
 export const ExploreCollections: FC<ExploreCollectionsProps> = ({
@@ -44,32 +30,60 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   const ExploreCollectionsClasses = CN(`explore-collections py-[40px] lg:py-[80px]`, className)
   const { push } = useHistory()
   const { search } = useLocation()
-  const { pid } = queryString.parse(search) || {}
+  const { pid, searchText } = queryString.parse(search) || {}
 
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(true)
-  const { isDesktop, isMobile } = useViewport()
+  const { isMobile } = useViewport()
 
   const [dataItems, setDataItems] = useState<any[]>([])
+  const { getData } = useExtendedCollection()
 
-  // new /////
   const { auctions } = useAuctionsList()
 
   useEffect(() => {
     setIsCollectionsLoading(true)
     const newArray: any[] = []
     if (auctions.length > 0) {
-      let group = auctions.reduce((r, a) => {
+      auctions.reduce((r, a) => {
         newArray.push([a as any])
         return r
       })
     }
-    let grouped = _.mapValues(
+    const grouped = _.mapValues(
       _.groupBy(newArray, item => item[0].thumbnail.metadata.info.data.creators[0].address)
     )
-    let group = _.values(grouped)
-    setDataItems(group)
-    setIsCollectionsLoading(false)
-  }, [auctions])
+    const groups = _.values(grouped)
+
+    setCollections(groups)
+  }, [auctions, searchText])
+
+  const setCollections = useCallback(
+    groups => {
+      Promise.all(groups.map(async group => await getData(group))).then(res => {
+        setDataItems(() => searchNFTByName(res, searchText))
+        setIsCollectionsLoading(false)
+      })
+    },
+    [auctions, searchText]
+  )
+
+  const searchNFTByName = (collections, text: any) => {
+    if (!text) {
+      return collections
+    }
+    const searchText = text.toLowerCase()
+    return collections.filter(({ collection }) => {
+      return collection?.name?.toLowerCase().includes(searchText)
+    })
+  }
+
+  const onChangeTabItem = value => {
+    if (searchText) {
+      push(`/explore?pid=${value}&searchText=${searchText}`)
+      return
+    }
+    push(`/explore?pid=${value}`)
+  }
 
   return (
     <div className={ExploreCollectionsClasses} {...restProps}>
@@ -120,7 +134,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                               isActive={pid === value}
                               key={value || index}
                               onClick={() => {
-                                push(`/explore?pid=${value}`)
+                                onChangeTabItem(value)
                                 onSelectOption(label)
                               }}>
                               {label}
@@ -144,7 +158,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                   isActive={pid === value}
                   key={value || index}
                   onClick={() => {
-                    push(`/explore?pid=${value}`)
+                    onChangeTabItem(value)
                   }}>
                   {label}
                 </TabHighlightButton>
@@ -163,7 +177,6 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
           <div className='grid grid-cols-1 gap-x-[32px] gap-y-[32px] pb-[100px] md:grid-cols-3 lg:grid-cols-4'>
             {pid === 'trending' &&
               dataItems.map((item: any) => {
-                console.log(item.length)
                 const temp = {
                   pubkey: item[0][0].thumbnail.metadata.pubkey,
                   itemsCount: item.length,
