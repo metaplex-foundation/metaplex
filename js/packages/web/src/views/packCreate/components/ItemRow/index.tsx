@@ -32,7 +32,7 @@ const ItemRow = ({
     <div className={itemRowCls} onClick={onClick} ref={ref}>
       {children}
       <div className="preview-column">
-        <ArtContent uri={data?.image} preview={false} />
+        <ArtContent uri={data?.image} preview={true} />
       </div>
       <div className="name-column">
         <p className="name-column__name">{name}</p>
