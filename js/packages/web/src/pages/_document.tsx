@@ -27,7 +27,7 @@ export default class MetaplexDocument extends Document {
           <link rel='preconnect' href='https://fonts.googleapis.com' />
           <link rel='preconnect' href='https://fonts.gstatic.com' crossOrigin='true' />
           <link
-            href='https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap'
+            href='https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Poppins:wght@400;500;600&family=Rajdhani:wght@400;500;600;700&family=Righteous&display=swap'
             rel='stylesheet'
           />
         </Head>
