@@ -26,6 +26,8 @@ import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks, sleep } from '../helpers/various';
 import { nftStorageUpload } from '../helpers/upload/nft-storage';
+import { pinataUpload } from '../helpers/upload/pinata';
+import { setCollection } from './set-collection';
 
 export async function uploadV2({
   files,
@@ -37,6 +39,8 @@ export async function uploadV2({
   mutable,
   nftStorageKey,
   ipfsCredentials,
+  pinataJwt,
+  pinataGateway,
   awsS3Bucket,
   batchSize,
   price,
@@ -52,6 +56,8 @@ export async function uploadV2({
   anchorProgram,
   arweaveJwk,
   rateLimit,
+  collectionMintPubkey,
+  setCollectionMint,
 }: {
   files: string[];
   cacheName: string;
@@ -62,6 +68,8 @@ export async function uploadV2({
   mutable: boolean;
   nftStorageKey: string;
   ipfsCredentials: ipfsCreds;
+  pinataJwt: string;
+  pinataGateway: string;
   awsS3Bucket: string;
   batchSize: number;
   price: BN;
@@ -89,6 +97,8 @@ export async function uploadV2({
   anchorProgram: Program;
   arweaveJwk: string;
   rateLimit: number;
+  collectionMintPubkey: null | PublicKey;
+  setCollectionMint: boolean;
 }): Promise<boolean> {
   const savedContent = loadCache(cacheName, env);
   const cacheContent = savedContent || {};
@@ -164,6 +174,20 @@ export async function uploadV2({
       cacheContent.program.uuid = res.uuid;
       cacheContent.program.candyMachine = res.candyMachine.toBase58();
       candyMachine = res.candyMachine;
+
+      if (setCollectionMint) {
+        const collection = await setCollection(
+          walletKeyPair,
+          anchorProgram,
+          res.candyMachine,
+          collectionMintPubkey,
+        );
+        console.log('Collection: ', collection);
+        cacheContent.program.collection =
+          collection.collectionMetadata.toBase58();
+      } else {
+        console.log('No collection set');
+      }
 
       log.info(
         `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
@@ -280,6 +304,15 @@ export async function uploadV2({
           let link, imageLink, animationLink;
           try {
             switch (storage) {
+              case StorageType.Pinata:
+                [link, imageLink, animationLink] = await pinataUpload(
+                  image,
+                  animation,
+                  manifestBuffer,
+                  pinataJwt,
+                  pinataGateway,
+                );
+                break;
               case StorageType.NftStorage:
                 [link, imageLink, animationLink] = await nftStorageUpload(
                   image,

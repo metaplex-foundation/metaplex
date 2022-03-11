@@ -247,4 +247,9 @@ export const METADATA_SCHEMA = new Map<any, any>([
   ],
 ]);
 
+export interface CollectionData {
+  mint: PublicKey;
+  candyMachine: PublicKey;
+}
+
 export type AssetKey = { mediaExt: string; index: string };
