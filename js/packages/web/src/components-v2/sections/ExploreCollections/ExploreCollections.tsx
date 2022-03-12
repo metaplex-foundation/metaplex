@@ -18,9 +18,15 @@ import { TabHighlightButton } from '../../atoms/TabHighlightButton'
 import { NftCard } from '../../molecules/NftCard'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import { useExtendedCollection } from '../../../hooks'
+import useSearch from '../../../hooks/useSearch'
 
 export interface ExploreCollectionsProps {
   [x: string]: any
+}
+
+interface SearchParamsInterface {
+  pid?: string
+  searchText?: string
 }
 
 export const ExploreCollections: FC<ExploreCollectionsProps> = ({
@@ -30,8 +36,8 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   const ExploreCollectionsClasses = CN(`explore-collections py-[40px] lg:py-[80px]`, className)
   const { push } = useHistory()
   const { search } = useLocation()
-  const { pid, searchText } = queryString.parse(search) || {}
-
+  const { pid, searchText }: SearchParamsInterface = queryString.parse(search) || {}
+  const { onChangeSearchText, searchText: text, onSubmitSearch } = useSearch()
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(true)
   const { isMobile } = useViewport()
 
@@ -93,14 +99,19 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
           collections
         </h1>
 
-        <div className='mb:pb-0 flex w-full max-w-[480px] pt-[20px] pb-[20px]'>
+        <form
+          onSubmit={e => onSubmitSearch(e, pid)}
+          name='search'
+          className='mb:pb-0 flex w-full max-w-[480px] pt-[20px] pb-[20px]'>
           <TextField
+            value={text}
+            onChange={onChangeSearchText}
             iconBefore={<i className='ri-search-2-line' />}
-            placeholder='Search for traits, tags, item #s, and more...'
+            placeholder='Search..'
             size='sm'
             wrapperClassName='!border-transparent !bg-gray-100 !w-full focus-within:!bg-white'
           />
-        </div>
+        </form>
 
         {isMobile && (
           <Dropdown className='mb-[20px] w-full max-w-[480px]'>
