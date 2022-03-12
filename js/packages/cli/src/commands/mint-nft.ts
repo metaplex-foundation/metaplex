@@ -325,7 +325,7 @@ export const updateMetadata = async (
       metadataData: data,
       updateAuthority: walletKeypair.publicKey,
       primarySaleHappened: null,
-      isMutable: true,
+      isMutable: null,
     },
   ).instructions;
 
