@@ -17,6 +17,7 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx}',
     './src/components/**/*.{js,ts,jsx,tsx}',
     './src/components-v2/**/*.{js,ts,jsx,tsx}',
+    './src/ui/**/*.{js,ts,jsx,tsx}',
     './src/views/**/*.{js,ts,jsx,tsx}',
     '../common/src/**/*.{js,ts,jsx,tsx}',
     './dummy-data/**/*.{js,ts,jsx,tsx}',
