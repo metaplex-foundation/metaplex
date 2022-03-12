@@ -45,7 +45,7 @@ import { StorageType } from './helpers/storage-type';
 import { getType } from 'mime';
 import { removeCollection } from './commands/remove-collection';
 import { setCollection } from './commands/set-collection';
-import { withdraw_bundlr } from './helpers/upload/arweave-bundle';
+import { withdrawBundlr } from './helpers/upload/arweave-bundle';
 import { CollectionData } from './types';
 
 program.version('0.0.2');
@@ -114,7 +114,7 @@ programCommand('upload')
     'optional collection mint ID. Will be randomly generated if not provided',
   )
   .option(
-    '-nc, --no-collection',
+    '-nc, --no-set-collection-mint',
     'optional flag to prevent the candy machine from using an on chain collection',
   )
   .action(async (files: string[], options, cmd) => {
@@ -257,7 +257,11 @@ programCommand('upload')
       );
     }
 
-    const collectionMintPubkey = parseCollectionMintPubkey(collectionMint);
+    const collectionMintPubkey = await parseCollectionMintPubkey(
+      collectionMint,
+      anchorProgram.provider.connection,
+      walletKeyPair,
+    );
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
@@ -487,7 +491,7 @@ programCommand('withdraw_all')
 programCommand('withdraw_bundlr').action(async (_, cmd) => {
   const { keypair } = cmd.opts();
   const walletKeyPair = loadWalletKey(keypair);
-  await withdraw_bundlr(walletKeyPair);
+  await withdrawBundlr(walletKeyPair);
 });
 
 program
@@ -541,7 +545,9 @@ programCommand('verify_upload')
       .filter(k => !cacheContent.items[k].verifyRun)
       .sort((a, b) => Number(a) - Number(b));
 
-    console.log('Key size', keys.length);
+    if (keys.length > 0) {
+      log.info(`Checking ${keys.length} items that have yet to be checked...`);
+    }
     await Promise.all(
       chunks(keys, 500).map(async allIndexesInSlice => {
         for (let i = 0; i < allIndexesInSlice.length; i++) {
@@ -565,12 +571,11 @@ programCommand('verify_upload')
           const cacheItem = cacheContent.items[key];
 
           if (name != cacheItem.name || uri != cacheItem.link) {
-            //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-            /*log.info(
-                `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
-                  `and (${cacheItem.link}). marking to rerun for image`,
-                key,
-              );*/
+            log.debug(
+              `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
+                `and (${cacheItem.link}). marking to rerun for image`,
+              key,
+            );
             cacheItem.onChain = false;
             allGood = false;
           } else {
@@ -664,10 +669,17 @@ programCommand('show')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
+  .option(
+    '-cm, --candy-machine-address <string>',
+    'Optional candy machine address to replace the cache path',
+  )
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, rpcUrl, cachePath } = cmd.opts();
+    const { keypair, env, cacheName, rpcUrl, cachePath, candyMachineAddress } =
+      cmd.opts();
 
-    const cacheContent = loadCache(cacheName, env, cachePath);
+    const cacheContent = candyMachineAddress
+      ? { program: { candyMachine: candyMachineAddress } }
+      : loadCache(cacheName, env, cachePath);
 
     if (!cacheContent) {
       return log.error(
@@ -694,7 +706,6 @@ programCommand('show')
           collectionPDAPubkey,
         );
       if (collectionPDAAccount) {
-        log.info('hi');
         collectionData = (await anchorProgram.account.collectionPda.fetch(
           collectionPDAPubkey,
         )) as CollectionData;
@@ -706,7 +717,10 @@ programCommand('show')
       log.info('authority: ', machine.authority.toBase58());
       //@ts-ignore
       log.info('wallet: ', machine.wallet.toBase58());
-      log.info('collection mint: ', collectionData?.mint.toBase58());
+      if (collectionPDAAccount) {
+        log.info('Collection mint: ', collectionData?.mint.toBase58());
+        log.info('Collection PDA: ', collectionPDAPubkey.toBase58());
+      }
       //@ts-ignore
       log.info(
         'tokenMint: ',
@@ -794,8 +808,8 @@ programCommand('show')
         log.info('no whitelist settings');
       }
     } catch (e) {
-      console.error(e);
-      console.log('No machine found');
+      log.error(e);
+      log.error('No machine found');
     }
   });
 
@@ -920,7 +934,11 @@ programCommand('set_collection')
     const candyMachine = new PublicKey(cacheContent.program.candyMachine);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
-    const collectionMintPubkey = parseCollectionMintPubkey(collectionMint);
+    const collectionMintPubkey = await parseCollectionMintPubkey(
+      collectionMint,
+      anchorProgram.provider.connection,
+      walletKeyPair,
+    );
     const tx = await setCollection(
       walletKeyPair,
       anchorProgram,

@@ -21,6 +21,7 @@ const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
 );
 
 interface CandyMachineState {
+  authority: anchor.web3.PublicKey;
   itemsAvailable: number;
   itemsRedeemed: number;
   itemsRemaining: number;
@@ -51,6 +52,7 @@ interface CandyMachineState {
     uri: string;
     hash: Uint8Array;
   };
+  retainAuthority: boolean;
 }
 
 export interface CandyMachineAccount {
@@ -176,6 +178,7 @@ export const getCandyMachineState = async (
     id: candyMachineId,
     program,
     state: {
+      authority: state.authority,
       itemsAvailable,
       itemsRedeemed,
       itemsRemaining,
@@ -191,6 +194,7 @@ export const getCandyMachineState = async (
       whitelistMintSettings: state.data.whitelistMintSettings,
       hiddenSettings: state.data.hiddenSettings,
       price: state.data.price,
+      retainAuthority: state.data.retainAuthority,
     },
   };
 };
@@ -282,6 +286,7 @@ export const mintOneToken = async (
     : payer;
 
   const candyMachineAddress = candyMachine.id;
+
   const remainingAccounts = [];
   const signers: anchor.web3.Keypair[] = [mint];
   const cleanupInstructions = [];
@@ -330,6 +335,7 @@ export const mintOneToken = async (
       isWritable: true,
       isSigner: false,
     });
+
     if (candyMachine.state.gatekeeper.expireOnUse) {
       remainingAccounts.push({
         pubkey: CIVIC,
@@ -437,66 +443,11 @@ export const mintOneToken = async (
   const metadataAddress = await getMetadata(mint.publicKey);
   const masterEdition = await getMasterEdition(mint.publicKey);
 
-  const [collectionPDA] = await getCollectionPDA(candyMachineAddress);
-  const collectionPDAAccount =
-    await candyMachine.program.provider.connection.getAccountInfo(
-      collectionPDA,
-    );
-  if (collectionPDAAccount) {
-    try {
-      const collectionData =
-        (await candyMachine.program.account.collectionPda.fetch(
-          collectionPDA,
-        )) as CollectionData;
-      console.log(collectionData);
-      const collectionMint = collectionData.mint;
-      const collectionAuthorityRecord = await getCollectionAuthorityRecordPDA(
-        collectionMint,
-        collectionPDA,
-      );
-      console.log(collectionMint);
-      if (collectionMint) {
-        const collectionMetadata = await getMetadata(collectionMint);
-        const collectionMasterEdition = await getMasterEdition(collectionMint);
-        remainingAccounts.push(
-          ...[
-            {
-              pubkey: collectionPDA,
-              isWritable: true,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionMint,
-              isWritable: false,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionMetadata,
-              isWritable: true,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionMasterEdition,
-              isWritable: false,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionAuthorityRecord,
-              isWritable: false,
-              isSigner: false,
-            },
-          ],
-        );
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   const [candyMachineCreator, creatorBump] = await getCandyMachineCreator(
     candyMachineAddress,
   );
 
+  console.log(remainingAccounts.map(rm => rm.pubkey.toBase58()));
   instructions.push(
     await candyMachine.program.instruction.mintNft(creatorBump, {
       accounts: {
@@ -522,13 +473,93 @@ export const mintOneToken = async (
     }),
   );
 
+  const [collectionPDA] = await getCollectionPDA(candyMachineAddress);
+  const collectionPDAAccount =
+    await candyMachine.program.provider.connection.getAccountInfo(
+      collectionPDA,
+    );
+
+  if (collectionPDAAccount && candyMachine.state.retainAuthority) {
+    try {
+      const collectionData =
+        (await candyMachine.program.account.collectionPda.fetch(
+          collectionPDA,
+        )) as CollectionData;
+      console.log(collectionData);
+      const collectionMint = collectionData.mint;
+      const collectionAuthorityRecord = await getCollectionAuthorityRecordPDA(
+        collectionMint,
+        collectionPDA,
+      );
+      console.log(collectionMint);
+      if (collectionMint) {
+        const collectionMetadata = await getMetadata(collectionMint);
+        const collectionMasterEdition = await getMasterEdition(collectionMint);
+        console.log('Collection PDA: ', collectionPDA.toBase58());
+        console.log('Authority: ', candyMachine.state.authority.toBase58());
+        instructions.push(
+          await candyMachine.program.instruction.setCollectionDuringMint({
+            accounts: {
+              candyMachine: candyMachineAddress,
+              metadata: metadataAddress,
+              payer: payer,
+              collectionPda: collectionPDA,
+              tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+              instructions: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
+              collectionMint,
+              collectionMetadata,
+              collectionMasterEdition,
+              authority: candyMachine.state.authority,
+              collectionAuthorityRecord,
+            },
+          }),
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const instructionsMatrix: anchor.web3.TransactionInstruction[][] = [];
+  const signersMatrix: anchor.web3.Keypair[][] = [];
+
+  const state = candyMachine.state;
+  const txnEstimate =
+    892 +
+    (collectionPDAAccount && state.retainAuthority ? 132 : 0) +
+    (state.tokenMint ? 145 : 0) +
+    (state.whitelistMintSettings ? 33 : 0) +
+    (state.whitelistMintSettings?.mode?.burnEveryTime ? 145 : 0) +
+    (state.gatekeeper ? 33 : 0) +
+    (state.gatekeeper?.expireOnUse ? 66 : 0);
+
+  const INIT_INSTRUCTIONS_LENGTH = 4;
+  const INIT_SIGNERS_LENGTH = 1;
+
+  console.log('Transaction estimate: ', txnEstimate);
+  if (txnEstimate > 1230) {
+    const initInstructions = instructions.splice(0, INIT_INSTRUCTIONS_LENGTH);
+    console.log(initInstructions);
+    instructionsMatrix.push(initInstructions);
+    const initSigners = signers.splice(0, INIT_SIGNERS_LENGTH);
+    signersMatrix.push(initSigners);
+  }
+
+  instructionsMatrix.push(instructions);
+  signersMatrix.push(signers);
+
+  if (cleanupInstructions.length > 0) {
+    instructionsMatrix.push(cleanupInstructions);
+    signersMatrix.push([]);
+  }
+
   try {
     return (
       await sendTransactions(
         candyMachine.program.provider.connection,
         candyMachine.program.provider.wallet,
-        [instructions, cleanupInstructions],
-        [signers, []],
+        instructionsMatrix,
+        signersMatrix,
       )
     ).txs.map(t => t.txid);
   } catch (e) {

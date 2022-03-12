@@ -498,7 +498,7 @@ export function* makeArweaveBundleUploadGenerator(
             },
           )
       : undefined;
-
+  log.debug('Bundlr type is: ', env);
   const filePairs = assets.map((asset: AssetKey) => {
     const manifestPath = path.join(dirname, `${asset.index}.json`);
     const manifestData = getAssetManifest(dirname, asset.index);
@@ -603,7 +603,7 @@ export function* makeArweaveBundleUploadGenerator(
         ] as unknown as BundlrTransaction[];
         log.info('Uploading bundle via Bundlr... in multiple transactions');
         const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
-          (c, d) => c + d.data.length,
+          (c, d) => c + d.getRaw().length,
           0,
         );
         const cost = await bundlr.utils.getPrice('solana', bytes);
@@ -692,7 +692,7 @@ export function* makeArweaveBundleUploadGenerator(
   }
 }
 
-export const withdraw_bundlr = async (walletKeyPair: Keypair) => {
+export const withdrawBundlr = async (walletKeyPair: Keypair) => {
   const bundlr = new Bundlr(
     'https://node1.bundlr.network',
     'solana',

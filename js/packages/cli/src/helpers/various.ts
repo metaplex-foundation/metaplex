@@ -1,13 +1,25 @@
-import { LAMPORTS_PER_SOL, AccountInfo, PublicKey } from '@solana/web3.js';
+import {
+  LAMPORTS_PER_SOL,
+  AccountInfo,
+  PublicKey,
+  Connection,
+  Keypair,
+} from '@solana/web3.js';
 import fs from 'fs';
 import weighted from 'weighted';
 import path from 'path';
 import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { StorageType } from './storage-type';
+
 import { getAtaForMint } from './accounts';
 import { CLUSTERS, DEFAULT_CLUSTER } from './constants';
-import { Uses, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
+import {
+  Uses,
+  UseMethod,
+  Metadata,
+  MetadataKey,
+} from '@metaplex-foundation/mpl-token-metadata';
 
 const { readFile } = fs.promises;
 
@@ -539,7 +551,11 @@ export function parseUses(useMethod: string, total: number): Uses | null {
   return null;
 }
 
-export function parseCollectionMintPubkey(collectionMint: null | PublicKey) {
+export async function parseCollectionMintPubkey(
+  collectionMint: null | PublicKey,
+  connection: Connection,
+  walletKeypair: Keypair,
+) {
   let collectionMintPubkey: null | PublicKey = null;
   if (collectionMint) {
     try {
@@ -547,6 +563,33 @@ export function parseCollectionMintPubkey(collectionMint: null | PublicKey) {
     } catch (error) {
       throw new Error(
         'Invalid Pubkey option. Please enter it as a base58 mint id',
+      );
+    }
+    const token = new Token(
+      connection,
+      collectionMintPubkey,
+      TOKEN_PROGRAM_ID,
+      walletKeypair,
+    );
+    await token.getMintInfo();
+  }
+  if (collectionMintPubkey) {
+    const metadata = await Metadata.findByMint(
+      connection,
+      collectionMintPubkey,
+    ).catch();
+    if (metadata.data.updateAuthority !== walletKeypair.publicKey.toString()) {
+      throw new Error(
+        'Invalid collection mint option. Metadata update authority does not match provided wallet keypair',
+      );
+    }
+    const edition = await Metadata.getEdition(connection, collectionMintPubkey);
+    if (
+      edition.data.key !== MetadataKey.MasterEditionV1 &&
+      edition.data.key !== MetadataKey.MasterEditionV2
+    ) {
+      throw new Error(
+        'Invalid collection mint. Provided collection mint does not have a master edition associated with it.',
       );
     }
   }
