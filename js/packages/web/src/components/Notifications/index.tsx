@@ -14,6 +14,7 @@ import {
   useUserAccounts,
   VaultState,
   WalletSigner,
+  WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -141,6 +142,7 @@ export function useCollapseWrappedSol({
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
         }
+        // eslint-disable-next-line no-empty
       } catch (e) {}
     }
     setTimeout(fn, 60000);
@@ -330,7 +332,12 @@ export function useSettlementAuctions({
                 myPayingAccount?.pubkey,
                 accountByMint,
               );
-              if (wallet.publicKey) {
+              // accept funds (open WSOL & close WSOL) only if Auction currency SOL
+              if (
+                wallet.publicKey &&
+                auctionView.auction.info.tokenMint ==
+                  WRAPPED_SOL_MINT.toBase58()
+              ) {
                 const ata = await getPersonalEscrowAta(wallet);
                 if (ata) await closePersonalEscrow(connection, wallet, ata);
               }
@@ -361,7 +368,6 @@ export function Notifications() {
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
-  const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
@@ -564,6 +570,9 @@ export function Notifications() {
   const justContent = (
     <Popover placement="bottomLeft" content={content} trigger="click">
       <img src={'/bell.svg'} style={{ cursor: 'pointer' }} />
+      {!!notifications.length && (
+        <div className="mobile-notification">{notifications.length - 1}</div>
+      )}
     </Popover>
   );
 

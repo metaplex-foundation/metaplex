@@ -1,0 +1,95 @@
+.quantities-step-wrapper {
+  &__title {
+    font-weight: bold;
+    font-size: 18px;
+    line-height: 24px;
+    color: @white;
+    margin-bottom: 8px;
+  }
+
+  &__subtitle {
+    font-size: 16px;
+    line-height: 20px;
+    color: @grey-20;
+    margin: 0;
+  }
+
+  &__input {
+    width: 160px;
+    margin: 8px 0 40px 0;
+  }
+
+  &__table-titles {
+    display: flex;
+    padding-left: 16px;
+    p {
+      margin-right: 38px;
+    }
+    p.redeem-weight {
+      span {
+        color: @white;
+      }
+    }
+  }
+
+  .cards-select {
+    display: flex;
+    margin-bottom: 24px;
+  }
+}
+
+.input-column {
+  display: flex;
+  align-items: center;
+  width: 120px;
+  margin-right: 40px;
+
+  .ant-input {
+    height: 56px;
+    border-radius: 8px;
+    background-color: @input-bg !important;
+
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 24px;
+    color: @white;
+  }
+  .ant-error-input {
+    border-radius: 8px;
+    border: 2px solid @error-purple;
+    &:focus, &:hover {
+      border-color: @error-purple !important;
+      outline: none !important;
+      box-shadow: none;
+      transition: none;
+    }
+  }
+  .error-redeem {
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+  }
+  .error-tooltip-container {
+    background: @input-bg;
+    border-radius: 0 8px 8px 0;
+    font-size: 20px;
+    height: 56px;
+    padding-right: 10px;
+    align-items: center;
+    display: flex;
+    border: 2px solid @error-purple;
+    border-left: none;
+    .input-info {
+      color: @error-purple;
+    }
+  }
+}
+
+.creat-pack-redeem-tooltip {
+  .ant-tooltip-inner {
+    font-size: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    background: @bg-color;
+  }
+}

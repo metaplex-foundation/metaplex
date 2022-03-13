@@ -120,7 +120,11 @@ const precacheUserTokenAccounts = async (
   });
 };
 
-export function AccountsProvider({ children = null as any }) {
+export function AccountsProvider({
+  children = null,
+}: {
+  children: React.ReactNode;
+}) {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
@@ -134,7 +138,7 @@ export function AccountsProvider({ children = null as any }) {
       .map(id => cache.get(id))
       .filter(a => a && a.info.owner.toBase58() === walletKey)
       .map(a => a as TokenAccount);
-  }, [walletKey]);
+  }, [walletKey, nativeAccount]);
 
   useEffect(() => {
     const accounts = selectUserAccounts().filter(
@@ -147,8 +151,8 @@ export function AccountsProvider({ children = null as any }) {
     const subs: number[] = [];
     cache.emitter.onCache(args => {
       if (args.isNew && args.isActive) {
-        let id = args.id;
-        let deserialize = args.parser;
+        const id = args.id;
+        const deserialize = args.parser;
         connection.onAccountChange(new PublicKey(id), info => {
           cache.add(id, info, deserialize);
         });

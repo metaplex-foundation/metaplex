@@ -1,22 +1,20 @@
 <p align="center">
   <a href="https://metaplex.com">
-    <img alt="Metaplex" src="https://metaplex.com/static/logos/metaplex.svg" width="250" />
+    <img alt="Metaplex" src="js/packages/web/public/metaplex-logo.svg" style="background: black; padding: 10px" width="250" />
   </a>
 </p>
 
 Metaplex is a protocol built on top of Solana that allows:
 
-- **Creating/Minting** non-fungible tokens;
-- **Starting** a variety of auctions for primary/secondary sales;
+- **Creating/Minting** Non-Fungible Tokens;
+- **Starting** A variety of auctions for primary/secondary sales;
 - and **Visualizing** NFTs in a standard way across wallets and applications.
 
 Metaplex is comprised of two core components: an on-chain program, and a self-hosted front-end web3 application.
 
-## In Depth Developer's Guide
+## Official Metaplex Docs and Guide
 
-If you want to deep dive on the Architecture, you can do so here:
-
-https://docs.metaplex.com/
+You can check out our docs at https://docs.metaplex.com/
 
 ## Installing
 
@@ -46,7 +44,7 @@ We have a few channels for contact:
 
 # Protocol
 
-## Non-fungible tokens
+## Non-fungible tokens(NFT)
 
 Metaplex's non-fungible-token standard is a part of the Solana Program Library (SPL), and can be characterized as a unique token with a fixed supply of 1 and 0 decimals. We extended the basic definition of an NFT on Solana to include additional metadata such as URI as defined in ERC-721 on Ethereum.
 
@@ -68,7 +66,7 @@ Usually, prints are created as a part of an auction that has happened on Metaple
 
 For limited auctions, each print number is awarded based on the bid placement.
 
-Prints can be created during [Open Edition](#open-edition) or [Limited Edition](#limited-edition) auction.
+Prints can be created during an [Open Edition](#open-edition) or [Limited Edition](#limited-edition) auction.
 
 ### Normal NFT
 
@@ -108,11 +106,11 @@ For each prize place, a Print will be minted in order of prize place, and awarde
 
 For example, the first place winner will win Print #1; the second place winner Print #2; and so on.
 
-It is required for limited supply NFTs that there is at least as much supply remaining as there are desired winners in the auction.
+It is required for limited supply NFTs that there is atleast as much supply remaining as there are desired winners in the auction.
 
 ### Tiered Auction
 
-A tiered auction can contain a mix of the other three auction types as winning placements. For instance, the first place winner could win a Print of Limited Edition NFT A, while the second-place winner could win Normal NFT, and so on. Additionally, all participants who did not win any place could get a Participation NFT Print from a Master Edition (if the Master Edition had no supply limit).
+A tiered auction can contain a mix of the other three auction types as winning placements. For instance, the first place winner could win a Print of Limited Edition NFT A, while the second-place winner could win a Normal NFT, etc. Additionally, all participants who did not win any place could get a Participation NFT Print from a Master Edition (if the Master Edition had no supply limit).
 
 ## Royalties
 
@@ -153,7 +151,7 @@ solana program deploy ./path/to/the_program.so -u devnet
 #     "Error: Deploying program failed: Error processing Instruction 1: custom program error: 0x1"
 solana program close --buffers
 
-# NOTE: If you had insufficient funds, airdrop yourself some SOL, then run the deploy
+# NOTE: If you had an insufficient funds, airdrop yourself some SOL, then run the deploy
 # command again. I needed roughly 5 SOL to deploy the auction contract.
 solana airdrop 5
 
@@ -182,3 +180,7 @@ solana airdrop 4 NEW_WALLET_ADDRESS
 # Create a new store
 # Test your program changes
 ```
+
+## Reporting security issues
+
+To report a security issue, please follow the guidance on the [SECURITY](.github/SECURITY.md) page.

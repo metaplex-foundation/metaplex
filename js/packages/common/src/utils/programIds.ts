@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+import { ORACLE_ID } from '..';
 import { findProgramAddress } from '../utils';
 
 import {
@@ -11,6 +12,7 @@ import {
   MEMO_ID,
   VAULT_ID,
   AUCTION_ID,
+  PACK_CREATE_ID,
   toPublicKey,
 } from './ids';
 
@@ -50,6 +52,8 @@ export const programIds = () => {
     vault: VAULT_ID,
     auction: AUCTION_ID,
     metaplex: METAPLEX_ID,
+    pack_create: PACK_CREATE_ID,
+    oracle: ORACLE_ID,
     store: STORE,
   };
 };

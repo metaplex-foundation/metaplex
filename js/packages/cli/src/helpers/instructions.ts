@@ -11,8 +11,12 @@ import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
+  CONFIG_ARRAY_START_V2,
+  CANDY_MACHINE_PROGRAM_V2_ID,
+  CONFIG_LINE_SIZE_V2,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
+import { CandyMachineData } from './accounts';
 
 export function createAssociatedTokenAccountInstruction(
   associatedTokenAddress: PublicKey,
@@ -63,7 +67,6 @@ export function createAssociatedTokenAccountInstruction(
     data: Buffer.from([]),
   });
 }
-
 
 export function createMetadataInstruction(
   metadataAccount: PublicKey,
@@ -126,7 +129,6 @@ export function createMasterEditionInstruction(
   updateAuthority: PublicKey,
   txnData: Buffer,
 ) {
-  
   const keys = [
     {
       pubkey: editionAccount,
@@ -156,7 +158,7 @@ export function createMasterEditionInstruction(
     {
       pubkey: metadataAccount,
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: TOKEN_PROGRAM_ID,
@@ -227,5 +229,30 @@ export async function createConfigAccount(
         size,
       ),
     programId: CANDY_MACHINE_PROGRAM_ID,
+  });
+}
+
+export async function createCandyMachineV2Account(
+  anchorProgram,
+  candyData: CandyMachineData,
+  payerWallet,
+  candyAccount,
+) {
+  const size =
+    CONFIG_ARRAY_START_V2 +
+    4 +
+    candyData.itemsAvailable.toNumber() * CONFIG_LINE_SIZE_V2 +
+    8 +
+    2 * (Math.floor(candyData.itemsAvailable.toNumber() / 8) + 1);
+
+  return anchor.web3.SystemProgram.createAccount({
+    fromPubkey: payerWallet,
+    newAccountPubkey: candyAccount,
+    space: size,
+    lamports:
+      await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
+        size,
+      ),
+    programId: CANDY_MACHINE_PROGRAM_V2_ID,
   });
 }

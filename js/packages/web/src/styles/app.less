@@ -87,11 +87,9 @@ code {
   overflow: hidden;
   .ant-image-img,
   video {
-    height: 300px;
     object-fit: cover;
   }
   iframe {
-    height: 300px;
     object-fit: cover;
     border: none;
   }
@@ -209,19 +207,28 @@ h1 {
   font-weight: 600;
   font-size: 2rem;
 }
-.ant-btn:hover{
+.ant-btn:hover {
   background-color: transparent !important;
 }
-.ant-steps-item-process>.ant-steps-item-container>.ant-steps-item-content>.ant-steps-item-title {
-  color: hsla(0,0%,100%,.85);
+.ant-steps-item-process
+  > .ant-steps-item-container
+  > .ant-steps-item-content
+  > .ant-steps-item-title {
+  color: hsla(0, 0%, 100%, 0.85);
 }
-.ant-steps-item-wait>.ant-steps-item-container>.ant-steps-item-content>.ant-steps-item-title {
-  color: hsla(0,0%,100%,.45);
+.ant-steps-item-wait
+  > .ant-steps-item-container
+  > .ant-steps-item-content
+  > .ant-steps-item-title {
+  color: hsla(0, 0%, 100%, 0.45);
 }
-.ant-steps-item-wait .ant-steps-item-icon>.ant-steps-icon .ant-steps-icon-dot {
-  background: hsla(0,0%,100%,.3);
+.ant-steps-item-wait
+  .ant-steps-item-icon
+  > .ant-steps-icon
+  .ant-steps-icon-dot {
+  background: hsla(0, 0%, 100%, 0.3);
 }
-.ant-card{
+.ant-card {
   background: #141414;
 }
 .ant-card-bordered {
@@ -249,21 +256,30 @@ h1 {
     border-radius: 8px;
     width: fit-content;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       background: transparent !important;
       border-color: @metaplex-primary-color !important;
       color: @metaplex-primary-color !important;
     }
+
+    &:disabled,
+    &:disabled &:hover {
+      color: rgba(255, 255, 255, 0.5) !important;
+      background: #1e1e1e !important;
+      border: none;
+    }
   }
 
   &.black-btn {
-    color: #FFFFFF;
+    color: #ffffff;
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     width: fit-content;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       background: transparent;
       border-color: rgba(255, 255, 255, 0.05);
       color: #ffffff;
@@ -275,8 +291,134 @@ model-viewer {
   --poster-color: transparent;
 }
 
-.creator-base-page{
+.creator-base-page {
   @media (max-width: @screen-sm-min) {
     padding: 15px;
+  }
+}
+
+.artwork-grid {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  & > a,
+  & > div {
+    margin: 10px;
+    flex: calc(25% - 20px);
+    max-width: calc(25% - 20px);
+    align-self: stretch;
+  }
+}
+
+.my-masonry-grid {
+  display: flex;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-left: -32px !important;
+}
+
+.my-masonry-grid_column {
+  padding-left: 32px !important; /* gutter size */
+  background-clip: padding-box;
+}
+
+.my-masonry-grid_column > div {
+  /* change div to reference your elements you put in <Masonry> */
+  margin-bottom: 20px;
+}
+
+.ant-tabs-nav-list {
+  align-items: center;
+}
+
+.refresh-button {
+  margin: 5px;
+  padding: 16px 36px;
+  border: none;
+  background: @grey-70 !important;
+  box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
+  border-radius: 8px;
+  cursor: pointer !important;
+  width: fit-content;
+
+  .refresh-overlay {
+    border-radius: 8px;
+  }
+  button {
+    &:not(.ant-btn-icon-only) {
+      padding-right: 0;
+    }
+    border: none;
+  }
+
+  & > span {
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .artwork-grid {
+    & > a,
+    & > div {
+      flex: calc(33% - 20px);
+      max-width: calc(33% - 20px);
+      max-height: 100%;
+    }
+  }
+}
+
+.ant-tabs-nav-list {
+  align-items: center;
+}
+.direction-row {
+  flex-direction: row !important;
+}
+.refresh-button {
+  margin: 5px;
+  padding: 16px 36px;
+  border: none;
+  background: @grey-70 !important;
+  box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
+  border-radius: 8px;
+  cursor: pointer !important;
+  width: fit-content;
+
+  & > span {
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+/* Optional, different gutter size on mobile */
+@media (max-width: 800px) {
+  .artwork-grid {
+    & > a,
+    & > div {
+      flex: calc(50% - 20px);
+      max-width: calc(50% - 20px);
+    }
+  }
+  .my-masonry-grid {
+    margin-left: -15px; /* gutter size offset */
+  }
+  .my-masonry-grid_column {
+    padding-left: 15px; /* gutter size offset */
+  }
+  .my-masonry-grid_column > div {
+    margin-bottom: 15px; /* space between items */
+  }
+}
+
+@media (max-width: 540px) {
+  .artwork-grid {
+    & > a,
+    & > div {
+      flex: calc(100% - 20px);
+      max-width: calc(100% - 20px);
+    }
   }
 }

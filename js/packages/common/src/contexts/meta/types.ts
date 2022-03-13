@@ -25,6 +25,10 @@ import {
   StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
+import { PackCard } from '../../models/packs/accounts/PackCard';
+import { PackSet } from '../../models/packs/accounts/PackSet';
+import { PackVoucher } from '../../models/packs/accounts/PackVoucher';
+import { ProvingProcess } from '../../models/packs/accounts/ProvingProcess';
 import { PublicKeyStringAndAccount, StringPublicKey } from '../../utils';
 import { ParsedAccount } from '../accounts/types';
 
@@ -32,7 +36,7 @@ export interface MetaState {
   metadata: ParsedAccount<Metadata>[];
   metadataByMint: Record<string, ParsedAccount<Metadata>>;
   metadataByMetadata: Record<string, ParsedAccount<Metadata>>;
-
+  metadataByCollection: Record<string, ParsedAccount<Metadata>>;
   metadataByAuction: Record<string, ParsedAccount<Metadata>[]>;
   metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>;
   editions: Record<string, ParsedAccount<Edition>>;
@@ -79,22 +83,39 @@ export interface MetaState {
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
   auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
   storeIndexer: ParsedAccount<StoreIndexer>[];
+  packs: Record<string, ParsedAccount<PackSet>>;
+  packCards: Record<string, ParsedAccount<PackCard>>;
+  packCardsByPackSet: Record<string, ParsedAccount<PackCard>[]>;
+  vouchers: Record<string, ParsedAccount<PackVoucher>>;
+  provingProcesses: Record<string, ParsedAccount<ProvingProcess>>;
 }
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
+  isFetching: boolean;
   update: (
     auctionAddress?: any,
     bidderAddress?: any,
+    userTokenAccounts?: TokenAccount[],
   ) => [
     ParsedAccount<AuctionData>,
     ParsedAccount<BidderPot>,
     ParsedAccount<BidderMetadata>,
   ];
+  pullAuctionListData: (auctionAddress: StringPublicKey) => Promise<MetaState>;
   pullAuctionPage: (auctionAddress: StringPublicKey) => Promise<MetaState>;
   pullBillingPage: (auctionAddress: StringPublicKey) => void;
   pullAllSiteData: () => void;
   pullAllMetadata: () => void;
+  pullItemsPage: (userTokenAccounts: TokenAccount[]) => Promise<void>;
+  pullPackPage: (
+    userTokenAccounts: TokenAccount[],
+    packSetKey: StringPublicKey,
+  ) => Promise<void>;
+  pullUserMetadata: (
+    userTokenAccounts: TokenAccount[],
+    tempState?: MetaState,
+  ) => Promise<void>;
 }
 
 export type AccountAndPubkey = {

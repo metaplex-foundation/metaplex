@@ -6,10 +6,13 @@ rust/test/nft-candy-machine.js
 dist/
 lib/
 deploy/
+venv/
+js/packages/cli/assets/
 docs/lockup-ui/
 .DS_Store
 *~
 .idea
+.yarn
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -31,5 +34,7 @@ hfuzz_workspace
 **/.DS_Store
 .cache
 js/packages/web/.env
+js/packages/candy-machine-ui/.env
 traits
 traits-configuration.json
+js/packages/cli/test/assets

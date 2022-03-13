@@ -40,7 +40,6 @@ import {
   TupleNumericType,
   SafetyDepositConfig,
   ParticipationStateV2,
-  AuctionCache,
   StoreIndexer,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';

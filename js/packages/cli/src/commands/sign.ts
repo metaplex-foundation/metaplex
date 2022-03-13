@@ -10,9 +10,10 @@ export async function signMetadata(
   metadata: string,
   keypair: string,
   env: string,
+  rpcUrl: string,
 ) {
   const creatorKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgram(creatorKeyPair, env);
+  const anchorProgram = await loadCandyProgram(creatorKeyPair, env, rpcUrl);
   await signWithRetry(anchorProgram, creatorKeyPair, new PublicKey(metadata));
 }
 

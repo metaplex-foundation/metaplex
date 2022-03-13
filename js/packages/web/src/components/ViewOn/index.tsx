@@ -4,7 +4,7 @@ import { useArt } from '../../hooks';
 import { useConnectionConfig } from '@oyster/common';
 
 export const ViewOn = ({ id }: { id: string }) => {
-  const { env } = useConnectionConfig();
+  const { endpoint } = useConnectionConfig();
   const art = useArt(id);
 
   return (
@@ -20,14 +20,17 @@ export const ViewOn = ({ id }: { id: string }) => {
           </Button>
           <Button
             className="tag"
-            onClick={() =>
-              window.open(
-                `https://explorer.solana.com/account/${art?.mint || ''}${
-                  env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
-                }`,
-                '_blank',
-              )
-            }
+            onClick={() => {
+              const cluster = endpoint.name;
+              const explorerURL = new URL(
+                `account/${art?.mint || ''}`,
+                'https://explorer.solana.com',
+              );
+              if (!cluster.includes('mainnet')) {
+                explorerURL.searchParams.set('cluster', cluster);
+              }
+              window.open(explorerURL.href, '_blank');
+            }}
           >
             Solana
           </Button>

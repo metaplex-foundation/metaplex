@@ -1,4 +1,7 @@
-import { sleep, useLocalStorageState } from '../utils/utils';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { getTokenListContainerPromise } from '../utils';
+import { TokenInfo, ENV as ChainId } from '@solana/spl-token-registry';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import {
   Keypair,
   clusterApiUrl,
@@ -13,126 +16,125 @@ import {
   Blockhash,
   FeeCalculator,
 } from '@solana/web3.js';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { chunks, sleep, useLocalStorageState } from '../utils/utils';
 import { notify } from '../utils/notifications';
 import { ExplorerLink } from '../components/ExplorerLink';
 import { useQuerySearch } from '../hooks';
-import {
-  TokenInfo,
-  TokenListProvider,
-  ENV as ChainId,
-} from '@solana/spl-token-registry';
 import { WalletSigner } from './wallet';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
   feeCalculator: FeeCalculator;
 }
 
-export type ENV =
+export type ENDPOINT_NAME =
   | 'mainnet-beta'
-  | 'mainnet-beta (Solana)'
-  | 'mainnet-beta (Serum)'
   | 'testnet'
   | 'devnet'
   | 'localnet'
   | 'lending';
 
-export const ENDPOINTS = [
+type Endpoint = {
+  name: ENDPOINT_NAME;
+  label: string;
+  url: string;
+  chainId: ChainId;
+};
+
+export const ENDPOINTS: Array<Endpoint> = [
   {
-    name: 'mainnet-beta' as ENV,
-    endpoint: 'https://api.metaplex.solana.com/',
-    ChainId: ChainId.MainnetBeta,
+    name: 'mainnet-beta',
+    label: 'mainnet-beta',
+    url: 'https://api.metaplex.solana.com/',
+    chainId: ChainId.MainnetBeta,
   },
   {
-    name: 'mainnet-beta (Solana)' as ENV,
-    endpoint: 'https://api.mainnet-beta.solana.com',
-    ChainId: ChainId.MainnetBeta,
+    name: 'testnet',
+    label: 'testnet',
+    url: clusterApiUrl('testnet'),
+    chainId: ChainId.Testnet,
   },
   {
-    name: 'mainnet-beta (Serum)' as ENV,
-    endpoint: 'https://solana-api.projectserum.com/',
-    ChainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'testnet' as ENV,
-    endpoint: clusterApiUrl('testnet'),
-    ChainId: ChainId.Testnet,
-  },
-  {
-    name: 'devnet' as ENV,
-    endpoint: clusterApiUrl('devnet'),
-    ChainId: ChainId.Devnet,
+    name: 'devnet',
+    label: 'devnet',
+    url: clusterApiUrl('devnet'),
+    chainId: ChainId.Devnet,
   },
 ];
 
-const DEFAULT = ENDPOINTS[0].endpoint;
+const DEFAULT_ENDPOINT = ENDPOINTS[0];
 
 interface ConnectionConfig {
   connection: Connection;
-  endpoint: string;
-  env: ENV;
-  setEndpoint: (val: string) => void;
-  tokens: TokenInfo[];
-  tokenMap: Map<string, TokenInfo>;
+  endpoint: Endpoint;
+  tokens: Map<string, TokenInfo>;
 }
 
 const ConnectionContext = React.createContext<ConnectionConfig>({
-  endpoint: DEFAULT,
-  setEndpoint: () => {},
-  connection: new Connection(DEFAULT, 'recent'),
-  env: ENDPOINTS[0].name,
-  tokens: [],
-  tokenMap: new Map<string, TokenInfo>(),
+  connection: new Connection(DEFAULT_ENDPOINT.url, 'recent'),
+  endpoint: DEFAULT_ENDPOINT,
+  tokens: new Map(),
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+export function ConnectionProvider({ children }: { children: any }) {
   const searchParams = useQuerySearch();
-  const network = searchParams.get('network');
-  const queryEndpoint =
-    network && ENDPOINTS.find(({ name }) => name.startsWith(network))?.endpoint;
+  const [networkStorage, setNetworkStorage] =
+    useLocalStorageState<ENDPOINT_NAME>('network', DEFAULT_ENDPOINT.name);
+  const networkParam = searchParams.get('network');
 
-  const [savedEndpoint, setEndpoint] = useLocalStorageState(
-    'connectionEndpoint',
-    ENDPOINTS[0].endpoint,
-  );
-  const endpoint = queryEndpoint || savedEndpoint;
+  let maybeEndpoint;
+  if (networkParam) {
+    const endpointParam = ENDPOINTS.find(({ name }) => name === networkParam);
+    if (endpointParam) {
+      maybeEndpoint = endpointParam;
+    }
+  }
 
-  const connection = useMemo(
-    () => new Connection(endpoint, 'recent'),
-    [endpoint],
-  );
+  if (networkStorage && !maybeEndpoint) {
+    const endpointStorage = ENDPOINTS.find(
+      ({ name }) => name === networkStorage,
+    );
+    if (endpointStorage) {
+      maybeEndpoint = endpointStorage;
+    }
+  }
 
-  const env =
-    ENDPOINTS.find(end => end.endpoint === endpoint)?.name || ENDPOINTS[0].name;
+  const endpoint = maybeEndpoint || DEFAULT_ENDPOINT;
 
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
+  const { current: connection } = useRef(new Connection(endpoint.url));
+
+  const [tokens, setTokens] = useState<Map<string, TokenInfo>>(new Map());
+
   useEffect(() => {
-    // fetch token files
-    new TokenListProvider().resolve().then(container => {
-      const list = container
-        .excludeByTag('nft')
-        .filterByChainId(
-          ENDPOINTS.find(end => end.endpoint === endpoint)?.ChainId ||
-            ChainId.MainnetBeta,
-        )
-        .getList();
+    function fetchTokens() {
+      return getTokenListContainerPromise().then(container => {
+        const list = container
+          .excludeByTag('nft')
+          .filterByChainId(endpoint.chainId)
+          .getList();
 
-      const knownMints = [...list].reduce((map, item) => {
-        map.set(item.address, item);
-        return map;
-      }, new Map<string, TokenInfo>());
+        const map = new Map(list.map(item => [item.address, item]));
+        setTokens(map);
+      });
+    }
 
-      setTokenMap(knownMints);
-      setTokens(list);
-    });
-  }, [env]);
+    fetchTokens();
+  }, []);
 
-  // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
-  // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.
-  // This is a hack to prevent the list from every getting empty
+  useEffect(() => {
+    function updateNetworkInLocalStorageIfNeeded() {
+      if (networkStorage !== endpoint.name) {
+        setNetworkStorage(endpoint.name);
+      }
+    }
+
+    updateNetworkInLocalStorageIfNeeded();
+  }, []);
+
+  // solana/web3.js closes its websocket connection when the subscription list
+  // is empty after opening for the first time, preventing subsequent
+  // subscriptions from receiving responses.
+  // This is a hack to prevent the list from ever being empty.
   useEffect(() => {
     const id = connection.onAccountChange(
       Keypair.generate().publicKey,
@@ -141,43 +143,40 @@ export function ConnectionProvider({ children = undefined as any }) {
     return () => {
       connection.removeAccountChangeListener(id);
     };
-  }, [connection]);
+  }, []);
 
   useEffect(() => {
     const id = connection.onSlotChange(() => null);
     return () => {
       connection.removeSlotChangeListener(id);
     };
-  }, [connection]);
+  }, []);
+
+  const contextValue = React.useMemo(() => {
+    return {
+      endpoint,
+      connection,
+      tokens,
+    };
+  }, [tokens]);
 
   return (
-    <ConnectionContext.Provider
-      value={{
-        endpoint,
-        setEndpoint,
-        connection,
-        tokens,
-        tokenMap,
-        env,
-      }}
-    >
+    <ConnectionContext.Provider value={contextValue}>
       {children}
     </ConnectionContext.Provider>
   );
 }
 
 export function useConnection() {
-  return useContext(ConnectionContext).connection as Connection;
+  const { connection } = useContext(ConnectionContext);
+  return connection;
 }
 
 export function useConnectionConfig() {
-  const context = useContext(ConnectionContext);
+  const { endpoint, tokens } = useContext(ConnectionContext);
   return {
-    endpoint: context.endpoint,
-    setEndpoint: context.setEndpoint,
-    env: context.env,
-    tokens: context.tokens,
-    tokenMap: context.tokenMap,
+    endpoint,
+    tokens,
   };
 }
 
@@ -226,7 +225,7 @@ export async function sendTransactionsWithManualRetry(
   let stopPoint = 0;
   let tries = 0;
   let lastInstructionsLength = null;
-  let toRemoveSigners: Record<number, boolean> = {};
+  const toRemoveSigners: Record<number, boolean> = {};
   instructions = instructions.filter((instr, i) => {
     if (instr.length > 0) {
       return true;
@@ -279,6 +278,86 @@ export async function sendTransactionsWithManualRetry(
   }
 }
 
+export const sendTransactionsInChunks = async (
+  connection: Connection,
+  wallet: WalletSigner,
+  instructionSet: TransactionInstruction[][],
+  signersSet: Keypair[][],
+  sequenceType: SequenceType = SequenceType.Parallel,
+  commitment: Commitment = 'singleGossip',
+  timeout: number = 120000,
+  batchSize: number,
+): Promise<number> => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+  let instructionsChunk: TransactionInstruction[][][] = [instructionSet];
+  let signersChunk: Keypair[][][] = [signersSet];
+
+  instructionsChunk = chunks(instructionSet, batchSize);
+  signersChunk = chunks(signersSet, batchSize);
+
+  for (let c = 0; c < instructionsChunk.length; c++) {
+    const unsignedTxns: Transaction[] = [];
+
+    for (let i = 0; i < instructionsChunk[c].length; i++) {
+      const instructions = instructionsChunk[c][i];
+      const signers = signersChunk[c][i];
+      if (instructions.length === 0) {
+        continue;
+      }
+      const transaction = new Transaction();
+      const block = await connection.getRecentBlockhash(commitment);
+
+      instructions.forEach(instruction => transaction.add(instruction));
+      transaction.recentBlockhash = block.blockhash;
+      transaction.setSigners(
+        // fee payed by the wallet owner
+        wallet.publicKey,
+        ...signers.map(s => s.publicKey),
+      );
+      if (signers.length > 0) {
+        transaction.partialSign(...signers);
+      }
+      unsignedTxns.push(transaction);
+    }
+
+    const signedTxns = await wallet.signAllTransactions(unsignedTxns);
+
+    const breakEarlyObject = { breakEarly: false, i: 0 };
+    console.log(
+      'Signed txns length',
+      signedTxns.length,
+      'vs handed in length',
+      instructionSet.length,
+    );
+    for (let i = 0; i < signedTxns.length; i++) {
+      const signedTxnPromise = sendSignedTransaction({
+        connection,
+        signedTransaction: signedTxns[i],
+        timeout,
+      });
+      signedTxnPromise.catch(() => {
+        // @ts-ignore
+        if (sequenceType === SequenceType.StopOnFailure) {
+          breakEarlyObject.breakEarly = true;
+          breakEarlyObject.i = i;
+        }
+      });
+
+      try {
+        await signedTxnPromise;
+      } catch (e) {
+        console.log('Caught failure', e);
+        if (breakEarlyObject.breakEarly) {
+          console.log('Died on ', breakEarlyObject.i);
+          return breakEarlyObject.i; // Return the txn we failed on by index
+        }
+      }
+    }
+  }
+
+  return instructionSet.length;
+};
+
 export const sendTransactions = async (
   connection: Connection,
   wallet: WalletSigner,
@@ -286,8 +365,8 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = (txid, ind) => {},
-  failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
+  successCallback: (txid: string, ind: number) => void = () => {},
+  failCallback: (reason: string, ind: number) => boolean = () => false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<number> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -306,7 +385,7 @@ export const sendTransactions = async (
       continue;
     }
 
-    let transaction = new Transaction();
+    const transaction = new Transaction();
     instructions.forEach(instruction => transaction.add(instruction));
     transaction.recentBlockhash = block.blockhash;
     transaction.setSigners(
@@ -326,7 +405,7 @@ export const sendTransactions = async (
 
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 
-  let breakEarlyObject = { breakEarly: false, i: 0 };
+  const breakEarlyObject = { breakEarly: false, i: 0 };
   console.log(
     'Signed txns length',
     signedTxns.length,
@@ -340,10 +419,10 @@ export const sendTransactions = async (
     });
 
     signedTxnPromise
-      .then(({ txid, slot }) => {
+      .then(({ txid }) => {
         successCallback(txid, i);
       })
-      .catch(reason => {
+      .catch(() => {
         // @ts-ignore
         failCallback(signedTxns[i], i);
         if (sequenceType === SequenceType.StopOnFailure) {
@@ -369,6 +448,78 @@ export const sendTransactions = async (
 
   if (sequenceType !== SequenceType.Parallel) {
     await Promise.all(pendingTxns);
+  }
+
+  return signedTxns.length;
+};
+
+export const sendTransactionsWithRecentBlock = async (
+  connection: Connection,
+  wallet: WalletSigner,
+  instructionSet: TransactionInstruction[][],
+  signersSet: Keypair[][],
+  commitment: Commitment = 'singleGossip',
+): Promise<number> => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const unsignedTxns: Transaction[] = [];
+
+  for (let i = 0; i < instructionSet.length; i++) {
+    const instructions = instructionSet[i];
+    const signers = signersSet[i];
+
+    if (instructions.length === 0) {
+      continue;
+    }
+
+    const block = await connection.getRecentBlockhash(commitment);
+    await sleep(1200);
+
+    const transaction = new Transaction();
+    instructions.forEach(instruction => transaction.add(instruction));
+    transaction.recentBlockhash = block.blockhash;
+    transaction.setSigners(
+      // fee payed by the wallet owner
+      wallet.publicKey,
+      ...signers.map(s => s.publicKey),
+    );
+
+    if (signers.length > 0) {
+      transaction.partialSign(...signers);
+    }
+
+    unsignedTxns.push(transaction);
+  }
+
+  const signedTxns = await wallet.signAllTransactions(unsignedTxns);
+
+  const breakEarlyObject = { breakEarly: false, i: 0 };
+  console.log(
+    'Signed txns length',
+    signedTxns.length,
+    'vs handed in length',
+    instructionSet.length,
+  );
+  for (let i = 0; i < signedTxns.length; i++) {
+    const signedTxnPromise = sendSignedTransaction({
+      connection,
+      signedTransaction: signedTxns[i],
+    });
+
+    signedTxnPromise.catch(() => {
+      breakEarlyObject.breakEarly = true;
+      breakEarlyObject.i = i;
+    });
+
+    try {
+      await signedTxnPromise;
+    } catch (e) {
+      console.log('Caught failure', e);
+      if (breakEarlyObject.breakEarly) {
+        console.log('Died on ', breakEarlyObject.i);
+        return breakEarlyObject.i; // Return the txn we failed on by index
+      }
+    }
   }
 
   return signedTxns.length;
@@ -410,7 +561,7 @@ export const sendTransaction = async (
   }
 
   const rawTransaction = transaction.serialize();
-  let options = {
+  const options = {
     skipPreflight: true,
     commitment,
   };
@@ -436,8 +587,8 @@ export const sendTransaction = async (
         message: 'Transaction failed...',
         description: (
           <>
-            {errors.map(err => (
-              <div>{err}</div>
+            {errors.map((err, ii) => (
+              <div key={ii}>{err}</div>
             ))}
             <ExplorerLink address={txid} type="transaction" />
           </>
@@ -558,7 +709,7 @@ export async function sendSignedTransaction({
     }
 
     slot = confirmation?.slot || 0;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Timeout Error caught', err);
     if (err.timeout) {
       throw new Error('Timed out awaiting confirmation on transaction');
@@ -568,6 +719,7 @@ export async function sendSignedTransaction({
       simulateResult = (
         await simulateTransaction(connection, signedTransaction, 'single')
       ).value;
+      // eslint-disable-next-line no-empty
     } catch (e) {}
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
@@ -631,71 +783,68 @@ async function awaitTransactionSignatureConfirmation(
     err: null,
   };
   let subId = 0;
-  status = await new Promise(async (resolve, reject) => {
+  status = await (async (): Promise<SignatureStatus | null | void> => {
     setTimeout(() => {
       if (done) {
         return;
       }
       done = true;
       console.log('Rejecting for timeout...');
-      reject({ timeout: true });
+      throw { timeout: true };
     }, timeout);
     try {
-      subId = connection.onSignature(
-        txid,
-        (result, context) => {
-          done = true;
-          status = {
-            err: result.err,
-            slot: context.slot,
-            confirmations: 0,
-          };
-          if (result.err) {
-            console.log('Rejected via websocket', result.err);
-            reject(status);
-          } else {
-            console.log('Resolved via websocket', result);
-            resolve(status);
-          }
-        },
-        commitment,
-      );
+      return await new Promise((resolve, reject) => {
+        subId = connection.onSignature(
+          txid,
+          (result, context) => {
+            done = true;
+            const nextStatus = {
+              err: result.err,
+              slot: context.slot,
+              confirmations: 0,
+            };
+            if (result.err) {
+              console.log('Rejected via websocket', result.err);
+              reject(nextStatus);
+            } else {
+              console.log('Resolved via websocket', result);
+              resolve(nextStatus);
+            }
+          },
+          commitment,
+        );
+      });
     } catch (e) {
       done = true;
       console.error('WS error in setup', txid, e);
     }
     while (!done && queryStatus) {
-      // eslint-disable-next-line no-loop-func
-      (async () => {
-        try {
-          const signatureStatuses = await connection.getSignatureStatuses([
-            txid,
-          ]);
-          status = signatureStatuses && signatureStatuses.value[0];
-          if (!done) {
-            if (!status) {
-              console.log('REST null result for', txid, status);
-            } else if (status.err) {
-              console.log('REST error for', txid, status);
-              done = true;
-              reject(status.err);
-            } else if (!status.confirmations) {
-              console.log('REST no confirmations for', txid, status);
-            } else {
-              console.log('REST confirmation for', txid, status);
-              done = true;
-              resolve(status);
-            }
-          }
-        } catch (e) {
-          if (!done) {
-            console.log('REST connection error: txid', txid, e);
+      try {
+        const signatureStatuses = await connection.getSignatureStatuses([txid]);
+        const nextStatus = signatureStatuses && signatureStatuses.value[0];
+        if (!done) {
+          if (!nextStatus) {
+            console.log('REST null result for', txid, nextStatus);
+          } else if (nextStatus.err) {
+            console.log('REST error for', txid, nextStatus);
+            done = true;
+            throw nextStatus.err;
+          } else if (!nextStatus.confirmations) {
+            console.log('REST no confirmations for', txid, nextStatus);
+          } else {
+            console.log('REST confirmation for', txid, nextStatus);
+            done = true;
+            return nextStatus;
           }
         }
-      })();
+      } catch (e) {
+        if (!done) {
+          console.log('REST connection error: txid', txid, e);
+        }
+      }
       await sleep(2000);
     }
-  });
+  })();
 
   //@ts-ignore
   if (connection._signatureSubscriptions[subId])

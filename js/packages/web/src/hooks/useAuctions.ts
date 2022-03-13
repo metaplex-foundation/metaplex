@@ -29,7 +29,6 @@ import {
   SafetyDepositConfig,
   WinningConfigType,
   AuctionViewItem,
-  AuctionCache,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 
 export enum AuctionViewState {
@@ -68,9 +67,9 @@ type CachedRedemptionKeys = Record<
 export function useStoreAuctionsList() {
   const { auctions, auctionManagersByAuction } = useMeta();
   const result = useMemo(() => {
-    return Object.values(auctionManagersByAuction).map(
-      manager => auctions[manager.info.auction],
-    ).filter(Boolean);
+    return Object.values(auctionManagersByAuction)
+      .map(manager => auctions[manager.info.auction])
+      .filter(Boolean);
   }, [Object.keys(auctions).length, auctionManagersByAuction]);
   return result;
 }
@@ -86,18 +85,21 @@ export function useCachedRedemptionKeysByWallet() {
   useEffect(() => {
     if (!publicKey) return;
     (async () => {
-      const temp: CachedRedemptionKeys = {};
+      const temp: CachedRedemptionKeys = Object.assign(
+        {},
+        cachedRedemptionKeys,
+      );
       await createPipelineExecutor(
         auctions.values(),
         async auction => {
           if (!cachedRedemptionKeys[auction.pubkey]) {
-            await getBidderKeys(auction.pubkey, publicKey.toBase58()).then(
-              key => {
-                temp[auction.pubkey] = bidRedemptions[key.bidRedemption]
-                  ? bidRedemptions[key.bidRedemption]
-                  : { pubkey: key.bidRedemption, info: null };
-              },
+            const key = await getBidderKeys(
+              auction.pubkey,
+              publicKey.toBase58(),
             );
+            temp[auction.pubkey] = bidRedemptions[key.bidRedemption]
+              ? bidRedemptions[key.bidRedemption]
+              : { pubkey: key.bidRedemption, info: null };
           } else if (!cachedRedemptionKeys[auction.pubkey].info) {
             temp[auction.pubkey] =
               bidRedemptions[cachedRedemptionKeys[auction.pubkey].pubkey] ||
@@ -106,11 +108,11 @@ export function useCachedRedemptionKeysByWallet() {
         },
         { delay: 1, sequence: 2 },
       );
-
-      setCachedRedemptionKeys(temp);
+      if (Object.keys(temp).length) {
+        setCachedRedemptionKeys(temp);
+      }
     })();
   }, [auctions, bidRedemptions, publicKey]);
-
   return cachedRedemptionKeys;
 }
 

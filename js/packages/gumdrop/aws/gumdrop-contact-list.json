@@ -1,0 +1,24 @@
+{
+    "ContactListName": "Gumdrop",
+    "Description": "Metaplex gumdrops",
+    "Topics": [
+     {
+         "TopicName": "Token",
+         "DisplayName": "Token Gumdrop",
+         "Description": "Hear about new token-airdrop gumdrops that you receive.",
+         "DefaultSubscriptionStatus": "OPT_IN"
+     },
+     {
+         "TopicName": "Candy",
+         "DisplayName": "Candy Gumdrop",
+         "Description": "Hear about new candy-machine mint gumdrops that you receive.",
+         "DefaultSubscriptionStatus": "OPT_IN"
+     },
+     {
+         "TopicName": "Edition",
+         "DisplayName": "Limited Edition Print Gumdrop",
+         "Description": "Hear about new limited-edition print gumdrops that you receive.",
+         "DefaultSubscriptionStatus": "OPT_IN"
+     }
+    ]
+}

@@ -14,6 +14,7 @@ import {
   Typography,
   Space,
   Card,
+  Checkbox,
 } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
@@ -23,7 +24,6 @@ import {
   MAX_METADATA_LEN,
   useConnection,
   IMetadataExtension,
-  Attribute,
   MetadataCategory,
   useConnectionConfig,
   Creator,
@@ -32,13 +32,15 @@ import {
   MetaplexOverlay,
   MetadataFile,
   StringPublicKey,
+  WRAPPED_SOL_MINT,
+  getAssetCostToStore,
+  LAMPORT_MULTIPLIER,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
 import { Connection } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { cleanName, getLast } from '../../utils/utils';
+import { getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 import {
@@ -46,6 +48,9 @@ import {
   MinusCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
+import { useTokenList } from '../../contexts/tokenList';
+import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import { ArtSelector } from '../auctionCreate/artSelector';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -53,7 +58,7 @@ const { Text } = Typography;
 
 export const ArtCreateView = () => {
   const connection = useConnection();
-  const { env } = useConnectionConfig();
+  const { endpoint } = useConnectionConfig();
   const wallet = useWallet();
   const [alertMessage, setAlertMessage] = useState<string>();
   const { step_param }: { step_param: string } = useParams();
@@ -64,12 +69,15 @@ export const ArtCreateView = () => {
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [isMinting, setMinting] = useState<boolean>(false);
-  const [nft, setNft] =
-    useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
+  const [nft, setNft] = useState<
+    { metadataAccount: StringPublicKey } | undefined
+  >(undefined);
   const [files, setFiles] = useState<File[]>([]);
+  const [isCollection, setIsCollection] = useState<boolean>(false);
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
     symbol: '',
+    collection: '',
     description: '',
     external_url: '',
     image: '',
@@ -102,6 +110,7 @@ export const ArtCreateView = () => {
       name: attributes.name,
       symbol: attributes.symbol,
       creators: attributes.creators,
+      collection: attributes.collection,
       description: attributes.description,
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
       image: attributes.image,
@@ -120,7 +129,7 @@ export const ArtCreateView = () => {
       const _nft = await mintNFT(
         connection,
         wallet,
-        env,
+        endpoint.name,
         files,
         metadata,
         setNFTcreateProgress,
@@ -189,6 +198,8 @@ export const ArtCreateView = () => {
             <InfoStep
               attributes={attributes}
               files={files}
+              isCollection={isCollection}
+              setIsCollection={setIsCollection}
               setAttributes={setAttributes}
               confirm={() => gotoStep(3)}
             />
@@ -240,7 +251,13 @@ const CategoryStep = (props: {
         <h2>Create a new item</h2>
         <p>
           First time creating on Metaplex?{' '}
-          <a href="#">Read our creators’ guide.</a>
+          <a
+            href="https://docs.metaplex.com/storefront/create"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Read our creators’ guide.
+          </a>
         </p>
       </Row>
       <Row justify={width < 768 ? 'center' : 'start'}>
@@ -326,7 +343,7 @@ const UploadStep = (props: {
 
   const [customURL, setCustomURL] = useState<string>('');
   const [customURLErr, setCustomURLErr] = useState<string>('');
-  const disableContinue = !coverFile || !!customURLErr;
+  const disableContinue = !(coverFile || (!customURLErr && !!customURL));
 
   useEffect(() => {
     props.setAttributes({
@@ -372,10 +389,16 @@ const UploadStep = (props: {
     }
   };
 
+  const { category } = props.attributes.properties;
+
+  const urlPlaceholder = `http://example.com/path/to/${
+    category === MetadataCategory.Image ? 'image' : 'file'
+  }`;
+
   return (
     <>
       <Row className="call-to-action">
-        <h2>Now, let's upload your creation</h2>
+        <h2>Now, let&apos;s upload your creation</h2>
         <p style={{ fontSize: '1.2rem' }}>
           Your file will be uploaded to the decentralized web via Arweave.
           Depending on file type, can take up to 1 minute. Arweave is a new type
@@ -390,6 +413,10 @@ const UploadStep = (props: {
           accept=".png,.jpg,.gif,.mp4,.svg"
           style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
           multiple={false}
+          onRemove={() => {
+            setMainFile(undefined);
+            setCoverFile(undefined);
+          }}
           customRequest={info => {
             // dont upload files here, handled outside of the control
             info?.onSuccess?.({}, null as any);
@@ -484,7 +511,7 @@ const UploadStep = (props: {
       >
         <Input
           disabled={!!mainFile}
-          placeholder="http://example.com/path/to/image"
+          placeholder={urlPlaceholder}
           value={customURL}
           onChange={ev => setCustomURL(ev.target.value)}
           onFocus={() => setCustomURLErr('')}
@@ -511,7 +538,7 @@ const UploadStep = (props: {
           type="primary"
           size="large"
           disabled={disableContinue}
-          onClick={() => {
+          onClick={async () => {
             props.setAttributes({
               ...props.attributes,
               properties: {
@@ -531,14 +558,19 @@ const UploadStep = (props: {
                     } as MetadataFile;
                   }),
               },
-              image: coverFile?.name || '',
+              image: coverFile?.name || customURL || '',
               animation_url:
                 props.attributes.properties?.category !==
                   MetadataCategory.Image && customURL
                   ? customURL
                   : mainFile && mainFile.name,
             });
-            const files = [coverFile, mainFile].filter(f => f) as File[];
+            const url = await fetch(customURL).then(res => res.blob());
+            const files = [
+              coverFile,
+              mainFile,
+              customURL ? new File([url], customURL) : '',
+            ].filter(f => f) as File[];
 
             props.setFiles(files);
             props.confirm();
@@ -604,25 +636,33 @@ const useArtworkFiles = (files: File[], attributes: IMetadataExtension) => {
 const InfoStep = (props: {
   attributes: IMetadataExtension;
   files: File[];
+  isCollection: boolean;
+  setIsCollection: (val: boolean) => void;
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
-  const [creators, setCreators] = useState<Array<UserValue>>([]);
-  const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
-  const { image, animation_url } = useArtworkFiles(
-    props.files,
-    props.attributes,
-  );
+  const { image } = useArtworkFiles(props.files, props.attributes);
   const [form] = Form.useForm();
+  const { isCollection, setIsCollection } = props;
+  const [selectedCollection, setSelectedCollection] = useState<
+    Array<SafetyDepositDraft>
+  >([]);
+
+  const artistFilter = useCallback(
+    (i: SafetyDepositDraft) =>
+      !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
+    [],
+  );
 
   useEffect(() => {
-    setRoyalties(
-      creators.map(creator => ({
-        creatorKey: creator.key,
-        amount: Math.trunc(100 / creators.length),
-      })),
-    );
-  }, [creators]);
+    if (selectedCollection.length) {
+      props.setAttributes({
+        ...props.attributes,
+        collection: selectedCollection[0].metadata.info.mint,
+      });
+    }
+  }, [selectedCollection]);
+
   return (
     <>
       <Row className="call-to-action">
@@ -637,11 +677,13 @@ const InfoStep = (props: {
           {props.attributes.image && (
             <ArtCard
               image={image}
-              animationURL={animation_url}
+              animationURL={props.attributes.animation_url}
               category={props.attributes.properties?.category}
               name={props.attributes.name}
               symbol={props.attributes.symbol}
               small={true}
+              artView={!(props.files.length > 1)}
+              className="art-create-card"
             />
           )}
         </Col>
@@ -652,6 +694,7 @@ const InfoStep = (props: {
               autoFocus
               className="input"
               placeholder="Max 50 characters"
+              maxLength={50}
               allowClear
               value={props.attributes.name}
               onChange={info =>
@@ -662,11 +705,12 @@ const InfoStep = (props: {
               }
             />
           </label>
-          {/* <label className="action-field">
+          <label className="action-field">
             <span className="field-title">Symbol</span>
             <Input
               className="input"
               placeholder="Max 10 characters"
+              maxLength={10}
               allowClear
               value={props.attributes.symbol}
               onChange={info =>
@@ -676,13 +720,39 @@ const InfoStep = (props: {
                 })
               }
             />
-          </label> */}
-
+          </label>
+          <label className="action-field direction-row">
+            <Checkbox
+              checked={isCollection}
+              onChange={val => {
+                setIsCollection(val.target.checked);
+              }}
+            />
+            <span className="field-title" style={{ marginLeft: '10px' }}>
+              Is parent collection?
+            </span>
+          </label>
+          {!isCollection && (
+            <label className="action-field">
+              <span className="field-title">Collection</span>
+              <ArtSelector
+                filter={artistFilter}
+                selected={selectedCollection}
+                setSelected={items => {
+                  setSelectedCollection(items);
+                }}
+                allowMultiple={false}
+              >
+                Select NFT
+              </ArtSelector>
+            </label>
+          )}
           <label className="action-field">
             <span className="field-title">Description</span>
             <Input.TextArea
               className="input textarea"
               placeholder="Max 500 characters"
+              maxLength={500}
               value={props.attributes.description}
               onChange={info =>
                 props.setAttributes({
@@ -695,19 +765,24 @@ const InfoStep = (props: {
           </label>
           <label className="action-field">
             <span className="field-title">Maximum Supply</span>
-            <InputNumber
-              placeholder="Quantity"
-              onChange={(val: number) => {
-                props.setAttributes({
-                  ...props.attributes,
-                  properties: {
-                    ...props.attributes.properties,
-                    maxSupply: val,
-                  },
-                });
-              }}
-              className="royalties-input"
-            />
+            {!isCollection ? (
+              <InputNumber
+                placeholder="Quantity"
+                value={props.attributes.properties.maxSupply}
+                onChange={(val: number) => {
+                  props.setAttributes({
+                    ...props.attributes,
+                    properties: {
+                      ...props.attributes.properties,
+                      maxSupply: val,
+                    },
+                  });
+                }}
+                className="royalties-input"
+              />
+            ) : (
+              0
+            )}
           </label>
           <label className="action-field">
             <span className="field-title">Attributes</span>
@@ -716,28 +791,19 @@ const InfoStep = (props: {
             <Form.List name="attributes">
               {(fields, { add, remove }) => (
                 <>
-                  {fields.map(({ key, name, fieldKey }) => (
+                  {fields.map(({ key, name }) => (
                     <Space key={key} align="baseline">
-                      <Form.Item
-                        name={[name, 'trait_type']}
-                        fieldKey={[fieldKey, 'trait_type']}
-                        hasFeedback
-                      >
+                      <Form.Item name={[name, 'trait_type']} hasFeedback>
                         <Input placeholder="trait_type (Optional)" />
                       </Form.Item>
                       <Form.Item
                         name={[name, 'value']}
-                        fieldKey={[fieldKey, 'value']}
                         rules={[{ required: true, message: 'Missing value' }]}
                         hasFeedback
                       >
                         <Input placeholder="value" />
                       </Form.Item>
-                      <Form.Item
-                        name={[name, 'display_type']}
-                        fieldKey={[fieldKey, 'display_type']}
-                        hasFeedback
-                      >
+                      <Form.Item name={[name, 'display_type']} hasFeedback>
                         <Input placeholder="display_type (Optional)" />
                       </Form.Item>
                       <MinusCircleOutlined onClick={() => remove(name)} />
@@ -1061,10 +1127,7 @@ const LaunchStep = (props: {
   connection: Connection;
 }) => {
   const [cost, setCost] = useState(0);
-  const { image, animation_url } = useArtworkFiles(
-    props.files,
-    props.attributes,
-  );
+  const { image } = useArtworkFiles(props.files, props.attributes);
   const files = props.files;
   const metadata = props.attributes;
   useEffect(() => {
@@ -1109,11 +1172,13 @@ const LaunchStep = (props: {
           {props.attributes.image && (
             <ArtCard
               image={image}
-              animationURL={animation_url}
+              animationURL={props.attributes.animation_url}
               category={props.attributes.properties?.category}
               name={props.attributes.name}
               symbol={props.attributes.symbol}
               small={true}
+              artView={props.files[1]?.type === 'unknown'}
+              className="art-create-card"
             />
           )}
         </Col>
@@ -1126,7 +1191,13 @@ const LaunchStep = (props: {
             suffix="%"
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} />
+            <AmountLabel
+              title="Cost to Create"
+              amount={cost.toFixed(5)}
+              tokenInfo={useTokenList().tokenMap.get(
+                WRAPPED_SOL_MINT.toString(),
+              )}
+            />
           ) : (
             <Spin />
           )}
@@ -1270,7 +1341,7 @@ const Congrats = (props: {
       <>
         <div className="waiting-title">Sorry, there was an error!</div>
         <p>{props.alert}</p>
-        <Button onClick={_ => history.push('/art/create')}>
+        <Button onClick={() => history.push('/art/create')}>
           Back to Create NFT
         </Button>
       </>
@@ -1283,14 +1354,14 @@ const Congrats = (props: {
       <div className="congrats-button-container">
         <Button
           className="metaplex-button"
-          onClick={_ => window.open(newTweetURL(), '_blank')}
+          onClick={() => window.open(newTweetURL(), '_blank')}
         >
           <span>Share it on Twitter</span>
           <span>&gt;</span>
         </Button>
         <Button
           className="metaplex-button"
-          onClick={_ =>
+          onClick={() =>
             history.push(`/art/${props.nft?.metadataAccount.toString()}`)
           }
         >
@@ -1299,7 +1370,7 @@ const Congrats = (props: {
         </Button>
         <Button
           className="metaplex-button"
-          onClick={_ => history.push('/auction/create')}
+          onClick={() => history.push('/auction/create')}
         >
           <span>Sell it via auction</span>
           <span>&gt;</span>

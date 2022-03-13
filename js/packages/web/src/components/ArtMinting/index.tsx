@@ -32,6 +32,9 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const [showCongrats, setShowCongrats] = useState<boolean>(false);
   const [mintingDestination, setMintingDestination] = useState<string>('');
   const [editions, setEditions] = useState<number>(1);
+  const [editionNumber, setEditionNumber] = useState<number | undefined>(
+    undefined,
+  );
   const [totalCost, setTotalCost] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const art = useArt(id);
@@ -52,7 +55,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
     isArtMasterEdition &&
     isArtOwnedByUser &&
     !isMasterEditionV1 &&
-    maxEditionsToMint !== 0;
+    maxEditionsToMint > 0;
 
   const mintingDestinationErr = useMemo(() => {
     if (!mintingDestination) return 'Required';
@@ -128,6 +131,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
         artMintTokenAccount!,
         editions,
         mintingDestination,
+        editionNumber,
       );
       onSuccessfulMint();
     } catch (e) {
@@ -162,6 +166,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
             cancelButtonProps={{ disabled: isLoading }}
             onOk={mint}
             onCancel={() => setShowMintModal(false)}
+            className="art-minting-modal"
           >
             <Form.Item
               style={{
@@ -206,6 +211,28 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
                 value={editions}
                 precision={0}
                 onChange={debouncedEditionsChangeHandler}
+              />
+            </Form.Item>
+            <Form.Item
+              style={{
+                width: '100%',
+                flexDirection: 'column',
+                paddingTop: 30,
+              }}
+              label={
+                <h3 style={{ color: 'white' }}>Edition Number (Optional)</h3>
+              }
+              labelAlign="left"
+              colon={false}
+            >
+              <InputNumber
+                type="number"
+                style={{ width: '100%' }}
+                min={1}
+                max={art.supply}
+                value={editionNumber}
+                precision={0}
+                onChange={setEditionNumber}
               />
             </Form.Item>
 

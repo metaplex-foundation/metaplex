@@ -4,6 +4,7 @@ export const getEmptyMetaState = (): MetaState => ({
   metadata: [],
   metadataByMetadata: {},
   metadataByMint: {},
+  metadataByCollection: {},
   metadataByAuction: {},
   masterEditions: {},
   masterEditionsByPrintingMint: {},
@@ -26,4 +27,9 @@ export const getEmptyMetaState = (): MetaState => ({
   bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
   auctionCaches: {},
   storeIndexer: [],
+  packs: {},
+  packCards: {},
+  packCardsByPackSet: {},
+  vouchers: {},
+  provingProcesses: {},
 });

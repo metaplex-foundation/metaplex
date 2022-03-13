@@ -1,7 +1,8 @@
+import type { FC } from 'react';
+
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Card } from 'antd';
-import { FC } from 'react';
-import { useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 interface Variables {
   storeAddress?: string;
@@ -37,8 +38,9 @@ export const SetupVariables: FC<Variables> = ({
       }
     >
       <div ref={ref}>
-        {storeOwnerAddress && <p>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS={storeOwnerAddress}</p>}
-        {storeAddress && <p>REACT_APP_STORE_ADDRESS={storeAddress}</p>}
+        {storeOwnerAddress && (
+          <p>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS={storeOwnerAddress}</p>
+        )}
       </div>
     </Card>
   );

@@ -47,6 +47,7 @@ export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
 export const MAX_PRIZE_TRACKING_TICKET_SIZE = 1 + 32 + 8 + 8 + 8 + 50;
 export const MAX_WHITELISTED_CREATOR_SIZE = 2 + 32 + 10;
 export const MAX_PAYOUT_TICKET_SIZE = 1 + 32 + 8;
+
 export enum MetaplexKey {
   Uninitialized = 0,
   OriginalAuthorityLookupV1 = 1,
@@ -63,6 +64,7 @@ export enum MetaplexKey {
   AuctionWinnerTokenTypeTrackerV1 = 12,
   StoreIndexerV1 = 13,
   AuctionCacheV1 = 14,
+  PackSet = 15,
 }
 export class PrizeTrackingTicket {
   key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;

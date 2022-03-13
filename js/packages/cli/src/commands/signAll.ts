@@ -14,7 +14,8 @@ import {
   MAX_URI_LENGTH,
   TOKEN_METADATA_PROGRAM_ID,
 } from '../helpers/constants';
-import { AccountAndPubkey, Metadata, METADATA_SCHEMA } from '../types';
+import { Metadata, METADATA_SCHEMA } from '../types';
+import { AccountAndPubkey } from '../helpers/accounts';
 import { signMetadataInstruction } from './sign';
 import log from 'loglevel';
 import { sleep } from '../helpers/various';
@@ -93,7 +94,7 @@ async function findAndSignMetadata(
   );
 }
 
-async function getAccountsByCreatorAddress(creatorAddress, connection) {
+export async function getAccountsByCreatorAddress(creatorAddress, connection) {
   const metadataAccounts = await getProgramAccounts(
     connection,
     TOKEN_METADATA_PROGRAM_ID.toBase58(),
@@ -130,6 +131,21 @@ async function getAccountsByCreatorAddress(creatorAddress, connection) {
     decodedAccounts.push(store);
   }
   return decodedAccounts;
+}
+
+export async function getAddressesByCreatorAddress(
+  candyMachineAddr,
+  connection,
+) {
+  const accountsByCreatorAddress = await getAccountsByCreatorAddress(
+    candyMachineAddr,
+    connection,
+  );
+  const addresses = accountsByCreatorAddress.map(it => {
+    return new PublicKey(it[0].mint).toBase58();
+  });
+
+  return addresses;
 }
 
 async function getProgramAccounts(
@@ -186,8 +202,18 @@ async function getProgramAccounts(
   return data;
 }
 
+// eslint-disable-next-line no-control-regex
+const METADATA_REPLACE = new RegExp('\u0000', 'g');
 async function decodeMetadata(buffer) {
-  return borsh.deserializeUnchecked(METADATA_SCHEMA, Metadata, buffer);
+  const metadata = borsh.deserializeUnchecked(
+    METADATA_SCHEMA,
+    Metadata,
+    buffer,
+  ) as Metadata;
+  metadata.data.name = metadata.data.name.replace(METADATA_REPLACE, '');
+  metadata.data.uri = metadata.data.uri.replace(METADATA_REPLACE, '');
+  metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, '');
+  return metadata;
 }
 
 async function getCandyMachineVerifiedMetadata(
@@ -250,6 +276,6 @@ async function signMetadataBatch(metadataList, connection, keypair) {
   );
 }
 
-function delay(ms: number) {
+export function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

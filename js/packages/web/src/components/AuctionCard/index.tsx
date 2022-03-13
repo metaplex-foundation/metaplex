@@ -1,13 +1,12 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, InputNumber, Spin } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import {
   useConnection,
   useUserAccounts,
   MetaplexModal,
   MetaplexOverlay,
-  formatAmount,
   formatTokenAmount,
   useMint,
   PriceFloorType,
@@ -24,16 +23,20 @@ import {
   useWalletModal,
   VaultState,
   BidStateType,
+  WRAPPED_SOL_MINT,
+  Bid,
+  BidderPot,
+  shortenAddress,
 } from '@oyster/common';
 import {
   AuctionView,
   AuctionViewState,
   useBidsForAuction,
+  useCreators,
   useUserBalance,
 } from '../../hooks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
-// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import {
   sendRedeemBid,
@@ -59,6 +62,8 @@ import {
 import { useActionButtonContent } from './hooks/useActionButtonContent';
 import { endSale } from './utils/endSale';
 import { useInstantSaleState } from './hooks/useInstantSaleState';
+import { useTokenList } from '../../contexts/tokenList';
+import CongratulationsModal from '../Modals/CongratulationsModal';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -124,6 +129,7 @@ function useGapTickCheck(
   gapTick: number | null,
   gapTime: number,
   auctionView: AuctionView,
+  LAMPORTS_PER_MINT: number,
 ): boolean {
   return !!useMemo(() => {
     if (gapTick && value && gapTime && !auctionView.auction.info.ended()) {
@@ -133,7 +139,7 @@ function useGapTickCheck(
       if (endedAt) {
         const ended = endedAt.toNumber();
         if (now > ended) {
-          const toLamportVal = value * LAMPORTS_PER_SOL;
+          const toLamportVal = value * LAMPORTS_PER_MINT;
           // Ok, we are in gap time, since now is greater than ended and we're not actually an ended auction yt.
           // Check that the bid is at least gapTick % bigger than the next biggest one in the stack.
           for (
@@ -197,6 +203,7 @@ export const AuctionCard = ({
   hideDefaultAction?: boolean;
   action?: JSX.Element;
 }) => {
+  const history = useHistory();
   const connection = useConnection();
   const { update } = useMeta();
 
@@ -210,6 +217,7 @@ export const AuctionCard = ({
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
   const bids = useBidsForAuction(auctionView.auction.pubkey);
+  const creators = useCreators(auctionView);
 
   const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -222,6 +230,8 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
+  const [isOpenPurchase, setIsOpenPurchase] = useState<boolean>(false);
+  const [isOpenClaim, setIsOpenClaim] = useState<boolean>(false);
 
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
@@ -230,8 +240,25 @@ export const AuctionCard = ({
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
+  const tokenInfo = useTokenList().subscribedTokens.filter(
+    m => m.address == mintKey,
+  )[0];
+  const symbol = tokenInfo
+    ? tokenInfo.symbol
+    : mintKey == WRAPPED_SOL_MINT.toBase58()
+    ? 'SOL'
+    : 'CUSTOM';
 
+  const LAMPORTS_PER_MINT = tokenInfo
+    ? Math.ceil(10 ** tokenInfo.decimals)
+    : LAMPORTS_PER_SOL;
+
+  //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
+  const instantSalePrice = useMemo(
+    () => auctionView.auctionDataExtended?.info.instantSalePrice,
+    [auctionView.auctionDataExtended],
+  );
   let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
@@ -254,14 +281,22 @@ export const AuctionCard = ({
   const gapTick = auctionExtended
     ? auctionExtended.info.gapTickSizePercentage
     : 0;
-  const tickSize = auctionExtended?.info?.tickSize ? auctionExtended.info.tickSize : 0;
+  const tickSize = auctionExtended?.info?.tickSize
+    ? auctionExtended.info.tickSize
+    : 0;
   const tickSizeInvalid = !!(
     tickSize &&
     value &&
-    (value * LAMPORTS_PER_SOL) % tickSize.toNumber() != 0
+    (value * LAMPORTS_PER_MINT) % tickSize.toNumber() != 0
   );
 
-  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
+  const gapBidInvalid = useGapTickCheck(
+    value,
+    gapTick,
+    gapTime,
+    auctionView,
+    LAMPORTS_PER_MINT,
+  );
 
   const isAuctionManagerAuthorityNotWalletOwner =
     auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
@@ -286,14 +321,14 @@ export const AuctionCard = ({
       : isStarted && bids.length > 0
       ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
       : 9999999) +
-      tickSize.toNumber() / LAMPORTS_PER_SOL;
+      tickSize.toNumber() / LAMPORTS_PER_MINT;
 
   const invalidBid =
     tickSizeInvalid ||
     gapBidInvalid ||
     !myPayingAccount ||
     value === undefined ||
-    value * LAMPORTS_PER_SOL < priceFloor ||
+    value * LAMPORTS_PER_MINT < priceFloor ||
     (minBid && value < minBid) ||
     loading ||
     !accountByMint.get(QUOTE_MINT.toBase58());
@@ -327,7 +362,22 @@ export const AuctionCard = ({
     setShowEndingBidModal(true);
     setLoading(false);
   };
+  const {
+    canEndInstantSale,
+    isAlreadyBought,
+    canClaimPurchasedItem,
+    canClaimItem,
+  } = useInstantSaleState(auctionView);
   const instantSaleAction = () => {
+    const isNotEnoughLamports =
+      balance.balanceLamports < (instantSalePrice?.toNumber() || 0);
+    if (
+      isNotEnoughLamports &&
+      !(canClaimPurchasedItem || canClaimItem || canEndInstantSale)
+    ) {
+      return;
+    }
+
     if (canEndInstantSale) {
       return endInstantSale();
     }
@@ -337,8 +387,6 @@ export const AuctionCard = ({
 
   const instantSale = async () => {
     setLoading(true);
-    const instantSalePrice =
-      auctionView.auctionDataExtended?.info.instantSalePrice;
     const winningConfigType =
       auctionView.participationItem?.winningConfigType ||
       auctionView.items[0][0].winningConfigType;
@@ -366,6 +414,8 @@ export const AuctionCard = ({
           auctionView,
           accountByMint,
           instantSalePrice,
+          // make sure all accounts are created
+          'finalized',
         );
         setLastBid(bid);
       } catch (e) {
@@ -382,6 +432,34 @@ export const AuctionCard = ({
     auctionView.auction = newAuctionState[0];
     auctionView.myBidderPot = newAuctionState[1];
     auctionView.myBidderMetadata = newAuctionState[2];
+    if (
+      wallet.publicKey &&
+      auctionView.auction.info.bidState.type == BidStateType.EnglishAuction
+    ) {
+      const winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
+        wallet.publicKey.toBase58(),
+      );
+      if (winnerIndex === null)
+        auctionView.auction.info.bidState.bids.unshift(
+          new Bid({
+            key: wallet.publicKey.toBase58(),
+            amount: instantSalePrice || new BN(0),
+          }),
+        );
+      // It isnt here yet
+      if (!auctionView.myBidderPot)
+        auctionView.myBidderPot = {
+          pubkey: 'none',
+          //@ts-ignore
+          account: {},
+          info: new BidderPot({
+            bidderPot: 'dummy',
+            bidderAct: wallet.publicKey.toBase58(),
+            auctionAct: auctionView.auction.pubkey,
+            emptied: false,
+          }),
+        };
+    }
     // Claim the purchase
     try {
       await sendRedeemBid(
@@ -393,10 +471,10 @@ export const AuctionCard = ({
         prizeTrackingTickets,
         bidRedemptions,
         bids,
-      ).then(async () => {
-        await update();
-        setShowRedeemedBidModal(true);
-      });
+      );
+      await update();
+      if (canClaimPurchasedItem) setIsOpenClaim(true);
+      else setIsOpenPurchase(true);
     } catch (e) {
       console.error(e);
       setShowRedemptionIssue(true);
@@ -408,7 +486,10 @@ export const AuctionCard = ({
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
 
-  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
+  const isBidderPotEmpty = Boolean(
+    // If I haven't bid, myBidderPot should be empty
+    !auctionView.myBidderPot || auctionView.myBidderPot?.info.emptied,
+  );
   const doesInstantSaleHasNoItems =
     isBidderPotEmpty &&
     auctionView.auction.info.bidState.max.toNumber() === bids.length;
@@ -417,14 +498,14 @@ export const AuctionCard = ({
     !isOpenEditionSale &&
     auctionView.isInstantSale &&
     isAuctionManagerAuthorityNotWalletOwner &&
-    doesInstantSaleHasNoItems;
+    doesInstantSaleHasNoItems &&
+    // If your bidderpot is empty but you haven't claimed
+    !canClaimPurchasedItem;
 
   const shouldHide =
     shouldHideInstantSale ||
     (auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty);
-
-  const { canEndInstantSale } = useInstantSaleState(auctionView);
 
   const actionButtonContent = useActionButtonContent(auctionView);
 
@@ -450,7 +531,7 @@ export const AuctionCard = ({
             auctionView={auctionView}
             showAsRow={true}
             hideCountdown={true}
-            displaySOL={true}
+            displaySymbol={true}
           />
           {showPlaceBid &&
             !hideDefaultAction &&
@@ -534,9 +615,10 @@ export const AuctionCard = ({
             <div className="show-place-bid">
               <AmountLabel
                 title="in your wallet"
-                displaySOL={true}
+                displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
                 style={{ marginBottom: 0 }}
-                amount={formatAmount(balance.balance, 2)}
+                amount={balance.balance}
+                tokenInfo={tokenInfo}
                 customPrefix={
                   <Identicon
                     address={wallet?.publicKey?.toBase58()}
@@ -639,7 +721,11 @@ export const AuctionCard = ({
                         ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                         : ''
                     }
-                    placeholder={ minBid === 0 ? `Place a Bid` : `Bid ${minBid} SOL or more` }
+                    placeholder={
+                      minBid === 0
+                        ? `Place a Bid`
+                        : `Bid ${minBid} ${symbol} or more`
+                    }
                   />
                 </div>
                 <div className={'bid-buttons'}>
@@ -714,7 +800,8 @@ export const AuctionCard = ({
           ) : loading ? (
             <Spin />
           ) : (
-            auctionView.isInstantSale && (
+            auctionView.isInstantSale &&
+            !isAlreadyBought && (
               <Button
                 type="primary"
                 size="large"
@@ -748,7 +835,7 @@ export const AuctionCard = ({
         )}
         {tickSizeInvalid && tickSize && (
           <span style={{ color: 'red' }}>
-            Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
+            Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_MINT}.
           </span>
         )}
         {gapBidInvalid && (
@@ -859,10 +946,27 @@ export const AuctionCard = ({
           required by the auction for printing bidders&apos; limited or open
           edition NFTs. If you wish to withdraw them, you are agreeing to foot
           the cost of up to an estimated ◎
-          <b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b> plus transaction fees
+          <b>{(printingCost || 0) / LAMPORTS_PER_MINT}</b> plus transaction fees
           to redeem their bids for them right now.
         </h3>
       </MetaplexModal>
+      <CongratulationsModal
+        isModalVisible={isOpenPurchase}
+        onClose={() => setIsOpenPurchase(false)}
+        onClickOk={() => window.location.reload()}
+        buttonText="Reload"
+        content="Reload the page and click claim to receive your NFT. Then check your wallet to confirm it has arrived. It may take a few minutes to process."
+      />
+      <CongratulationsModal
+        isModalVisible={isOpenClaim}
+        onClose={() => setIsOpenClaim(false)}
+        buttonText="Got it"
+        content={`You have claimed your item from ${creators.map(
+          item => ' ' + (item.name || shortenAddress(item.address || '')),
+        )}!`}
+        extraButtonText="View My Items"
+        onClickExtraButton={() => history.push('/artworks')}
+      />
     </div>
   );
 };

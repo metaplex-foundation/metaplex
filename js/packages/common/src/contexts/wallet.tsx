@@ -7,11 +7,10 @@ import {
   getLedgerWallet,
   getMathWallet,
   getPhantomWallet,
+  getSlopeWallet,
   getSolflareWallet,
   getSolletWallet,
   getSolongWallet,
-  getTorusWallet,
-  WalletName,
 } from '@solana/wallet-adapter-wallets';
 import { Button, Collapse } from 'antd';
 import React, {
@@ -43,13 +42,11 @@ export function useWalletModal(): WalletModalContextState {
 }
 
 export const WalletModal: FC = () => {
-  const { wallets, wallet: selected, select } = useWallet();
+  const { wallets, select } = useWallet();
   const { visible, setVisible } = useWalletModal();
-  const [showWallets, setShowWallets] = useState(false);
   const close = useCallback(() => {
     setVisible(false);
-    setShowWallets(false);
-  }, [setVisible, setShowWallets]);
+  }, [setVisible]);
 
   const phatomWallet = useMemo(() => getPhantomWallet(), []);
 
@@ -93,9 +90,9 @@ export const WalletModal: FC = () => {
               <path
                 d="M15 7.5L10 12.5L5 7.5"
                 stroke="white"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           ) : (
@@ -109,9 +106,9 @@ export const WalletModal: FC = () => {
               <path
                 d="M7.5 5L12.5 10L7.5 15"
                 stroke="white"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           )
@@ -211,6 +208,7 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     () => [
       getPhantomWallet(),
       getSolflareWallet(),
+      getSlopeWallet(),
       // getTorusWallet({
       //   options: {
       //     // @FIXME: this should be changed for Metaplex, and by each Metaplex storefront
