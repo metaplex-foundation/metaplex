@@ -1,0 +1,52 @@
+.hamburger {
+  span {
+    transition: all 0.15s cubic-bezier(0.1, 0.82, 0.76, 0.965);
+
+    &:first-of-type {
+      top: 0;
+    }
+
+    &:last-of-type {
+      bottom: 0;
+    }
+  }
+
+  &.active,
+  &__checkbox:checked + div {
+    span {
+      &:first-of-type {
+        top: 3px;
+        transform: rotate(45deg);
+      }
+      &:last-of-type {
+        bottom: 3px;
+        transform: rotate(-45deg);
+      }
+    }
+  }
+
+  &.active:hover span:first-of-type,
+  &.active:hover span:last-of-type,
+  &:hover .hamburger__checkbox:checked + div span:first-of-type,
+  &:hover .hamburger__checkbox:checked + div span:last-of-type {
+    width: 22px;
+  }
+
+  .hamburger__checkbox:checked + div span:first-of-type,
+  .hamburger__checkbox:checked + div span:last-of-type {
+    width: 22px;
+  }
+
+  &:hover {
+    // no need hover effect on mobile.
+    @media (min-width: 1024px) {
+      span:first-of-type {
+        width: 32px;
+      }
+
+      span:last-of-type {
+        width: 22px;
+      }
+    }
+  }
+}

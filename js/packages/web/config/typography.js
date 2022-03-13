@@ -1,44 +1,78 @@
+const colors = require('./colors'),
+  palette = colors.palette
+
 module.exports = {
   fontSources: ['Google Fonts'],
 
   fontStack: [
     {
-      name: 'Sora',
-      cssClass: 'text-serif',
-      link: 'https://fonts.google.com/specimen/Sora',
+      name: 'Rajdhani',
+      className: 'text-serif',
+      link: 'https://fonts.google.com/specimen/Rajdhani',
     },
     {
-      name: 'Roboto',
-      cssClass: 'text-sans',
-      link: 'https://fonts.google.com/specimen/Roboto',
+      name: 'Righteous',
+      className: 'text-heading',
+      link: 'https://fonts.google.com/specimen/Righteous',
+    },
+    {
+      name: 'Poppins',
+      className: 'text-sans',
+      link: 'https://fonts.google.com/specimen/Poppins',
     },
     {
       name: 'IBM Plex Mono',
-      cssClass: 'text-mono',
+      className: 'text-mono',
       link: 'https://fonts.google.com/specimen/IBM+Plex+Mono',
     },
   ],
 
   fontFamily: {
-    sans: ['"Roboto"', 'sans-serif'],
-    serif: ['"Sora"', 'serif'],
-    heading: ['"Sora"', 'sans-serif'],
+    sans: ['"Poppins"', 'sans-serif'],
+    serif: ['"Rajdhani"', 'serif'],
+    heading: ['"Rajdhani"', 'sans-serif'],
+    display: ['"Righteous"', 'sans-serif'],
     mono: ['"IBM Plex Mono"', 'monospace'],
     code: ['"IBM Plex Mono"', 'monospace'],
   },
 
-  headings: {
-    fontFamily: '"Sora", sans-serif',
+  display: {
+    fontFamily: '"Righteous", sans-serif',
 
     fontSize: {
-      display: [
-        '64px',
+      'display-xl': [
+        '60px',
         {
-          label: 'Display',
-          lineHeight: '86px',
+          label: 'Display XL',
+          lineHeight: 'normal',
           letterSpacing: '-1.25px',
         },
       ],
+      'display-lg': [
+        '52px',
+        {
+          label: 'Display LG',
+          lineHeight: 'normal',
+          letterSpacing: '-0.18px',
+        },
+      ],
+      'display-base': [
+        '36px',
+        {
+          label: 'Display Base',
+          lineHeight: 'normal',
+          letterSpacing: '-0.18px',
+        },
+      ],
+    },
+
+    fontWeight: {},
+  },
+
+  headings: {
+    fontFamily: '"Rajdhani", sans-serif',
+
+    fontSize: {
       h1: [
         '52px',
         {
@@ -51,7 +85,7 @@ module.exports = {
         '40px',
         {
           label: 'H2',
-          lineHeight: '58px',
+          lineHeight: '52px',
           letterSpacing: '-0.74px',
         },
       ],
@@ -87,27 +121,27 @@ module.exports = {
           letterSpacing: '-0.26px',
         },
       ],
+      overline: [
+        '14px',
+        {
+          label: 'Overline',
+          lineHeight: '24px',
+          letterSpacing: '3.5px',
+        },
+      ],
     },
 
-    fontWeight: {
-      display: 700,
-      h1: 700,
-      h2: 700,
-      h3: 700,
-      h4: 700,
-      h5: 600,
-      h6: 600,
-    },
+    fontWeight: {},
   },
 
   body: {
-    fontFamily: ['"Roboto", sans-serif', '"IBM Plex Mono", monospace'],
+    fontFamily: ['"Poppins", sans-serif', '"IBM Plex Mono", monospace'],
     fontSize: {
       base: [
         '16px',
         {
           label: 'Base',
-          lineHeight: '24px',
+          lineHeight: '28px',
           letterSpacing: '-0.18px',
         },
       ],
@@ -123,8 +157,8 @@ module.exports = {
         '20px',
         {
           label: 'Text Large',
-          lineHeight: '32px',
-          letterSpacing: '-0.26px',
+          lineHeight: 'normal',
+          letterSpacing: '-0.18px',
         },
       ],
       md: [
@@ -139,7 +173,7 @@ module.exports = {
         '12px',
         {
           label: 'Text Small',
-          lineHeight: '20px',
+          lineHeight: 'normal',
           letterSpacing: '-0.01px',
         },
       ],
@@ -162,4 +196,4 @@ module.exports = {
       900: 900,
     },
   },
-};
+}

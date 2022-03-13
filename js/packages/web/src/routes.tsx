@@ -22,13 +22,16 @@ import { CollectionDetailView } from './views/collections/collectionDetail'
 
 /* New view components */
 import {
-  Home,
   Explore,
   Collection,
   StaticContent,
   SubmitCollection,
   LaunchPadSubmission,
 } from './components-v2/views'
+
+/* UI v2 Upgraded Views */
+import { Home } from './ui/views/Home'
+
 import { SalesListView } from './views/home/components/SalesList'
 
 export function Routes() {

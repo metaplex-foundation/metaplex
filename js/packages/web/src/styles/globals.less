@@ -1,29 +1,89 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* TailwindCSS */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-::-moz-selection {
-  /* Code for Firefox */
-  @apply text-white bg-black;
+* {
+  @apply selection:bg-N-800 selection:text-white;
 }
 
-::selection {
-  @apply text-white bg-black;
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Roboto', sans-serif;
-  font-weight: 400;
+  @apply bg-white font-sans text-base text-N-700;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply text-base text-gray-700;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  @apply text-gray-900;
+img {
+  max-width: unset;
+}
+
+.scrollbar-thin {
+  -webkit-appearance: none !important;
+  -webkit-overflow-scrolling: auto;
+}
+
+@layer base {
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .text-h2,
+  .text-h3,
+  .text-h4,
+  .text-h5,
+  .text-h6,
+  .text-overline,
+  .text-heading {
+    @apply font-heading text-N-800;
+  }
+
+  h1,
+  .text-h1 {
+    @apply font-display text-N-800;
+  }
+
+  h2,
+  .text-h2 {
+    @apply font-700;
+  }
+
+  h3,
+  .text-h3 {
+    @apply font-700;
+  }
+
+  h4,
+  .text-h4 {
+    @apply font-600;
+  }
+
+  h5,
+  .text-h5 {
+    @apply font-600;
+  }
+
+  h6,
+  .text-h6 {
+    @apply font-600;
+  }
+
+  .text-display-xl,
+  .text-display-lg,
+  .text-display-base {
+    @apply font-display text-N-800;
+  }
+
+  .text-overline {
+    @apply font-600 uppercase text-N-800;
+  }
+
+  a,
+  .link {
+    @apply text-N-700 hover:text-B-400;
+  }
 }
