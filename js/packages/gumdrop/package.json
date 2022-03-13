@@ -13,6 +13,7 @@
     "@fontsource/sora": "^4.5.0",
     "@mui/icons-material": "^5.0.1",
     "@mui/material": "^5.0.2",
+    "@oyster/common": "0.0.2",
     "@project-serum/anchor": "^0.14.0",
     "@project-serum/serum": "^0.13.52",
     "@solana/spl-token": "^0.1.8",
