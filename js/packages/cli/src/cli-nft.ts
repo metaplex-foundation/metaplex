@@ -15,6 +15,7 @@ import { PublicKey } from '@solana/web3.js';
 import { getCluster } from './helpers/various';
 import { DataV2, MetadataData } from '@metaplex-foundation/mpl-token-metadata';
 import * as fs from 'fs';
+import { mintNFTToWallet } from './commands/mint-nft';
 
 program.version('1.1.0');
 log.setLevel('info');
@@ -61,6 +62,65 @@ programCommand('mint')
     await mintNFT(
       solConnection,
       walletKeyPair,
+      url,
+      true,
+      collectionKey,
+      supply,
+      verifyCreators,
+      structuredUseMethod,
+    );
+  });
+
+programCommand('mint-to-wallet')
+  .requiredOption('-u, --url <string>', 'metadata url')
+  .option(
+    '-w, --to-wallet <string>',
+    'Optional: Wallet to receive nft. Defaults to keypair public key',
+  )
+  .option(
+    '-c, --collection <string>',
+    'Optional: Set this NFT as a part of a collection, Note you must be the update authority for this to work.',
+  )
+  .option('-um, --use-method <string>', 'Optional: Single, Multiple, or Burn')
+  .option('-tum, --total-uses <number>', 'Optional: Allowed Number of Uses')
+  .option('-ms, --max-supply <number>', 'Optional: Max Supply')
+  .option(
+    '-nvc, --no-verify-creators',
+    'Optional: Disable Verification of Creators',
+  )
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const {
+      keypair,
+      env,
+      url,
+      toWallet,
+      collection,
+      useMethod,
+      totalUses,
+      maxSupply,
+      verifyCreators,
+    } = cmd.opts();
+    const solConnection = new web3.Connection(getCluster(env));
+    let structuredUseMethod;
+    try {
+      structuredUseMethod = parseUses(useMethod, totalUses);
+    } catch (e) {
+      log.error(e);
+    }
+    const walletKeyPair = loadWalletKey(keypair);
+    let collectionKey;
+    if (collection !== undefined) {
+      collectionKey = new PublicKey(collection);
+    }
+    const supply = maxSupply || 0;
+    const receivingWallet = toWallet
+      ? new PublicKey(toWallet)
+      : walletKeyPair.publicKey;
+    await mintNFTToWallet(
+      solConnection,
+      walletKeyPair,
+      receivingWallet,
       url,
       true,
       collectionKey,
