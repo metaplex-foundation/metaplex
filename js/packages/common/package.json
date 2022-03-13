@@ -39,7 +39,6 @@
     "@solana/wallet-adapter-wallets": "^0.6.2",
     "@solana/web3.js": "^1.21.0",
     "antd": "^4.18.4",
-    "bignumber.js": "^9.0.1",
     "bn.js": "^5.1.3",
     "borsh": "^0.4.0",
     "bs58": "^4.0.1",
