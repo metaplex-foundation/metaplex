@@ -68,7 +68,13 @@ export const MintButton = ({
     if (verified && clicked) {
       mint();
     }
-  }, [verified, clicked]);
+  }, [
+    verified,
+    clicked,
+    connection.connection,
+    onMint,
+    webSocketSubscriptionId,
+  ]);
 
   const getMintButtonContent = () => {
     if (candyMachine?.state.isSoldOut) {
