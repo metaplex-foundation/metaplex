@@ -183,7 +183,6 @@ export async function setCollection(
   );
   log.info('Collection mint address: ', mintPubkey.toBase58());
   log.info('Collection PDA address: ', collectionPDAPubkey.toBase58());
-  log.info('Collection mint address: ');
   log.info(
     'Collection authority record address: ',
     collectionAuthorityRecordPubkey.toBase58(),
