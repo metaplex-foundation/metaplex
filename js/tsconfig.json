@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "target": "es6",
     "module": "es2015",
