@@ -1,5 +1,5 @@
 export const LABELS = {
-  STORE_NAME: 'Daring Dinos',
+  STORE_NAME: 'Metaplex',
   CONNECT_LABEL: 'Connect Wallet',
   GIVE_SOL: 'Give me SOL',
   FAUCET_INFO:
