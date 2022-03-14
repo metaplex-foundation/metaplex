@@ -10,17 +10,20 @@ const useSearch = () => {
     setSearchText(event.target.value)
   }
 
-  const onSubmitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmitSearch = (
+    event: React.FormEvent<HTMLFormElement>,
+    pid: string | undefined = 'trending'
+  ) => {
     event.preventDefault()
     if (searchText) {
       history.push({
         pathname: '/explore',
-        search: '?' + new URLSearchParams({ pid: 'trending', searchText }).toString(),
+        search: '?' + new URLSearchParams({ pid, searchText }).toString(),
       })
     } else {
       history.push({
         pathname: '/explore',
-        search: '?' + new URLSearchParams({ pid: 'trending' }).toString(),
+        search: '?' + new URLSearchParams({ pid }).toString(),
       })
     }
   }

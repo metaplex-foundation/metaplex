@@ -8,6 +8,8 @@ import '../styles/globals.less'
 import '../styles/overrides.less'
 import '../styles/custom-form.scss'
 
+import 'swiper/css'
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <>

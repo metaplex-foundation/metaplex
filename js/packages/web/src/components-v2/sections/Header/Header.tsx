@@ -38,7 +38,7 @@ export const Header: FC<HeaderProps> = ({ className, ...restProps }: HeaderProps
 
       <div className='ml-auto flex items-center lg:ml-[unset]'>
         {!isDesktop && (
-          <Button className='px-[8px] hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400 lg:mr-[12px]'>
+          <Button className='px-[8px] focus:!bg-white focus:!text-B-400 hover:!bg-white hover:!text-B-400 lg:mr-[12px]'>
             <i className='ri-search-2-line text-lg' />
           </Button>
         )}
@@ -46,10 +46,9 @@ export const Header: FC<HeaderProps> = ({ className, ...restProps }: HeaderProps
         {!connected && isDesktop && (
           <Button
             className={CN(
-              'mr-[4px] px-[8px] hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400 lg:mr-[12px]'
+              'mr-[4px] px-[8px] focus:!bg-white focus:!text-B-400 hover:!bg-white hover:!text-B-400 lg:mr-[12px]'
             )}
-            size='md'
-          >
+            size='md'>
             <i className='ri-user-3-fill flex text-[20px]' />
           </Button>
         )}
@@ -68,10 +67,9 @@ export const Header: FC<HeaderProps> = ({ className, ...restProps }: HeaderProps
         {!isDesktop && (
           <Button
             className={CN(
-              'ml-[4px] px-[8px] hover:!bg-white hover:!text-B-400 focus:!bg-white focus:!text-B-400'
+              'ml-[4px] px-[8px] focus:!bg-white focus:!text-B-400 hover:!bg-white hover:!text-B-400'
             )}
-            size='md'
-          >
+            size='md'>
             <i className='ri-menu-line text-lg' />
           </Button>
         )}

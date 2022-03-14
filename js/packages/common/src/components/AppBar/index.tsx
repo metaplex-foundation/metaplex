@@ -21,14 +21,13 @@ export const AppBar = (props: {
       {connected ? (
         <CurrentUserBadge />
       ) : (
-        <ConnectButton type='text' size='large' style={{ color: '#2abdd2' }} allowWalletChange />
+        <ConnectButton type='text' style={{ color: '#2abdd2' }} allowWalletChange />
       )}
       <Popover
         placement='topRight'
         title={LABELS.SETTINGS_TOOLTIP}
         content={<Settings additionalSettings={props.additionalSettings} />}
-        trigger='click'
-      >
+        trigger='click'>
         <Button shape='circle' size='large' type='text' icon={<SettingOutlined />} />
       </Popover>
       {props.right}

@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 
-import { Button } from '../../Button'
+import { Button } from '../../../atoms'
 import { TextField } from '../TextField'
 
 export interface FieldGroupProps {
