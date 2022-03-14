@@ -294,7 +294,7 @@ programCommand('upload')
         arweaveJwk,
         rateLimit,
         collectionMintPubkey,
-        setCollectionMint,
+        false,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
