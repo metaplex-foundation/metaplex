@@ -330,8 +330,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
               setUsersBid,
               setUsersEngaged,
             })
-          }
-        >
+          }>
           RERUN CALCULATION
         </Button>
         <h1>Overview</h1>

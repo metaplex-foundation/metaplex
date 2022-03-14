@@ -1,4 +1,14 @@
-import { Keypair, Connection, TransactionInstruction, PublicKey, Commitment } from '@solana/web3.js'
+import {
+  Keypair,
+  Connection,
+  TransactionInstruction,
+  PublicKey,
+  Commitment,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+  sendAndConfirmTransaction,
+} from '@solana/web3.js'
 import {
   sendTransactionWithRetry,
   placeBid,
@@ -79,6 +89,7 @@ export async function setupPlaceBid(
 
   let signers: Keypair[] = []
   let instructions: TransactionInstruction[] = []
+
   const cleanupInstructions: TransactionInstruction[] = []
 
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span)
