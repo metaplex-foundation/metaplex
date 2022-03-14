@@ -263,6 +263,8 @@ programCommand('upload')
       walletKeyPair,
     );
 
+    log.debug(setCollectionMint);
+
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
     try {
