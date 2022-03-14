@@ -184,9 +184,6 @@ export const mintNFT = async (
   const mint = anchor.web3.Keypair.generate();
   const instructions: TransactionInstruction[] = [];
   const signers: anchor.web3.Keypair[] = [mint, walletKeypair];
-  const finalDestinationWallet = mintOptions?.receivingWallet
-    ? mintOptions.receivingWallet
-    : wallet.publicKey;
 
   instructions.push(
     SystemProgram.createAccount({
@@ -208,7 +205,7 @@ export const mintNFT = async (
   );
 
   const userTokenAccoutAddress = await getTokenWallet(
-    finalDestinationWallet,
+    wallet.publicKey,
     mint.publicKey,
   );
   instructions.push(
@@ -217,7 +214,7 @@ export const mintNFT = async (
       TOKEN_PROGRAM_ID,
       mint.publicKey,
       userTokenAccoutAddress,
-      finalDestinationWallet,
+      wallet.publicKey,
       wallet.publicKey,
     ),
   );
@@ -288,7 +285,7 @@ export const mintNFT = async (
       mintOptions.receivingWallet,
       mint.publicKey,
     );
-    const createdAccount = Token.createAssociatedTokenAccountInstruction(
+    const createdAccountIx = Token.createAssociatedTokenAccountInstruction(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       mint.publicKey,
@@ -296,15 +293,22 @@ export const mintNFT = async (
       mintOptions.receivingWallet,
       wallet.publicKey,
     );
-    const transferTxn = Token.createTransferInstruction(
+    const transferIx = Token.createTransferInstruction(
       TOKEN_PROGRAM_ID,
       userTokenAccoutAddress,
       derivedAccount,
-      finalDestinationWallet,
+      wallet.publicKey,
       signers,
       1,
     );
-    instructions.push(createdAccount, transferTxn);
+    const closeAccountIx = Token.createCloseAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      userTokenAccoutAddress,
+      wallet.publicKey,
+      wallet.publicKey,
+      signers,
+    );
+    instructions.push(createdAccountIx, transferIx, closeAccountIx);
   }
 
   const res = await sendTransactionWithRetryWithKeypair(
