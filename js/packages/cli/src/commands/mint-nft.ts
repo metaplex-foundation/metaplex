@@ -30,6 +30,8 @@ import {
   CreateMasterEditionV3,
   UpdateMetadataV2,
 } from '@metaplex-foundation/mpl-token-metadata';
+import { MintOptions } from '../helpers/mintoptions';
+import { MintResult } from '../helpers/mintresult';
 
 export const createMetadata = async (
   metadataLink: string,
@@ -158,7 +160,8 @@ export const mintNFT = async (
   maxSupply: number = 0,
   verifyCreators: boolean,
   use: Uses = null,
-): Promise<PublicKey | void> => {
+  mintOptions: MintOptions = null,
+): Promise<MintResult | void> => {
   // Retrieve metadata
   const data = await createMetadata(
     metadataLink,
@@ -181,6 +184,9 @@ export const mintNFT = async (
   const mint = anchor.web3.Keypair.generate();
   const instructions: TransactionInstruction[] = [];
   const signers: anchor.web3.Keypair[] = [mint, walletKeypair];
+  const finalDestinationWallet = mintOptions?.receivingWallet
+    ? mintOptions.receivingWallet
+    : wallet.publicKey;
 
   instructions.push(
     SystemProgram.createAccount({
@@ -202,7 +208,7 @@ export const mintNFT = async (
   );
 
   const userTokenAccoutAddress = await getTokenWallet(
-    wallet.publicKey,
+    finalDestinationWallet,
     mint.publicKey,
   );
   instructions.push(
@@ -211,7 +217,7 @@ export const mintNFT = async (
       TOKEN_PROGRAM_ID,
       mint.publicKey,
       userTokenAccoutAddress,
-      wallet.publicKey,
+      finalDestinationWallet,
       wallet.publicKey,
     ),
   );
@@ -277,153 +283,28 @@ export const mintNFT = async (
     );
   }
 
-  const res = await sendTransactionWithRetryWithKeypair(
-    connection,
-    walletKeypair,
-    instructions,
-    signers,
-  );
-
-  try {
-    await connection.confirmTransaction(res.txid, 'max');
-  } catch {
-    // ignore
-  }
-
-  // Force wait for max confirmations
-  await connection.getParsedTransaction(res.txid, 'confirmed');
-  log.info('NFT created', res.txid);
-  log.info('\n\nNFT: Mint Address is ', mint.publicKey.toBase58());
-  return metadataAccount;
-};
-
-export const mintNFTToWallet = async (
-  connection: Connection,
-  walletKeypair: Keypair,
-  receivingWallet: PublicKey,
-  metadataLink: string,
-  mutableMetadata: boolean = true,
-  collection: PublicKey = null,
-  maxSupply: number = 0,
-  verifyCreators: boolean,
-  use: Uses = null,
-): Promise<PublicKey | void> => {
-  // Retrieve metadata
-  const data = await createMetadata(
-    metadataLink,
-    verifyCreators,
-    collection,
-    use,
-  );
-  if (!data) return;
-
-  // Create wallet from keypair
-  const wallet = new anchor.Wallet(walletKeypair);
-  if (!wallet?.publicKey) return;
-
-  // Allocate memory for the account
-  const mintRent = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
-  );
-
-  // Generate a mint
-  const mint = anchor.web3.Keypair.generate();
-  const instructions: TransactionInstruction[] = [];
-  const signers: anchor.web3.Keypair[] = [mint, walletKeypair];
-
-  instructions.push(
-    SystemProgram.createAccount({
-      fromPubkey: wallet.publicKey,
-      newAccountPubkey: mint.publicKey,
-      lamports: mintRent,
-      space: MintLayout.span,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-  );
-  instructions.push(
-    Token.createInitMintInstruction(
-      TOKEN_PROGRAM_ID,
+  if (mintOptions.receivingWallet) {
+    const derivedAccount = await getTokenWallet(
+      mintOptions.receivingWallet,
       mint.publicKey,
-      0,
-      wallet.publicKey,
-      wallet.publicKey,
-    ),
-  );
-
-  const userTokenAccoutAddress = await getTokenWallet(
-    receivingWallet,
-    mint.publicKey,
-  );
-  instructions.push(
-    Token.createAssociatedTokenAccountInstruction(
+    );
+    const createdAccount = Token.createAssociatedTokenAccountInstruction(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       mint.publicKey,
-      userTokenAccoutAddress,
-      receivingWallet,
+      derivedAccount,
+      mintOptions.receivingWallet,
       wallet.publicKey,
-    ),
-  );
-
-  // Create metadata
-  const metadataAccount = await getMetadata(mint.publicKey);
-
-  instructions.push(
-    ...new CreateMetadataV2(
-      { feePayer: wallet.publicKey },
-      {
-        metadata: metadataAccount,
-        metadataData: data,
-        updateAuthority: wallet.publicKey,
-        mint: mint.publicKey,
-        mintAuthority: wallet.publicKey,
-      },
-    ).instructions,
-  );
-
-  instructions.push(
-    Token.createMintToInstruction(
-      TOKEN_PROGRAM_ID,
-      mint.publicKey,
-      userTokenAccoutAddress,
-      wallet.publicKey,
-      [],
-      1,
-    ),
-  );
-
-  // Create master edition
-  const editionAccount = await getMasterEdition(mint.publicKey);
-
-  instructions.push(
-    ...new CreateMasterEditionV3(
-      {
-        feePayer: wallet.publicKey,
-      },
-      {
-        edition: editionAccount,
-        metadata: metadataAccount,
-        mint: mint.publicKey,
-        mintAuthority: wallet.publicKey,
-        updateAuthority: wallet.publicKey,
-        maxSupply: new anchor.BN(maxSupply),
-      },
-    ).instructions,
-  );
-
-  if (!mutableMetadata) {
-    instructions.push(
-      ...new UpdateMetadataV2(
-        {},
-        {
-          metadata: metadataAccount,
-          metadataData: data,
-          updateAuthority: walletKeypair.publicKey,
-          primarySaleHappened: null,
-          isMutable: false,
-        },
-      ).instructions,
     );
+    const transferTxn = Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      userTokenAccoutAddress,
+      derivedAccount,
+      finalDestinationWallet,
+      signers,
+      1,
+    );
+    instructions.push(createdAccount, transferTxn);
   }
 
   const res = await sendTransactionWithRetryWithKeypair(
@@ -441,9 +322,10 @@ export const mintNFTToWallet = async (
 
   // Force wait for max confirmations
   await connection.getParsedTransaction(res.txid, 'confirmed');
+
   log.info('NFT created', res.txid);
   log.info('\n\nNFT: Mint Address is ', mint.publicKey.toBase58());
-  return metadataAccount;
+  return { metadataAccount, mint: mint.publicKey };
 };
 
 export const updateMetadata = async (
