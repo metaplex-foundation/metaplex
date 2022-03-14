@@ -1,24 +1,17 @@
 import React, { FC } from 'react'
-import CN from 'classnames'
 import { Link } from 'react-router-dom'
 import { SearchField, ConnectButton, Button, Logo } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { CurrentUserBadge } from '../../../components/CurrentUserBadge'
+import useSearch from '../../../hooks/useSearch'
 
-import { Cog, CurrentUserBadge } from '../../../components/CurrentUserBadge'
+interface HeaderProps {}
 
-export interface HeaderProps {
-  [x: string]: any
-}
-
-export const Header: FC<HeaderProps> = ({ className, ...restProps }: HeaderProps) => {
-  const HeaderClasses = CN(
-    `header relative flex w-full min-h-[42px] flex items-center py-[40px]`,
-    className
-  )
+export const Header: FC<HeaderProps> = () => {
   const { connected } = useWallet()
-
+  const { onChangeSearchText, searchText, onSubmitSearch } = useSearch()
   return (
-    <div className={HeaderClasses} {...restProps}>
+    <div className='header relative flex flex min-h-[42px] w-full items-center py-[40px]'>
       <span className="absolute top-0 left-0 right-0 z-[-1] h-[692px] w-full bg-[url('/img/hero-bg-pattern.png')] bg-top" />
 
       <div className='container relative flex items-center justify-between'>
@@ -27,7 +20,13 @@ export const Header: FC<HeaderProps> = ({ className, ...restProps }: HeaderProps
             <Logo className='cursor-pointer' />
           </Link>
 
-          <SearchField className='min-w-[368px] flex-shrink-0' />
+          <form name='search' onSubmit={onSubmitSearch}>
+            <SearchField
+              value={searchText}
+              onChange={onChangeSearchText}
+              className='min-w-[368px] flex-shrink-0'
+            />
+          </form>
         </div>
 
         <div className='header__right relative z-10 flex flex-shrink-0 items-center gap-[28px]'>
@@ -48,5 +47,3 @@ export const Header: FC<HeaderProps> = ({ className, ...restProps }: HeaderProps
     </div>
   )
 }
-
-export default Header
