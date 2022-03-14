@@ -75,9 +75,17 @@ export const deserializeAccount = (data: Buffer) => {
   return accountInfo;
 };
 
-export enum WhitelistMintMode {
-  BurnEveryTime,
-  NeverBurn,
+export interface WhitelistMintMode {
+  neverBurn: undefined | boolean;
+  burnEveryTime: undefined | boolean;
+}
+
+export interface CandyMachine {
+  authority: anchor.web3.PublicKey;
+  wallet: anchor.web3.PublicKey;
+  tokenMint: null | anchor.web3.PublicKey;
+  itemsRedeemed: anchor.BN;
+  data: CandyMachineData;
 }
 export interface CandyMachineData {
   itemsAvailable: anchor.BN;

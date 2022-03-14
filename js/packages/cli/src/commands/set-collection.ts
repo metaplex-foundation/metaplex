@@ -22,6 +22,7 @@ import {
 } from '@metaplex-foundation/mpl-token-metadata';
 import log from 'loglevel';
 import { Program } from '@project-serum/anchor';
+import { parseCollectionMintPubkey } from '../helpers/various';
 
 export async function setCollection(
   walletKeyPair: anchor.web3.Keypair,
@@ -33,10 +34,10 @@ export async function setCollection(
   const wallet = new anchor.Wallet(walletKeyPair);
   const instructions = [];
   let mintPubkey: PublicKey;
-  let metadataPubkey;
-  let masterEditionPubkey;
-  let collectionPDAPubkey;
-  let collectionAuthorityRecordPubkey;
+  let metadataPubkey: PublicKey;
+  let masterEditionPubkey: PublicKey;
+  let collectionPDAPubkey: PublicKey;
+  let collectionAuthorityRecordPubkey: PublicKey;
 
   const candyMachine: any = await anchorProgram.account.candyMachine.fetch(
     candyMachineAddress,
@@ -141,7 +142,11 @@ export async function setCollection(
       ).instructions,
     );
   } else {
-    mintPubkey = collectionMint;
+    mintPubkey = await parseCollectionMintPubkey(
+      collectionMint,
+      anchorProgram.provider.connection,
+      walletKeyPair,
+    );
     metadataPubkey = await getMetadata(mintPubkey);
     masterEditionPubkey = await getMasterEdition(mintPubkey);
     [collectionPDAPubkey] = await getCollectionPDA(candyMachineAddress);
@@ -170,10 +175,13 @@ export async function setCollection(
   );
 
   log.info('Candy machine address: ', candyMachineAddress.toBase58());
-  log.info('Metadata address: ', metadataPubkey.toBase58());
-  log.info('Metadata authority: ', wallet.publicKey.toBase58());
-  log.info('Master edition address: ', masterEditionPubkey.toBase58());
-  log.info('Mint address: ', mintPubkey.toBase58());
+  log.info('Collection metadata address: ', metadataPubkey.toBase58());
+  log.info('Collection metadata authority: ', wallet.publicKey.toBase58());
+  log.info(
+    'Collection master edition address: ',
+    masterEditionPubkey.toBase58(),
+  );
+  log.info('Collection mint address: ', mintPubkey.toBase58());
   log.info('Collection PDA address: ', collectionPDAPubkey.toBase58());
   log.info(
     'Collection authority record address: ',
@@ -189,8 +197,8 @@ export async function setCollection(
     )
   ).txid;
   const toReturn = {
-    collectionMetadata: metadataPubkey,
-    collectionPDA: collectionPDAPubkey,
+    collectionMetadata: metadataPubkey.toBase58(),
+    collectionPDA: collectionPDAPubkey.toBase58(),
     txId,
   };
   return toReturn;

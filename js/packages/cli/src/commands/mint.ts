@@ -1,5 +1,6 @@
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
+  CandyMachine,
   getAtaForMint,
   getCandyMachineAddress,
   getCandyMachineCreator,
@@ -20,6 +21,7 @@ import * as anchor from '@project-serum/anchor';
 import { MintLayout, Token } from '@solana/spl-token';
 import { createAssociatedTokenAccountInstruction } from '../helpers/instructions';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
+import log from 'loglevel';
 
 export async function mint(
   keypair: string,
@@ -174,9 +176,9 @@ export async function mintV2(
     mint.publicKey,
   );
 
-  const candyMachine: any = await anchorProgram.account.candyMachine.fetch(
-    candyMachineAddress,
-  );
+  const candyMachine: CandyMachine =
+    await anchorProgram.account.candyMachine.fetch(candyMachineAddress);
+
   const remainingAccounts = [];
   const signers = [mint, userKeyPair];
   const cleanupInstructions = [];
@@ -315,7 +317,7 @@ export async function mintV2(
   const collectionPDAAccount =
     await anchorProgram.provider.connection.getAccountInfo(collectionPDA);
 
-  if (collectionPDAAccount) {
+  if (collectionPDAAccount && candyMachine.data.retainAuthority) {
     try {
       const collectionMint = (await anchorProgram.account.collectionPda.fetch(
         collectionPDA,
@@ -354,6 +356,11 @@ export async function mintV2(
               isSigner: false,
             },
             {
+              pubkey: candyMachine.authority,
+              isWritable: false,
+              isSigner: false,
+            },
+            {
               pubkey: collectionAuthorityRecord,
               isWritable: false,
               isSigner: false,
@@ -365,7 +372,7 @@ export async function mintV2(
       console.error(error);
     }
   }
-  console.log(remainingAccounts.map(i => i.pubkey.toBase58()));
+  log.debug(remainingAccounts.map(i => i.pubkey.toBase58()));
   const [candyMachineCreator, creatorBump] = await getCandyMachineCreator(
     candyMachineAddress,
   );
@@ -395,7 +402,35 @@ export async function mintV2(
     }),
   );
 
-  const finished = (
+  const data = candyMachine.data;
+  const txnEstimate =
+    892 +
+    (collectionPDAAccount && data.retainAuthority ? 132 : 0) +
+    (candyMachine.tokenMint ? 145 : 0) +
+    (data.whitelistMintSettings ? 33 : 0) +
+    (data.whitelistMintSettings?.mode?.burnEveryTime ? 145 : 0) +
+    (data.gatekeeper ? 33 : 0) +
+    (data.gatekeeper?.expireOnUse ? 66 : 0);
+
+  log.info('Transaction size estimate: ', txnEstimate);
+  const INIT_INSTRUCTIONS_LENGTH = 4;
+  const INIT_SIGNERS_LENGTH = 1;
+  let initInstructions: anchor.web3.TransactionInstruction[] = [];
+  let initSigners: Keypair[] = [];
+
+  if (txnEstimate > 1230) {
+    initInstructions = instructions.splice(0, INIT_INSTRUCTIONS_LENGTH);
+    initSigners = signers.splice(0, INIT_SIGNERS_LENGTH);
+  }
+
+  await sendTransactionWithRetryWithKeypair(
+    anchorProgram.provider.connection,
+    userKeyPair,
+    initInstructions,
+    initSigners,
+  );
+
+  const mainInstructions = (
     await sendTransactionWithRetryWithKeypair(
       anchorProgram.provider.connection,
       userKeyPair,
@@ -411,5 +446,5 @@ export async function mintV2(
     [],
   );
 
-  return finished;
+  return mainInstructions;
 }
