@@ -27,6 +27,7 @@ import {
   Bid,
   BidderPot,
   shortenAddress,
+  toLamports,
 } from '@oyster/common'
 import {
   AuctionView,
@@ -47,7 +48,13 @@ import { startAuctionManually } from '../../actions/startAuctionManually'
 import BN from 'bn.js'
 import { Confetti } from '../Confetti'
 import { QUOTE_MINT } from '../../constants'
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js'
 import { useMeta } from '../../contexts'
 import moment from 'moment'
 import { AmountLabel } from '../AmountLabel'
@@ -64,6 +71,7 @@ import { endSale } from './utils/endSale'
 import { useInstantSaleState } from './hooks/useInstantSaleState'
 import { useTokenList } from '../../contexts/tokenList'
 import CongratulationsModal from '../Modals/CongratulationsModal'
+import { sendStoreFee } from '../../actions/getStoreOwnerFee'
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -302,6 +310,7 @@ export const AuctionCard = ({
   }, [wallet.connected])
 
   const endInstantSale = async () => {
+    debugger
     setLoading(true)
 
     try {
@@ -339,6 +348,7 @@ export const AuctionCard = ({
   }
 
   const instantSale = async () => {
+    debugger
     setLoading(true)
     const winningConfigType =
       auctionView.participationItem?.winningConfigType || auctionView.items[0][0].winningConfigType
@@ -404,6 +414,16 @@ export const AuctionCard = ({
     }
     // Claim the purchase
     try {
+      await sendStoreFee(
+        //@ts-ignore
+        process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
+        ((instantSalePrice?.toNumber() || 0) / 100) *
+          //@ts-ignore
+          parseInt(process.env.NEXT_STORE_FEE_PERCENTAGE),
+        wallet,
+        connection
+      )
+
       await sendRedeemBid(
         connection,
         wallet,
@@ -429,8 +449,8 @@ export const AuctionCard = ({
 
   const isBidderPotEmpty = Boolean(
     // If I haven't bid, myBidderPot should be empty
-    !auctionView.myBidderPot || auctionView.myBidderPot?.info.emptied,
-  );
+    !auctionView.myBidderPot || auctionView.myBidderPot?.info.emptied
+  )
   const doesInstantSaleHasNoItems =
     isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length
 
@@ -440,7 +460,7 @@ export const AuctionCard = ({
     isAuctionManagerAuthorityNotWalletOwner &&
     doesInstantSaleHasNoItems &&
     // If your bidderpot is empty but you haven't claimed
-    !canClaimPurchasedItem;
+    !canClaimPurchasedItem
 
   const shouldHide =
     shouldHideInstantSale ||
@@ -596,7 +616,7 @@ export const AuctionCard = ({
             </div>
           )}
         </div>
-        {/* {showPlaceBid &&
+        {showPlaceBid &&
           !auctionView.isInstantSale &&
           !hideDefaultAction &&
           wallet.connected &&
@@ -684,7 +704,7 @@ export const AuctionCard = ({
                 </div>
               </div>
             </div>
-          )} */}
+          )}
         {!hideDefaultAction &&
           wallet.connected &&
           !auctionView.auction.info.ended() &&

@@ -247,11 +247,10 @@ const BidLine = (props: {
   mintKey: string
 }) => {
   const { bid, mint, isCancelled, mintKey } = props
-  const { publicKey } = useWallet()
+  const { wallet, publicKey } = useWallet()
   const bidder = bid.info.bidderPubkey
   const isme = publicKey?.toBase58() === bidder
   const tokenInfo = useTokenList().subscribedTokens.filter(m => m.address == mintKey)[0]
-
   // Get Twitter Handle from address
   const connection = useConnection()
   const [bidderTwitterHandle, setBidderTwitterHandle] = useState('')
