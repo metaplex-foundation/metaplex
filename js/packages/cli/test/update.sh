@@ -3,8 +3,9 @@ SCRIPT_DIR=$(cd -- $(dirname -- "${BASH_SOURCE[0]}") &>/dev/null && pwd)
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 CACHE_DIR=$SCRIPT_DIR/.cache
 SRC_DIR=$PARENT_DIR/src
+TEST_UTILS_DIR=$PARENT_DIR/test/utils
 CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
-CMD_CONFIG="ts-node ${SRC_DIR}/make-config.ts"
+CMD_CONFIG="ts-node ${TEST_UTILS_DIR}/make-config.ts"
 
 WL_MINT_M=""
 SPL_TOKEN_M=""
