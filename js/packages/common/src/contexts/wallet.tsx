@@ -22,7 +22,7 @@ import React, {
 } from 'react'
 import { notify } from '../utils'
 import { MetaplexModal } from '../components'
-import { Button } from './../ui-components/Button'
+import { Button } from './../atoms'
 
 const { Panel } = Collapse
 

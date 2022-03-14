@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 import { Upload } from 'antd'
-import { Button } from '../Button'
+import { Button } from '../../atoms'
 import { UploadOutlined } from '@ant-design/icons'
 
 export interface FileUploadProps {
@@ -34,8 +34,7 @@ export const FileUpload: FC<FileUploadProps> = ({
         <Button
           appearance='secondary'
           view='outline'
-          iconBefore={<i className='ri-upload-cloud-2-line text-lg' />}
-        >
+          iconBefore={<i className='ri-upload-cloud-2-line text-lg' />}>
           Attach file
         </Button>
       </Upload>
