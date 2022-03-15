@@ -3,7 +3,7 @@ import { FC, useEffect, useState } from 'react'
 import { useAuctionStatus } from '../../../components/AuctionRenderCard/hooks/useAuctionStatus'
 import { useAllSplPrices, useSolPrice } from '../../../contexts'
 import { useTokenList } from '../../../contexts/tokenList'
-import { AuctionView, useArt, useExtendedArt } from '../../../hooks'
+import { AuctionView, useExtendedArt } from '../../../hooks'
 import { useAuctionCountdown } from '../../../hooks/useAuctionCountdown'
 import { BidCardAlt, formatAmount, WRAPPED_SOL_MINT } from '@oyster/common'
 
@@ -14,9 +14,6 @@ interface AuctionsCardProps {
 const AuctionsCard: FC<AuctionsCardProps> = ({ auction }) => {
   const [priceUSD, setPriceUSD] = useState<number | undefined>(undefined)
   const id = auction.thumbnail.metadata.pubkey
-  const art = useArt(id)
-
-  const image = art.uri || ''
 
   const tokenInfo = useTokenList().subscribedTokens.filter(
     m => m.address == auction.auction.info.tokenMint
