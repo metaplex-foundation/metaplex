@@ -1,57 +1,17 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { ButtonGroup, Button, SectionHeading, BidCardAlt } from '@oyster/common'
-
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
 import { LiveAuctionViewState } from '../../views/Home'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import AuctionsCard from './AuctionsCard'
 import { AuctionView } from '../../../hooks'
+import { ButtonGroup, Button, SectionHeading } from '@oyster/common'
 
 export interface HottestAuctionsProps {
   activeKey: LiveAuctionViewState
   onChangeActiveKey: (key: LiveAuctionViewState) => void
   className: string
 }
-
-const slidesData = [
-  {
-    image: '/img/temp/nft1.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft3.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft4.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft2.png',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft5.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft6.gif',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-]
 
 export const HottestAuctions: FC<HottestAuctionsProps> = ({
   className,
@@ -68,7 +28,6 @@ export const HottestAuctions: FC<HottestAuctionsProps> = ({
       Component: () => <AuctionsCard auction={auction} key={index} />,
     }
   })
-  console.log('auctions', auctions)
 
   return (
     <div className={HottestAuctionsClasses}>
@@ -83,17 +42,27 @@ export const HottestAuctions: FC<HottestAuctionsProps> = ({
                 buttons={[
                   {
                     label: 'Live Auctions',
-                    onClick: () => {},
-                    isActive: true,
-                    hasIndicator: true,
+                    onClick: () => {
+                      onChangeActiveKey(LiveAuctionViewState.All)
+                    },
+                    isActive: activeKey === LiveAuctionViewState.All,
+                    hasIndicator: activeKey === LiveAuctionViewState.All,
                   },
                   {
                     label: 'Ended',
-                    onClick: () => {},
+                    onClick: () => {
+                      onChangeActiveKey(LiveAuctionViewState.Ended)
+                    },
+                    isActive: activeKey === LiveAuctionViewState.Ended,
+                    hasIndicator: activeKey === LiveAuctionViewState.Ended,
                   },
                   {
                     label: 'Participated',
-                    onClick: () => {},
+                    onClick: () => {
+                      onChangeActiveKey(LiveAuctionViewState.Participated)
+                    },
+                    isActive: activeKey === LiveAuctionViewState.Participated,
+                    hasIndicator: activeKey === LiveAuctionViewState.Participated,
                   },
                 ]}
               />

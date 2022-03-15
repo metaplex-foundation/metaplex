@@ -3,27 +3,22 @@ import CN from 'classnames'
 import { Image, Button, MetaChip } from '../../atoms'
 
 export interface BidCardAltProps {
-  [x: string]: any
-  avatar?: string
-  avatarLabel?: string
   image?: string
   remainingTime?: string
   price?: string
   dollarValue?: string
   onClickButton?: any
   hasIndicator?: boolean
+  className?: string
 }
 
 export const BidCardAlt: FC<BidCardAltProps> = ({
   className,
-  avatar,
-  avatarLabel,
   image,
   remainingTime,
   price,
   dollarValue,
   onClickButton,
-  hasIndicator,
   ...restProps
 }) => {
   const BidCardAltClasses = CN(
