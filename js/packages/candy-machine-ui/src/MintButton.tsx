@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button';
 import { CandyMachineAccount } from './candy-machine';
 import { CircularProgress } from '@material-ui/core';
 import { GatewayStatus, useGateway } from '@civic/solana-gateway-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import {
   findGatewayToken,
@@ -28,31 +28,37 @@ export const MintButton = ({
   candyMachine,
   isMinting,
   rpcUrl,
+  setIsMinting,
   isActive,
 }: {
   onMint: () => Promise<void>;
   candyMachine?: CandyMachineAccount;
   isMinting: boolean;
+  setIsMinting: (val: boolean) => void;
   isActive: boolean;
   rpcUrl: string;
 }) => {
-  const { requestGatewayToken, gatewayStatus } = useGateway();
-  const [clicked, setClicked] = useState(false);
-  const [verified, setVerified] = useState(false);
-  const [webSocketSubscriptionId, setWebSocketSubscriptionId] = useState(-1);
-
   const wallet = useWallet();
   const connection = useConnection();
+  const [verified, setVerified] = useState(false);
+  const { requestGatewayToken, gatewayStatus } = useGateway();
+  const [webSocketSubscriptionId, setWebSocketSubscriptionId] = useState(-1);
+  const [clicked, setClicked] = useState(false);
 
-  useEffect(() => {
-    const mint = async () => {
-      await onMint();
-      setClicked(false);
-    };
-    if (gatewayStatus === GatewayStatus.ACTIVE && clicked) {
-      mint();
+  const getMintButtonContent = () => {
+    if (candyMachine?.state.isSoldOut) {
+      return 'SOLD OUT';
+    } else if (isMinting) {
+      return <CircularProgress />;
+    } else if (
+      candyMachine?.state.isPresale ||
+      candyMachine?.state.isWhitelistOnly
+    ) {
+      return 'WHITELIST MINT';
     }
-  }, [gatewayStatus, clicked, setClicked, onMint]);
+
+    return 'MINT';
+  };
 
   useEffect(() => {
     const mint = async () => {
@@ -76,41 +82,42 @@ export const MintButton = ({
     webSocketSubscriptionId,
   ]);
 
-  const getMintButtonContent = () => {
-    if (candyMachine?.state.isSoldOut) {
-      return 'SOLD OUT';
-    } else if (isMinting) {
-      return <CircularProgress />;
-    } else if (
-      candyMachine?.state.isPresale ||
-      candyMachine?.state.isWhitelistOnly
+  const previousGatewayStatus = usePrevious(gatewayStatus);
+  useEffect(() => {
+    const fromStates = [
+      GatewayStatus.NOT_REQUESTED,
+      GatewayStatus.REFRESH_TOKEN_REQUIRED,
+    ];
+    const invalidToStates = [...fromStates, GatewayStatus.UNKNOWN];
+    if (
+      fromStates.find(state => previousGatewayStatus === state) &&
+      !invalidToStates.find(state => gatewayStatus === state)
     ) {
-      return 'WHITELIST MINT';
-    } else if (clicked && candyMachine?.state.gatekeeper) {
-      return <CircularProgress />;
+      setIsMinting(true);
     }
-
-    return 'MINT';
-  };
+    console.log('change: ', gatewayStatus);
+  }, [setIsMinting, previousGatewayStatus, gatewayStatus]);
 
   return (
     <CTAButton
-      disabled={clicked || isMinting || !isActive}
+      disabled={isMinting || !isActive}
       onClick={async () => {
-        setClicked(true);
         if (candyMachine?.state.isActive && candyMachine?.state.gatekeeper) {
           const network =
             candyMachine.state.gatekeeper.gatekeeperNetwork.toBase58();
           if (network === 'ignREusXmGrscGNUesoU9mxfds9AiYTezUKex2PsZV6') {
             if (gatewayStatus === GatewayStatus.ACTIVE) {
-              setClicked(true);
+              await onMint();
             } else {
+              // setIsMinting(true);
               await requestGatewayToken();
+              console.log('after: ', gatewayStatus);
             }
           } else if (
             network === 'ttib7tuX8PTWPqFsmUFQTj78MbRhUmqxidJRDv4hRRE' ||
             network === 'tibePmPaoTgrs929rWpu755EXaxC7M3SthVCf6GzjZt'
           ) {
+            setClicked(true);
             const gatewayToken = await findGatewayToken(
               connection.connection,
               wallet.publicKey!,
@@ -119,7 +126,6 @@ export const MintButton = ({
 
             if (gatewayToken?.isValid()) {
               await onMint();
-              setClicked(false);
             } else {
               let endpoint = rpcUrl;
               if (endpoint.endsWith('/')) endpoint = endpoint.slice(0, -1);
@@ -161,3 +167,11 @@ export const MintButton = ({
     </CTAButton>
   );
 };
+
+function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}

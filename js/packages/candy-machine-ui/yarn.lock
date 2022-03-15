@@ -1089,14 +1089,14 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
-"@civic/solana-gateway-react@^0.4.12":
-  version "0.4.12"
-  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.12.tgz#e9e6986d517f09926d7554c9e40265861252e85a"
-  integrity sha512-P7M4A3C6Zd+dtYC2UllyxuUnDdP3cr0/OFZXlv/DkBQcux6XyJFSdQQcjaE2+t/n6v6mnuNiti8r9SkW4ZvQXg==
+"@civic/solana-gateway-react@^0.4.13":
+  version "0.4.13"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.4.13.tgz#c8706e1f398c68fd2b28f4d604716bee56b3b1df"
+  integrity sha512-Hpw90oquM0AAksu5qZebmlzSr4Fe391fpXz2ham8qfWyed9rbDw7WlQxEqVPaXY77zYd1roU1+7tNg+nwAy1GQ==
   dependencies:
     "@identity.com/prove-solana-wallet" "^0.2.3"
     "@identity.com/solana-gateway-ts" "^0.7.0"
-    "@solana/web3.js" "^1.20.0"
+    "@solana/web3.js" "^1.33.0"
     "@types/styled-components" "^5.1.15"
     fetch-retry-ts "^1.1.24"
     iframe-resizer-react "^1.1.0"
@@ -1892,7 +1892,7 @@
     "@solana/wallet-adapter-tokenpocket" "^0.2.0"
     "@solana/wallet-adapter-torus" "^0.8.0"
 
-"@solana/web3.js@^1.17.0", "@solana/web3.js@^1.20.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.22.0", "@solana/web3.js@^1.30.2":
+"@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.22.0", "@solana/web3.js@^1.30.2":
   version "1.31.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.31.0.tgz#7a313d4c1a90b77f27ddbfe845a10d6883e06452"
   integrity sha512-7nHHx1JNFnrt15e9y8m38I/EJCbaB+bFC3KZVM1+QhybCikFxGMtGA5r7PDC3GEL1R2RZA8yKoLkDKo3vzzqnw==
