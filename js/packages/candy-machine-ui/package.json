@@ -3,7 +3,9 @@
   "version": "0.2.0",
   "private": true,
   "dependencies": {
+    "@babel/runtime": "^7.15.5",
     "@civic/solana-gateway-react": "^0.4.12",
+    "@identity.com/solana-gateway-ts": "^0.8.1",
     "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.60",
@@ -16,16 +18,15 @@
     "@solana/wallet-adapter-wallets": "^0.11.3",
     "@solana/web3.js": "^1.33.0",
     "mime": "^3.0.0",
+    "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-countdown": "^2.3.2",
     "react-dom": "^17.0.2",
+    "react-is": "^16.8.0",
     "react-scripts": "4.0.3",
     "styled-components": "^5.3.1",
     "typescript": "^4.1.2",
-    "web-vitals": "^1.0.1",
-    "react-is": "^16.8.0",
-    "@babel/runtime": "^7.15.5",
-    "prop-types": "^15.7.2"
+    "web-vitals": "^1.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
