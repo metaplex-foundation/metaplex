@@ -8,8 +8,6 @@ import { AuctionCategory, AuctionState } from '.';
 import { ArtCard } from '../../components/ArtCard';
 import { useUserBalance } from '../../hooks';
 import { AddFundsModal } from '../../components/CurrentUserBadge';
-import * as MaterialAlert from '@material-ui/lab/Alert';
-import { DateTime } from 'luxon';
 
 export const ReviewStep = (props: {
   confirm: () => void;
@@ -38,10 +36,9 @@ export const ReviewStep = (props: {
             />
           )}
         </Col>
-        <Col span={8} className="">
+        <Col span={8}>
           <Statistic
             title="Copies"
-            className=""
             value={
               props.attributes.editions === undefined
                 ? 'Unique'
