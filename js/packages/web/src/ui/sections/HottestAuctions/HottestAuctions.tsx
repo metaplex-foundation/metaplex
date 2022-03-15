@@ -3,9 +3,15 @@ import CN from 'classnames'
 import { ButtonGroup, Button, SectionHeading, BidCardAlt } from '@oyster/common'
 
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
+import { LiveAuctionViewState } from '../../views/Home'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+import AuctionsCard from './AuctionsCard'
+import { AuctionView } from '../../../hooks'
 
-export interface HottestsAuctionsProps {
-  [x: string]: any
+export interface HottestAuctionsProps {
+  activeKey: LiveAuctionViewState
+  onChangeActiveKey: (key: LiveAuctionViewState) => void
+  className: string
 }
 
 const slidesData = [
@@ -47,35 +53,25 @@ const slidesData = [
   },
 ]
 
-export const HottestsAuctions: FC<HottestsAuctionsProps> = ({
+export const HottestAuctions: FC<HottestAuctionsProps> = ({
   className,
-  ...restProps
-}: HottestsAuctionsProps) => {
-  const HottestsAuctionsClasses = CN(`hottests-auctions w-full`, className)
+  activeKey,
+  onChangeActiveKey,
+}) => {
+  const HottestAuctionsClasses = CN(`hottests-auctions w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
+  const { auctions } = useAuctionsList(activeKey)
 
-  const slides = (slidesData || []).map(
-    ({ avatar, avatarLabel, image, remainingTime, price, dollarValue }: any, index: number) => {
-      return {
-        id: 0,
-        Component: () => (
-          <BidCardAlt
-            key={index}
-            avatar={avatar}
-            avatarLabel={avatarLabel}
-            image={image}
-            remainingTime={remainingTime}
-            price={price}
-            dollarValue={dollarValue}
-            onClickButton={() => {}}
-          />
-        ),
-      }
+  const slides = (auctions || []).map((auction: AuctionView, index: number) => {
+    return {
+      id: 0,
+      Component: () => <AuctionsCard auction={auction} key={index} />,
     }
-  )
+  })
+  console.log('auctions', auctions)
 
   return (
-    <div className={HottestsAuctionsClasses} {...restProps}>
+    <div className={HottestAuctionsClasses}>
       <div className='container flex flex-col gap-[60px]'>
         <SectionHeading
           indicator={{ children: 'Live', appearance: 'danger' }}
@@ -142,5 +138,3 @@ export const HottestsAuctions: FC<HottestsAuctionsProps> = ({
     </div>
   )
 }
-
-export default HottestsAuctions

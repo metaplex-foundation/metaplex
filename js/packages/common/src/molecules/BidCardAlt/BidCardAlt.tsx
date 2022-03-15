@@ -25,7 +25,7 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
   onClickButton,
   hasIndicator,
   ...restProps
-}: BidCardAltProps) => {
+}) => {
   const BidCardAltClasses = CN(
     `bid-card-alt flex flex-col bg-white rounded overflow-hidden w-full`,
     className
@@ -52,5 +52,3 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
     </div>
   )
 }
-
-export default BidCardAlt
