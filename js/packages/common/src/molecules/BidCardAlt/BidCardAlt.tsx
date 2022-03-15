@@ -3,29 +3,24 @@ import CN from 'classnames'
 import { Image, Button, MetaChip } from '../../atoms'
 
 export interface BidCardAltProps {
-  [x: string]: any
-  avatar?: string
-  avatarLabel?: string
   image?: string
   remainingTime?: string
   price?: string
   dollarValue?: string
   onClickButton?: any
   hasIndicator?: boolean
+  className?: string
 }
 
 export const BidCardAlt: FC<BidCardAltProps> = ({
   className,
-  avatar,
-  avatarLabel,
   image,
   remainingTime,
   price,
   dollarValue,
   onClickButton,
-  hasIndicator,
   ...restProps
-}: BidCardAltProps) => {
+}) => {
   const BidCardAltClasses = CN(
     `bid-card-alt flex flex-col bg-white rounded overflow-hidden w-full`,
     className
@@ -52,5 +47,3 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
     </div>
   )
 }
-
-export default BidCardAlt

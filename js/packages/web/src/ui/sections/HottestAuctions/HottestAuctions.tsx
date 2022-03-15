@@ -1,81 +1,36 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { ButtonGroup, Button, SectionHeading, BidCardAlt } from '@oyster/common'
-
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
+import { LiveAuctionViewState } from '../../views/Home'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+import AuctionsCard from './AuctionsCard'
+import { AuctionView } from '../../../hooks'
+import { ButtonGroup, Button, SectionHeading } from '@oyster/common'
 
-export interface HottestsAuctionsProps {
-  [x: string]: any
+export interface HottestAuctionsProps {
+  activeKey: LiveAuctionViewState
+  onChangeActiveKey: (key: LiveAuctionViewState) => void
+  className: string
 }
 
-const slidesData = [
-  {
-    image: '/img/temp/nft1.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft3.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft4.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft2.png',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft5.webp',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-  {
-    image: '/img/temp/nft6.gif',
-    remainingTime: '20h : 35m : 08s',
-    price: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-  },
-]
-
-export const HottestsAuctions: FC<HottestsAuctionsProps> = ({
+export const HottestAuctions: FC<HottestAuctionsProps> = ({
   className,
-  ...restProps
-}: HottestsAuctionsProps) => {
-  const HottestsAuctionsClasses = CN(`hottests-auctions w-full`, className)
+  activeKey,
+  onChangeActiveKey,
+}) => {
+  const HottestAuctionsClasses = CN(`hottests-auctions w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
+  const { auctions } = useAuctionsList(activeKey)
 
-  const slides = (slidesData || []).map(
-    ({ avatar, avatarLabel, image, remainingTime, price, dollarValue }: any, index: number) => {
-      return {
-        id: 0,
-        Component: () => (
-          <BidCardAlt
-            key={index}
-            avatar={avatar}
-            avatarLabel={avatarLabel}
-            image={image}
-            remainingTime={remainingTime}
-            price={price}
-            dollarValue={dollarValue}
-            onClickButton={() => {}}
-          />
-        ),
-      }
+  const slides = (auctions || []).map((auction: AuctionView, index: number) => {
+    return {
+      id: 0,
+      Component: () => <AuctionsCard auction={auction} key={index} />,
     }
-  )
+  })
 
   return (
-    <div className={HottestsAuctionsClasses} {...restProps}>
+    <div className={HottestAuctionsClasses}>
       <div className='container flex flex-col gap-[60px]'>
         <SectionHeading
           indicator={{ children: 'Live', appearance: 'danger' }}
@@ -87,17 +42,27 @@ export const HottestsAuctions: FC<HottestsAuctionsProps> = ({
                 buttons={[
                   {
                     label: 'Live Auctions',
-                    onClick: () => {},
-                    isActive: true,
-                    hasIndicator: true,
+                    onClick: () => {
+                      onChangeActiveKey(LiveAuctionViewState.All)
+                    },
+                    isActive: activeKey === LiveAuctionViewState.All,
+                    hasIndicator: activeKey === LiveAuctionViewState.All,
                   },
                   {
                     label: 'Ended',
-                    onClick: () => {},
+                    onClick: () => {
+                      onChangeActiveKey(LiveAuctionViewState.Ended)
+                    },
+                    isActive: activeKey === LiveAuctionViewState.Ended,
+                    hasIndicator: activeKey === LiveAuctionViewState.Ended,
                   },
                   {
                     label: 'Participated',
-                    onClick: () => {},
+                    onClick: () => {
+                      onChangeActiveKey(LiveAuctionViewState.Participated)
+                    },
+                    isActive: activeKey === LiveAuctionViewState.Participated,
+                    hasIndicator: activeKey === LiveAuctionViewState.Participated,
                   },
                 ]}
               />
@@ -142,5 +107,3 @@ export const HottestsAuctions: FC<HottestsAuctionsProps> = ({
     </div>
   )
 }
-
-export default HottestsAuctions
