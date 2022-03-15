@@ -8,6 +8,8 @@ import { AuctionCategory, AuctionState } from '.';
 import { ArtCard } from '../../components/ArtCard';
 import { useUserBalance } from '../../hooks';
 import { AddFundsModal } from '../../components/CurrentUserBadge';
+import * as MaterialAlert from '@material-ui/lab/Alert';
+import { DateTime } from 'luxon';
 
 export const ReviewStep = (props: {
   confirm: () => void;
@@ -18,7 +20,9 @@ export const ReviewStep = (props: {
   const wallet = useWallet();
   const [isShowingModal, setIsShowingModal] = useState(false);
   const { balance } = useUserBalance(WRAPPED_SOL_MINT.toString());
-  const item = props.attributes.items?.[0];
+  const attributes = props.attributes;
+  const item = attributes.items?.[0];
+  const isFixedPrice = attributes.category === AuctionCategory.InstantSale;
 
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
@@ -34,15 +38,26 @@ export const ReviewStep = (props: {
             />
           )}
         </Col>
-        <Col span={8}>
+        <Col span={8} className="">
           <Statistic
             title="Copies"
+            className=""
             value={
               props.attributes.editions === undefined
                 ? 'Unique'
                 : props.attributes.editions
             }
           />
+          <Statistic
+            title={isFixedPrice ? 'Price' : 'Floor price'}
+            value={'◎' + attributes.priceFloor}
+          />
+          {/* {isFixedPrice && (
+            <Statistic
+              title={'Listing type'}
+              value={ attributes.instantSaleType}
+            />
+          )} */}
         </Col>
       </Row>
       <div>
@@ -68,13 +83,11 @@ export const ReviewStep = (props: {
         )}
         <Divider />
         <Statistic
-          title="Sale ends"
+          title={isFixedPrice ? 'Sale ends' : 'Minimum duration'}
           value={
-            props.attributes.endTS
-              ? moment
-                  .unix(props.attributes.endTS)
-                  .format('dddd, MMMM Do YYYY, h:mm a')
-              : 'Until sold'
+            isFixedPrice
+              ? `Until sold out`
+              : `${attributes.auctionDuration} ${attributes.auctionDurationType}`
           }
         />
       </div>
@@ -114,9 +127,7 @@ export const ReviewStep = (props: {
           props.confirm();
         }}
       >
-        {props.attributes.category === AuctionCategory.InstantSale
-          ? 'List for Sale'
-          : 'Publish Auction'}
+        {isFixedPrice ? 'List for Sale' : 'Publish Auction'}
       </Button>
     </Space>
   );
