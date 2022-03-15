@@ -113,8 +113,7 @@ export const MintButton = ({
               await requestGatewayToken();
               console.log('after: ', gatewayStatus);
             }
-          }
-          else if (
+          } else if (
             network === 'ttib7tuX8PTWPqFsmUFQTj78MbRhUmqxidJRDv4hRRE' ||
             network === 'tibePmPaoTgrs929rWpu755EXaxC7M3SthVCf6GzjZt'
           ) {
