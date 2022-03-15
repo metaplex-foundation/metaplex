@@ -1,62 +1,13 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { Button, SectionHeading, BuyCard } from '@oyster/common'
+import { Button, SectionHeading } from '@oyster/common'
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
+import { useCollections } from '../../../hooks/useCollections'
+import CollectionCard from './CollectionCard'
 
 export interface RecentCollectionsProps {
-  [x: string]: any
+  className: string
 }
-
-const slidesData = [
-  {
-    name: 'Belugies',
-    volume: '472.54',
-    image: '/img/temp/nft12.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Mean Pigs',
-    volume: '472.54',
-    image: '/img/temp/nft9.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Bohomia',
-    volume: '472.54',
-    image: '/img/temp/nft10.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Sad Sea',
-    volume: '472.54',
-    image: '/img/temp/nft11.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Posh Gorilla',
-    volume: '472.54',
-    image: '/img/temp/nft12.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Pixel Wizards at Hogwarts',
-    volume: '472.54',
-    image: '/img/temp/nft8.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-]
 
 export const RecentCollections: FC<RecentCollectionsProps> = ({
   className,
@@ -65,10 +16,12 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
   const RecentCollectionsClasses = CN(`recent-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
 
-  const slides = (slidesData || []).map((slide: any, index: number) => {
+  const { liveCollections } = useCollections()
+
+  const slides = (liveCollections || []).map((collection: any, index: number) => {
     return {
       id: 0,
-      Component: () => <BuyCard key={index} onClickButton={() => {}} {...slide} />,
+      Component: () => <CollectionCard collection={collection} key={index} />,
     }
   })
 
