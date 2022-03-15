@@ -10,9 +10,9 @@ export const ParticipationStep = (props: {
   confirm: () => void;
 }) => {
   return (
-    <Space className="metaplex-fullwidth" direction="vertical">
+    <Space className="metaplex-fullwidth" direction="vertical" size={'large'}>
       <div>
-        <h2>Participation NFT</h2>
+        <h2>Participation NFT(Optional)</h2>
         <p>
           Provide NFT that will be awarded as an Open Edition NFT for auction
           participation.
