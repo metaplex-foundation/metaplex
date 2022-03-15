@@ -832,7 +832,7 @@ export const AuctionCard = ({
 
   // Crossmint credit card checkout
   const maybeCrossMintButton = (auctionView: AuctionView, storefront: Storefront) => {
-    if (auctionView.isInstantSale && storefront.integrations?.crossmintClientId) {
+    if (auctionView.isInstantSale && storefront.integrations?.crossmintClientId && auctionView.items.flat().length === 1) {
 
       return (
         <CrossMintButton
