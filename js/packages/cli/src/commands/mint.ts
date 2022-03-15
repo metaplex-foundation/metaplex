@@ -1,5 +1,6 @@
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
+  CandyMachine,
   getAtaForMint,
   getCandyMachineAddress,
   getCandyMachineCreator,
@@ -20,6 +21,7 @@ import * as anchor from '@project-serum/anchor';
 import { MintLayout, Token } from '@solana/spl-token';
 import { createAssociatedTokenAccountInstruction } from '../helpers/instructions';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
+import log from 'loglevel';
 
 export async function mint(
   keypair: string,
@@ -174,9 +176,9 @@ export async function mintV2(
     mint.publicKey,
   );
 
-  const candyMachine: any = await anchorProgram.account.candyMachine.fetch(
-    candyMachineAddress,
-  );
+  const candyMachine: CandyMachine =
+    await anchorProgram.account.candyMachine.fetch(candyMachineAddress);
+
   const remainingAccounts = [];
   const signers = [mint, userKeyPair];
   const cleanupInstructions = [];
@@ -311,61 +313,10 @@ export async function mintV2(
   const metadataAddress = await getMetadata(mint.publicKey);
   const masterEdition = await getMasterEdition(mint.publicKey);
 
-  const collectionPDA = (await getCollectionPDA(candyMachineAddress))[0];
-  const collectionPDAAccount =
-    await anchorProgram.provider.connection.getAccountInfo(collectionPDA);
-
-  if (collectionPDAAccount) {
-    try {
-      const collectionMint = (await anchorProgram.account.collectionPda.fetch(
-        collectionPDA,
-      )) as { mint: PublicKey };
-      const collectionAuthorityRecord = (
-        await getCollectionAuthorityRecordPDA(
-          collectionMint.mint,
-          collectionPDA,
-        )
-      )[0];
-      if (collectionMint) {
-        const collectionMetadata = await getMetadata(collectionMint.mint);
-        const collectionMasterEdition = await getMasterEdition(
-          collectionMint.mint,
-        );
-        remainingAccounts.push(
-          ...[
-            {
-              pubkey: collectionPDA,
-              isWritable: true,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionMint.mint,
-              isWritable: false,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionMetadata,
-              isWritable: true,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionMasterEdition,
-              isWritable: false,
-              isSigner: false,
-            },
-            {
-              pubkey: collectionAuthorityRecord,
-              isWritable: false,
-              isSigner: false,
-            },
-          ],
-        );
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  console.log(remainingAccounts.map(i => i.pubkey.toBase58()));
+  log.debug(
+    'Remaining accounts: ',
+    remainingAccounts.map(i => i.pubkey.toBase58()),
+  );
   const [candyMachineCreator, creatorBump] = await getCandyMachineCreator(
     candyMachineAddress,
   );
@@ -395,7 +346,80 @@ export async function mintV2(
     }),
   );
 
-  const finished = (
+  const collectionPDA = (await getCollectionPDA(candyMachineAddress))[0];
+  const collectionPDAAccount =
+    await anchorProgram.provider.connection.getAccountInfo(collectionPDA);
+
+  if (collectionPDAAccount && candyMachine.data.retainAuthority) {
+    try {
+      const collectionPdaData =
+        (await anchorProgram.account.collectionPda.fetch(collectionPDA)) as {
+          mint: PublicKey;
+        };
+      const collectionMint = collectionPdaData.mint;
+      const collectionAuthorityRecord = (
+        await getCollectionAuthorityRecordPDA(collectionMint, collectionPDA)
+      )[0];
+
+      if (collectionMint) {
+        const collectionMetadata = await getMetadata(collectionMint);
+        const collectionMasterEdition = await getMasterEdition(collectionMint);
+        log.debug('Collection PDA: ', collectionPDA.toBase58());
+        log.debug('Authority: ', candyMachine.authority.toBase58());
+
+        instructions.push(
+          await anchorProgram.instruction.setCollectionDuringMint({
+            accounts: {
+              candyMachine: candyMachineAddress,
+              metadata: metadataAddress,
+              payer: userKeyPair.publicKey,
+              collectionPda: collectionPDA,
+              tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+              instructions: anchor.web3.SYSVAR_INSTRUCTIONS_PUBKEY,
+              collectionMint: collectionMint,
+              collectionMetadata,
+              collectionMasterEdition,
+              authority: candyMachine.authority,
+              collectionAuthorityRecord,
+            },
+          }),
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  const data = candyMachine.data;
+  const txnEstimate =
+    892 +
+    (collectionPDAAccount && data.retainAuthority ? 132 : 0) +
+    (candyMachine.tokenMint ? 145 : 0) +
+    (data.whitelistMintSettings ? 33 : 0) +
+    (data.whitelistMintSettings?.mode?.burnEveryTime ? 145 : 0) +
+    (data.gatekeeper ? 33 : 0) +
+    (data.gatekeeper?.expireOnUse ? 66 : 0);
+
+  log.info('Transaction size estimate: ', txnEstimate);
+  const INIT_INSTRUCTIONS_LENGTH = 4;
+  const INIT_SIGNERS_LENGTH = 1;
+  let initInstructions: anchor.web3.TransactionInstruction[] = [];
+  let initSigners: Keypair[] = [];
+
+  if (txnEstimate > 1230) {
+    initInstructions = instructions.splice(0, INIT_INSTRUCTIONS_LENGTH);
+    initSigners = signers.splice(0, INIT_SIGNERS_LENGTH);
+  }
+
+  if (initInstructions.length > 0) {
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      userKeyPair,
+      initInstructions,
+      initSigners,
+    );
+  }
+
+  const mainInstructions = (
     await sendTransactionWithRetryWithKeypair(
       anchorProgram.provider.connection,
       userKeyPair,
@@ -404,12 +428,14 @@ export async function mintV2(
     )
   ).txid;
 
-  await sendTransactionWithRetryWithKeypair(
-    anchorProgram.provider.connection,
-    userKeyPair,
-    cleanupInstructions,
-    [],
-  );
+  if (cleanupInstructions.length > 0) {
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      userKeyPair,
+      cleanupInstructions,
+      [],
+    );
+  }
 
-  return finished;
+  return mainInstructions;
 }

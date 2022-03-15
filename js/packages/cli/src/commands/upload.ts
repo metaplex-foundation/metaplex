@@ -17,7 +17,7 @@ import { loadCache, saveCache } from '../helpers/cache';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import {
   makeArweaveBundleUploadGenerator,
-  withdraw_bundlr,
+  withdrawBundlr,
 } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
@@ -26,6 +26,7 @@ import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks, sleep } from '../helpers/various';
 import { nftStorageUpload } from '../helpers/upload/nft-storage';
+import { pinataUpload } from '../helpers/upload/pinata';
 import { setCollection } from './set-collection';
 
 export async function uploadV2({
@@ -38,6 +39,8 @@ export async function uploadV2({
   mutable,
   nftStorageKey,
   ipfsCredentials,
+  pinataJwt,
+  pinataGateway,
   awsS3Bucket,
   batchSize,
   price,
@@ -65,6 +68,8 @@ export async function uploadV2({
   mutable: boolean;
   nftStorageKey: string;
   ipfsCredentials: ipfsCreds;
+  pinataJwt: string;
+  pinataGateway: string;
   awsS3Bucket: string;
   batchSize: number;
   price: BN;
@@ -178,8 +183,7 @@ export async function uploadV2({
           collectionMintPubkey,
         );
         console.log('Collection: ', collection);
-        cacheContent.program.collection =
-          collection.collectionMetadata.toBase58();
+        cacheContent.program.collection = collection.collectionMetadata;
       } else {
         console.log('No collection set');
       }
@@ -254,7 +258,7 @@ export async function uploadV2({
       if (storage === StorageType.ArweaveSol && env !== 'devnet') {
         log.info('Waiting 5 seconds to check Bundlr balance.');
         await sleep(5000);
-        await withdraw_bundlr(walletKeyPair);
+        await withdrawBundlr(walletKeyPair);
       }
     } else {
       const progressBar = new cliProgress.SingleBar(
@@ -299,6 +303,15 @@ export async function uploadV2({
           let link, imageLink, animationLink;
           try {
             switch (storage) {
+              case StorageType.Pinata:
+                [link, imageLink, animationLink] = await pinataUpload(
+                  image,
+                  animation,
+                  manifestBuffer,
+                  pinataJwt,
+                  pinataGateway,
+                );
+                break;
               case StorageType.NftStorage:
                 [link, imageLink, animationLink] = await nftStorageUpload(
                   image,
