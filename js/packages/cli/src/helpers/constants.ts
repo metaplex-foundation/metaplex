@@ -43,12 +43,6 @@ export const TOKEN_ENTANGLEMENT_PROGRAM_ID = new PublicKey(
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
 );
-export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(
-  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a',
-);
-export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(
-  'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV',
-);
 
 export const CONFIG_ARRAY_START =
   32 + // authority

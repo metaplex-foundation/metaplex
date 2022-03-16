@@ -11,7 +11,6 @@ import log from 'loglevel';
 import { Program } from '@project-serum/anchor';
 import { CollectionData } from '../types';
 
-//TODO: get this working. Not sure what it needs
 export async function removeCollection(
   walletKeyPair: anchor.web3.Keypair,
   anchorProgram: Program,
