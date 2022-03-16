@@ -246,12 +246,12 @@ export const Listings = () => {
                       Get started by creating a listing
                     </p>
                     <div className="mt-6 flex space-x-4 justify-center">
-                      <Link to="/listings/new/0">
+                      <Link to="/owned?action=create-listing">
                         <Button size="large" type="primary">
                           Create a listing
                         </Button>
                       </Link>
-                      <Link to="/owned">
+                      <Link to="/owned?action=mint-nfts">
                         <Button size="large" type={'primary'} className="">
                           Mint NFTs
                         </Button>
