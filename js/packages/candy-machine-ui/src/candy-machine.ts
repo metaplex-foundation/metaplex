@@ -1,8 +1,12 @@
 import * as anchor from '@project-serum/anchor';
 
 import { MintLayout, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
-import { SystemProgram, SYSVAR_SLOT_HASHES_PUBKEY } from '@solana/web3.js';
-import { sendTransactions } from './connection';
+import {
+  SystemProgram,
+  Transaction,
+  SYSVAR_SLOT_HASHES_PUBKEY,
+} from '@solana/web3.js';
+import { sendTransactions, SequenceType } from './connection';
 
 import {
   CIVIC,
@@ -274,6 +278,8 @@ export const getCollectionAuthorityRecordPDA = async (
 export const mintOneToken = async (
   candyMachine: CandyMachineAccount,
   payer: anchor.web3.PublicKey,
+  beforeTransactions: Transaction[] = [],
+  afterTransactions: Transaction[] = [],
 ): Promise<(string | undefined)[]> => {
   const mint = anchor.web3.Keypair.generate();
 
@@ -560,6 +566,13 @@ export const mintOneToken = async (
         candyMachine.program.provider.wallet,
         instructionsMatrix,
         signersMatrix,
+        SequenceType.StopOnFailure,
+        'singleGossip',
+        () => {},
+        () => false,
+        undefined,
+        beforeTransactions,
+        afterTransactions,
       )
     ).txs.map(t => t.txid);
   } catch (e) {
