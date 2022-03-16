@@ -58,6 +58,7 @@ export async function uploadV2({
   rateLimit,
   collectionMintPubkey,
   setCollectionMint,
+  rpcUrl,
 }: {
   files: string[];
   cacheName: string;
@@ -99,6 +100,7 @@ export async function uploadV2({
   rateLimit: number;
   collectionMintPubkey: null | PublicKey;
   setCollectionMint: boolean;
+  rpcUrl: null | string;
 }): Promise<boolean> {
   const savedContent = loadCache(cacheName, env);
   const cacheContent = savedContent || {};
@@ -234,6 +236,7 @@ export async function uploadV2({
           : undefined,
         storage === StorageType.ArweaveSol ? walletKeyPair : undefined,
         batchSize,
+        rpcUrl,
       );
 
       let result = arweaveBundleUploadGenerator.next();

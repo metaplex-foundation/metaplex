@@ -37,6 +37,7 @@ SRC_DIR=$PARENT_DIR/src
 CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
 
 # Remote files to test the upload
+PNG_MIN="https://arweave.net/N3LqmO6yURUK1JxV9MJtH8YeqppEtZhKuy3RB0Tqm3A/?ext=png"
 PNG="https://arweave.net/izpWaFnueKtbRg4TY-CkUYQtwSzPNit3ZvQPY5hOK7E/?ext=png"
 GIF="https://arweave.net/3I50hy1dHhRwyxtKPL60WIl4kV0rqjnl7t_DcZPAp2o/?ext=gif"
 JPG="https://arweave.net/-KqqzJLtD8Pug-aCjbV6RWbGhfB74MBT71afqGFKYHA/?ext=jpg"
@@ -256,6 +257,10 @@ else
     case "$EXT" in
     png)
         IMAGE=$PNG
+        ;;
+    png_min)
+        IMAGE=$PNG_MIN
+        EXT="png"
         ;;
     jpg)
         IMAGE=$JPG

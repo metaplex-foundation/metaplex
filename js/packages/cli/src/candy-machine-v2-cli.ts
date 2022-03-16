@@ -295,6 +295,7 @@ programCommand('upload')
         rateLimit,
         collectionMintPubkey,
         setCollectionMint,
+        rpcUrl,
       });
     } catch (err) {
       log.warn('upload was not successful, please re-run.', err);
