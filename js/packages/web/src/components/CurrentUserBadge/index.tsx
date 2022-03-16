@@ -205,24 +205,29 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
   const {wallet} = useWallet();
   const open = useCallback(() => setVisible(true), [setVisible]);
 
+    function onNetworkChange(network: string) {
+    setEndpoint(network);
+    setTimeout(() => window.location.reload(), 500);
+  }
+
+  
   return (
     <Popover
       trigger="click"
       placement="bottomRight"
       content={
         <Space direction="vertical">
-          {
-            !wallet?.adapter.connected ? <>
-              <h5>NETWORK</h5>
-              <Select onSelect={setEndpoint} value={endpoint} bordered={false}>
-                {ENDPOINTS.map(({ name, endpoint }) => (
-                  <Select.Option value={endpoint} key={endpoint}>
-                    {name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </> : <Button onClick={open}>Change wallet</Button>
-          }
+          <h5>NETWORK</h5>
+          <Select onSelect={onNetworkChange} value={endpoint} bordered={false}>
+            {ENDPOINTS.map(({ name, endpoint }) => (
+              <Select.Option value={endpoint} key={endpoint}>
+                {name}
+              </Select.Option>
+            ))}
+          </Select>
+          {wallet?.adapter.connected && (
+            <Button onClick={open}>Change wallet</Button>
+          )}
         </Space>
       }
     >
