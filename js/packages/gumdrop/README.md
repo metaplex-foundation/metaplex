@@ -1,11 +1,11 @@
 # Gumdrop
 
-1) Deploy the website by modifying the `homepage` parameter in `package.json`
-2) Create an `.env` file with the website pathname prefix e.g
+The UI/CLI for Gumdrop used to live here but have been moved.
 
-```
-echo 'REACT_APP_WEB_HOME="/gumdrop"' > .env
-```
+## Where are those programs now?
 
-See the [Metaplex Docs](https://docs.metaplex.com/airdrops/create-gumdrop) and the
-[About page](https://lwus.github.io/metaplex/) for more information.
+The Gumdrop UI/CLI was moved to [gumdrop][gumdrop]. The program can still be found in the [metaplex-program-library][mpl].
+
+
+[mpl]:https://github.com/metaplex-foundation/metaplex-program-library
+[gumdrop]:https://github.com/metaplex-foundation/gumdrop
