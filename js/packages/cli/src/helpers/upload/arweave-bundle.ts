@@ -461,6 +461,7 @@ export function* makeArweaveBundleUploadGenerator(
   jwk?: any,
   walletKeyPair?: Keypair,
   batchSize?: number,
+  rpcUrl?: string,
 ): Generator<Promise<UploadGeneratorResult>> {
   let signer: ArweaveSigner;
   const storageType: StorageType = storage;
@@ -487,6 +488,10 @@ export function* makeArweaveBundleUploadGenerator(
             'https://node1.bundlr.network',
             'solana',
             walletKeyPair.secretKey,
+            {
+              timeout: 60000,
+              providerUrl: rpcUrl ?? 'https://api.metaplex.rpcpool.com',
+            },
           )
         : new Bundlr(
             'https://devnet.bundlr.network',
@@ -603,16 +608,17 @@ export function* makeArweaveBundleUploadGenerator(
         ] as unknown as BundlrTransaction[];
         log.info('Uploading bundle via Bundlr... in multiple transactions');
         const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
-          (c, d) => c + d.getRaw().length,
+          (c, d) => c + Math.max(d.getRaw().length, 12000),
           0,
         );
         const cost = await bundlr.utils.getPrice('solana', bytes);
+        const bufferCost = cost.multipliedBy(3).dividedToIntegerBy(2);
         log.info(
-          `${(cost.toNumber() * 2) / LAMPORTS} SOL to upload ${sizeMB(
+          `${bufferCost.toNumber() / LAMPORTS} SOL to upload ${sizeMB(
             bytes,
           )}MB with buffer. Sending fund txn...`,
         );
-        await bundlr.fund(cost.multipliedBy(2));
+        await bundlr.fund(bufferCost);
         log.info(`Successfully funded Arweave Bundler, starting upload`);
 
         const progressBar = new cliProgress.SingleBar(
