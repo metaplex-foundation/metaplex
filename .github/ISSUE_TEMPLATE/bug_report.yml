@@ -16,7 +16,6 @@ body:
         - candy machine ui
         - candy machine cli
         - other cli
-        - gumdrop
         - other
     validations:
       required: true
