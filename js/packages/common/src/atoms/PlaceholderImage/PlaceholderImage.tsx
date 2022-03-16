@@ -17,7 +17,7 @@ export const PlaceholderImage: FC<PlaceholderImageProps> = ({
   return (
     <div className={PlaceholderImageClasses} {...restProps}>
       <svg
-        width='auto'
+        // width=''
         height='40%'
         viewBox='0 0 230 200'
         fill='none'
@@ -32,7 +32,5 @@ export const PlaceholderImage: FC<PlaceholderImageProps> = ({
     </div>
   )
 }
-
-PlaceholderImage.defaultProps = {}
 
 export default PlaceholderImage
