@@ -30,8 +30,6 @@ import {
   CreateMasterEditionV3,
   UpdateMetadataV2,
 } from '@metaplex-foundation/mpl-token-metadata';
-import { MintOptions } from '../helpers/mintoptions';
-import { MintResult } from '../helpers/mintresult';
 
 export const createMetadata = async (
   metadataLink: string,
@@ -151,6 +149,11 @@ export const createMetadataAccount = async ({
   return metadataAccount;
 };
 
+export type MintResult = {
+  metadataAccount: PublicKey;
+  mint: PublicKey;
+};
+
 export const mintNFT = async (
   connection: Connection,
   walletKeypair: Keypair,
@@ -160,7 +163,7 @@ export const mintNFT = async (
   maxSupply: number = 0,
   verifyCreators: boolean,
   use: Uses = null,
-  mintOptions: MintOptions = null,
+  receivingWallet: PublicKey = null,
 ): Promise<MintResult | void> => {
   // Retrieve metadata
   const data = await createMetadata(
@@ -280,9 +283,9 @@ export const mintNFT = async (
     );
   }
 
-  if (mintOptions.receivingWallet) {
+  if (receivingWallet) {
     const derivedAccount = await getTokenWallet(
-      mintOptions.receivingWallet,
+      receivingWallet,
       mint.publicKey,
     );
     const createdAccountIx = Token.createAssociatedTokenAccountInstruction(
@@ -290,7 +293,7 @@ export const mintNFT = async (
       TOKEN_PROGRAM_ID,
       mint.publicKey,
       derivedAccount,
-      mintOptions.receivingWallet,
+      receivingWallet,
       wallet.publicKey,
     );
     const transferIx = Token.createTransferInstruction(
@@ -328,7 +331,8 @@ export const mintNFT = async (
   await connection.getParsedTransaction(res.txid, 'confirmed');
 
   log.info('NFT created', res.txid);
-  log.info('\n\nNFT: Mint Address is ', mint.publicKey.toBase58());
+  log.info('\nNFT: Mint Address is ', mint.publicKey.toBase58());
+  log.info('NFT: Metadata address is ', metadataAccount.toBase58());
   return { metadataAccount, mint: mint.publicKey };
 };
 

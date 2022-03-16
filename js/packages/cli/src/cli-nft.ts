@@ -15,7 +15,6 @@ import { PublicKey } from '@solana/web3.js';
 import { getCluster } from './helpers/various';
 import { DataV2, MetadataData } from '@metaplex-foundation/mpl-token-metadata';
 import * as fs from 'fs';
-import { MintOptions } from './helpers/mintoptions';
 
 program.version('1.1.0');
 log.setLevel('info');
@@ -63,11 +62,9 @@ programCommand('mint')
       collectionKey = new PublicKey(collection);
     }
     const supply = maxSupply || 0;
-    let mintOptions;
+    let receivingWallet;
     if (toWallet) {
-      mintOptions = {
-        receivingWallet: new PublicKey(toWallet),
-      } as MintOptions;
+      receivingWallet = new PublicKey(toWallet);
     }
     await mintNFT(
       solConnection,
@@ -78,7 +75,7 @@ programCommand('mint')
       supply,
       verifyCreators,
       structuredUseMethod,
-      mintOptions,
+      receivingWallet,
     );
   });
 
