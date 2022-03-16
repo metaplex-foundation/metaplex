@@ -2,11 +2,8 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "packages/cli",
       "packages/common",
-      "packages/gumdrop",
-      "packages/web",
-      "packages/ui"
+      "packages/web"
     ]
   },
   "keywords": [],
