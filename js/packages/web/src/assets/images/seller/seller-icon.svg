@@ -1,0 +1,14 @@
+<svg version="1.2" baseProfile="tiny-ps" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 28" width="32" height="28">
+	<title>nft home</title>
+	<defs>
+		<image  width="32" height="28" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAcCAMAAAA3HE0QAAAAAXNSR0IB2cksfwAAAHhQTFRFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFAOzFelnPUQAAACh0Uk5TAEpRT0wNzP/mH1mWb69npGyrZaUc+jsgd4SAi5+BOn+04BIsYrDeCZfUHeIAAABuSURBVHic7c3dEoFgFEbhpR9bhPKXPkRC93+HMuogM94LaFqH+31mNjDx/D95QQjh1ESziLnazRbEGixZabAewaBAokHKRoMtu70EB8iOeZs7fY9n110uBf2un/2GqGzAXYHK7KF2eL70Tv374A0MMhgppuxliwAAAABJRU5ErkJggg=="/>
+	</defs>
+	<style>
+		tspan { white-space:pre }
+	</style>
+	<g id="Top seller">
+		<g id="title">
+			<use id="L1" href="#img1" x="0" y="0" />
+		</g>
+	</g>
+</svg>

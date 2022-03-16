@@ -1,6 +1,9 @@
 @import '~antd/es/style/themes/dark.less';
 @import '~antd/dist/antd.dark.less';
 
+
+
+
 html {
   overflow-y: scroll;
   width: 100%;
@@ -137,12 +140,15 @@ code {
   align-items: center;
   letter-spacing: 0.02em;
 
-  color: @text-color-secondary;
+  color: #000!important;
 }
 
 .ant-tabs {
   width: 100%;
+  color: #000000;
 }
+
+
 
 .ant-avatar-group .ant-avatar {
   border: 1px solid #434343;
@@ -207,20 +213,29 @@ h1 {
   font-weight: 600;
   font-size: 2rem;
 }
+
 .ant-btn:hover {
   background-color: transparent !important;
 }
+
 .ant-steps-item-process
   > .ant-steps-item-container
   > .ant-steps-item-content
   > .ant-steps-item-title {
-  color: hsla(0, 0%, 100%, 0.85);
+  color: #FFFFFF;
 }
+
+.ant-steps-item-content >
+.ant-steps-item-title{
+color: black!important;
+}
+
+
 .ant-steps-item-wait
   > .ant-steps-item-container
   > .ant-steps-item-content
   > .ant-steps-item-title {
-  color: hsla(0, 0%, 100%, 0.45);
+  color: gray;
 }
 .ant-steps-item-wait
   .ant-steps-item-icon
@@ -241,13 +256,15 @@ h1 {
 .tab-title {
   color: rgba(255, 255, 255, 0.45);
 }
+
+
 .ant-btn {
   height: 56px;
   font-weight: 600;
   font-size: 16px;
   line-height: 16px;
   background-color: transparent !important;
-  color: white;
+  color: #000;
   &.secondary-btn {
     color: @black-100;
     background: @metaplex-primary-color !important;
@@ -286,6 +303,20 @@ h1 {
     }
   }
 }
+
+.ant-btn-white {
+  height: 56px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16px;
+  background-color: transparent !important;
+  color: #FFF; 
+  
+  &:hover{
+  color: blue;
+  }
+  
+  }
 
 model-viewer {
   --poster-color: transparent;
@@ -422,3 +453,37 @@ model-viewer {
     }
   }
 }
+
+
+#desktop-navbar .app-btn{
+color: #FFF!important;
+&:hover{
+color: blue!important;
+}
+
+}
+
+#desktop-navbar .ant-btn{
+color: #FFF!important;
+&:hover{
+color: blue!important;
+}
+
+}
+
+.ant-popover-inner-content .ant-btn{
+color: #FFF!important;
+&:hover{
+color: blue!important;
+}
+
+}
+
+
+#desktop-navbar{
+background-color: #12141A!important;
+}
+
+ #rc-tabs-0-tab-0{
+  color: #2c49e1!important;
+ }

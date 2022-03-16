@@ -1,0 +1,87 @@
+.cat-item {
+    background-color: $white-color;
+    border-radius: 10px;
+    transition: $transition;
+    min-width: 129px;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 5px 5px rgba($black-color, $alpha: .10);
+    }
+
+    &.blured {
+        background-color: rgba($white-color, $alpha: .50);
+        backdrop-filter: blur(20px) saturate(100%);
+        -webkit-backdrop-filter: blur(20px) saturate(100%);
+        border: 1px solid rgba($white-color, $alpha: .50);
+        box-shadow: 0 0 3px rgba($black-color, $alpha: .10);
+
+        .cat-content {
+            h6 {
+                a {
+                    color: $title-color;
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+}
+
+.cat-inner {
+    @extend %text-center;
+    padding: 30px 10px;
+
+    .badge {
+        right: 10px;
+        top: 10px;
+    }
+}
+
+.cat-thumb {
+    padding-block: 20px;
+}
+
+.cat-content {
+    h6 {
+        a {
+            color: $title-color;
+            @include font-size(16px);
+        }
+    }
+}
+
+//------> Collection single start here <-------
+.collection-banner {
+    padding-block: 100px;
+    background-image: url(../images/category/banner-bg.png);
+    background-size: cover;
+}
+
+.collection-brn-content {
+    h2 {
+        @extend %mb-30;
+    }
+}
+
+.col-author {
+    @extend %align-items-center;
+    display: inline-flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    img {
+        width: 50px;
+        height: 50px;
+        border: 1px solid $black-color;
+        border-radius: 50%;
+    }
+
+    span {
+        font-weight: 600;
+        @include font-size(18px);
+        color: $black-color;
+    }
+}
+
+//------> Collection single end here <-------

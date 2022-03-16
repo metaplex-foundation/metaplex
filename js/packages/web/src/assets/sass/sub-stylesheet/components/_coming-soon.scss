@@ -1,0 +1,35 @@
+//coming soon page
+.coming-wrapper {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    .event-count {
+        gap: 10px;
+
+        .rounded-circle {
+            border: 2px solid $theme-color;
+            height: 80px;
+            width: 80px;
+            @extend %flex;
+            flex-direction: column;
+            justify-content: center;
+
+            span {
+                font-size: 24px;
+                font-family: $manrope;
+                @extend %text-bold;
+                line-height: 1;
+            }
+        }
+    }
+
+    h1 {
+        font-size: 40px;
+
+        @include breakpoint(md) {
+            font-size: 55px;
+        }
+    }
+}

@@ -1,0 +1,228 @@
+/*Account Section Starts Here*/
+.account-wrapper {
+    @extend %p-40;
+    @extend %text-center;
+    border-radius: 10px;
+    box-shadow: 0px 2px 4px 0px rgba($color:$black-color, $alpha:.3);
+    margin: 0 auto;
+    background-color: $white-color;
+
+    .title {
+        text-transform: capitalize;
+        @extend %mb-20;
+    }
+
+    .cate {
+        font-style: normal;
+
+        a {
+            font-weight: 600;
+
+            &:hover {
+                color: $theme-color;
+            }
+        }
+    }
+}
+
+.account-bottom {
+    .subtitle {
+        @extend %mb-15;
+
+        @include breakpoint(sm) {
+            font-size: 20px;
+        }
+    }
+
+    .social-media {
+        li {
+            @extend %mr-10;
+
+            &:last-child {
+                @extend %mr-0;
+            }
+
+            a {
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                @extend %text-center;
+                @extend %d-inline-block;
+                border-radius: 50%;
+                color: $white-color;
+
+                &.facebook {
+                    background: $facebook;
+                }
+
+                &.twitter {
+                    background: $twitter;
+                }
+
+                &.linkedin {
+                    background: $linkedin;
+                }
+
+                &.instagram {
+                    background: $instagram;
+                }
+
+                &.pinterest {
+                    background: $pinterest;
+                }
+
+                &:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 3px 10px rgba($color:$black-color, $alpha:.3);
+                    color: $white-color;
+                }
+            }
+        }
+    }
+}
+
+.account-form {
+    .form-group {
+        @extend %mb-25;
+
+        input {
+            @extend %w-100;
+            border: 1px solid rgba($color:$theme-color, $alpha:.3);
+            outline: none;
+            @include border-radius(4px);
+            background: $body-color;
+            box-shadow: 0px 2px 2px 0px rgba($theme-color, $alpha: .10);
+            padding: .6rem 1rem;
+        }
+
+        .checkgroup {
+            @extend %flex;
+            @extend %align-items-center;
+            flex-wrap: nowrap;
+            @extend %c-pointer;
+
+            input {
+                &[type="checkbox"] {
+                    width: 18px;
+                    height: 18px;
+                    @extend %mr-15;
+
+                    @include breakpoint(max-sm) {
+                        width: 14px;
+                        height: 14px;
+                        margin-right: 8px;
+                    }
+
+                    @extend %c-pointer;
+                }
+            }
+
+            label {
+                @extend %m-0;
+                color: $title-color;
+                @extend %c-pointer;
+
+                @include breakpoint(max-sm) {
+                    font-size: 14px;
+                }
+            }
+        }
+
+        a {
+            color: $title-color;
+            text-decoration: underline;
+
+            @include breakpoint(max-sm) {
+                font-size: 14px;
+            }
+
+            &:hover {
+                color: $theme-color
+            }
+        }
+
+        button {
+            @extend %w-100;
+            box-shadow: none;
+            border: none;
+            @extend %bg-theme;
+
+            @include breakpoint(max-sm) {
+                margin-top: 24px;
+            }
+        }
+    }
+
+    .form-floating {
+        input {
+            background: $body-color;
+            border: 1px solid $border-color;
+            color: $black-color;
+
+            &:focus {
+                border-color: rgba($color:$theme-color, $alpha:.3);
+                outline: none;
+                box-shadow: none;
+            }
+        }
+    }
+}
+
+.or {
+    display: block;
+    margin: 24px auto 40px;
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    @include border-radius(50%);
+    @extend %bg-theme;
+    @extend %p-rel;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: $white-color;
+
+    span {
+        @extend %p-rel;
+        z-index: 1;
+    }
+
+    &::before,
+    &::after {
+        @extend %p-abs;
+        @extend %bg-theme;
+        @extend %h-100;
+        @extend %w-100;
+        top: 50%;
+        left: 50%;
+        @include border-radius(50%);
+        background: rgba($color:$theme-color, $alpha:.3);
+        animation: pulse 2.5s linear infinite;
+        -webkit-animation: pulse 2.5s linear infinite;
+        -moz-animation: pulse 2.5s linear infinite;
+        opacity: 0;
+    }
+
+    &::before {
+        animation-delay: 1.5s;
+        -webkit-animation-delay: 1.5s;
+        -moz-animation-delay: 1.5s;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        @include transform(translate(-50%, -50%)scale(1));
+        opacity: 1;
+    }
+
+    90% {
+        opacity: .5;
+        @include transform(translate(-50%, -50%)scale(1.8));
+    }
+
+    100% {
+        opacity: 0;
+        @include transform(translate(-50%, -50%)scale(2));
+    }
+}

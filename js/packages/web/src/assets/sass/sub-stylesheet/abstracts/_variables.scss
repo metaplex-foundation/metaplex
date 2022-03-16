@@ -1,0 +1,93 @@
+$bootstrap-sass-asset-helper: false !default;
+
+// Variables
+// --------------------------------------------------
+
+
+// Colors
+
+$title-color: #030e35;
+$desc-color:#6f7d95;
+// $theme-color:#1574e4;
+$theme-color:#822cff;
+$primary-color: #ff5757;
+$secondary-color:#1d1d1eed;
+// $body-color:#f9f3e6;
+$body-color:#f4f6f9;
+$royal-blue:rgba(83, 4, 119, 1);
+$royal-yellow:#00edc5;
+$shadow-color: rgba($royal-blue, $alpha:.2);
+$white-color: #fff;
+$ash-color: #f9fafb;
+$black-color:#000000;
+$border-color: #f5f5f5;
+
+
+
+$gradient-orange: linear-gradient(90deg, rgb(162, 0, 255) 0%, rgb(255, 124, 110) 100%);
+$gradient-blue: linear-gradient(315deg, #734ae8 0%, #00d3c5 74%);
+$gradient-blue-reverse: linear-gradient(-315deg, #734ae8 0%, #00d3c5 74%);
+
+
+
+//default box shadow
+$d-box-shadow: 0 0 10px $shadow-color;
+
+
+// social-media color
+$facebook: #3b5998;
+$twitter: #55acee;
+$linkedin: #007bb5;
+$skype: #2fb7df;
+$youtube: #cd201f;
+$google: #dd4b39;
+$camera: #e4405f;
+$instagram: #e4405f;
+$tumblr: #34465d;
+$behance: #1769ff;
+$pinterest:#c8232c;
+$dribble:#ea4c89;
+$vimeo:#86c9ef;
+$star: #e9ba17;
+$green: #0be881;
+$green-h: #0fbcf9;
+$red: #f53b57;
+$yellow: #dec32b;
+$nell: #212fb4;
+$navy: #d8e0f3;
+$plaseholder: #a0a6bc;
+
+//== Typography
+
+// font-family
+
+$manrope:'Manrope',
+sans-serif;
+
+// font-size
+
+$fs-base: 16px !default;
+$fs-small:14px;
+
+$fs-h1: 60px;
+$fs-h2: 48px;
+$fs-h3: 30px;
+$fs-h4: 24px;
+$fs-h5: 20px;
+$fs-h6: 18px;
+
+
+// heading line height
+
+$lh-h1: 66px;
+$lh-h2: 50px;
+$lh-h3: 43px;
+$lh-h4: 36px;
+$lh-h5: 32px;
+$lh-h6: 28px;
+
+// Description line height
+$lh-p: 24px;
+
+//  transition
+$transition: all 0.3s ease;

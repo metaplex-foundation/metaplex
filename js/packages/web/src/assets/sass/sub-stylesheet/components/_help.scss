@@ -1,0 +1,140 @@
+/*----------------------- Help center Page Start here------------------------------------*/
+.help-search {
+    background: linear-gradient(180deg, #1270e3 0%, #59c2ff 100%);
+
+    h2 {
+        @include font-size(2.5rem);
+    }
+
+
+}
+
+.search-bar {
+
+    input,
+    button {
+        border: none;
+
+        &:focus {
+            box-shadow: none;
+        }
+    }
+
+    input {
+        padding: 1rem;
+
+
+    }
+
+    button {
+        background: $gradient-orange;
+        color: $white-color;
+        padding: 1rem 1.5rem;
+    }
+}
+
+.help-item {
+    background-color: $white-color;
+    padding: 1.75rem;
+    border-radius: 5px;
+    display: block;
+    color: $title-color;
+    text-align: center;
+
+    &.style-2 {
+        @extend %p-rel;
+        padding: 3rem 1.75rem;
+
+        span {
+            @extend %p-abs;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: $theme-color;
+            color: $white-color;
+            padding: .5rem 1rem;
+            border-radius: 5px;
+        }
+    }
+
+    &:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 5px rgba($color:$black-color, $alpha: .20);
+    }
+
+}
+
+.cant-find {
+    border-top: 1px solid rgba($color:$black-color, $alpha: .08);
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(249, 243, 230, 1) 77%);
+
+    &-content {
+        h4 {
+            @extend %mb-20;
+        }
+
+        >p {
+            @extend %mb-20;
+        }
+
+        ul {
+            gap: 10px;
+
+            li {
+                a {
+                    border: 1px solid rgba($color:$black-color, $alpha: .20);
+                    padding: .5rem 1rem;
+                    border-radius: 5px;
+
+                    span {
+                        margin-inline-end: 3px;
+                    }
+
+                    &:hover {
+                        background-color: $theme-color;
+                        color: $white-color;
+                        border-color: transparent;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.help-text {
+    background-color: $white-color;
+
+    &-wrapper {
+        @include breakpoint(lg) {
+            // max-inline-size: 80%;
+        }
+    }
+}
+
+.related-help {
+    background-color: $body-color;
+    padding: 2rem 1.5rem;
+    border-radius: 5px;
+
+    h5 {
+        @extend %mb-25;
+    }
+}
+
+.related-linklist {
+    li {
+        &:not(:last-child) {
+            @extend %mb-15;
+        }
+    }
+}
+
+.related-link {
+    &:hover {
+        text-decoration: underline;
+    }
+
+    @include breakpoint(lg) {
+        max-inline-size: 30ch;
+    }
+}
