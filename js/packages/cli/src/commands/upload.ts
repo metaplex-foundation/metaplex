@@ -370,22 +370,25 @@ export async function uploadV2({
     saveCache(cacheName, env, cacheContent);
   }
 
-  let uploadSuccessful = true;
+  let uploadSuccessful = false;
   if (!hiddenSettings) {
-    uploadSuccessful = await writeIndices({
-      anchorProgram,
-      cacheContent,
-      cacheName,
-      env,
-      candyMachine,
-      walletKeyPair,
-      rateLimit,
-    });
+    while (!uploadSuccessful) {
+      console.log(`Starting upload at ${new Date()}`);
+      uploadSuccessful = await writeIndices({
+        anchorProgram,
+        cacheContent,
+        cacheName,
+        env,
+        candyMachine,
+        walletKeyPair,
+        rateLimit,
+      });
 
-    const uploadedItems = Object.values(cacheContent.items).filter(
-      (f: { link: string }) => !!f.link,
-    ).length;
-    uploadSuccessful = uploadSuccessful && uploadedItems === totalNFTs;
+      const uploadedItems = Object.values(cacheContent.items).filter(
+        (f: { link: string }) => !!f.link,
+      ).length;
+      uploadSuccessful = uploadSuccessful && uploadedItems === totalNFTs;
+    }
   } else {
     log.info('Skipping upload to chain as this is a hidden Candy Machine');
   }
