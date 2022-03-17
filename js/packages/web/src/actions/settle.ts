@@ -297,7 +297,7 @@ async function claimAllBids(
     signers.push(currSignerBatch);
     instructions.push(currInstrBatch);
   }
-  console.log('Instructions', instructions);
+  console.log('Settle Instructions', instructions);
   for (let i = 0; i < instructions.length; i++) {
     const instructionBatch = instructions[i];
     const signerBatch = signers[i];

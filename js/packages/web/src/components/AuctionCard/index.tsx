@@ -343,7 +343,7 @@ export const AuctionCard = ({
   );
 
   const [value, setValue] = useState<number>(minBid);
-
+  const [triedToBid, setTriedToBid] = useState(false);
   const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
   const gapTick = auctionExtended
     ? auctionExtended.info.gapTickSizePercentage
@@ -898,10 +898,13 @@ export const AuctionCard = ({
         </Col>
         <Col flex="0 0 auto">
           <Button
-            disabled={invalidBid}
+            disabled={invalidBid && triedToBid}
             type="primary"
             loading={loading || !accountByMint.get(QUOTE_MINT.toBase58())}
             onClick={async () => {
+              setTriedToBid(true);
+              if (invalidBid) return;
+
               setLoading(true);
 
               if (!myPayingAccount || !value) {
@@ -965,7 +968,7 @@ export const AuctionCard = ({
         <div className="metaplex-margin-top-4">
           {!loading && (
             <>
-              {notEnoughFundsToBid && (
+              {notEnoughFundsToBid && triedToBid && (
                 <Text className="danger" type="danger">
                   You do not have enough funds to fulfill the bid. Your current
                   bidding power is {biddingPower} SOL.
@@ -1054,12 +1057,7 @@ export const AuctionCard = ({
             : '1px solid var(--color-border, #121212)',
         }}
         bodyStyle={{
-          padding:
-            auctionEnded ||
-            (shouldHide && !winners.length) ||
-            (auctionView.isInstantSale && !showInstantSaleButton)
-              ? 0
-              : 24,
+          padding: shouldHide ? 0 : 24,
         }}
         title={
           <div className="">
