@@ -28,6 +28,7 @@ import {
   Tooltip,
   notification,
 } from 'antd';
+import Bugsnag from '@bugsnag/browser';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArtContent } from '../../components/ArtContent';
@@ -388,6 +389,14 @@ export const AuctionBids = ({
                     message: 'Bid Cancel Error',
                     description:
                       'There was an issue cancelling your bid. Please check your transaction history and try again.',
+                  });
+                  Bugsnag.notify(e);
+
+                  track('Error Listing Bid Cancelled', {
+                    event_category: 'Listings',
+                    auctionPubkey: auctionView.auction.pubkey,
+                    event_label: auctionRunning ? 'cancel' : 'refund',
+                    auctionRunning,
                   });
                 } finally {
                   setCancellingBid(false);

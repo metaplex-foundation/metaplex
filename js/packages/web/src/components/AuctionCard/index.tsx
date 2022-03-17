@@ -743,6 +743,14 @@ export const AuctionCard = ({
                     : 'There was an error refunding your bid.') +
                   ' Please try again or reach out to support.',
               });
+              if (!isAuctioneer) {
+                track('Listing Bid Cancelled', {
+                  event_category: 'Listings',
+                  auctionPubkey: auctionView.auction.pubkey,
+                  event_label: 'refund',
+                  auctionRunning: false,
+                });
+              }
             }
           }
 
