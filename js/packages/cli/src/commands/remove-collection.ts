@@ -67,8 +67,8 @@ export async function removeCollection(
     )
   ).txid;
   const toReturn = {
-    collectionMetadata: metadataPubkey,
-    collectionPDA: collectionPDAPubkey,
+    collectionMetadata: metadataPubkey.toBase58(),
+    collectionPDA: collectionPDAPubkey.toBase58(),
     txId,
   };
   return toReturn;
