@@ -6,12 +6,10 @@ import {
   StringPublicKey,
   useMeta,
 } from '@oyster/common';
+
 import { WalletContextState } from '@solana/wallet-adapter-react';
-import {
-  startAuctionManually,
-  decommAuctionManagerAndReturnPrizes,
-  unwindVault,
-} from '../actions';
+import { startAuctionManually, decommAuctionManagerAndReturnPrizes, unwindVault } from '../actions';
+
 import { useCompactAuctions } from './useAuctions';
 
 export enum StorefrontNotificationType {
@@ -20,7 +18,7 @@ export enum StorefrontNotificationType {
   Unwind,
 }
 
-interface StorefrontNotification {
+export interface StorefrontNotification {
   accountPubkey: StringPublicKey;
   type: StorefrontNotificationType;
   description: string;
@@ -28,9 +26,7 @@ interface StorefrontNotification {
   action: () => Promise<void>;
 }
 
-export const useNotifications = (
-  wallet: WalletContextState,
-): StorefrontNotification[] => {
+export const useNotifications = (wallet: WalletContextState): StorefrontNotification[] => {
   const auctions = useCompactAuctions();
   const connection = useConnection();
   const { vaults } = useMeta();
@@ -38,11 +34,10 @@ export const useNotifications = (
 
   let notifications = [] as StorefrontNotification[];
 
-  auctions.forEach(auctionView => {
+  auctions.forEach((auctionView) => {
     if (
       auctionView.auction.info.state === AuctionState.Created &&
-      auctionView.auctionManager.info.state.status ===
-        AuctionManagerStatus.Validated &&
+      auctionView.auctionManager.info.state.status === AuctionManagerStatus.Validated &&
       auctionView.auctionManager.info.authority === walletPubkey
     ) {
       const upcoming = {
@@ -51,16 +46,14 @@ export const useNotifications = (
         description:
           'You have an auction that has not started yet. If you want start the auction now.',
         callToAction: 'Start Auction',
-        action: async () =>
-          startAuctionManually(connection, wallet, auctionView.auctionManager),
+        action: async () => startAuctionManually(connection, wallet, auctionView.auctionManager),
       };
 
       notifications = [...notifications, upcoming];
     }
 
     if (
-      auctionView.auctionManager.info.state.status ===
-        AuctionManagerStatus.Initialized &&
+      auctionView.auctionManager.info.state.status === AuctionManagerStatus.Initialized &&
       auctionView.auctionManager.info.authority === walletPubkey
     ) {
       const possiblyBroken = {
@@ -69,15 +62,14 @@ export const useNotifications = (
         description:
           'You have an NFT locked in a defective listing. Decommission it now to re-claim the NFT.',
         callToAction: 'Decommission Listing',
-        action: async () =>
-          decommAuctionManagerAndReturnPrizes(connection, wallet, auctionView),
+        action: async () => decommAuctionManagerAndReturnPrizes(connection, wallet, auctionView),
       };
 
       notifications = [...notifications, possiblyBroken];
     }
   });
 
-  Object.values(vaults).forEach(vault => {
+  Object.values(vaults).forEach((vault) => {
     if (
       vault.info.state != VaultState.Deactivated &&
       vault.info.authority === walletPubkey &&

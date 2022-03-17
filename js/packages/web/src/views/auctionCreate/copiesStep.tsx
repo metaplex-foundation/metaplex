@@ -108,7 +108,7 @@ export const CopiesStep = (props: {
         className="metaplex-fullwidth"
         type="primary"
         size="large"
-        disabled={!!editionsError}
+        disabled={!!editionsError || !props.attributes.items.length}
         onClick={() => {
           props.confirm();
         }}

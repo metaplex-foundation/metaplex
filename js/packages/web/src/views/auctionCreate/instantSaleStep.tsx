@@ -21,20 +21,17 @@ export const InstantSaleStep = ({
   const nft = attributes?.items[0];
   const isEdition = useMemo(() => !!nft?.edition, [nft]);
   const masterEdition = useMemo(() => nft?.masterEdition, [nft]);
-  const availableSupply = useMemo(
-    () => {
-      const info = masterEdition?.info;
+  const availableSupply = useMemo(() => {
+    const info = masterEdition?.info;
 
-      if (isEdition || !info) {
-        return 0;
-      }
-      const maxSupply = info?.maxSupply?.toNumber() as number;
-      const supply = info?.supply?.toNumber() as number;
+    if (isEdition || !info) {
+      return 0;
+    }
+    const maxSupply = info?.maxSupply?.toNumber() as number;
+    const supply = info?.supply?.toNumber() as number;
 
-      return maxSupply - supply;
-    },
-    [masterEdition, isEdition],
-  );
+    return maxSupply - supply;
+  }, [masterEdition, isEdition]);
   const hasUlimatedPrints = useMemo(
     () => !isEdition && isNil(masterEdition?.info?.maxSupply),
     [masterEdition, isEdition],
@@ -44,10 +41,10 @@ export const InstantSaleStep = ({
       !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
     [],
   );
-  const shouldRenderSelect = attributes.items.length > 0;
+  const shouldRenderSelect = attributes.items.length > 0; // && (availableSupply || hasUlimatedPrints);
 
   return (
-    <Space className="metaplex-fullwidth" direction="vertical">
+    <Space className="metaplex-fullwidth" direction="vertical" size={'large'}>
       <h2>Select which item to sell:</h2>
 
       <ArtSelector
@@ -146,7 +143,7 @@ export const InstantSaleStep = ({
         className="metaplex-fullwidth"
         type="primary"
         size="large"
-        disabled={!!editionError}
+        disabled={!!editionError || !attributes.items.length}
         onClick={() => {
           confirm();
         }}
