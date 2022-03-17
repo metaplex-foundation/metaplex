@@ -239,23 +239,21 @@ export async function uploadV2({
         rpcUrl,
       );
 
-      let result = arweaveBundleUploadGenerator.next();
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
-      while (!result.done) {
+      for (const value of arweaveBundleUploadGenerator) {
         const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
-          await result.value;
+          await value;
 
         updateCacheAfterUpload(
           cacheContent,
           cacheKeys,
           arweavePathManifestLinks,
-          updatedManifests,
+          updatedManifests.map(m => m.name),
         );
 
         saveCache(cacheName, env, cacheContent);
         log.info('Saved bundle upload result to cache.');
-        result = arweaveBundleUploadGenerator.next();
       }
       log.info('Upload done. Cleaning up...');
       if (storage === StorageType.ArweaveSol && env !== 'devnet') {
@@ -612,12 +610,12 @@ function updateCacheAfterUpload(
   cache: Cache,
   cacheKeys: Array<keyof Cache['items']>,
   links: string[],
-  manifests: Manifest[],
+  names: string[],
 ) {
   cacheKeys.forEach((cacheKey, idx) => {
     cache.items[cacheKey] = {
       link: links[idx],
-      name: manifests[idx].name,
+      name: names[idx],
       onChain: false,
     };
   });
@@ -706,21 +704,20 @@ export async function upload({
         batchSize,
       );
 
-      let result = arweaveBundleUploadGenerator.next();
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
-      while (!result.done) {
+      for (const value of arweaveBundleUploadGenerator) {
         const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
-          await result.value;
+          await value;
+
         updateCacheAfterUpload(
           cache,
           cacheKeys,
           arweavePathManifestLinks,
-          updatedManifests,
+          updatedManifests.map(m => m.name),
         );
         saveCache(cacheName, env, cache);
         log.info('Saved bundle upload result to cache.');
-        result = arweaveBundleUploadGenerator.next();
       }
       log.info('Upload done.');
     } else {

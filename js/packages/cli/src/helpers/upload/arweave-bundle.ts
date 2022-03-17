@@ -64,6 +64,7 @@ type ProcessFileArgs = {
  * Represented here in its minimal form.
  */
 type Manifest = {
+  name: string;
   image: string;
   animation_url: string;
   properties: {
@@ -517,14 +518,6 @@ export function* makeArweaveBundleUploadGenerator(
           : undefined,
       manifest: manifestPath,
     };
-  });
-
-  // Yield an empty result object before processing file pairs
-  // & uploading bundles for initialization.
-  yield Promise.resolve({
-    cacheKeys: [],
-    arweavePathManifestLinks: [],
-    updatedManifests: [],
   });
 
   // As long as we still have file pairs needing upload, compute the next range
