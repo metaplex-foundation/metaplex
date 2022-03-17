@@ -237,13 +237,13 @@ export const AuctionCard = ({
   hideDefaultAction,
   artDescription,
   artTitle,
-  artImage
+  artImage,
 }: {
   auctionView: AuctionView;
   hideDefaultAction?: boolean;
-  artDescription?: string
-  artTitle?: string
-  artImage?: string
+  artDescription?: string;
+  artTitle?: string;
+  artImage?: string;
 }) => {
   const { storefront } = useStore();
   const connection = useConnection();
@@ -720,6 +720,15 @@ export const AuctionCard = ({
               const message =
                 cancelBidMessages[isAuctioneer ? 'reclaimed' : 'refunded'];
 
+              if (!isAuctioneer) {
+                track('Listing Bid Cancelled', {
+                  event_category: 'Listings',
+                  auctionPubkey: auctionView.auction.pubkey,
+                  event_label: 'refund',
+                  auctionRunning: false,
+                });
+              }
+
               notification.success(message);
             } catch (e: any) {
               Bugsnag.notify(e);
@@ -734,6 +743,14 @@ export const AuctionCard = ({
                     : 'There was an error refunding your bid.') +
                   ' Please try again or reach out to support.',
               });
+              if (!isAuctioneer) {
+                track('Listing Bid Cancelled', {
+                  event_category: 'Listings',
+                  auctionPubkey: auctionView.auction.pubkey,
+                  event_label: 'refund',
+                  auctionRunning: false,
+                });
+              }
             }
           }
 
@@ -831,9 +848,15 @@ export const AuctionCard = ({
   );
 
   // Crossmint credit card checkout
-  const maybeCrossMintButton = (auctionView: AuctionView, storefront: Storefront) => {
-    if (auctionView.isInstantSale && storefront.integrations?.crossmintClientId && auctionView.items.flat().length === 1) {
-
+  const maybeCrossMintButton = (
+    auctionView: AuctionView,
+    storefront: Storefront,
+  ) => {
+    if (
+      auctionView.isInstantSale &&
+      storefront.integrations?.crossmintClientId &&
+      auctionView.items.flat().length === 1
+    ) {
       return (
         <CrossMintButton
           listingId={auctionView.auction.pubkey}
@@ -848,10 +871,9 @@ export const AuctionCard = ({
             marginTop: '12px',
           }}
         />
-
-      )
+      );
     }
-  }
+  };
 
   // Components for inputting bid amount and placing a bid
   const PlaceBidUI = (
@@ -1079,7 +1101,7 @@ export const AuctionCard = ({
             {/* todo: reduce opacity if starting bid */}
             <div className={cx('flex items-center text-xl')}>
               <svg
-                className="mx-[5px] h-4 w-4 opacity-75 stroke-color-text"
+                className="stroke-color-text mx-[5px] h-4 w-4 opacity-75"
                 viewBox="0 0 16 16"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -1128,16 +1150,13 @@ export const AuctionCard = ({
                   >
                     Connect wallet to{' '}
                     {auctionView.isInstantSale ? 'purchase' : 'place bid'}
-                  </Button>)}
+                  </Button>
+                )}
               </>
             )}
 
             {/*  During auction, connected */}
-            {showInstantSaleButton && (
-                <>
-                  {InstantSaleBtn}
-                </>
-              )}
+            {showInstantSaleButton && <>{InstantSaleBtn}</>}
             {showPlaceBidButton && PlaceBidBtn}
             {actuallyShowPlaceBidUI && PlaceBidUI}
             {maybeCrossMintButton(auctionView, storefront)}
@@ -1177,19 +1196,19 @@ const WinnerProfile = ({
   }, []);
   return (
     <a href={`https://www.holaplex.com/profiles/${bidderPubkey}`}>
-      <div className="flex items-center px-4 py-4 sm:px-6 cursor-pointer rounded-lg  group">
-        <div className="min-w-0 flex-1 flex items-center transition-colors">
+      <div className="group flex cursor-pointer items-center rounded-lg px-4 py-4  sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center transition-colors">
           <div className="flex-shrink-0 pr-4">
             <Identicon size={48} address={bidderPubkey} />
           </div>
-          <div className="min-w-0 flex-1 flex justify-between group-hover:text-primary text-color-text">
+          <div className="group-hover:text-primary text-color-text flex min-w-0 flex-1 justify-between">
             <div className="text-color-text">
-              <p className=" font-medium  truncate flex items-center  group-hover:text-primary text-color-text">
+              <p className=" group-hover:text-primary  text-color-text flex items-center  truncate font-medium">
                 {bidderTwitterHandle || shortenAddress(bidderPubkey)}
               </p>
             </div>
           </div>
-          <div className="flex items-center group-hover:text-primary text-color-text">
+          <div className="group-hover:text-primary text-color-text flex items-center">
             <span className="block">View profile</span>
             <ChevronRightIcon
               className="h-5 w-5"
