@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { Button, MetaChip } from '@oyster/common'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import LiveNFTCard from './LiveNFTCard'
+import { LiveAuctionViewState } from '../../views/Home'
 
 export interface HeroProps {
   className: string
@@ -11,7 +12,7 @@ export interface HeroProps {
 
 export const Hero: FC<HeroProps> = ({ className }) => {
   const HeroClasses = CN(`hero w-full`, className)
-  const { auctions } = useAuctionsList()
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const [talentedArtists, setTalentedArtists] = useState(0)
 
   useEffect(() => {
