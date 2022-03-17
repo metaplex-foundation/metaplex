@@ -11,6 +11,7 @@ import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/
 import queryString from 'query-string'
 import _ from 'lodash'
 import { Spinner } from '@oyster/common'
+import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 
 export interface CollectionHeaderProps {
   [x: string]: any
@@ -35,7 +36,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
   const [dataItems, setDataItems] = useState<any>()
 
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(true)
-  const { auctions } = useAuctionsList()
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
   useEffect(() => {
     setIsCollectionsLoading(true)

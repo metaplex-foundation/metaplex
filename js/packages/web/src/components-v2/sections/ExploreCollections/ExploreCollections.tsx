@@ -19,6 +19,7 @@ import { NftCard } from '../../molecules/NftCard'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import { useExtendedCollection } from '../../../hooks'
 import useSearch from '../../../hooks/useSearch'
+import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 
 export interface ExploreCollectionsProps {
   [x: string]: any
@@ -44,7 +45,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
   const [dataItems, setDataItems] = useState<any[]>([])
   const { getData } = useExtendedCollection()
 
-  const { auctions } = useAuctionsList()
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
   useEffect(() => {
     setIsCollectionsLoading(true)
@@ -137,7 +138,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
                   {isOpen && (
                     <DropDownBody
                       align='center'
-                      className='w-full border-x border-b border-B-10 shadow-lg shadow-B-700/5'>
+                      className='shadow-lg w-full border-x border-b border-B-10 shadow-B-700/5'>
                       {categories?.map(({ label, value }: any, index: number) => {
                         return (
                           <>

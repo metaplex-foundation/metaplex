@@ -54,7 +54,7 @@ export const Collection: FC<CollectionProps> = () => {
   const [dataItems, setDataItems] = useState<any[]>([])
 
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(true)
-  const { auctions } = useAuctionsList()
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
   useEffect(() => {
     setIsCollectionsLoading(true)

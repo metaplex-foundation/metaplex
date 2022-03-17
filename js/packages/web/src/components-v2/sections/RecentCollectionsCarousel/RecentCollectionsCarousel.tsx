@@ -9,6 +9,7 @@ import { NftCard } from '../../molecules/NftCard'
 import { useViewport } from '../../../utils/useViewport'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import _ from 'lodash'
+import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 
 export interface RecentCollectionsCarouselProps {
   [x: string]: any
@@ -26,7 +27,7 @@ export const RecentCollectionsCarousel: FC<RecentCollectionsCarouselProps> = ({
   const [dataItems, setDataItems] = useState<any[]>([])
 
   // new /////
-  const { auctions } = useAuctionsList()
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
   useEffect(() => {
     setIsCollectionsLoading(true)
