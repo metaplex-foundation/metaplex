@@ -6,12 +6,12 @@ import {
   Account,
   SystemProgram,
 } from '@solana/web3.js';
-import { WalletSigner } from '../contexts';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export const mintNFT = async (
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   // SOL account
   owner: PublicKey,
 ) => {
@@ -103,7 +103,7 @@ export const mintNFT = async (
   if (signers.length > 0) {
     transaction.partialSign(...signers);
   }
-  transaction = await wallet.signTransaction(transaction);
+  transaction = (await wallet?.signTransaction?.(transaction)) as Transaction;
   const rawTransaction = transaction.serialize();
   const options = {
     skipPreflight: true,

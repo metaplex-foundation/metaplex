@@ -12,7 +12,6 @@ import {
   toLamports,
   ParsedAccount,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { approve } from '@oyster/common/dist/lib/models/account';
@@ -23,10 +22,11 @@ import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 import { QUOTE_MINT } from '../constants';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function sendPlaceBid(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -67,7 +67,7 @@ export async function sendPlaceBid(
 
 export async function setupPlaceBid(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,

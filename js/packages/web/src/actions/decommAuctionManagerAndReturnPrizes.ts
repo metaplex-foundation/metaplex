@@ -3,17 +3,17 @@ import {
   sendTransactionsWithManualRetry,
   setAuctionAuthority,
   setVaultAuthority,
-  WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AuctionViewCompact } from '../hooks';
 import { AuctionManagerStatus } from '@oyster/common/dist/lib/models/metaplex/index';
 import { decommissionAuctionManager } from '@oyster/common/dist/lib/models/metaplex/decommissionAuctionManager';
 import { unwindVault } from './unwindVault';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function decommAuctionManagerAndReturnPrizes(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionView: AuctionViewCompact,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();

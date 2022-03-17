@@ -1,5 +1,4 @@
-import { ConnectButton } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, WalletMultiButton } from '@oyster/common';
 import React from 'react';
 import { CurrentUserBadge } from '../CurrentUserBadge';
 import { HowToBuyModal } from '../HowToBuyModal';
@@ -20,7 +19,8 @@ export const SecondaryMenu = () => {
       ) : (
         <>
           <HowToBuyModal buttonType="text" />
-          <ConnectButton type="text" allowWalletChange={false} />
+          <Cog buttonType="text" />
+          <WalletMultiButton className="bg-primary hover:bg-primary-hover" />
         </>
       )}
     </div>

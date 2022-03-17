@@ -12,10 +12,10 @@ import {
   TokenAccount,
   programIds,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { Token } from '@solana/spl-token';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 const BATCH_SIZE = 10;
 const CONVERT_TRANSACTION_SIZE = 10;
@@ -126,7 +126,7 @@ export async function filterMetadata(
 // Given a vault you own, unwind all the tokens out of it.
 export async function convertMasterEditions(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   masterEditions: ParsedAccount<MasterEditionV1>[],
   accountsByMint: Map<string, TokenAccount>,
 ) {

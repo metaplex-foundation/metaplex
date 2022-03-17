@@ -23,7 +23,6 @@ import {
   useUserAccounts,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
   loadPayoutTickets,
   getBidderKeys,
   getPayoutTicket,
@@ -34,7 +33,7 @@ import {
   processMetaplexAccounts,
   subscribeProgramChanges,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
@@ -415,7 +414,7 @@ export const InnerBillingView = ({
   mint,
 }: {
   auctionView: AuctionView;
-  wallet: WalletSigner;
+  wallet: WalletContextState;
   connection: Connection;
   mint: MintInfo;
 }) => {

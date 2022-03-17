@@ -33,8 +33,8 @@ export const CurrentUserBadge = (props: {
         trigger="click"
       >
         <div>
-          <span>{wallet.name}</span>
-          <img src={wallet.icon} />
+          <span>{wallet.adapter.name}</span>
+          <img src={wallet.adapter.icon} />
         </div>
       </Popover>
     </div>

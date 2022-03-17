@@ -8,7 +8,6 @@ import {
   ParsedAccount,
   BidderMetadata,
   StringPublicKey,
-  WalletSigner,
   toPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
@@ -21,11 +20,15 @@ import {
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
+import {
+  SmartInstructionSender,
+  WalletSigner,
+} from '@holaplex/solana-web3-tools';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function sendCancelBidOrReclaimItems(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -97,7 +100,7 @@ export async function sendCancelBidOrReclaimItems(
   } else {
     let cancelBidError: Error | null = null;
 
-    await SmartInstructionSender.build(wallet as any, connection)
+    await SmartInstructionSender.build(wallet as WalletSigner, connection)
       .config({
         abortOnFailure: true,
         maxSigningAttempts: 3,
@@ -124,7 +127,7 @@ export async function setupCancelBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {

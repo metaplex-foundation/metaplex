@@ -18,7 +18,7 @@ import { actions } from '@metaplex/js';
 import { PublicKey } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Link } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import {
   Button,
   Carousel,

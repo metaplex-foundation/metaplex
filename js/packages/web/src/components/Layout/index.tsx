@@ -2,7 +2,6 @@ import { Storefront } from '@oyster/common';
 import { Layout, notification } from 'antd';
 import React, { ReactNode, useEffect } from 'react';
 import { AppBar } from '../AppBar';
-
 const { Content } = Layout;
 
 export const AppLayout = React.memo(function AppLayout(props: {

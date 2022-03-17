@@ -22,7 +22,6 @@ import {
   MetadataKey,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
   SendAndConfirmError,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
@@ -48,7 +47,10 @@ import {
   addTokensToVault,
   SafetyDepositInstructionTemplate,
 } from './addTokensToVault';
-import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
+import {
+  SmartInstructionSender,
+  WalletSigner,
+} from '@holaplex/solana-web3-tools';
 import { makeAuction } from './makeAuction';
 import { createExternalPriceAccount } from './createExternalPriceAccount';
 import { deprecatedValidateParticipation } from '@oyster/common/dist/lib/models/metaplex/deprecatedValidateParticipation';
@@ -60,6 +62,7 @@ import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metap
 import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2';
 import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
 import { SetStateAction, Dispatch } from 'react';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 interface normalPattern {
   instructions: TransactionInstruction[];
@@ -104,7 +107,7 @@ export interface SafetyDepositDraft {
 // from some AuctionManagerSettings.
 export async function createAuctionManager(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   progressCallback: Dispatch<SetStateAction<number>>,
   reSignCallback: () => void,
   failureCallback: (err: SendAndConfirmError) => void,
@@ -347,7 +350,7 @@ export async function createAuctionManager(
     instructions: ix,
     signers: filteredSigners[i],
   }));
-  await SmartInstructionSender.build(wallet, connection)
+  await SmartInstructionSender.build(wallet as WalletSigner, connection)
     .config(config)
     .withInstructionSets(instructionSets)
     .onProgress(index => {
@@ -373,7 +376,7 @@ export async function createAuctionManager(
 }
 
 async function buildSafetyDepositArray(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   safetyDeposits: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
 ): Promise<SafetyDepositInstructionTemplate[]> {
@@ -507,7 +510,7 @@ async function buildSafetyDepositArray(
 }
 
 async function setupAuctionManagerInstructions(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   vault: StringPublicKey,
   paymentMint: StringPublicKey,
   accountRentExempt: number,
@@ -566,7 +569,7 @@ async function setupAuctionManagerInstructions(
 }
 
 async function setupStartAuction(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   vault: StringPublicKey,
 ): Promise<{
   instructions: TransactionInstruction[];
@@ -583,7 +586,7 @@ async function setupStartAuction(
 }
 
 async function deprecatedValidateParticipationHelper(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionManager: StringPublicKey,
   whitelistedCreatorsByCreator: Record<
     string,
@@ -668,7 +671,7 @@ async function findValidWhitelistedCreator(
 }
 
 async function validateBoxes(
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -754,7 +757,7 @@ async function validateBoxes(
 
 async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   oneTimePrintingAuthorizationMint: StringPublicKey | undefined,
 ): Promise<{
   instructions: TransactionInstruction[];

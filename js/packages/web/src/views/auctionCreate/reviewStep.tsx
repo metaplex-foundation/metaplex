@@ -1,5 +1,5 @@
 import { WRAPPED_SOL_MINT } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { Connection } from '@solana/web3.js';
 import { Alert, Button, Col, Divider, Row, Space, Statistic } from 'antd';
 import moment from 'moment';

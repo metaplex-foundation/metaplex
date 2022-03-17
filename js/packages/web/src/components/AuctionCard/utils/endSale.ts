@@ -1,4 +1,7 @@
-import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
+import {
+  SmartInstructionSender,
+  WalletSigner,
+} from '@holaplex/solana-web3-tools';
 import {
   BidderMetadata,
   BidRedemptionTicket,
@@ -62,7 +65,7 @@ export async function endSale({
   const instructions = [endAuctionInstructions, ...claimInstructions];
   const signers = [[], ...claimSigners];
 
-  return SmartInstructionSender.build(wallet, connection)
+  return SmartInstructionSender.build(wallet as WalletSigner, connection)
     .config({
       abortOnFailure: true,
       maxSigningAttempts: 3,
