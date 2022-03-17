@@ -1,79 +1,28 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { Button, SectionHeading, BuyCard } from '@oyster/common'
+import { Button, SectionHeading } from '@oyster/common'
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
+import { useCollections } from '../../../hooks/useCollections'
+import CollectionCard from '../RecentCollections/CollectionCard'
 
 export interface TrendingCollectionsProps {
   [x: string]: any
 }
 
-const slidesData = [
-  {
-    name: 'Almost Famous Pandas',
-    volume: '472.54',
-    image: '/img/temp/nft6.gif',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Lady Yetis',
-    volume: '472.54',
-    image: '/img/temp/nft5.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Diamond Hands',
-    volume: '472.54',
-    image: '/img/temp/nft13.gif',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Dapper Ape',
-    volume: '472.54',
-    image: '/img/temp/nft8.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Posh Gorilla',
-    volume: '472.54',
-    image: '/img/temp/nft12.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-  {
-    name: 'Pixel Wizards',
-    volume: '472.54',
-    image: '/img/temp/nft2.webp',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    link: '#',
-  },
-]
-
-export const TrendingCollections: FC<TrendingCollectionsProps> = ({
-  className,
-  ...restProps
-}: TrendingCollectionsProps) => {
+export const TrendingCollections: FC<TrendingCollectionsProps> = ({ className }) => {
   const TrendingCollectionsClasses = CN(`trending-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
+  const { liveCollections } = useCollections()
 
-  const slides = (slidesData || []).map((slide: any, index: number) => {
+  const slides = (liveCollections || []).map((collection: any, index: number) => {
     return {
       id: 0,
-      Component: () => <BuyCard key={index} onClickButton={() => {}} {...slide} />,
+      Component: () => <CollectionCard collection={collection} key={index} />,
     }
   })
 
   return (
-    <div className={TrendingCollectionsClasses} {...restProps}>
+    <div className={TrendingCollectionsClasses}>
       <div className='container flex flex-col gap-[60px]'>
         <SectionHeading
           overline='🤠 Trending'
