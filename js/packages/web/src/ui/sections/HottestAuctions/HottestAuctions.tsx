@@ -64,6 +64,14 @@ export const HottestAuctions: FC<HottestAuctionsProps> = ({
                     isActive: activeKey === LiveAuctionViewState.Participated,
                     hasIndicator: activeKey === LiveAuctionViewState.Participated,
                   },
+                  {
+                    label: 'My Live Auctions',
+                    onClick: () => {
+                      onChangeActiveKey(LiveAuctionViewState.Own)
+                    },
+                    isActive: activeKey === LiveAuctionViewState.Own,
+                    hasIndicator: activeKey === LiveAuctionViewState.Own,
+                  },
                 ]}
               />
               <Button
