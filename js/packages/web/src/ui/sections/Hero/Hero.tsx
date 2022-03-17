@@ -69,7 +69,7 @@ export const Hero: FC<HeroProps> = ({ className }) => {
             />
 
             <LiveNFTCard
-              auction={auctions[3]}
+              auction={auctions[2]}
               className='absolute left-0 right-0 m-auto w-[320px] rotate-[10deg] shadow transition-all group-hover:rotate-[0]'
               hasIndicator
             />
