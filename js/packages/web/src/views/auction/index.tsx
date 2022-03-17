@@ -384,7 +384,7 @@ export const AuctionBids = ({
                     event_label: auctionRunning ? 'cancel' : 'refund',
                     auctionRunning,
                   });
-                } catch {
+                } catch (e: any) {
                   notification.error({
                     message: 'Bid Cancel Error',
                     description:
