@@ -1054,7 +1054,12 @@ export const AuctionCard = ({
             : '1px solid var(--color-border, #121212)',
         }}
         bodyStyle={{
-          padding: auctionEnded || (shouldHide && !winners.length) ? 0 : 24,
+          padding:
+            auctionEnded ||
+            (shouldHide && !winners.length) ||
+            (auctionView.isInstantSale && !showInstantSaleButton)
+              ? 0
+              : 24,
         }}
         title={
           <div className="">
@@ -1077,7 +1082,7 @@ export const AuctionCard = ({
                         : ''
                     }`
                 : auctionView.isInstantSale
-                ? 'Instant sale'
+                ? 'Fixed price'
                 : 'Ends in'}
             </span>
             {!auctionEnded && !auctionView.isInstantSale && (
@@ -1156,7 +1161,7 @@ export const AuctionCard = ({
             )}
 
             {/*  During auction, connected */}
-            {showInstantSaleButton && <>{InstantSaleBtn}</>}
+            {showInstantSaleButton && InstantSaleBtn}
             {showPlaceBidButton && PlaceBidBtn}
             {actuallyShowPlaceBidUI && PlaceBidUI}
             {maybeCrossMintButton(auctionView, storefront)}
