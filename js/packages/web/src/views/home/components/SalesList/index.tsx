@@ -43,9 +43,9 @@ export const SalesListView = (props: { collectionMintFilter?: string }) => {
     <>
       {!props.collectionMintFilter && (
         <Banner
-          src="/main-banner.svg"
-          headingText="The amazing world of Metaplex."
-          subHeadingText="Buy exclusive Metaplex NFTs."
+          src="/wave_img.png"
+          headingText="Paint Us with Your NFTs."
+          subHeadingText="Pi-market is an NFT market where you can mint and freely purchase NFT works related to the school you belong to. Sell and purchase any works of art, including photos, pictures, videos, music, etc. from your beloved school."
           actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
           useBannerBg
         />

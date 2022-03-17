@@ -21,9 +21,12 @@ import { CollectionsView } from './views/collections';
 import { CollectionDetailView } from './views/collections/collectionDetail';
 
 export function Routes() {
+  const style_black= {
+    backgroundColor : 'black'
+  }
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
   return (
-    <>
+    <div style={style_black} >
       <HashRouter basename={'/'}>
         <Providers>
           <Switch>
@@ -86,6 +89,6 @@ export function Routes() {
           </Switch>
         </Providers>
       </HashRouter>
-    </>
+    </div>
   );
 }

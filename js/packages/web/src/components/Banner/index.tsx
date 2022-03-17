@@ -50,7 +50,7 @@ export const Banner = (props: {
           <div id={'message-container'}>
             <div id={'main-heading'}>{props.headingText}</div>
             <div id={'sub-heading'}>{props.subHeadingText}</div>
-            {props.actionComponent}
+            {/* {props.actionComponent} */}
           </div>
           {props.children}
           <div className="powered-by">
