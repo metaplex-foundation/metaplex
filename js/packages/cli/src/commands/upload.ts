@@ -241,9 +241,8 @@ export async function uploadV2({
 
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
-      for (const value of arweaveBundleUploadGenerator) {
-        const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
-          await value;
+      for await (const value of arweaveBundleUploadGenerator) {
+        const { cacheKeys, arweavePathManifestLinks, updatedManifests } = value;
 
         updateCacheAfterUpload(
           cacheContent,
@@ -706,9 +705,8 @@ export async function upload({
 
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
-      for (const value of arweaveBundleUploadGenerator) {
-        const { cacheKeys, arweavePathManifestLinks, updatedManifests } =
-          await value;
+      for await (const value of arweaveBundleUploadGenerator) {
+        const { cacheKeys, arweavePathManifestLinks, updatedManifests } = value;
 
         updateCacheAfterUpload(
           cache,

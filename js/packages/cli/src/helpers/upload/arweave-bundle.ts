@@ -454,7 +454,7 @@ async function processFiles({
  * into appropriately sized bundles.
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
  */
-export function* makeArweaveBundleUploadGenerator(
+export async function* makeArweaveBundleUploadGenerator(
   storage: StorageType,
   dirname: string,
   assets: AssetKey[],
@@ -463,7 +463,7 @@ export function* makeArweaveBundleUploadGenerator(
   walletKeyPair?: Keypair,
   batchSize?: number,
   rpcUrl?: string,
-): Generator<Promise<UploadGeneratorResult>> {
+): AsyncGenerator<UploadGeneratorResult> {
   let signer: ArweaveSigner;
   const storageType: StorageType = storage;
   if (storageType === StorageType.ArweaveSol && !walletKeyPair) {
@@ -523,32 +523,29 @@ export function* makeArweaveBundleUploadGenerator(
   // As long as we still have file pairs needing upload, compute the next range
   // of file pairs we can include in the next bundle.
   while (filePairs.length) {
-    const result = getBundleRange(
+    const { count, size } = await getBundleRange(
       filePairs,
       storage === StorageType.ArweaveSol ? true : false,
-    ).then(async function processBundle({ count, size }) {
-      log.info(
-        `Computed Bundle range, including ${count} file pair(s) totaling ${sizeMB(
-          size,
-        )}MB.`,
-      );
-      const bundleFilePairs = filePairs.splice(0, count);
-      log.info('Processing file groups...');
+    );
 
-      const progressBar = new cliProgress.SingleBar(
-        {
-          format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
-        },
-        cliProgress.Presets.shades_classic,
-      );
+    log.info(
+      `Computed Bundle range, including ${count} file pair(s) totaling ${sizeMB(
+        size,
+      )}MB.`,
+    );
+    const bundleFilePairs = filePairs.splice(0, count);
+    log.info('Processing file groups...');
 
-      progressBar.start(bundleFilePairs.length, 0);
-      const {
-        cacheKeys,
-        dataItems,
-        arweavePathManifestLinks,
-        updatedManifests,
-      } = await bundleFilePairs.reduce<Promise<ProcessedBundleFilePairs>>(
+    const progressBar = new cliProgress.SingleBar(
+      {
+        format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
+      },
+      cliProgress.Presets.shades_classic,
+    );
+
+    progressBar.start(bundleFilePairs.length, 0);
+    const { cacheKeys, dataItems, arweavePathManifestLinks, updatedManifests } =
+      await bundleFilePairs.reduce<Promise<ProcessedBundleFilePairs>>(
         // Process a bundle file pair (image + manifest).
         // - retrieve image data, put it in a DataItem
         // - sign the image DataItem and build the image link from the txId.
@@ -594,100 +591,98 @@ export function* makeArweaveBundleUploadGenerator(
           updatedManifests: [],
         }),
       );
-      progressBar.stop();
-      if (storageType === StorageType.ArweaveSol) {
-        const bundlrTransactions = [
-          ...dataItems,
-        ] as unknown as BundlrTransaction[];
-        log.info('Uploading bundle via Bundlr... in multiple transactions');
-        const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
-          (c, d) => c + Math.max(d.getRaw().length, 12000),
-          0,
-        );
-        const cost = await bundlr.utils.getPrice('solana', bytes);
-        const bufferCost = cost.multipliedBy(3).dividedToIntegerBy(2);
-        log.info(
-          `${bufferCost.toNumber() / LAMPORTS} SOL to upload ${sizeMB(
-            bytes,
-          )}MB with buffer. Sending fund txn...`,
-        );
-        await bundlr.fund(bufferCost);
-        log.info(`Successfully funded Arweave Bundler, starting upload`);
+    progressBar.stop();
+    if (storageType === StorageType.ArweaveSol) {
+      const bundlrTransactions = [
+        ...dataItems,
+      ] as unknown as BundlrTransaction[];
+      log.info('Uploading bundle via Bundlr... in multiple transactions');
+      const bytes = (dataItems as unknown as BundlrTransaction[]).reduce(
+        (c, d) => c + Math.max(d.getRaw().length, 12000),
+        0,
+      );
+      const cost = await bundlr.utils.getPrice('solana', bytes);
+      const bufferCost = cost.multipliedBy(3).dividedToIntegerBy(2);
+      log.info(
+        `${bufferCost.toNumber() / LAMPORTS} SOL to upload ${sizeMB(
+          bytes,
+        )}MB with buffer. Sending fund txn...`,
+      );
+      await bundlr.fund(bufferCost);
+      log.info(`Successfully funded Arweave Bundler, starting upload`);
 
-        const progressBar = new cliProgress.SingleBar(
-          {
-            format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
-          },
-          cliProgress.Presets.shades_classic,
-        );
-        progressBar.start(bundlrTransactions.length, 0);
+      const progressBar = new cliProgress.SingleBar(
+        {
+          format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
+        },
+        cliProgress.Presets.shades_classic,
+      );
+      progressBar.start(bundlrTransactions.length, 0);
 
-        let errored = false;
-        await PromisePool.withConcurrency(batchSize || 20)
-          .for(bundlrTransactions)
-          .handleError(async err => {
-            if (!errored) {
-              errored = true;
-              log.error(
-                `\nCould not complete Bundlr tx upload successfully, exiting due to: `,
+      let errored = false;
+      await PromisePool.withConcurrency(batchSize || 20)
+        .for(bundlrTransactions)
+        .handleError(async err => {
+          if (!errored) {
+            errored = true;
+            log.error(
+              `\nCould not complete Bundlr tx upload successfully, exiting due to: `,
+              err,
+            );
+          }
+          throw err;
+        })
+        .process(async tx => {
+          let attempts = 0;
+          const uploadTransaction = async () => {
+            await tx.upload().catch(async (err: Error) => {
+              attempts++;
+              if (attempts >= 3) {
+                throw err;
+              }
+              log.debug(
+                `Failed Bundlr tx upload, retrying transaction (attempt: ${attempts})`,
                 err,
               );
-            }
-            throw err;
-          })
-          .process(async tx => {
-            let attempts = 0;
-            const uploadTransaction = async () => {
-              await tx.upload().catch(async (err: Error) => {
-                attempts++;
-                if (attempts >= 3) {
-                  throw err;
-                }
-                log.debug(
-                  `Failed Bundlr tx upload, retrying transaction (attempt: ${attempts})`,
-                  err,
-                );
-                await sleep(5 * 1000);
-                await uploadTransaction();
-              });
-            };
+              await sleep(5 * 1000);
+              await uploadTransaction();
+            });
+          };
 
-            await uploadTransaction();
-            progressBar.increment();
-          });
+          await uploadTransaction();
+          progressBar.increment();
+        });
 
-        progressBar.stop();
-        log.info('Bundle uploaded!');
-      }
+      progressBar.stop();
+      log.info('Bundle uploaded!');
+    }
 
-      if (storageType === StorageType.ArweaveBundle) {
-        const startBundleTime = Date.now();
+    if (storageType === StorageType.ArweaveBundle) {
+      const startBundleTime = Date.now();
 
-        log.info('Bundling...');
+      log.info('Bundling...');
 
-        const bundle = await bundleAndSignData(dataItems, signer);
-        const endBundleTime = Date.now();
-        log.info(
-          `Bundled ${dataItems.length} data items in ${
-            (endBundleTime - startBundleTime) / 1000
-          }s`,
-        );
-        // @ts-ignore
-        // Argument of type
-        // 'import("node_modules/arweave/node/common").default'
-        // is not assignable to parameter of type
-        // 'import("node_modules/arbundles/node_modules/arweave/node/common").default'.
-        // Types of property 'api' are incompatible.
-        const tx = await bundle.toTransaction(arweave, jwk);
-        await arweave.transactions.sign(tx as Transaction, jwk);
-        log.info('Uploading bundle via arbundle...');
-        await arweave.transactions.post(tx);
-        log.info('Bundle uploaded!', tx.id);
-      }
+      const bundle = await bundleAndSignData(dataItems, signer);
+      const endBundleTime = Date.now();
+      log.info(
+        `Bundled ${dataItems.length} data items in ${
+          (endBundleTime - startBundleTime) / 1000
+        }s`,
+      );
+      // @ts-ignore
+      // Argument of type
+      // 'import("node_modules/arweave/node/common").default'
+      // is not assignable to parameter of type
+      // 'import("node_modules/arbundles/node_modules/arweave/node/common").default'.
+      // Types of property 'api' are incompatible.
+      const tx = await bundle.toTransaction(arweave, jwk);
+      await arweave.transactions.sign(tx as Transaction, jwk);
+      log.info('Uploading bundle via arbundle...');
+      await arweave.transactions.post(tx);
+      log.info('Bundle uploaded!', tx.id);
+    }
 
-      return { cacheKeys, arweavePathManifestLinks, updatedManifests };
-    });
-    yield result;
+    yield { cacheKeys, arweavePathManifestLinks, updatedManifests };
   }
 }
 
