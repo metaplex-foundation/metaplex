@@ -1,16 +1,37 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
-import { Button, MetaChip, BidCard } from '@oyster/common'
+import _ from 'lodash'
+import { Button, MetaChip } from '@oyster/common'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+import LiveNFTCard from './LiveNFTCard'
 
 export interface HeroProps {
-  [x: string]: any
+  className: string
 }
 
-export const Hero: FC<HeroProps> = ({ className, ...restProps }: HeroProps) => {
+export const Hero: FC<HeroProps> = ({ className }) => {
   const HeroClasses = CN(`hero w-full`, className)
+  const { auctions } = useAuctionsList()
+  const [talentedArtists, setTalentedArtists] = useState(0)
+
+  useEffect(() => {
+    const newArray: any[] = []
+    if (auctions.length > 0) {
+      auctions.reduce((r, a) => {
+        newArray.push([a as any])
+        return r
+      })
+    }
+    const grouped = _.mapValues(
+      _.groupBy(newArray, item => item[0].thumbnail.metadata.info.data.creators[0].address)
+    )
+    setTalentedArtists(_.size(grouped))
+  }, [auctions])
+
+  const NFTsMinted = auctions.length
 
   return (
-    <div className={HeroClasses} {...restProps}>
+    <div className={HeroClasses}>
       <div className='container flex items-center gap-[48px]'>
         <div className='hero__left flex max-w-[527px] flex-col gap-[52px]'>
           <div className='flex flex-col gap-[24px]'>
@@ -39,34 +60,25 @@ export const Hero: FC<HeroProps> = ({ className, ...restProps }: HeroProps) => {
           </div>
         </div>
 
-        <div className='hero__center group relative ml-auto flex h-[452px] w-[395px]'>
-          <BidCard
-            className='absolute left-[-44px] right-0 m-auto w-[320px] rotate-[-6deg] shadow transition-all group-hover:rotate-[-8deg]'
-            avatar='https://images.unsplash.com/photo-1511485977113-f34c92461ad9?crop=faces&fit=crop&h=200&w=200'
-            avatarLabel='8bSR11...GtR63S'
-            image='https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Fwww.arweave.net%2F60XHAzcLzJwkbveI7d8JM8MZWaa9D8zi4qWkHFRStDk%3Fext%3Dpng&w=1920&q=75'
-            remainingTime='20h : 35m : 08s'
-            price='Ⓞ 0.25 SOL'
-            dollarValue='$154.00'
-            onClickButton={() => {}}
-          />
+        {!!auctions.length && (
+          <div className='hero__center group relative ml-auto flex h-[452px] w-[395px]'>
+            <LiveNFTCard
+              auction={auctions[0]}
+              className='absolute left-[-44px] right-0 m-auto w-[320px] rotate-[-6deg] shadow transition-all group-hover:rotate-[-8deg]'
+              onClickButton={() => {}}
+            />
 
-          <BidCard
-            className='absolute left-0 right-0 m-auto w-[320px] rotate-[10deg] shadow transition-all group-hover:rotate-[0]'
-            avatar='https://images.unsplash.com/photo-1511485977113-f34c92461ad9?crop=faces&fit=crop&h=200&w=200'
-            avatarLabel='8bSR11...GtR63S'
-            image='https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Farweave.net%2FyytjymgHK5Y64dJLHZlkCB-zbayUpAmLNB49VapL30g&w=1920&q=75'
-            remainingTime='20h : 35m : 08s'
-            price='Ⓞ 0.25 SOL'
-            dollarValue='$154.00'
-            onClickButton={() => {}}
-            hasIndicator
-          />
-        </div>
+            <LiveNFTCard
+              auction={auctions[2]}
+              className='absolute left-0 right-0 m-auto w-[320px] rotate-[10deg] shadow transition-all group-hover:rotate-[0]'
+              hasIndicator
+            />
+          </div>
+        )}
 
         <div className='hero__right flex flex-col gap-[28px] pr-[64px]'>
-          <MetaChip heading='12.1M+' description='NFTs minted' />
-          <MetaChip heading='2000+' description='Talented artists' />
+          <MetaChip heading={`${NFTsMinted}+`} description='NFTs minted' />
+          <MetaChip heading={`${talentedArtists}+`} description='Talented artists' />
           <MetaChip
             heading={`<span class="text-[24px]">Ⓞ</span> 2,398+`}
             description='Daily SOL volume'
