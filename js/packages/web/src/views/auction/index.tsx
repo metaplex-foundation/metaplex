@@ -47,6 +47,7 @@ import { ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
 import { Card } from 'antd';
 import BidLine from './BidLine';
+import { useAnalytics } from '../../contexts';
 
 export const AuctionItem = ({
   item,
@@ -260,7 +261,7 @@ export const AuctionView = () => {
                   {art.maxSupply === undefined ? (
                     <Skeleton paragraph={{ rows: 0 }} />
                   ) : (
-                    <span className="flex justify-center items-center text-sm">
+                    <span className="flex items-center justify-center text-sm">
                       {`${(art.maxSupply || 0) - (art.supply || 0)} of ${
                         art.maxSupply || 0
                       } `}
@@ -311,7 +312,7 @@ export const AuctionBids = ({
   const { width } = useWindowDimensions();
 
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
-
+  const { track } = useAnalytics();
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const winners = useWinningBidsForAuction(auctionPubkey);
   const isWinner = some(
@@ -376,6 +377,12 @@ export const AuctionBids = ({
                     description:
                       'Your bid was successfully cancelled. You may rebid to enter the auction again.',
                   });
+                  track('Listing Bid Cancelled', {
+                    event_category: 'Listings',
+                    auctionPubkey: auctionView.auction.pubkey,
+                    event_label: auctionRunning ? 'cancel' : 'refund',
+                    auctionRunning,
+                  });
                 } catch {
                   notification.error({
                     message: 'Bid Cancel Error',
@@ -393,7 +400,7 @@ export const AuctionBids = ({
         }
       >
         <div className=" overflow-hidden">
-          <ul role="list" className="divide-y divide-color-border">
+          <ul role="list" className="divide-color-border divide-y">
             {bidLines}
             {/* {bids.map(bid => (
 
