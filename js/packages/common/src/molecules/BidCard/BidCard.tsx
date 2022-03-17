@@ -25,7 +25,7 @@ export const BidCard: FC<BidCardProps> = ({
   onClickButton,
   hasIndicator,
   ...restProps
-}: BidCardProps) => {
+}) => {
   const BidCardClasses = CN(
     `bid-card flex flex-col gap-[12px] p-[24px] bg-white rounded-[12px] w-full`,
     className

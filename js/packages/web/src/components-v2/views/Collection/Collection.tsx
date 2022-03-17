@@ -61,12 +61,12 @@ export const Collection: FC<CollectionProps> = () => {
     const parsed = queryString.parse(search)
     const newArray: any[] = []
     if (auctions.length > 0) {
-      let group = auctions.reduce((r, a) => {
+      auctions.reduce((r, a) => {
         newArray.push([a as any])
         return r
       })
     }
-    let grouped = _.mapValues(
+    const grouped = _.mapValues(
       _.groupBy(newArray, item => item[0].thumbnail.metadata.info.data.creators[0].address)
     )
     if (grouped[parsed.collection ? parsed.collection?.toString() : '']) {
