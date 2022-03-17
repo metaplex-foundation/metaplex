@@ -14,6 +14,8 @@ import { Banner } from './../../components/Banner';
 import cx from 'classnames';
 import { SearchIcon } from '@heroicons/react/solid';
 import { Switch } from '@headlessui/react';
+import { DebounceInput } from 'react-debounce-input';
+
 
 export const Listings = () => {
   const { storefront } = useStore();
@@ -186,7 +188,9 @@ export const Listings = () => {
                     aria-hidden="true"
                   />
                 </div>
-                <input
+                <DebounceInput
+                minLength= {3}
+                debounceTimeout={300}
                   type="search"
                   name="listings-search"
                   id="listings-search"
