@@ -9,8 +9,8 @@ import {
   useConnectionConfig,
   useNativeAccount,
   useWalletModal,
+  useWallet
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Button, ButtonProps, Popover, Select, Space } from 'antd';
 import React, {
@@ -135,13 +135,13 @@ export const CurrentUserBadge = (props: {
   const balanceInUSD = balance * solPrice;
 
   let name = props.showAddress ? shortenAddress(`${publicKey}`) : '';
-  const unknownWallet = wallet as any;
-  if (unknownWallet.name && !props.showAddress) {
-    name = unknownWallet.name;
+  const unknownWallet = wallet;
+  if (unknownWallet.adapter.name && !props.showAddress) {
+    name = unknownWallet.adapter.name;
   }
 
-  const image = unknownWallet.image ? (
-    <img src={unknownWallet.image} />
+  const image = unknownWallet.adapter.icon ? (
+    <img className='wallet-icon' src={unknownWallet.adapter.icon} />
   ) : (
     <Identicon address={publicKey?.toBase58()} size={22} />
   );
@@ -202,8 +202,15 @@ export const CurrentUserBadge = (props: {
 export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
   const { endpoint, setEndpoint } = useConnectionConfig();
   const { setVisible } = useWalletModal();
+  const {wallet} = useWallet();
   const open = useCallback(() => setVisible(true), [setVisible]);
 
+    function onNetworkChange(network: string) {
+    setEndpoint(network);
+    setTimeout(() => window.location.reload(), 500);
+  }
+
+  
   return (
     <Popover
       trigger="click"
@@ -211,15 +218,16 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
       content={
         <Space direction="vertical">
           <h5>NETWORK</h5>
-          <Select onSelect={setEndpoint} value={endpoint} bordered={false}>
+          <Select onSelect={onNetworkChange} value={endpoint} bordered={false}>
             {ENDPOINTS.map(({ name, endpoint }) => (
               <Select.Option value={endpoint} key={endpoint}>
                 {name}
               </Select.Option>
             ))}
           </Select>
-
-          <Button onClick={open}>Change wallet</Button>
+          {wallet?.adapter.connected && (
+            <Button onClick={open}>Change wallet</Button>
+          )}
         </Space>
       }
     >
@@ -251,15 +259,15 @@ export const CurrentUserBadgeMobile = (props: {
   const balanceInUSD = balance * solPrice;
 
   let name = props.showAddress ? shortenAddress(`${publicKey}`) : '';
-  const unknownWallet = wallet as any;
-  if (unknownWallet.name && !props.showAddress) {
-    name = unknownWallet.name;
+  const unknownWallet = wallet;
+  if (unknownWallet.adapter.name && !props.showAddress) {
+    name = unknownWallet.adapter.name;
   }
 
   let image = <Identicon address={publicKey?.toBase58()} />;
 
-  if (unknownWallet.image) {
-    image = <img src={unknownWallet.image} />;
+  if (unknownWallet.adapter.icon) {
+    image = <img className='wallet-icon' src={unknownWallet.adapter.icon} />;
   }
 
   return (

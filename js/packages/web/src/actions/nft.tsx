@@ -13,9 +13,9 @@ import {
   sendTransactionWithRetry,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import { MintLayout, Token } from '@solana/spl-token';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import React, { Dispatch, SetStateAction } from 'react';
@@ -42,7 +42,7 @@ export type PinFileResponse = {
 
 export const mintNFT = async (
   connection: Connection,
-  wallet: WalletSigner | undefined,
+  wallet: WalletContextState | undefined,
   env: ENV,
   files: File[],
   metadata: {

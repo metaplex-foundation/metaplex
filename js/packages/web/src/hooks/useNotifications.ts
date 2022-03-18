@@ -4,10 +4,12 @@ import {
   AuctionManagerStatus,
   useConnection,
   StringPublicKey,
-  WalletSigner,
   useMeta,
 } from '@oyster/common';
+
+import { WalletContextState } from '@solana/wallet-adapter-react';
 import { startAuctionManually, decommAuctionManagerAndReturnPrizes, unwindVault } from '../actions';
+
 import { useCompactAuctions } from './useAuctions';
 
 export enum StorefrontNotificationType {
@@ -24,7 +26,7 @@ export interface StorefrontNotification {
   action: () => Promise<void>;
 }
 
-export const useNotifications = (wallet: WalletSigner): StorefrontNotification[] => {
+export const useNotifications = (wallet: WalletContextState): StorefrontNotification[] => {
   const auctions = useCompactAuctions();
   const connection = useConnection();
   const { vaults } = useMeta();

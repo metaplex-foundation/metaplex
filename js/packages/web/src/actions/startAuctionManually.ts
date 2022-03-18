@@ -5,11 +5,12 @@ import {
   AuctionManagerV1,
   AuctionManagerV2,
 } from '@oyster/common';
-import { notify, sendTransactionWithRetry, WalletSigner } from '@oyster/common';
+import { notify, sendTransactionWithRetry } from '@oyster/common';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function startAuctionManually(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
 ) {
   try {

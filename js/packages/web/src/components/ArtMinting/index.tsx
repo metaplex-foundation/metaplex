@@ -11,13 +11,13 @@ import {
   MetaplexOverlay,
   useConnection,
   useUserAccounts,
+  useWallet,
 } from '@oyster/common';
 import { useArt } from '../../hooks';
 import { mintEditionsToWallet } from '../../actions/mintEditionsIntoWallet';
 import { ArtType } from '../../types';
 import { Confetti } from '../Confetti';
 import { Link } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
 
 interface ArtMintingProps {
   id?: string;

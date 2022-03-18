@@ -1,6 +1,6 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { StringPublicKey, toPublicKey, WalletSigner } from '@oyster/common';
+import { StringPublicKey, toPublicKey } from '@oyster/common';
 import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 import {
   activateVault,
@@ -10,12 +10,13 @@ import { approve } from '@oyster/common/dist/lib/models/account';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // This command "closes" the vault, by activating & combining it in one go, handing it over to the auction manager
 // authority (that may or may not exist yet.)
 export async function closeVault(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   vault: StringPublicKey,
   fractionMint: StringPublicKey,
   fractionTreasury: StringPublicKey,

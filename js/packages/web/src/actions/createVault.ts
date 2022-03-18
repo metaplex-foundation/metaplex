@@ -10,7 +10,6 @@ import {
   findProgramAddress,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import {
   initVault,
@@ -21,12 +20,13 @@ import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // This command creates the external pricing oracle a vault
 // This gets the vault ready for adding the tokens.
 export async function createVault(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   priceMint: StringPublicKey,
   externalPriceAccount: StringPublicKey,
 ): Promise<{

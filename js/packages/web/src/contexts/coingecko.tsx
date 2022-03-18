@@ -42,7 +42,7 @@ export function CoingeckoProvider({
       clearTimeout(timerId);
     };
   }, [setSolPrice]);
-
+  
   return (
     <CoingeckoContext.Provider value={{ solPrice }}>
       {children}

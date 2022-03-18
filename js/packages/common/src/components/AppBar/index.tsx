@@ -4,8 +4,8 @@ import { CurrentUserBadge } from '../CurrentUserBadge';
 import { SettingOutlined } from '@ant-design/icons';
 import { Settings } from '../Settings';
 import { LABELS } from '../../constants/labels';
-import { ConnectButton } from '..';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 export const SecondaryMenu = (props: {
   left?: JSX.Element;
@@ -21,7 +21,7 @@ export const SecondaryMenu = (props: {
       {connected ? (
         <CurrentUserBadge />
       ) : (
-        <ConnectButton type="text" size="large" allowWalletChange />
+        <WalletMultiButton />
       )}
       <Popover
         placement="topRight"

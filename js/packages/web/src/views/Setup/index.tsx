@@ -4,7 +4,7 @@ import {
   useWalletModal,
   WhitelistedCreator,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { Button, Card, Row, Col, Space } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

@@ -6,12 +6,7 @@ import {
 } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
-import {
-  utils,
-  StringPublicKey,
-  toPublicKey,
-  WalletSigner,
-} from '@oyster/common';
+import { utils, StringPublicKey, toPublicKey } from '@oyster/common';
 import {
   updateExternalPriceAccount,
   ExternalPriceAccount,
@@ -20,11 +15,12 @@ import {
 
 import BN from 'bn.js';
 import { QUOTE_MINT } from '../constants';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // This command creates the external pricing oracle
 export async function createExternalPriceAccount(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
 ): Promise<{
   priceMint: StringPublicKey;
   externalPriceAccount: StringPublicKey;

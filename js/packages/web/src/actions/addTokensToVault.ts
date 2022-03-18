@@ -5,7 +5,6 @@ import {
   MetadataKey,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
 } from '@oyster/common';
 import { SafetyDepositConfig } from '@oyster/common/dist/lib/models/metaplex/index';
 import { approve } from '@oyster/common/dist/lib/models/account';
@@ -19,6 +18,7 @@ import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
 import { SafetyDepositDraft } from './createAuctionManager';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export interface SafetyDepositInstructionTemplate {
   box: {
@@ -35,7 +35,7 @@ const BATCH_SIZE = 1;
 // the vault for use. It issues a series of transaction instructions and signers for the sendTransactions batch.
 export async function addTokensToVault(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   vault: StringPublicKey,
   nfts: SafetyDepositInstructionTemplate[],
 ): Promise<{

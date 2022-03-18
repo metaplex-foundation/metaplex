@@ -13,7 +13,6 @@ import {
   useStore,
   useUserAccounts,
   useWalletModal,
-  WalletSigner,
   loadCreators,
   loadAuctionManagers,
   loadAuctionsForAuctionManagers,
@@ -22,7 +21,7 @@ import {
   processMetaplexAccounts,
   subscribeProgramChanges,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { convertMasterEditions, filterMetadata } from '../../actions/convertMasterEditions';
@@ -225,7 +224,7 @@ function InnerAdminView({
   store: ParsedAccount<Store>;
   whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>;
   connection: Connection;
-  wallet: WalletSigner;
+  wallet: WalletContextState;
   connected: boolean;
 }) {
   const [newStore, setNewStore] = useState(store && store.info && new Store(store.info));
