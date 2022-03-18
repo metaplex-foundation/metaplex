@@ -1,15 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Table,
-  Switch,
-  Spin,
-  Modal,
-  Button,
-  Input,
-  Divider,
-  Progress,
-  Space,
-} from 'antd';
+import { Table, Switch, Spin, Modal, Button, Input, Divider, Progress, Space } from 'antd';
 import { useMeta } from '../../contexts';
 import {
   Store,
@@ -23,7 +13,6 @@ import {
   useStore,
   useUserAccounts,
   useWalletModal,
-  WalletSigner,
   loadCreators,
   loadAuctionManagers,
   loadAuctionsForAuctionManagers,
@@ -32,18 +21,15 @@ import {
   processMetaplexAccounts,
   subscribeProgramChanges,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
-import {
-  convertMasterEditions,
-  filterMetadata,
-} from '../../actions/convertMasterEditions';
+import { convertMasterEditions, filterMetadata } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
 import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useAuctionManagersToCache, useNotifications } from '../../hooks';
+import { StorefrontNotification, useAuctionManagersToCache, useNotifications } from '../../hooks';
 import Bugsnag from '@bugsnag/browser';
 import { CrossMintStatusButton } from '@crossmint/client-sdk-react-ui';
 import styled from 'styled-components';
@@ -56,15 +42,14 @@ const StyledLink = styled.a`
 `;
 
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, isLoading, patchState } =
-    useMeta();
+  const { store, whitelistedCreatorsByCreator, isLoading, patchState } = useMeta();
   const connection = useConnection();
   const wallet = useWallet();
   const [loadingAdmin, setLoadingAdmin] = useState(true);
   const { setVisible } = useWalletModal();
   const connect = useCallback(
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
-    [wallet.wallet, wallet.connect, setVisible],
+    [wallet.wallet, wallet.connect, setVisible]
   );
   const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
@@ -97,11 +82,11 @@ export const AdminView = () => {
       ]);
       const auctionsState = await loadAuctionsForAuctionManagers(
         connection,
-        Object.values(auctionManagerState.auctionManagersByAuction),
+        Object.values(auctionManagerState.auctionManagersByAuction)
       );
       const vaultState = await loadVaultsAndContentForAuthority(
         connection,
-        wallet.publicKey?.toBase58() as string,
+        wallet.publicKey?.toBase58() as string
       );
 
       patchState(creatorsState, auctionManagerState, auctionsState, vaultState);
@@ -142,8 +127,8 @@ export const AdminView = () => {
               <Divider />
               <Divider />
               <p>
-                To finish initialization please copy config below into{' '}
-                <b>packages/web/.env</b> and restart yarn or redeploy
+                To finish initialization please copy config below into <b>packages/web/.env</b> and
+                restart yarn or redeploy
               </p>
               <SetupVariables
                 storeAddress={storeAddress}
@@ -168,9 +153,7 @@ function ArtistModal({
   showAddCreatorModal: modalOpen,
   setShowAddCreatorModal: setModalOpen,
 }: {
-  setUpdatedCreators: React.Dispatch<
-    React.SetStateAction<Record<string, WhitelistedCreator>>
-  >;
+  setUpdatedCreators: React.Dispatch<React.SetStateAction<Record<string, WhitelistedCreator>>>;
   uniqueCreatorsWithUpdates: Record<string, WhitelistedCreator>;
   showAddCreatorModal: boolean;
   setShowAddCreatorModal: (openStatus: boolean) => void;
@@ -198,7 +181,7 @@ function ArtistModal({
           let address: StringPublicKey;
           try {
             address = addressToAdd;
-            setUpdatedCreators(u => ({
+            setUpdatedCreators((u) => ({
               ...u,
               [modalAddress]: new WhitelistedCreator({
                 address,
@@ -217,10 +200,7 @@ function ArtistModal({
           setModalOpen(false);
         }}
       >
-        <Input
-          value={modalAddress}
-          onChange={e => setModalAddress(e.target.value)}
-        />
+        <Input value={modalAddress} onChange={(e) => setModalAddress(e.target.value)} />
       </Modal>
       {/* <Button onClick={() => setModalOpen(true)}>Add Creator</Button> */}
     </>
@@ -242,30 +222,21 @@ function InnerAdminView({
   connected,
 }: {
   store: ParsedAccount<Store>;
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >;
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>;
   connection: Connection;
-  wallet: WalletSigner;
+  wallet: WalletContextState;
   connected: boolean;
 }) {
-  const [newStore, setNewStore] = useState(
-    store && store.info && new Store(store.info),
-  );
+  const [newStore, setNewStore] = useState(store && store.info && new Store(store.info));
   const { storefront } = useStore();
-  const [updatedCreators, setUpdatedCreators] = useState<
-    Record<string, WhitelistedCreator>
-  >({});
+  const [updatedCreators, setUpdatedCreators] = useState<Record<string, WhitelistedCreator>>({});
   const [filteredMetadata, setFilteredMetadata] = useState<{
     available: ParsedAccount<MasterEditionV1>[];
     unavailable: ParsedAccount<MasterEditionV1>[];
   }>();
   const [cachingAuctions, setCachingAuctions] = useState<boolean>();
-  const [showAddCreatorModal, setShowAddCreatorModal] =
-    useState<boolean>(false);
-  const [convertingMasterEditions, setConvertMasterEditions] =
-    useState<boolean>();
+  const [showAddCreatorModal, setShowAddCreatorModal] = useState<boolean>(false);
+  const [convertingMasterEditions, setConvertMasterEditions] = useState<boolean>();
   const { auctionCaches, storeIndexer, metadata, masterEditions } = useMeta();
   const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } =
     useAuctionManagersToCache();
@@ -275,12 +246,7 @@ function InnerAdminView({
   useMemo(() => {
     const fn = async () => {
       setFilteredMetadata(
-        await filterMetadata(
-          connection,
-          metadata,
-          masterEditions,
-          accountByMint,
-        ),
+        await filterMetadata(connection, metadata, masterEditions, accountByMint)
       );
     };
     fn();
@@ -291,7 +257,7 @@ function InnerAdminView({
       acc[e.info.address] = e.info;
       return acc;
     },
-    {},
+    {}
   );
 
   const uniqueCreatorsWithUpdates = { ...uniqueCreators, ...updatedCreators };
@@ -319,14 +285,14 @@ function InnerAdminView({
           activated: boolean;
           name: string;
           key: string;
-        },
+        }
       ) => (
         <Switch
           checkedChildren="Active"
           unCheckedChildren="Inactive"
           checked={value}
-          onChange={val =>
-            setUpdatedCreators(u => ({
+          onChange={(val) =>
+            setUpdatedCreators((u) => ({
               ...u,
               [record.key]: new WhitelistedCreator({
                 activated: val,
@@ -350,12 +316,7 @@ function InnerAdminView({
                 message: 'Saving...',
                 type: 'info',
               });
-              await saveAdmin(
-                connection,
-                wallet,
-                newStore.public,
-                Object.values(updatedCreators),
-              );
+              await saveAdmin(connection, wallet, newStore.public, Object.values(updatedCreators));
               notify({
                 message: 'Saved',
                 type: 'success',
@@ -382,7 +343,7 @@ function InnerAdminView({
             checkedChildren="Public"
             unCheckedChildren="Whitelist Only"
             checked={newStore.public}
-            onChange={val => {
+            onChange={(val) => {
               setNewStore(() => {
                 const newS = new Store(store.info);
                 newS.public = val;
@@ -390,14 +351,12 @@ function InnerAdminView({
               });
             }}
           />
-          <Button onClick={() => setShowAddCreatorModal(true)}>
-            Add Creator
-          </Button>
+          <Button onClick={() => setShowAddCreatorModal(true)}>Add Creator</Button>
         </div>
 
         <Table
           columns={columns}
-          dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
+          dataSource={Object.keys(uniqueCreatorsWithUpdates).map((key) => ({
             key,
             address: uniqueCreatorsWithUpdates[key].address,
             activated: uniqueCreatorsWithUpdates[key].activated,
@@ -408,66 +367,13 @@ function InnerAdminView({
           }))}
         />
 
-        <h2>Listing Notifications</h2>
-        <Table
-          columns={[
-            {
-              key: 'accountPubkey',
-              title: 'Listing',
-              dataIndex: 'accountPubkey',
-            },
-            {
-              key: 'description',
-              title: 'Notification',
-              dataIndex: 'description',
-            },
-            {
-              key: 'action',
-              title: 'Action',
-              render: ({ action, callToAction }) => {
-                const [status, setStatus] = useState<ListingNotificationStatus>(
-                  ListingNotificationStatus.Ready,
-                );
-
-                const onSubmit = async () => {
-                  try {
-                    setStatus(ListingNotificationStatus.Submitting);
-                    await action();
-                    setStatus(ListingNotificationStatus.Complete);
-                  } catch (e: any) {
-                    Bugsnag.notify(e);
-                    setStatus(ListingNotificationStatus.Error);
-                  }
-                };
-                const isComplete =
-                  status === ListingNotificationStatus.Complete;
-
-                const label = isComplete ? 'Done' : callToAction;
-                return (
-                  <Button
-                    loading={status === ListingNotificationStatus.Submitting}
-                    disabled={isComplete}
-                    onClick={onSubmit}
-                  >
-                    {label}
-                  </Button>
-                );
-              },
-            },
-          ]}
-          dataSource={notifications}
-        />
+        <ListingNotificationTable notifications={notifications} />
 
         <h2>Credit Card Payments</h2>
         <div className="metaplex-flex-column metaplex-gap-4">
           <p>
-            Increase your sales by accepting credit and debit card payments
-            using&nbsp;
-            <StyledLink
-              href="https://www.crossmint.io/creators"
-              target="_blank"
-              rel="noreferrer"
-            >
+            Increase your sales by accepting credit and debit card payments using&nbsp;
+            <StyledLink href="https://www.crossmint.io/creators" target="_blank" rel="noreferrer">
               Crossmint
             </StyledLink>
             . Crossmint is 100% free for sellers.
@@ -477,8 +383,7 @@ function InnerAdminView({
               <CrossMintStatusButton style={{ fontWeight: 'normal' }} />
             ) : (
               <p>
-                NOTE: Your store is not yet ready to use Crossmint. To get
-                started, please visit{' '}
+                NOTE: Your store is not yet ready to use Crossmint. To get started, please visit{' '}
                 <StyledLink
                   href="https://www.holaplex.com/storefront/edit"
                   target="_blank"
@@ -486,15 +391,14 @@ function InnerAdminView({
                 >
                   https://www.holaplex.com/storefront/edit
                 </StyledLink>
-                , connect your wallet, and click on the Update button. Once your
-                store is successfully updated, return here to finish setting up
-                Crossmint.
+                , connect your wallet, and click on the Update button. Once your store is
+                successfully updated, return here to finish setting up Crossmint.
               </p>
             )}
           </div>
           <p>
-            Please note that credit card payments are currently only supported
-            for instant sale auctions. More sale types are coming soon.
+            Please note that credit card payments are currently only supported for instant sale
+            auctions. More sale types are coming soon.
           </p>
         </div>
 
@@ -504,10 +408,9 @@ function InnerAdminView({
             <div className="metaplex-width-50">
               <h3>Convert Master Editions</h3>
               <p>
-                You have {filteredMetadata?.available.length} MasterEditionV1s
-                that can be converted right now and{' '}
-                {filteredMetadata?.unavailable.length} still in unfinished
-                auctions that cannot be converted yet.
+                You have {filteredMetadata?.available.length} MasterEditionV1s that can be converted
+                right now and {filteredMetadata?.unavailable.length} still in unfinished auctions
+                that cannot be converted yet.
               </p>
               <Button
                 size="large"
@@ -519,7 +422,7 @@ function InnerAdminView({
                     connection,
                     wallet,
                     filteredMetadata?.available || [],
-                    accountByMint,
+                    accountByMint
                   );
 
                   setConvertMasterEditions(false);
@@ -531,11 +434,10 @@ function InnerAdminView({
             <div className="metaplex-width-50">
               <h3>Cache Auctions</h3>
               <p>
-                Activate your storefront listing caches by pressing &ldquo;build
-                cache&rdquo;. This will reduce page load times for your
-                listings. Your storefront will start looking up listing using
-                the cache on November 17th. To preview the speed improvement
-                visit the Holaplex{' '}
+                Activate your storefront listing caches by pressing &ldquo;build cache&rdquo;. This
+                will reduce page load times for your listings. Your storefront will start looking up
+                listing using the cache on November 17th. To preview the speed improvement visit the
+                Holaplex{' '}
                 <a
                   rel="noopener noreferrer"
                   target="_blank"
@@ -566,7 +468,7 @@ function InnerAdminView({
                           connection,
                           auctionManagersToCache,
                           auctionCaches,
-                          storeIndexer,
+                          storeIndexer
                         );
                       } finally {
                         setCachingAuctions(false);
@@ -590,3 +492,81 @@ function InnerAdminView({
     </>
   );
 }
+
+const ListingNotificationTable = ({
+  notifications,
+}: {
+  notifications: StorefrontNotification[];
+}) => {
+  return (
+    <>
+      <h2>Listing Notifications</h2>
+      <div className="flex flex-col">
+        <div className="overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 sm:px-6 lg:px-8">
+            <div className="overflow-hidden shadow-md sm:rounded-lg">
+              <table className="min-w-full">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase"
+                    >
+                      Listing
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase"
+                    >
+                      Notification
+                    </th>
+                    <th scope="col" className="relative px-6 py-3">
+                      <span className="sr-only">Action</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {notifications.map((n) => (
+                    <tr className="border-b" key={n.accountPubkey + n.description}>
+                      <td className="px-6 py-4 text-sm text-white font-mediumwhitespace-nowrap">
+                        {n.accountPubkey}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">
+                        {n.description}
+                      </td>
+
+                      <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                        <NotificationButton action={n.action} callToAction={n.callToAction} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const NotificationButton = ({ action, callToAction }: { action: any; callToAction?: string }) => {
+  const [status, setStatus] = useState<ListingNotificationStatus>(ListingNotificationStatus.Ready);
+
+  const onSubmit = async () => {
+    try {
+      setStatus(ListingNotificationStatus.Submitting);
+      await action();
+      setStatus(ListingNotificationStatus.Complete);
+    } catch (e: any) {
+      Bugsnag.notify(e);
+      setStatus(ListingNotificationStatus.Error);
+    }
+  };
+
+  const isComplete = status === ListingNotificationStatus.Complete;
+
+  const label = isComplete ? 'Done' : callToAction || 'Action';
+
+  return <Button onClick={onSubmit}>{label}</Button>;
+};

@@ -4,6 +4,7 @@ import {
   TokenListProvider,
 } from '@solana/spl-token-registry';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 import {
   Blockhash,
   clusterApiUrl,
@@ -31,7 +32,6 @@ import { ExplorerLink } from '../components/ExplorerLink';
 import { useQuerySearch } from '../hooks';
 import { notify } from '../utils/notifications';
 import { sleep, useLocalStorageState } from '../utils/utils';
-import { WalletSigner } from './wallet';
 
 export interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
@@ -227,7 +227,7 @@ export enum SequenceType {
 
 export async function sendTransactionsWithManualRetry(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   instructions: TransactionInstruction[][],
   signers: Keypair[][],
 ) {
@@ -289,7 +289,7 @@ export async function sendTransactionsWithManualRetry(
 
 export const sendTransactions = async (
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   instructionSet: TransactionInstruction[][],
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
@@ -331,7 +331,7 @@ export const sendTransactions = async (
     unsignedTxns.push(transaction);
   }
 
-  const signedTxns = await wallet.signAllTransactions(unsignedTxns);
+  const signedTxns = await wallet?.signAllTransactions?.(unsignedTxns) as [Transaction];
 
   const pendingTxns: Promise<void>[] = [];
 
@@ -392,7 +392,7 @@ export const sendTransactions = async (
 
 export const sendTransaction = async (
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   instructions: TransactionInstruction[],
   signers: Keypair[],
   awaitConfirmation = true,
@@ -422,7 +422,7 @@ export const sendTransaction = async (
     transaction.partialSign(...signers);
   }
   if (!includesFeePayer) {
-    transaction = await wallet.signTransaction(transaction);
+    transaction = await wallet?.signTransaction?.(transaction) as Transaction;
   }
 
   const rawTransaction = transaction.serialize();
@@ -473,7 +473,7 @@ export const sendTransaction = async (
 
 export const sendTransactionWithRetry = async (
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletContextState,
   instructions: TransactionInstruction[],
   signers: Keypair[],
   commitment: Commitment = 'singleGossip',
@@ -503,7 +503,7 @@ export const sendTransactionWithRetry = async (
     transaction.partialSign(...signers);
   }
   if (!includesFeePayer) {
-    transaction = await wallet.signTransaction(transaction);
+    transaction = await wallet?.signTransaction?.(transaction) as Transaction;
   }
 
   if (beforeSend) {

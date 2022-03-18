@@ -23,7 +23,7 @@ https://docs.metaplex.com/
 Make sure lerna is installed (`yarn global add lerna`).
 
 ```bash
-$ git clone https://github.com/metaplex-foundation/metaplex.git
+$ git clone https://github.com/holaplex/metaplex.git
 $ cd metaplex
 $ cd js
 $ yarn install

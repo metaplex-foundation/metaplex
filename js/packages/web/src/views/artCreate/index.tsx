@@ -6,7 +6,7 @@ import {
   useConnection,
   useConnectionConfig,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { Button, Col, Row, Space, Steps } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';

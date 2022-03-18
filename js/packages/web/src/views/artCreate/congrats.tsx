@@ -1,5 +1,5 @@
 import { ArrowButton, StringPublicKey } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { Button, Space } from 'antd';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';

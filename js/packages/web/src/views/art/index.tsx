@@ -6,7 +6,7 @@ import {
   loadMultipleAccounts,
   useConnectionConfig,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import { Button, List, Skeleton, Tag, Space, Row, Col } from 'antd';
 import React, { useEffect, useState } from 'react';

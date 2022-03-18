@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Alert, Anchor, Button, Card, Spin } from 'antd';
 import { Link } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@oyster/common';
 import { AuctionView, useAuctionManagersToCache } from '../../hooks';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { MetaplexMasonry } from './../../components/MetaplexMasonry';

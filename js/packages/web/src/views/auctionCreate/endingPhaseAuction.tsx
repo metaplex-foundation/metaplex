@@ -9,8 +9,15 @@ export const EndingPhaseAuction = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
+  const showAuctionDurationWarning =
+    props?.attributes?.auctionDuration &&
+    ((props?.attributes?.auctionDurationType === 'days' &&
+      props?.attributes?.auctionDuration > 30) ||
+      (props?.attributes?.auctionDurationType === 'hours' &&
+        props?.attributes?.auctionDuration > 730));
+
   return (
-    <Space className="metaplex-fullwidth" direction="vertical">
+    <Space className="metaplex-fullwidth" direction="vertical" size={'large'}>
       <div>
         <h2>Ending Phase</h2>
         <p>Set the terms for your auction.</p>
@@ -46,6 +53,9 @@ export const EndingPhaseAuction = (props: {
             })
           }
         />
+        {showAuctionDurationWarning && (
+          <div>This auction will run for over a month! Are you sure?</div>
+        )}
       </div>
 
       <div>

@@ -2,6 +2,7 @@ import { Button, InputNumber, Space, Form } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import React from 'react';
 import { AuctionCategory, AuctionState } from '.';
+import Alert from '@material-ui/lab/Alert';
 
 export const PriceAuction = (props: {
   attributes: AuctionState;
@@ -19,7 +20,7 @@ export const PriceAuction = (props: {
   };
 
   return (
-    <Space className="metaplex-fullwidth" direction="vertical">
+    <Space className="metaplex-fullwidth" direction="vertical" size={'large'}>
       <div>
         <h2>Price</h2>
         <p>Set the price for your auction.</p>
