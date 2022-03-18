@@ -4728,7 +4728,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@^17.0.0", "@types/react@^17.0.16":
+"@types/react@*", "@types/react@^17.0.0":
   version "17.0.39"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.39.tgz#d0f4cde092502a6db00a1cded6e6bf2abb7633ce"
   integrity sha512-UVavlfAxDd/AgAacMa60Azl7ygyQNRwC/DsHZmKgNvPmRR5p70AJ5Q9EAmL2NWOJmeV+vVUI4IAP7GZrN8h8Ug==
@@ -14368,7 +14368,7 @@ lodash.clonedeep@^4.5.0:
   resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
   integrity sha1-4j8/nE+Pvd6HJSnBBxhXoIblzO8=
 
-lodash.debounce@^4.0.8:
+lodash.debounce@^4, lodash.debounce@^4.0.8:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
   integrity sha1-gteb/zCmfEAF/9XiUVMArZyk168=
@@ -18132,6 +18132,14 @@ react-countdown@^2.3.2:
   resolved "https://registry.yarnpkg.com/react-countdown/-/react-countdown-2.3.2.tgz#4cc27f28f2dcd47237ee66e4b9f6d2a21fc0b0ad"
   integrity sha512-Q4SADotHtgOxNWhDdvgupmKVL0pMB9DvoFcxv5AzjsxVhzOVxnttMbAywgqeOdruwEAmnPhOhNv/awAgkwru2w==
   dependencies:
+    prop-types "^15.7.2"
+
+react-debounce-input@^3.2.5:
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/react-debounce-input/-/react-debounce-input-3.2.5.tgz#3a29682c4b9dcd62694d6e03f85d7bfa96cec433"
+  integrity sha512-WDc9nvZ8E/cT4nW1RlD/r+Nsc5Z5+Jmj2v9HT9RzsPtxkwRTQUBCKJvdt1fCYy5ME/nQPoqVYmWUWSv7whGmig==
+  dependencies:
+    lodash.debounce "^4"
     prop-types "^15.7.2"
 
 react-dev-utils@^11.0.3:
