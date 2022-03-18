@@ -1,0 +1,95 @@
+/**
+ * Basic typography style for copy text
+ */
+body {
+  color: $desc-color;
+  font-size: 1rem;
+  font-family: $manrope;
+  line-height: 1.5;
+  padding: 0;
+  margin: 0;
+  background-color: $body-color;
+  -webkit-font-smoothing: antialiased;
+
+  &.home-2 {
+    background-color: $body-color;
+  }
+
+  &.home-5 {
+    background-color: $body-color;
+    background-image: url(../images/texture/texture.png);
+    background-repeat: repeat;
+    background-position: left top;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: $title-color;
+  font-family: $manrope;
+  font-weight: 700;
+  margin: initial;
+}
+
+h1 {
+  @include font-size($fs-h1);
+}
+
+h2 {
+  @include font-size($fs-h2);
+}
+
+h3 {
+  @include font-size($fs-h3);
+}
+
+h4 {
+  @include font-size($fs-h4);
+}
+
+h5 {
+  @include font-size($fs-h5);
+}
+
+h6 {
+  @include font-size($fs-h6);
+}
+
+
+a>h1,
+a>h2,
+a>h3,
+a>h4,
+a>h5,
+a>h6 {
+  @include transition($transition);
+}
+
+a {
+  color: $desc-color;
+  @include transition($transition);
+  display: inline-block;
+  text-decoration: none;
+
+  &:hover {
+    color: $theme-color;
+    text-decoration: none;
+    outline: none;
+  }
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}

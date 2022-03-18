@@ -8,8 +8,8 @@ export const CollectionsView = () => {
   const { liveCollections } = useCollections();
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      <span className={'collections-title'}>Collections</span>
+    <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center'}}>
+      <span className={'collections-title'} style={{color: 'black'}}>Collections</span>
       <Row className={'collections-layout-container'} gutter={32}>
         {liveCollections.map(collection => {
           const pubkey = collection.pubkey;

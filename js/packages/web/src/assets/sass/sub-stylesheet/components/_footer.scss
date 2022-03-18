@@ -1,0 +1,183 @@
+/*=======  Footer section  css start here =========*/
+
+
+.footer-section {
+    @extend %of-hidden;
+}
+
+.footer-top {
+    background-size: cover;
+    background-position: center;
+
+
+    .footer-newsletter {
+        border-bottom: 1px solid rgba($black-color, $alpha: .1);
+        padding-block: 50px;
+
+        @include breakpoint(lg) {
+            padding-block: 60px;
+        }
+    }
+
+    .ft-header {
+        @extend %mb-20;
+
+        @include breakpoint(lg) {
+            margin-bottom: 30px;
+        }
+    }
+
+    form {
+        @extend %p-rel;
+
+        input {
+            @extend %w-100;
+            @extend %text-bold;
+            background: rgba($white-color, $alpha: .15);
+            border: 1px solid rgba($black-color, $alpha: .1);
+            height: 60px;
+            padding: .5rem 1.5rem;
+            color: $desc-color;
+            font-size: 1rem;
+            border-radius: 4px;
+
+            &::placeholder {
+                color: $desc-color;
+            }
+
+        }
+
+        input,
+        button {
+            outline: none;
+            box-shadow: none;
+        }
+
+        button {
+            border: none;
+            @extend %p-abs;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 50px;
+            padding-inline: 1.5rem;
+            border-radius: 4px;
+            background: $gradient-orange;
+            color: $white-color;
+            @extend %text-bold;
+            text-transform: uppercase;
+            transition: $transition;
+
+            &:hover {
+                background: $gradient-blue;
+            }
+        }
+    }
+
+    .social-list {
+        gap: 20px;
+
+        .social-link {
+            a {
+                background: $gradient-blue;
+                color: $white-color;
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                border-radius: 4px;
+                font-size: 20px;
+                @extend %text-center;
+
+
+                @include breakpoint(lg) {
+                    height: 50px;
+                    width: 50px;
+                    line-height: 50px;
+                }
+
+                &:hover {
+                    background-image: $gradient-orange;
+                }
+            }
+        }
+    }
+}
+
+//* Footer link item
+.footer-link-item {
+    h5 {
+        @extend %mb-20;
+    }
+
+    .footer-link-list {
+        @extend %mb-0;
+
+        .footer-link {
+            @extend %p-rel;
+            padding-block: 5px;
+            @extend %pl-25;
+
+
+            &:before {
+                @extend %p-abs;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                border: 2px solid $theme-color;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+
+            }
+        }
+    }
+}
+
+.footer-section {
+    &.style-2 {
+        .footer-top {
+            form {
+                button {
+                    background-color: $theme-color;
+                    color: $black-color;
+
+                    &:hover {
+                        background-color: darken($theme-color, $amount: 10);
+                    }
+                }
+            }
+
+            .social-link {
+                a {
+                    background-color: $theme-color;
+                    color: $black-color;
+
+                    &:hover {
+                        background-color: darken($theme-color, $amount: 10);
+
+                    }
+                }
+            }
+        }
+
+        .footer-link-item {
+            .footer-link {
+                &:hover {
+                    color: $theme-color;
+                }
+
+                &:before {
+                    border-color: $theme-color;
+                }
+            }
+        }
+
+        .footer-bottom {
+            a {
+                &:hover {
+                    color: $theme-color;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,143 @@
+// -----------------------------------------------------------------------------
+// This file contains all application-wide Sass mixins.
+// -----------------------------------------------------------------------------
+
+/// On event change (Hover, active or focus state)
+
+@mixin on-event($self: false) {
+  @if $self {
+
+    &,
+    &:hover,
+    &:active,
+    &:focus {
+      @content;
+    }
+  }
+
+  @else {
+
+    &:hover,
+    &:active,
+    &:focus {
+      @content;
+    }
+  }
+}
+
+
+//   transition 
+@mixin transition($transition) {
+  -webkit-transition: $transition;
+  -moz-transition: $transition;
+  transition: $transition;
+}
+
+//  transform property
+@mixin transform($property) {
+  -webkit-transform: $property;
+  -ms-transform: $property;
+  transform: $property;
+}
+
+// BORDER RADIUS
+@mixin border-radius($radius) {
+  -webkit-border-radius: $radius;
+  -moz-border-radius: $radius;
+  border-radius: $radius;
+}
+
+
+//Responsive Breakpoints
+
+@mixin breakpoint($point) {
+  @if $point==sm {
+    @media (min-width: 576px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-xsm {
+    @media (max-width: 320px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-sm {
+    @media (max-width: 575px) {
+      @content ;
+    }
+  }
+
+  @else if $point==md {
+    @media (min-width: 768px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-md {
+    @media (max-width: 767px) {
+      @content ;
+    }
+  }
+
+  @else if $point==lg {
+    @media (min-width: 992px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-lg {
+    @media (max-width: 991px) {
+      @content ;
+    }
+  }
+
+  @else if $point==mlg {
+    @media (min-width: 1024px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-mlg {
+    @media (max-width: 1023px) {
+      @content ;
+    }
+  }
+
+  @else if $point==xl {
+    @media (min-width: 1200px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-xl {
+    @media (max-width: 1199px) {
+      @content ;
+    }
+  }
+
+  @else if $point==xxl {
+    @media (min-width: 1440px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-xxl {
+    @media (max-width: 1439px) {
+      @content ;
+    }
+  }
+
+  @else if $point==xxxl {
+    @media (min-width: 1600px) {
+      @content ;
+    }
+  }
+
+  @else if $point==max-xxxl {
+    @media (max-width: 1599px) {
+      @content ;
+    }
+  }
+}

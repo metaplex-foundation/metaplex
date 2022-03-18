@@ -77,7 +77,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         className={'modalp-40 big-modal'}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
-          <h2>Select the NFT you want to sell</h2>
+          <h2 style={{ color: 'white'}}>Select the NFT you want to sell</h2>
           <p style={{ fontSize: '1.2rem' }}>
             Select the NFT that you want to sell copy/copies of.
           </p>

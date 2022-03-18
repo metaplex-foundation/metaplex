@@ -1,0 +1,877 @@
+/*======@@@@@@ Profile sectin start here  @@@@@@@@======= */
+
+.profile-section {
+    .member-profile {
+
+        .profile-item {
+
+
+            .profile-cover {
+                @extend %p-rel;
+                border-radius: 10px;
+                @extend %of-hidden;
+
+                img {
+                    @extend %w-100;
+                    min-height: 150px;
+
+                    @include breakpoint(sm) {
+                        min-height: 200px;
+                    }
+                }
+
+                .custom-upload {
+                    @extend %p-abs;
+                    top: 20px;
+                    right: 20px;
+                    width: max-content;
+                    height: max-content;
+                    border: 1px solid rgba($white-color, $alpha: .50);
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    background: $theme-color;
+                    opacity: 0;
+                    transform: translateY(-5px);
+                    @include transition($transition);
+                }
+
+                &:hover {
+                    .custom-upload {
+                        opacity: 1;
+                        transform: translateY(0);
+
+                    }
+                }
+            }
+
+            .profile-information {
+                @extend %flex;
+                flex-direction: column;
+                @extend %align-items-center;
+                margin-top: -85px;
+                @extend %pb-20;
+
+                @include breakpoint(lg) {
+                    background: transparent;
+                    padding-bottom: 0;
+                    flex-direction: row;
+                    align-items: flex-end;
+                    margin-top: -205px;
+
+                }
+
+                @include breakpoint(xl) {
+                    margin-top: -245px;
+                }
+
+
+                .profile-pic {
+                    @extend %of-hidden;
+                    @extend %p-rel;
+                    width: 140px;
+                    height: 140px;
+                    border: 5px solid $body-color;
+                    border-radius: 50%;
+                    box-shadow: 0 0 10px rgba($black-color, $alpha: .30);
+
+                    @include breakpoint(lg) {
+                        width: auto;
+                        height: auto;
+                        border-radius: 15px;
+                        height: 250px;
+                        width: 200px;
+                        transform: translate(10px, 10px);
+                    }
+
+                    @include breakpoint(xl) {
+                        height: 270px;
+                        width: 220px;
+                        transform: translate(20px, 20px);
+                    }
+
+                    img {
+                        @extend %w-100;
+                        @extend %h-100;
+                        object-fit: cover;
+                    }
+
+                    .custom-upload {
+                        @extend %p-abs;
+                        bottom: 10px;
+                        left: 50%;
+                        transform: translateX(-50%) translateY(5px);
+                        width: max-content;
+                        height: max-content;
+                        border: 1px solid rgba($white-color, $alpha: .50);
+                        padding: 5px 10px;
+                        border-radius: 5px;
+                        background: rgba($body-color, $alpha: .50);
+                        opacity: 0;
+                        @include transition($transition);
+
+                        .file-btn {
+                            i {
+                                @extend %mr-0;
+                                color: $black-color;
+
+                                @include breakpoint(lg) {
+                                    margin-right: 5px;
+                                }
+                            }
+                        }
+
+                    }
+
+                    &:hover {
+                        .custom-upload {
+                            opacity: 1;
+                            transform: translateX(-50%) translateY(0);
+
+                        }
+                    }
+                }
+
+                .profile-name,
+                .profile-contact {
+                    @include breakpoint(lg) {
+                        transform: translateY(-70px);
+                    }
+
+                    @include breakpoint(xl) {
+                        transform: translateY(-50px);
+                    }
+                }
+
+                .profile-name {
+                    @extend %mt-10;
+                    @extend %text-center;
+
+                    h4 {
+                        margin-bottom: 2px;
+                    }
+
+                    @include breakpoint(lg) {
+                        margin-left: 30px;
+
+                        p {
+                            margin-bottom: 0;
+                        }
+                    }
+
+                    @include breakpoint(xl) {
+                        margin-left: 45px;
+                    }
+                }
+
+                .profile-contact {
+                    @extend %flex;
+                    justify-content: space-evenly;
+                    gap: 15px;
+
+                    @include breakpoint(md) {
+                        margin-left: 20px;
+                    }
+
+                    @include breakpoint(xl) {
+                        margin-left: 40px;
+                    }
+
+                    .crypto-copy {
+
+                        @include breakpoint(max-sm) {
+                            width: 80%;
+                            margin-right: 0;
+                        }
+                    }
+
+                    li {
+                        // @extend %mb-5;
+                        // @extend %mr-15;
+
+                        @include breakpoint(xl) {
+                            margin-right: 25px;
+                        }
+
+                        a {
+                            @extend %flex;
+                            @extend %align-items-center;
+
+                            .icon {
+                                @extend %bg-theme;
+                                height: 30px;
+                                width: 30px;
+                                line-height: 30px;
+                                font-size: 1rem;
+                                border-radius: 50%;
+                                @extend %text-center;
+                                @extend %mr-5;
+                                color: $white-color;
+                            }
+
+                            .text {
+                                p {
+                                    @extend %mb-0;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+
+
+    }
+}
+
+.profile-details {
+    @include breakpoint(lg) {
+        margin-top: -50px;
+    }
+
+    @include breakpoint(xl) {
+        margin-top: -26px;
+    }
+
+    .profile-nav {
+        background-color: $white-color;
+        margin-bottom: 60px;
+        border-radius: 10px;
+
+        @include breakpoint(xl) {
+            padding-left: 23%;
+        }
+
+        .nav-tabs {
+            padding: 18px 0;
+            border-bottom: none;
+            @extend %align-items-center;
+
+            @include breakpoint(lg) {
+                padding: 18px 0;
+                padding-left: 220px;
+            }
+
+            @include breakpoint(xl) {
+                padding-left: 0;
+            }
+
+            .nav-link {
+                border: none;
+                color: $desc-color;
+                font-weight: 600;
+
+                @include breakpoint(xl) {
+                    margin-right: 10px;
+                    @include font-size(18px);
+                }
+
+
+                .item-number {
+                    @extend %bg-theme;
+                    color: $white-color;
+                    @extend %p-rel;
+                    padding: 0px 5px;
+                    @extend %border-radius-2;
+                    @extend %ml-10;
+                    font-size: 12px;
+                    font-family: $manrope;
+
+                    &:before {
+                        position: absolute;
+                        content: "";
+                        left: -5px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        width: 0;
+                        height: 0;
+                        border-style: solid;
+                        border-width: 5px 8.7px 5px 0;
+                        border-color: transparent $theme-color transparent transparent;
+                    }
+
+                }
+
+                &.active {
+                    color: $theme-color;
+                    background-color: transparent;
+                    border: none;
+                    @extend %p-rel;
+
+                    @include breakpoint(xl) {
+
+                        &:after {
+                            position: absolute;
+                            content: "";
+                            bottom: -22px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            width: 0;
+                            height: 0;
+                            border-style: solid;
+                            border-width: 0 13px 15px 13px;
+                            border-color: transparent transparent $body-color transparent;
+                        }
+                    }
+                }
+
+                &:hover {
+                    color: $theme-color;
+                }
+            }
+
+            .dropdown {
+                @extend %p-rel;
+
+                .btn {
+                    color: $desc-color;
+                    border: none;
+                    outline: none;
+                    box-shadow: none;
+                    padding: .5rem 1rem;
+                    @include font-size(18px);
+                    font-weight: 600;
+                }
+
+                ul {
+                    background: $white-color;
+                    box-shadow: 0 3px 3px rgba($black-color, $alpha: .30);
+                    border-radius: 10px;
+                    border: 1px solid rgba($black-color, $alpha: .30);
+
+                    li {
+                        .dropdown-item {
+                            color: $desc-color;
+
+                            &:hover {
+                                @extend %bg-theme;
+                                color: $white-color;
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    .tab-content {
+        .activity-page {
+
+            .activity-tab {
+                .nav {
+                    @extend %align-items-center;
+                    border-radius: 5px;
+                    background-color: $white-color;
+
+                    .nav-item {
+                        padding: 10px 5px;
+
+                        @include breakpoint(md) {
+                            padding: 15px 5px;
+                        }
+
+                        @include breakpoint(lg) {
+                            &:first-child {
+                                margin-left: 13px;
+                            }
+                        }
+
+                        .nav-link {
+                            padding: 5px 10px;
+                            border-radius: 5px;
+                            color: $desc-color;
+                            font-family: $manrope;
+
+                            @include breakpoint(sm) {
+                                padding: 10px 18px;
+                            }
+
+                            &.active {
+                                @extend %bg-theme;
+                                color: $white-color;
+                            }
+                        }
+                    }
+
+                    .custom-select {
+                        width: auto;
+                        margin-left: auto;
+                        @extend %mr-15;
+
+                        select {
+                            font-family: $manrope;
+                            color: $desc-color;
+                            outline: none;
+                            @extend %p-5;
+                            // @extend %pl-15;
+                            // @extend %pr-30;
+                            @extend %border-radius-2;
+                            background-color: $body-color !important;
+                            border: none;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//info-cards
+.info-card {
+    @extend %border-radius-2;
+    background-color: $white-color;
+
+    .info-card-title {
+        padding: 20px 30px;
+        border-bottom: 1px solid $body-color;
+
+        h6 {
+            @extend %mb-0;
+        }
+    }
+
+    .info-card-content {
+        @extend %p-30;
+
+        p {
+            @extend %mb-0;
+        }
+
+        .info-list {
+            li {
+                @extend %flex;
+                padding: 10px 0;
+
+                p {
+                    @extend %mb-0;
+                }
+
+                .info-name {
+                    width: 40%;
+                    @extend %p-rel;
+
+                    @include breakpoint(md) {
+                        width: 30%;
+                    }
+
+                    &:after {
+                        @extend %p-abs;
+                        content: ":";
+                        right: 10px;
+                        top: 0;
+                        @extend %ml-5;
+                    }
+
+                }
+
+                .info-details {
+                    width: 60%;
+
+                    @include breakpoint(md) {
+                        width: 70%;
+                    }
+                }
+            }
+        }
+    }
+}
+
+//Media Tab css
+.media-wrapper {
+    .nav-tp-abs {
+        @extend %bg-primary;
+        @extend %p-15;
+        @extend %border-radius-2;
+        border: none;
+        justify-content: space-evenly;
+        row-gap: 10px;
+
+        .nav-item {
+            .nav-link {
+                @extend %border-radius-2;
+                outline: none;
+                box-shadow: none;
+                border: none !important;
+                border-bottom: 1px solid transparent !important;
+                padding: .4rem .7rem;
+
+                @include breakpoint(lg) {
+                    padding: .5rem 1rem;
+                }
+
+
+                span {
+                    padding: 2px 6px;
+                    @extend %bg-theme;
+                    @extend %ml-10;
+                    @extend %p-rel;
+                    font-size: $fs-small;
+                    @extend %border-radius-2;
+
+                    &:before {
+                        @extend %p-abs;
+                        left: -6px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        width: 0;
+                        height: 0;
+                        border-style: solid;
+                        border-width: 5px 8.7px 5px 0;
+                        border-color: transparent $theme-color transparent transparent;
+                    }
+                }
+
+                &:focus,
+                &:hover,
+                &:focus-visible {
+                    border-bottom-color: $theme-color !important;
+                }
+
+                &.active {
+                    @extend %bg-theme;
+                    color: $white-color;
+                    border-color: $theme-color;
+                    outline: none;
+                    box-shadow: none;
+                    @extend %p-rel;
+
+                    &:after {
+                        @include breakpoint(md) {
+                            position: p-absolute;
+                            content: "";
+                            bottom: -7px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            width: 0;
+                            height: 0;
+                            border-style: solid;
+                            border-width: 8px 8px 0 8px;
+                            border-color: $theme-color transparent transparent transparent;
+                        }
+
+                    }
+
+                    span {
+                        padding: 2px 6px;
+                        @extend %bg-primary;
+                        @extend %ml-10;
+                        @extend %p-rel;
+                        font-size: $fs-small;
+                        @extend %border-radius-2;
+
+                        &:before {
+                            @extend %p-abs;
+                            left: -6px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            width: 0;
+                            height: 0;
+                            border-style: solid;
+                            border-width: 5px 8.7px 5px 0;
+                            border-color: transparent $primary-color transparent transparent;
+                        }
+                    }
+
+                    &:focus,
+                    &:hover,
+                    &:focus-visible {
+                        border-color: $theme-color;
+                    }
+                }
+
+            }
+        }
+    }
+
+    .tab-content {
+        .tab-pane {
+            @extend %bg-primary;
+            @extend %mt-10;
+
+            .media-title {
+                border-bottom: 1px solid $body-color;
+                padding: 5px 20px;
+
+                h2 {
+                    @extend %mb-0;
+                }
+            }
+
+            .media-content {
+                @extend %p-20;
+
+                .media-upload {
+                    @extend %mb-10;
+
+                    .upload-now {
+                        .custom-upload {
+                            @extend %bg-theme;
+                            padding: .5rem 1rem;
+                            @extend %border-radius-2;
+                        }
+                    }
+                }
+
+                .media-thumb {
+                    @include transition($transition);
+                    @extend %of-hidden;
+
+                    img {
+                        border-radius: 5px;
+                        @include transition($transition);
+                    }
+
+                    &:hover {
+                        box-shadow: 0 0 10px rgba($white-color, $alpha: .30);
+
+                        img {
+                            transform: scale(1.02);
+                        }
+                    }
+                }
+
+                .album {
+                    width: max-content;
+                    height: max-content;
+                    margin: 0 auto;
+
+                    .album-thumb {
+
+                        height: 170px;
+                        width: 170px;
+                        @extend %p-rel;
+                        @extend %m-30;
+                        box-shadow: 5px solid $white-color;
+                        z-index: 9;
+                        object-fit: cover;
+
+
+                        img {
+                            @extend %w-100;
+                            border: 4px solid #fff;
+
+                        }
+
+                        &:before {
+                            @extend %p-abs;
+                            height: 170px;
+                            width: 170px;
+                            background: #e0043b;
+                            border: 4px solid #fff;
+                            z-index: -1;
+                            top: 0px;
+                            left: -10px;
+                            box-shadow: 2px 2px 5px rgba($color: #000000, $alpha: .30);
+                            transform: rotate(-4deg);
+                            -webkit-backface-visibility: hidden;
+                        }
+
+                        &::after {
+                            @extend %p-abs;
+                            height: 170px;
+                            width: 170px;
+                            background: #ffd900;
+                            border: 4px solid #fff;
+                            z-index: -1;
+                            top: 5px;
+                            left: 0px;
+                            box-shadow: 2px 2px 5px rgba($color: #000000, $alpha: .30);
+                            transform: rotate(7deg);
+                            -webkit-backface-visibility: hidden;
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+}
+
+.h4-title {
+    background-color: $white-color;
+    color: $title-color;
+    padding: 15px 20px;
+    @extend %mb-20;
+}
+
+.wallet-title {
+    @extend %mb-30;
+
+    h4 {
+        @extend %mb-10;
+    }
+
+    p {
+        @extend %mb-0;
+        max-width: 350px;
+        @include font-size(18px);
+        line-height: 1.3;
+
+        a {
+            color: $theme-color;
+            transition: .3s all cubic-bezier(0.075, 0.82, 0.165, 1);
+
+
+            &:hover {
+                transform: translateX(3px);
+            }
+        }
+    }
+}
+
+.wallet-notice {
+    @include font-size(18px);
+    display: inline-flex;
+
+    span {
+        i {
+            font-size: 20px;
+        }
+    }
+
+    @include breakpoint(md) {
+        max-width: 500px;
+    }
+}
+
+
+
+/*======= Post items css =======*/
+
+
+
+//on focus title color change
+.form-floating>.form-control:focus~label,
+.form-floating>.form-control:not(:placeholder-shown)~label,
+.form-floating>.form-select~label {
+    color: $theme-color;
+    opacity: .8;
+}
+
+.load-btn {
+    @extend %text-center;
+    @extend %mt-30;
+
+    .lab-btn {
+        padding: 0 60px;
+        @extend %bg-theme;
+
+        i {
+            @include transition($transition);
+            @extend %ml-10;
+        }
+
+        &:hover {
+            i {
+                animation: rotate-2 3s linear infinite;
+            }
+        }
+    }
+}
+
+
+//----Crypto copy css
+.crypto-page {
+    @extend %flex;
+    @extend %justify-between;
+    background-color: rgba($white-color, $alpha: .30);
+    border-radius: 5px;
+    @extend %w-100;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, .07);
+
+    #cryptoLink {
+        @include breakpoint(max-sm) {
+            width: calc(100% - 35px);
+            max-width: 100%;
+        }
+
+        font-size: 1rem;
+        color: $desc-color;
+        background-color: transparent;
+        border: none;
+        @extend %pl-10;
+        border: 1px solid transparent;
+        max-width: 145px;
+
+        &:focus-visible {
+            outline: none;
+            border: 1px solid rgba($theme-color, $alpha: .20);
+        }
+    }
+
+    #cryptoCopy {
+        width: 30px;
+        height: 30px;
+        border: 1px solid $body-color;
+        border-radius: 5px;
+        @extend %ml-5;
+        @extend %bg-theme;
+
+        i {
+            display: block;
+            line-height: 30px;
+            position: relative;
+            color: $white-color;
+
+            &::before {
+                display: block;
+                width: 15px;
+                margin: 0 auto;
+            }
+
+            &.copied::after {
+                position: absolute;
+                top: 0px;
+                right: 35px;
+                height: 30px;
+                line-height: 25px;
+                display: block;
+                content: "copied";
+                font-size: 1rem;
+                padding: 2px 10px;
+                color: $white-color;
+                background-color: $theme-color;
+                border-radius: 3px;
+                opacity: 1;
+                will-change: opacity, transform;
+                animation: showcopied 1.5s ease;
+            }
+        }
+
+        &:hover {
+            cursor: pointer;
+            background-color: darken($theme-color, 5);
+            transition: background-color .3s ease-in;
+        }
+    }
+}
+
+@keyframes showcopied {
+    0% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    70% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/*======@@@@@@ Profile sectin end here  @@@@@@@@======= */
+
+// .tooltip-inner {
+//     background-color: #ff0000;
+//     box-shadow: 0px 0px 4px black;
+//     opacity: 1 !important;
+// }
+
+// .tooltip.bs-tooltip-top .arrow:before {
+//     border-top-color: #ff0000 !important;
+// }

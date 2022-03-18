@@ -1,0 +1,73 @@
+/*!
+Template Name: Anftiz
+Template URI: https://themeforest.net/user/labartisan/portfolio
+Author: Labartisan.com
+Author URI: https://themeforest.net/user/labartisan/portfolio
+Description: Description
+Version: 1.0.0
+Text Domain: Anftiz
+Tags: nft, digital assets, non-fungible, cryptocurrency, crypto, bitcoin, etherium,Anftiz,NFT market, NFT selling , NFT website.
+
+*/
+/*--------------------------------------------------------------
+>>> TABLE OF CONTENTS:
+----------------------------------------------------------------
+# Normalize
+# Typography
+# Global CSS
+# Header CSS
+	*Style-1
+	*Style-2
+	*Mobile Header
+# Page Header
+# Banner
+	*Style-1
+	*Style-2
+# Main
+    *home + all common section
+# Blog
+	*Style-1
+	*Blog Single
+# Blog Widget
+# Contact Us
+#Footer
+--------------------------------------------------------------*/
+
+
+//1. Core variables and mixins
+@import "sub-stylesheet/abstracts/variables";
+@import "sub-stylesheet/abstracts/mixins";
+
+
+
+//2. Vedors  CSS
+@import "sub-stylesheet/vendors/normalize";
+@import "sub-stylesheet/vendors/rfs";
+
+
+//3. Base Stuffs
+@import "sub-stylesheet/base/fonts";
+@import "sub-stylesheet/base/typography";
+@import "sub-stylesheet/base/animation";
+@import "sub-stylesheet/base/extend";
+@import "sub-stylesheet/base/utilities";
+
+//4.site components
+@import "sub-stylesheet/components/global";
+@import "sub-stylesheet/components/preloader";
+@import "sub-stylesheet/components/widget";
+@import "sub-stylesheet/components/header";
+@import "sub-stylesheet/components/category";
+@import "sub-stylesheet/components/home";
+@import "sub-stylesheet/components/banner";
+@import "sub-stylesheet/components/profile";
+@import "sub-stylesheet/components/help";
+@import "sub-stylesheet/components/item-details";
+@import "sub-stylesheet/components/create-nft";
+@import "sub-stylesheet/components/registration";
+@import "sub-stylesheet/components/error-page";
+@import "sub-stylesheet/components/rank";
+@import "sub-stylesheet/components/coming-soon";
+@import "sub-stylesheet/components/blog";
+@import "sub-stylesheet/components/contact";
+@import "sub-stylesheet/components/footer";

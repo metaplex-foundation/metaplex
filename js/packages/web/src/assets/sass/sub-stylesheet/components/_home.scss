@@ -1,0 +1,336 @@
+/*--------------
+Home page css start here
+------------------*/
+
+
+/*------------ Auction section start here --------------*/
+
+.auction-section {
+
+    .section-header {
+        .header-title {
+            @extend %flex;
+            @extend %align-items-center;
+            gap: 10px;
+        }
+
+        .header-content {
+            .auction-nav {
+                gap: 10px;
+
+                .auction-prev,
+                .auction-next {
+                    width: 40px;
+                    height: 40px;
+                    line-height: 40px;
+                    border-radius: 10px;
+                    background: rgba($white-color, $alpha: .10);
+                    @extend %text-center;
+                    font-size: 20px;
+                    transition: $transition;
+
+                    &:hover {
+                        background: $theme-color;
+                    }
+                }
+            }
+
+        }
+    }
+
+    .auction-holder {
+        @extend %of-hidden;
+        cursor: e-resize;
+    }
+}
+
+.live-icon {
+    background: $theme-color;
+    @extend %p-rel;
+    width: 30px;
+    height: 15px;
+    border-radius: 2px;
+
+    svg {
+        width: 18px;
+        height: 18px;
+        fill: $theme-color;
+        @extend %p-abs;
+        top: -100%;
+        left: 50%;
+        transform: translateX(-50%);
+
+
+        path {
+            animation: wave 2s infinite;
+        }
+
+        path:nth-child(1) {
+            animation-delay: -0.35s;
+        }
+
+        path:nth-child(2) {
+            animation-delay: -0.25s;
+        }
+
+        path:nth-child(3) {
+            animation-delay: -0.15s;
+        }
+
+        @keyframes wave {
+            25% {
+                fill: transparent;
+            }
+        }
+    }
+}
+
+/*------------ Auction section end here --------------*/
+
+
+
+/*------------ seller section start here --------------*/
+.filter-group {
+    gap: 10px;
+
+}
+
+.seller-section {
+    .seller-wrapper {
+        @extend %flex;
+        @extend %justify-center;
+    }
+}
+
+.view-all-btn {
+    @include font-size(18px);
+    text-transform: uppercase;
+    @extend %text-bold;
+    color: $theme-color;
+    font-family: $manrope;
+
+    span {
+        transition: $transition;
+        @extend %d-inline-block;
+    }
+
+    &:hover {
+        span {
+            transform: rotate(360deg);
+        }
+    }
+}
+
+/*------------ seller section end here --------------*/
+
+
+/*------------ assets section stat here --------------*/
+.assets-section {
+    .section-header {
+        .header-content {
+            .asset-filter-list {
+                gap: 20px;
+
+                @include breakpoint(xl) {
+                    gap: 40px;
+                }
+
+                .asset-filter-btn {
+                    font-size: 16px;
+                    @extend %text-bold;
+                    cursor: pointer;
+
+                    &.is-checked {
+                        color: $theme-color;
+                    }
+                }
+            }
+        }
+
+    }
+
+    .nft-item {
+        @extend %w-100;
+        transition: none;
+        @extend %mb-20;
+
+        &:hover {
+
+            &:after,
+            &:before {
+                display: inherit;
+            }
+        }
+
+        @include breakpoint(sm) {
+            width: calc(100% / 2 - 15px);
+        }
+
+        @include breakpoint(lg) {
+            width: calc(100% / 3 - 15px);
+        }
+
+        @include breakpoint(xl) {
+            width: calc(100% / 4 - 15px);
+        }
+    }
+}
+
+/*------------ assets section end here --------------*/
+
+
+
+/*------------ hot section start here --------------*/
+.header-title {
+    span {
+        i {
+            color: $theme-color;
+            @include font-size(30px);
+        }
+    }
+
+    @extend %flex;
+    @extend %align-items-center;
+    gap: 10px;
+}
+
+.hot-section {
+
+    .section-header {
+
+
+        .header-content {
+            .hot-nav {
+                gap: 10px;
+
+                .hot-prev,
+                .hot-next {
+                    width: 40px;
+                    height: 40px;
+                    line-height: 40px;
+                    border-radius: 10px;
+                    background: rgba($white-color, $alpha: .10);
+                    @extend %text-center;
+                    font-size: 20px;
+                    transition: $transition;
+
+                    &:hover {
+                        background: $theme-color;
+                    }
+                }
+            }
+
+        }
+    }
+
+    .hot-holder {
+        @extend %of-hidden;
+    }
+}
+
+/*------------ hot section end here --------------*/
+
+
+/*------------ sponsor section end here --------------*/
+.sponsor-section {
+    .sponsor-wrapper {
+        border: 1px solid $border-color;
+        box-shadow: $d-box-shadow;
+        padding: 40px 20px;
+        border-radius: 15px;
+    }
+
+    .sponsor-img {
+        @extend %d-block;
+
+        img {
+            transition: .3s all cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        &:hover {
+            img {
+                transform: scale(1.07);
+            }
+        }
+    }
+}
+
+/*------------ sponsor section end here --------------*/
+
+
+
+/*------------ explore section start here --------------*/
+.explore-section {
+    .section-header {
+        @extend %justify-center;
+        gap: 15px;
+
+        .nft-filter {
+            @extend %w-100;
+            gap: 10px;
+
+            @include breakpoint(md) {
+                gap: 15px;
+            }
+
+            @include breakpoint(lg) {
+                width: auto;
+            }
+
+            h3 {
+                @extend %w-100;
+                @extend %text-center;
+
+                @include breakpoint(lg) {
+                    width: auto;
+                    text-align: left;
+                }
+            }
+
+            .form-floating {
+                @extend %w-100;
+
+                @include breakpoint(sm) {
+                    width: 45%;
+                }
+
+                @include breakpoint(lg) {
+                    width: auto;
+                }
+            }
+        }
+
+        @include breakpoint(lg) {
+            padding: 15px;
+            justify-content: space-between;
+        }
+
+        @include breakpoint(md) {}
+    }
+
+    .nft-search-input {
+        input {
+            min-width: 230px;
+
+            @include breakpoint(lg) {
+                min-width: 280px;
+            }
+        }
+    }
+
+    .nft-search {
+        @include breakpoint(max-sm) {
+            width: 100%;
+        }
+    }
+}
+
+/*------------ explore section end here --------------*/
+
+
+
+/*======================================================
+
+***************** Home-2 Css  *****************
+
+========================================================*/

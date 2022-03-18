@@ -1,0 +1,680 @@
+/* @@@@@@@@@@@@@  Extend Property CSS start here  @@@@@@@@@@@@@@ */
+%flex {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+// %rel {
+//     position: relative;
+// }
+
+%p-rel {
+    position: relative;
+}
+
+
+%p-abs {
+    position: absolute;
+    content: "";
+}
+
+%mp-0 {
+    padding: 0;
+    margin: 0;
+}
+
+%of-hidden {
+    overflow: hidden;
+}
+
+%c-pointer {
+    cursor: pointer;
+}
+
+%w-100 {
+    width: 100%;
+}
+
+%h-100 {
+    height: 100%;
+}
+
+%text-bold {
+    font-weight: 700;
+}
+
+%text-regular {
+    font-weight: 400;
+}
+
+%pos-center {
+    position: absolute;
+    content: "";
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+%justify-center {
+    justify-content: center;
+}
+
+%justify-between {
+    justify-content: space-between;
+}
+
+%justify-start {
+    justify-content: flex-start;
+}
+
+%justify-end {
+    justify-content: flex-end;
+}
+
+%justify-around {
+    justify-content: space-around;
+}
+
+%justify-evenly {
+    justify-content: space-evenly;
+}
+
+%align-items-center {
+    align-items: center;
+}
+
+%align-items-start {
+    align-items: flex-start;
+}
+
+%align-items-end {
+    align-items: flex-end;
+}
+
+
+%d-block {
+    display: block;
+}
+
+%d-inline-block {
+    display: inline-block;
+}
+
+%d-grid {
+    display: grid;
+}
+
+%border-radius-2 {
+    border-radius: 2px;
+}
+
+/* @@@@@@@@@@@@@  Extend Property CSS Writing Now  @@@@@@@@@@@@@@ */
+
+%text-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    @extend %of-hidden;
+    text-overflow: ellipsis;
+}
+
+%text-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    @extend %of-hidden;
+    text-overflow: ellipsis;
+}
+
+%text-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    @extend %of-hidden;
+    text-overflow: ellipsis;
+}
+
+/* @@@@@@@@@@@@@  Extend Property CSS Writing Now  @@@@@@@@@@@@@@ */
+%white-color {
+    color: $white-color;
+}
+
+%black-color {
+    color: $black-color;
+}
+
+%bg-white {
+    background-color: $white-color;
+}
+
+%bg-theme {
+    background: $theme-color;
+}
+
+%bg-primary {
+    background: $secondary-color;
+}
+
+
+%border-color {
+    border-color: $border-color;
+}
+
+%text-center {
+    text-align: center;
+}
+
+%text-right {
+    text-align: right;
+}
+
+%text-left {
+    text-align: left;
+}
+
+%list-none {
+    list-style: none;
+}
+
+/* @@@@@@@@@@@@@  Extend Property Margin 10 - 30 CSS Writing Now  @@@@@@@@@@@@@@ */
+%m-0 {
+    margin: 0;
+}
+
+%m-5 {
+    margin: 5px;
+}
+
+%m-10 {
+    margin: 10px;
+}
+
+%m-15 {
+    margin: 15px;
+}
+
+%m-20 {
+    margin: 20px;
+}
+
+%m-25 {
+    margin: 25px;
+}
+
+%m-30 {
+    margin: 30px;
+}
+
+%m-35 {
+    margin: 35px;
+}
+
+%m-40 {
+    margin: 40px;
+}
+
+%m-45 {
+    margin: 45px;
+}
+
+%m-50 {
+    margin: 50px;
+}
+
+%mb-0 {
+    margin-bottom: 0;
+}
+
+%mb-5 {
+    margin-bottom: 5px;
+}
+
+%mb-10 {
+    margin-bottom: 10px;
+}
+
+%mb-15 {
+    margin-bottom: 15px;
+}
+
+%mb-20 {
+    margin-bottom: 20px;
+}
+
+%mb-25 {
+    margin-bottom: 25px;
+}
+
+%mb-30 {
+    margin-bottom: 30px;
+}
+
+%mb-35 {
+    margin-bottom: 35px;
+}
+
+%mb-40 {
+    margin-bottom: 40px;
+}
+
+%mb-45 {
+    margin-bottom: 45px;
+}
+
+%mb-50 {
+    margin-bottom: 50px;
+}
+
+%mt-0 {
+    margin-top: 0;
+}
+
+%mt-5 {
+    margin-top: 5px;
+}
+
+%mt-10 {
+    margin-top: 10px;
+}
+
+%mt-15 {
+    margin-top: 15px;
+}
+
+%mt-20 {
+    margin-top: 20px;
+}
+
+%mt-25 {
+    margin-top: 25px;
+}
+
+%mt-30 {
+    margin-top: 30px;
+}
+
+%mt-35 {
+    margin-top: 35px;
+}
+
+%mt-40 {
+    margin-top: 40px;
+}
+
+%mt-45 {
+    margin-top: 45px;
+}
+
+%mt-50 {
+    margin-top: 50px;
+}
+
+%ml-0 {
+    margin-left: 0;
+}
+
+%ml-5 {
+    margin-left: 5px;
+}
+
+%ml-10 {
+    margin-left: 10px;
+}
+
+%ml-15 {
+    margin-left: 15px;
+}
+
+%ml-20 {
+    margin-left: 20px;
+}
+
+%ml-25 {
+    margin-left: 25px;
+}
+
+%ml-30 {
+    margin-left: 30px;
+}
+
+%ml-35 {
+    margin-left: 35px;
+}
+
+%ml-40 {
+    margin-left: 40px;
+}
+
+%ml-45 {
+    margin-left: 45px;
+}
+
+%ml-50 {
+    margin-left: 50px;
+}
+
+%mr-0 {
+    margin-right: 0;
+}
+
+%mr-5 {
+    margin-right: 5px;
+}
+
+%mr-10 {
+    margin-right: 10px;
+}
+
+%mr-15 {
+    margin-right: 15px;
+}
+
+%mr-20 {
+    margin-right: 20px;
+}
+
+%mr-25 {
+    margin-right: 25px;
+}
+
+%mr-30 {
+    margin-right: 30px;
+}
+
+%mr-35 {
+    margin-right: 35px;
+}
+
+%mr-40 {
+    margin-right: 40px;
+}
+
+%mr-45 {
+    margin-right: 45px;
+}
+
+%mr-50 {
+    margin-right: 50px;
+}
+
+%my-0 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+%my-10 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+%my-15 {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+%my-20 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+%my-25 {
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+%my-30 {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+%mx-0 {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+%mx-10 {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+%mx-15 {
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+%mx-20 {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+%mx-25 {
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+%mx-30 {
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+/* @@@@@@@@@@@@@  Extend Property padding 10 - 30 CSS Writing Now  @@@@@@@@@@@@@@ */
+%p-0 {
+    padding: 0;
+}
+
+%p-5 {
+    padding: 5px;
+}
+
+%p-10 {
+    padding: 10px;
+}
+
+%p-15 {
+    padding: 15px;
+}
+
+%p-20 {
+    padding: 20px;
+}
+
+%p-25 {
+    padding: 25px;
+}
+
+%p-30 {
+    padding: 30px;
+}
+
+%p-35 {
+    padding: 35px;
+}
+
+%p-40 {
+    padding: 40px;
+}
+
+%p-45 {
+    padding: 45px;
+}
+
+%p-50 {
+    padding: 50px;
+}
+
+%pb-0 {
+    padding-bottom: 0;
+}
+
+%pb-5 {
+    padding-bottom: 5px;
+}
+
+%pb-10 {
+    padding-bottom: 10px;
+}
+
+%pb-15 {
+    padding-bottom: 15px;
+}
+
+%pb-20 {
+    padding-bottom: 20px;
+}
+
+%pb-25 {
+    padding-bottom: 25px;
+}
+
+%pb-30 {
+    padding-bottom: 30px;
+}
+
+%pb-35 {
+    padding-bottom: 35px;
+}
+
+%pb-40 {
+    padding-bottom: 40px;
+}
+
+%pb-45 {
+    padding-bottom: 45px;
+}
+
+%pb-50 {
+    padding-bottom: 50px;
+}
+
+%pt-0 {
+    padding-top: 0;
+}
+
+%pt-5 {
+    padding-top: 5px;
+}
+
+%pt-10 {
+    padding-top: 10px;
+}
+
+%pt-15 {
+    padding-top: 15px;
+}
+
+%pt-20 {
+    padding-top: 20px;
+}
+
+%pt-25 {
+    padding-top: 25px;
+}
+
+%pt-30 {
+    padding-top: 30px;
+}
+
+%pt-35 {
+    padding-top: 35px;
+}
+
+%pt-40 {
+    padding-top: 40px;
+}
+
+%pt-45 {
+    padding-top: 45px;
+}
+
+%pt-50 {
+    padding-top: 50px;
+}
+
+%pl-0 {
+    padding-left: 0;
+}
+
+%pl-5 {
+    padding-left: 5px;
+}
+
+%pl-10 {
+    padding-left: 10px;
+}
+
+%pl-15 {
+    padding-left: 14px;
+}
+
+%pl-20 {
+    padding-left: 20px;
+}
+
+%pl-25 {
+    padding-left: 25px;
+}
+
+%pl-30 {
+    padding-left: 30px;
+}
+
+%pl-35 {
+    padding-left: 35px;
+}
+
+%pl-40 {
+    padding-left: 40px;
+}
+
+%pl-45 {
+    padding-left: 45px;
+}
+
+%pl-50 {
+    padding-left: 50px;
+}
+
+%pr-5 {
+    padding-right: 5px;
+}
+
+%pr-0 {
+    padding-right: 0;
+}
+
+%pr-10 {
+    padding-right: 10px;
+}
+
+%pr-15 {
+    padding-right: 15px;
+}
+
+%pr-20 {
+    padding-right: 20px;
+}
+
+%pr-25 {
+    padding-right: 25px;
+}
+
+%pr-30 {
+    padding-right: 30px;
+}
+
+%pr-35 {
+    padding-right: 35px;
+}
+
+%pr-40 {
+    padding-right: 40px;
+}
+
+%pr-45 {
+    padding-right: 45px;
+}
+
+%pr-50 {
+    padding-right: 50px;
+}

@@ -1,0 +1,54 @@
+.ranking-wrapper {
+    @extend %p-30;
+    background-color: $white-color;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba($black-color, $alpha: .10);
+
+}
+
+.rank-table {
+    vertical-align: middle;
+    text-align: center;
+
+    thead {
+        background-color: $theme-color;
+        color: $white-color;
+    }
+
+    th,
+    td {
+        padding: 1rem;
+    }
+
+    td {
+        font-weight: 600;
+        color: $title-color;
+    }
+}
+
+.rank-col-inner,
+.rank-vol-inner {
+    gap: 5px;
+    min-width: max-content;
+}
+
+.rank-col-thumb {
+    width: 40px;
+    height: 40px;
+}
+
+.rank-vol-thumb {
+    width: 25px;
+    height: 25px;
+}
+
+.rank-col-content {
+    a {
+        color: $title-color;
+    }
+}
+
+.table-hover>tbody>tr:hover {
+    background-color: rgba($theme-color, $alpha: .10);
+    --bs-table-accent-bg: none;
+}

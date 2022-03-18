@@ -54,7 +54,7 @@ export const MetaplexMenu = () => {
     return (
       <>
         <Modal
-          title={<img src={'/metaplex-logo.svg'} />}
+          title={<img src={'images/logo/logo.png'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
@@ -113,7 +113,7 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/metaplex-logo.svg'} />
+      <img src={'images/logo/logo.png'} style={{height: 120, padding: 15}}/>
     </Link>
   );
 };
@@ -139,7 +139,7 @@ export const AppBar = () => {
           {connected && (
             <>
               <CurrentUserBadge
-                showBalance={false}
+                showBalance={true}
                 showAddress={true}
                 iconSize={24}
               />

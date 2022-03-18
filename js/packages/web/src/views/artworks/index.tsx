@@ -75,8 +75,9 @@ export const ArtworksView = () => {
           </Menu.Item>
         </Menu>
       }
-    >
+    ><span style={{color: 'white'}}>
       Refresh
+      </span>
     </Dropdown.Button>
   );
 

@@ -1,0 +1,221 @@
+//---------------------------------
+// This file contains banner css
+//---------------------------------
+.banner-section {
+    @extend %p-rel;
+    @extend %of-hidden;
+    background-size: cover;
+    background-position: center;
+
+    &.style-1 {
+        .banner-wrapper {
+            @extend %p-rel;
+            z-index: 1;
+            padding-top: 120px;
+            padding-bottom: 120px;
+
+            @include breakpoint(lg) {
+                padding-top: 200px;
+                padding-bottom: 200px;
+            }
+
+            .banner-content {
+                >p {
+                    @include breakpoint(md) {
+                        @include breakpoint(max-lg) {
+                            max-inline-size: 35ch;
+                            margin: auto auto 45px;
+                        }
+                    }
+
+                    margin-bottom: 45px;
+                }
+            }
+        }
+    }
+}
+
+
+
+.banner-slider {
+    overflow: hidden;
+    padding: 30px;
+
+    .nft-item {
+        border: 1px solid rgba($black-color, $alpha: .30);
+
+        .nft-inner {
+            background-color: $white-color;
+        }
+
+        &:hover {
+            transform: none;
+            box-shadow: none;
+        }
+    }
+}
+
+.banner_shape {
+    display: none;
+
+    @include breakpoint(md) {
+        display: inherit;
+    }
+
+    &__item {
+        img {
+            border-radius: 10px;
+            // opacity: .2;
+            transition: $transition;
+            width: 100%;
+        }
+
+        &:hover {
+            img {
+                // opacity: 1;
+            }
+        }
+    }
+
+    &__1,
+    &__2 {
+        @extend %p-abs;
+        @extend %h-100;
+        width: 500px;
+
+
+        img {
+            @extend %h-100;
+        }
+    }
+
+    &__1 {
+        top: 0;
+        left: -45%;
+        animation: scrollUp 50s ease-in-out 0s infinite backwards;
+    }
+
+    &__2 {
+        top: 0;
+        right: -45%;
+        animation: scrollUp 50s ease-in-out 2s infinite backwards;
+    }
+
+    @include breakpoint(lg) {
+        &__1 {
+            left: -35%;
+        }
+
+        &__2 {
+            right: -35%;
+        }
+    }
+
+    @include breakpoint(xl) {
+        &__1 {
+            left: -15%;
+        }
+
+        &__2 {
+            right: -15%;
+        }
+    }
+
+    @include breakpoint(xxl) {
+        &__1 {
+            left: -10%;
+        }
+
+        &__2 {
+            right: -10%;
+        }
+    }
+
+    @include breakpoint(xxxl) {
+        &__1 {
+            left: -5%;
+        }
+
+        &__2 {
+            right: -5%;
+        }
+    }
+
+    @media screen and (min-width:1900px) {
+        &__1 {
+            left: 0;
+        }
+
+        &__2 {
+            right: 0;
+        }
+    }
+
+}
+
+.banner-wrapper {
+    padding-block: 80px;
+
+}
+
+.banner-content {
+    .search-bar {
+        margin: auto;
+        max-inline-size: 700px;
+
+        input {
+            padding: 1rem 2rem;
+            border: 2px solid rgba($theme-color, $alpha: .2);
+        }
+
+        button {
+            @include breakpoint(lg) {
+                padding: 1rem 2.5rem;
+            }
+        }
+    }
+
+    h2 {
+        @extend %mb-20;
+        font-weight: 800;
+    }
+
+    p {
+        @include font-size(18px);
+        font-weight: 700;
+        color: $title-color;
+        font-family: $manrope;
+    }
+
+    .banner-btns {
+        gap: 30px;
+    }
+}
+
+.banner-image {
+    // animation: rotating 15s linear infinite;
+}
+
+
+//floating keyframes
+@keyframes rotating {
+    from {
+        transform: rotateY(0deg);
+    }
+
+    to {
+        transform: rotateY(360deg);
+    }
+}
+
+.gradient-text-blue {
+    background: $gradient-blue;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-orange {
+    background: $gradient-orange;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

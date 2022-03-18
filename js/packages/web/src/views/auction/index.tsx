@@ -68,6 +68,7 @@ export const AuctionItem = ({
     background: 'black',
     boxShadow: 'rgb(0 0 0 / 10%) 12px 2px 20px 14px',
     aspectRatio: '1/1',
+
   };
   return (
     <ArtContent
@@ -156,7 +157,7 @@ export const AuctionView = () => {
             </Carousel>
           </div>
         </Col>
-        <Col className="auction-mobile-section">
+        <Col className="auction-mobile-section" >
           <h2 className="art-title">
             {art.title || <Skeleton paragraph={{ rows: 0 }} />}
           </h2>
@@ -284,6 +285,7 @@ export const AuctionView = () => {
               {items}
             </Carousel>
           </div>
+          <div style={{background: 'darkgray', borderRadius: '9px', padding: '12px'}}>
           <h6 className={'about-nft-collection'}>
             ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}
           </h6>
@@ -314,9 +316,11 @@ export const AuctionView = () => {
               <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
             </>
           )} */}
+
+          </div>
         </Col>
 
-        <Col span={24} md={14}>
+        <Col span={24} md={14} style={{background: 'lightgray', borderRadius: '9px'}}>
           <h2 className="art-title">
             {art.title || <Skeleton paragraph={{ rows: 0 }} />}
           </h2>

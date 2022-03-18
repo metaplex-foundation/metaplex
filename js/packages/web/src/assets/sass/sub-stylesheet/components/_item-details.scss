@@ -1,0 +1,289 @@
+/*===========================  Item Details Page CSS start here=====================================*/
+
+.item-desc-part {
+    .item-desc-thumb {
+
+        @extend %mb-40;
+
+        @include breakpoint(lg) {
+            margin-bottom: 50px;
+        }
+
+        img {
+            border-radius: 10px;
+            margin: auto;
+            @extend %d-block;
+        }
+    }
+
+    .item-desc-content {
+        // background-color: $secondary-color;
+        // @extend %pl-30;
+        border-radius: 10px;
+
+        .nav-tabs {
+            background: $white-color;
+            border-bottom: none;
+            @extend %mb-25;
+            padding-block: 5px;
+
+            .nav-link {
+                border: 0;
+                outline: none;
+                box-shadow: none;
+                color: $title-color;
+                font-weight: 500;
+                @extend %p-rel;
+
+                &.active {
+                    background: transparent;
+                    color: $theme-color;
+
+                    &:after {
+                        @extend %p-abs;
+                        bottom: -5px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        width: 0;
+                        height: 0;
+                        border-style: solid;
+                        border-width: 0 8px 10px 8px;
+                        border-color: transparent transparent $body-color transparent;
+                    }
+                }
+            }
+
+        }
+
+        .details-tab {
+            >p {
+                @extend %mb-20;
+
+                @include breakpoint(lg) {
+                    max-width: 95%;
+                }
+            }
+
+            .author-profile {
+                @extend %mb-25;
+            }
+
+            .author-p-thumb {
+                width: 60px;
+                height: 60px;
+
+                img {
+                    border-radius: 50%;
+                    border: 2px solid $royal-blue;
+                }
+            }
+
+            .other-info-list {
+
+                .item-other-info {
+                    @extend %mb-20;
+                    @extend %flex;
+                    @extend %align-items-center;
+
+                    .item-info-title {
+                        @extend %p-rel;
+                        width: 30%;
+
+                        @include breakpoint(sm) {
+                            width: 35%;
+                        }
+
+                        &:after {
+                            @extend %p-abs;
+                            content: ":";
+                            right: 10px;
+                            top: 0;
+                        }
+                    }
+
+                    .item-info-details {
+                        width: 70%;
+
+                        @include breakpoint(sm) {
+                            width: 65%;
+                        }
+                    }
+
+                    p {
+                        @extend %mb-0;
+                    }
+                }
+
+                .crypto-page {
+                    background: $white-color;
+                }
+
+                #cryptoLink {
+                    max-width: 100%;
+                    width: 80%;
+                    color: $desc-color;
+                }
+
+                .copy-icon {
+                    i {
+                        color: $white-color;
+                    }
+                }
+            }
+
+        }
+
+        .bids-tab {
+            @extend %text-center;
+
+            span {
+                @extend %mb-10;
+                @extend %d-inline-block;
+
+                i {
+                    @include font-size(40px);
+                }
+            }
+
+            p {
+                @include font-size(18px);
+            }
+        }
+
+        .history-tab {
+            @extend %pl-15;
+
+            .item-histo-list {
+                border-left: 1px dashed $theme-color;
+                @extend %pl-20;
+
+                .histo-item {
+                    @extend %mb-20;
+                    @extend %p-rel;
+
+                    &::before {
+                        @extend %p-abs;
+                        width: 10px;
+                        height: 10px;
+                        border-radius: 50%;
+                        background-color: $theme-color;
+                        left: -25px;
+                        top: 5px;
+                    }
+
+
+                    p {
+                        @extend %mb-0;
+
+                        a {
+                            @extend %text-bold;
+                        }
+                    }
+
+                    time {
+                        font-size: $fs-small;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.item-buy-part {
+    position: sticky;
+    top: 95px;
+    background: $white-color;
+    padding: 50px 30px;
+    border-radius: 10px;
+}
+
+.nft-item-title {
+    @extend %flex;
+    @extend %mb-30;
+
+    h3 {
+        width: 85%;
+    }
+
+    .share-btn {
+        width: 15%;
+        text-align: right;
+
+        .dropdown-toggle {
+            i {
+                @include font-size(30px);
+            }
+
+            &:before {
+                display: none;
+            }
+        }
+
+        .dropdown-menu {
+            background-color: $body-color;
+        }
+
+        .dropdown-item {
+            color: $desc-color;
+
+            &:hover {
+                color: $theme-color;
+                background: transparent;
+            }
+        }
+    }
+}
+
+.item-details-countdown {
+    @extend %mb-40;
+
+    h4 {
+        @extend %mb-15;
+    }
+
+    .item-countdown-list {
+        @extend %flex;
+        gap: 15px;
+
+        li {
+            @extend %text-center;
+
+            .days,
+            .hours,
+            .minutes,
+            .seconds {
+                @include font-size($fs-h4);
+                font-weight: 600;
+                @extend %d-block;
+                background: $body-color;
+                padding: 10px 20px;
+                border-radius: 5px;
+                @extend %mb-5;
+            }
+        }
+    }
+}
+
+.item-price {
+    @extend %mb-40;
+
+    h4 {
+        @extend %mb-10;
+    }
+
+    p {
+        span {
+            @include font-size($fs-h4);
+            font-weight: 600;
+
+            i {
+                color: $theme-color;
+            }
+        }
+    }
+}
+
+.buying-btns {
+    gap: 30px;
+    @extend %mb-10;
+}

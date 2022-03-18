@@ -1,0 +1,1288 @@
+//-----------------------------------
+//all global css is here
+
+//------------------------------------
+
+
+//custom container
+.container {
+    @include breakpoint(xl) {
+        max-width: 1170px;
+    }
+}
+
+//default button style
+.default-btn {
+    @extend %p-rel;
+    @extend %d-inline-block;
+    @extend %of-hidden;
+    text-decoration: none;
+    color: $white-color;
+    padding: 0 1.7rem;
+    line-height: 40px;
+    border-radius: 4px;
+    @include font-size(16px);
+    transform-origin: right;
+    transition: $transition;
+    background: $gradient-blue;
+    font-weight: bold;
+
+    @include breakpoint(md) {
+        padding: 0 2.25rem;
+        line-height: 50px;
+    }
+
+    span {
+        position: inherit;
+        z-index: 1;
+    }
+
+    &.small-btn {
+        padding: 0 1rem;
+        line-height: 40px;
+        @include font-size(14px);
+    }
+
+    &.move-right {
+
+
+        &:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: $gradient-orange;
+            transition: transform .5s;
+            transform-origin: right;
+            transform: scaleX(0);
+            z-index: 0;
+        }
+
+        &:hover {
+
+            &:before {
+                transform: scaleX(1);
+                transform-origin: left;
+                transition: transform .5s;
+            }
+        }
+    }
+
+    &.move-left {
+
+        &:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: $gradient-orange;
+            transition: transform .5s;
+            transform-origin: left;
+            transform: scaleX(0);
+            z-index: 0;
+        }
+
+        &:hover {
+
+            &:before {
+                transform: scaleX(1);
+                transform-origin: right;
+                transition: transform .5s;
+            }
+        }
+    }
+
+    &.move-bottom {
+
+        &:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: $gradient-orange;
+            transition: transform .5s;
+            transform-origin: bottom;
+            transform: scaleY(0);
+            z-index: 0;
+        }
+
+        &:hover {
+
+            &:before {
+                transform: scaleY(1);
+                transform-origin: top;
+                transition: transform .5s;
+            }
+        }
+    }
+
+    &.move-top {
+
+        &:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: $gradient-orange;
+            transition: transform .5s;
+            transform-origin: top;
+            transform: scaleY(0);
+            z-index: 0;
+        }
+
+        &:hover {
+
+            &:before {
+                transform: scaleY(1);
+                transform-origin: bottom;
+                transition: transform .5s;
+            }
+        }
+    }
+
+    &.style-2 {
+        background: $gradient-orange;
+        color: $white-color;
+        border-radius: 4px;
+    }
+
+    &:hover {
+        color: $body-color;
+    }
+}
+
+
+//ajal load text
+.load-more__counter {
+    @extend %mt-20;
+}
+
+
+//common section top bottom padding
+
+.padding-top {
+    padding-top: 90px;
+
+    @include breakpoint(lg) {
+        padding-top: 140px;
+    }
+}
+
+.padding-bottom {
+    padding-bottom: 85px;
+
+    @include breakpoint(lg) {
+        padding-bottom: 135px;
+    }
+}
+
+.pb-120 {
+    padding-bottom: 80px;
+
+    @include breakpoint(lg) {
+        padding-bottom: 120px;
+    }
+}
+
+.pb-100 {
+    padding-bottom: 70px;
+
+    @include breakpoint(lg) {
+        padding-bottom: 100px;
+    }
+}
+
+
+
+/*---------------* Section header start here *------------------*/
+
+
+.section-header {
+    @extend %flex;
+    @extend %justify-between;
+    @extend %align-items-center;
+    @extend %mb-30;
+    gap: 15px;
+    padding-block: 10px;
+    border-top: 1px solid rgba($black-color, $alpha: .15);
+    border-bottom: 1px solid rgba($black-color, $alpha: .15);
+
+    .header-content {
+        line-height: 0;
+    }
+
+    .arrows {
+        @extend %mb-0;
+        gap: 5px;
+        padding: .5rem .75rem;
+        background-color: $white-color;
+        border-radius: 4px;
+    }
+
+    .arrow-right,
+    .arrow-left {
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        background: $gradient-blue;
+        color: $white-color;
+        border-radius: 50%;
+        @extend %text-center;
+    }
+
+    .arrow-right {
+        background: $gradient-orange;
+    }
+}
+
+/*---------------* Section header end here *------------------*/
+
+
+
+
+/*-------- --------------nft item start here------- -------*/
+.nft-item {
+    @extend %p-rel;
+    transition: $transition;
+    border-radius: 10px;
+    @extend %of-hidden;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 5px 10px rgba($black-color, $alpha: .15);
+    }
+
+    .nft-inner {
+        background: $white-color;
+        box-shadow: $d-box-shadow;
+        transition: $transition;
+        border: 1px solid rgba($white-color, $alpha:.05);
+    }
+
+    .nft-item-top {
+        padding: 15px;
+
+        .author-part {
+            .author-list {
+                @extend %mb-0;
+
+
+            }
+        }
+
+        .more-part {
+            .dropstart {
+                >a {
+                    @extend %d-inline-block;
+                    width: 25px;
+                    height: 25px;
+                    line-height: 25px;
+                    background-color: rgba($white-color, $alpha:.30);
+                    color: $desc-color;
+                    @extend %text-center;
+                    border-radius: 50%;
+
+                    i {
+                        font-size: 14px;
+                        @extend %d-inline-block;
+                        transition: all .1s ease;
+                    }
+
+                    &:before {
+                        display: none;
+                    }
+
+                    &:focus-visible {
+                        outline: none;
+                    }
+
+                    &.show {
+                        i {
+                            transform: rotate(-90deg);
+                        }
+                    }
+
+                    &:hover {
+                        color: $title-color;
+                    }
+                }
+
+                .dropdown-menu {
+                    min-width: 8rem;
+                    background: $body-color;
+                    border: 1px solid rgba($white-color, $alpha: .30);
+                    box-shadow: 0 4px 5px rgba($black-color, $alpha: .40);
+
+                    li {
+                        border-bottom: 1px solid rgba($white-color, $alpha: .4);
+
+                        &:last-child {
+                            border-bottom: none;
+                        }
+
+                        .dropdown-item {
+                            color: $desc-color;
+
+                            &:hover {
+                                background: transparent;
+                                color: $theme-color;
+                            }
+                        }
+                    }
+
+
+                }
+            }
+        }
+    }
+
+    .single-author {
+        gap: 10px;
+
+        a {
+            img {
+                border: 1px solid $body-color;
+                border-radius: 50%;
+                max-width: 44px;
+                object-fit: cover;
+            }
+
+        }
+
+        &:nth-child(2) {
+            transform: translateX(-12px);
+        }
+
+        &:nth-child(3) {
+            transform: translateX(-25px);
+
+
+        }
+
+        h6 {
+            a {
+                @extend %text-clamp-1;
+                color: $title-color;
+            }
+        }
+    }
+
+    &.style-2 {
+        .nft-thumb {
+            img {
+                @extend %w-100;
+            }
+        }
+
+        .nft-content {
+            @extend %text-center;
+
+            .author-thumb {
+                @extend %d-inline-block;
+                transform: translateY(-50%);
+
+                img {
+                    border-radius: 50%;
+                    border: 2px solid $body-color;
+                    max-width: 65px;
+                }
+
+                .veryfied {
+                    &:after {
+                        width: 18px;
+                        height: 18px;
+                        font-size: 15px;
+                    }
+                }
+            }
+
+            .author-details {
+                margin-top: -20px;
+                padding: 0 20px 20px;
+
+                h5 {
+                    @extend %mb-10;
+
+                    a {
+                        color: $title-color;
+                    }
+
+                    &:hover {
+                        a {
+                            color: $theme-color;
+                        }
+                    }
+                }
+
+                p {
+                    @extend %mb-0;
+                    @include font-size(18px);
+                    font-family: $manrope;
+                    color: $theme-color;
+                }
+            }
+        }
+    }
+
+    &.style-3 {
+        .nft-inner {
+            padding-inline: 35px;
+            padding-block: 35px;
+
+            @include breakpoint(lg) {
+                padding-inline: 60px;
+                padding-block: 45px;
+            }
+
+        }
+
+        .nft-thumb {
+            @extend %mb-30;
+        }
+
+        .nft-content {
+            h5 {
+                @extend %mb-15;
+            }
+
+            p {
+                @extend %mb-0;
+            }
+        }
+
+    }
+
+    //blog post item
+    &.blog-item {
+
+        .nft-inner {
+            @extend %p-10;
+        }
+
+        .nft-thumb {
+            @extend %mb-10;
+
+            img {
+                @extend %w-100;
+                transition: $transition;
+            }
+        }
+
+        .nft-content {
+            @extend %p-10;
+
+            h4 {
+                @extend %mb-5;
+
+                a {
+                    @extend %text-clamp-1;
+                    color: $title-color;
+                }
+            }
+
+            .meta-info {
+                @extend %flex;
+                @extend %align-items-center;
+                @extend %mb-15;
+                gap: 10px;
+
+                date,
+                p {
+                    @extend %mb-0;
+
+                    i {
+                        @extend %mr-5;
+                    }
+                }
+            }
+        }
+
+        &:hover {
+            .nft-content {
+                h4 {
+                    a {
+                        color: $theme-color;
+                    }
+                }
+            }
+        }
+    }
+
+    //category item
+    &.collection-item {
+        .badge {
+            background-color: $body-color;
+            top: 10px;
+            right: 25px;
+            color: $desc-color;
+            font-size: 14px;
+
+            i {
+                color: $primary-color;
+            }
+        }
+
+        .coll-thumb-wrapper {
+            padding: 1rem;
+        }
+
+        .nft-coll-thumb {
+
+            @extend %of-hidden;
+            cursor: w-resize;
+
+            .single-thumb {
+                img {
+                    border-radius: 4px;
+                    @extend %w-100;
+                }
+            }
+        }
+
+        .collection-title {
+            padding: 1rem;
+
+            h5 {
+                @extend %mb-5;
+
+                a {
+                    color: $title-color;
+
+                    &:hover {
+                        color: $theme-color;
+                    }
+                }
+            }
+
+            p {
+                @extend %mb-0;
+            }
+        }
+
+        .author-details {
+            padding: 1rem;
+            border-top: 1px solid $border-color;
+        }
+
+    }
+
+    &:hover {
+        border-color: rgba($white-color, $alpha: .50);
+    }
+
+}
+
+.nft-item-bottom {
+    .nft-thumb {
+        @extend %p-rel;
+        @extend %mb-20;
+        padding-inline: 15px;
+
+        img {
+            @extend %w-100;
+            border-radius: 10px;
+        }
+
+        .nft-countdown {
+            @extend %mb-0;
+            @extend %p-abs;
+            width: 92%;
+            left: 25px;
+            top: 10px;
+            @extend %flex;
+            @extend %align-items-center;
+            gap: 10px;
+
+
+            span {
+                font-size: 14px;
+                font-family: $manrope;
+                font-weight: 400;
+                color: $white-color;
+
+            }
+
+            li {
+                @extend %text-center;
+                background: $gradient-orange;
+                width: 24px;
+                height: 24px;
+                line-height: 24px;
+                border-radius: 50%;
+            }
+
+        }
+
+        .badge {
+            background-color: $white-color;
+            top: 10px;
+            right: 25px;
+            color: $desc-color;
+            font-size: 14px;
+
+            i {
+                color: $primary-color;
+            }
+        }
+    }
+
+    .nft-content {
+        .content-title {
+            padding-inline: 15px;
+
+            h5 {
+                a {
+                    color: $title-color;
+                }
+            }
+        }
+
+
+        p {
+            @extend %mb-0;
+        }
+
+        .price-like {
+            padding: 15px;
+            border-top: 1px solid $border-color;
+        }
+
+        .nft-status {
+            padding: 10px 15px;
+            font-weight: 600;
+        }
+
+        .nft-price {
+            p {
+                @include font-size(14px);
+                font-weight: 700;
+            }
+        }
+
+        .currency-img {
+            @extend %mr-10;
+        }
+
+        .nft-bid {
+            @extend %d-inline-block;
+            background-image: $gradient-blue;
+            color: $white-color;
+            @include font-size(14px);
+            line-height: 24px;
+            padding-inline: .5rem;
+            border-radius: 99px;
+            font-weight: 700;
+
+            @include breakpoint(md) {
+                padding-inline: 1rem;
+            }
+
+            &:hover {
+                background-image: $gradient-blue-reverse;
+            }
+        }
+    }
+}
+
+//varify icon
+.veryfied {
+    @extend %p-rel;
+
+    &:after {
+        @extend %p-abs;
+        content: "\eed8";
+        font-family: "IcoFont";
+        font-weight: 400;
+        color: $white-color;
+        font-size: 12px;
+        right: 0;
+        bottom: 0;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: $gradient-blue;
+        text-align: center;
+        border: 1px solid $white-color;
+        line-height: 1.1;
+    }
+}
+
+/*----------------------------- nft item end here-----------*/
+
+
+
+/*--------------------------seller item start here ----------------------------------*/
+.bg-blue {
+    background-image: $gradient-blue;
+}
+
+.bg-orange {
+    background-image: $gradient-orange;
+}
+
+.seller-item {
+    background: $white-color;
+    border-radius: 10px;
+    transition: $transition;
+
+    .badge {
+        @include font-size(16px);
+    }
+
+    .seller-inner {
+        @extend %flex;
+        @extend %align-items-center;
+        @extend %justify-between;
+        padding: 15px 10px;
+        gap: 10px;
+
+        @include breakpoint(sm) {
+            padding: 15px 20px;
+        }
+
+        p {
+            @extend %mb-0;
+            font-family: $manrope;
+        }
+    }
+
+    .seller-part {
+        @extend %flex;
+        @extend %align-items-center;
+        gap: 10px;
+
+    }
+
+    .assets-number {
+        @include font-size(18px);
+        font-weight: 600;
+        color: $theme-color;
+    }
+
+    .assets-owner {
+        @extend %flex;
+        @extend %align-items-center;
+        gap: 15px;
+
+        p {
+            color: $primary-color;
+        }
+
+        .owner-thumb {
+            width: 60px;
+            height: 60px;
+
+            &.veryfied {
+                &:after {
+                    width: 18px;
+                    height: 18px;
+                    font-size: 16px;
+                    right: 1px;
+                    bottom: 5px;
+                }
+            }
+
+            img {
+                border: 2px solid $body-color;
+                border-radius: 50%;
+
+            }
+        }
+
+        .owner-content {
+            h6 {
+                a {
+                    color: $title-color;
+
+                    &:hover {
+                        color: $theme-color;
+                    }
+                }
+            }
+        }
+    }
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 5px rgba($black-color, $alpha: .15);
+    }
+}
+
+
+//seller icon
+
+.seller-icon {
+    background: $theme-color;
+    @extend %p-rel;
+    width: 30px;
+    height: 20px;
+    border-radius: 2px;
+
+    &:after {
+        @extend %p-abs;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 5px 5px 0 5px;
+        border-color: $theme-color transparent transparent transparent;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: -5px;
+
+    }
+}
+
+/*--------------------------seller item end here ----------------------------------*/
+
+
+
+/*--------------------------artwork section start here ----------------------------------*/
+.artwork-section {
+    .arrow-blue {
+        &:focus-within {
+            &:after {
+                background-image: $gradient-orange;
+            }
+
+        }
+
+    }
+}
+
+/*--------------------------artwork section end here ----------------------------------*/
+
+
+
+/*--------------------------activity item start here ----------------------------------*/
+.activity-item {
+    .lab-inner {
+        background-color: $white-color;
+        border-radius: 4px;
+        // flex-direction: column;
+
+        // @include breakpoint(sm) {
+        //     flex-direction: row;
+        // }
+
+        .lab-thumb {
+            width: 130px;
+
+            img {
+                border-radius: 4px;
+            }
+
+            @include breakpoint(md) {
+                width: auto;
+            }
+        }
+
+        .lab-content {
+            // @extend %w-100;
+            width: calc(100% - 150px);
+
+            @include breakpoint(md) {
+                width: calc(100% - 200px);
+            }
+
+
+
+
+            h4,
+            p {
+                @include breakpoint(md) {
+                    max-width: 70%;
+                }
+            }
+
+            h4 {
+                @extend %mb-10;
+
+                a {
+                    color: $title-color;
+
+                    &:hover {
+                        color: $theme-color;
+                    }
+                }
+            }
+
+            p {
+                @include breakpoint(max-sm) {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 1;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                @extend %mb-0;
+
+                a {
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+
+}
+
+/*--------------------------activity item end here ----------------------------------*/
+
+
+
+/*--------------------------wallet item start here ----------------------------------*/
+.wallet-item {
+    background: $secondary-color;
+    @extend %p-20;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: $transition;
+
+    .wallet-thumb {
+        @extend %mb-15;
+    }
+
+    .wallet-content {
+        h5 {
+            @extend %mb-10;
+        }
+
+        p {
+            @extend %mb-0;
+            line-height: 1.3;
+        }
+    }
+
+    &:hover {
+        border-color: rgba($theme-color, $alpha: .6);
+    }
+}
+
+.wallet-tab-list {
+    @extend %mb-40;
+    gap: 15px;
+}
+
+.wallet-tab {
+    @extend %flex;
+    @extend %p-15;
+    @extend %align-items-center;
+    @extend %justify-center;
+    @extend %c-pointer;
+    flex-direction: column;
+    border: 1px solid rgba($black-color, $alpha: .15) !important;
+    background-color: rgba($white-color, $alpha: .20) !important;
+    min-inline-size: 100px;
+    gap: 10px;
+
+    img {
+        width: 50px;
+        height: 50px;
+    }
+
+    span {
+        @include font-size(18px);
+        font-weight: 600;
+        color: $desc-color;
+    }
+
+    @include breakpoint(xl) {
+        min-inline-size: 150px;
+    }
+
+
+    &.active {
+        background-color: $white-color !important;
+        border-color: $theme-color !important;
+
+        span {
+            color: $theme-color !important;
+        }
+    }
+}
+
+.wallet-content {
+    @extend %p-20;
+    @extend %flex;
+    @extend %align-items-center;
+    flex-direction: column;
+    border: 1px solid rgba($black-color, $alpha: .15);
+    background-color: $white-color;
+    border-radius: 5px;
+    max-inline-size: 80%;
+    margin: auto;
+    gap: 30px;
+    text-align: center;
+
+    @include breakpoint(lg) {
+        padding: 50px;
+        flex-direction: row;
+        text-align: inherit;
+    }
+
+    .wallet-img {
+        width: 150px;
+        flex: 1;
+
+        img {
+            width: 150px;
+            height: 150px;
+        }
+    }
+
+    .wallet-desc {
+        flex: 3;
+
+        h5 {
+            @extend %mb-20;
+        }
+
+        .default-btn {
+            @extend %mb-30;
+        }
+
+        a {
+            &:not(.default-btn) {
+                display: block;
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
+/*--------------------------wallet item end here ----------------------------------*/
+
+
+
+
+
+/*--------------------------Custom Upload button ----------------------------------*/
+.custom-upload {
+    @extend %p-rel;
+    @extend %d-inline-block;
+    @extend %of-hidden;
+    @extend %c-pointer;
+
+    i {
+        @extend %mr-5;
+    }
+
+    .file-btn {
+        border-radius: 5px;
+        @extend %c-pointer;
+        color: $white-color;
+
+    }
+
+    input[type="file"] {
+        @extend %p-abs;
+        @extend %c-pointer;
+        left: 0;
+        top: 0;
+        opacity: 0;
+    }
+}
+
+/*--------------------------------
+Pagination css start here
+------------------------------------*/
+.paginations {
+    margin: 40px 0;
+
+    @include breakpoint(lg) {
+        margin-bottom: 0;
+    }
+
+    ul {
+        @extend %m-0;
+
+        li {
+            padding: 5px;
+
+            a {
+                width: 46px;
+                height: 46px;
+                @extend %align-items-center;
+                @extend %justify-center;
+                box-shadow: 0 0px 5px rgba($black-color, $alpha: .15);
+                color: $desc-color;
+                background-color: $white-color;
+                z-index: 1;
+                @extend %p-rel;
+                @extend %flex;
+                @include border-radius(5px);
+                @include transition($transition);
+
+                &.active,
+                &:hover {
+                    color: $white-color;
+                    @extend %bg-theme;
+                }
+
+                &.dot {
+                    box-shadow: none;
+
+                    &:hover {
+                        background: transparent;
+                        color: $desc-color;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/*===== scroll to top css =====*/
+.scrollToTop {
+    position: fixed;
+    bottom: -30%;
+    right: 5%;
+    z-index: 9;
+    @extend %text-center;
+    @include font-size(36px);
+    @include transition($transition);
+
+    i {
+        color: $black-color;
+        @extend %p-rel;
+        z-index: 1;
+        transform: .3s all linear;
+    }
+
+    &:hover {
+        i {
+            color: $theme-color;
+        }
+    }
+}
+
+
+//Explore category
+.explore-category {
+    .excat-item {
+        border: 1px solid rgba($black-color, $alpha: .15);
+        border-radius: 10px;
+        background-color: rgba($white-color, $alpha: .10);
+
+        a {
+            @extend %w-100;
+            @extend %h-100;
+            @extend %flex;
+            @extend %align-items-center;
+            @extend %justify-center;
+            flex-direction: column;
+            padding: 20px;
+            gap: 5px;
+
+            i {
+                @include font-size(40px);
+            }
+        }
+
+        &:hover,
+        &.active {
+            background-color: $white-color;
+
+            a {
+                color: $theme-color;
+            }
+
+        }
+
+    }
+}
+
+.explore-filter {
+    @extend %flex;
+    @extend %w-100;
+
+    .nft-item {
+        width: 100%;
+        @extend %mb-20;
+
+        @include breakpoint(md) {
+            width: calc(100% / 2 - 15px);
+        }
+
+        @include breakpoint(lg) {
+            width: calc(100% / 3 - 15px);
+        }
+
+        @include breakpoint(xl) {
+            width: calc(100% / 4 - 15px);
+        }
+    }
+}
+
+.explore-page {
+    .nft-item {
+        transition: none;
+
+        &:hover {
+            transform: none;
+        }
+    }
+}
+
+//Terms page css
+.terms-content {
+    background-color: $white-color;
+    padding: 2rem 1rem;
+    border-radius: 5px;
+
+    @include breakpoint(md) {
+        padding: 3rem 2rem;
+    }
+}
+
+.terms-header {
+    @extend %mb-25;
+
+    @include breakpoint(md) {
+        margin-bottom: 35px;
+    }
+
+    h4 {
+        @extend %mb-10;
+    }
+}
+
+.terms-text {
+
+    ul,
+    ol {
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+
+        li {
+            &:not(:last-child) {
+                @extend %mb-20;
+            }
+
+            h5 {
+                @extend %mb-15;
+            }
+
+            &::marker {
+                color: $theme-color;
+                font-weight: 700;
+            }
+        }
+    }
+
+    ol {
+        list-style: lower-roman;
+    }
+
+    ul {
+        list-style-type: disc;
+    }
+}

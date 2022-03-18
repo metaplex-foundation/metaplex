@@ -1,0 +1,34 @@
+//--------------------------------------------
+//--This file contains all the utility classes
+//---------------------------------------------
+.theme-color {
+    color: $theme-color;
+}
+
+.yellow-color {
+    color: $royal-yellow;
+}
+
+.mb-30 {
+    @extend %mb-30;
+}
+
+.gap-10 {
+    gap: 10px;
+}
+
+.gap-15 {
+    gap: 15px;
+}
+
+.fs-36 {
+    @include font-size(36px);
+}
+
+.mb-70 {
+    margin-bottom: 70px;
+}
+
+.mt-70 {
+    margin-top: 70px;
+}

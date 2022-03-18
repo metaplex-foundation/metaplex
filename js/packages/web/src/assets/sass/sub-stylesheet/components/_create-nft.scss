@@ -1,0 +1,147 @@
+//create item
+.create-nft {
+    background: $white-color;
+    border-radius: 10px;
+
+    .create-nft-form {
+
+        input,
+        select,
+        textarea {
+            background: $body-color;
+            color: $desc-color;
+            border: 1px solid $border-color;
+            ;
+
+            &:focus {
+                box-shadow: none;
+                border-color: rgba($theme-color, $alpha: .40)
+            }
+        }
+
+        textarea {
+            height: 200px;
+        }
+    }
+
+    .upload-item {
+        border: 2px dashed rgba($theme-color, $alpha: .50);
+        @extend %text-center;
+        padding: 30px 15px;
+        border-radius: 15px;
+        background: rgba($body-color, $alpha: .15);
+        transition: $transition;
+
+        @include breakpoint(md) {
+            padding: 50px 15px;
+        }
+
+        .custom-upload {
+            background: $theme-color;
+            padding: .5rem 1rem;
+            border-radius: 10px;
+            transition: $transition;
+            font-weight: 500;
+
+            &:hover {
+                background: darken($theme-color, $amount: 5);
+                transform: translateY(-3px);
+            }
+        }
+
+        &:hover {
+            background: rgba($body-color, $alpha: .50)
+        }
+    }
+
+    //item category field
+    .item-category-field {
+        h4 {
+            @extend %mb-20;
+        }
+
+        .item-cat-list {
+            gap: 10px;
+
+            .item-cat-btn {
+                background: $body-color;
+                border: 1px solid $border-color;
+                padding: .5rem 1rem;
+                border-radius: 5px;
+                @extend %c-pointer;
+                transition: $transition;
+                font-weight: 600;
+
+                &.active,
+                &:hover {
+                    background: $theme-color;
+                    border-color: transparent;
+                    color: $white-color;
+                }
+
+            }
+        }
+    }
+
+    //submit button
+    .submit-btn-field {
+        button {
+            background: $theme-color;
+            border: none;
+            color: $white-color;
+            padding: 1.125rem 2rem;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: $transition;
+
+
+            &:hover {
+                background: darken($theme-color, $amount: 8);
+            }
+        }
+    }
+
+
+}
+
+//Variation items
+.variation-content {
+    >p {
+        margin: auto;
+        margin-bottom: 40px;
+
+        @include breakpoint(lg) {
+            max-inline-size: 80%;
+        }
+    }
+}
+
+.variation-items {
+    @extend %flex;
+    @extend %justify-center;
+    gap: 5%;
+}
+
+.variation-item {
+    @extend %text-center;
+    @extend %of-hidden;
+    min-inline-size: 40%;
+    border: 2px solid $white-color;
+    border-radius: 10px;
+    background-color: rgba($white-color, $alpha: .40);
+    padding: 8% 5%;
+    box-shadow: 0 0 10px rgba($black-color, $alpha: .2);
+
+    img {
+        transition: $transition;
+    }
+
+    &:hover {
+        border-color: rgba($theme-color, $alpha: .50);
+
+        img {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 5px rgba($black-color, $alpha:.1));
+        }
+    }
+}
