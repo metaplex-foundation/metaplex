@@ -1,9 +1,4 @@
-import {
-  useConnection,
-  useStore,
-  useWalletModal,
-  WhitelistedCreator,
-} from '@oyster/common';
+import { useConnection, useStore, useWalletModal, WhitelistedCreator } from '@oyster/common';
 import { useWallet } from '@oyster/common';
 import { Button, Card, Row, Col, Space } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -22,7 +17,7 @@ export const SetupView = () => {
   const { setVisible } = useWalletModal();
   const connect = useCallback(
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
-    [wallet.wallet, wallet.connect, setVisible],
+    [wallet.wallet, wallet.connect, setVisible]
   );
   const [storeAddress, setStoreAddress] = useState<string | undefined>();
 
@@ -80,13 +75,12 @@ export const SetupView = () => {
                 {wallet.connected && !store && (
                   <>
                     <h3>Store is not initialized yet</h3>
-                    <p>There must be some ◎ SOL in the wallet before initialization. After initialization, you will be able to manage the list of creators.</p>
+                    <p>
+                      There must be some ◎ SOL in the wallet before initialization. After
+                      initialization, you will be able to manage the list of creators.
+                    </p>
 
-                    <Button
-                      type="primary"
-                      loading={isInitalizingStore}
-                      onClick={initializeStore}
-                    >
+                    <Button type="primary" loading={isInitalizingStore} onClick={initializeStore}>
                       Init Store
                     </Button>
                   </>

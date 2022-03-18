@@ -34,10 +34,7 @@ export const WaitingStep = (props: {
             description="Starting Mint Process"
             icon={setIconForStep(props.step, 0)}
           />
-          <Step
-            title="Uploading Metadata"
-            icon={setIconForStep(props.step, 1)}
-          />
+          <Step title="Uploading Metadata" icon={setIconForStep(props.step, 1)} />
           <Step
             title="Approving Transaction"
             description="Approve the transaction from your wallet"
@@ -48,10 +45,7 @@ export const WaitingStep = (props: {
             description="This will take a few seconds."
             icon={setIconForStep(props.step, 3)}
           />
-          <Step
-            title="Waiting for Final Confirmation"
-            icon={setIconForStep(props.step, 4)}
-          />
+          <Step title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 4)} />
         </Steps>
       </Card>
     </Space>

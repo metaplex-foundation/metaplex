@@ -10,18 +10,13 @@ interface IDateTimePicker {
 }
 
 export const DateTimePicker = (props: IDateTimePicker) => {
-  const {
-    momentObj,
-    setMomentObj,
-    datePickerProps = {},
-    timePickerProps = {},
-  } = props;
+  const { momentObj, setMomentObj, datePickerProps = {}, timePickerProps = {} } = props;
   return (
     <>
       <DatePicker
         size="large"
         value={momentObj}
-        onChange={value => {
+        onChange={(value) => {
           if (!value) return;
           if (!momentObj) return setMomentObj(value);
 
@@ -36,7 +31,7 @@ export const DateTimePicker = (props: IDateTimePicker) => {
       <TimePicker
         size="large"
         value={momentObj}
-        onChange={value => {
+        onChange={(value) => {
           if (!value) return;
           if (!momentObj) return setMomentObj(value);
 

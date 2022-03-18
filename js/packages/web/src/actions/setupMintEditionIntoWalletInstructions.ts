@@ -18,7 +18,7 @@ export async function setupMintEditionIntoWalletInstructions(
   edition: BN,
   instructions: any,
   signers: any,
-  mintDestination: StringPublicKey,
+  mintDestination: StringPublicKey
 ) {
   if (!art.mint) throw new Error('Art mint is not provided');
   if (typeof art.supply === 'undefined') {
@@ -33,15 +33,13 @@ export async function setupMintEditionIntoWalletInstructions(
   const { pubkey: mintTokenAccountPubKey } = mintTokenAccount;
   const mintTokenAccountOwner = mintTokenAccount.info.owner.toString();
 
-  const mintRentExempt = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
-  );
+  const mintRentExempt = await connection.getMinimumBalanceForRentExemption(MintLayout.span);
   const { mint: newMint } = await createMintAndAccountWithOne(
     wallet,
     mintDestination,
     mintRentExempt,
     instructions,
-    signers,
+    signers
   );
 
   await mintNewEditionFromMasterEditionViaToken(
@@ -53,6 +51,6 @@ export async function setupMintEditionIntoWalletInstructions(
     mintTokenAccountPubKey,
     instructions,
     walletPubKey,
-    edition,
+    edition
   );
 }

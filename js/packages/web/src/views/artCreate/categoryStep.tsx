@@ -2,9 +2,7 @@ import { MetadataCategory } from '@oyster/common';
 import { Button, Row, Col, Space } from 'antd';
 import React from 'react';
 
-export const CategoryStep = (props: {
-  confirm: (category: MetadataCategory) => void;
-}) => {
+export const CategoryStep = (props: { confirm: (category: MetadataCategory) => void }) => {
   return (
     <Space className="metaplex-fullwidth" direction="vertical">
       <h2>Create a new item</h2>

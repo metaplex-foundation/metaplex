@@ -1,9 +1,5 @@
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
-import {
-  setAuctionAuthority,
-  setVaultAuthority,
-  StringPublicKey,
-} from '@oyster/common';
+import { setAuctionAuthority, setVaultAuthority, StringPublicKey } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 
@@ -12,7 +8,7 @@ export async function setVaultAndAuctionAuthorities(
   wallet: WalletContextState,
   vault: StringPublicKey,
   auction: StringPublicKey,
-  auctionManager: StringPublicKey,
+  auctionManager: StringPublicKey
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
@@ -22,18 +18,8 @@ export async function setVaultAndAuctionAuthorities(
   const signers: Keypair[] = [];
   const instructions: TransactionInstruction[] = [];
 
-  await setAuctionAuthority(
-    auction,
-    wallet.publicKey.toBase58(),
-    auctionManager,
-    instructions,
-  );
-  await setVaultAuthority(
-    vault,
-    wallet.publicKey.toBase58(),
-    auctionManager,
-    instructions,
-  );
+  await setAuctionAuthority(auction, wallet.publicKey.toBase58(), auctionManager, instructions);
+  await setVaultAuthority(vault, wallet.publicKey.toBase58(), auctionManager, instructions);
 
   return { instructions, signers };
 }

@@ -33,20 +33,19 @@ export const ArtView = () => {
   const connection = useConnection();
   const art = useArt(nft);
   const { track } = useAnalytics();
-  const isUnverified = !!art.creators?.find(c => !c.verified);
+  const isUnverified = !!art.creators?.find((c) => !c.verified);
   const holaplexCreator = art.creators?.find(
-    c => c.address === process.env.NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY,
+    (c) => c.address === process.env.NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY
   );
   const isHolaplexUnverified = !!(holaplexCreator && !holaplexCreator.verified);
   const { metadataByMetadata } = useMeta();
   const metaDataKey = metadataByMetadata[nft as string];
   const { endpoint } = useConnectionConfig();
   const [signingStatus, setSigningStatus] = useState<SigningStatus>(
-    isHolaplexUnverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED,
+    isHolaplexUnverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED
   );
   const showRetryMessage =
-    signingStatus === SigningStatus.PENDING ||
-    signingStatus === SigningStatus.VERIFICATION_SENT;
+    signingStatus === SigningStatus.PENDING || signingStatus === SigningStatus.VERIFICATION_SENT;
 
   // If we use this in a third place it would be good to turn into a hook and DRY up
   const retrySigning = async () => {
@@ -70,7 +69,7 @@ export const ArtView = () => {
         setSigningStatus(SigningStatus.VERIFICATION_SENT);
         console.log('signing call sent');
       },
-      onProgress: status => {
+      onProgress: (status) => {
         setSigningStatus(SigningStatus.PENDING);
         console.log('signing progress', status);
       },
@@ -82,11 +81,7 @@ export const ArtView = () => {
   };
 
   useEffect(() => {
-    if (
-      isHolaplexUnverified &&
-      endpoint &&
-      signingStatus === SigningStatus.UNVERIFIED
-    ) {
+    if (isHolaplexUnverified && endpoint && signingStatus === SigningStatus.UNVERIFIED) {
       retrySigning();
     }
   }, [retrySigning, isHolaplexUnverified, signingStatus]);
@@ -113,11 +108,7 @@ export const ArtView = () => {
         return;
       }
 
-      const artState = await loadArtwork(
-        connection,
-        whitelistedCreatorsByCreator,
-        nft,
-      );
+      const artState = await loadArtwork(connection, whitelistedCreatorsByCreator, nft);
 
       patchState(artState);
     })();
@@ -140,8 +131,8 @@ export const ArtView = () => {
       <div>
         <i>
           This artwork is still missing verification from{' '}
-          {art.creators?.filter(c => !c.verified).length} contributors before it
-          can be considered verified and sellable on the platform.
+          {art.creators?.filter((c) => !c.verified).length} contributors before it can be considered
+          verified and sellable on the platform.
         </i>
       </div>
       <br />
@@ -176,10 +167,7 @@ export const ArtView = () => {
           <List grid={{ column: 4 }}>
             {attributes.map((attribute, index) => (
               <List.Item key={`${attribute.value}-${index}`}>
-                <List.Item.Meta
-                  title={attribute.trait_type}
-                  description={attribute.value}
-                />
+                <List.Item.Meta title={attribute.trait_type} description={attribute.value} />
               </List.Item>
             ))}
           </List>
@@ -209,9 +197,7 @@ export const ArtView = () => {
       </div>
       <div className="item-page-right">
         <div className="title-row">
-          <h1 className="text-3xl">
-            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-          </h1>
+          <h1 className="text-3xl">{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
           <ViewOn id={nft} />
         </div>
 
@@ -230,7 +216,7 @@ export const ArtView = () => {
               <span className="item-title">
                 {art?.creators?.length || 0 > 1 ? 'Creators' : 'Creator'}
               </span>
-              {(art.creators || []).map(creator => {
+              {(art.creators || []).map((creator) => {
                 return (
                   <>
                     {creator.name || shortenAddress(creator.address || '')}
@@ -248,29 +234,21 @@ export const ArtView = () => {
                               }
 
                               try {
-                                const res = await sendSignMetadata(
-                                  connection,
-                                  wallet,
-                                  nft,
-                                );
+                                const res = await sendSignMetadata(connection, wallet, nft);
 
                                 if (res.err) throw res.err.inner;
 
                                 const { txid } = res;
-                                const tx = await connection.getTransaction(
-                                  txid,
-                                  {
-                                    commitment: 'confirmed',
-                                  },
-                                );
+                                const tx = await connection.getTransaction(txid, {
+                                  commitment: 'confirmed',
+                                });
 
-                                const keys =
-                                  tx?.transaction.message.accountKeys || [];
+                                const keys = tx?.transaction.message.accountKeys || [];
 
                                 const patch = await loadMultipleAccounts(
                                   connection,
-                                  keys.map(k => k.toBase58()),
-                                  'confirmed',
+                                  keys.map((k) => k.toBase58()),
+                                  'confirmed'
                                 );
 
                                 patchState(patch);
@@ -312,7 +290,7 @@ export const ArtView = () => {
           <ArtMinting
             id={nft}
             key={remountArtMinting}
-            onMint={async () => await setRemountArtMinting(prev => prev + 1)}
+            onMint={async () => await setRemountArtMinting((prev) => prev + 1)}
           />
         </Space>
         {showRetryMessage && <RetryMessage />}

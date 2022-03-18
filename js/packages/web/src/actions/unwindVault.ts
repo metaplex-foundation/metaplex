@@ -25,7 +25,7 @@ const BATCH_SIZE = 1;
 export async function unwindVault(
   connection: Connection,
   wallet: WalletContextState,
-  vault: ParsedAccount<Vault>,
+  vault: ParsedAccount<Vault>
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -37,28 +37,27 @@ export async function unwindVault(
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];
 
-  const { safetyDepositBoxesByVaultAndIndex } =
-    await querySafetyDepositBoxByVault(connection, vault.pubkey);
+  const { safetyDepositBoxesByVaultAndIndex } = await querySafetyDepositBoxByVault(
+    connection,
+    vault.pubkey
+  );
 
   if (vault.info.state === VaultState.Inactive) {
     console.log('Vault is inactive, combining');
-    const epa = await connection.getAccountInfo(
-      toPublicKey(vault.info.pricingLookupAddress),
-    );
+    const epa = await connection.getAccountInfo(toPublicKey(vault.info.pricingLookupAddress));
     if (epa) {
       const decoded = decodeExternalPriceAccount(epa.data);
       // "Closing" it here actually brings it to Combined state which means we can withdraw tokens.
-      const { instructions: cvInstructions, signers: cvSigners } =
-        await closeVault(
-          connection,
-          wallet,
-          vault.pubkey,
-          vault.info.fractionMint,
-          vault.info.fractionTreasury,
-          vault.info.redeemTreasury,
-          decoded.priceMint,
-          vault.info.pricingLookupAddress,
-        );
+      const { instructions: cvInstructions, signers: cvSigners } = await closeVault(
+        connection,
+        wallet,
+        vault.pubkey,
+        vault.info.fractionMint,
+        vault.info.fractionTreasury,
+        vault.info.redeemTreasury,
+        decoded.priceMint,
+        vault.info.pricingLookupAddress
+      );
 
       signers.push(cvSigners);
       instructions.push(cvInstructions);
@@ -88,7 +87,7 @@ export async function unwindVault(
           PROGRAM_IDS.token.toBuffer(),
           toPublicKey(nft.info.tokenMint).toBuffer(),
         ],
-        PROGRAM_IDS.associatedToken,
+        PROGRAM_IDS.associatedToken
       )
     )[0];
 
@@ -100,12 +99,10 @@ export async function unwindVault(
         toPublicKey(ata),
         wallet.publicKey,
         wallet.publicKey,
-        toPublicKey(nft.info.tokenMint),
+        toPublicKey(nft.info.tokenMint)
       );
 
-    const value = await connection.getTokenAccountBalance(
-      toPublicKey(nft.info.store),
-    );
+    const value = await connection.getTokenAccountBalance(toPublicKey(nft.info.store));
     await withdrawTokenFromSafetyDepositBox(
       new BN(value.value.uiAmount || 1),
       ata,
@@ -114,7 +111,7 @@ export async function unwindVault(
       vault.pubkey,
       vault.info.fractionMint,
       wallet.publicKey.toBase58(),
-      currInstructions,
+      currInstructions
     );
 
     if (batchCounter === BATCH_SIZE) {
@@ -132,10 +129,5 @@ export async function unwindVault(
     instructions.push(currInstructions);
   }
 
-  await sendTransactionsWithManualRetry(
-    connection,
-    wallet,
-    instructions,
-    signers,
-  );
+  await sendTransactionsWithManualRetry(connection, wallet, instructions, signers);
 }

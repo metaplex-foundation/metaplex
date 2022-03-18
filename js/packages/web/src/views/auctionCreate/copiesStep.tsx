@@ -17,14 +17,12 @@ export const CopiesStep = (props: {
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
   let filter: (i: SafetyDepositDraft) => boolean = () => true;
   if (props.attributes.category === AuctionCategory.Limited) {
-    filter = (i: SafetyDepositDraft) =>
-      !!i.masterEdition && !!i.masterEdition.info.maxSupply;
+    filter = (i: SafetyDepositDraft) => !!i.masterEdition && !!i.masterEdition.info.maxSupply;
   } else if (props.attributes.category === AuctionCategory.Open) {
     filter = (i: SafetyDepositDraft) =>
       !!(
         i.masterEdition &&
-        (i.masterEdition.info.maxSupply === undefined ||
-          i.masterEdition.info.maxSupply === null)
+        (i.masterEdition.info.maxSupply === undefined || i.masterEdition.info.maxSupply === null)
       );
   }
 
@@ -37,8 +35,7 @@ export const CopiesStep = (props: {
 
   if (masterEdition) {
     maxSupply = masterEdition.info.maxSupply?.toNumber() as number;
-    availableSupply = (maxSupply -
-      masterEdition.info.supply?.toNumber()) as number;
+    availableSupply = (maxSupply - masterEdition.info.supply?.toNumber()) as number;
   }
 
   return (
@@ -52,7 +49,7 @@ export const CopiesStep = (props: {
         className="metaplex-fullwidth"
         filter={overallFilter}
         selected={props.attributes.items}
-        setSelected={items => {
+        setSelected={(items) => {
           props.setAttributes({ ...props.attributes, items });
         }}
         allowMultiple={false}
@@ -71,20 +68,20 @@ export const CopiesStep = (props: {
             autoFocus
             placeholder="Enter number of copies sold"
             allowClear
-            onChange={info => {
+            onChange={(info) => {
               const editions = parseInt(info.target.value);
               setEditionsError(undefined);
 
               if (editions > MAX_EDITIONS_ALLOWED) {
                 setEditionsError(
-                  `The onchain program can only auction off ${MAX_EDITIONS_ALLOWED} NFTs at a time. Please lower the edition supply.`,
+                  `The onchain program can only auction off ${MAX_EDITIONS_ALLOWED} NFTs at a time. Please lower the edition supply.`
                 );
                 return;
               }
 
               if (editions > availableSupply) {
                 setEditionsError(
-                  `${editions} is greater than the available supply of ${availableSupply} on the NFT. Please lower the edition supply.`,
+                  `${editions} is greater than the available supply of ${availableSupply} on the NFT. Please lower the edition supply.`
                 );
                 return;
               }
@@ -97,8 +94,7 @@ export const CopiesStep = (props: {
           />
           {editionsError && (
             <Row>
-              <span className="ant-typography ant-typography-danger">*</span>{' '}
-              {editionsError}
+              <span className="ant-typography ant-typography-danger">*</span> {editionsError}
             </Row>
           )}
         </label>

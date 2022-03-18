@@ -60,7 +60,7 @@ export const mintNFT = async (
   progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
   coverFile?: File,
-  mainFile?: File,
+  mainFile?: File
 ): Promise<{
   metadataAccount: StringPublicKey;
 } | void> => {
@@ -77,7 +77,7 @@ export const mintNFT = async (
     external_url: metadata.external_url,
     properties: {
       ...metadata.properties,
-      creators: metadata.creators?.map(creator => {
+      creators: metadata.creators?.map((creator) => {
         return {
           address: creator.address,
           share: creator.share,
@@ -89,7 +89,7 @@ export const mintNFT = async (
   const realFiles: File[] = [...files];
   const fileDataForm = new FormData();
 
-  realFiles.map(f => {
+  realFiles.map((f) => {
     fileDataForm.append(`file[${f.name}]`, f, f.name);
   });
 
@@ -100,20 +100,17 @@ export const mintNFT = async (
   });
 
   if (!uploadResponse.ok) {
-    throw new Error(
-      'Unable to upload files to IPFS. Please wait a moment and try again.',
-    );
+    throw new Error('Unable to upload files to IPFS. Please wait a moment and try again.');
   }
 
-  const uploadedFilePins: { files: PinFileResponse[] } =
-    await uploadResponse.json();
+  const uploadedFilePins: { files: PinFileResponse[] } = await uploadResponse.json();
   // add files to properties
   // first image is added as image
 
   progressCallback(1);
   let imageSet = false;
   metadataContent.properties.files = [];
-  uploadedFilePins.files.forEach(file => {
+  uploadedFilePins.files.forEach((file) => {
     if (!coverFile && !imageSet && /image/.test(file.type || '')) {
       metadataContent.image = file.uri;
       imageSet = true;
@@ -125,27 +122,20 @@ export const mintNFT = async (
   });
 
   if (coverFile) {
-    const coverFileUpload = uploadedFilePins.files.find(
-      file => file.name == coverFile.name,
-    );
+    const coverFileUpload = uploadedFilePins.files.find((file) => file.name == coverFile.name);
     if (coverFileUpload) {
       metadataContent.image = coverFileUpload.uri;
     }
   }
 
   if (mainFile) {
-    const mainFileUpload = uploadedFilePins.files.find(
-      file => file.name == mainFile.name,
-    );
+    const mainFileUpload = uploadedFilePins.files.find((file) => file.name == mainFile.name);
     if (mainFileUpload) {
       metadataContent.animation_url = mainFileUpload.uri;
     }
   }
 
-  const metaData = new File(
-    [JSON.stringify(metadataContent)],
-    RESERVED_METADATA,
-  );
+  const metaData = new File([JSON.stringify(metadataContent)], RESERVED_METADATA);
   const metaDataFileForm = new FormData();
   metaDataFileForm.append(`file[${metaData.name}]`, metaData, metaData.name);
 
@@ -156,9 +146,7 @@ export const mintNFT = async (
   });
 
   if (!metaDataUploadResponse.ok) {
-    throw new Error(
-      'Unable to upload NFT metadata to IPFS. Please wait a moment and try again.',
-    );
+    throw new Error('Unable to upload NFT metadata to IPFS. Please wait a moment and try again.');
   }
 
   const uploadedMetaDataPinResponse = await metaDataUploadResponse.json();
@@ -169,9 +157,7 @@ export const mintNFT = async (
   const TOKEN_PROGRAM_ID = programIds().token;
 
   // Allocate memory for the account
-  const mintRent = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
-  );
+  const mintRent = await connection.getMinimumBalanceForRentExemption(MintLayout.span);
 
   const payerPublicKey = wallet.publicKey.toBase58();
   const instructions: TransactionInstruction[] = [];
@@ -186,17 +172,13 @@ export const mintNFT = async (
     // Some weird bug with phantom where it's public key doesnt mesh with data encode wellff
     toPublicKey(payerPublicKey),
     toPublicKey(payerPublicKey),
-    signers,
+    signers
   ).toBase58();
 
   const recipientKey = (
     await findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        programIds().token.toBuffer(),
-        toPublicKey(mintKey).toBuffer(),
-      ],
-      programIds().associatedToken,
+      [wallet.publicKey.toBuffer(), programIds().token.toBuffer(), toPublicKey(mintKey).toBuffer()],
+      programIds().associatedToken
     )
   )[0];
 
@@ -205,7 +187,7 @@ export const mintNFT = async (
     toPublicKey(recipientKey),
     wallet.publicKey,
     wallet.publicKey,
-    toPublicKey(mintKey),
+    toPublicKey(mintKey)
   );
 
   const metadataAccount = await createMetadata(
@@ -220,7 +202,7 @@ export const mintNFT = async (
     mintKey,
     payerPublicKey,
     instructions,
-    wallet.publicKey.toBase58(),
+    wallet.publicKey.toBase58()
   );
 
   if (uploadedMetaDataPin && wallet.publicKey) {
@@ -236,8 +218,8 @@ export const mintNFT = async (
         toPublicKey(recipientKey),
         toPublicKey(payerPublicKey),
         [],
-        1,
-      ),
+        1
+      )
     );
 
     // // In this instruction, mint authority will be removed from the main mint, while
@@ -248,26 +230,17 @@ export const mintNFT = async (
       payerPublicKey,
       payerPublicKey,
       payerPublicKey,
-      updateInstructions,
+      updateInstructions
     );
 
     progressCallback(4);
 
-    await sendTransactionWithRetry(
-      connection,
-      wallet,
-      updateInstructions,
-      updateSigners,
-    );
+    await sendTransactionWithRetry(connection, wallet, updateInstructions, updateSigners);
 
     notify({
       message: 'Art created on Solana',
       description: (
-        <a
-          href={uploadedMetaDataPin.uri}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={uploadedMetaDataPin.uri} target="_blank" rel="noopener noreferrer">
           Metadata Link
         </a>
       ),

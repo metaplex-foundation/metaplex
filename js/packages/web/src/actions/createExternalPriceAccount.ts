@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  SystemProgram,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, Connection, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 import { utils, StringPublicKey, toPublicKey } from '@oyster/common';
@@ -20,7 +15,7 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 // This command creates the external pricing oracle
 export async function createExternalPriceAccount(
   connection: Connection,
-  wallet: WalletContextState,
+  wallet: WalletContextState
 ): Promise<{
   priceMint: StringPublicKey;
   externalPriceAccount: StringPublicKey;
@@ -35,7 +30,7 @@ export async function createExternalPriceAccount(
   const instructions: TransactionInstruction[] = [];
 
   const epaRentExempt = await connection.getMinimumBalanceForRentExemption(
-    MAX_EXTERNAL_ACCOUNT_SIZE,
+    MAX_EXTERNAL_ACCOUNT_SIZE
   );
 
   const externalPriceAccount = Keypair.generate();

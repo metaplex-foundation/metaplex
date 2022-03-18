@@ -1,9 +1,4 @@
-import {
-  CountdownState,
-  fromLamports,
-  PriceFloorType,
-  useMint,
-} from '@oyster/common';
+import { CountdownState, fromLamports, PriceFloorType, useMint } from '@oyster/common';
 import { find } from 'lodash';
 import { Col, Row, Typography } from 'antd';
 import React from 'react';
@@ -13,10 +8,7 @@ import { AmountLabel } from '../AmountLabel';
 
 const { Text } = Typography;
 
-export const AuctionCountdown = (props: {
-  auctionView: AuctionView;
-  labels: boolean;
-}) => {
+export const AuctionCountdown = (props: { auctionView: AuctionView; labels: boolean }) => {
   const { auctionView } = props;
   const state = useAuctionCountdown(auctionView);
   const ended = isEnded(state);
@@ -41,10 +33,8 @@ export const AuctionNumbers = (props: {
   const bids = useBidsForAuction(auctionView.auction.pubkey);
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
 
-  const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
-  const participationOnly =
-    auctionView.auctionManager.numWinners.toNumber() === 0;
+  const participationFixedPrice = auctionView.auctionManager.participationConfig?.fixedPrice || 0;
+  const participationOnly = auctionView.auctionManager.numWinners.toNumber() === 0;
   const priceFloor =
     auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
@@ -64,7 +54,7 @@ export const AuctionNumbers = (props: {
               title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
               amount={fromLamports(
                 participationOnly ? participationFixedPrice : priceFloor,
-                mintInfo,
+                mintInfo
               )}
             />
           )}
@@ -73,10 +63,7 @@ export const AuctionNumbers = (props: {
               displaySOL={props.displaySOL}
               title="Highest bid"
               amount={fromLamports(
-                find(
-                  bids,
-                  bid => !bid.info.cancelled,
-                )?.info.lastBid.toNumber() || 0,
+                find(bids, (bid) => !bid.info.cancelled)?.info.lastBid.toNumber() || 0
               )}
             />
           )}
@@ -90,10 +77,7 @@ export const AuctionNumbers = (props: {
 };
 
 const isEnded = (state?: CountdownState) =>
-  state?.days === 0 &&
-  state?.hours === 0 &&
-  state?.minutes === 0 &&
-  state?.seconds === 0;
+  state?.days === 0 && state?.hours === 0 && state?.minutes === 0 && state?.seconds === 0;
 
 const Countdown = ({ state }: { state?: CountdownState }) => {
   let localState = state;

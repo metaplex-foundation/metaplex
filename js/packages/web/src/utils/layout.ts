@@ -38,9 +38,9 @@ export const uint64 = (property = 'uint64'): unknown => {
     return new BN(
       [...data]
         .reverse()
-        .map(i => `00${i.toString(16)}`.slice(-2))
+        .map((i) => `00${i.toString(16)}`.slice(-2))
         .join(''),
-      16,
+      16
     );
   };
 
@@ -70,9 +70,9 @@ export const uint128 = (property = 'uint128'): unknown => {
     return new BN(
       [...data]
         .reverse()
-        .map(i => `00${i.toString(16)}`.slice(-2))
+        .map((i) => `00${i.toString(16)}`.slice(-2))
         .join(''),
-      16,
+      16
     );
   };
 
@@ -101,7 +101,7 @@ export const rustString = (property = 'string'): unknown => {
       BufferLayout.u32('lengthPadding'),
       BufferLayout.blob(BufferLayout.offset(BufferLayout.u32(), -8), 'chars'),
     ],
-    property,
+    property
   );
   const _decode = rsl.decode.bind(rsl);
   const _encode = rsl.encode.bind(rsl);
@@ -130,9 +130,7 @@ function getWindowDimensions() {
 }
 
 export default function useWindowDimensions() {
-  const [windowDimensions, setWindowDimensions] = useState(
-    getWindowDimensions(),
-  );
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
   useEffect(() => {
     function handleResize() {

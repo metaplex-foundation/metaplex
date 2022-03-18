@@ -73,7 +73,7 @@ export function SkeletonListing() {
       <div
         className={classNames(
           'flex items-center justify-between rounded-b-md px-4 py-4',
-          'border border-gray-800 ',
+          'border border-gray-800 '
         )}
       >
         <div className="h-[42px] w-32  rounded-md bg-[#bebebe33]"></div>
@@ -184,9 +184,7 @@ export function ListingCard({
     return <SkeletonListing />;
   }
 
-  const listingEndsAtDateTime = listing.endsAt
-    ? DateTime.fromISO(listing.endsAt)
-    : null;
+  const listingEndsAtDateTime = listing.endsAt ? DateTime.fromISO(listing.endsAt) : null;
 
   return (
     <div
@@ -200,12 +198,7 @@ export function ListingCard({
         });
       }}
     >
-      <a
-        href={listingHref}
-        rel="nofollow noreferrer"
-        target="_blank"
-        className=""
-      >
+      <a href={listingHref} rel="nofollow noreferrer" target="_blank" className="">
         <Square>
           <NFTPreview
             $show={inView}
@@ -214,7 +207,7 @@ export function ListingCard({
               visible: showArtPreview,
               mask: (
                 <CustomImageMask
-                  onClick={e => {
+                  onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     setShowArtPreview(true);
@@ -238,16 +231,9 @@ export function ListingCard({
         </Square>
       </a>
       <div className="border-x border-gray-800 px-4 pt-4 pb-5">
-        <a
-          href={listingHref}
-          rel="nofollow noreferrer"
-          target="_blank"
-          className=""
-        >
+        <a href={listingHref} rel="nofollow noreferrer" target="_blank" className="">
           <div className="mb-1 flex items-center justify-between">
-            <div className="max truncate text-lg font-semibold text-white">
-              {nftMetadata?.name}
-            </div>
+            <div className="max truncate text-lg font-semibold text-white">{nftMetadata?.name}</div>
             <div className="flex items-center">
               {hasParticipationNFTs && (
                 <Tooltip
@@ -294,16 +280,11 @@ export function ListingCard({
           </div>
         </a>
       </div>
-      <a
-        href={listingHref}
-        rel="nofollow noreferrer"
-        target="_blank"
-        className=""
-      >
+      <a href={listingHref} rel="nofollow noreferrer" target="_blank" className="">
         <div
           className={classNames(
             'flex items-center justify-between rounded-b-md px-4 py-4',
-            isAuction ? 'bg-gray-800' : 'border border-gray-800 ',
+            isAuction ? 'bg-gray-800' : 'border border-gray-800 '
           )}
         >
           <div>
@@ -319,9 +300,7 @@ export function ListingCard({
           <div className="text-right">
             {listing.endsAt && listingEndsAtDateTime ? (
               <div className="-mb-[4px] flex flex-col justify-around">
-                <div className="text-right text-sm font-semibold text-gray-300">
-                  Ends in
-                </div>
+                <div className="text-right text-sm font-semibold text-gray-300">Ends in</div>
                 <div className="-mt-[4px]">
                   {Date.now() < listingEndsAtDateTime.toMillis() ? (
                     <AuctionCountdown endTime={listing.endsAt} />
@@ -331,9 +310,7 @@ export function ListingCard({
                 </div>
               </div>
             ) : (
-              <span className="rounded-full bg-white px-4 py-2 text-sm text-gray-900">
-                Buy now
-              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-sm text-gray-900">Buy now</span>
             )}
           </div>
         </div>
@@ -341,12 +318,9 @@ export function ListingCard({
 
       {isDev && (
         <Row justify="space-between" wrap={false}>
+          <span className="text-sm opacity-[0.6]">Listed {listing.createdAt.slice(5, 16)}</span>
           <span className="text-sm opacity-[0.6]">
-            Listed {listing.createdAt.slice(5, 16)}
-          </span>
-          <span className="text-sm opacity-[0.6]">
-            Bids: {listing.totalUncancelledBids}, (
-            {listing.lastBidTime?.slice(5, 16)})
+            Bids: {listing.totalUncancelledBids}, ({listing.lastBidTime?.slice(5, 16)})
           </span>
         </Row>
       )}
@@ -355,13 +329,7 @@ export function ListingCard({
 }
 
 const CustomExpandIcon = () => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="24" height="24" rx="4" fill="#f4f4f4" />
     <path
       d="M13.75 6.75H17.25V10.25"
@@ -512,11 +480,7 @@ function Countdown(props: { endTime: string }) {
 
   const format = timeLeft.toFormat("hh'h' mm'm' ss's'");
 
-  return (
-    <span className="text-right text-base font-semibold text-white">
-      {format}
-    </span>
-  );
+  return <span className="text-right text-base font-semibold text-white">{format}</span>;
 }
 
 export default function AuctionCountdown(props: { endTime: string }) {

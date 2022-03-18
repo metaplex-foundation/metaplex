@@ -21,20 +21,14 @@ import {
   notify,
 } from '@oyster/common';
 import Bugsnag from '@bugsnag/browser';
-import {
-  AmountRange,
-  WinningConfigType,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+import { AmountRange, WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
 import { useWallet } from '@oyster/common';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Button, Col, Row, Space, Steps } from 'antd';
 import BN from 'bn.js';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  createAuctionManager,
-  SafetyDepositDraft,
-} from '../../actions/createAuctionManager';
+import { createAuctionManager, SafetyDepositDraft } from '../../actions/createAuctionManager';
 
 import { useAnalytics, useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
@@ -184,7 +178,7 @@ export const AuctionCreateView = () => {
       {
         programId: VAULT_ID,
         processAccount: processVaultData,
-      },
+      }
     );
   }, [connection]);
 
@@ -200,9 +194,7 @@ export const AuctionCreateView = () => {
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
-    let auctionInfo:
-      | { vault: string; auction: string; auctionManager: string }
-      | undefined;
+    let auctionInfo: { vault: string; auction: string; auctionManager: string } | undefined;
 
     if (
       attributes.category === AuctionCategory.InstantSale &&
@@ -211,9 +203,7 @@ export const AuctionCreateView = () => {
       const { items, instantSalePrice } = attributes;
 
       if (items.length > 0 && items[0].participationConfig) {
-        items[0].participationConfig.fixedPrice = new BN(
-          toLamports(instantSalePrice, mint) || 0,
-        );
+        items[0].participationConfig.fixedPrice = new BN(toLamports(instantSalePrice, mint) || 0);
       }
 
       winnerLimit = new WinnerLimit({
@@ -243,12 +233,9 @@ export const AuctionCreateView = () => {
         usize: new BN(editions || 1),
       });
     } else if (attributes.category === AuctionCategory.Open) {
-      if (
-        attributes.items.length > 0 &&
-        attributes.items[0].participationConfig
-      ) {
+      if (attributes.items.length > 0 && attributes.items[0].participationConfig) {
         attributes.items[0].participationConfig.fixedPrice = new BN(
-          toLamports(attributes.participationFixedPrice, mint) || 0,
+          toLamports(attributes.participationFixedPrice, mint) || 0
         );
       }
       winnerLimit = new WinnerLimit({
@@ -261,10 +248,7 @@ export const AuctionCreateView = () => {
     ) {
       if (attributes.items.length > 0) {
         const item = attributes.items[0];
-        if (
-          attributes.category == AuctionCategory.Single &&
-          item.masterEdition
-        ) {
+        if (attributes.category == AuctionCategory.Single && item.masterEdition) {
           item.winningConfigType = WinningConfigType.TokenOnlyTransfer;
         }
         item.amountRanges = [
@@ -285,35 +269,27 @@ export const AuctionCreateView = () => {
             : new BN(attributes.editions || 1),
       });
 
-      if (
-        attributes.participationNFT &&
-        attributes.participationNFT.participationConfig
-      ) {
+      if (attributes.participationNFT && attributes.participationNFT.participationConfig) {
         attributes.participationNFT.participationConfig.fixedPrice = new BN(
-          toLamports(attributes.participationFixedPrice, mint) || 0,
+          toLamports(attributes.participationFixedPrice, mint) || 0
         );
       }
     } else {
       const tiers = tieredAttributes.tiers;
-      tiers.forEach(
-        c => (c.items = c.items.filter(i => i.winningConfigType !== undefined)),
-      );
-      const filteredTiers = tiers.filter(
-        i => i.items.length > 0 && i.winningSpots.length > 0,
-      );
+      tiers.forEach((c) => (c.items = c.items.filter((i) => i.winningConfigType !== undefined)));
+      const filteredTiers = tiers.filter((i) => i.items.length > 0 && i.winningSpots.length > 0);
 
       tieredAttributes.items.forEach((config, index) => {
         let ranges: AmountRange[] = [];
-        filteredTiers.forEach(tier => {
+        filteredTiers.forEach((tier) => {
           const tierRangeLookup: Record<number, AmountRange> = {};
           const tierRanges: AmountRange[] = [];
-          const item = tier.items.find(i => i.safetyDepositBoxIndex === index);
+          const item = tier.items.find((i) => i.safetyDepositBoxIndex === index);
 
           if (item) {
             if (item.winningConfigType === undefined)
               throw new Error('Missing item.winningConfigType');
-            if (item.amount === undefined)
-              throw new Error('Missing item.amount');
+            if (item.amount === undefined) throw new Error('Missing item.amount');
 
             config.winningConfigType = item.winningConfigType;
             const amount = item.amount;
@@ -321,9 +297,7 @@ export const AuctionCreateView = () => {
             sorted.forEach((spot, i) => {
               if (tierRangeLookup[spot - 1]) {
                 tierRangeLookup[spot] = tierRangeLookup[spot - 1];
-                tierRangeLookup[spot].length = tierRangeLookup[spot].length.add(
-                  new BN(1),
-                );
+                tierRangeLookup[spot].length = tierRangeLookup[spot].length.add(new BN(1));
               } else {
                 tierRangeLookup[spot] = new AmountRange({
                   amount: new BN(amount),
@@ -338,7 +312,7 @@ export const AuctionCreateView = () => {
                     new AmountRange({
                       amount: new BN(0),
                       length: new BN(zeroLength),
-                    }),
+                    })
                   );
                 }
                 tierRanges.push(tierRangeLookup[spot]);
@@ -351,10 +325,7 @@ export const AuctionCreateView = () => {
             let oldRangeCtr = 0,
               tierRangeCtr = 0;
 
-            while (
-              oldRangeCtr < oldRanges.length ||
-              tierRangeCtr < tierRanges.length
-            ) {
+            while (oldRangeCtr < oldRanges.length || tierRangeCtr < tierRanges.length) {
               let toAdd = new BN(0);
               if (
                 tierRangeCtr < tierRanges.length &&
@@ -368,58 +339,46 @@ export const AuctionCreateView = () => {
                   new AmountRange({
                     amount: toAdd,
                     length: tierRanges[tierRangeCtr].length,
-                  }),
+                  })
                 );
                 tierRangeCtr++;
               } else if (tierRangeCtr == tierRanges.length) {
                 ranges.push(oldRanges[oldRangeCtr]);
                 oldRangeCtr++;
-              } else if (
-                oldRanges[oldRangeCtr].length.gt(
-                  tierRanges[tierRangeCtr].length,
-                )
-              ) {
-                oldRanges[oldRangeCtr].length = oldRanges[
-                  oldRangeCtr
-                ].length.sub(tierRanges[tierRangeCtr].length);
+              } else if (oldRanges[oldRangeCtr].length.gt(tierRanges[tierRangeCtr].length)) {
+                oldRanges[oldRangeCtr].length = oldRanges[oldRangeCtr].length.sub(
+                  tierRanges[tierRangeCtr].length
+                );
 
                 ranges.push(
                   new AmountRange({
                     amount: oldRanges[oldRangeCtr].amount.add(toAdd),
                     length: tierRanges[tierRangeCtr].length,
-                  }),
+                  })
                 );
 
                 tierRangeCtr += 1;
                 // dont increment oldRangeCtr since i still have length to give
-              } else if (
-                tierRanges[tierRangeCtr].length.gt(
-                  oldRanges[oldRangeCtr].length,
-                )
-              ) {
-                tierRanges[tierRangeCtr].length = tierRanges[
-                  tierRangeCtr
-                ].length.sub(oldRanges[oldRangeCtr].length);
+              } else if (tierRanges[tierRangeCtr].length.gt(oldRanges[oldRangeCtr].length)) {
+                tierRanges[tierRangeCtr].length = tierRanges[tierRangeCtr].length.sub(
+                  oldRanges[oldRangeCtr].length
+                );
 
                 ranges.push(
                   new AmountRange({
                     amount: oldRanges[oldRangeCtr].amount.add(toAdd),
                     length: oldRanges[oldRangeCtr].length,
-                  }),
+                  })
                 );
 
                 oldRangeCtr += 1;
                 // dont increment tierRangeCtr since they still have length to give
-              } else if (
-                tierRanges[tierRangeCtr].length.eq(
-                  oldRanges[oldRangeCtr].length,
-                )
-              ) {
+              } else if (tierRanges[tierRangeCtr].length.eq(oldRanges[oldRangeCtr].length)) {
                 ranges.push(
                   new AmountRange({
                     amount: oldRanges[oldRangeCtr].amount.add(toAdd),
                     length: oldRanges[oldRangeCtr].length,
-                  }),
+                  })
                 );
                 // Move them both in this degen case
                 oldRangeCtr++;
@@ -436,20 +395,16 @@ export const AuctionCreateView = () => {
         type: WinnerLimitType.Capped,
         usize: new BN(attributes.winnersCount),
       });
-      if (
-        attributes.participationNFT &&
-        attributes.participationNFT.participationConfig
-      ) {
+      if (attributes.participationNFT && attributes.participationNFT.participationConfig) {
         attributes.participationNFT.participationConfig.fixedPrice = new BN(
-          toLamports(attributes.participationFixedPrice, mint) || 0,
+          toLamports(attributes.participationFixedPrice, mint) || 0
         );
       }
       console.log('Tiered settings', tieredAttributes.items);
     }
 
     const isInstantSale =
-      attributes.instantSalePrice &&
-      attributes.priceFloor === attributes.instantSalePrice;
+      attributes.instantSalePrice && attributes.priceFloor === attributes.instantSalePrice;
 
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
@@ -461,7 +416,7 @@ export const AuctionCreateView = () => {
                 ? 60 * 60 * 24 // 1 day in seconds
                 : attributes.auctionDurationType == 'hours'
                 ? 60 * 60 // 1 hour in seconds
-                : 60), // 1 minute in seconds
+                : 60) // 1 minute in seconds
           ), // endAuctionAt is actually auction duration, poorly named, in seconds
       auctionGap: isInstantSale
         ? null
@@ -471,19 +426,15 @@ export const AuctionCreateView = () => {
                 ? 60 * 60 * 24 // 1 day in seconds
                 : attributes.gapTimeType == 'hours'
                 ? 60 * 60 // 1 hour in seconds
-                : 60), // 1 minute in seconds
+                : 60) // 1 minute in seconds
           ),
       priceFloor: new PriceFloor({
-        type: attributes.priceFloor
-          ? PriceFloorType.Minimum
-          : PriceFloorType.None,
+        type: attributes.priceFloor ? PriceFloorType.Minimum : PriceFloorType.None,
         minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_SOL),
       }),
       tokenMint: QUOTE_MINT.toBase58(),
       gapTickSizePercentage: attributes.tickSizeEndingPhase || null,
-      tickSize: attributes.priceTick
-        ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
-        : null,
+      tickSize: attributes.priceTick ? new BN(attributes.priceTick * LAMPORTS_PER_SOL) : null,
       instantSalePrice: attributes.instantSalePrice
         ? new BN((attributes.instantSalePrice || 0) * LAMPORTS_PER_SOL)
         : null,
@@ -514,13 +465,12 @@ export const AuctionCreateView = () => {
         () => {
           notify({
             message: 'New signature needed...',
-            description:
-              'Please re-sign the current transaction again to continue.',
+            description: 'Please re-sign the current transaction again to continue.',
             type: 'info',
           });
         },
-        rej => {
-          setRejection(r => r ?? rej);
+        (rej) => {
+          setRejection((r) => r ?? rej);
           tmpRejection ??= rej;
         },
         whitelistedCreatorsByCreator,
@@ -528,11 +478,11 @@ export const AuctionCreateView = () => {
         safetyDepositDrafts,
         participationSafetyDepositDraft,
         QUOTE_MINT.toBase58(),
-        storeIndexer,
+        storeIndexer
       );
     } catch (e: any) {
       const rej: SendAndConfirmError = { type: 'misc-error', inner: e };
-      setRejection(r => r ?? rej);
+      setRejection((r) => r ?? rej);
       tmpRejection ??= rej;
     }
 
@@ -641,11 +591,7 @@ export const AuctionCreateView = () => {
   );
 
   const waitStep = (
-    <WaitingStep
-      percent={percentComplete}
-      rejection={rejection}
-      createAuction={createAuction}
-    />
+    <WaitingStep percent={percentComplete} rejection={rejection} createAuction={createAuction} />
   );
 
   const congratsStep = (
@@ -709,13 +655,9 @@ export const AuctionCreateView = () => {
       <Row>
         {stepsVisible && (
           <Col span={24} md={4}>
-            <Steps
-              progressDot
-              direction={width < 768 ? 'horizontal' : 'vertical'}
-              current={step}
-            >
+            <Steps progressDot direction={width < 768 ? 'horizontal' : 'vertical'} current={step}>
               {stepsByCategory[attributes.category]
-                .filter(_ => !!_[0])
+                .filter((_) => !!_[0])
                 .map((step, idx) => (
                   <Step title={step[0]} key={idx} />
                 ))}
@@ -723,10 +665,7 @@ export const AuctionCreateView = () => {
           </Col>
         )}
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
-          <Space
-            className="metaplex-fullwidth metaplex-space-align-stretch"
-            direction="vertical"
-          >
+          <Space className="metaplex-fullwidth metaplex-space-align-stretch" direction="vertical">
             {stepsByCategory[attributes.category][step][1]}
             {0 < step && stepsVisible && (
               <Row justify="center">

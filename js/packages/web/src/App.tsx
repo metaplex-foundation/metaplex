@@ -28,19 +28,10 @@ function App({ storefront }: AppProps) {
           <Route path="/owned" element={<ArtworksView />} />
           <Route path="/creators/:creator/nfts/:nft" element={<ArtView />} />
           <Route path="/creators/:creator" element={<ArtistView />} />
-          <Route
-            path="/listings/new/:step_param"
-            element={<AuctionCreateView />}
-          />
-          <Route
-            path="/listings/:id/billing"
-            element={<BillingView />}
-          />
+          <Route path="/listings/new/:step_param" element={<AuctionCreateView />} />
+          <Route path="/listings/:id/billing" element={<BillingView />} />
           <Route path="/listings" element={<Listings />} />
-          <Route
-            path="/listings/:id"
-            element={<AuctionView />}
-          />
+          <Route path="/listings/:id" element={<AuctionView />} />
           <Route path="/setup" element={<SetupView />} />
           <Route path="/" element={<HomeView />} />
         </Routes>

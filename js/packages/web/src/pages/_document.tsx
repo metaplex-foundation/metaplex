@@ -1,14 +1,7 @@
-import Document, {
-  DocumentContext,
-  Head,
-  Html,
-  Main,
-  NextScript,
-} from 'next/document';
+import Document, { DocumentContext, Head, Html, Main, NextScript } from 'next/document';
 import React from 'react';
 
-const GOOGLE_ANALYTICS_ID =
-  process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
+const GOOGLE_ANALYTICS_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
 
 export default class MetaplexDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -56,11 +49,7 @@ export default class MetaplexDocument extends Document {
         <body>
           <Main />
           <NextScript />
-          <script
-            async
-            src="https://platform.twitter.com/widgets.js"
-            charSet="utf-8"
-          />
+          <script async src="https://platform.twitter.com/widgets.js" charSet="utf-8" />
           <script
             type="text/javascript"
             dangerouslySetInnerHTML={{

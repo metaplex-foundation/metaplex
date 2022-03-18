@@ -57,15 +57,15 @@ export const ArtCard = ({
   const art = useArt(pubkey);
   const creators = art?.creators || creatorsProp || [];
   const name = art?.title || nameProp || ' ';
-  const unverified = art.creators?.find(c => !c.verified);
+  const unverified = art.creators?.find((c) => !c.verified);
   const holaplexCreator = art.creators?.find(
-    c => c.address === process.env.NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY,
+    (c) => c.address === process.env.NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY
   );
   const isHolaplexUnverified = !!(holaplexCreator && !holaplexCreator.verified);
   const { metadataByMetadata } = useMeta();
   const metaDataKey = metadataByMetadata[pubkey as string];
   const [signingStatus, setSigningStatus] = useState<SigningStatus>(
-    isHolaplexUnverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED,
+    isHolaplexUnverified ? SigningStatus.UNVERIFIED : SigningStatus.VERIFIED
   );
   const { track } = useAnalytics();
 
@@ -89,7 +89,7 @@ export const ArtCard = ({
         setSigningStatus(SigningStatus.VERIFICATION_SENT);
         console.log('signing call sent');
       },
-      onProgress: status => {
+      onProgress: (status) => {
         setSigningStatus(SigningStatus.PENDING);
         console.log('signing progress', status);
       },
@@ -129,7 +129,7 @@ export const ArtCard = ({
             <Button
               className="metaplex-square-w"
               shape="circle"
-              onClick={e => {
+              onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 close && close();
@@ -175,9 +175,7 @@ export const ArtCard = ({
   );
 
   return unverified ? (
-    <Badge.Ribbon
-      text={SigningStatus.UNVERIFIED ? 'Unverified' : 'Verifying...'}
-    >
+    <Badge.Ribbon text={SigningStatus.UNVERIFIED ? 'Unverified' : 'Verifying...'}>
       {card}
     </Badge.Ribbon>
   ) : (

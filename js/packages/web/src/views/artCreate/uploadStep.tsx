@@ -1,8 +1,4 @@
-import {
-  IMetadataExtension,
-  MetadataCategory,
-  MetadataFile,
-} from '@oyster/common';
+import { IMetadataExtension, MetadataCategory, MetadataFile } from '@oyster/common';
 import { Button, Space, Typography, Upload } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { getLast } from '../../utils/utils';
@@ -19,9 +15,7 @@ export const UploadStep = (props: {
   onSetCoverFile?: (f: File) => void;
   onSetMainFile?: (f: File) => void;
 }) => {
-  const [coverFile, setCoverFile] = useState<File | undefined>(
-    props.files?.[0],
-  );
+  const [coverFile, setCoverFile] = useState<File | undefined>(props.files?.[0]);
   const [mainFile, setMainFile] = useState<File | undefined>(props.files?.[1]);
   const [coverArtError, setCoverArtError] = useState<string>();
   const [mainArtError, setMainArtError] = useState<string>();
@@ -76,19 +70,19 @@ export const UploadStep = (props: {
     <Space direction="vertical" className="metaplex-fullwidth">
       <h2>Now, let&apos;s upload your creation</h2>
       <p>
-        Your file will be uploaded to the decentralized web via IPFS. Depending
-        on file type, can take up to 1 minute.
+        Your file will be uploaded to the decentralized web via IPFS. Depending on file type, can
+        take up to 1 minute.
       </p>
       <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
       <Dragger
         accept=".png,.jpg,.gif,.mp4,.svg"
         multiple={false}
-        customRequest={info => {
+        customRequest={(info) => {
           // dont upload files here, handled outside of the control
           info?.onSuccess?.({}, null as any);
         }}
         fileList={coverFile ? [coverFile as any] : []}
-        onChange={async info => {
+        onChange={async (info) => {
           const file = info.file.originFileObj;
           setCoverFile(undefined);
 
@@ -119,12 +113,12 @@ export const UploadStep = (props: {
           <Dragger
             accept={acceptableFiles(props.attributes.properties?.category)}
             multiple={false}
-            customRequest={info => {
+            customRequest={(info) => {
               // dont upload files here, handled outside of the control
               info?.onSuccess?.({}, null as any);
             }}
             fileList={mainFile ? [mainFile as any] : []}
-            onChange={async info => {
+            onChange={async (info) => {
               const file = info.file.originFileObj;
 
               setMainFile(undefined);
@@ -166,12 +160,10 @@ export const UploadStep = (props: {
             properties: {
               ...props.attributes.properties,
               files: [coverFile, mainFile]
-                .filter(f => f)
-                .map(f => {
+                .filter((f) => f)
+                .map((f) => {
                   const uri = f?.name || '';
-                  const type = f
-                    ? f.type || getLast(f.name.split('.')) || 'unknown'
-                    : '';
+                  const type = f ? f.type || getLast(f.name.split('.')) || 'unknown' : '';
 
                   const ret: MetadataFile = {
                     uri,
@@ -184,7 +176,7 @@ export const UploadStep = (props: {
             image: coverFile?.name || '',
             animation_url: mainFile && mainFile.name,
           });
-          const files = [coverFile, mainFile].filter(f => f) as File[];
+          const files = [coverFile, mainFile].filter((f) => f) as File[];
 
           props.setFiles(files);
           props.confirm();

@@ -19,15 +19,7 @@ import { PublicKey } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@oyster/common';
-import {
-  Button,
-  Carousel,
-  List,
-  Skeleton,
-  Spin,
-  Tooltip,
-  notification,
-} from 'antd';
+import { Button, Carousel, List, Skeleton, Spin, Tooltip, notification } from 'antd';
 import Bugsnag from '@bugsnag/browser';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -50,23 +42,11 @@ import { Card } from 'antd';
 import BidLine from './BidLine';
 import { useAnalytics } from '../../contexts';
 
-export const AuctionItem = ({
-  item,
-  active,
-}: {
-  item: AuctionViewItem;
-  active?: boolean;
-}) => {
+export const AuctionItem = ({ item, active }: { item: AuctionViewItem; active?: boolean }) => {
   const id = item.metadata.pubkey;
 
   return (
-    <ArtContent
-      pubkey={id}
-      active={active}
-      allowMeshRender={true}
-      backdrop="dark"
-      square={false}
-    />
+    <ArtContent pubkey={id} active={active} allowMeshRender={true} backdrop="dark" square={false} />
   );
 };
 
@@ -114,7 +94,7 @@ export const AuctionView = () => {
       {
         programId: VAULT_ID,
         processAccount: processVaultData,
-      },
+      }
     );
   }, [connection]);
 
@@ -140,13 +120,7 @@ export const AuctionView = () => {
       return null;
     }
 
-    return (
-      <AuctionItem
-        key={item.metadata.pubkey}
-        item={item}
-        active={index === currentIndex}
-      />
-    );
+    return <AuctionItem key={item.metadata.pubkey} item={item} active={index === currentIndex} />;
   });
 
   const getArt = (className: string) => (
@@ -154,7 +128,7 @@ export const AuctionView = () => {
       <Carousel
         className="metaplex-margin-bottom-8"
         autoplay={false}
-        afterChange={index => setCurrentIndex(index)}
+        afterChange={(index) => setCurrentIndex(index)}
       >
         {items}
       </Carousel>
@@ -196,9 +170,7 @@ export const AuctionView = () => {
 
       <div className="item-page-right">
         <div className="title-row">
-          <h1 className="text-3xl">
-            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-          </h1>
+          <h1 className="text-3xl">{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
           <ViewOn art={art} />
         </div>
 
@@ -216,10 +188,8 @@ export const AuctionView = () => {
         <div className="info-outer-wrapper">
           <div className="info-items-wrapper">
             <div className="info-item-wrapper">
-              <span className="item-title">
-                {creators.length > 1 ? 'Creators' : 'Creator'}
-              </span>
-              {creators.map(creator => (
+              <span className="item-title">{creators.length > 1 ? 'Creators' : 'Creator'}</span>
+              {creators.map((creator) => (
                 <span className="info-address" key={creator.address}>
                   {shortenAddress(creator.address || '')}
                 </span>
@@ -238,21 +208,13 @@ export const AuctionView = () => {
             <div className="info-item-wrapper">
               <span className="item-title">Winners</span>
               <span>
-                {winnerCount === undefined ? (
-                  <Skeleton paragraph={{ rows: 0 }} />
-                ) : (
-                  winnerCount
-                )}
+                {winnerCount === undefined ? <Skeleton paragraph={{ rows: 0 }} /> : winnerCount}
               </span>
             </div>
             <div className="info-item-wrapper">
               <span className="item-title">NFTs</span>
               <span>
-                {nftCount === undefined ? (
-                  <Skeleton paragraph={{ rows: 0 }} />
-                ) : (
-                  nftCount
-                )}
+                {nftCount === undefined ? <Skeleton paragraph={{ rows: 0 }} /> : nftCount}
               </span>
             </div>
             {(auction?.items.length || 0) > 1 && (
@@ -263,9 +225,7 @@ export const AuctionView = () => {
                     <Skeleton paragraph={{ rows: 0 }} />
                   ) : (
                     <span className="flex items-center justify-center text-sm">
-                      {`${(art.maxSupply || 0) - (art.supply || 0)} of ${
-                        art.maxSupply || 0
-                      } `}
+                      {`${(art.maxSupply || 0) - (art.supply || 0)} of ${art.maxSupply || 0} `}
                       <Tooltip
                         title="Max supply may include items from previous listings"
                         className="ml-2"
@@ -298,11 +258,7 @@ export const AuctionView = () => {
   );
 };
 
-export const AuctionBids = ({
-  auctionView,
-}: {
-  auctionView?: Auction | null;
-}) => {
+export const AuctionBids = ({ auctionView }: { auctionView?: Auction | null }) => {
   const auctionPubkey = auctionView?.auction.pubkey || '';
   const bids = useBidsForAuction(auctionPubkey);
   const connection = useConnection();
@@ -316,18 +272,13 @@ export const AuctionBids = ({
   const { track } = useAnalytics();
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const winners = useWinningBidsForAuction(auctionPubkey);
-  const isWinner = some(
-    winners,
-    bid => bid.info.bidderPubkey === wallet.publicKey?.toBase58(),
-  );
-  const auctionState = auctionView
-    ? auctionView.auction.info.state
-    : AuctionState.Created;
+  const isWinner = some(winners, (bid) => bid.info.bidderPubkey === wallet.publicKey?.toBase58());
+  const auctionState = auctionView ? auctionView.auction.info.state : AuctionState.Created;
   const auctionRunning = auctionState !== AuctionState.Ended;
 
   // I don't think this is actually used
   const activeBidders = useMemo(() => {
-    return new Set(activeBids.map(b => b.key));
+    return new Set(activeBids.map((b) => b.key));
   }, [activeBids]);
 
   const bidLines = useMemo(() => {
@@ -421,9 +372,7 @@ export const AuctionBids = ({
 
       {/* <div className="space-y-8 md:space-y-0">{bidLines.slice(0, 10)}</div> */}
       {bids.length > 10 && (
-        <Button onClick={() => setShowHistoryModal(true)}>
-          View full history
-        </Button>
+        <Button onClick={() => setShowHistoryModal(true)}>View full history</Button>
       )}
       <MetaplexModal
         visible={showHistoryModal}

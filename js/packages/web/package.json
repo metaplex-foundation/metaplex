@@ -22,7 +22,7 @@
     "@solana/spl-token-registry": "^0.2.202",
     "@solana/wallet-adapter-base": "^0.9.4",
     "@solana/wallet-adapter-react": "^0.15.3",
-    "@solana/wallet-adapter-react-ui":"^0.9.5",
+    "@solana/wallet-adapter-react-ui": "^0.9.5",
     "@solana/web3.js": "^1.25.0",
     "@types/mixpanel-browser": "^2.36.0",
     "@welldone-software/why-did-you-render": "^6.0.5",

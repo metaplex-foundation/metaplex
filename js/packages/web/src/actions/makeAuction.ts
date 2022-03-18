@@ -7,10 +7,7 @@ import {
   StringPublicKey,
   toPublicKey,
 } from '@oyster/common';
-import {
-  AUCTION_PREFIX,
-  createAuction,
-} from '@oyster/common/dist/lib/actions/auction';
+import { AUCTION_PREFIX, createAuction } from '@oyster/common/dist/lib/actions/auction';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 
@@ -18,7 +15,7 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 export async function makeAuction(
   wallet: WalletContextState,
   vault: StringPublicKey,
-  auctionSettings: IPartialCreateAuctionArgs,
+  auctionSettings: IPartialCreateAuctionArgs
 ): Promise<{
   auction: StringPublicKey;
   instructions: TransactionInstruction[];
@@ -37,7 +34,7 @@ export async function makeAuction(
         toPublicKey(PROGRAM_IDS.auction).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.auction),
+      toPublicKey(PROGRAM_IDS.auction)
     )
   )[0];
 

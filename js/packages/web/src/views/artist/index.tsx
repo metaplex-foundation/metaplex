@@ -25,10 +25,7 @@ export const ArtistView = () => {
       setLoadingArt(true);
       const active = whitelistedCreatorsByCreator[creator];
 
-      const artistMetadataState = await loadMetadataForCreator(
-        connection,
-        active,
-      );
+      const artistMetadataState = await loadMetadataForCreator(connection, active);
 
       patchState(artistMetadataState);
       setLoadingArt(false);

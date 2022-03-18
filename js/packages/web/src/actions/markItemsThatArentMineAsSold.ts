@@ -7,7 +7,7 @@ const SALE_TRANSACTION_SIZE = 10;
 
 export async function markItemsThatArentMineAsSold(
   wallet: WalletContextState,
-  safetyDepositDrafts: SafetyDepositDraft[],
+  safetyDepositDrafts: SafetyDepositDraft[]
 ): Promise<{ instructions: TransactionInstruction[][]; signers: Keypair[][] }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -25,19 +25,19 @@ export async function markItemsThatArentMineAsSold(
     const item = safetyDepositDrafts[i].metadata;
 
     if (
-      !item.info.data.creators?.find(c => c.address === publicKey) &&
+      !item.info.data.creators?.find((c) => c.address === publicKey) &&
       !item.info.primarySaleHappened
     ) {
       console.log(
         'For token',
         item.info.data.name,
-        'marking it sold because i didnt make it but i want to keep proceeds',
+        'marking it sold because i didnt make it but i want to keep proceeds'
       );
       await updatePrimarySaleHappenedViaToken(
         item.pubkey,
         publicKey,
         safetyDepositDrafts[i].holding,
-        markInstructions,
+        markInstructions
       );
 
       if (markInstructions.length === SALE_TRANSACTION_SIZE) {
@@ -49,10 +49,7 @@ export async function markItemsThatArentMineAsSold(
     }
   }
 
-  if (
-    markInstructions.length < SALE_TRANSACTION_SIZE &&
-    markInstructions.length > 0
-  ) {
+  if (markInstructions.length < SALE_TRANSACTION_SIZE && markInstructions.length > 0) {
     signers.push(markSigners);
     instructions.push(markInstructions);
   }

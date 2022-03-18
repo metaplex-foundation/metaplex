@@ -64,8 +64,7 @@ export const Banner = ({
                 message="Connect your Twitter account"
                 description={
                   <>
-                    Help protect collectors by connecting your store to a
-                    Twitter page on{' '}
+                    Help protect collectors by connecting your store to a Twitter page on{' '}
                     <a
                       href="https://naming.bonfida.org/#/twitter-registration"
                       rel="noreferrer"

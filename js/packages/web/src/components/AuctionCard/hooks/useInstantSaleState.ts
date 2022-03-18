@@ -8,9 +8,7 @@ interface ActionButtonContentProps {
   canEndInstantSale: boolean;
 }
 
-export const useInstantSaleState = (
-  auctionView: AuctionView,
-): ActionButtonContentProps => {
+export const useInstantSaleState = (auctionView: AuctionView): ActionButtonContentProps => {
   const wallet = useWallet();
 
   const { isInstantSale, auctionManager, auction, myBidderPot } = auctionView;

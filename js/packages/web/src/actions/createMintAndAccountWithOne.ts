@@ -15,7 +15,7 @@ export async function createMintAndAccountWithOne(
   receiverWallet: StringPublicKey,
   mintRent: any,
   instructions: TransactionInstruction[],
-  signers: Keypair[],
+  signers: Keypair[]
 ): Promise<{ mint: StringPublicKey; account: StringPublicKey }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -26,19 +26,15 @@ export async function createMintAndAccountWithOne(
     0,
     wallet.publicKey,
     wallet.publicKey,
-    signers,
+    signers
   );
 
   const PROGRAM_IDS = programIds();
 
   const account: StringPublicKey = (
     await findProgramAddress(
-      [
-        toPublicKey(receiverWallet).toBuffer(),
-        PROGRAM_IDS.token.toBuffer(),
-        mint.toBuffer(),
-      ],
-      PROGRAM_IDS.associatedToken,
+      [toPublicKey(receiverWallet).toBuffer(), PROGRAM_IDS.token.toBuffer(), mint.toBuffer()],
+      PROGRAM_IDS.associatedToken
     )
   )[0];
 
@@ -47,7 +43,7 @@ export async function createMintAndAccountWithOne(
     toPublicKey(account),
     wallet.publicKey,
     toPublicKey(receiverWallet),
-    mint,
+    mint
   );
 
   instructions.push(
@@ -57,8 +53,8 @@ export async function createMintAndAccountWithOne(
       toPublicKey(account),
       wallet.publicKey,
       [],
-      1,
-    ),
+      1
+    )
   );
 
   return { mint: mint.toBase58(), account };

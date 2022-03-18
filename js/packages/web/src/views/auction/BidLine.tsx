@@ -15,10 +15,7 @@ import { CheckCircleIcon, ClockIcon } from '@heroicons/react/solid';
 import { DateTime } from 'luxon';
 import { useSolPrice } from '../../contexts';
 
-export default function BidLine(props: {
-  bid: ParsedAccount<BidderMetadata>;
-  mint?: MintInfo;
-}) {
+export default function BidLine(props: { bid: ParsedAccount<BidderMetadata>; mint?: MintInfo }) {
   const { bid, mint } = props;
   const { publicKey } = useWallet();
   const bidderPubkey = bid.info.bidderPubkey;
@@ -29,9 +26,7 @@ export default function BidLine(props: {
   const connection = useConnection();
   const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
   useEffect(() => {
-    getTwitterHandle(connection, bidderPubkey).then(
-      tw => tw && setBidderTwitterHandle(tw),
-    );
+    getTwitterHandle(connection, bidderPubkey).then((tw) => tw && setBidderTwitterHandle(tw));
   }, []);
 
   const solPrice = useSolPrice();
@@ -58,9 +53,7 @@ export default function BidLine(props: {
                 rel="noreferrer"
               >
                 <p className="max-w-fit truncate text-color-text hover:text-primary">
-                  {bidderTwitterHandle
-                    ? `@${bidderTwitterHandle}`
-                    : shortenAddress(bidderPubkey)}
+                  {bidderTwitterHandle ? `@${bidderTwitterHandle}` : shortenAddress(bidderPubkey)}
                 </p>
                 {isMe && (
                   <span>
@@ -72,14 +65,9 @@ export default function BidLine(props: {
                 )}
               </a>
               <p className="mt-2 flex items-center text-sm opacity-75">
-                <ClockIcon
-                  className="flex-shrink-0 mr-1.5 h-4 w-4 "
-                  aria-hidden="true"
-                />
+                <ClockIcon className="flex-shrink-0 mr-1.5 h-4 w-4 " aria-hidden="true" />
                 <span>
-                  {DateTime.fromMillis(
-                    bid.info.lastBidTimestamp.toNumber() * 1000,
-                  ).toRelative({
+                  {DateTime.fromMillis(bid.info.lastBidTimestamp.toNumber() * 1000).toRelative({
                     style: 'narrow',
                   })}
                 </span>

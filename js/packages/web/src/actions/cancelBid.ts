@@ -20,10 +20,7 @@ import {
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import {
-  SmartInstructionSender,
-  WalletSigner,
-} from '@holaplex/solana-web3-tools';
+import { SmartInstructionSender, WalletSigner } from '@holaplex/solana-web3-tools';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function sendCancelBidOrReclaimItems(
@@ -34,17 +31,14 @@ export async function sendCancelBidOrReclaimItems(
   accountsByMint: Map<string, TokenAccount>,
   bids: ParsedAccount<BidderMetadata>[],
   bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
-  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
+  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const signers: Array<Keypair[]> = [];
   const instructions: Array<TransactionInstruction[]> = [];
 
-  if (
-    auctionView.auction.info.ended() &&
-    auctionView.auction.info.state !== AuctionState.Ended
-  ) {
+  if (auctionView.auction.info.ended() && auctionView.auction.info.state !== AuctionState.Ended) {
     await setupPlaceBid(
       connection,
       wallet,
@@ -53,13 +47,11 @@ export async function sendCancelBidOrReclaimItems(
       accountsByMint,
       0,
       instructions,
-      signers,
+      signers
     );
   }
 
-  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
 
   await setupCancelBid(
     auctionView,
@@ -67,12 +59,12 @@ export async function sendCancelBidOrReclaimItems(
     accountRentExempt,
     wallet,
     signers,
-    instructions,
+    instructions
   );
 
   if (
     wallet.publicKey.equals(
-      toPublicKey(auctionView.auctionManager.authority), // isAuctioneer
+      toPublicKey(auctionView.auctionManager.authority) // isAuctioneer
     ) &&
     auctionView.auction.info.ended()
   ) {
@@ -85,18 +77,12 @@ export async function sendCancelBidOrReclaimItems(
       bidRedemptions,
       prizeTrackingTickets,
       signers,
-      instructions,
+      instructions
     );
   }
 
   if (instructions.length === 1) {
-    await sendTransactionWithRetry(
-      connection,
-      wallet,
-      instructions[0],
-      signers[0],
-      'single',
-    );
+    await sendTransactionWithRetry(connection, wallet, instructions[0], signers[0], 'single');
   } else {
     let cancelBidError: Error | null = null;
 
@@ -110,9 +96,9 @@ export async function sendCancelBidOrReclaimItems(
         instructions.map((ixs, i) => ({
           instructions: ixs,
           signers: signers[i],
-        })),
+        }))
       )
-      .onFailure(err => {
+      .onFailure((err) => {
         cancelBidError = err;
       })
       .send();
@@ -129,7 +115,7 @@ export async function setupCancelBid(
   accountRentExempt: number,
   wallet: WalletContextState,
   signers: Array<Keypair[]>,
-  instructions: Array<TransactionInstruction[]>,
+  instructions: Array<TransactionInstruction[]>
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -147,7 +133,7 @@ export async function setupCancelBid(
       tokenAccount,
       wallet.publicKey,
       accountRentExempt,
-      cancelSigners,
+      cancelSigners
     );
 
     await cancelBid(
@@ -156,12 +142,9 @@ export async function setupCancelBid(
       auctionView.myBidderPot.info.bidderPot,
       auctionView.auction.info.tokenMint,
       auctionView.vault.pubkey,
-      cancelInstructions,
+      cancelInstructions
     );
     signers.push(cancelSigners);
-    instructions.push([
-      ...cancelInstructions,
-      ...cleanupInstructions.reverse(),
-    ]);
+    instructions.push([...cancelInstructions, ...cleanupInstructions.reverse()]);
   }
 }

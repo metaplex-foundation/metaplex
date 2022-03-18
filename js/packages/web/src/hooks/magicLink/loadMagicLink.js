@@ -43,7 +43,7 @@ export default async function loadMagicLink(key, endpoint) {
     return;
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     if (sdk) {
       resolve(sdk);
       return;

@@ -14,11 +14,7 @@ import {
 } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import React, { ReactNode, useEffect, useState } from 'react';
-import {
-  SendAndConfirmError,
-  useConnection,
-  useConnectionConfig,
-} from '@oyster/common';
+import { SendAndConfirmError, useConnection, useConnectionConfig } from '@oyster/common';
 import { ClickToCopy } from '../../components/ClickToCopy';
 
 const { Title, Text } = Typography;
@@ -26,7 +22,7 @@ const { Title, Text } = Typography;
 const hasMessage = (e: object): e is { message: unknown } => 'message' in e;
 
 const isCustomInstructionErr = (
-  e: unknown,
+  e: unknown
 ): e is { InstructionError: [number, { Custom: number }] } => {
   if (!(typeof e === 'object' && e && 'InstructionError' in e)) return false;
 
@@ -51,9 +47,7 @@ export const WaitingStep = (props: {
 }) => {
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
-  const [rejectedTx, setRejectedTx] = useState<TransactionResponse | undefined>(
-    undefined,
-  );
+  const [rejectedTx, setRejectedTx] = useState<TransactionResponse | undefined>(undefined);
 
   useEffect(() => {
     const func = async () => {
@@ -68,14 +62,13 @@ export const WaitingStep = (props: {
     if (props.rejection?.txid) {
       connection
         .getTransaction(props.rejection.txid, { commitment: 'confirmed' })
-        .catch(e => console.error(e))
-        .then(t => setRejectedTx(t ?? undefined));
+        .catch((e) => console.error(e))
+        .then((t) => setRejectedTx(t ?? undefined));
     }
   }, [props.rejection]);
 
   let title = 'Listing NFT with Holaplex...';
-  let description: ReactNode =
-    'This may take several minutes depending current network demand.';
+  let description: ReactNode = 'This may take several minutes depending current network demand.';
   let status: 'normal' | 'exception' = 'normal';
 
   if (props.rejection) {
@@ -101,8 +94,7 @@ export const WaitingStep = (props: {
           descriptionInner = (
             <>
               <p>
-                Instruction #{ins + 1} failed with code{' '}
-                <code>0x{code.toString(16)}</code>
+                Instruction #{ins + 1} failed with code <code>0x{code.toString(16)}</code>
               </p>
             </>
           );
@@ -143,9 +135,7 @@ export const WaitingStep = (props: {
     // Kind of a hack, but it's not critical that this works correctly
     const isDevnet = /devnet/i.test(endpoint);
 
-    const solscanLink =
-      txid &&
-      `https://solscan.io/tx/${txid}${isDevnet ? '?cluster=devnet' : ''}`;
+    const solscanLink = txid && `https://solscan.io/tx/${txid}${isDevnet ? '?cluster=devnet' : ''}`;
 
     description = (
       <>
@@ -167,13 +157,9 @@ export const WaitingStep = (props: {
             <Divider />
             <Space direction="vertical" size={16}>
               <Text>
-                Check that the wallet you are using has sufficient funds and try
-                again. If the error occurs again, get help on{' '}
-                <a
-                  href="https://discord.gg/e463A53qWj"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                Check that the wallet you are using has sufficient funds and try again. If the error
+                occurs again, get help on{' '}
+                <a href="https://discord.gg/e463A53qWj" target="_blank" rel="noopener noreferrer">
                   our Discord server
                 </a>{' '}
                 or{' '}
@@ -184,8 +170,7 @@ export const WaitingStep = (props: {
                 >
                   submit a support request
                 </a>
-                . Please provide the link to the transaction on Solscan when
-                making your request:
+                . Please provide the link to the transaction on Solscan when making your request:
               </Text>
               <Input.Group
                 compact
@@ -199,7 +184,7 @@ export const WaitingStep = (props: {
                   style={{ flex: '1 0 0' }}
                   defaultValue={solscanLink}
                   readOnly
-                  onClick={e => {
+                  onClick={(e) => {
                     const input = e.target as HTMLInputElement;
                     input.setSelectionRange(0, input.value.length);
                   }}
@@ -236,23 +221,11 @@ export const WaitingStep = (props: {
     <Row justify="center">
       <Col xs={22} md={16} lg={12}>
         <Card>
-          <Space
-            direction="vertical"
-            size="large"
-            className="metaplex-fullwidth"
-          >
+          <Space direction="vertical" size="large" className="metaplex-fullwidth">
             <Row justify="center">
-              <Progress
-                status={status}
-                type="circle"
-                width={140}
-                percent={props.percent}
-              />
+              <Progress status={status} type="circle" width={140} percent={props.percent} />
             </Row>
-            <Card.Meta
-              title={<Title level={5}>{title}</Title>}
-              description={description}
-            />
+            <Card.Meta title={<Title level={5}>{title}</Title>} description={description} />
           </Space>
         </Card>
       </Col>

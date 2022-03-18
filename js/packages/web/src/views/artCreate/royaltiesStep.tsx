@@ -1,9 +1,4 @@
-import {
-  Creator,
-  IMetadataExtension,
-  MetaplexModal,
-  shortenAddress,
-} from '@oyster/common';
+import { Creator, IMetadataExtension, MetaplexModal, shortenAddress } from '@oyster/common';
 import { useWallet } from '@oyster/common';
 import { Button, Col, InputNumber, Row, Slider, Space, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
@@ -26,24 +21,19 @@ const RoyaltiesSplitter = (props: {
     <Col>
       <Row gutter={[0, 24]}>
         {props.creators.map((creator, idx) => {
-          const royalty = props.royalties.find(
-            royalty => royalty.creatorKey === creator.key,
-          );
+          const royalty = props.royalties.find((royalty) => royalty.creatorKey === creator.key);
           if (!royalty) return null;
 
           const amt = royalty.amount;
 
           const handleChangeShare = (newAmt: number) => {
             props.setRoyalties(
-              props.royalties.map(_royalty => {
+              props.royalties.map((_royalty) => {
                 return {
                   ..._royalty,
-                  amount:
-                    _royalty.creatorKey === royalty.creatorKey
-                      ? newAmt
-                      : _royalty.amount,
+                  amount: _royalty.creatorKey === royalty.creatorKey ? newAmt : _royalty.amount,
                 };
-              }),
+              })
             );
           };
 
@@ -55,9 +45,9 @@ const RoyaltiesSplitter = (props: {
                   <InputNumber<number>
                     min={0}
                     max={100}
-                    formatter={value => `${value}%`}
+                    formatter={(value) => `${value}%`}
                     value={amt}
-                    parser={value => parseInt(value?.replace('%', '') ?? '0')}
+                    parser={(value) => parseInt(value?.replace('%', '') ?? '0')}
                     onChange={handleChangeShare}
                   />
                 </Col>
@@ -66,9 +56,7 @@ const RoyaltiesSplitter = (props: {
                 </Col>
                 {props.isShowErrors && amt === 0 && (
                   <Col>
-                    <Text type="danger">
-                      The split percentage for this creator cannot be 0%.
-                    </Text>
+                    <Text type="danger">The split percentage for this creator cannot be 0%.</Text>
                   </Col>
                 )}
               </Row>
@@ -110,10 +98,10 @@ export const RoyaltiesStep = (props: {
 
   useEffect(() => {
     setRoyalties(
-      [...fixedCreators, ...creators].map(creator => ({
+      [...fixedCreators, ...creators].map((creator) => ({
         creatorKey: creator.key,
         amount: Math.trunc(100 / [...fixedCreators, ...creators].length),
-      })),
+      }))
     );
   }, [creators, fixedCreators]);
 
@@ -128,8 +116,8 @@ export const RoyaltiesStep = (props: {
   useEffect(() => {
     props.setAttributes({
       ...props.attributes,
-      seller_fee_basis_points: sellerFeeBasisPoints
-    })
+      seller_fee_basis_points: sellerFeeBasisPoints,
+    });
   }, [sellerFeeBasisPoints]);
 
   return (
@@ -137,23 +125,20 @@ export const RoyaltiesStep = (props: {
       <div>
         <h2>Set royalties and creator splits</h2>
         <p>
-          Royalties ensure that you continue to get compensated for your work
-          after its initial sale.
+          Royalties ensure that you continue to get compensated for your work after its initial
+          sale.
         </p>
       </div>
       <label>
         <h3>Royalty Percentage</h3>
-        <p>
-          This is how much of each secondary sale will be paid out to the
-          creators.
-        </p>
+        <p>This is how much of each secondary sale will be paid out to the creators.</p>
         <InputNumber<number>
           autoFocus
           min={0}
           max={100}
-          formatter={v => `${v}%`}
+          formatter={(v) => `${v}%`}
           defaultValue={10}
-          parser={v => parseInt(v?.replace('%', '') ?? '0')}
+          parser={(v) => parseInt(v?.replace('%', '') ?? '0')}
           onChange={(val: number) => setSellerFeeBasisPoints(val * 100)}
         />
       </label>
@@ -162,8 +147,8 @@ export const RoyaltiesStep = (props: {
           <label>
             <h3>Creators Split</h3>
             <p>
-              This is how much of the proceeds from the initial sale and any
-              royalties will be split out amongst the creators.
+              This is how much of the proceeds from the initial sale and any royalties will be split
+              out amongst the creators.
             </p>
             <RoyaltiesSplitter
               creators={[...fixedCreators, ...creators]}
@@ -179,24 +164,18 @@ export const RoyaltiesStep = (props: {
           <span>+</span>
           <span>Add another creator</span>
         </Button>
-        <MetaplexModal
-          visible={showCreatorsModal}
-          onCancel={() => setShowCreatorsModal(false)}
-        >
+        <MetaplexModal visible={showCreatorsModal} onCancel={() => setShowCreatorsModal(false)}>
           <label>
             <span>Creators</span>
-            <UserSearch
-              className="metaplex-fullwidth"
-              setCreators={setCreators}
-            />
+            <UserSearch className="metaplex-fullwidth" setCreators={setCreators} />
           </label>
         </MetaplexModal>
       </Row>
       {isShowErrors && totalRoyaltyShares !== 100 && (
         <Row>
           <Text type="danger">
-            The split percentages for each creator must add up to 100%. Current
-            total split percentage is {totalRoyaltyShares}%.
+            The split percentages for each creator must add up to 100%. Current total split
+            percentage is {totalRoyaltyShares}%.
           </Text>
         </Row>
       )}
@@ -207,9 +186,7 @@ export const RoyaltiesStep = (props: {
           size="large"
           onClick={() => {
             // Find all royalties that are invalid (0)
-            const zeroedRoyalties = royalties.filter(
-              royalty => royalty.amount === 0,
-            );
+            const zeroedRoyalties = royalties.filter((royalty) => royalty.amount === 0);
 
             if (zeroedRoyalties.length !== 0 || totalRoyaltyShares !== 100) {
               // Contains a share that is 0 or total shares does not equal 100, show errors.
@@ -217,24 +194,18 @@ export const RoyaltiesStep = (props: {
               return;
             }
 
-            const creatorStructs: Creator[] = [
-              ...fixedCreators,
-              ...creators,
-            ].map(
-              c =>
+            const creatorStructs: Creator[] = [...fixedCreators, ...creators].map(
+              (c) =>
                 new Creator({
                   address: c.value,
                   verified: c.value === publicKey?.toBase58(),
                   share:
-                    royalties.find(r => r.creatorKey === c.value)?.amount ||
+                    royalties.find((r) => r.creatorKey === c.value)?.amount ||
                     Math.round(100 / royalties.length),
-                }),
+                })
             );
 
-            const share = creatorStructs.reduce(
-              (acc, el) => (acc += el.share),
-              0,
-            );
+            const share = creatorStructs.reduce((acc, el) => (acc += el.share), 0);
             if (share > 100 && creatorStructs.length) {
               creatorStructs[0].share -= share - 100;
             }

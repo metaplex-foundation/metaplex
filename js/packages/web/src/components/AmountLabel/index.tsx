@@ -37,9 +37,7 @@ export const AmountLabel = (props: IAmountLabel) => {
         )}
         {displayUSD && <span className="metaplex-opacity-5">|</span>}
         {displayUSD && (
-          <div>
-            {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
-          </div>
+          <div>{PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}</div>
         )}
       </div>
       <p className="auction-status">{title}</p>

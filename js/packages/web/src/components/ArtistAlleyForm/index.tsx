@@ -39,11 +39,7 @@ export const ArtistAlleyForm = () => {
         </Form.Item>
 
         <Form.Item label="Upload artwork (optional)">
-          <Form.Item
-            name="dragger"
-            valuePropName="fileList"
-            getValueFromEvent={handleFile}
-          >
+          <Form.Item name="dragger" valuePropName="fileList" getValueFromEvent={handleFile}>
             <Upload.Dragger name="files" action="/upload.do">
               <p>Upload files here</p>
               <p>Drag and drop, or click to browse</p>

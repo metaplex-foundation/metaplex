@@ -14,17 +14,14 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 export async function decommAuctionManagerAndReturnPrizes(
   connection: Connection,
   wallet: WalletContextState,
-  auctionView: AuctionViewCompact,
+  auctionView: AuctionViewCompact
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const signers: Array<Keypair[]> = [];
   const instructions: Array<TransactionInstruction[]> = [];
 
-  if (
-    auctionView.auctionManager.info.state.status ===
-    AuctionManagerStatus.Initialized
-  ) {
+  if (auctionView.auctionManager.info.state.status === AuctionManagerStatus.Initialized) {
     const decomSigners: Keypair[] = [];
     const decomInstructions: TransactionInstruction[] = [];
 
@@ -33,7 +30,7 @@ export async function decommAuctionManagerAndReturnPrizes(
         auctionView.auction.pubkey,
         wallet.publicKey.toBase58(),
         auctionView.auctionManager.pubkey,
-        decomInstructions,
+        decomInstructions
       );
     }
     if (auctionView.vault.info.authority === wallet.publicKey.toBase58()) {
@@ -41,7 +38,7 @@ export async function decommAuctionManagerAndReturnPrizes(
         auctionView.vault.pubkey,
         wallet.publicKey.toBase58(),
         auctionView.auctionManager.pubkey,
-        decomInstructions,
+        decomInstructions
       );
     }
     await decommissionAuctionManager(
@@ -49,18 +46,13 @@ export async function decommAuctionManagerAndReturnPrizes(
       auctionView.auction.pubkey,
       wallet.publicKey.toBase58(),
       auctionView.vault.pubkey,
-      decomInstructions,
+      decomInstructions
     );
     signers.push(decomSigners);
     instructions.push(decomInstructions);
   }
 
-  await sendTransactionsWithManualRetry(
-    connection,
-    wallet,
-    instructions,
-    signers,
-  );
+  await sendTransactionsWithManualRetry(connection, wallet, instructions, signers);
 
   // now that is rightfully decommed, we have authority back properly to the vault,
   // and the auction manager is in disbursing, so we can unwind the vault.

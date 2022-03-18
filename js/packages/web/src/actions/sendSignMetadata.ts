@@ -11,7 +11,7 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 export async function sendSignMetadata(
   connection: Connection,
   wallet: WalletContextState,
-  metadata: StringPublicKey,
+  metadata: StringPublicKey
 ): Promise<SendSignedTransactionResult> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -20,11 +20,5 @@ export async function sendSignMetadata(
 
   await signMetadata(metadata, wallet.publicKey.toBase58(), instructions);
 
-  return await sendTransactionWithRetry(
-    connection,
-    wallet,
-    instructions,
-    signers,
-    'confirmed',
-  );
+  return await sendTransactionWithRetry(connection, wallet, instructions, signers, 'confirmed');
 }

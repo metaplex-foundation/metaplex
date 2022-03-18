@@ -16,9 +16,7 @@ export const Congrats = (props: {
   const newTweetURL = () => {
     const params = {
       text: "I've listed an NFT on my @Holaplex store, check it out!",
-      url: `${
-        window.location.origin
-      }/#/listings/${props.auction?.auction.toString()}`,
+      url: `${window.location.origin}/#/listings/${props.auction?.auction.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
@@ -43,9 +41,7 @@ export const Congrats = (props: {
           className="metaplex-fullwidth"
           size="large"
           type="primary"
-          onClick={() =>
-            navigate(`/listings/${props.auction?.auction.toString()}`)
-          }
+          onClick={() => navigate(`/listings/${props.auction?.auction.toString()}`)}
         >
           View Listing
         </ArrowButton>

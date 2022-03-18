@@ -25,8 +25,8 @@ export const ArtSelector = ({
   let items = useUserArts();
   if (filter) items = items.filter(filter);
   const selectedItems = useMemo<Set<string>>(
-    () => new Set(selected.map(item => item.metadata.pubkey)),
-    [selected],
+    () => new Set(selected.map((item) => item.metadata.pubkey)),
+    [selected]
   );
 
   const [visible, setVisible] = useState(false);
@@ -52,7 +52,7 @@ export const ArtSelector = ({
   return (
     <>
       <MetaplexMasonry className={className}>
-        {selected.map(m => {
+        {selected.map((m) => {
           const key = m?.metadata.pubkey || '';
 
           return (
@@ -62,7 +62,7 @@ export const ArtSelector = ({
               preview={false}
               onClick={open}
               close={() => {
-                setSelected(selected.filter(_ => _.metadata.pubkey !== key));
+                setSelected(selected.filter((_) => _.metadata.pubkey !== key));
                 confirm();
               }}
             />
@@ -75,17 +75,11 @@ export const ArtSelector = ({
         )}
       </MetaplexMasonry>
 
-      <Modal
-        visible={visible}
-        onCancel={close}
-        onOk={confirm}
-        width={1100}
-        footer={null}
-      >
+      <Modal visible={visible} onCancel={close} onOk={confirm} width={1100} footer={null}>
         <Space className="metaplex-space-align-stretch" direction="vertical">
           <h2>Select the NFT you want to sell</h2>
           <MetaplexMasonry>
-            {items.map(m => {
+            {items.map((m) => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
 
@@ -96,12 +90,10 @@ export const ArtSelector = ({
                 }
 
                 const newSet = isSelected
-                  ? new Set(list.filter(item => item !== id))
+                  ? new Set(list.filter((item) => item !== id))
                   : new Set([...list, id]);
 
-                const selected = items.filter(item =>
-                  newSet.has(item.metadata.pubkey),
-                );
+                const selected = items.filter((item) => newSet.has(item.metadata.pubkey));
                 setSelected(selected);
 
                 if (!allowMultiple) {
@@ -110,12 +102,7 @@ export const ArtSelector = ({
               };
 
               return (
-                <ArtCard
-                  key={id}
-                  pubkey={m.metadata.pubkey}
-                  preview={false}
-                  onClick={onSelect}
-                />
+                <ArtCard key={id} pubkey={m.metadata.pubkey} preview={false} onClick={onSelect} />
               );
             })}
           </MetaplexMasonry>

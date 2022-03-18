@@ -49,9 +49,7 @@ function RunAction({
   onFinish?: () => void;
   icon: JSX.Element;
 }) {
-  const [state, setRunState] = useState<RunActionState>(
-    RunActionState.NotRunning,
-  );
+  const [state, setRunState] = useState<RunActionState>(RunActionState.NotRunning);
 
   useMemo(() => setRunState(RunActionState.NotRunning), [id]);
 
@@ -89,19 +87,15 @@ function RunAction({
 }
 
 export async function getPersonalEscrowAta(
-  wallet: WalletContextState | undefined,
+  wallet: WalletContextState | undefined
 ): Promise<StringPublicKey | undefined> {
   const PROGRAM_IDS = programIds();
   if (!wallet?.publicKey) return;
 
   return (
     await findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        PROGRAM_IDS.token.toBuffer(),
-        QUOTE_MINT.toBuffer(),
-      ],
-      PROGRAM_IDS.associatedToken,
+      [wallet.publicKey.toBuffer(), PROGRAM_IDS.token.toBuffer(), QUOTE_MINT.toBuffer()],
+      PROGRAM_IDS.associatedToken
     )
   )[0];
 }
@@ -120,9 +114,7 @@ export function useCollapseWrappedSol({
     const ata = await getPersonalEscrowAta(wallet);
     if (ata) {
       try {
-        const balance = await connection.getTokenAccountBalance(
-          toPublicKey(ata),
-        );
+        const balance = await connection.getTokenAccountBalance(toPublicKey(ata));
 
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
@@ -142,15 +134,13 @@ export function useCollapseWrappedSol({
     notifications.push({
       id: 'unsettled',
       title: 'Unsettled funds!',
-      description:
-        'You have unsettled royalties in your personal escrow account.',
+      description: 'You have unsettled royalties in your personal escrow account.',
       action: async () => {
         try {
           const ata = await getPersonalEscrowAta(wallet);
           if (ata) {
             const data = await connection.getAccountInfo(toPublicKey(ata));
-            if (data?.data.length || 0 > 0)
-              await closePersonalEscrow(connection, wallet, ata);
+            if (data?.data.length || 0 > 0) await closePersonalEscrow(connection, wallet, ata);
           }
         } catch (e) {
           console.error(e);
@@ -162,11 +152,7 @@ export function useCollapseWrappedSol({
   }
 }
 
-export function Notifications({
-  buttonType,
-}: {
-  buttonType?: ButtonProps['type'];
-}) {
+export function Notifications({ buttonType }: { buttonType?: ButtonProps['type'] }) {
   const { metadata, whitelistedCreatorsByCreator, store } = useMeta();
 
   const connection = useConnection();
@@ -179,28 +165,25 @@ export function Notifications({
 
   const metaNeedsApproving = useMemo(
     () =>
-      metadata.filter(m => {
+      metadata.filter((m) => {
         return (
           m.info.data.creators &&
-          (whitelistedCreatorsByCreator[m.info.updateAuthority]?.info
-            ?.activated ||
+          (whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.activated ||
             store?.info.public) &&
-          m.info.data.creators.find(
-            c => c.address === walletPubkey && !c.verified,
-          )
+          m.info.data.creators.find((c) => c.address === walletPubkey && !c.verified)
         );
       }),
-    [metadata, whitelistedCreatorsByCreator, walletPubkey],
+    [metadata, whitelistedCreatorsByCreator, walletPubkey]
   );
 
-  metaNeedsApproving.forEach(m => {
+  metaNeedsApproving.forEach((m) => {
     notifications.push({
       id: m.pubkey,
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          A whitelisted creator wants you to approve a collaboration. See
-          artwork <Link to={`/artworks/${m.pubkey}`}>here</Link>.
+          A whitelisted creator wants you to approve a collaboration. See artwork{' '}
+          <Link to={`/artworks/${m.pubkey}`}>here</Link>.
         </span>
       ),
       action: async () => {
@@ -236,18 +219,10 @@ export function Notifications({
           extra={
             <>
               {item.action && (
-                <RunAction
-                  id={item.id}
-                  action={item.action}
-                  icon={<PlayCircleOutlined />}
-                />
+                <RunAction id={item.id} action={item.action} icon={<PlayCircleOutlined />} />
               )}
               {item.dismiss && (
-                <RunAction
-                  id={item.id}
-                  action={item.dismiss}
-                  icon={<PlayCircleOutlined />}
-                />
+                <RunAction id={item.id} action={item.dismiss} icon={<PlayCircleOutlined />} />
               )}
             </>
           }

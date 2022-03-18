@@ -14,10 +14,9 @@ const CLASS_NAME = 'metaplex-masonry';
 export const MetaplexMasonry = ({
   className,
   ...props
-}: Omit<
-  MasonryProps & HTMLProps<HTMLElement>,
-  'ref' | 'className' | 'columnClassName'
-> & { className?: string }) => (
+}: Omit<MasonryProps & HTMLProps<HTMLElement>, 'ref' | 'className' | 'columnClassName'> & {
+  className?: string;
+}) => (
   <Masonry
     className={className ? `${CLASS_NAME} ${className}` : CLASS_NAME}
     columnClassName="metaplex-masonry-column"

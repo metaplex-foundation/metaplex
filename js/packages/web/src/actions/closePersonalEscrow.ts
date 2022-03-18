@@ -1,10 +1,5 @@
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
-import {
-  utils,
-  sendTransactionWithRetry,
-  StringPublicKey,
-  toPublicKey,
-} from '@oyster/common';
+import { utils, sendTransactionWithRetry, StringPublicKey, toPublicKey } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { Token } from '@solana/spl-token';
 import { WalletContextState } from '@solana/wallet-adapter-react';
@@ -17,7 +12,7 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 export async function closePersonalEscrow(
   connection: Connection,
   wallet: WalletContextState,
-  ata: StringPublicKey,
+  ata: StringPublicKey
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -31,15 +26,9 @@ export async function closePersonalEscrow(
       toPublicKey(ata),
       wallet.publicKey,
       wallet.publicKey,
-      [],
+      []
     ),
   ];
 
-  await sendTransactionWithRetry(
-    connection,
-    wallet,
-    instructions,
-    signers,
-    'single',
-  );
+  await sendTransactionWithRetry(connection, wallet, instructions, signers, 'single');
 }

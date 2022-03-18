@@ -22,8 +22,7 @@ export const Listings = () => {
   const view = searchParams.get('view') as View;
   const { ownerAddress } = useStore();
   const wallet = useWallet();
-  const { auctionManagerTotal, auctionCacheTotal } =
-    useAuctionManagersToCache();
+  const { auctionManagerTotal, auctionCacheTotal } = useAuctionManagersToCache();
   const pubkey = wallet.publicKey?.toBase58() || '';
   const isStoreOwner = ownerAddress === pubkey;
   const notAllAuctionsCached = auctionManagerTotal !== auctionCacheTotal;
@@ -36,8 +35,7 @@ export const Listings = () => {
   });
   const activeGroup = groups[view] || [];
 
-  const { auctions, loading, hasNextPage, loadMore } =
-    useInfiniteScrollAuctions(activeGroup, view);
+  const { auctions, loading, hasNextPage, loadMore } = useInfiniteScrollAuctions(activeGroup, view);
 
   const [sentryRef] = useInfiniteScroll({
     loading,
@@ -94,18 +92,15 @@ export const Listings = () => {
   const showShowAllEndedListingsToggle = view === View.ended;
 
   const filteredAuctions: AuctionView[] = auctions.filter(
-    a =>
+    (a) =>
       !listingNameFilter ||
       a?.thumbnail?.metadata?.info?.data?.name
         ?.toLowerCase()
-        .includes(listingNameFilter.toLowerCase()),
+        .includes(listingNameFilter.toLowerCase())
   );
 
   const canList = useMemo(() => {
-    return (
-      store?.info?.public ||
-      whitelistedCreatorsByCreator[pubkey]?.info?.activated
-    );
+    return store?.info?.public || whitelistedCreatorsByCreator[pubkey]?.info?.activated;
   }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   return (
@@ -116,19 +111,13 @@ export const Listings = () => {
           className="app-alert-banner metaplex-margin-bottom-8"
           description={
             <p>
-              Make your storefront faster by enabling listing caches.{' '}
-              {auctionCacheTotal}/{auctionManagerTotal} of your listing have a
-              cache account. Watch this{' '}
-              <a
-                rel="noopener noreferrer"
-                target="_blank"
-                href="https://youtu.be/02V7F07DFbk"
-              >
+              Make your storefront faster by enabling listing caches. {auctionCacheTotal}/
+              {auctionManagerTotal} of your listing have a cache account. Watch this{' '}
+              <a rel="noopener noreferrer" target="_blank" href="https://youtu.be/02V7F07DFbk">
                 video
               </a>{' '}
-              for more details and a walkthrough. On November 17rd storefronts
-              will start reading from the cache for listings. All new listing
-              are generating a cache account.
+              for more details and a walkthrough. On November 17rd storefronts will start reading
+              from the cache for listings. All new listing are generating a cache account.
             </p>
           }
           type="info"
@@ -191,11 +180,11 @@ export const Listings = () => {
                   name="listings-search"
                   id="listings-search"
                   value={listingNameFilter}
-                  onChange={e => setListingNameFilter(e.target.value)}
+                  onChange={(e) => setListingNameFilter(e.target.value)}
                   className={cx(
                     'bg-base text-color-text py-2 px-4 ring-0 opacity-50 focus:opacity-100 outline-none transition-all',
                     'block w-full pl-10 sm:text-sm border border-color-text rounded-lg max-w-full',
-                    view === View.ended ? 'md:max-w-xs' : 'md:max-w-sm',
+                    view === View.ended ? 'md:max-w-xs' : 'md:max-w-sm'
                   )}
                   placeholder="Search"
                 />
@@ -232,9 +221,7 @@ export const Listings = () => {
           {!filteredAuctions.length && !fetching && !hasNextPage && (
             <Card>
               <div className="text-center text-color-text">
-                <h3 className="mt-2 text-2xl font-medium ">
-                  No listings found
-                </h3>
+                <h3 className="mt-2 text-2xl font-medium ">No listings found</h3>
                 <p className="mt-1 text-sm opacity-75">
                   {/* {listingNameFilter.length
                 ? 'Try a different one'
@@ -242,9 +229,7 @@ export const Listings = () => {
                 </p>
                 {canList && (
                   <>
-                    <p className="mt-1 text-sm opacity-75">
-                      Get started by creating a listing
-                    </p>
+                    <p className="mt-1 text-sm opacity-75">Get started by creating a listing</p>
                     <div className="mt-6 flex space-x-4 justify-center">
                       <Link to="/owned?action=create-listing">
                         <Button size="large" type="primary">
@@ -263,7 +248,7 @@ export const Listings = () => {
             </Card>
           )}
           <MetaplexMasonry>
-            {filteredAuctions.map(m => {
+            {filteredAuctions.map((m) => {
               const id = m.auction.pubkey;
               return (
                 <Link to={`/listings/${id}`} key={id}>

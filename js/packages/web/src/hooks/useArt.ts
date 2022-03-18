@@ -20,14 +20,8 @@ import { maybeCDN, maybeImageCDN } from '../utils/cdn';
 const metadataToArt = (
   info: Metadata | undefined,
   editions: Record<string, ParsedAccount<Edition>>,
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >,
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >,
+  masterEditions: Record<string, ParsedAccount<MasterEditionV1 | MasterEditionV2>>,
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>
 ) => {
   let type: ArtType = ArtType.NFT;
   let editionNumber: number | undefined = undefined;
@@ -56,7 +50,7 @@ const metadataToArt = (
     mint: info?.mint,
     title: info?.data.name,
     creators: (info?.data.creators || [])
-      .map(creator => {
+      .map((creator) => {
         const knownCreator = whitelistedCreatorsByCreator[creator.address];
 
         return {
@@ -149,24 +143,13 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
 };
 
 export const useArt = (key?: StringPublicKey) => {
-  const {
-    metadataByMetadata,
-    editions,
-    masterEditions,
-    whitelistedCreatorsByCreator,
-  } = useMeta();
+  const { metadataByMetadata, editions, masterEditions, whitelistedCreatorsByCreator } = useMeta();
 
   const account = metadataByMetadata[key as string];
 
   const art = useMemo(
-    () =>
-      metadataToArt(
-        account?.info,
-        editions,
-        masterEditions,
-        whitelistedCreatorsByCreator,
-      ),
-    [account, editions, masterEditions, whitelistedCreatorsByCreator],
+    () => metadataToArt(account?.info, editions, masterEditions, whitelistedCreatorsByCreator),
+    [account, editions, masterEditions, whitelistedCreatorsByCreator]
   );
 
   return art;
@@ -181,10 +164,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 
   const key = pubkeyToString(id);
 
-  const account = useMemo(
-    () => metadata.find(a => a.pubkey === key),
-    [key, metadata],
-  );
+  const account = useMemo(() => metadata.find((a) => a.pubkey === key), [key, metadata]);
 
   useEffect(() => {
     if (inView && id && !data) {
@@ -213,8 +193,8 @@ export const useExtendedArt = (id?: StringPublicKey) => {
           } else {
             // TODO: BL handle concurrent calls to avoid double query
             fetch(uri)
-              .then(response => response.json())
-              .then(json => {
+              .then((response) => response.json())
+              .then((json) => {
                 try {
                   localStorage.setItem(uri, JSON.stringify(json));
                 } finally {

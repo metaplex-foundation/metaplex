@@ -11,14 +11,14 @@ export const useCreators = (auction?: AuctionView) => {
       [
         ...(
           [
-            ...(auction?.items || []).flat().map(item => item?.metadata),
+            ...(auction?.items || []).flat().map((item) => item?.metadata),
             auction?.participationItem?.metadata,
           ]
-            .filter(item => item && item.info)
-            .map(item => item?.info.data.creators || [])
+            .filter((item) => item && item.info)
+            .map((item) => item?.info.data.creators || [])
             .flat() || []
         )
-          .filter(creator => creator.verified)
+          .filter((creator) => creator.verified)
           .reduce((agg, item) => {
             agg.add(item.address);
             return agg;
@@ -37,7 +37,7 @@ export const useCreators = (auction?: AuctionView) => {
           link: knownCreator?.info.twitter || '',
         } as Artist;
       }),
-    [auction, whitelistedCreatorsByCreator],
+    [auction, whitelistedCreatorsByCreator]
   );
 
   return creators;

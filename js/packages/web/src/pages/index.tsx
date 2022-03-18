@@ -29,14 +29,12 @@ const subdomainAlias: { [key: string]: string } = {
 
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
-  const forwarded = headers.forwarded
-    ?.split(';')
-    .reduce((acc: Record<string, string>, entry) => {
-      const [key, value] = entry.split('=');
-      acc[key] = value;
+  const forwarded = headers.forwarded?.split(';').reduce((acc: Record<string, string>, entry) => {
+    const [key, value] = entry.split('=');
+    acc[key] = value;
 
-      return acc;
-    }, {});
+    return acc;
+  }, {});
   const host = (forwarded?.host || headers.host) ?? '';
   let subdomain = host.split(':')[0].split('.')[0];
 
@@ -129,26 +127,14 @@ function AppWrapper({ storefront, host }: AppProps) {
           </>
         )}
         <title>{storefront.meta.title}</title>
-        <meta
-          name="description"
-          content={storefront.meta.description}
-          key="description"
-        />
-        <meta
-          property="og:title"
-          content={storefront.meta.title}
-          key="og:title"
-        />
+        <meta name="description" content={storefront.meta.description} key="description" />
+        <meta property="og:title" content={storefront.meta.title} key="og:title" />
         <meta
           property="og:description"
           content={storefront.meta.description}
           key="og:description"
         />
-        <meta
-          property="og:image"
-          content={storefront.theme.logo}
-          key="og:image"
-        />
+        <meta property="og:image" content={storefront.theme.logo} key="og:image" />
         <meta property="og:type" content="website" key="og:type" />
       </Head>
       {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}

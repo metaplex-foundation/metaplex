@@ -18,10 +18,7 @@ import { emptyPaymentAccount } from '@oyster/common/dist/lib/models/metaplex/emp
 import { QUOTE_MINT } from '../constants';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import {
-  SmartInstructionSender,
-  WalletSigner,
-} from '@holaplex/solana-web3-tools';
+import { SmartInstructionSender, WalletSigner } from '@holaplex/solana-web3-tools';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 
 const BATCH_SIZE = 10;
@@ -33,12 +30,9 @@ export async function settle(
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
   payingAccount: string | undefined,
-  accountsByMint: Map<string, TokenAccount>,
+  accountsByMint: Map<string, TokenAccount>
 ) {
-  if (
-    auctionView.auction.info.ended() &&
-    auctionView.auction.info.state !== AuctionState.Ended
-  ) {
+  if (auctionView.auction.info.ended() && auctionView.auction.info.state !== AuctionState.Ended) {
     const signers: Keypair[][] = [];
     const instructions: TransactionInstruction[][] = [];
 
@@ -50,15 +44,10 @@ export async function settle(
       accountsByMint,
       0,
       instructions,
-      signers,
+      signers
     );
 
-    await sendTransactionWithRetry(
-      connection,
-      wallet,
-      instructions[0],
-      signers[0],
-    );
+    await sendTransactionWithRetry(connection, wallet, instructions[0], signers[0]);
   }
 
   await claimAllBids(connection, wallet, auctionView, bidsToClaim);
@@ -68,7 +57,7 @@ export async function settle(
 export async function createEmptyPaymentAccountForAllTokensIX(
   connection: Connection,
   wallet: WalletContextState,
-  auctionView: AuctionView,
+  auctionView: AuctionView
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -97,11 +86,11 @@ export async function createEmptyPaymentAccountForAllTokensIX(
       const item = items[j];
       const creators = item.metadata.info.data.creators;
       const edgeCaseWhereCreatorIsAuctioneer = !!creators
-        ?.map(c => c.address)
-        .find(c => c === auctionView.auctionManager.authority);
+        ?.map((c) => c.address)
+        .find((c) => c === auctionView.auctionManager.authority);
 
       const addresses = [
-        ...(creators ? creators.map(c => c.address) : []),
+        ...(creators ? creators.map((c) => c.address) : []),
         ...[auctionView.auctionManager.authority],
       ];
 
@@ -113,7 +102,7 @@ export async function createEmptyPaymentAccountForAllTokensIX(
               PROGRAM_IDS.token.toBuffer(),
               QUOTE_MINT.toBuffer(),
             ],
-            PROGRAM_IDS.associatedToken,
+            PROGRAM_IDS.associatedToken
           )
         )[0];
 
@@ -125,14 +114,12 @@ export async function createEmptyPaymentAccountForAllTokensIX(
             toPublicKey(ata),
             wallet.publicKey,
             toPublicKey(addresses[k]),
-            QUOTE_MINT,
+            QUOTE_MINT
           );
 
         ataLookup[ata] = true;
 
-        const creatorIndex = creators
-          ? creators.map(c => c.address).indexOf(addresses[k])
-          : null;
+        const creatorIndex = creators ? creators.map((c) => c.address).indexOf(addresses[k]) : null;
 
         await emptyPaymentAccount(
           auctionView.auctionManager.acceptPayment,
@@ -152,7 +139,7 @@ export async function createEmptyPaymentAccountForAllTokensIX(
             (edgeCaseWhereCreatorIsAuctioneer && k === addresses.length - 1)
             ? null
             : creatorIndex,
-          settleInstructions,
+          settleInstructions
         );
 
         if (settleInstructions.length >= SETTLE_TRANSACTION_SIZE) {
@@ -172,10 +159,7 @@ export async function createEmptyPaymentAccountForAllTokensIX(
     }
   }
 
-  if (
-    settleInstructions.length < SETTLE_TRANSACTION_SIZE &&
-    settleInstructions.length > 0
-  ) {
+  if (settleInstructions.length < SETTLE_TRANSACTION_SIZE && settleInstructions.length > 0) {
     currSignerBatch.push(settleSigners);
     currInstrBatch.push(settleInstructions);
   }
@@ -192,14 +176,13 @@ export async function createEmptyPaymentAccountForAllTokensIX(
 async function emptyPaymentAccountForAllTokens(
   connection: Connection,
   wallet: WalletContextState,
-  auctionView: AuctionView,
+  auctionView: AuctionView
 ) {
-  const { instructions, signers } =
-    await createEmptyPaymentAccountForAllTokensIX(
-      connection,
-      wallet,
-      auctionView,
-    );
+  const { instructions, signers } = await createEmptyPaymentAccountForAllTokensIX(
+    connection,
+    wallet,
+    auctionView
+  );
   for (let i = 0; i < instructions.length; i++) {
     const instructionBatch = instructions[i];
     const signerBatch = signers[i];
@@ -216,9 +199,9 @@ async function emptyPaymentAccountForAllTokens(
           instructionBatch.map((ixs, i) => ({
             instructions: ixs,
             signers: signerBatch[i],
-          })),
+          }))
         )
-        .onFailure(err => {
+        .onFailure((err) => {
           emptyPaymentTokenError = err;
         })
         .send();
@@ -232,7 +215,7 @@ async function emptyPaymentAccountForAllTokens(
         wallet,
         instructionBatch[0],
         signerBatch[0],
-        'single',
+        'single'
       );
     }
   }
@@ -242,7 +225,7 @@ async function claimAllBids(
   connection: Connection,
   wallet: WalletContextState,
   auctionView: AuctionView,
-  bids: ParsedAccount<BidderPot>[],
+  bids: ParsedAccount<BidderPot>[]
 ) {
   const signers: Array<Array<Keypair[]>> = [];
   const instructions: Array<Array<TransactionInstruction[]>> = [];
@@ -266,7 +249,7 @@ async function claimAllBids(
       bid.info.bidderPot,
       auctionView.vault.pubkey,
       auctionView.auction.info.tokenMint,
-      claimBidInstructions,
+      claimBidInstructions
     );
 
     if (claimBidInstructions.length === CLAIM_TRANSACTION_SIZE) {
@@ -284,10 +267,7 @@ async function claimAllBids(
     }
   }
 
-  if (
-    claimBidInstructions.length < CLAIM_TRANSACTION_SIZE &&
-    claimBidInstructions.length > 0
-  ) {
+  if (claimBidInstructions.length < CLAIM_TRANSACTION_SIZE && claimBidInstructions.length > 0) {
     currSignerBatch.push(claimBidSigners);
     currInstrBatch.push(claimBidInstructions);
   }
@@ -314,9 +294,9 @@ async function claimAllBids(
           instructionBatch.map((ixs, i) => ({
             instructions: ixs,
             signers: signerBatch[i],
-          })),
+          }))
         )
-        .onFailure(err => {
+        .onFailure((err) => {
           throw err;
         })
         .send();
@@ -326,7 +306,7 @@ async function claimAllBids(
         wallet,
         instructionBatch[0],
         signerBatch[0],
-        'single',
+        'single'
       );
     }
     console.log('Done');

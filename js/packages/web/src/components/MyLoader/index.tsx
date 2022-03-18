@@ -19,12 +19,7 @@ export const CardLoader = () => (
 );
 
 export const ThreeDots = () => (
-  <ContentLoader
-    viewBox="0 0 212 200"
-    height={200}
-    width={212}
-    backgroundColor="transparent"
-  >
+  <ContentLoader viewBox="0 0 212 200" height={200} width={212} backgroundColor="transparent">
     <circle cx="86" cy="100" r="8" />
     <circle cx="106" cy="100" r="8" />
     <circle cx="126" cy="100" r="8" />

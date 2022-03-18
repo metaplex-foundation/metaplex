@@ -7,11 +7,7 @@ import {
 } from '@oyster/common';
 import { useWallet } from '@oyster/common';
 import { useEffect, useState } from 'react';
-import {
-  AuctionView,
-  processAccountsIntoAuctionView,
-  useCachedRedemptionKeysByWallet,
-} from '.';
+import { AuctionView, processAccountsIntoAuctionView, useCachedRedemptionKeysByWallet } from '.';
 import { useMeta } from '../contexts';
 
 export const useAuction = (id: StringPublicKey) => {
@@ -20,9 +16,7 @@ export const useAuction = (id: StringPublicKey) => {
   const connection = useConnection();
   const [loading, setLoading] = useState(true);
 
-  const [existingAuctionView, setAuctionView] = useState<
-    AuctionView | undefined
-  >(undefined);
+  const [existingAuctionView, setAuctionView] = useState<AuctionView | undefined>(undefined);
   const walletPubkey = publicKey?.toBase58();
   const {
     auctions,
@@ -58,13 +52,13 @@ export const useAuction = (id: StringPublicKey) => {
       const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(
         connection,
         auctionState.safetyDepositBoxesByVaultAndIndex,
-        whitelistedCreatorsByCreator,
+        whitelistedCreatorsByCreator
       );
 
       const prizeTrackingTicketState = await loadPrizeTrackingTickets(
         connection,
         auctionManager,
-        metadataState.metadata,
+        metadataState.metadata
       );
 
       patchState(prizeTrackingTicketState, auctionState, metadataState);
@@ -95,7 +89,7 @@ export const useAuction = (id: StringPublicKey) => {
           metadataByMasterEdition,
           cachedRedemptionKeys,
           metadataByAuction,
-          undefined,
+          undefined
         );
 
         if (auctionView) setAuctionView(auctionView);

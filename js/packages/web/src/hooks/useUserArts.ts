@@ -25,29 +25,28 @@ export const useUserArts = (): SafetyDepositDraft[] => {
   }, new Map<string, TokenAccount>());
 
   const ownedMetadata = metadata.filter(
-    m =>
+    (m) =>
       accountByMint.has(m.info.mint) &&
-      (accountByMint?.get(m.info.mint)?.info?.amount?.toNumber() || 0) > 0,
+      (accountByMint?.get(m.info.mint)?.info?.amount?.toNumber() || 0) > 0
   );
 
-  const possibleEditions = ownedMetadata.map(m =>
-    m.info.edition ? editions[m.info.edition] : undefined,
+  const possibleEditions = ownedMetadata.map((m) =>
+    m.info.edition ? editions[m.info.edition] : undefined
   );
 
-  const possibleMasterEditions = ownedMetadata.map(m =>
-    m.info.masterEdition ? masterEditions[m.info.masterEdition] : undefined,
+  const possibleMasterEditions = ownedMetadata.map((m) =>
+    m.info.masterEdition ? masterEditions[m.info.masterEdition] : undefined
   );
 
   const safetyDeposits: SafetyDepositDraft[] = [];
   let i = 0;
-  ownedMetadata.forEach(m => {
+  ownedMetadata.forEach((m) => {
     const a = accountByMint.get(m.info.mint);
     let masterA;
     const masterEdition = possibleMasterEditions[i];
     if (masterEdition?.info.key == MetadataKey.MasterEditionV1) {
       masterA = accountByMint.get(
-        (masterEdition as ParsedAccount<MasterEditionV1>)?.info.printingMint ||
-          '',
+        (masterEdition as ParsedAccount<MasterEditionV1>)?.info.printingMint || ''
       );
     }
 

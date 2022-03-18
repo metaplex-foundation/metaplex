@@ -12,10 +12,7 @@ export const InfoStep = (props: {
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
-  const { image, animation_url } = useArtworkFiles(
-    props.files,
-    props.attributes,
-  );
+  const { image, animation_url } = useArtworkFiles(props.files, props.attributes);
   const [form] = Form.useForm();
 
   const [values, setValues] = useState<IMetadataExtension>(props.attributes);
@@ -24,21 +21,18 @@ export const InfoStep = (props: {
     <Space className="metaplex-fullwidth" direction="vertical">
       <>
         <h2>Describe your item</h2>
-        <p>
-          Provide detailed description of your creative process to engage with
-          your audience.
-        </p>
+        <p>Provide detailed description of your creative process to engage with your audience.</p>
       </>
 
       <Form
         name="dynamic_attributes"
         form={form}
         autoComplete="off"
-        onValuesChange={field => {
+        onValuesChange={(field) => {
           setValues({ ...values, ...field });
         }}
         initialValues={props.attributes}
-        onFinish={formState => {
+        onFinish={(formState) => {
           const nftAttributes = formState.attributes;
           // value is number if possible
           for (const nftAttribute of nftAttributes || []) {
@@ -92,9 +86,7 @@ export const InfoStep = (props: {
                         if (!(Buffer.from(info).length > 32)) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(
-                          'Needs to be fewer than 32 bytes',
-                        );
+                        return Promise.reject('Needs to be fewer than 32 bytes');
                       },
                     },
                   ]}
@@ -117,21 +109,14 @@ export const InfoStep = (props: {
                     },
                   ]}
                 >
-                  <Input.TextArea
-                    size="large"
-                    placeholder="Max 500 characters"
-                    allowClear
-                  />
+                  <Input.TextArea size="large" placeholder="Max 500 characters" allowClear />
                 </Form.Item>
               </label>
 
               <label>
                 <h3>Maximum Supply</h3>
                 <Form.Item name={['properties', 'maxSupply']}>
-                  <InputNumber
-                    className="metaplex-fullwidth"
-                    placeholder="Quantity"
-                  />
+                  <InputNumber className="metaplex-fullwidth" placeholder="Quantity" />
                 </Form.Item>
               </label>
               <label>
@@ -162,12 +147,7 @@ export const InfoStep = (props: {
                       </Space>
                     ))}
                     <Form.Item>
-                      <Button
-                        type="dashed"
-                        onClick={() => add()}
-                        block
-                        icon={<PlusOutlined />}
-                      >
+                      <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
                         Add attribute
                       </Button>
                     </Form.Item>
@@ -179,12 +159,7 @@ export const InfoStep = (props: {
         </Row>
 
         <Form.Item>
-          <Button
-            className="metaplex-fullwidth"
-            type="primary"
-            size="large"
-            htmlType="submit"
-          >
+          <Button className="metaplex-fullwidth" type="primary" size="large" htmlType="submit">
             Continue to royalties
           </Button>
         </Form.Item>

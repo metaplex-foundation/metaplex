@@ -13,10 +13,7 @@ export const maybeCDN = (uri: string) => {
 
 export const maybeImageCDN = (imageUri: string) => {
   if (IPFS_IMAGE_CDN && imageUri.includes('ipfs.dweb')) {
-    const res = imageUri.replace(
-      /https:\/\/(.*).ipfs.dweb.*$/g,
-      `${IPFS_IMAGE_CDN}/$1`,
-    );
+    const res = imageUri.replace(/https:\/\/(.*).ipfs.dweb.*$/g, `${IPFS_IMAGE_CDN}/$1`);
 
     return res;
   } else {

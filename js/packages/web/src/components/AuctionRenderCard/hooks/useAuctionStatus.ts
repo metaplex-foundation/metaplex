@@ -49,15 +49,12 @@ export const getHumanStatus = (status: AuctionStatus): string => {
   }
 };
 
-export const useAuctionStatus = (
-  auctionView: AuctionView,
-): AuctionStatusLabels => {
+export const useAuctionStatus = (auctionView: AuctionView): AuctionStatusLabels => {
   const bids = useBidsForAuction(auctionView.auction.pubkey);
   const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
 
-  const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
+  const participationFixedPrice = auctionView.auctionManager.participationConfig?.fixedPrice || 0;
   const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0));
   const priceFloor =
     auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
@@ -66,7 +63,7 @@ export const useAuctionStatus = (
 
   let amount: number = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
-    mintInfo,
+    mintInfo
   );
 
   const countdown = auctionView.auction.info.timeToEnd();
@@ -74,12 +71,9 @@ export const useAuctionStatus = (
   let isLive = auctionView.state !== AuctionViewState.Ended;
 
   if (auctionView.isInstantSale) {
-    const soldOut =
-      bids.length === auctionView.auctionManager.numWinners.toNumber();
+    const soldOut = bids.length === auctionView.auctionManager.numWinners.toNumber();
 
-    amount = fromLamports(
-      auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber() || 0,
-    );
+    amount = fromLamports(auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber() || 0);
 
     return {
       status: { isInstantSale: true, isLive, soldOut },
