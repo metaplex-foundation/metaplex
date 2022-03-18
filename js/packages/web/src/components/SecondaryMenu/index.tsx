@@ -20,7 +20,7 @@ export const SecondaryMenu = () => {
         <>
           <HowToBuyModal buttonType="text" />
           <Cog buttonType="text" />
-          <WalletMultiButton className="!bg-primary hover:!bg-primary-hover" />
+          <WalletMultiButton className="!bg-primary hover:!bg-primary-hover !text-color-text-accent" />
         </>
       )}
     </div>
