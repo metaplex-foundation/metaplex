@@ -29,10 +29,7 @@ export const ArtworksView = () => {
   const pubkey = wallet.publicKey?.toBase58() || '';
 
   const canCreate = useMemo(() => {
-    return (
-      store?.info?.public ||
-      whitelistedCreatorsByCreator[pubkey]?.info?.activated
-    );
+    return store?.info?.public || whitelistedCreatorsByCreator[pubkey]?.info?.activated;
   }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   useEffect(() => {
@@ -41,7 +38,7 @@ export const ArtworksView = () => {
       const metadataState = await loadMetadataForUsers(
         connection,
         userAccounts,
-        whitelistedCreatorsByCreator,
+        whitelistedCreatorsByCreator
       );
 
       patchState(metadataState);
@@ -94,7 +91,7 @@ export const ArtworksView = () => {
         <Col span={24}>
           {ownedMetadata.length ? (
             <MetaplexMasonry>
-              {ownedMetadata.map(m => {
+              {ownedMetadata.map((m) => {
                 const id = m.metadata.pubkey;
                 const creators = m.metadata.info.data.creators;
                 let address: string = '';
@@ -120,20 +117,14 @@ export const ArtworksView = () => {
               <div className="text-center text-color-text">
                 <h3 className="mt-2 text-2xl font-medium ">No NFTs detected</h3>
                 <p className="mt-1 text-sm opacity-75">
-                  NFTs created with the same wallet that created this store will
-                  show up here, as well as any bought from the store.
+                  NFTs created with the same wallet that created this store will show up here, as
+                  well as any bought from the store.
                 </p>
                 {canCreate && (
                   <>
-                    <p className="mt-1 text-sm opacity-75">
-                      Get started by minting some NFTs.
-                    </p>
+                    <p className="mt-1 text-sm opacity-75">Get started by minting some NFTs.</p>
                     <div className="mt-6">
-                      <Button
-                        size="large"
-                        type="primary"
-                        onClick={() => setShowMintModal(true)}
-                      >
+                      <Button size="large" type="primary" onClick={() => setShowMintModal(true)}>
                         Mint NFTs
                       </Button>
                     </div>

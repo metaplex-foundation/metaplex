@@ -41,18 +41,12 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const isArtMasterEdition = art.type === ArtType.Master;
   const artMintTokenAccount = accountByMint.get(art.mint!);
   const isArtOwnedByUser =
-    ((accountByMint.has(art.mint!) &&
-      artMintTokenAccount?.info.amount.toNumber()) ||
-      0) > 0;
+    ((accountByMint.has(art.mint!) && artMintTokenAccount?.info.amount.toNumber()) || 0) > 0;
   const isMasterEditionV1 = artMintTokenAccount
-    ? decodeMasterEdition(artMintTokenAccount.account.data).key ===
-    MetadataKey.MasterEditionV1
+    ? decodeMasterEdition(artMintTokenAccount.account.data).key === MetadataKey.MasterEditionV1
     : false;
   const renderMintEdition =
-    isArtMasterEdition &&
-    isArtOwnedByUser &&
-    !isMasterEditionV1 &&
-    maxEditionsToMint !== 0;
+    isArtMasterEdition && isArtOwnedByUser && !isMasterEditionV1 && maxEditionsToMint !== 0;
 
   const mintingDestinationErr = useMemo(() => {
     if (!mintingDestination) return 'Required';
@@ -65,36 +59,30 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
     }
   }, [mintingDestination]);
 
-  const isMintingDisabled =
-    isLoading || editions < 1 || Boolean(mintingDestinationErr);
+  const isMintingDisabled = isLoading || editions < 1 || Boolean(mintingDestinationErr);
 
   const debouncedEditionsChangeHandler = useCallback(
-    debounce(val => {
+    debounce((val) => {
       setEditions(val < 1 ? 1 : val);
     }, 300),
-    [],
+    []
   );
 
   useEffect(() => {
     if (editions < 1) return;
 
     (async () => {
-      const mintRentExempt = await connection.getMinimumBalanceForRentExemption(
-        MintLayout.span,
+      const mintRentExempt = await connection.getMinimumBalanceForRentExemption(MintLayout.span);
+      const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
+        AccountLayout.span
       );
-      const accountRentExempt =
-        await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
-      const metadataRentExempt =
-        await connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN);
-      const editionRentExempt =
-        await connection.getMinimumBalanceForRentExemption(MAX_EDITION_LEN);
+      const metadataRentExempt = await connection.getMinimumBalanceForRentExemption(
+        MAX_METADATA_LEN
+      );
+      const editionRentExempt = await connection.getMinimumBalanceForRentExemption(MAX_EDITION_LEN);
 
       const cost =
-        ((mintRentExempt +
-          accountRentExempt +
-          metadataRentExempt +
-          editionRentExempt) *
-          editions) /
+        ((mintRentExempt + accountRentExempt + metadataRentExempt + editionRentExempt) * editions) /
         LAMPORTS_PER_SOL;
 
       setTotalCost(cost);
@@ -127,7 +115,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
         connection,
         artMintTokenAccount!,
         editions,
-        mintingDestination,
+        mintingDestination
       );
       onSuccessfulMint();
     } catch (e) {
@@ -141,11 +129,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
     <>
       {renderMintEdition && (
         <div>
-          <Button
-            type="primary"
-            size="large"
-            onClick={() => setShowMintModal(true)}
-          >
+          <Button type="primary" size="large" onClick={() => setShowMintModal(true)}>
             Mint
           </Button>
 
@@ -161,9 +145,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
             onOk={mint}
             onCancel={() => setShowMintModal(false)}
           >
-            <Form
-              layout="vertical"
-            >
+            <Form layout="vertical">
               <Form.Item
                 label={<h3>Mint to</h3>}
                 labelAlign="left"
@@ -174,7 +156,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
                 <Input
                   placeholder="Address to mint edition to"
                   value={mintingDestination}
-                  onChange={e => {
+                  onChange={(e) => {
                     setMintingDestination(e.target.value);
                   }}
                 />

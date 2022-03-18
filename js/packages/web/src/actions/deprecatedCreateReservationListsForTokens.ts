@@ -1,8 +1,5 @@
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
-import {
-  deprecatedCreateReservationList,
-  StringPublicKey,
-} from '@oyster/common';
+import { deprecatedCreateReservationList, StringPublicKey } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { SafetyDepositInstructionTemplate } from './addTokensToVault';
 import { WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
@@ -14,7 +11,7 @@ const BATCH_SIZE = 10;
 export async function deprecatedCreateReservationListForTokens(
   wallet: WalletContextState,
   auctionManager: StringPublicKey,
-  safetyDepositInstructionTemplates: SafetyDepositInstructionTemplate[],
+  safetyDepositInstructionTemplates: SafetyDepositInstructionTemplate[]
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
@@ -41,7 +38,7 @@ export async function deprecatedCreateReservationListForTokens(
         auctionManager,
         wallet.publicKey.toBase58(),
         wallet.publicKey.toBase58(),
-        currInstructions,
+        currInstructions
       );
 
     if (batchCounter === BATCH_SIZE) {

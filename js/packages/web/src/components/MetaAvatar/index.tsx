@@ -4,11 +4,7 @@ import { Artist } from '../../types';
 import { Identicon } from '@oyster/common';
 
 // TODO: remove size?
-const MetaAvatarItem = (props: {
-  creator: Artist;
-  size: number;
-  alt?: string;
-}) => {
+const MetaAvatarItem = (props: { creator: Artist; size: number; alt?: string }) => {
   const { creator, size, alt } = props;
   const [noImage, setNoImage] = useState(false);
   const image = creator?.image || '';
@@ -49,10 +45,7 @@ export const MetaAvatar = (props: {
   return <Avatar.Group>{controls || null}</Avatar.Group>;
 };
 
-export const MetaAvatarDetailed = (props: {
-  creators?: Artist[];
-  size?: number;
-}) => {
+export const MetaAvatarDetailed = (props: { creators?: Artist[]; size?: number }) => {
   const { creators } = props;
   const size = props.size || 32;
   if (!creators || creators.length === 0) {

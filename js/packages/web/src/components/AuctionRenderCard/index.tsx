@@ -21,13 +21,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const card = (
     <Card hoverable bordered={false} className="metaplex-round-corners">
       <Space direction="vertical" className="metaplex-fullwidth">
-        <ArtContent
-          square
-          backdrop="light"
-          preview={false}
-          pubkey={id}
-          allowMeshRender={false}
-        />
+        <ArtContent square backdrop="light" preview={false} pubkey={id} allowMeshRender={false} />
         <h3 className="metaplex-margin-top-4 metaplex-margin-bottom-2 metaplex-line-height-medium text-xl">
           {name}
         </h3>

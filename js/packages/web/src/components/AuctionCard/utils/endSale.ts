@@ -1,7 +1,4 @@
-import {
-  SmartInstructionSender,
-  WalletSigner,
-} from '@holaplex/solana-web3-tools';
+import { SmartInstructionSender, WalletSigner } from '@holaplex/solana-web3-tools';
 import {
   BidderMetadata,
   BidRedemptionTicket,
@@ -10,12 +7,7 @@ import {
   TokenAccount,
 } from '@oyster/common';
 import { WalletContextState } from '@solana/wallet-adapter-react';
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { claimUnusedPrizes } from '../../../actions/claimUnusedPrizes';
 import { AuctionView } from '../../../hooks';
 import { endAuction } from '../../../models/metaplex/endAuction';
@@ -45,7 +37,7 @@ export async function endSale({
   await endAuction(
     new PublicKey(vault.pubkey),
     new PublicKey(auctionManager.authority),
-    endAuctionInstructions,
+    endAuctionInstructions
   );
 
   const claimInstructions: TransactionInstruction[][] = [];
@@ -59,7 +51,7 @@ export async function endSale({
     bidRedemptions,
     prizeTrackingTickets,
     claimSigners,
-    claimInstructions,
+    claimInstructions
   );
 
   const instructions = [endAuctionInstructions, ...claimInstructions];
@@ -75,7 +67,7 @@ export async function endSale({
       instructions.map((ix, i) => ({
         instructions: ix,
         signers: signers[i],
-      })),
+      }))
     )
     .send();
 }

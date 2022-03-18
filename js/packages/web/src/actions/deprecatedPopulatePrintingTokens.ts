@@ -20,7 +20,7 @@ const BATCH_SIZE = 4;
 export async function deprecatedPopulatePrintingTokens(
   connection: Connection,
   wallet: WalletContextState,
-  safetyDepositConfigs: SafetyDepositInstructionTemplate[],
+  safetyDepositConfigs: SafetyDepositInstructionTemplate[]
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
@@ -42,9 +42,8 @@ export async function deprecatedPopulatePrintingTokens(
     if (nft.draft.masterEdition?.info.key != MetadataKey.MasterEditionV1) {
       continue;
     }
-    const printingMint = (
-      nft.draft.masterEdition as ParsedAccount<MasterEditionV1>
-    )?.info.printingMint;
+    const printingMint = (nft.draft.masterEdition as ParsedAccount<MasterEditionV1>)?.info
+      .printingMint;
     if (nft.box.tokenMint === printingMint && !nft.box.tokenAccount) {
       const holdingKey = (
         await findProgramAddress(
@@ -53,7 +52,7 @@ export async function deprecatedPopulatePrintingTokens(
             PROGRAM_IDS.token.toBuffer(),
             toPublicKey(printingMint).toBuffer(),
           ],
-          PROGRAM_IDS.associatedToken,
+          PROGRAM_IDS.associatedToken
         )
       )[0];
 
@@ -62,7 +61,7 @@ export async function deprecatedPopulatePrintingTokens(
         toPublicKey(holdingKey),
         wallet.publicKey,
         wallet.publicKey,
-        toPublicKey(printingMint),
+        toPublicKey(printingMint)
       );
       console.log('Making atas');
 
@@ -73,11 +72,8 @@ export async function deprecatedPopulatePrintingTokens(
       let balance = 0;
       try {
         balance =
-          (
-            await connection.getTokenAccountBalance(
-              toPublicKey(nft.box.tokenAccount),
-            )
-          ).value.uiAmount || 0;
+          (await connection.getTokenAccountBalance(toPublicKey(nft.box.tokenAccount))).value
+            .uiAmount || 0;
       } catch (e) {
         console.error(e);
       }
@@ -90,7 +86,7 @@ export async function deprecatedPopulatePrintingTokens(
           nft.draft.metadata.pubkey,
           nft.draft.masterEdition.pubkey,
           new BN(nft.box.amount.toNumber() - balance),
-          currInstructions,
+          currInstructions
         );
 
       batchCounter++;

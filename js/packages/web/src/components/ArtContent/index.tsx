@@ -21,9 +21,7 @@ const MeshArtContent = ({
   backdrop: string;
 }) => {
   const renderURL =
-    files && files.length > 0 && typeof files[0] === 'string'
-      ? files[0]
-      : animationUrl;
+    files && files.length > 0 && typeof files[0] === 'string' ? files[0] : animationUrl;
 
   const { isLoading } = useCachedImage(renderURL || '', true);
 
@@ -37,7 +35,6 @@ const MeshArtContent = ({
     </div>
   );
 };
-
 
 const CachedImageContent = ({
   uri,
@@ -74,26 +71,25 @@ const VideoArtContent = ({
   animationURL?: string;
   active?: boolean;
 }) => {
-
-
-  const content =
-      <video
-        className="metaplex-video-content"
-        playsInline={true}
-        autoPlay={true}
-        muted={true}
-        controls={true}
-        controlsList="nodownload"
-        loop={true}
-        poster={uri}
-      >
-        {animationURL && <source src={maybeCDN(animationURL)} type="video/mp4" />}
-        {(
-          files?.filter(f => !!f && typeof f !== 'string') as MetadataFile[]
-        )?.map((f: MetadataFile, i) => (
+  const content = (
+    <video
+      className="metaplex-video-content"
+      playsInline={true}
+      autoPlay={true}
+      muted={true}
+      controls={true}
+      controlsList="nodownload"
+      loop={true}
+      poster={uri}
+    >
+      {animationURL && <source src={maybeCDN(animationURL)} type="video/mp4" />}
+      {(files?.filter((f) => !!f && typeof f !== 'string') as MetadataFile[])?.map(
+        (f: MetadataFile, i) => (
           <source key={i} src={f.uri} type={f.type} />
-        ))}
-      </video>
+        )
+      )}
+    </video>
+  );
 
   return <div className="metaplex-video-content">{content}</div>;
 };
@@ -114,14 +110,10 @@ const HTMLContent = ({
   backdrop: string;
 }) => {
   if (!artView) {
-    return (
-      <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />
-    );
+    return <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />;
   }
   const htmlURL =
-    files && files.length > 0 && typeof files[0] === 'string'
-      ? files[0]
-      : animationUrl;
+    files && files.length > 0 && typeof files[0] === 'string' ? files[0] : animationUrl;
   return (
     <div className="metaplex-html-content">
       <iframe
@@ -177,20 +169,13 @@ export const ArtContent = ({
 
   const squareAspect = square || animationURL !== '';
 
-  const animationUrlExt = new URLSearchParams(
-    getLast(animationURL.split('?')),
-  ).get('ext');
+  const animationUrlExt = new URLSearchParams(getLast(animationURL.split('?'))).get('ext');
 
   let content: ReactElement;
 
   if (category === 'video' || category === 'audio') {
     content = (
-      <VideoArtContent
-        files={files}
-        uri={uri}
-        animationURL={animationURL}
-        active={active}
-      />
+      <VideoArtContent files={files} uri={uri} animationURL={animationURL} active={active} />
     );
   } else if (category === 'html' || animationUrlExt === 'html') {
     content = (
@@ -205,22 +190,13 @@ export const ArtContent = ({
     );
   } else if (
     allowMeshRender &&
-    (category === 'vr' ||
-      animationUrlExt === 'glb' ||
-      animationUrlExt === 'gltf')
+    (category === 'vr' || animationUrlExt === 'glb' || animationUrlExt === 'gltf')
   ) {
     content = (
-      <MeshArtContent
-        backdrop={backdrop}
-        uri={uri}
-        animationUrl={animationURL}
-        files={files}
-      />
+      <MeshArtContent backdrop={backdrop} uri={uri} animationUrl={animationURL} files={files} />
     );
   } else {
-    content = (
-      <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />
-    );
+    content = <CachedImageContent backdrop={backdrop} uri={uri} preview={preview} />;
   }
 
   return (

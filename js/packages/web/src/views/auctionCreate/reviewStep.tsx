@@ -29,21 +29,13 @@ export const ReviewStep = (props: {
       <Row justify="space-around">
         <Col span={6}>
           {item?.metadata.info && (
-            <ArtCard
-              pubkey={item.metadata.pubkey}
-              small={true}
-              hoverable={false}
-            />
+            <ArtCard pubkey={item.metadata.pubkey} small={true} hoverable={false} />
           )}
         </Col>
         <Col span={8}>
           <Statistic
             title="Copies"
-            value={
-              props.attributes.editions === undefined
-                ? 'Unique'
-                : props.attributes.editions
-            }
+            value={props.attributes.editions === undefined ? 'Unique' : props.attributes.editions}
           />
           <Statistic
             title={isFixedPrice ? 'Price' : 'Floor price'}
@@ -63,9 +55,7 @@ export const ReviewStep = (props: {
           title="Start date"
           value={
             props.attributes.startSaleTS
-              ? moment
-                  .unix(props.attributes.startSaleTS)
-                  .format('dddd, MMMM Do YYYY, h:mm a')
+              ? moment.unix(props.attributes.startSaleTS).format('dddd, MMMM Do YYYY, h:mm a')
               : 'Right after successfully published'
           }
         />
@@ -73,9 +63,7 @@ export const ReviewStep = (props: {
         {props.attributes.startListTS && (
           <Statistic
             title="Listing go live date"
-            value={moment
-              .unix(props.attributes.startListTS)
-              .format('dddd, MMMM Do YYYY, h:mm a')}
+            value={moment.unix(props.attributes.startListTS).format('dddd, MMMM Do YYYY, h:mm a')}
           />
         )}
         <Divider />

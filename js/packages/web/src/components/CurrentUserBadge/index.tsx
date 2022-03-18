@@ -9,17 +9,11 @@ import {
   useConnectionConfig,
   useNativeAccount,
   useWalletModal,
-  useWallet
+  useWallet,
 } from '@oyster/common';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Button, ButtonProps, Popover, Select, Space } from 'antd';
-import React, {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
 import { useMeta, useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
 import MintModal from '../MintModal';
@@ -31,10 +25,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
   const pubkey = publicKey?.toBase58() || '';
 
   const canCreate = useMemo(() => {
-    return (
-      store?.info?.public ||
-      whitelistedCreatorsByCreator[pubkey]?.info?.activated
-    );
+    return store?.info?.public || whitelistedCreatorsByCreator[pubkey]?.info?.activated;
   }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   return (
@@ -43,9 +34,9 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
         (props.mobile ? (
           <div>
             {canCreate && (
-                <Space direction="horizontal">
-                  <Button onClick={props.onClick}>Mint NFTs</Button>
-                </Space>
+              <Space direction="horizontal">
+                <Button onClick={props.onClick}>Mint NFTs</Button>
+              </Space>
             )}
           </div>
         ) : (
@@ -77,8 +68,7 @@ export const AddFundsModal = (props: {
     >
       <div>
         <p>
-          We partner with <b>FTX</b> to make it simple to start purchasing
-          digital collectibles.
+          We partner with <b>FTX</b> to make it simple to start purchasing digital collectibles.
         </p>
         <div>
           <span>Balance</span>
@@ -90,17 +80,14 @@ export const AddFundsModal = (props: {
             SOL
           </span>
         </div>
-        <p>
-          If you have not used FTX Pay before, it may take a few moments to get
-          set up.
-        </p>
+        <p>If you have not used FTX Pay before, it may take a few moments to get set up.</p>
         <Button onClick={() => props.setShowAddFundsModal(false)}>Close</Button>
         <Button
           onClick={() => {
             window.open(
               `https://ftx.com/pay/request?coin=SOL&address=${props.publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
               '_blank',
-              'resizable,width=680,height=860',
+              'resizable,width=680,height=860'
             );
           }}
         >
@@ -141,7 +128,7 @@ export const CurrentUserBadge = (props: {
   }
 
   const image = unknownWallet.adapter.icon ? (
-    <img className='wallet-icon' src={unknownWallet.adapter.icon} />
+    <img className="wallet-icon" src={unknownWallet.adapter.icon} />
   ) : (
     <Identicon address={publicKey?.toBase58()} size={22} />
   );
@@ -162,9 +149,7 @@ export const CurrentUserBadge = (props: {
                   <span>{formatUSD.format(balanceInUSD)}</span>
                 </Space>
                 <Space direction="horizontal">
-                  <Button onClick={() => setShowAddFundsModal(true)}>
-                    Add Funds
-                  </Button>
+                  <Button onClick={() => setShowAddFundsModal(true)}>Add Funds</Button>
                   <Button onClick={disconnect}>Disconnect</Button>
                 </Space>
                 <UserActions onClick={() => setShowMintModal(true)} />
@@ -176,12 +161,7 @@ export const CurrentUserBadge = (props: {
         <Button className="metaplex-button-appbar" type={props.buttonType}>
           <Space direction="horizontal">
             {props.showBalance && (
-              <span>
-                {formatNumber.format(
-                  (account?.lamports || 0) / LAMPORTS_PER_SOL,
-                )}{' '}
-                SOL
-              </span>
+              <span>{formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL</span>
             )}
             {image}
             {name && <span>{name}</span>}
@@ -202,15 +182,14 @@ export const CurrentUserBadge = (props: {
 export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
   const { endpoint, setEndpoint } = useConnectionConfig();
   const { setVisible } = useWalletModal();
-  const {wallet} = useWallet();
+  const { wallet } = useWallet();
   const open = useCallback(() => setVisible(true), [setVisible]);
 
-    function onNetworkChange(network: string) {
+  function onNetworkChange(network: string) {
     setEndpoint(network);
     setTimeout(() => window.location.reload(), 500);
   }
 
-  
   return (
     <Popover
       trigger="click"
@@ -225,9 +204,7 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
               </Select.Option>
             ))}
           </Select>
-          {wallet?.adapter.connected && (
-            <Button onClick={open}>Change wallet</Button>
-          )}
+          {wallet?.adapter.connected && <Button onClick={open}>Change wallet</Button>}
         </Space>
       }
     >
@@ -267,7 +244,7 @@ export const CurrentUserBadgeMobile = (props: {
   let image = <Identicon address={publicKey?.toBase58()} />;
 
   if (unknownWallet.adapter.icon) {
-    image = <img className='wallet-icon' src={unknownWallet.adapter.icon} />;
+    image = <img className="wallet-icon" src={unknownWallet.adapter.icon} />;
   }
 
   return (

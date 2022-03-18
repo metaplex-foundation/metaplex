@@ -21,7 +21,7 @@ export async function cacheAuctionIndexer(
   auctionManager: StringPublicKey,
   tokenMints: StringPublicKey[],
   storeIndexer: ParsedAccount<StoreIndexer>[],
-  skipCache?: boolean,
+  skipCache?: boolean
 ): Promise<{
   instructions: TransactionInstruction[][];
   signers: Keypair[][];
@@ -35,18 +35,9 @@ export async function cacheAuctionIndexer(
     auctionCache,
     instructions: createAuctionCacheInstructions,
     signers: createAuctionCacheSigners,
-  } = await createAuctionCache(
-    wallet,
-    vault,
-    auction,
-    auctionManager,
-    tokenMints,
-  );
+  } = await createAuctionCache(wallet, vault, auction, auctionManager, tokenMints);
 
-  const above =
-    storeIndexer.length == 0
-      ? undefined
-      : storeIndexer[0].info.auctionCaches[0];
+  const above = storeIndexer.length == 0 ? undefined : storeIndexer[0].info.auctionCaches[0];
 
   const storeIndexKey = await getStoreIndexer(0);
   await setStoreIndex(
@@ -57,7 +48,7 @@ export async function cacheAuctionIndexer(
     new BN(0),
     instructions,
     undefined,
-    above,
+    above
   );
 
   const { instructions: propagationInstructions, signers: propagationSigners } =
@@ -69,18 +60,14 @@ export async function cacheAuctionIndexer(
       instructions,
       ...propagationInstructions,
     ],
-    signers: [
-      ...(skipCache ? [] : createAuctionCacheSigners),
-      [],
-      ...propagationSigners,
-    ],
+    signers: [...(skipCache ? [] : createAuctionCacheSigners), [], ...propagationSigners],
   };
 }
 
 const INDEX_TRANSACTION_SIZE = 10;
 async function propagateIndex(
   wallet: WalletContextState,
-  storeIndexer: ParsedAccount<StoreIndexer>[],
+  storeIndexer: ParsedAccount<StoreIndexer>[]
 ): Promise<{ instructions: TransactionInstruction[][]; signers: Keypair[][] }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -94,14 +81,9 @@ async function propagateIndex(
 
   let currPage: ParsedAccount<StoreIndexer> | null = storeIndexer[0];
   let lastPage: ParsedAccount<StoreIndexer> | null = null;
-  while (
-    currPage &&
-    currPage.info.auctionCaches.length == MAX_INDEXED_ELEMENTS
-  ) {
-    const cacheLeavingThePage =
-      currPage.info.auctionCaches[currPage.info.auctionCaches.length - 1];
-    const nextPage: ParsedAccount<StoreIndexer> =
-      storeIndexer[currPage.info.page.toNumber() + 1];
+  while (currPage && currPage.info.auctionCaches.length == MAX_INDEXED_ELEMENTS) {
+    const cacheLeavingThePage = currPage.info.auctionCaches[currPage.info.auctionCaches.length - 1];
+    const nextPage: ParsedAccount<StoreIndexer> = storeIndexer[currPage.info.page.toNumber() + 1];
     if (nextPage) {
       lastPage = currPage;
       currPage = nextPage;
@@ -123,7 +105,7 @@ async function propagateIndex(
       new BN(0),
       indexInstructions,
       undefined,
-      above,
+      above
     );
 
     if (indexInstructions.length >= INDEX_TRANSACTION_SIZE) {
@@ -134,10 +116,7 @@ async function propagateIndex(
     }
   }
 
-  if (
-    indexInstructions.length < INDEX_TRANSACTION_SIZE &&
-    indexInstructions.length > 0
-  ) {
+  if (indexInstructions.length < INDEX_TRANSACTION_SIZE && indexInstructions.length > 0) {
     currSignerBatch.push(indexSigners);
     currInstrBatch.push(indexInstructions);
   }
@@ -155,7 +134,7 @@ async function createAuctionCache(
   vault: StringPublicKey,
   auction: StringPublicKey,
   auctionManager: StringPublicKey,
-  tokenMints: StringPublicKey[],
+  tokenMints: StringPublicKey[]
 ): Promise<{
   auctionCache: StringPublicKey;
   instructions: TransactionInstruction[][];
@@ -173,10 +152,7 @@ async function createAuctionCache(
   const auctionCache = await getAuctionCache(auction);
 
   for (let i = 0; i < tokenMints.length; i++) {
-    const safetyDeposit = await getSafetyDepositBoxAddress(
-      vault,
-      tokenMints[i],
-    );
+    const safetyDeposit = await getSafetyDepositBoxAddress(vault, tokenMints[i]);
 
     await setAuctionCache(
       auctionCache,
@@ -185,7 +161,7 @@ async function createAuctionCache(
       safetyDeposit,
       auctionManager,
       new BN(0),
-      cacheInstructions,
+      cacheInstructions
     );
 
     if (cacheInstructions.length >= TRANSACTION_SIZE) {
@@ -196,10 +172,7 @@ async function createAuctionCache(
     }
   }
 
-  if (
-    cacheInstructions.length < TRANSACTION_SIZE &&
-    cacheInstructions.length > 0
-  ) {
+  if (cacheInstructions.length < TRANSACTION_SIZE && cacheInstructions.length > 0) {
     currSignerBatch.push(cacheSigners);
     currInstrBatch.push(cacheInstructions);
   }

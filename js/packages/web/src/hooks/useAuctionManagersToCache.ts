@@ -16,30 +16,27 @@ interface AuctionCacheStatus {
 }
 
 export const useAuctionManagersToCache = (): AuctionCacheStatus => {
-  const { auctionManagersByAuction, auctions, auctionCaches, storeIndexer } =
-    useMeta();
+  const { auctionManagersByAuction, auctions, auctionCaches, storeIndexer } = useMeta();
   const { storeAddress } = useStore();
 
   const auctionManagersToCache = useMemo(() => {
     let auctionManagersToCache = Object.values(auctionManagersByAuction)
       .filter(
-        a =>
+        (a) =>
           a.info.store == storeAddress &&
           a.info.key === MetaplexKey.AuctionManagerV2 &&
-          auctions[a.info.auction],
+          auctions[a.info.auction]
       )
       .sort((a, b) =>
         (auctions[b.info.auction].info.endedAt || new BN(Date.now() / 1000))
-          .sub(
-            auctions[a.info.auction].info.endedAt || new BN(Date.now() / 1000),
-          )
-          .toNumber(),
+          .sub(auctions[a.info.auction].info.endedAt || new BN(Date.now() / 1000))
+          .toNumber()
       );
 
     const indexedInStoreIndexer: Record<string, boolean | undefined> = {};
 
-    storeIndexer.forEach(s => {
-      s.info.auctionCaches.forEach(a => (indexedInStoreIndexer[a] = true));
+    storeIndexer.forEach((s) => {
+      s.info.auctionCaches.forEach((a) => (indexedInStoreIndexer[a] = true));
     });
 
     const alreadyIndexed = Object.values(auctionCaches).reduce((hash, val) => {
@@ -47,9 +44,7 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
 
       return hash;
     }, {} as Record<string, boolean | undefined>);
-    auctionManagersToCache = auctionManagersToCache.filter(
-      a => !alreadyIndexed[a.pubkey],
-    );
+    auctionManagersToCache = auctionManagersToCache.filter((a) => !alreadyIndexed[a.pubkey]);
 
     return auctionManagersToCache;
   }, [auctionManagersByAuction, auctions, auctionCaches, storeIndexer]);
@@ -71,8 +66,7 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
 
   const auctionManagerTotal = useMemo(() => {
     return Object.values(auctionManagersByAuction).filter(
-      ({ info: { store, key } }) =>
-        store === storeAddress && key === MetaplexKey.AuctionManagerV2,
+      ({ info: { store, key } }) => store === storeAddress && key === MetaplexKey.AuctionManagerV2
     ).length;
   }, [auctionManagersToCache, storeAddress]);
 

@@ -1,10 +1,4 @@
-import React, {
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import React, { ReactNode, useContext, useEffect, useMemo, useRef } from 'react';
 import confetti from 'canvas-confetti';
 
 export interface ConfettiContextState {
@@ -15,11 +9,7 @@ const ConfettiContext = React.createContext<ConfettiContextState>({
   dropConfetti: () => {},
 });
 
-export const ConfettiProvider = ({
-  children = null,
-}: {
-  children: ReactNode;
-}) => {
+export const ConfettiProvider = ({ children = null }: { children: ReactNode }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const confettiRef = useRef<confetti.CreateTypes>();
 
@@ -40,7 +30,7 @@ export const ConfettiProvider = ({
           });
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {

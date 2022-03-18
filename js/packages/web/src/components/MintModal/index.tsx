@@ -3,11 +3,7 @@ import { Modal } from 'antd';
 import { BulkMinter } from '@holaplex/ui';
 import styled from 'styled-components';
 import { holaSignMetadata } from './sign-meta';
-import {
-  ENDPOINTS,
-  useLocalStorageState,
-  useStore,
-} from '../../../../common/dist/lib';
+import { ENDPOINTS, useLocalStorageState, useStore } from '../../../../common/dist/lib';
 import { useWallet } from '@oyster/common';
 import { Wallet } from '@metaplex/js';
 import { Connection } from '@solana/web3.js';
@@ -48,10 +44,7 @@ const MintModal = ({ show, onClose }: MintModalProps) => {
   const { track } = useAnalytics();
   const wallet = useWallet();
   const navigate = useNavigate();
-  const [savedEndpoint] = useLocalStorageState(
-    'connectionEndpoint',
-    ENDPOINTS[0].endpoint,
-  );
+  const [savedEndpoint] = useLocalStorageState('connectionEndpoint', ENDPOINTS[0].endpoint);
 
   // how can we get rid of this and just use the context?
   const connection = new Connection(savedEndpoint);

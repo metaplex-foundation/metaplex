@@ -2,17 +2,14 @@ import { ButtonProps } from 'antd';
 import React from 'react';
 import { LABELS } from '../../constants';
 import { InstructionsModal } from '../InstructionsModal';
-import {WalletMultiButton} from '@oyster/common';
+import { WalletMultiButton } from '@oyster/common';
 
 interface HowToBuyModalProps {
   onClick?: () => void;
   buttonType?: ButtonProps['type'];
 }
 
-export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
-  onClick,
-  buttonType,
-}) => {
+export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({ onClick, buttonType }) => {
   return (
     <InstructionsModal
       buttonType={buttonType}

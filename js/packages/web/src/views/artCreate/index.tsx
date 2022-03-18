@@ -37,9 +37,7 @@ export const ArtCreateView = () => {
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [isMinting, setMinting] = useState<boolean>(false);
-  const [nft, setNft] = useState<
-    { metadataAccount: StringPublicKey } | undefined
-  >(undefined);
+  const [nft, setNft] = useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File>();
   const [mainFile, setMainFile] = useState<File>();
@@ -67,7 +65,7 @@ export const ArtCreateView = () => {
       navigate(`/nfts/new/${_step.toString()}`);
       if (_step === 0) setStepsVisible(true);
     },
-    [history],
+    [history]
   );
 
   useEffect(() => {
@@ -106,7 +104,7 @@ export const ArtCreateView = () => {
         setNFTcreateProgress,
         attributes.properties?.maxSupply,
         coverFile,
-        mainFile,
+        mainFile
       );
 
       if (_nft) setNft(_nft);
@@ -136,11 +134,7 @@ export const ArtCreateView = () => {
       <Row>
         {stepsVisible && (
           <Col span={24} md={4}>
-            <Steps
-              progressDot
-              direction={width < 768 ? 'horizontal' : 'vertical'}
-              current={step}
-            >
+            <Steps progressDot direction={width < 768 ? 'horizontal' : 'vertical'} current={step}>
               <Step title="Category" />
               <Step title="Upload" />
               <Step title="Info" />
@@ -150,10 +144,7 @@ export const ArtCreateView = () => {
           </Col>
         )}
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
-          <Space
-            className="metaplex-fullwidth metaplex-space-align-stretch"
-            direction="vertical"
-          >
+          <Space className="metaplex-fullwidth metaplex-space-align-stretch" direction="vertical">
             {step === 0 && (
               <CategoryStep
                 confirm={(category: MetadataCategory) => {
@@ -226,10 +217,7 @@ export const ArtCreateView = () => {
   );
 };
 
-export const useArtworkFiles = (
-  files: File[],
-  attributes: IMetadataExtension,
-) => {
+export const useArtworkFiles = (files: File[], attributes: IMetadataExtension) => {
   const [data, setData] = useState<{ image: string; animation_url: string }>({
     image: '',
     animation_url: '',
@@ -237,7 +225,7 @@ export const useArtworkFiles = (
 
   useEffect(() => {
     if (attributes.image) {
-      const file = files.find(f => f.name === attributes.image);
+      const file = files.find((f) => f.name === attributes.image);
       if (file) {
         const reader = new FileReader();
         reader.onload = function (event) {
@@ -253,7 +241,7 @@ export const useArtworkFiles = (
     }
 
     if (attributes.animation_url) {
-      const file = files.find(f => f.name === attributes.animation_url);
+      const file = files.find((f) => f.name === attributes.animation_url);
       if (file) {
         const reader = new FileReader();
         reader.onload = function (event) {

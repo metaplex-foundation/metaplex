@@ -15,8 +15,8 @@ export const TierTableStep = (props: {
   confirm: () => void;
 }) => {
   const newImmutableTiers = (tiers: Tier[]) => {
-    return tiers.map(wc => ({
-      items: [...wc.items.map(it => ({ ...it }))],
+    return tiers.map((wc) => ({
+      items: [...wc.items.map((it) => ({ ...it }))],
       winningSpots: [...wc.winningSpots],
     }));
   };
@@ -30,10 +30,7 @@ export const TierTableStep = (props: {
     <Space className="metaplex-fullwidth" direction="vertical">
       <div>
         <h2>Add Winning Tiers and Their Prizes</h2>
-        <p>
-          Each row represents a tier. You can choose which winning spots get
-          which tiers.
-        </p>
+        <p>Each row represents a tier. You can choose which winning spots get which tiers.</p>
       </div>
       {props.attributes.tiers.map((wcg, configIndex) => (
         <Space key={configIndex} direction="horizontal" align="center">
@@ -41,10 +38,10 @@ export const TierTableStep = (props: {
 
           <Checkbox.Group
             options={options}
-            onChange={value => {
+            onChange={(value) => {
               const newTiers = newImmutableTiers(props.attributes.tiers);
               const myNewTier = newTiers[configIndex];
-              myNewTier.winningSpots = value.map(i => Number(i.valueOf()));
+              myNewTier.winningSpots = value.map((i) => Number(i.valueOf()));
 
               props.setAttributes({
                 ...props.attributes,
@@ -64,53 +61,41 @@ export const TierTableStep = (props: {
                       ? [props.attributes.items[i.safetyDepositBoxIndex]]
                       : []
                   }
-                  setSelected={items => {
-                    const newItems = [
-                      ...props.attributes.items.map(it => ({ ...it })),
-                    ];
+                  setSelected={(items) => {
+                    const newItems = [...props.attributes.items.map((it) => ({ ...it }))];
 
                     const newTiers = newImmutableTiers(props.attributes.tiers);
                     if (items[0]) {
                       const existing = props.attributes.items.find(
-                        it => it.metadata.pubkey === items[0].metadata.pubkey,
+                        (it) => it.metadata.pubkey === items[0].metadata.pubkey
                       );
                       if (!existing) newItems.push(items[0]);
                       const index = newItems.findIndex(
-                        it => it.metadata.pubkey === items[0].metadata.pubkey,
+                        (it) => it.metadata.pubkey === items[0].metadata.pubkey
                       );
 
                       const myNewTier = newTiers[configIndex].items[itemIndex];
                       myNewTier.safetyDepositBoxIndex = index;
                       if (
                         items[0].masterEdition &&
-                        items[0].masterEdition.info.key ==
-                          MetadataKey.MasterEditionV1
+                        items[0].masterEdition.info.key == MetadataKey.MasterEditionV1
                       ) {
-                        myNewTier.winningConfigType =
-                          WinningConfigType.PrintingV1;
+                        myNewTier.winningConfigType = WinningConfigType.PrintingV1;
                       } else if (
                         items[0].masterEdition &&
-                        items[0].masterEdition.info.key ==
-                          MetadataKey.MasterEditionV2
+                        items[0].masterEdition.info.key == MetadataKey.MasterEditionV2
                       ) {
-                        myNewTier.winningConfigType =
-                          WinningConfigType.PrintingV2;
+                        myNewTier.winningConfigType = WinningConfigType.PrintingV2;
                       } else {
-                        myNewTier.winningConfigType =
-                          WinningConfigType.TokenOnlyTransfer;
+                        myNewTier.winningConfigType = WinningConfigType.TokenOnlyTransfer;
                       }
                       myNewTier.amount = 1;
                     } else if (i.safetyDepositBoxIndex !== undefined) {
                       const myNewTier = newTiers[configIndex];
                       myNewTier.items.splice(itemIndex, 1);
-                      if (myNewTier.items.length === 0)
-                        newTiers.splice(configIndex, 1);
-                      const othersWithSameItem = newTiers.find(c =>
-                        c.items.find(
-                          it =>
-                            it.safetyDepositBoxIndex ===
-                            i.safetyDepositBoxIndex,
-                        ),
+                      if (myNewTier.items.length === 0) newTiers.splice(configIndex, 1);
+                      const othersWithSameItem = newTiers.find((c) =>
+                        c.items.find((it) => it.safetyDepositBoxIndex === i.safetyDepositBoxIndex)
                       );
 
                       if (!othersWithSameItem) {
@@ -119,11 +104,10 @@ export const TierTableStep = (props: {
                           j < props.attributes.items.length;
                           j++
                         ) {
-                          newTiers.forEach(c =>
-                            c.items.forEach(it => {
-                              if (it.safetyDepositBoxIndex === j)
-                                it.safetyDepositBoxIndex--;
-                            }),
+                          newTiers.forEach((c) =>
+                            c.items.forEach((it) => {
+                              if (it.safetyDepositBoxIndex === j) it.safetyDepositBoxIndex--;
+                            })
                           );
                         }
                         newItems.splice(i.safetyDepositBoxIndex, 1);
@@ -145,22 +129,17 @@ export const TierTableStep = (props: {
                   <>
                     <Select
                       defaultValue={i.winningConfigType}
-                      onChange={value => {
-                        const newTiers = newImmutableTiers(
-                          props.attributes.tiers,
-                        );
+                      onChange={(value) => {
+                        const newTiers = newImmutableTiers(props.attributes.tiers);
 
-                        const myNewTier =
-                          newTiers[configIndex].items[itemIndex];
+                        const myNewTier = newTiers[configIndex].items[itemIndex];
 
                         // Legacy hack...
                         if (
                           value == WinningConfigType.PrintingV2 &&
                           myNewTier.safetyDepositBoxIndex &&
-                          props.attributes.items[
-                            myNewTier.safetyDepositBoxIndex
-                          ].masterEdition?.info.key ==
-                            MetadataKey.MasterEditionV1
+                          props.attributes.items[myNewTier.safetyDepositBoxIndex].masterEdition
+                            ?.info.key == MetadataKey.MasterEditionV1
                         ) {
                           value = WinningConfigType.PrintingV1;
                         }
@@ -177,37 +156,27 @@ export const TierTableStep = (props: {
                       <Option value={WinningConfigType.TokenOnlyTransfer}>
                         Token Only Transfer
                       </Option>
-                      <Option value={WinningConfigType.PrintingV2}>
-                        Printing V2
-                      </Option>
+                      <Option value={WinningConfigType.PrintingV2}>Printing V2</Option>
 
-                      <Option value={WinningConfigType.PrintingV1}>
-                        Printing V1
-                      </Option>
+                      <Option value={WinningConfigType.PrintingV1}>Printing V1</Option>
                     </Select>
 
                     {(i.winningConfigType === WinningConfigType.PrintingV1 ||
                       i.winningConfigType === WinningConfigType.PrintingV2) && (
                       <label>
                         <span>
-                          How many copies do you want to create for each winner?
-                          If you put 2, then each winner will get 2 copies.
+                          How many copies do you want to create for each winner? If you put 2, then
+                          each winner will get 2 copies.
                         </span>
-                        <span>
-                          Each copy will be given unique edition number e.g. 1
-                          of 30
-                        </span>
+                        <span>Each copy will be given unique edition number e.g. 1 of 30</span>
                         <Input
                           autoFocus
                           placeholder="Enter number of copies sold"
                           allowClear
-                          onChange={info => {
-                            const newTiers = newImmutableTiers(
-                              props.attributes.tiers,
-                            );
+                          onChange={(info) => {
+                            const newTiers = newImmutableTiers(props.attributes.tiers);
 
-                            const myNewTier =
-                              newTiers[configIndex].items[itemIndex];
+                            const myNewTier = newTiers[configIndex].items[itemIndex];
                             myNewTier.amount = parseInt(info.target.value);
                             props.setAttributes({
                               ...props.attributes,
@@ -256,12 +225,7 @@ export const TierTableStep = (props: {
         <PlusCircleOutlined />
       </Button>
 
-      <Button
-        className="metaplex-fullwidth"
-        type="primary"
-        size="large"
-        onClick={props.confirm}
-      >
+      <Button className="metaplex-fullwidth" type="primary" size="large" onClick={props.confirm}>
         Continue to Review
       </Button>
     </Space>

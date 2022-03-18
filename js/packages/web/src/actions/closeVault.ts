@@ -2,10 +2,7 @@ import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { StringPublicKey, toPublicKey } from '@oyster/common';
 import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
-import {
-  activateVault,
-  combineVault,
-} from '@oyster/common/dist/lib/actions/vault';
+import { activateVault, combineVault } from '@oyster/common/dist/lib/actions/vault';
 import { approve } from '@oyster/common/dist/lib/models/account';
 
 import { AccountLayout } from '@solana/spl-token';
@@ -22,16 +19,14 @@ export async function closeVault(
   fractionTreasury: StringPublicKey,
   redeemTreasury: StringPublicKey,
   priceMint: StringPublicKey,
-  externalPriceAccount: StringPublicKey,
+  externalPriceAccount: StringPublicKey
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
   const signers: Keypair[] = [];
   const instructions: TransactionInstruction[] = [];
 
@@ -41,7 +36,7 @@ export async function closeVault(
     fractionMint,
     fractionTreasury,
     wallet.publicKey.toBase58(),
-    instructions,
+    instructions
   );
 
   const outstandingShareAccount = createTokenAccount(
@@ -50,7 +45,7 @@ export async function closeVault(
     accountRentExempt,
     toPublicKey(fractionMint),
     wallet.publicKey,
-    signers,
+    signers
   );
 
   const payingTokenAccount = createTokenAccount(
@@ -59,7 +54,7 @@ export async function closeVault(
     accountRentExempt,
     toPublicKey(priceMint),
     wallet.publicKey,
-    signers,
+    signers
   );
 
   const transferAuthority = Keypair.generate();
@@ -74,7 +69,7 @@ export async function closeVault(
     0,
     false,
     undefined,
-    transferAuthority,
+    transferAuthority
   );
 
   approve(
@@ -85,7 +80,7 @@ export async function closeVault(
     0,
     false,
     undefined,
-    transferAuthority,
+    transferAuthority
   );
 
   signers.push(transferAuthority);
@@ -101,7 +96,7 @@ export async function closeVault(
     wallet.publicKey.toBase58(),
     transferAuthority.publicKey.toBase58(),
     externalPriceAccount,
-    instructions,
+    instructions
   );
 
   return { instructions, signers };

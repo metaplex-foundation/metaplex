@@ -29,7 +29,7 @@ function DebounceSelect<ValueType extends SelectValue = SelectValue>({
       setOptions([]);
       setFetching(true);
 
-      fetchOptions(value).then(newOptions => {
+      fetchOptions(value).then((newOptions) => {
         if (fetchId !== fetchRef.current) {
           // for fetch callback order
           return;
@@ -78,15 +78,15 @@ export const UserSearch = (props: {
       placeholder="Select creator"
       fetchOptions={async () => {
         const items = Object.values(whitelistedCreatorsByCreator)
-          .filter(c => c.info.activated)
-          .map(a => ({
+          .filter((c) => c.info.activated)
+          .map((a) => ({
             label: a.info.name || shortenAddress(a.info.address),
             value: a.info.address,
           }));
 
         return items;
       }}
-      onChange={newValue => {
+      onChange={(newValue) => {
         props.setCreators(newValue);
         setValue(newValue);
       }}

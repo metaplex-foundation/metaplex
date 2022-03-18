@@ -11,8 +11,7 @@ const where = <T extends { clone: () => T }>(t: T, by: (t: T) => void) => {
 // Linear interpolation between a and b by t.
 const lerp = (a: number, b: number, t: number) => a + t * (b - a);
 const rlerp = (a: number, b: number, x: number) => (x - a) / (b - a);
-const lerpVec = <T extends Vector3>(a: T, b: T, t: number): T =>
-  a.clone().lerp(b, t);
+const lerpVec = <T extends Vector3>(a: T, b: T, t: number): T => a.clone().lerp(b, t);
 
 // Bézier and inverse Bézier
 const bezier = (c1: number, c2: number, t: number) => {
@@ -32,8 +31,7 @@ const rbezier = (c1: number, c2: number, x: number) => {
   }
   return t;
 };
-const bezier2 = (c1: Vector2, c2: Vector2, x: number) =>
-  bezier(c1.y, c2.y, rbezier(c1.x, c2.x, x));
+const bezier2 = (c1: Vector2, c2: Vector2, x: number) => bezier(c1.y, c2.y, rbezier(c1.x, c2.x, x));
 const rbezier2 = (c1: Vector2, c2: Vector2, y: number) =>
   bezier(c1.x, c2.x, rbezier(c1.y, c2.y, y));
 
@@ -74,7 +72,7 @@ const oklab = (srgb: Color): Lab => {
   return new Lab(
     0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
     1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
-    0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
+    0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_
   );
 };
 
@@ -90,7 +88,7 @@ const unOklab = (c: Lab): Color => {
   return new Color(
     +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s
   ).convertLinearToSRGB();
 };
 
@@ -126,50 +124,40 @@ const LIGHTNESS_AMT = 0.045;
 const tweakLightness = (clr: Lab, by: (lPrime: number) => number) =>
   where(
     clr,
-    c =>
+    (c) =>
       (c.l = lerp(
         BLACK_L,
         WHITE_L,
         bezier2(
           LIGHTNESS_C1,
           LIGHTNESS_C2,
-          by(
-            rbezier2(LIGHTNESS_C1, LIGHTNESS_C2, rlerp(BLACK_L, WHITE_L, c.l)),
-          ),
-        ),
-      )),
+          by(rbezier2(LIGHTNESS_C1, LIGHTNESS_C2, rlerp(BLACK_L, WHITE_L, c.l)))
+        )
+      ))
   );
 
 /** Whether dark text or light text would work better against a background by the WCAG standard */
-const isLight = (clr: Lab) =>
-  contrastRatio(BLACK_LAB, clr) > contrastRatio(WHITE_LAB, clr);
+const isLight = (clr: Lab) => contrastRatio(BLACK_LAB, clr) > contrastRatio(WHITE_LAB, clr);
 
 /** Generate a lighter color */
 const lighter = (clr: Lab, by: number) =>
-  tweakLightness(clr, l => (l = lerp(l, 1, by * LIGHTNESS_AMT)));
+  tweakLightness(clr, (l) => (l = lerp(l, 1, by * LIGHTNESS_AMT)));
 
 /** Generate a darker color */
 const darker = (clr: Lab, by: number) =>
-  tweakLightness(clr, l => (l = lerp(l, 0, by * LIGHTNESS_AMT)));
+  tweakLightness(clr, (l) => (l = lerp(l, 0, by * LIGHTNESS_AMT)));
 
 /** Generate a color further from the given background color */
-const bolder = (clr: Lab, by: number) =>
-  isLight(clr) ? darker(clr, by) : lighter(clr, by);
+const bolder = (clr: Lab, by: number) => (isLight(clr) ? darker(clr, by) : lighter(clr, by));
 
 /** Generate a color closer to the given background color */
-const fainter = (clr: Lab, by: number) =>
-  isLight(clr) ? lighter(clr, by) : darker(clr, by);
+const fainter = (clr: Lab, by: number) => (isLight(clr) ? lighter(clr, by) : darker(clr, by));
 
 /** Generate a suitable text color from an intended background color */
-const textColor = (clr: Lab) =>
-  lerpVec(clr, isLight(clr) ? BLACK_LAB : WHITE_LAB, 0.85);
+const textColor = (clr: Lab) => lerpVec(clr, isLight(clr) ? BLACK_LAB : WHITE_LAB, 0.85);
 
 /** Apply the relevant CSS variables for a storefront theme */
-export const applyTheme = (
-  theme: StorefrontTheme,
-  vars: CSSStyleDeclaration,
-  head: Node,
-) => {
+export const applyTheme = (theme: StorefrontTheme, vars: CSSStyleDeclaration, head: Node) => {
   applyThemeColors(theme.color, vars);
   return applyThemeFonts(theme.font, vars, head);
 };
@@ -177,7 +165,7 @@ export const applyTheme = (
 /** Apply the colors from a storefront theme */
 const applyThemeColors = (
   { background, primary }: StorefrontTheme['color'],
-  vars: CSSStyleDeclaration,
+  vars: CSSStyleDeclaration
 ) => {
   const base = Object.freeze(new Color(background));
   const accent = Object.freeze(new Color(primary));
@@ -220,18 +208,15 @@ const FONT_STACKS: Record<string, string[] | undefined> = {
   Domine: ['serif'],
 };
 
-const fontStack = (font: string) => [
-  font,
-  ...(FONT_STACKS[font] ?? ['sans-serif']),
-];
+const fontStack = (font: string) => [font, ...(FONT_STACKS[font] ?? ['sans-serif'])];
 
 const formatFontStack = (stack: string[]) =>
-  stack.map(s => (/\s/.test(s) ? `'${s.replace(/'/g, "\\'")}'` : s)).join(', ');
+  stack.map((s) => (/\s/.test(s) ? `'${s.replace(/'/g, "\\'")}'` : s)).join(', ');
 
 const applyThemeFonts = (
   { title, text }: StorefrontTheme['font'],
   vars: CSSStyleDeclaration,
-  head: Node,
+  head: Node
 ) => {
   const titleStack = fontStack(title);
   const textStack = fontStack(text);
@@ -240,12 +225,9 @@ const applyThemeFonts = (
   vars.setProperty('--family-text', formatFontStack(textStack));
 
   const link =
-    (document.getElementById(FONTS_ID) as HTMLLinkElement) ??
-    document.createElement('link');
+    (document.getElementById(FONTS_ID) as HTMLLinkElement) ?? document.createElement('link');
 
-  const fontIds = [title, text]
-    .map(s => s.replace(/\s+/g, '+'))
-    .join('&family=');
+  const fontIds = [title, text].map((s) => s.replace(/\s+/g, '+')).join('&family=');
 
   link.id = FONTS_ID;
   link.rel = 'stylesheet';

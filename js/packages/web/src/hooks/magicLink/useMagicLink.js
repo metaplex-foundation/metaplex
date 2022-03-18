@@ -69,9 +69,7 @@ export default function useMagicLink() {
 
   const { endpoint } = useConnectionConfig();
 
-  const [loggedIn, setLoggedIn] = useState(
-    currentLoginState !== null ? currentLoginState : false,
-  );
+  const [loggedIn, setLoggedIn] = useState(currentLoginState !== null ? currentLoginState : false);
   const [loading, setLoading] = useState(currentLoginState === null);
   const [error, setError] = useState(null);
   const [loggingIn, setLoggingIn] = useState(false);
@@ -128,7 +126,7 @@ export default function useMagicLink() {
   useEffect(() => {
     if (!currentLoginState) {
       isLoggedIn(magicLinkKey, endpoint)
-        .then(loginState => {
+        .then((loginState) => {
           setLoggedIn(loginState);
         })
         .then(() => setLoading(false));

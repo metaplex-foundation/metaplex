@@ -4,13 +4,7 @@ import { Artist } from '../../types';
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../MetaAvatar';
 
-export const ArtistCard = ({
-  artist,
-}: /* active, */
-{
-  artist: Artist;
-  active: boolean;
-}) => {
+export const ArtistCard = ({ artist }: /* active, */ { artist: Artist; active: boolean }) => {
   return (
     <Card
       className="metaplex-round-corners"
@@ -18,10 +12,7 @@ export const ArtistCard = ({
       cover={
         <div className="metaplex-artist-card-cover">
           {artist.background ? (
-            <img
-              className="metaplex-artist-card-background"
-              src={artist.background}
-            />
+            <img className="metaplex-artist-card-background" src={artist.background} />
           ) : null}
         </div>
       }

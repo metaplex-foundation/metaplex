@@ -18,10 +18,7 @@ export const AppBar = () => {
     };
   };
 
-  let menu = [
-    getMenuItem('listings', '?view=live'),
-    getMenuItem('creators', `/${ownerAddress}`),
-  ];
+  let menu = [getMenuItem('listings', '?view=live'), getMenuItem('creators', `/${ownerAddress}`)];
 
   if (connected) {
     menu = [...menu, getMenuItem('owned')];
@@ -69,13 +66,7 @@ export const AppBar = () => {
           </Link>
           <div className="main-menu-wrapper">
             {menu.map(({ key, title, link, group }) => (
-              <MenuItem
-                to={link}
-                key={key}
-                itemKey={key}
-                group={group}
-                title={title}
-              />
+              <MenuItem to={link} key={key} itemKey={key} group={group} title={title} />
             ))}
           </div>
         </div>

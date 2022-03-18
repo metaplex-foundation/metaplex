@@ -34,12 +34,12 @@ export const InstantSaleStep = ({
   }, [masterEdition, isEdition]);
   const hasUlimatedPrints = useMemo(
     () => !isEdition && isNil(masterEdition?.info?.maxSupply),
-    [masterEdition, isEdition],
+    [masterEdition, isEdition]
   );
   const artistFilter = useCallback(
     (i: SafetyDepositDraft) =>
       !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
-    [],
+    []
   );
   const shouldRenderSelect = attributes.items.length > 0; // && (availableSupply || hasUlimatedPrints);
 
@@ -51,7 +51,7 @@ export const InstantSaleStep = ({
         className="metaplex-fullwidth"
         filter={artistFilter}
         selected={attributes.items}
-        setSelected={items => {
+        setSelected={(items) => {
           setAttributes({ ...attributes, items });
         }}
         allowMultiple={false}
@@ -63,7 +63,7 @@ export const InstantSaleStep = ({
         <label>
           <Select
             defaultValue={attributes.instantSaleType || InstantSaleType.Single}
-            onChange={value => {
+            onChange={(value) => {
               setEditionError(undefined);
               setAttributes({
                 ...attributes,
@@ -73,32 +73,26 @@ export const InstantSaleStep = ({
           >
             <Option value={InstantSaleType.Single}>Sell unique token</Option>
             {availableSupply > 0 && (
-              <Option value={InstantSaleType.Limited}>
-                Sell limited number of copies
-              </Option>
+              <Option value={InstantSaleType.Limited}>Sell limited number of copies</Option>
             )}
             {hasUlimatedPrints && (
-              <Option value={InstantSaleType.Open}>
-                Sell unlimited number of copies
-              </Option>
+              <Option value={InstantSaleType.Open}>Sell unlimited number of copies</Option>
             )}
           </Select>
           {availableSupply > 0 && (
             <>
-              <span>
-                Each copy will be given unique edition number e.g. 1 of 30
-              </span>
+              <span>Each copy will be given unique edition number e.g. 1 of 30</span>
               <Input
                 autoFocus
                 placeholder="Enter number of copies sold"
                 allowClear
-                onChange={info => {
+                onChange={(info) => {
                   setEditionError(undefined);
                   const editions = parseInt(info.target.value);
 
                   if (editions > availableSupply) {
                     setEditionError(
-                      `The NFT can only generate ${availableSupply} more editions. Please lower the copy count.`,
+                      `The NFT can only generate ${availableSupply} more editions. Please lower the copy count.`
                     );
                     return;
                   }
@@ -115,8 +109,7 @@ export const InstantSaleStep = ({
       )}
       {editionError && (
         <Row>
-          <span className="ant-typography ant-typography-danger">*</span>{' '}
-          {editionError}
+          <span className="ant-typography ant-typography-danger">*</span> {editionError}
         </Row>
       )}
 
@@ -130,7 +123,7 @@ export const InstantSaleStep = ({
           placeholder="Price"
           prefix="◎"
           suffix="SOL"
-          onChange={info =>
+          onChange={(info) =>
             setAttributes({
               ...attributes,
               priceFloor: parseFloat(info.target.value),

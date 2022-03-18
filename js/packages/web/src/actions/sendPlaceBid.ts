@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  TransactionInstruction,
-  Commitment,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction, Commitment } from '@solana/web3.js';
 import {
   sendTransactionWithRetry,
   placeBid,
@@ -32,7 +27,7 @@ export async function sendPlaceBid(
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
   amount: number | BN,
-  commitment: Commitment = 'single',
+  commitment: Commitment = 'single'
 ) {
   const signers: Keypair[][] = [];
   const instructions: TransactionInstruction[][] = [];
@@ -44,7 +39,7 @@ export async function sendPlaceBid(
     accountsByMint,
     amount,
     instructions,
-    signers,
+    signers
   );
 
   const res = await sendTransactionWithRetry(
@@ -52,7 +47,7 @@ export async function sendPlaceBid(
     wallet,
     instructions[0],
     signers[0],
-    commitment,
+    commitment
   );
 
   if (res.err) throw res.err.inner;
@@ -75,7 +70,7 @@ export async function setupPlaceBid(
   // If BN, then assume instant sale and decimals already adjusted.
   amount: number | BN,
   overallInstructions: TransactionInstruction[][],
-  overallSigners: Keypair[][],
+  overallSigners: Keypair[][]
 ): Promise<BN> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -83,22 +78,18 @@ export async function setupPlaceBid(
   let instructions: TransactionInstruction[] = [];
   const cleanupInstructions: TransactionInstruction[] = [];
 
-  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
 
   const tokenAccount = bidderTokenAccount
     ? (cache.get(bidderTokenAccount) as TokenAccount)
     : undefined;
   const mint = cache.get(
-    tokenAccount ? tokenAccount.info.mint : QUOTE_MINT,
+    tokenAccount ? tokenAccount.info.mint : QUOTE_MINT
   ) as ParsedAccount<MintInfo>;
 
   const lamports =
     accountRentExempt +
-    (typeof amount === 'number'
-      ? toLamports(amount, mint.info)
-      : amount.toNumber());
+    (typeof amount === 'number' ? toLamports(amount, mint.info) : amount.toNumber());
 
   let bidderPotTokenAccount: string | undefined;
   if (auctionView.myBidderPot) {
@@ -112,7 +103,7 @@ export async function setupPlaceBid(
         accountRentExempt,
         wallet,
         cancelSigners,
-        cancelInstr,
+        cancelInstr
       );
       signers = [...signers, ...cancelSigners[0]];
       instructions = [...cancelInstr[0], ...instructions];
@@ -125,7 +116,7 @@ export async function setupPlaceBid(
     tokenAccount,
     wallet.publicKey,
     lamports + accountRentExempt * 2,
-    signers,
+    signers
   );
 
   const transferAuthority = approve(
@@ -133,7 +124,7 @@ export async function setupPlaceBid(
     cleanupInstructions,
     toPublicKey(payingSolAccount),
     wallet.publicKey,
-    lamports - accountRentExempt,
+    lamports - accountRentExempt
   );
 
   signers.push(transferAuthority);
@@ -148,7 +139,7 @@ export async function setupPlaceBid(
     wallet.publicKey.toBase58(),
     auctionView.auctionManager.vault,
     bid,
-    instructions,
+    instructions
   );
 
   overallInstructions.push([...instructions, ...cleanupInstructions.reverse()]);

@@ -23,11 +23,8 @@ const CONVERT_TRANSACTION_SIZE = 10;
 export async function filterMetadata(
   connection: Connection,
   metadata: ParsedAccount<Metadata>[],
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >,
-  accountsByMint: Map<string, TokenAccount>,
+  masterEditions: Record<string, ParsedAccount<MasterEditionV1 | MasterEditionV2>>,
+  accountsByMint: Map<string, TokenAccount>
 ): Promise<{
   available: ParsedAccount<MasterEditionV1>[];
   unavailable: ParsedAccount<MasterEditionV1>[];
@@ -41,20 +38,17 @@ export async function filterMetadata(
     const masterEdition = masterEditions[
       md.info.masterEdition || ''
     ] as ParsedAccount<MasterEditionV1>;
-    if (
-      masterEdition &&
-      masterEdition?.info.key == MetadataKey.MasterEditionV1
-    ) {
+    if (masterEdition && masterEdition?.info.key == MetadataKey.MasterEditionV1) {
       if (batchWaitCounter == 10) {
         console.log('Waiting 10s before continuing to avoid rate limits');
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise((resolve) => setTimeout(resolve, 10000));
         batchWaitCounter = 0;
       }
       console.log('Reviewing', masterEdition.pubkey);
       let printingBal = 0;
       try {
         const printingBalResp = await connection.getTokenSupply(
-          toPublicKey(masterEdition.info.printingMint),
+          toPublicKey(masterEdition.info.printingMint)
         );
         printingBal = printingBalResp.value.uiAmount || 0;
       } catch (e) {
@@ -67,50 +61,38 @@ export async function filterMetadata(
           'Existing print account subtracts',
           myAcct.info.amount.toNumber(),
           'from',
-          printingBal,
+          printingBal
         );
         printingBal -= myAcct.info.amount.toNumber();
       }
 
       if (printingBal > 0) {
-        console.log(
-          'Reject',
-          masterEdition.pubkey,
-          'due to printing bal of',
-          printingBal,
-        );
+        console.log('Reject', masterEdition.pubkey, 'due to printing bal of', printingBal);
         unavailable.push(masterEdition);
       } else {
         let oneTimeBal = 0;
         try {
           const oneTimeBalResp = await connection.getTokenSupply(
-            toPublicKey(masterEdition.info.oneTimePrintingAuthorizationMint),
+            toPublicKey(masterEdition.info.oneTimePrintingAuthorizationMint)
           );
           oneTimeBal = oneTimeBalResp.value.uiAmount || 0;
         } catch (e) {
           console.error(e);
         }
 
-        const myAcct = accountsByMint.get(
-          masterEdition.info.oneTimePrintingAuthorizationMint,
-        );
+        const myAcct = accountsByMint.get(masterEdition.info.oneTimePrintingAuthorizationMint);
         if (myAcct) {
           console.log(
             'Existing one time account subtracts',
             myAcct.info.amount.toNumber(),
             'from',
-            oneTimeBal,
+            oneTimeBal
           );
           oneTimeBal -= myAcct.info.amount.toNumber();
         }
 
         if (oneTimeBal > 0) {
-          console.log(
-            'Reject',
-            masterEdition.pubkey,
-            'due to one time auth bal of',
-            oneTimeBal,
-          );
+          console.log('Reject', masterEdition.pubkey, 'due to one time auth bal of', oneTimeBal);
           unavailable.push(masterEdition);
         } else {
           available.push(masterEdition);
@@ -128,7 +110,7 @@ export async function convertMasterEditions(
   connection: Connection,
   wallet: WalletContextState,
   masterEditions: ParsedAccount<MasterEditionV1>[],
-  accountsByMint: Map<string, TokenAccount>,
+  accountsByMint: Map<string, TokenAccount>
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -148,11 +130,9 @@ export async function convertMasterEditions(
     const masterEdition = masterEditions[i] as ParsedAccount<MasterEditionV1>;
 
     console.log('Converting', masterEdition.pubkey);
-    const printingMintAcct = accountsByMint.get(
-      masterEdition.info.printingMint,
-    );
+    const printingMintAcct = accountsByMint.get(masterEdition.info.printingMint);
     const oneTimeAuthMintAcct = accountsByMint.get(
-      masterEdition.info.oneTimePrintingAuthorizationMint,
+      masterEdition.info.oneTimePrintingAuthorizationMint
     );
     if (printingMintAcct) {
       if (printingMintAcct.info.amount.toNumber() > 0) {
@@ -163,8 +143,8 @@ export async function convertMasterEditions(
             toPublicKey(printingMintAcct.pubkey),
             wallet.publicKey,
             [],
-            printingMintAcct.info.amount,
-          ),
+            printingMintAcct.info.amount
+          )
         );
       }
 
@@ -174,8 +154,8 @@ export async function convertMasterEditions(
           toPublicKey(printingMintAcct.pubkey),
           wallet.publicKey,
           wallet.publicKey,
-          [],
-        ),
+          []
+        )
       );
     }
 
@@ -188,8 +168,8 @@ export async function convertMasterEditions(
             toPublicKey(oneTimeAuthMintAcct.pubkey),
             wallet.publicKey,
             [],
-            oneTimeAuthMintAcct.info.amount,
-          ),
+            oneTimeAuthMintAcct.info.amount
+          )
         );
       }
 
@@ -199,8 +179,8 @@ export async function convertMasterEditions(
           toPublicKey(oneTimeAuthMintAcct.pubkey),
           wallet.publicKey,
           wallet.publicKey,
-          [],
-        ),
+          []
+        )
       );
     }
 
@@ -208,7 +188,7 @@ export async function convertMasterEditions(
       masterEdition.pubkey,
       masterEdition.info.oneTimePrintingAuthorizationMint,
       masterEdition.info.printingMint,
-      convertInstructions,
+      convertInstructions
     );
 
     if (convertInstructions.length === CONVERT_TRANSACTION_SIZE) {
@@ -226,10 +206,7 @@ export async function convertMasterEditions(
     }
   }
 
-  if (
-    convertInstructions.length < CONVERT_TRANSACTION_SIZE &&
-    convertInstructions.length > 0
-  ) {
+  if (convertInstructions.length < CONVERT_TRANSACTION_SIZE && convertInstructions.length > 0) {
     currSignerBatch.push(convertSigners);
     currInstrBatch.push(convertInstructions);
   }
@@ -252,7 +229,7 @@ export async function convertMasterEditions(
         instructionBatch,
         signerBatch,
         SequenceType.StopOnFailure,
-        'single',
+        'single'
       );
     else
       await sendTransactionWithRetry(
@@ -260,7 +237,7 @@ export async function convertMasterEditions(
         wallet,
         instructionBatch[0],
         signerBatch[0],
-        'single',
+        'single'
       );
     console.log('Done');
   }

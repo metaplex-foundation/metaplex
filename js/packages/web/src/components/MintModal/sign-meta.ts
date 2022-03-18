@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-const SIGN_META_ENDPOINT = process.env
-  .NEXT_PUBLIC_HOLAPLEX_SIGN_META_ENDPOINT as string;
+const SIGN_META_ENDPOINT = process.env.NEXT_PUBLIC_HOLAPLEX_SIGN_META_ENDPOINT as string;
 
 export interface SignMetaParams {
   solanaEndpoint: string;
@@ -53,9 +52,7 @@ export const holaSignMetadata = async ({
         json = { message: 'An error occurred' };
       }
 
-      throw new Error(
-        `Store upload failed: ${json.message ?? JSON.stringify(json)}`,
-      );
+      throw new Error(`Store upload failed: ${json.message ?? JSON.stringify(json)}`);
     }
 
     onProgress('signed');

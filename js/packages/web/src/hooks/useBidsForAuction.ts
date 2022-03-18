@@ -1,33 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { find, filter, take } from 'lodash';
-import {
-  BidderMetadata,
-  ParsedAccount,
-  StringPublicKey,
-  useMeta,
-} from '@oyster/common';
+import { BidderMetadata, ParsedAccount, StringPublicKey, useMeta } from '@oyster/common';
 
-export const useHighestBidForAuction = (
-  auctionPubkey: StringPublicKey | string,
-) => {
+export const useHighestBidForAuction = (auctionPubkey: StringPublicKey | string) => {
   const bids = useBidsForAuction(auctionPubkey);
   const winner = useMemo(() => {
-    return find(bids || [], bid => !bid.info.cancelled);
+    return find(bids || [], (bid) => !bid.info.cancelled);
   }, [bids]);
 
   return winner;
 };
 
-export const useWinningBidsForAuction = (
-  auctionPubkey: StringPublicKey | string,
-) => {
+export const useWinningBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
   const bids = useBidsForAuction(auctionPubkey);
   const { auctions } = useMeta();
 
   const auction = auctions[auctionPubkey];
 
   const winners = useMemo(() => {
-    const activeBids = filter(bids || [], bid => !bid.info.cancelled);
+    const activeBids = filter(bids || [], (bid) => !bid.info.cancelled);
     const maxWinners = auction.info.bidState.max.toNumber();
 
     return take(activeBids, maxWinners);
@@ -44,7 +35,7 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
           ? auctionPubkey
           : undefined
         : auctionPubkey,
-    [auctionPubkey],
+    [auctionPubkey]
   );
   const { bidderMetadataByAuctionAndBidder } = useMeta();
 
@@ -58,14 +49,11 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
 };
 
 const getBids = (
-  bidderMetadataByAuctionAndBidder: Record<
-    string,
-    ParsedAccount<BidderMetadata>
-  >,
-  id?: StringPublicKey,
+  bidderMetadataByAuctionAndBidder: Record<string, ParsedAccount<BidderMetadata>>,
+  id?: StringPublicKey
 ) => {
   const bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
-    b => b.info.auctionPubkey === id,
+    (b) => b.info.auctionPubkey === id
   );
 
   return bids
@@ -77,7 +65,7 @@ const getBids = (
 
       return lastBidDiff;
     })
-    .map(item => {
+    .map((item) => {
       return item;
     });
 };

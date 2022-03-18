@@ -5,8 +5,7 @@ import { useLocation } from 'react-router';
 import mixpanel from 'mixpanel-browser';
 import { useSolPrice } from '.';
 
-export const GOOGLE_ANALYTICS_ID =
-  process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
+export const GOOGLE_ANALYTICS_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || 'G-HLNC4C2YKN';
 const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
 
 interface AnalyticsUserProperties {
@@ -52,15 +51,13 @@ export function AnalyticsProvider(props: { children: React.ReactNode }) {
 
   // user pubkey / id
   const pubkey = publicKey?.toBase58() || '';
-  const endpointName = ENDPOINTS.find(e => e.endpoint === endpoint)?.name;
+  const endpointName = ENDPOINTS.find((e) => e.endpoint === endpoint)?.name;
 
   // initial intial config
   useEffect(() => {
     if (MIXPANEL_TOKEN) {
       mixpanel.init(MIXPANEL_TOKEN, {
-        debug:
-          window.location.host.includes('localhost') ||
-          window.location.host.includes('.dev'),
+        debug: window.location.host.includes('localhost') || window.location.host.includes('.dev'),
       });
     }
   }, []);

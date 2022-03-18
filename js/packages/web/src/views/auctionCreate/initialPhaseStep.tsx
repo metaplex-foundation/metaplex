@@ -13,14 +13,10 @@ export const InitialPhaseStep = (props: {
   const [listNow, setListNow] = useState<boolean>(true);
 
   const [saleMoment, setSaleMoment] = useState<moment.Moment | undefined>(
-    props.attributes.startSaleTS
-      ? moment.unix(props.attributes.startSaleTS)
-      : undefined,
+    props.attributes.startSaleTS ? moment.unix(props.attributes.startSaleTS) : undefined
   );
   const [listMoment, setListMoment] = useState<moment.Moment | undefined>(
-    props.attributes.startListTS
-      ? moment.unix(props.attributes.startListTS)
-      : undefined,
+    props.attributes.startListTS ? moment.unix(props.attributes.startListTS) : undefined
   );
 
   useEffect(() => {
@@ -62,13 +58,10 @@ export const InitialPhaseStep = (props: {
         <h4>When do you want the auction to begin?</h4>
         <Radio.Group
           defaultValue="now"
-          onChange={info => setStartNow(info.target.value === 'now')}
+          onChange={(info) => setStartNow(info.target.value === 'now')}
         >
           <Radio value="now">Immediately</Radio>
-          <div>
-            Participants can buy the NFT as soon as you finish setting up the
-            auction.
-          </div>
+          <div>Participants can buy the NFT as soon as you finish setting up the auction.</div>
           <Radio value="later">At a specified date</Radio>
           <div>Participants can start buying the NFT at a specified date.</div>
         </Radio.Group>
@@ -94,19 +87,19 @@ export const InitialPhaseStep = (props: {
             <h4>When do you want the listing to go live?</h4>
             <Radio.Group
               defaultValue="now"
-              onChange={info => setListNow(info.target.value === 'now')}
+              onChange={(info) => setListNow(info.target.value === 'now')}
             >
               <Radio value="now" defaultChecked={true}>
                 Immediately
               </Radio>
               <div>
-                Participants will be able to view the listing with a countdown
-                to the start date as soon as you finish setting up the sale.
+                Participants will be able to view the listing with a countdown to the start date as
+                soon as you finish setting up the sale.
               </div>
               <Radio value="later">At a specified date</Radio>
               <div>
-                Participants will be able to view the listing with a countdown
-                to the start date at the specified date.
+                Participants will be able to view the listing with a countdown to the start date at
+                the specified date.
               </div>
             </Radio.Group>
           </label>
@@ -131,12 +124,7 @@ export const InitialPhaseStep = (props: {
         </>
       )}
 
-      <Button
-        className="metaplex-fullwidth"
-        type="primary"
-        size="large"
-        onClick={props.confirm}
-      >
+      <Button className="metaplex-fullwidth" type="primary" size="large" onClick={props.confirm}>
         Continue
       </Button>
     </Space>

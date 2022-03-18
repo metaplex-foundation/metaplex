@@ -10,18 +10,9 @@ interface ContentCardProps {
 }
 
 export const ContentCard = (props: ContentCardProps) => {
-  const {
-    title = '',
-    description = '',
-    endElement = <div />,
-    imgSrc = '',
-  } = props;
+  const { title = '', description = '', endElement = <div />, imgSrc = '' } = props;
   return (
-    <Card
-      cover={
-        <div>{imgSrc ? <img src={imgSrc} /> : <CreditCardOutlined />}</div>
-      }
-    >
+    <Card cover={<div>{imgSrc ? <img src={imgSrc} /> : <CreditCardOutlined />}</div>}>
       <div>{title}</div>
       <div>{description}</div>
       {endElement}

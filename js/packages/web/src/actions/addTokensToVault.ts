@@ -9,10 +9,7 @@ import {
 import { SafetyDepositConfig } from '@oyster/common/dist/lib/models/metaplex/index';
 import { approve } from '@oyster/common/dist/lib/models/account';
 import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
-import {
-  addTokenToInactiveVault,
-  VAULT_PREFIX,
-} from '@oyster/common/dist/lib/actions/vault';
+import { addTokenToInactiveVault, VAULT_PREFIX } from '@oyster/common/dist/lib/actions/vault';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
@@ -37,7 +34,7 @@ export async function addTokensToVault(
   connection: Connection,
   wallet: WalletContextState,
   vault: StringPublicKey,
-  nfts: SafetyDepositInstructionTemplate[],
+  nfts: SafetyDepositInstructionTemplate[]
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
@@ -47,9 +44,7 @@ export async function addTokensToVault(
 
   const PROGRAM_IDS = utils.programIds();
 
-  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
 
   const vaultAuthority = (
     await findProgramAddress(
@@ -58,7 +53,7 @@ export async function addTokensToVault(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault),
+      toPublicKey(PROGRAM_IDS.vault)
     )
   )[0];
 
@@ -79,7 +74,7 @@ export async function addTokensToVault(
         accountRentExempt,
         toPublicKey(nft.box.tokenMint),
         toPublicKey(vaultAuthority),
-        currSigners,
+        currSigners
       );
       newStores.push(newStoreAccount.toBase58());
 
@@ -88,14 +83,13 @@ export async function addTokensToVault(
         [],
         toPublicKey(nft.box.tokenAccount),
         wallet.publicKey,
-        nft.box.amount.toNumber(),
+        nft.box.amount.toNumber()
       );
 
       currSigners.push(transferAuthority);
 
       await addTokenToInactiveVault(
-        nft.draft.masterEdition &&
-          nft.draft.masterEdition.info.key === MetadataKey.MasterEditionV2
+        nft.draft.masterEdition && nft.draft.masterEdition.info.key === MetadataKey.MasterEditionV2
           ? new BN(1)
           : nft.box.amount,
         nft.box.tokenMint,
@@ -105,7 +99,7 @@ export async function addTokensToVault(
         wallet.publicKey.toBase58(),
         wallet.publicKey.toBase58(),
         transferAuthority.publicKey.toBase58(),
-        currInstructions,
+        currInstructions
       );
 
       if (batchCounter === BATCH_SIZE) {

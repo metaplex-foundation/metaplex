@@ -9,18 +9,12 @@ export interface CoingeckoContextState {
 
 export const solToUSD = async (): Promise<number> => {
   const url = `${COINGECKO_COIN_PRICE_API}?ids=solana&vs_currencies=usd`;
-  const resp = await window.fetch(url).then(resp => resp.json());
+  const resp = await window.fetch(url).then((resp) => resp.json());
   return resp.solana.usd;
 };
 
-const CoingeckoContext = React.createContext<CoingeckoContextState | null>(
-  null,
-);
-export function CoingeckoProvider({
-  children = null,
-}: {
-  children: ReactNode;
-}) {
+const CoingeckoContext = React.createContext<CoingeckoContextState | null>(null);
+export function CoingeckoProvider({ children = null }: { children: ReactNode }) {
   const [solPrice, setSolPrice] = useState<number>(0);
 
   useEffect(() => {
@@ -42,12 +36,8 @@ export function CoingeckoProvider({
       clearTimeout(timerId);
     };
   }, [setSolPrice]);
-  
-  return (
-    <CoingeckoContext.Provider value={{ solPrice }}>
-      {children}
-    </CoingeckoContext.Provider>
-  );
+
+  return <CoingeckoContext.Provider value={{ solPrice }}>{children}</CoingeckoContext.Provider>;
 }
 
 export const useCoingecko = () => {

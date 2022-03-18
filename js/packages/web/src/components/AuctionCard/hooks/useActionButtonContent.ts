@@ -2,12 +2,8 @@ import { AuctionView } from '../../../hooks';
 import { useInstantSaleState } from './useInstantSaleState';
 
 export const useActionButtonContent = (auctionView: AuctionView): string => {
-  const {
-    isInstantSale,
-    canClaimItem,
-    canClaimPurchasedItem,
-    canEndInstantSale,
-  } = useInstantSaleState(auctionView);
+  const { isInstantSale, canClaimItem, canClaimPurchasedItem, canEndInstantSale } =
+    useInstantSaleState(auctionView);
 
   if (!isInstantSale) {
     return 'Place Bid';

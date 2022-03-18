@@ -37,8 +37,7 @@ export const PriceAuction = (props: {
             name="price"
             rules={[
               {
-                message:
-                  'Starting price must be an exact multiple of the tick size!',
+                message: 'Starting price must be an exact multiple of the tick size!',
                 validator: async (_, price) => {
                   checkForPriceError(price, props.attributes.priceTick);
                 },
@@ -51,10 +50,7 @@ export const PriceAuction = (props: {
           >
             <label>
               <h3>Price</h3>
-              <p>
-                This is the fixed price that everybody will pay for your
-                Participation NFT.
-              </p>
+              <p>This is the fixed price that everybody will pay for your Participation NFT.</p>
               <div className="metaplex-flex metaplex-align-items-center metaplex-gap-2">
                 ◎
                 <InputNumber<number>
@@ -64,7 +60,7 @@ export const PriceAuction = (props: {
                   step="0.01"
                   autoFocus
                   placeholder="Fixed Price in SOL"
-                  onChange={price => {
+                  onChange={(price) => {
                     props.setAttributes({
                       ...props.attributes,
                       // Do both, since we know this is the only item being sold.
@@ -83,8 +79,7 @@ export const PriceAuction = (props: {
             name="price"
             rules={[
               {
-                message:
-                  'Starting price must be an exact multiple of the tick size!',
+                message: 'Starting price must be an exact multiple of the tick size!',
                 validator: async (_, price) => {
                   checkForPriceError(price, props.attributes.priceTick);
                 },
@@ -107,7 +102,7 @@ export const PriceAuction = (props: {
                   step="0.01"
                   autoFocus
                   placeholder="Price in SOL"
-                  onChange={price => {
+                  onChange={(price) => {
                     props.setAttributes({
                       ...props.attributes,
                       priceFloor: price,
@@ -123,8 +118,7 @@ export const PriceAuction = (props: {
           name="tickSize"
           rules={[
             {
-              message:
-                'Starting price must be an exact multiple of the tick size!',
+              message: 'Starting price must be an exact multiple of the tick size!',
               validator: async (_, tickSize) => {
                 checkForPriceError(props.attributes.priceFloor, tickSize);
               },
@@ -142,7 +136,7 @@ export const PriceAuction = (props: {
                 className="metaplex-fullwidth"
                 step="0.01"
                 placeholder="Tick size in SOL"
-                onChange={tick => {
+                onChange={(tick) => {
                   props.setAttributes({
                     ...props.attributes,
                     priceTick: tick,

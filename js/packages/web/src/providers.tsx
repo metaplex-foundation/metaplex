@@ -23,10 +23,7 @@ interface ProvidersProps {
 export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
   return (
     <ConnectionProvider>
-      <StoreProvider
-        storefront={storefront}
-        storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
-      >
+      <StoreProvider storefront={storefront} storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}>
         <WalletProvider>
           <AccountsProvider>
             <CoingeckoProvider>
@@ -36,14 +33,10 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
                     <AnalyticsProvider>
                       {storefront.integrations?.crossmintClientId ? (
                         <CrossmintWrapper>
-                          <AppLayout storefront={storefront}>
-                            {children}
-                          </AppLayout>
+                          <AppLayout storefront={storefront}>{children}</AppLayout>
                         </CrossmintWrapper>
                       ) : (
-                        <AppLayout storefront={storefront}>
-                          {children}
-                        </AppLayout>
+                        <AppLayout storefront={storefront}>{children}</AppLayout>
                       )}
                     </AnalyticsProvider>
                   </ConfettiProvider>

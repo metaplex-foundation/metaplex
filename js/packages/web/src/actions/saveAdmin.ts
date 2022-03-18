@@ -1,9 +1,5 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
-import {
-  SequenceType,
-  sendTransactions,
-  sendTransactionWithRetry,
-} from '@oyster/common';
+import { SequenceType, sendTransactions, sendTransactionWithRetry } from '@oyster/common';
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { setStore } from '@oyster/common/dist/lib/models/metaplex/setStore';
 import { setWhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/setWhitelistedCreator';
@@ -16,7 +12,7 @@ export async function saveAdmin(
   connection: Connection,
   wallet: WalletContextState,
   isPublic: boolean,
-  whitelistedCreators: WhitelistedCreator[],
+  whitelistedCreators: WhitelistedCreator[]
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -30,7 +26,7 @@ export async function saveAdmin(
     isPublic,
     wallet.publicKey.toBase58(),
     wallet.publicKey.toBase58(),
-    storeInstructions,
+    storeInstructions
   );
   signers.push(storeSigners);
   instructions.push(storeInstructions);
@@ -45,26 +41,20 @@ export async function saveAdmin(
       wc.activated,
       wallet.publicKey.toBase58(),
       wallet.publicKey.toBase58(),
-      wcInstructions,
+      wcInstructions
     );
     signers.push(wcSigners);
     instructions.push(wcInstructions);
   }
 
   instructions.length === 1
-    ? await sendTransactionWithRetry(
-        connection,
-        wallet,
-        instructions[0],
-        signers[0],
-        'single',
-      )
+    ? await sendTransactionWithRetry(connection, wallet, instructions[0], signers[0], 'single')
     : await sendTransactions(
         connection,
         wallet,
         instructions,
         signers,
         SequenceType.StopOnFailure,
-        'single',
+        'single'
       );
 }

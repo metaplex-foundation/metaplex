@@ -7,10 +7,7 @@ interface Variables {
   storeOwnerAddress?: string;
 }
 
-export const SetupVariables: FC<Variables> = ({
-  storeAddress,
-  storeOwnerAddress,
-}) => {
+export const SetupVariables: FC<Variables> = ({ storeAddress, storeOwnerAddress }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const copySettings = useCallback(() => {
@@ -27,13 +24,7 @@ export const SetupVariables: FC<Variables> = ({
   return (
     <Card
       title="Store configuration"
-      extra={
-        <Button
-          type="dashed"
-          onClick={copySettings}
-          icon={<CopyOutlined />}
-        ></Button>
-      }
+      extra={<Button type="dashed" onClick={copySettings} icon={<CopyOutlined />}></Button>}
     >
       <div ref={ref}>
         {storeOwnerAddress && <p>STORE_OWNER_ADDRESS={storeOwnerAddress}</p>}

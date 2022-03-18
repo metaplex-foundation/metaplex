@@ -21,7 +21,7 @@ export const NumberOfWinnersStep = (props: {
           type="number"
           autoFocus
           placeholder="Number of spots in the leaderboard"
-          onChange={info =>
+          onChange={(info) =>
             props.setAttributes({
               ...props.attributes,
               winnersCount: parseInt(info.target.value),
@@ -30,12 +30,7 @@ export const NumberOfWinnersStep = (props: {
         />
       </label>
 
-      <Button
-        className="metaplex-fullwidth"
-        type="primary"
-        size="large"
-        onClick={props.confirm}
-      >
+      <Button className="metaplex-fullwidth" type="primary" size="large" onClick={props.confirm}>
         Continue
       </Button>
     </Space>
