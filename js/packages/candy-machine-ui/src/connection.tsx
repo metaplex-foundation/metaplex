@@ -129,7 +129,7 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = (txid, ind) => {},
+  successCallback: (txid: string, ind: number) => void = (txid, ind) => { },
   failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
   block?: BlockhashAndFeeCalculator,
   beforeTransactions: Transaction[] = [],
@@ -195,10 +195,7 @@ export const sendTransactions = async (
     if (sequenceType !== SequenceType.Parallel) {
       try {
         await signedTxnPromise
-          .then(({ txid, slot }) => {
-            successCallback(txid, i);
-            return { txid, slot };
-          });
+          .then(({ txid, slot }) => successCallback(txid, i));
         pendingTxns.push(signedTxnPromise);
       } catch (e) {
         console.log('Caught failure', e);
