@@ -180,7 +180,6 @@ export const sendTransactions = async (
   signedTxns = fullySignedTransactions.concat(signedTxns);
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 
-  let breakEarlyObject = { breakEarly: false, i: 0 };
   console.log(
     'Signed txns length',
     signedTxns.length,
@@ -193,30 +192,22 @@ export const sendTransactions = async (
       signedTransaction: signedTxns[i],
     });
 
-    signedTxnPromise
-      .then(({ txid, slot }) => {
-        successCallback(txid, i);
-        return { txid, slot };
-      })
-      .catch(reason => {
-        failCallback(signedTxns[i], i);
-        if (sequenceType === SequenceType.StopOnFailure) {
-          breakEarlyObject.breakEarly = true;
-          breakEarlyObject.i = i;
-        }
-      });
-
     if (sequenceType !== SequenceType.Parallel) {
       try {
-        await signedTxnPromise;
+        await signedTxnPromise
+          .then(({ txid, slot }) => {
+            successCallback(txid, i);
+            return { txid, slot };
+          });
         pendingTxns.push(signedTxnPromise);
       } catch (e) {
         console.log('Caught failure', e);
-        if (breakEarlyObject.breakEarly) {
-          console.log('Died on ', breakEarlyObject.i);
-          // Return the txn we failed on by index
+
+        failCallback(signedTxns[i], i);
+        if (sequenceType === SequenceType.StopOnFailure) {
+
           return {
-            number: breakEarlyObject.i,
+            number: i,
             txs: await Promise.all(pendingTxns),
           };
         }
@@ -372,6 +363,7 @@ export async function sendSignedTransaction({
   timeout?: number;
 }): Promise<{ txid: string; slot: number }> {
   const rawTransaction = signedTransaction.serialize();
+
   const startTime = getUnixTs();
   let slot = 0;
   const txid: TransactionSignature = await connection.sendRawTransaction(
@@ -420,7 +412,7 @@ export async function sendSignedTransaction({
       simulateResult = (
         await simulateTransaction(connection, signedTransaction, 'single')
       ).value;
-    } catch (e) {}
+    } catch (e) { }
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
         for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
