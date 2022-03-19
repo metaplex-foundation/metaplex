@@ -532,8 +532,7 @@ export const mintOneToken = async (
   const state = candyMachine.state;
   const txnEstimate =
     892 +
-    50 + // Buffer 50 (the amount we underestimate)
-    (collectionPDAAccount && state.retainAuthority ? 132 : 0) +
+    (collectionPDAAccount && state.retainAuthority ? 182 : 0) +
     (state.tokenMint ? 145 : 0) +
     (state.whitelistMintSettings ? 33 : 0) +
     (state.whitelistMintSettings?.mode?.burnEveryTime ? 145 : 0) +
