@@ -199,7 +199,8 @@ export const sendTransactions = async (
         );
         pendingTxns.push(signedTxnPromise);
       } catch (e) {
-        console.log('Caught failure', e);
+        console.log('Failed at txn index:', i);
+        console.log('Caught failure:', e);
 
         failCallback(signedTxns[i], i);
         if (sequenceType === SequenceType.StopOnFailure) {
