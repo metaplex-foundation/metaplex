@@ -4,7 +4,6 @@
     "packages": [
       "packages/cli",
       "packages/common",
-      "packages/gumdrop",
       "packages/web"
     ]
   },
