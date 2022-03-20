@@ -5,7 +5,10 @@ import {
   getMasterEdition,
   getMetadata,
 } from '../helpers/accounts';
-import { TOKEN_METADATA_PROGRAM_ID } from '../helpers/constants';
+import {
+  COLLECTION_UUID,
+  TOKEN_METADATA_PROGRAM_ID,
+} from '../helpers/constants';
 import * as anchor from '@project-serum/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -23,6 +26,7 @@ import {
 import log from 'loglevel';
 import { Program } from '@project-serum/anchor';
 import { parseCollectionMintPubkey } from '../helpers/various';
+import { updateCandyMachineUUID } from '../helpers/instructions';
 
 export async function setCollection(
   walletKeyPair: anchor.web3.Keypair,
@@ -174,18 +178,26 @@ export async function setCollection(
     }),
   );
 
-  log.info('Candy machine address: ', candyMachineAddress.toBase58());
-  log.info('Collection metadata address: ', metadataPubkey.toBase58());
-  log.info('Collection metadata authority: ', wallet.publicKey.toBase58());
-  log.info(
+  log.debug('Candy machine address: ', candyMachineAddress.toBase58());
+  log.debug('Collection mint address: ', mintPubkey.toBase58());
+  log.debug('Collection metadata address: ', metadataPubkey.toBase58());
+  log.debug('Collection metadata authority: ', wallet.publicKey.toBase58());
+  log.debug(
     'Collection master edition address: ',
     masterEditionPubkey.toBase58(),
   );
-  log.info('Collection mint address: ', mintPubkey.toBase58());
-  log.info('Collection PDA address: ', collectionPDAPubkey.toBase58());
-  log.info(
+  log.debug('Collection PDA address: ', collectionPDAPubkey.toBase58());
+  log.debug(
     'Collection authority record address: ',
     collectionAuthorityRecordPubkey.toBase58(),
+  );
+
+  instructions.push(
+    await updateCandyMachineUUID(
+      COLLECTION_UUID,
+      anchorProgram,
+      candyMachineAddress,
+    ),
   );
 
   const txId = (
@@ -197,6 +209,7 @@ export async function setCollection(
     )
   ).txid;
   const toReturn = {
+    collectionMint: mintPubkey.toBase58(),
     collectionMetadata: metadataPubkey.toBase58(),
     collectionPDA: collectionPDAPubkey.toBase58(),
     txId,

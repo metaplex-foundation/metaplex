@@ -18,6 +18,7 @@ import {
   EXTENSION_JSON,
   CANDY_MACHINE_PROGRAM_V2_ID,
   CONFIG_ARRAY_START_V2,
+  COLLECTION_UUID,
 } from './helpers/constants';
 import {
   getProgramAccounts,
@@ -26,6 +27,7 @@ import {
   AccountAndPubkey,
   deriveCandyMachineV2ProgramAddress,
   getCollectionPDA,
+  uuidFromConfigPubkey,
 } from './helpers/accounts';
 
 import { uploadV2 } from './commands/upload';
@@ -947,6 +949,10 @@ programCommand('set_collection')
       collectionMintPubkey,
     );
 
+    cacheContent.program.uuid = COLLECTION_UUID;
+    cacheContent.program.collection = tx.collectionMint;
+    saveCache(cacheName, env, cacheContent);
+
     log.info('set collection finished', tx);
   });
 
@@ -967,7 +973,9 @@ programCommand('remove_collection')
       anchorProgram,
       candyMachine,
     );
-
+    delete cacheContent.program.collection;
+    cacheContent.program.uuid = uuidFromConfigPubkey(candyMachine);
+    saveCache(cacheName, env, cacheContent);
     log.info('remove collection finished', tx);
   });
 

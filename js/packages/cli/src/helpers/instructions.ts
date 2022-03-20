@@ -14,6 +14,7 @@ import {
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import { CandyMachineData } from './accounts';
+import { Program } from '@project-serum/anchor';
 
 export function createAssociatedTokenAccountInstruction(
   associatedTokenAddress: PublicKey,
@@ -111,5 +112,57 @@ export async function createCandyMachineV2Account(
         size,
       ),
     programId: CANDY_MACHINE_PROGRAM_V2_ID,
+  });
+}
+
+export async function updateCandyMachineUUID(
+  uuid: string,
+  anchorProgram: Program,
+  candyAccount: PublicKey,
+) {
+  const candyMachineObj = await anchorProgram.account.candyMachine.fetch(
+    candyAccount,
+  );
+
+  const newSettings = {
+    itemsAvailable: candyMachineObj.data.itemsAvailable,
+    uuid: uuid,
+    symbol: candyMachineObj.data.symbol,
+    sellerFeeBasisPoints: candyMachineObj.data.sellerFeeBasisPoints,
+    isMutable: candyMachineObj.data.isMutable,
+    maxSupply: candyMachineObj.data.maxSupply,
+    retainAuthority: candyMachineObj.data.retainAuthority,
+    gatekeeper: candyMachineObj.data.gatekeeper,
+    goLiveDate: candyMachineObj.data.goLiveDate,
+    endSettings: candyMachineObj.data.endSettings,
+    price: candyMachineObj.data.price,
+    whitelistMintSettings: candyMachineObj.data.whitelistMintSettings,
+    hiddenSettings: candyMachineObj.data.hiddenSettings,
+    creators: candyMachineObj.data.creators.map(creator => {
+      return {
+        address: new PublicKey(creator.address),
+        verified: true,
+        share: creator.share,
+      };
+    }),
+  };
+
+  const remainingAccounts = [];
+  if (candyMachineObj.tokenMint) {
+    remainingAccounts.push({
+      pubkey: candyMachineObj.tokenMint,
+      isSigner: false,
+      isWritable: false,
+    });
+  }
+
+  return await anchorProgram.instruction.updateCandyMachine(newSettings, {
+    accounts: {
+      candyMachine: candyAccount,
+      authority: candyMachineObj.authority,
+      wallet: candyMachineObj.wallet,
+    },
+    remainingAccounts:
+      remainingAccounts.length > 0 ? remainingAccounts : undefined,
   });
 }
