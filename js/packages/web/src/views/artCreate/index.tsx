@@ -15,7 +15,10 @@ import {
   Space,
   Card,
   Checkbox,
+  Dropdown,
+  Menu
 } from 'antd';
+import { DownOutlined } from "@ant-design/icons";
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
 import { Confetti } from './../../components/Confetti';
@@ -83,6 +86,7 @@ export const ArtCreateView = () => {
     image: '',
     animation_url: undefined,
     attributes: undefined,
+    tag: '',
     seller_fee_basis_points: 0,
     creators: [],
     properties: {
@@ -606,6 +610,28 @@ const InfoStep = (props: {
     [],
   );
 
+  const handleTagChange = ({ key }) => {
+    console.log(key)
+    props.setAttributes({ ...props.attributes, tag: key });
+  }
+
+  const menu = (
+    <Menu onClick={handleTagChange}>
+      <Menu.Item key="Collectibles">
+        Collectibles
+      </Menu.Item>
+      <Menu.Item key="Charity Focused">
+        Charity Focused
+      </Menu.Item>
+      <Menu.Item key="Gaming">
+        Gaming
+      </Menu.Item>
+      <Menu.Item key="Utility">
+        Utility
+      </Menu.Item>
+    </Menu>
+  )
+
   useEffect(() => {
     if (selectedCollection.length) {
       props.setAttributes({
@@ -775,6 +801,18 @@ const InfoStep = (props: {
               )}
             </Form.List>
           </Form>
+          {!isCollection && (
+            <label className="action-field">
+              <span className="field-title">Tags</span>
+              <div style={{ marginBottom: 20 }}>
+                <Dropdown overlay={menu}>
+                  <Button type="dashed" block>
+                    Select your tag <DownOutlined />
+                  </Button>
+                </Dropdown>
+              </div>
+            </label>
+          )}
         </Col>
       </Row>
 
