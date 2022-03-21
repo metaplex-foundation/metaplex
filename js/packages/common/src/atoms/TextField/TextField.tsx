@@ -1,4 +1,5 @@
 import React, { FC, forwardRef, useState } from 'react'
+import { Eye, EyeOff } from 'react-feather'
 import CN from 'classnames'
 
 export interface TextFieldProps {
@@ -63,25 +64,25 @@ export const TextField: FC<TextFieldProps> = forwardRef(
     const [inputType, setInputType] = useState(type)
 
     /* Background Color */
-    const wrapperBGColor = (!disabled && 'bg-white') || (disabled && 'bg-N-50')
+    const wrapperBGColor = (!disabled && 'bg-white') || (disabled && 'bg-slate-50')
 
     /* Border Color */
     const wrapperBorderColor =
       (!disabled &&
         !isError &&
-        'border-N-300 outline-none focus-within:border-N-700 focus-within:shadow-[inset_0px_0px_0px_1px_#040D1F]') ||
-      (disabled && 'border-N-200') ||
+        'border-slate-300 outline-none focus-within:border-slate-700 focus-within:shadow-[inset_0px_0px_0px_1px_#040D1F]') ||
+      (disabled && 'border-slate-300') ||
       (!disabled &&
         isError &&
-        '!border-R-100 focus-within:!border-N-700 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]')
+        '!border-R-100 focus-within:!border-slate-700 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]')
 
     /* Text Color */
-    const inputTextColor = (!disabled && 'text-N-800') || (disabled && 'text-N-400')
+    const inputTextColor = (!disabled && 'text-slate-900') || (disabled && 'text-slate-400')
 
     /* Inner Input Field */
     const TextFieldClasses = CN('text-field', className, inputTextColor, {
       /* Input Field Common */
-      'appearance-none h-full w-full outline-none text-md font-400 flex items-center bg-[transparent] placeholder:text-N-300':
+      'appearance-none h-full w-full outline-none text-md font-400 flex items-center bg-[transparent] placeholder:text-sm placeholder:text-[#848E9E] transition-all':
         true,
 
       /* Disabled */
@@ -97,8 +98,7 @@ export const TextField: FC<TextFieldProps> = forwardRef(
     /* Wrapper */
     const TextFieldWrapperClasses = CN(wrapperClassName, wrapperBGColor, wrapperBorderColor, {
       /* Input Field Wrapper Common */
-      'border flex items-center rounded-[4px] w-full group ease-in-out duration-[50] relative z-[0]':
-        true,
+      'border flex items-center rounded-[4px] w-full group relative z-[0] transition-all': true,
       'mt-[11px]': label,
       'h-[40px]': size === 'md' || !size,
       'h-[60px]': size === 'lg',
@@ -111,10 +111,10 @@ export const TextField: FC<TextFieldProps> = forwardRef(
           {label && (
             <label
               className={CN(
-                'text-field__label text-N-700 absolute top-[-11px] left-[12px] px-[4px] !text-sm after:absolute after:left-0 after:right-0 after:bottom-[2px] after:z-[0] after:h-[9px] after:content-[""]',
+                'text-field__label absolute top-[-11px] left-[12px] px-[4px] !text-sm text-slate-800 after:absolute after:left-0 after:right-0 after:bottom-[2px] after:z-[0] after:h-[9px] after:content-[""]',
                 {
                   'after:bg-white': !disabled,
-                  'after:bg-N-50': disabled,
+                  'after:bg-slate-50': disabled,
                 }
               )}>
               <span className='relative z-[1]'>
@@ -146,16 +146,12 @@ export const TextField: FC<TextFieldProps> = forwardRef(
           {type === 'password' && (
             <div
               className={CN(
-                'text-field__icon text-N-500 flex h-full items-center pr-[16px] pl-[12px]'
+                'text-field__icon flex h-full items-center pr-[16px] pl-[12px] text-slate-500'
               )}
               onClick={() => setInputType(prev => (prev === 'password' ? 'text' : 'password'))}
               role='button'
               tabIndex={0}>
-              {inputType === 'password' ? (
-                <i className='ri-eye-line text-[16px]' />
-              ) : (
-                <i className='ri-eye-off-line text-[16px]' />
-              )}
+              {inputType === 'password' ? <Eye size={16} /> : <EyeOff size={16} />}
             </div>
           )}
 

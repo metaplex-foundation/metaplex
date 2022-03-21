@@ -85,7 +85,7 @@ export const HottestAuctions: FC<HottestAuctionsProps> = ({
         />
 
         <div className='relative flex w-full'>
-          <div className='flex w-full overflow-hidden'>
+          <div className='flex w-full'>
             <BlockCarousel
               slides={slides}
               id='hottest-auctions'

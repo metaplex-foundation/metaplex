@@ -20,7 +20,7 @@ export const ButtonGroup: FC<ButtonGroupProps> = ({
     className,
     {
       /* Appearance */
-      'bg-N-100 border-N-800': appearance === 'default',
+      'bg-slate-100 border-slate-900': appearance === 'default',
       'bg-R-10 border-R-800': appearance === 'danger',
       'bg-G-10 border-G-800': appearance === 'success',
       'bg-Y-10 border-Y-800': appearance === 'warning',
@@ -33,16 +33,16 @@ export const ButtonGroup: FC<ButtonGroupProps> = ({
         <div key={index} className='flex items-center gap-[24px]'>
           <button
             className={CN(
-              'font-600 flex h-full items-center gap-[8px] font-serif text-base uppercase',
+              'font-500 flex h-full items-center gap-[8px] font-serif text-sm uppercase',
               {
-                'font-700': isActive,
+                '!font-600': isActive,
               }
             )}
             onClick={onClick}>
             {hasIndicator && <BlinkIndicator appearance='danger' />}
             <span className='flex h-full items-center leading-normal'>{label}</span>
           </button>
-          {index + 1 !== buttons.length && <span className='bg-N-600 h-[24px] w-[1px]' />}
+          {index + 1 !== buttons.length && <span className='h-[24px] w-[1px] bg-slate-500' />}
         </div>
       ))}
     </div>

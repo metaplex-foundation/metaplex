@@ -8,6 +8,7 @@ export interface FooterProps {
 
 export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps) => {
   const FooterClasses = CN(`footer w-full`, className)
+
   const copyrightDate = new Date().getFullYear()
 
   const footerBottomLinks = [
@@ -35,23 +36,23 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
 
   return (
     <div className={FooterClasses} {...restProps}>
-      <div className='container border-t border-N-100'>
+      <div className='container border-t border-slate-100'>
         <div className='footer__top flex flex-col justify-between pt-[60px] pb-[40px] lg:grid lg:grid-cols-[1fr_2fr]'>
           <div className='footer__about flex max-w-[360px] flex-col gap-[24px]'>
             <div className='flex flex-col gap-[12px]'>
               <Logo />
-              <span className='footer__bottom__copyrights text-sm font-400 text-N-600'>
-                Copyright © {copyrightDate} · Karmaverse
+              <span className='footer__bottom__copyrights text-sm font-400 text-slate-700'>
+                Copyright © {copyrightDate} · Karmaplex
               </span>
             </div>
 
             <div className='flex flex-col gap-[16px]'>
-              <h5 className='text-h5 font-700 leading-normal text-N-800'>
-                Get the latest Karmaverse updates
+              <h5 className='text-h5 font-600 leading-normal text-slate-900'>
+                Get the latest updates
               </h5>
 
               <FieldGroup
-                bgClassName='!bg-N-50 !border-N-100 focus-within:!border-N-700'
+                bgClassName='!bg-slate-50 !border-slate-100 focus-within:!border-slate-700'
                 className='w-full lg:w-[unset]'
                 btnProps={{
                   children: 'Subscribe',
@@ -85,13 +86,13 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
           </div>
 
           <div className='flex justify-between'>
-            <div className='footer__link-list flex flex-col items-center border-l-[1px] px-[80px]'>
+            <div className='footer__link-list flex flex-col items-center border-l-[1px] px-[60px]'>
               <div className='flex flex-col gap-[24px]'>
-                <h5 className='text-h5 font-700 text-N-800'>Marketplace</h5>
+                <h5 className='text-h5 font-600 text-slate-900'>Marketplace</h5>
 
                 <LinkList
                   direction='vertical'
-                  labelClassName='text-base font-500 text-N-700'
+                  labelClassName='text-md font-500 text-slate-800'
                   list={[
                     { id: 0, label: 'Explore collections', url: '#' },
                     { id: 1, label: 'Submit collections', url: '#' },
@@ -102,13 +103,13 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
               </div>
             </div>
 
-            <div className='footer__link-list flex flex-col items-center border-l-[1px] px-[80px]'>
+            <div className='footer__link-list flex flex-col items-center border-l-[1px] px-[60px]'>
               <div className='flex flex-col gap-[24px]'>
-                <h5 className='text-h5 font-700 text-N-800'>Community</h5>
+                <h5 className='text-h5 font-600 text-slate-900'>Community</h5>
 
                 <LinkList
                   direction='vertical'
-                  labelClassName='text-base font-500 text-N-700'
+                  labelClassName='text-md font-500 text-slate-800'
                   list={[
                     { id: 0, label: 'About', url: '#' },
                     { id: 1, label: 'Blog', url: '#' },
@@ -118,13 +119,13 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
               </div>
             </div>
 
-            <div className='footer__link-list flex flex-col items-center border-l-[1px] px-[80px]'>
+            <div className='footer__link-list flex flex-col items-center border-l-[1px] px-[60px]'>
               <div className='flex flex-col gap-[24px]'>
-                <h5 className='text-h5 font-700 text-N-800'>Karmaverse</h5>
+                <h5 className='text-h5 font-600 text-slate-900'>Karmaplex</h5>
 
                 <LinkList
                   direction='vertical'
-                  labelClassName='text-base font-500 text-N-700'
+                  labelClassName='text-md font-500 text-slate-800'
                   list={[
                     { id: 0, label: 'Donate', url: '#' },
                     { id: 1, label: 'About', url: '#' },

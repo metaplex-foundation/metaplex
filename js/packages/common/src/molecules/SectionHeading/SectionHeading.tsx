@@ -44,7 +44,7 @@ export const SectionHeading: FC<SectionHeadingProps> = ({
           })}>
           {overline && (
             <span
-              className={CN('font-500 text-N-700 text-lg', commonClassName)}
+              className={CN('font-500 text-lg text-slate-800', commonClassName)}
               dangerouslySetInnerHTML={{ __html: overline || '' }}
             />
           )}
@@ -53,7 +53,7 @@ export const SectionHeading: FC<SectionHeadingProps> = ({
             <div className='flex items-center gap-[12px]'>
               <h2
                 className={CN(
-                  'text-display-base font-400 text-N-800',
+                  'text-display-sm font-400 text-slate-900',
                   headingClassName,
                   commonClassName
                 )}
@@ -70,7 +70,7 @@ export const SectionHeading: FC<SectionHeadingProps> = ({
           {description && (
             <p
               className={CN(
-                'font-400 text-N-700 max-w-[700px] pt-[40px] text-base',
+                'font-400 max-w-[700px] pt-[40px] text-base text-slate-800',
                 commonClassName
               )}
               dangerouslySetInnerHTML={{ __html: description || '' }}

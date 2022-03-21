@@ -9,12 +9,13 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply break-normal;
 }
 
 body {
   @apply bg-white font-sans text-base text-N-700;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 img {
@@ -39,51 +40,52 @@ img {
   .text-h6,
   .text-overline,
   .text-heading {
-    @apply font-heading text-N-800;
+    @apply text-slate-900;
   }
 
   h1,
   .text-h1 {
-    @apply font-display text-N-800;
+    @apply font-500;
   }
 
   h2,
   .text-h2 {
-    @apply font-700;
+    @apply font-500;
   }
 
   h3,
   .text-h3 {
-    @apply font-700;
+    @apply font-500;
   }
 
   h4,
   .text-h4 {
-    @apply font-600;
+    @apply font-500;
   }
 
   h5,
   .text-h5 {
-    @apply font-600;
+    @apply font-500;
   }
 
   h6,
   .text-h6 {
-    @apply font-600;
+    @apply font-500;
   }
 
   .text-display-xl,
   .text-display-lg,
-  .text-display-base {
-    @apply font-display text-N-800;
+  .text-display-md,
+  .text-display-sm {
+    @apply font-display text-slate-900;
   }
 
   .text-overline {
-    @apply font-600 uppercase text-N-800;
+    @apply font-600 uppercase text-slate-900;
   }
 
   a,
   .link {
-    @apply text-N-700 hover:text-B-400;
+    @apply hover:text-B-400;
   }
 }

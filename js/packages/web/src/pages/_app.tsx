@@ -7,6 +7,7 @@ import 'remixicon/fonts/remixicon.css'
 import '../styles/globals.less'
 import '../styles/overrides.less'
 import '../styles/custom-form.scss'
+import '../styles/overrides.scss'
 
 import 'swiper/css'
 

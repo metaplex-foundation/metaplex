@@ -11,6 +11,7 @@ export interface MetaChipProps {
   hint?: string
   overline?: string
   subHeading?: any
+  subHeadingClassName?: string
 }
 
 export const MetaChip: FC<MetaChipProps> = ({
@@ -23,6 +24,7 @@ export const MetaChip: FC<MetaChipProps> = ({
   hint,
   overline,
   subHeading,
+  subHeadingClassName,
   ...restProps
 }: MetaChipProps) => {
   const MetaChipClasses = CN(`meta-chip flex flex-col`, className, {
@@ -35,45 +37,65 @@ export const MetaChip: FC<MetaChipProps> = ({
     <div className={MetaChipClasses} {...restProps}>
       {overline && (
         <span
-          className={CN('mb-[4px] text-sm font-500 text-N-700', commonClassName)}
+          className={CN('font-500 text-sm text-slate-600', commonClassName)}
           dangerouslySetInnerHTML={{ __html: overline }}
         />
       )}
 
       {heading && typeof heading === 'string' && (
         <h3
-          className={CN('mb-[4px] text-h3 leading-[normal]', headingClassName, commonClassName)}
+          className={CN(
+            'text-h4 font-600 leading-[normal] text-slate-900',
+            headingClassName,
+            commonClassName
+          )}
           dangerouslySetInnerHTML={{ __html: heading }}
         />
       )}
 
       {heading && typeof heading !== 'string' && (
-        <h3 className={CN('mb-[4px] text-h3 leading-[normal]', headingClassName, commonClassName)}>
+        <h3
+          className={CN(
+            'text-h4 font-600 leading-[normal] text-slate-900',
+            headingClassName,
+            commonClassName
+          )}>
           {heading}
         </h3>
       )}
 
       {subHeading && typeof subHeading === 'string' && (
         <h3
-          className={CN('text-h5 font-700 leading-[normal]', commonClassName)}
+          className={CN(
+            'text-h6 font-600 leading-[normal] tracking-tighter',
+            commonClassName,
+            subHeadingClassName
+          )}
           dangerouslySetInnerHTML={{ __html: subHeading }}
         />
       )}
 
       {subHeading && typeof subHeading !== 'string' && (
-        <h3 className={CN('text-h5 font-700 leading-[normal]', commonClassName)}>{subHeading}</h3>
+        <h3
+          className={CN(
+            'text-h6 font-600 leading-[normal] tracking-tighter',
+            commonClassName,
+            subHeadingClassName
+          )}>
+          {subHeading}
+        </h3>
       )}
 
       {description && (
         <span
-          className={CN('text-base text-N-700', commonClassName)}
+          className={CN('font-500 text-base text-slate-700', commonClassName)}
           dangerouslySetInnerHTML={{ __html: description }}
         />
       )}
 
       {hint && (
         <p
-          className={CN('text-sm font-500 text-N-600', commonClassName)}
+          className={CN('font-500 text-sm text-slate-600', commonClassName)}
           dangerouslySetInnerHTML={{ __html: hint }}
         />
       )}

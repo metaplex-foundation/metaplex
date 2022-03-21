@@ -6,11 +6,6 @@ module.exports = {
 
   fontStack: [
     {
-      name: 'Rajdhani',
-      className: 'text-serif',
-      link: 'https://fonts.google.com/specimen/Rajdhani',
-    },
-    {
       name: 'Righteous',
       className: 'text-heading',
       link: 'https://fonts.google.com/specimen/Righteous',
@@ -29,8 +24,8 @@ module.exports = {
 
   fontFamily: {
     sans: ['"Poppins"', 'sans-serif'],
-    serif: ['"Rajdhani"', 'serif'],
-    heading: ['"Rajdhani"', 'sans-serif'],
+    serif: ['"Poppins"', 'serif'],
+    heading: ['"Poppins"', 'sans-serif'],
     display: ['"Righteous"', 'sans-serif'],
     mono: ['"IBM Plex Mono"', 'monospace'],
     code: ['"IBM Plex Mono"', 'monospace'],
@@ -41,26 +36,34 @@ module.exports = {
 
     fontSize: {
       'display-xl': [
-        '60px',
+        '72px',
         {
           label: 'Display XL',
-          lineHeight: 'normal',
+          lineHeight: '96px',
           letterSpacing: '-1.25px',
         },
       ],
       'display-lg': [
-        '52px',
+        '60px',
         {
           label: 'Display LG',
-          lineHeight: 'normal',
+          lineHeight: '74px',
+          letterSpacing: '-1.25px',
+        },
+      ],
+      'display-md': [
+        '52px',
+        {
+          label: 'Display MD',
+          lineHeight: '72px',
           letterSpacing: '-0.18px',
         },
       ],
-      'display-base': [
+      'display-sm': [
         '36px',
         {
-          label: 'Display Base',
-          lineHeight: 'normal',
+          label: 'Display SM',
+          lineHeight: '36px',
           letterSpacing: '-0.18px',
         },
       ],
@@ -70,7 +73,7 @@ module.exports = {
   },
 
   headings: {
-    fontFamily: '"Rajdhani", sans-serif',
+    fontFamily: '"Poppins", sans-serif',
 
     fontSize: {
       h1: [
@@ -78,15 +81,15 @@ module.exports = {
         {
           label: 'H1',
           lineHeight: '72px',
-          letterSpacing: '-1.25px',
+          letterSpacing: '-0.18px',
         },
       ],
       h2: [
-        '40px',
+        '36px',
         {
           label: 'H2',
-          lineHeight: '52px',
-          letterSpacing: '-0.74px',
+          lineHeight: '48px',
+          letterSpacing: '-0.18px',
         },
       ],
       h3: [
@@ -94,31 +97,31 @@ module.exports = {
         {
           label: 'H3',
           lineHeight: '48px',
-          letterSpacing: '-0.64px',
+          letterSpacing: '-0.18px',
         },
       ],
       h4: [
-        '24px',
+        '28px',
         {
           label: 'H4',
-          lineHeight: '36px',
-          letterSpacing: '-0.33px',
+          lineHeight: '40px',
+          letterSpacing: '-0.18px',
         },
       ],
       h5: [
         '20px',
         {
           label: 'H5',
-          lineHeight: '32px',
-          letterSpacing: '-0.26px',
+          lineHeight: '26px',
+          letterSpacing: '-0.18px',
         },
       ],
       h6: [
-        '18px',
+        '16px',
         {
           label: 'H6',
-          lineHeight: '32px',
-          letterSpacing: '-0.26px',
+          lineHeight: '20px',
+          letterSpacing: '-0.18px',
         },
       ],
       overline: [
@@ -146,11 +149,11 @@ module.exports = {
         },
       ],
       xl: [
-        '28px',
+        '24px',
         {
           label: 'Text Extra Large',
-          lineHeight: '44px',
-          letterSpacing: '-0.2px',
+          lineHeight: '32px',
+          letterSpacing: '-0.18px',
         },
       ],
       lg: [
@@ -166,7 +169,7 @@ module.exports = {
         {
           label: 'Text Medium',
           lineHeight: '24px',
-          letterSpacing: '-0.18px',
+          letterSpacing: '-0.09px',
         },
       ],
       sm: [

@@ -24,9 +24,9 @@ export const DataCard: FC<DataCardProps> = ({
       <span className='h-[60px] w-auto'>
         <img src={icon} height={60} />
       </span>
-      <p className='pt-[16px] text-base font-500 text-N-700'>{overline}</p>
-      <h3 className='text-h3 font-700 text-N-800'>{heading}</h3>
-      <p className='pt-[8px] text-base font-400 text-N-700'>{description}</p>
+      <p className='font-500 pt-[16px] text-base text-slate-700'>{overline}</p>
+      <h3 className='text-h4 text-slate-900'>{heading}</h3>
+      <p className='font-400 pt-[8px] text-base text-slate-700'>{description}</p>
     </div>
   )
 }

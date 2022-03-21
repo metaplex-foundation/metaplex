@@ -50,6 +50,7 @@
     "mime": "^3.0.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
+    "react-feather": "^2.0.9",
     "swiper": "^8.0.7",
     "typescript": "^4.1.3"
   },

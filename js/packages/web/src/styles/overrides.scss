@@ -1,0 +1,43 @@
+/* Swiper bullets */
+.swiper-pagination {
+  bottom: 24px !important;
+
+  &-bullet {
+    width: 52px !important;
+    height: 8px !important;
+    border-radius: 8px !important;
+    background-color: #d8e1ec !important;
+    opacity: 1 !important;
+
+    &-active {
+      background-color: #4b5669 !important;
+    }
+  }
+}
+
+.block-carousel__item {
+  opacity: 0;
+
+  &.swiper-slide-visible {
+    opacity: 1;
+  }
+}
+
+/* Product Card Carousel Preview */
+.preview-carousel {
+  .swiper-pagination {
+    bottom: 24px !important;
+
+    &-bullet {
+      width: 20px !important;
+      height: 4px !important;
+      border-radius: 8px !important;
+      background-color: #d8e1ec !important;
+      opacity: 1 !important;
+
+      &-active {
+        background-color: #4b5669 !important;
+      }
+    }
+  }
+}

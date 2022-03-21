@@ -36,12 +36,13 @@ export const Hero: FC<HeroProps> = ({ className }) => {
       <div className='container flex items-center gap-[48px]'>
         <div className='hero__left flex max-w-[527px] flex-col gap-[52px]'>
           <div className='flex flex-col gap-[24px]'>
-            <h1 className='text-display-xl'>
+            <h1 className='text-display-lg'>
               Buy, Sell, <AndIcon /> Trade Eco-Friendly NFTs
             </h1>
             <p>
-              Karmaverse is a Solana NFT exchange that rewards users for their activity and donates
-              a portion of every trade to charitable causes.
+              Karmaplex is a Solana NFT exchange that rewards users <br />
+              for their activity and donates a portion of every trade to <br />
+              charitable causes.
             </p>
           </div>
 

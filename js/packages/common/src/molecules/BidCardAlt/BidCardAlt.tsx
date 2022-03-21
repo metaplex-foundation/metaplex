@@ -3,13 +3,15 @@ import CN from 'classnames'
 import { Image, Button, MetaChip } from '../../atoms'
 
 export interface BidCardAltProps {
+  [x: string]: any
+  avatar?: string
+  avatarLabel?: string
   image?: string
   remainingTime?: string
   price?: string
   dollarValue?: string
   onClickButton?: any
   hasIndicator?: boolean
-  className?: string
 }
 
 export const BidCardAlt: FC<BidCardAltProps> = ({
@@ -20,9 +22,9 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
   dollarValue,
   onClickButton,
   ...restProps
-}) => {
+}: BidCardAltProps) => {
   const BidCardAltClasses = CN(
-    `bid-card-alt flex flex-col bg-white rounded overflow-hidden w-full`,
+    `bid-card-alt shadow-card flex flex-col bg-white rounded overflow-hidden w-full group cursor-pointer`,
     className
   )
 
@@ -32,7 +34,7 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
         <Image src={image} />
       </div>
 
-      <div className='border-N-100 flex justify-between rounded-b border-x border-b p-[20px]'>
+      <div className='flex justify-between rounded-b p-[20px] transition-all'>
         <div className='flex flex-col gap-[8px]'>
           <MetaChip overline='Remaining Time' subHeading={remainingTime} />
           <Button appearance='neutral' onClick={onClickButton}>
@@ -47,3 +49,5 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
     </div>
   )
 }
+
+export default BidCardAlt

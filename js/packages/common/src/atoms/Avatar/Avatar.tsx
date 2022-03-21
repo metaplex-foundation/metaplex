@@ -7,7 +7,7 @@ export interface AvatarProps {
   image?: string
   onClick?: any
   label?: string
-  size?: 'sm' | 'md' | 'lg' | number
+  size?: 'sm' | 'md' | 'lg' | 'xl' | number
 }
 
 export const Avatar: FC<AvatarProps> = ({
@@ -28,6 +28,7 @@ export const Avatar: FC<AvatarProps> = ({
     <div className={AvatarClasses} onClick={onClick} {...restProps}>
       <span
         className={CN('flex overflow-hidden rounded-full', {
+          'h-[160px] w-[160px]': typeof size !== 'number' && size === 'xl',
           'h-[56px] w-[56px]': typeof size !== 'number' && size === 'lg',
           'h-[40px] w-[40px]': typeof size !== 'number' && size === 'md',
           'h-[24px] w-[24px]': typeof size !== 'number' && size === 'sm',

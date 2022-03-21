@@ -26,19 +26,15 @@ export const SubFooter: FC<SubFooterProps> = ({
 
   return (
     <div className={SubFooterClasses} {...restProps}>
-      <div className='container flex flex-col items-center justify-center gap-[40px] border-t border-N-100 py-[60px]'>
-        <h3 className='text-display-base font-400 leading-[normal] text-N-800'>
+      <div className='container flex flex-col items-center justify-center gap-[40px] border-t border-slate-100 py-[60px]'>
+        <h3 className='text-display-sm font-400 leading-[normal] text-slate-900'>
           {heading || 'Join our communities'}
         </h3>
 
         <ul className='flex gap-[28px]'>
           {(list || []).map(({ id, url, icon }, index) => (
             <li key={id || index}>
-              <a
-                target='_blank'
-                href={url}
-                rel='noreferrer'
-                className='text-N-800 hover:text-B-base'>
+              <a target='_blank' href={url} className='text-slate-900 hover:text-B-base' rel="noreferrer">
                 {icon}
               </a>
             </li>

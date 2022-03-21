@@ -6,10 +6,17 @@ export interface BlinkIndicatorProps {
   appearance?: 'default' | 'success' | 'warning' | 'danger' | 'info'
 }
 
-export const BlinkIndicator: FC<BlinkIndicatorProps> = ({ className, appearance, ...restProps }: BlinkIndicatorProps) => {
-  const BlinkIndicatorClasses = CN('blink-indicator inline-flex h-[8px] w-[8px] flex-shrink-0 rounded-full relative')
+export const BlinkIndicator: FC<BlinkIndicatorProps> = ({
+  className,
+  appearance,
+  ...restProps
+}: BlinkIndicatorProps) => {
+  const BlinkIndicatorClasses = CN(
+    'blink-indicator inline-flex h-[8px] w-[8px] flex-shrink-0 rounded-full relative',
+    className
+  )
   const ColorDotClasses = CN('blink-indicator-color', {
-    'bg-N-500': appearance === 'default',
+    'bg-slate-500': appearance === 'default',
     'bg-R-500': appearance === 'danger',
     'bg-G-500': appearance === 'success',
     'bg-Y-500': appearance === 'warning',
@@ -17,7 +24,7 @@ export const BlinkIndicator: FC<BlinkIndicatorProps> = ({ className, appearance,
   })
 
   const ColorRippleClasses = CN('blink-indicator-color', {
-    'bg-N-400': appearance === 'default',
+    'bg-slate-400': appearance === 'default',
     'bg-R-400': appearance === 'danger',
     'bg-G-400': appearance === 'success',
     'bg-Y-400': appearance === 'warning',
@@ -26,8 +33,14 @@ export const BlinkIndicator: FC<BlinkIndicatorProps> = ({ className, appearance,
 
   return (
     <span className={BlinkIndicatorClasses} {...restProps}>
-      <span className={CN('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', ColorRippleClasses)} />
-      <span className={CN('relative inline-flex h-[8px] w-[8px] rounded-full', ColorDotClasses)}></span>
+      <span
+        className={CN(
+          'absolute inline-flex h-full w-full animate-ping rounded-full opacity-75',
+          ColorRippleClasses
+        )}
+      />
+      <span
+        className={CN('relative inline-flex h-[8px] w-[8px] rounded-full', ColorDotClasses)}></span>
     </span>
   )
 }
