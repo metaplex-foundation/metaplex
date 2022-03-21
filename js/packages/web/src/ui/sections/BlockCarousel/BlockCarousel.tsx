@@ -1,6 +1,7 @@
 import React, { FC, useEffect } from 'react'
 import CN from 'classnames'
 import Swiper, { Navigation, Autoplay, Mousewheel } from 'swiper'
+import 'swiper/css'
 
 export interface SlideProps {
   Component?: any
@@ -32,7 +33,6 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
   id,
   options,
   slides,
-  loop,
   onChangeIndex,
   ...restProps
 }: BlockCarouselProps) => {
@@ -40,7 +40,6 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
 
   const {
     autoPlay,
-    centeredSlides,
     slideClass,
     slidePrevClass,
     slidesPerView,
@@ -56,7 +55,7 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
 
     const swiper = new Swiper(`#${id}` || '.block-carousel', {
       autoplay: autoPlay || false,
-      centeredSlides: centeredSlides || false,
+      centeredSlides: false,
       direction: 'horizontal',
       slideClass: slideClass || 'block-carousel__item',
       slidePrevClass: slidePrevClass || 'block-carousel__item__prev',
@@ -70,7 +69,6 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
       },
       resizeObserver: resizeObserver || true,
       mousewheel: { forceToAxis: true },
-      loop: loop || false,
       on: {
         slideChange: function () {
           onChangeIndex(
@@ -78,6 +76,7 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
           )
         },
       },
+      watchSlidesProgress: true,
       ...restOptions,
     })
   }, [])

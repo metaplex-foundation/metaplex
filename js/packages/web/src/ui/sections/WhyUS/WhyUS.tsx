@@ -14,7 +14,7 @@ export const WhyUS: FC<WhyUSProps> = ({ className, ...restProps }: WhyUSProps) =
       <div className='container'>
         <SectionHeading
           align='center'
-          overline='✋ Why Karmaverse?'
+          overline='✋ Why Karmaplex?'
           heading='What makes us different'
           headingClassName='pt-[12px]'
           description='Do you have a Solana based generative NFT collection with<br />more than 100 pieces? Submit your collection below to be added to our Marketplace and<br />shown to thousands of users.'
@@ -22,7 +22,7 @@ export const WhyUS: FC<WhyUSProps> = ({ className, ...restProps }: WhyUSProps) =
 
         <div className='flex w-full gap-[32px] pt-[80px]'>
           <DataCard
-            className='border-[1px] border-N-100'
+            className='border-[1px] border-slate-100'
             icon='/img/points.svg'
             overline='Donations with'
             heading='Every purchase'
@@ -30,7 +30,7 @@ export const WhyUS: FC<WhyUSProps> = ({ className, ...restProps }: WhyUSProps) =
               labore et dolore magna.'
           />
           <DataCard
-            className='border-[1px] border-N-100'
+            className='border-[1px] border-slate-100'
             icon='/img/gift.svg'
             overline='Community'
             heading='Rewards'
@@ -38,7 +38,7 @@ export const WhyUS: FC<WhyUSProps> = ({ className, ...restProps }: WhyUSProps) =
               labore et dolore magna.'
           />
           <DataCard
-            className='border-[1px] border-N-100'
+            className='border-[1px] border-slate-100'
             icon='/img/collection.svg'
             overline='Curated'
             heading='Collections'

@@ -53,6 +53,7 @@ module.exports = {
     },
     boxShadow: {
       DEFAULT: '0px 6px 12px -6px rgba(18, 16, 55, 0.12), 0px 8px 24px -4px rgba(18, 16, 55, 0.08)',
+      card: '0px 25px 120px -12px rgba(13, 39, 86, 0.08)',
       none: 'none',
     },
     borderRadius: {
@@ -66,10 +67,17 @@ module.exports = {
     extend: {
       colors: {
         ...palette,
+        slate: {
+          10: '#fdfeff',
+        },
       },
       backgroundImage: {
-        launchpad:
+        'launchpad':
           'linear-gradient(99.28deg, #021228 6.43%, #1D105E 17.29%, #250439 69.73%, #03172B 95.71%)',
+        'collection-cover':
+          'linear-gradient(180deg, rgba(14, 30, 62, 0.09) 0%, rgba(14, 30, 62, 0.54) 50.52%, rgba(4, 13, 31, 0.81) 100%)',
+        'gradient-primary':
+          'linear-gradient(90deg, rgb(14 136 255 / 90%) -0.17%, rgb(66 25 226 / 90%) 99.83%)',
       },
       transform: {
         'hero-card-1': 'matrix(1, -0.1, 0.1, 1, 0, 0)',

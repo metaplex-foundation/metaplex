@@ -11,6 +11,7 @@ export interface BuyCardProps {
   floorPrice?: string
   dollarValue?: string
   onClickButton?: any
+  hasIndicator?: boolean
 }
 
 export const BuyCard: FC<BuyCardProps> = ({
@@ -24,20 +25,18 @@ export const BuyCard: FC<BuyCardProps> = ({
   ...restProps
 }: BuyCardProps) => {
   const BuyCardClasses = CN(
-    `buy-card flex flex-col bg-white rounded overflow-hidden w-full`,
+    `buy-card flex flex-col bg-white rounded overflow-hidden w-full group transition-all cursor-pointer shadow-card`,
     className
   )
 
   return (
     <div className={BuyCardClasses} {...restProps}>
-      <div className='flex h-[286px] w-full overflow-hidden'>
+      <div className='flex h-[286px] w-full overflow-hidden transition-all'>
         <Image src={image} />
       </div>
 
-      <div className='border-N-100 flex flex-col rounded-b border-x border-b px-[20px] pt-[12px] pb-[20px]'>
-        <h2 className='border-N-100 text-h4 font-600 w-full border-b pb-[8px] text-center'>
-          {name}
-        </h2>
+      <div className='flex flex-col rounded-b px-[20px] pt-[12px] pb-[20px] transition-all'>
+        <h2 className='text-h5 w-full border-b border-slate-100 pb-[8px] text-center'>{name}</h2>
 
         <div className='flex justify-between pt-[12px]'>
           <div className='flex flex-col gap-[8px]'>
@@ -45,14 +44,11 @@ export const BuyCard: FC<BuyCardProps> = ({
               overline='Volume'
               subHeading={
                 <div className='flex items-center gap-[4px]'>
-                  <Solana size={20} />
-                  {volume}
+                  <Solana size={16} className='flex items-center' />
+                  <span className='flex items-center'>{volume}</span>
                 </div>
               }
             />
-            <Button appearance='neutral' onClick={onClickButton}>
-              View collection
-            </Button>
           </div>
 
           <div className='flex'>
@@ -63,6 +59,12 @@ export const BuyCard: FC<BuyCardProps> = ({
               hint={dollarValue}
             />
           </div>
+        </div>
+
+        <div className='flex w-full pt-[12px]'>
+          <Button appearance='neutral' className='w-full' onClick={onClickButton}>
+            View collection
+          </Button>
         </div>
       </div>
     </div>

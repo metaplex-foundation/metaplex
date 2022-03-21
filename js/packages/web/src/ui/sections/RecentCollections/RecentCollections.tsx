@@ -44,7 +44,7 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
         />
 
         <div className='relative flex w-full'>
-          <div className='flex w-full overflow-hidden'>
+          <div className='flex w-full'>
             <BlockCarousel
               slides={slides}
               id='recent-collections'

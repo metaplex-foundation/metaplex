@@ -1,0 +1,43 @@
+import dedent from 'ts-dedent'
+import { ArgsTable, Canvas, Description, Meta, Preview, Source, Story } from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+
+import { ActivityCard } from './ActivityCard'
+
+<Meta title='02. Molecules / ActivityCard' component={ActivityCard} />
+
+# ActivityCard
+
+`import { ActivityCard } from '@karapincha/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex items-center gap-4'>
+      <ActivityCard
+        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/yytjymgHK5Y64dJLHZlkCB-zbayUpAmLNB49VapL30g'
+        title='Degen Ape #1921'
+        description='Sale'
+        price='49.92'
+        fromAddress='6gr...Vun5'
+        toAddress='7hk...JaoW'
+        time='12 hours ago'
+      />
+    </div>
+  </div>
+</Story>
+
+<Source language={'jsx'} code={dedent`<ActivityCard />`} />
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={ActivityCard} />

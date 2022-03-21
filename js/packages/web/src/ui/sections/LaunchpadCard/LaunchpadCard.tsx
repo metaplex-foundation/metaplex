@@ -38,7 +38,7 @@ export const LaunchpadCard: FC<LaunchpadCardProps> = ({
                 description='NFTs minted'
               />
 
-              <span className='flex h-[60px] w-[1px] bg-N-200' />
+              <span className='flex h-[60px] w-[1px] bg-slate-200' />
 
               <MetaChip
                 commonClassName='!text-white'
@@ -52,7 +52,7 @@ export const LaunchpadCard: FC<LaunchpadCardProps> = ({
                 description='Daily SOL volume'
               />
 
-              <span className='flex h-[60px] w-[1px] bg-N-200' />
+              <span className='flex h-[60px] w-[1px] bg-slate-200' />
 
               <MetaChip
                 commonClassName='!text-white'

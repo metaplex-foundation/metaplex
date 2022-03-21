@@ -1,22 +1,28 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { PlaceholderImage } from '..'
+import { Placeholder } from '../Placeholder'
 
 export interface ImageProps {
   [x: string]: any
   src?: string
+  imgClassName?: string
 }
 
-export const Image: FC<ImageProps> = ({ className, src, ...restProps }: ImageProps) => {
+export const Image: FC<ImageProps> = ({
+  className,
+  src,
+  imgClassName,
+  ...restProps
+}: ImageProps) => {
   const ImageClasses = CN(`image flex w-[inherit] h-[inherit]`, className)
   const [isImageLoaded, setIsImageLoaded] = useState(false)
 
   return (
     <div className={ImageClasses} {...restProps}>
-      {!isImageLoaded && <PlaceholderImage />}
+      {!isImageLoaded && <Placeholder />}
       <img
         src={src}
-        className='w-full max-w-full object-cover'
+        className={CN('h-[inherit] w-full max-w-full object-cover', imgClassName)}
         onLoad={() => setIsImageLoaded(true)}
         style={isImageLoaded ? {} : { display: 'none' }}
       />

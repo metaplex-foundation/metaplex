@@ -4,14 +4,29 @@ import { SearchField, ConnectButton, Button, Logo } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { CurrentUserBadge } from '../../../components/CurrentUserBadge'
 import useSearch from '../../../hooks/useSearch'
+import { useLocation } from 'react-router-dom'
+import CN from 'classnames'
 
 interface HeaderProps {}
+
+const usePathname = () => {
+  const location = useLocation()
+  return location.pathname
+}
 
 export const Header: FC<HeaderProps> = () => {
   const { connected } = useWallet()
   const { onChangeSearchText, searchText, onSubmitSearch } = useSearch()
+  const pathname = usePathname()
+
+  console.log(pathname)
+
   return (
-    <div className='header relative flex flex min-h-[42px] w-full items-center py-[40px]'>
+    <div
+      className={CN('header relative flex min-h-[42px] w-full items-center', {
+        'py-[40px]': pathname === '/',
+        'py-[20px]': pathname !== '/',
+      })}>
       <span className="absolute top-0 left-0 right-0 z-[-1] h-[692px] w-full bg-[url('/img/hero-bg-pattern.png')] bg-top" />
 
       <div className='container relative flex items-center justify-between'>
@@ -24,7 +39,7 @@ export const Header: FC<HeaderProps> = () => {
             <SearchField
               value={searchText}
               onChange={onChangeSearchText}
-              className='min-w-[368px] flex-shrink-0'
+              className='min-w-[368px]'
             />
           </form>
         </div>

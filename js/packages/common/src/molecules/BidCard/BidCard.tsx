@@ -25,7 +25,7 @@ export const BidCard: FC<BidCardProps> = ({
   onClickButton,
   hasIndicator,
   ...restProps
-}) => {
+}: BidCardProps) => {
   const BidCardClasses = CN(
     `bid-card flex flex-col gap-[12px] p-[24px] bg-white rounded-[12px] w-full`,
     className
@@ -50,7 +50,7 @@ export const BidCard: FC<BidCardProps> = ({
         <div className='flex flex-col gap-[8px]'>
           <MetaChip overline='Remaining Time' subHeading={remainingTime} />
           <Button appearance='neutral' onClick={onClickButton}>
-            View collection
+            Bid now
           </Button>
         </div>
 

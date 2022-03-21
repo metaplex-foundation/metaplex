@@ -3177,9 +3177,9 @@
     "@types/react" "*"
 
 "@types/react@*", "@types/react@^17.0.16":
-  version "17.0.40"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.40.tgz#dc010cee6254d5239a138083f3799a16638e6bad"
-  integrity sha512-UrXhD/JyLH+W70nNSufXqMZNuUD2cXHu6UjCllC6pmOQgBX4SGXOH8fjRka0O0Ee0HrFxapDD8Bwn81Kmiz6jQ==
+  version "17.0.41"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.41.tgz#6e179590d276394de1e357b3f89d05d7d3da8b85"
+  integrity sha512-chYZ9ogWUodyC7VUTRBfblysKLjnohhFY9bGLwvnUFFy48+vB9DikmB3lW0qTFmBcKSzmdglcvkHK71IioOlDA==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -4716,9 +4716,9 @@ caseless@~0.12.0:
   integrity sha1-G2gcIf+EAzyCZUMJBolCDRhxUdw=
 
 ccxt@^1.60.81:
-  version "1.76.29"
-  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.76.29.tgz#c6a2b02e673974ccce7b0358d657eda0b8339dbb"
-  integrity sha512-sCzcUha0Sd/wrmDm6fFSvDlMavfJD73yVCrsZSK60o48hjc+ZnGw5Ze3dSoCBhAH6udcmwzjn6klqgdoI0S2gw==
+  version "1.76.65"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.76.65.tgz#8de64096061909af6c688234036bdd9b36e8d34b"
+  integrity sha512-F71rSCoGD7ct2M7fDTMmGjz41a70GdKn191s9zz+4bbsfdIGkvEbqGswC/bINognqyhmlsdudYgJ9VxXPSbarg==
 
 chalk@2.4.2, chalk@^2.0.0, chalk@^2.0.1, chalk@^2.1.0, chalk@^2.3.1, chalk@^2.4.1, chalk@^2.4.2:
   version "2.4.2"
@@ -12463,6 +12463,13 @@ react-dom@17.0.2, react-dom@^17.0.2:
     object-assign "^4.1.1"
     scheduler "^0.20.2"
 
+react-feather@^2.0.9:
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/react-feather/-/react-feather-2.0.9.tgz#6e42072130d2fa9a09d4476b0e61b0ed17814480"
+  integrity sha512-yMfCGRkZdXwIs23Zw/zIWCJO3m3tlaUvtHiXlW+3FH7cIT6fiK1iJ7RJWugXq7Fso8ZaQyUm92/GOOHXvkiVUw==
+  dependencies:
+    prop-types "^15.7.2"
+
 react-intersection-observer@^8.32.0:
   version "8.33.1"
   resolved "https://registry.yarnpkg.com/react-intersection-observer/-/react-intersection-observer-8.33.1.tgz#8e6442cac7052ed63056e191b7539e423e7d5c64"
@@ -12793,9 +12800,9 @@ redent@^3.0.0:
     strip-indent "^3.0.0"
 
 redstone-api@^0.4.6:
-  version "0.4.10"
-  resolved "https://registry.yarnpkg.com/redstone-api/-/redstone-api-0.4.10.tgz#62a4e2abc9a75ec7ca060944ca8b2825e4c181cb"
-  integrity sha512-14I7NRzaEeQEuXrfASImoLiNzCQXIqpGf7mj5BKSKyyzIdAZpG5waj7e86Woo2TgAodfCpVRAQEPRsZiB8JgJQ==
+  version "0.4.11"
+  resolved "https://registry.yarnpkg.com/redstone-api/-/redstone-api-0.4.11.tgz#103530e7a23138bb24332ce4d893eb72e61109bd"
+  integrity sha512-X0gj7UU5aLQPmNjdnhBUCvi6tkj5SpQJ7heT6+TIPx7Od707n4oqKHoJa41V8QOGjudbxaM1BIv6+2+hp0wFGQ==
   dependencies:
     ar-gql "^0.0.6"
     arweave "^1.10.16"
