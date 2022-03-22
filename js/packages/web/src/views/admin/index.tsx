@@ -20,8 +20,12 @@ import {
   METAPLEX_ID,
   processMetaplexAccounts,
   subscribeProgramChanges,
+  useWallet,
 } from '@oyster/common';
-import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
+import {
+  //  useWallet,
+  WalletContextState,
+} from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { convertMasterEditions, filterMetadata } from '../../actions/convertMasterEditions';
@@ -52,17 +56,18 @@ export const AdminView = () => {
     [wallet.wallet, wallet.connect, setVisible]
   );
   const { storeAddress, setStoreForOwner, isConfigured } = useStore();
+  const connectedWalletPubkey = wallet.publicKey?.toBase58();
 
   useEffect(() => {
     if (
       !store &&
       !storeAddress &&
-      wallet.publicKey &&
+      connectedWalletPubkey &&
       !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
     ) {
-      setStoreForOwner(wallet.publicKey.toBase58());
+      setStoreForOwner(connectedWalletPubkey);
     }
-  }, [store, storeAddress, wallet.publicKey]);
+  }, [store, storeAddress, connectedWalletPubkey]);
 
   useEffect(() => {
     return subscribeProgramChanges(connection, patchState, {
@@ -72,7 +77,7 @@ export const AdminView = () => {
   }, [connection]);
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || !connectedWalletPubkey) {
       return;
     }
     (async () => {
@@ -84,15 +89,12 @@ export const AdminView = () => {
         connection,
         Object.values(auctionManagerState.auctionManagersByAuction)
       );
-      const vaultState = await loadVaultsAndContentForAuthority(
-        connection,
-        wallet.publicKey?.toBase58() as string
-      );
+      const vaultState = await loadVaultsAndContentForAuthority(connection, connectedWalletPubkey);
 
       patchState(creatorsState, auctionManagerState, auctionsState, vaultState);
       setLoadingAdmin(false);
     })();
-  }, [loadingAdmin, isLoading, storeAddress]);
+  }, [loadingAdmin, isLoading, storeAddress, connectedWalletPubkey]);
 
   if (loadingAdmin) {
     return (
