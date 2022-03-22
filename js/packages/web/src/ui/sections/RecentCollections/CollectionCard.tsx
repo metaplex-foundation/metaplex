@@ -18,7 +18,7 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection }) => {
   const { data } = useExtendedArt(collection.pubkey)
 
   return (
-    <Link to='/collection'>
+    <Link to={`/collection/${collection.pubkey}`}>
       <BuyCard {...dx} image={data?.image ?? ''} name={data?.name ?? ''} onClickButton={() => {}} />
     </Link>
   )

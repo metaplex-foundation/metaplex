@@ -1,5 +1,4 @@
-import React, { FC, useState } from 'react'
-import CN from 'classnames'
+import React, { FC, useMemo, useState } from 'react'
 import { CollectionHeader } from '../../sections/CollectionHeader'
 import { CollectionSidebar } from '../../sections/CollectionSidebar'
 import { CollectionActionsBar } from '../../sections/CollectionActionsBar'
@@ -7,24 +6,45 @@ import { CollectionAppliedFilters } from '../../sections/CollectionAppliedFilter
 import { CollectionNftList } from '../../sections/CollectionNftList'
 import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
+import { useParams } from 'react-router-dom'
+import { useExtendedArt } from '../../../hooks'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
+import { pubkeyToString } from '@oyster/common'
 
-export interface CollectionProps {
-  [x: string]: any
+export interface CollectionProps {}
+
+interface ParamsInterface {
+  pubkey: string
 }
 
-export const Collection: FC<CollectionProps> = ({ className, ...restProps }: CollectionProps) => {
-  const CollectionClasses = CN(`collection`, className)
-  const [showActivity, setShowActivity] = useState(false)
-  const [showExplore, setShowExplore] = useState(true)
+export const Collection: FC<CollectionProps> = () => {
+  const [showActivity, setShowActivity] = useState<boolean>(false)
+  const [showExplore, setShowExplore] = useState<boolean>(true)
+  const { pubkey }: ParamsInterface = useParams()
+  const { data } = useExtendedArt(pubkey)
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+
+  const filteredAuctions = useMemo(() => {
+    return auctions
+    if (pubkey) {
+      return auctions.filter(
+        auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(pubkey)
+      )
+    }
+    return auctions
+  }, [auctions, pubkey])
+
+  console.log('auctions', auctions)
 
   return (
-    <div className={CollectionClasses} {...restProps}>
+    <div className='collection'>
       <CollectionHeader
         isVerified
-        avatar='https://i.imgur.com/QRUzR7g.png'
+        avatar={data?.image ?? ''}
         cover='/img/dummy-collection-cover.png'
-        title='Degenerate Ape Academy'
-        description='Our mission here at the academy is simple: Take 10,000 of the smoothest brained apes, put them all in one location and let the mayhem ensue.'
+        title={data?.name ?? ''}
+        description={data?.description ?? ''}
       />
 
       <div className='flex w-full pt-[80px] pb-[100px]'>
@@ -50,7 +70,7 @@ export const Collection: FC<CollectionProps> = ({ className, ...restProps }: Col
             {showExplore && (
               <div className='flex flex-col gap-[28px]'>
                 <CollectionAppliedFilters />
-                <CollectionNftList />
+                <CollectionNftList auctions={filteredAuctions} />
               </div>
             )}
 
