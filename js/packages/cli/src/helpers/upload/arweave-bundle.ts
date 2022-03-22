@@ -490,7 +490,7 @@ export function* makeArweaveBundleUploadGenerator(
             walletKeyPair.secretKey,
             {
               timeout: 60000,
-              providerUrl: rpcUrl ?? 'https://api.metaplex.rpcpool.com',
+              providerUrl: rpcUrl ?? 'https://api.metaplex.solana.com',
             },
           )
         : new Bundlr(
