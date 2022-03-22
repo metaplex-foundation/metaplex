@@ -90,6 +90,7 @@ export interface IMetadataExtension {
   animation_url?: string;
 
   attributes?: Attribute[];
+  tag: string;
 
   // stores link to item on meta
   external_url: string;
