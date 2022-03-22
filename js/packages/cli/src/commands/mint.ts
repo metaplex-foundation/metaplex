@@ -393,7 +393,7 @@ export async function mintV2(
   const txnEstimate =
     892 +
     (collectionPDAAccount && data.retainAuthority ? 182 : 0) +
-    (candyMachine.tokenMint ? 145 : 0) +
+    (candyMachine.tokenMint ? 177 : 0) +
     (data.whitelistMintSettings ? 33 : 0) +
     (data.whitelistMintSettings?.mode?.burnEveryTime ? 145 : 0) +
     (data.gatekeeper ? 33 : 0) +

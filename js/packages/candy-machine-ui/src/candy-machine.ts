@@ -533,7 +533,7 @@ export const mintOneToken = async (
   const txnEstimate =
     892 +
     (collectionPDAAccount && state.retainAuthority ? 182 : 0) +
-    (state.tokenMint ? 145 : 0) +
+    (state.tokenMint ? 177 : 0) +
     (state.whitelistMintSettings ? 33 : 0) +
     (state.whitelistMintSettings?.mode?.burnEveryTime ? 145 : 0) +
     (state.gatekeeper ? 33 : 0) +
