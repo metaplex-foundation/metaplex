@@ -12,6 +12,7 @@ interface HowToBuyModalProps {
 export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({ onClick, buttonType }) => {
   return (
     <InstructionsModal
+      buttonClassName="!p-0"
       buttonType={buttonType}
       buttonText="How to Buy"
       modalTitle={`Buying NFTs on ${LABELS.STORE_NAME}`}

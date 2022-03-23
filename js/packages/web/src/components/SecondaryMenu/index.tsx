@@ -9,7 +9,7 @@ export const SecondaryMenu = () => {
   const { connected } = useWallet();
 
   return (
-    <div className="secondary-menu">
+    <div className="secondary-menu space-x-8 sm:space-x-0 w-">
       {connected ? (
         <>
           <Notifications buttonType="text" />
@@ -20,7 +20,9 @@ export const SecondaryMenu = () => {
         <>
           <HowToBuyModal buttonType="text" />
           <Cog buttonType="text" />
-          <WalletMultiButton className="!bg-primary !rounded-full hover:!bg-primary-hover !text-color-text-accent !px-4 !py-3 " />
+          <WalletMultiButton className="!bg-primary !rounded-full hover:!bg-primary-hover !text-color-text-accent ">
+            Connect
+          </WalletMultiButton>
         </>
       )}
     </div>

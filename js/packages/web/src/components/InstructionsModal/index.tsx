@@ -24,6 +24,7 @@ interface ModalProps {
   buttonType?: ButtonProps['type'];
   buttonSize?: ButtonProps['size'];
   buttonBlock?: boolean;
+  buttonClassName?: string;
   buttonText: string;
   modalTitle: string;
   cardProps: [ContentCardProps, ContentCardProps, ContentCardProps];
@@ -38,6 +39,7 @@ export const InstructionsModal: React.FC<ModalProps> = ({
   modalTitle,
   cardProps,
   onClick,
+  buttonClassName,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -56,7 +58,13 @@ export const InstructionsModal: React.FC<ModalProps> = ({
 
   return (
     <>
-      <Button block={buttonBlock} type={buttonType} size={buttonSize} onClick={showModal}>
+      <Button
+        block={buttonBlock}
+        type={buttonType}
+        size={buttonSize}
+        onClick={showModal}
+        className={buttonClassName || ''}
+      >
         {buttonText}
       </Button>
       <Modal
