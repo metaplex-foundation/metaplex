@@ -1089,7 +1089,7 @@ const WinnerProfile = ({ bidderPubkey }: { handle?: string; bidderPubkey: string
           <div className="group-hover:text-primary text-color-text flex min-w-0 flex-1 justify-between">
             <div className="text-color-text">
               <p className=" group-hover:text-primary  text-color-text flex items-center  truncate font-medium">
-                {bidderTwitterHandle || shortenAddress(bidderPubkey)}
+                {bidderTwitterHandle ? '@' + bidderTwitterHandle : shortenAddress(bidderPubkey)}
               </p>
             </div>
           </div>
