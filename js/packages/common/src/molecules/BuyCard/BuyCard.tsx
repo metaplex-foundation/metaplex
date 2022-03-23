@@ -12,6 +12,7 @@ export interface BuyCardProps {
   dollarValue?: string
   onClickButton?: any
   hasIndicator?: boolean
+  hasButton?: boolean
 }
 
 export const BuyCard: FC<BuyCardProps> = ({
@@ -22,6 +23,7 @@ export const BuyCard: FC<BuyCardProps> = ({
   floorPrice,
   dollarValue,
   onClickButton,
+  hasButton,
   ...restProps
 }: BuyCardProps) => {
   const BuyCardClasses = CN(
@@ -36,7 +38,9 @@ export const BuyCard: FC<BuyCardProps> = ({
       </div>
 
       <div className='flex flex-col rounded-b px-[20px] pt-[12px] pb-[20px] transition-all'>
-        <h2 className='text-h5 w-full border-b border-slate-100 pb-[8px] text-center'>{name}</h2>
+        <h2 className='text-h5 w-full border-b border-slate-100 pb-[8px] text-center'>
+          {name || 'Collection'}
+        </h2>
 
         <div className='flex justify-between pt-[12px]'>
           <div className='flex flex-col gap-[8px]'>
@@ -45,7 +49,7 @@ export const BuyCard: FC<BuyCardProps> = ({
               subHeading={
                 <div className='flex items-center gap-[4px]'>
                   <Solana size={16} className='flex items-center' />
-                  <span className='flex items-center'>{volume}</span>
+                  <span className='flex items-center'>{volume || 'xxx'}</span>
                 </div>
               }
             />
@@ -55,20 +59,26 @@ export const BuyCard: FC<BuyCardProps> = ({
             <MetaChip
               align='right'
               overline='Floor Price'
-              subHeading={floorPrice}
+              subHeading={floorPrice || '0.00'}
               hint={dollarValue}
             />
           </div>
         </div>
 
-        <div className='flex w-full pt-[12px]'>
-          <Button appearance='neutral' className='w-full' onClick={onClickButton}>
-            View collection
-          </Button>
-        </div>
+        {hasButton && onClickButton && (
+          <div className='flex w-full pt-[12px]'>
+            <Button appearance='neutral' className='w-full' onClick={onClickButton}>
+              View collection
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )
+}
+
+BuyCard.defaultProps = {
+  hasButton: true,
 }
 
 export default BuyCard
