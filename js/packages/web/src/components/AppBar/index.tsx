@@ -53,8 +53,8 @@ export const AppBar = () => {
   };
 
   return (
-    <div className="outer-wrapper">
-      <div className="app-bar-wrapper">
+    <div className="outer-wrapper m-0 sm:mx-auto">
+      <div className="app-bar-wrapper my-6 sm:mx-8 mx-0 ">
         <div className="app-bar-left-wrapper">
           <Link
             to="/"
