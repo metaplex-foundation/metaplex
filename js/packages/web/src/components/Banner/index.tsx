@@ -34,7 +34,7 @@ export const Banner = ({
 
   const connection = useConnection();
 
-  const CreatedByAvatars = ({ className }: { className: string }) => (
+  const CreatedByAvatars = ({ className }: { className?: string }) => (
     <Disclosure.Button className={'flex cursor-pointer items-center ' + className}>
       Created by
       <div className="flex -space-x-2 overflow-hidden pl-2">
