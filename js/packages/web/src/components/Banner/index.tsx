@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography, Button, Alert, Space } from 'antd';
 import { TwitterOutlined } from '@ant-design/icons';
 import { Connection, StorefrontSocialInfo } from '@oyster/common';
@@ -8,6 +8,8 @@ import { Link, useParams } from 'react-router-dom';
 
 import { Identicon, shortenAddress, getTwitterHandle, useConnection } from '@oyster/common';
 import { ChevronRightIcon } from '@heroicons/react/solid';
+import { Disclosure, Transition } from '@headlessui/react';
+
 
 export const Banner = ({
   src,
@@ -33,17 +35,8 @@ export const Banner = ({
 
   const connection = useConnection();
 
-  const [active, setActive] = useState(false);
-  const [height, setHeight] = useState('0px');
-  const contentSpace = useRef(null);
-
-  function toggleAccordion() {
-    setActive(active === false ? true : false);
-    //@ts-ignore
-    setHeight(active ? '0px' : `${contentSpace.current.scrollHeight}px`);
-  }
-
   return (
+    <Disclosure>
     <div id="metaplex-banner">
       {src ? (
         <img id="metaplex-banner-backdrop" src={src} />
@@ -110,7 +103,8 @@ export const Banner = ({
               )
             )}
           </div>
-          <div className="flex cursor-pointer pt-1" onClick={toggleAccordion}>
+          
+          <Disclosure.Button className="flex cursor-pointer pt-1">
             Created by
             <div className="flex -space-x-2 overflow-hidden pl-2">
               {creators.map((m) => {
@@ -122,17 +116,20 @@ export const Banner = ({
                 );
               })}
             </div>
-          </div>
+          </Disclosure.Button>
         </div>
       </div>
       {children}
-
-      <div className="px-8">
-        <div
-          ref={contentSpace}
-          style={{ maxHeight: `${height}` }}
-          className="transition-max-height overflow-auto duration-700 ease-in-out"
-        >
+      <Transition
+      
+      enter="transition duration-300 ease-out"
+        enterFrom="transform scale-0 opacity-0"
+        enterTo="transform scale-100 opacity-100"
+        leave="transition duration-300 ease-out"
+        leaveFrom="transform scale-100 opacity-100"
+        leaveTo="transform scale-0 opacity-0"
+      >
+      <Disclosure.Panel className="px-8">
           <div className="pb-10">
             <div className="w-screen flex-row px-12">
               {creators.map((m) => {
@@ -171,8 +168,11 @@ export const Banner = ({
               })}
             </div>
           </div>
-        </div>
-      </div>
+          
+        {/* </div> */}
+      </Disclosure.Panel>
+      </Transition>
     </div>
+    </Disclosure>
   );
 };
