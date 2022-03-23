@@ -169,7 +169,7 @@ export const Banner = ({
                           </div>
 
                           <div className="hidden right-4 sm:flex items-center ml-auto ">
-                            View Profile
+                            View profile
                             <ChevronRightIcon
                               className="h-5 w-5"
                               viewBox="0 0 18 18"

@@ -13,6 +13,7 @@ import {
   processMetaplexAccounts,
   VAULT_ID,
   processVaultData,
+  getTwitterHandle,
 } from '@oyster/common';
 import { actions } from '@metaplex/js';
 import { PublicKey } from '@solana/web3.js';
@@ -36,7 +37,7 @@ import {
   useExtendedArt,
   useWinningBidsForAuction,
 } from '../../hooks';
-import { ArtType } from '../../types';
+import { Artist, ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
 import { Card } from 'antd';
 import BidLine from './BidLine';
@@ -190,9 +191,7 @@ export const AuctionView = () => {
             <div className="info-item-wrapper">
               <span className="item-title">{creators.length > 1 ? 'Creators' : 'Creator'}</span>
               {creators.map((creator) => (
-                <span className="info-address" key={creator.address}>
-                  {shortenAddress(creator.address || '')}
-                </span>
+                <CreatorItem key={creator.address} connection={connection} creator={creator} />
               ))}
             </div>
             <div className="info-item-wrapper">
@@ -258,6 +257,29 @@ export const AuctionView = () => {
   );
 };
 
+const CreatorItem = (props: { creator: Artist; connection: any }) => {
+  const { creator, connection } = props;
+  const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
+  useEffect(() => {
+    if (creator.address) {
+      getTwitterHandle(connection, creator.address).then((tw) => tw && setBidderTwitterHandle(tw));
+    }
+  }, []);
+
+  return (
+    <a
+      href={`https://www.holaplex.com/profiles/${creator.address}`}
+      target="_blank"
+      rel="noreferrer"
+      className="hover:text-primary"
+    >
+      <span className="info-address " key={creator.address}>
+        {bidderTwitterHandle ? '@' + bidderTwitterHandle : shortenAddress(creator.address || '')}
+      </span>
+    </a>
+  );
+};
+
 export const AuctionBids = ({ auctionView }: { auctionView?: Auction | null }) => {
   const auctionPubkey = auctionView?.auction.pubkey || '';
   const bids = useBidsForAuction(auctionPubkey);
@@ -282,7 +304,7 @@ export const AuctionBids = ({ auctionView }: { auctionView?: Auction | null }) =
   }, [activeBids]);
 
   const bidLines = useMemo(() => {
-    return bids.map((bid, index) => {
+    return bids.map((bid) => {
       const line = <BidLine bid={bid} key={bid.pubkey} mint={mint} />;
 
       return line;

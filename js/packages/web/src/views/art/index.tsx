@@ -218,7 +218,13 @@ export const ArtView = () => {
               </span>
               {(art.creators || []).map((creator) => {
                 return (
-                  <>
+                  <a
+                    href={`https://www.holaplex.com/profiles/${creator.address}`}
+                    target="_blank"
+                    key={creator.address}
+                    rel="noreferrer"
+                    className="hover:text-primary"
+                  >
                     {creator.name || shortenAddress(creator.address || '')}
 
                     <div>
@@ -267,7 +273,7 @@ export const ArtView = () => {
                           tag
                         ))}
                     </div>
-                  </>
+                  </a>
                 );
               })}
             </div>
