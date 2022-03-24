@@ -28,7 +28,7 @@ import {
 
 /* UI v2 Upgraded Views */
 import ScrollToTop from './ScrollToTop'
-import { Home, Collection } from './ui/views'
+import { Home, Collection, Discover } from './ui/views'
 
 import { SalesListView } from './views/home/components/SalesList'
 
@@ -67,7 +67,7 @@ export function Routes() {
               <Route exact path='/auction/:id' component={() => <AuctionView />} />
               <Route exact path='/auction/:id/billing' component={() => <BillingView />} />
               <Route path='/about' component={() => <StaticPageView />} />
-              <Route path='/explore' component={() => <Explore />} />
+              <Route path='/discover' component={() => <Discover />} />
               {/* <Route path='/collection/:id' component={() => <CollectionDetailView />} /> */}
               <Route path='/collection/:pubkey' component={() => <Collection />} />
               <Route path='/' component={() => <Home />} />
