@@ -1124,32 +1124,53 @@ programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
   log.info('Successfully saved mint addresses to mint-addresses.json');
 });
 
-programCommand('get_all_owners_addresses').action(async (directory, cmd) => {
-  const { env, cacheName, keypair } = cmd.opts();
+programCommand('get_all_owners_addresses')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .option('--concurrency <string>', 'In-flight request concurrency')
+  .option('--cached-mint-addresses', 'Read mint addresses from existing file')
+  .action(async (directory, cmd) => {
+    const { env, cacheName, keypair, rpcUrl, concurrency, cachedMintAddresses } =
+      cmd.opts();
 
-  const cacheContent = loadCache(cacheName, env);
-  const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
-  const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
-  const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
-    candyMachineId,
-  );
+    const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+    const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+      candyMachineId,
+    );
 
-  log.info('Getting mint addresses...');
-  const addresses = await getAddressesByCreatorAddress(
-    candyMachineAddr.toBase58(),
-    anchorProgram.provider.connection,
-  );
+    let addresses;
+    if (cachedMintAddresses) {
+      addresses = JSON.parse(
+        fs.readFileSync('./mint-addresses.json').toString(),
+      );
+    } else {
+      log.info('Getting mint addresses...');
+      const addresses = await getAddressesByCreatorAddress(
+        candyMachineAddr.toBase58(),
+        anchorProgram.provider.connection,
+      );
+      fs.writeFileSync(
+        './mint-addresses.json',
+        JSON.stringify(addresses, null, 2),
+      );
+      log.info('Successfully saved mint addresses to mint-addresses.json');
+    }
 
-  log.info('Getting owner addresses...');
-  const owners = await getOwnersByMintAddresses(
-    addresses,
-    anchorProgram.provider.connection,
-  );
-  fs.writeFileSync('./owner-addresses.json', JSON.stringify(owners, null, 2));
-  log.info('Successfully saved owner addresses to owner-addresses.json');
-});
+    log.info('Getting owner addresses...');
+    const owners = await getOwnersByMintAddresses(
+      addresses,
+      anchorProgram.provider.connection,
+      concurrency,
+    );
+    fs.writeFileSync('./owner-addresses.json', JSON.stringify(owners, null, 2));
+    log.info('Successfully saved owner addresses to owner-addresses.json');
+  });
 
 programCommand('get_unminted_tokens').action(async (directory, cmd) => {
   const { keypair, env, cacheName } = cmd.opts();

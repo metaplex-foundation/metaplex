@@ -1,14 +1,42 @@
+import { Connection } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '../helpers/constants';
 import log from 'loglevel';
 
-export async function getOwnersByMintAddresses(addresses, connection) {
+import * as cliProgress from 'cli-progress';
+import { PromisePool } from '@supercharge/promise-pool';
+
+export async function getOwnersByMintAddresses(
+  addresses: Array<string>,
+  connection: Connection,
+  concurrency: number | undefined,
+) {
   const owners = [];
 
   log.debug("Recuperation of the owners' addresses");
-  for (const address of addresses) {
-    owners.push(await getOwnerOfTokenAddress(address, connection));
-    await delay(500);
-  }
+
+  const progressBar = new cliProgress.SingleBar(
+    {
+      format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
+    },
+    cliProgress.Presets.shades_classic,
+  );
+  progressBar.start(addresses.length, 0);
+
+  await PromisePool.withConcurrency(concurrency || 10)
+    .for(addresses)
+    .handleError(async (err, address) => {
+      log.error(
+        `\nError fetching owner for ${address} (skipping)`,
+        err.message,
+      );
+      await delay(5000);
+    })
+    .process(async address => {
+      owners.push(await getOwnerOfTokenAddress(address, connection));
+      progressBar.increment();
+    });
+
+  progressBar.stop();
 
   return owners;
 }
