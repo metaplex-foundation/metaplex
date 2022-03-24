@@ -1,9 +1,12 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { Button, TextField, Chip, Tag, AttributesCard } from '@oyster/common'
+import { PriceRangeInterface } from '../../views'
 
 export interface CollectionSidebarProps {
-  [x: string]: any
+  setPriceRange: (range: PriceRangeInterface) => void
+  range: PriceRangeInterface
+  applyRange: () => void
 }
 
 const dummyAttributes = [
@@ -60,17 +63,15 @@ const dummyAttributes = [
 ]
 
 export const CollectionSidebar: FC<CollectionSidebarProps> = ({
-  className,
-  ...restProps
-}: CollectionSidebarProps) => {
-  const CollectionSidebarClasses = CN(
-    `collection-sidebar w-[300px] overflow-x-hidden flex`,
-    className
-  )
+  setPriceRange,
+  range,
+  applyRange,
+}) => {
   const [showAttributes, setShowAttributes] = useState(false)
 
+  const addToFilter = () => {}
   return (
-    <div className={CollectionSidebarClasses} {...restProps}>
+    <div className='collection-sidebar flex w-[300px] overflow-x-hidden'>
       <div
         className={CN('flex w-[600px] flex-shrink-0 transition-all', {
           'translate-x-[-300px]': showAttributes,
@@ -86,9 +87,19 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
             <h3 className='text-h6'>Price filter</h3>
 
             <div className='flex items-center gap-[8px]'>
-              <TextField placeholder='Min price' />
-              <TextField placeholder='Max price' />
-              <Button isRounded={false} appearance='secondary' view='outline'>
+              <TextField
+                type='number'
+                value={range.min ?? ''}
+                onChange={e => setPriceRange({ ...range, min: e.target.value })}
+                placeholder='Min price'
+              />
+              <TextField
+                onChange={e => setPriceRange({ ...range, max: e.target.value })}
+                type='number'
+                value={range.max ?? ''}
+                placeholder='Max price'
+              />
+              <Button onClick={applyRange} isRounded={false} appearance='secondary' view='outline'>
                 Apply
               </Button>
             </div>
@@ -122,6 +133,7 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
           <div className='flex flex-col gap-[8px]'>
             {dummyAttributes.map(({ label, description, tag }: any, index: number) => (
               <AttributesCard
+                addToFilter={addToFilter}
                 key={index}
                 label={label}
                 description={description}
