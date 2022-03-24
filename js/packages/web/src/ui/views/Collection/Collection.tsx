@@ -20,11 +20,12 @@ import {
 } from '@oyster/common'
 import { PublicKey } from '@solana/web3.js'
 import { BN } from 'bn.js'
+import { useCollections } from '../../../hooks/useCollections'
 
 export interface CollectionProps {}
 
 interface ParamsInterface {
-  pubkey: string
+  id: string
 }
 
 export interface PriceRangeInterface {
@@ -43,17 +44,18 @@ export const SORT_HIGH_TO_LOW = 'High to Low'
 export const Collection: FC<CollectionProps> = () => {
   const [showActivity, setShowActivity] = useState<boolean>(false)
   const [showExplore, setShowExplore] = useState<boolean>(true)
-  const { pubkey }: ParamsInterface = useParams()
-  const { data } = useExtendedArt(pubkey)
+  const { id }: ParamsInterface = useParams()
+  const { liveCollections } = useCollections()
+
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const [filters, setFilters] = useState<AppliedFiltersInterface[]>([])
   const [priceRange, setPriceRange] = useState<PriceRangeInterface>({
     min: null,
     max: null,
   })
+  const pubkey = liveCollections.find(({ mint }) => mint === id)?.pubkey || undefined
+  const { data } = useExtendedArt(pubkey)
   const [nftItems, setNftItems] = useState<any[]>([])
-
-  console.log('auctions', auctions)
 
   const getMintData = useMintD()
 
@@ -74,10 +76,9 @@ export const Collection: FC<CollectionProps> = () => {
   }
 
   const filteredAuctions = () => {
-    // return auctions
-    if (pubkey) {
+    if (id) {
       return auctions.filter(
-        auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(pubkey)
+        auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
       )
     }
     return auctions
