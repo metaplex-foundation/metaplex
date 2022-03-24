@@ -23,7 +23,7 @@ export const Header: FC<HeaderProps> = () => {
 
   return (
     <div
-      className={CN('header relative flex min-h-[42px] w-full items-center', {
+      className={CN('header relative flex min-h-[42px] w-full items-center transition-all', {
         'py-[40px]': pathname === '/',
         'py-[20px]': pathname !== '/',
       })}>
@@ -45,7 +45,10 @@ export const Header: FC<HeaderProps> = () => {
         </div>
 
         <div className='header__right relative z-10 flex flex-shrink-0 items-center gap-[28px]'>
-          <Button appearance='link'>Discover Collections</Button>
+          <Link to='/discover'>
+            <Button appearance='link'>Discover Collections</Button>
+          </Link>
+
           <Button appearance='link'>Launchpad</Button>
           <Button appearance='link'>Resources</Button>
           <Button appearance='link'>Donate</Button>
