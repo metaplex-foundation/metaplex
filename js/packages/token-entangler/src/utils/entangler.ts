@@ -533,6 +533,7 @@ export const swapEntanglement = async (
       transferAuthority: transferAuthority.publicKey,
       paymentTransferAuthority: paymentTransferAuthority.publicKey,
       token,
+      tokenMint,
       replacementTokenMetadata,
       replacementToken,
       replacementTokenMint,
