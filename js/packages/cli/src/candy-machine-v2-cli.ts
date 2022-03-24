@@ -37,7 +37,11 @@ import {
   getAddressesByCreatorAddress,
   signAllMetadataFromCandyMachine,
 } from './commands/signAll';
-import { getOwnersByMintAddresses } from './commands/owners';
+import {
+  getOwnersByMintAddresses,
+  getOriginalMinters,
+  getAllSignaturesForAddress,
+} from './commands/owners';
 import log from 'loglevel';
 import { withdrawV2 } from './commands/withdraw';
 import { updateFromCache } from './commands/updateFromCache';
@@ -1132,8 +1136,14 @@ programCommand('get_all_owners_addresses')
   .option('--concurrency <string>', 'In-flight request concurrency')
   .option('--cached-mint-addresses', 'Read mint addresses from existing file')
   .action(async (directory, cmd) => {
-    const { env, cacheName, keypair, rpcUrl, concurrency, cachedMintAddresses } =
-      cmd.opts();
+    const {
+      env,
+      cacheName,
+      keypair,
+      rpcUrl,
+      concurrency,
+      cachedMintAddresses,
+    } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
@@ -1170,6 +1180,62 @@ programCommand('get_all_owners_addresses')
     );
     fs.writeFileSync('./owner-addresses.json', JSON.stringify(owners, null, 2));
     log.info('Successfully saved owner addresses to owner-addresses.json');
+  });
+
+programCommand('get_original_minter_addresses')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .option('-b, --batch-size <string>', 'getParsedTransactions batch size')
+  .option('--concurrency <string>', 'In-flight request concurrency')
+  .option('--cached-signatures', 'Read mint addresses from existing file')
+  .description(
+    'fetches original minters (payer for MintNft) by traversing signatures referencing the candy machine address',
+  )
+  .action(async (directory, cmd) => {
+    const {
+      env,
+      cacheName,
+      keypair,
+      rpcUrl,
+      batchSize,
+      concurrency,
+      cachedSignatures,
+    } = cmd.opts();
+
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
+
+    const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+
+    const connection = anchorProgram.provider.connection;
+    let signatures;
+    if (cachedSignatures) {
+      signatures = JSON.parse(fs.readFileSync('./signatures.json').toString());
+    } else {
+      log.info('Getting signatures...');
+      signatures = await getAllSignaturesForAddress(candyMachineId, connection);
+      fs.writeFileSync(
+        './signatures.json',
+        JSON.stringify(signatures, null, 2),
+      );
+      log.info('Successfully saved signatures to signatures.json');
+    }
+
+    const minters = await getOriginalMinters(
+      signatures,
+      connection,
+      concurrency,
+      batchSize,
+    );
+
+    fs.writeFileSync(
+      './minter-addresses.json',
+      JSON.stringify(minters, null, 2),
+    );
+    log.info('Successfully saved minter addresses to minter-addresses.json');
   });
 
 programCommand('get_unminted_tokens').action(async (directory, cmd) => {
