@@ -69,7 +69,7 @@ export function Routes() {
               <Route path='/about' component={() => <StaticPageView />} />
               <Route path='/explore' component={() => <Explore />} />
               {/* <Route path='/collection/:id' component={() => <CollectionDetailView />} /> */}
-              <Route path='/collection' component={() => <Collection />} />
+              <Route path='/collection/:pubkey' component={() => <Collection />} />
               <Route path='/' component={() => <Home />} />
               {/* <Route exact path='/auction/:id' component={() => <AuctionView />} />
             <Route exact path='/auction/:id/billing' component={() => <BillingView />} /> */}
