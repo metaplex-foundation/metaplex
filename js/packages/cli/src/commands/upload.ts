@@ -359,6 +359,7 @@ export async function uploadV2({
               log.debug('Updating cache for ', asset.index);
               cacheContent.items[asset.index] = {
                 link,
+                imageLink,
                 name: manifest.name,
                 onChain: false,
               };
