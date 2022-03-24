@@ -1,21 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import {
-  Steps,
-  Row,
-  Upload,
-  Col,
-  Input,
-  Statistic,
-  Slider,
-  Spin,
-  InputNumber,
-  Form,
-  Typography,
-  Space,
-  Card,
-  Menu,
-} from 'antd'
-import { DownOutlined } from '@ant-design/icons'
+import { Steps, Row, Upload, Statistic, Spin, Form, Typography, Card } from 'antd'
 import { ArtCard } from './../../components/ArtCard'
 import { UserSearch, UserValue } from './../../components/UserSearch'
 import { Confetti } from './../../components/Confetti'
@@ -596,7 +580,6 @@ const InfoStep = (props: {
   )
 
   const handleTagChange = ({ key }) => {
-    console.log(key)
     props.setAttributes({ ...props.attributes, tag: key })
   }
 
@@ -700,12 +683,12 @@ const InfoStep = (props: {
               label='Maximum Supply'
               placeholder='Quantity'
               value={props.attributes.properties.maxSupply}
-              onChange={(val: number) => {
+              onChange={val => {
                 props.setAttributes({
                   ...props.attributes,
                   properties: {
                     ...props.attributes.properties,
-                    maxSupply: val,
+                    maxSupply: val.target.value,
                   },
                 })
               }}
@@ -747,9 +730,9 @@ const InfoStep = (props: {
                     <Button
                       appearance='secondary'
                       view='outline'
+                      onClick={() => add()}
                       isRounded={false}
                       iconBefore={<PlusOutlined />}>
-                      onClick={() => add()}
                       Add attribute
                     </Button>
                   </Form.Item>
@@ -1080,7 +1063,6 @@ const LaunchStep = (props: {
       props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
       props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
     ])
-    console.log(JSON.stringify(metadata))
     if (files.length)
       getAssetCostToStore([...files, new File([JSON.stringify(metadata)], 'metadata.json')]).then(
         async lamports => {
