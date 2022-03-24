@@ -70,7 +70,7 @@ export const SectionHeading: FC<SectionHeadingProps> = ({
           {description && (
             <p
               className={CN(
-                'font-400 max-w-[700px] pt-[40px] text-base text-slate-800',
+                'font-400 max-w-[700px] pt-[16px] text-base text-slate-800',
                 commonClassName
               )}
               dangerouslySetInnerHTML={{ __html: description || '' }}

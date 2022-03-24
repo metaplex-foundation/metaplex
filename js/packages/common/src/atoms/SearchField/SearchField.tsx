@@ -6,6 +6,7 @@ export interface SearchFieldProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   isRounded?: boolean
   placeholder?: string
+  actions?: any
 }
 
 export const SearchField: FC<SearchFieldProps> = ({
@@ -13,6 +14,7 @@ export const SearchField: FC<SearchFieldProps> = ({
   size,
   isRounded,
   placeholder,
+  actions,
   ...restProps
 }: SearchFieldProps) => {
   const SearchFieldClasses = CN(
@@ -20,6 +22,7 @@ export const SearchField: FC<SearchFieldProps> = ({
     className,
     {
       'h-[40px] px-[8px]': size === 'md',
+      'h-[52px] px-[8px]': size === 'lg',
       'rounded-full': isRounded,
       'rounded-[4px]': !isRounded,
     }
@@ -34,6 +37,7 @@ export const SearchField: FC<SearchFieldProps> = ({
         placeholder={placeholder}
         {...restProps}
       />
+      {actions && <div className='flex-shrink-0'>{actions}</div>}
     </div>
   )
 }

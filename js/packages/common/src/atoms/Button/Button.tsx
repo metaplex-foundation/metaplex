@@ -37,6 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size,
       view,
       isSquare,
+      isActive,
       isRounded,
       ...restProps
     }: ButtonProps,
@@ -50,9 +51,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         /* Rounded */
         'rounded-full': isRounded,
         'rounded-[4px]': !isRounded,
-
-        /* Disabled */
-        'pointer-events-none select-none cursor-not-allowed': disabled,
 
         /* Sizing */
         'h-[24px] px-[8px] text-xs font-700': size === 'xs',
@@ -70,37 +68,41 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
         /* Appearance */
         'bg-gradient-to-r from-B-400 to-P-400 text-white hover:from-B-500 hover:from-P-500':
-          appearance === 'primary' && view === 'solid',
+          appearance === 'primary' && view === 'solid' && !disabled,
         'bg-slate-50 text-slate-900 hover:bg-slate-300':
-          appearance === 'secondary' && view === 'solid',
-        'bg-slate-900 text-white hover:bg-slate-800': appearance === 'neutral' && view === 'solid',
+          appearance === 'secondary' && view === 'solid' && !disabled,
+        'bg-slate-900 text-white hover:bg-slate-800':
+          appearance === 'neutral' && view === 'solid' && !disabled,
 
-        'bg-transparent !text-slate-900 hover:!text-B-400 normal-case !font-sans !font-500 ':
+        'bg-transparent !text-slate-900 hover:!text-B-400 normal-case !font-sans !font-500':
           appearance === 'link',
         'bg-transparent text-white hover:text-slate-200 focus:!shadow-none':
           appearance === 'link-invert',
 
         'bg-transparent text-slate-900 hover:bg-slate-50':
-          appearance === 'ghost' && view === 'solid',
+          appearance === 'ghost' && view === 'solid' && !disabled,
         'bg-transparent text-white hover:text-B-base':
-          appearance === 'ghost-invert' && view === 'solid',
+          appearance === 'ghost-invert' && view === 'solid' && !disabled,
 
         /* View */
         'bg-transparent text-slate-900 border-slate-900':
-          appearance === 'primary' && view === 'outline',
+          appearance === 'primary' && view === 'outline' && !disabled,
         'border bg-slate-50 hover:bg-slate-50 border-slate-300':
-          appearance === 'secondary' && view === 'outline',
+          appearance === 'secondary' && view === 'outline' && !disabled,
         'bg-transparent text-slate-900 !border-slate-900':
-          appearance === 'neutral' && view === 'outline',
+          appearance === 'neutral' && view === 'outline' && !disabled,
         'bg-transparent text-slate-900 border border-slate-300 hover:border-slate-900':
-          appearance === 'ghost' && view === 'outline',
+          appearance === 'ghost' && view === 'outline' && !disabled,
         'bg-transparent text-white hover:border-white':
-          appearance === 'ghost-invert' && view === 'outline',
+          appearance === 'ghost-invert' && view === 'outline' && !disabled,
 
         /* Outline */
         'focus:!shadow-[0px_0px_0px_2px_#040D1F]': view == 'solid' && appearance !== 'link',
         'focus:!border-slate-700 focus:!shadow-[0px_0px_0px_1px_#040D1F]':
           view == 'outline' && appearance !== 'link',
+
+        /* Disabled */
+        '!bg-slate-100 pointer-events-none select-none cursor-not-allowed': disabled,
       }
     )
 

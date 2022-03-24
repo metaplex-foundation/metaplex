@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import _ from 'lodash'
+import { Link } from 'react-router-dom'
 import { Button, MetaChip } from '@oyster/common'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import LiveNFTCard from './LiveNFTCard'
@@ -47,12 +48,14 @@ export const Hero: FC<HeroProps> = ({ className }) => {
           </div>
 
           <div className='hero__actions flex items-center gap-[12px]'>
-            <Button
-              appearance='primary'
-              size='lg'
-              iconAfter={<i className='ri-arrow-right-s-line' />}>
-              Discover Collections
-            </Button>
+            <Link to='/discover'>
+              <Button
+                appearance='primary'
+                size='lg'
+                iconAfter={<i className='ri-arrow-right-s-line' />}>
+                Discover Collections
+              </Button>
+            </Link>
             <Button
               appearance='ghost'
               size='lg'
