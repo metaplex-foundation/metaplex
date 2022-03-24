@@ -4,6 +4,7 @@ import { Button, SectionHeading } from '@oyster/common'
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
 import { useCollections } from '../../../hooks/useCollections'
 import CollectionCard from '../RecentCollections/CollectionCard'
+import { Link } from 'react-router-dom'
 
 export interface TrendingCollectionsProps {
   [x: string]: any
@@ -17,7 +18,11 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({ className })
   const slides = (liveCollections || []).map((collection: any, index: number) => {
     return {
       id: 0,
-      Component: () => <CollectionCard collection={collection} key={index} />,
+      Component: () => (
+        <Link to={`/collection/${collection.mint}`} key={index}>
+          <CollectionCard collection={collection} />
+        </Link>
+      ),
     }
   })
 

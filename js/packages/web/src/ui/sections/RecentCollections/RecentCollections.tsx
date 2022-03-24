@@ -4,6 +4,7 @@ import { Button, SectionHeading } from '@oyster/common'
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
 import { useCollections } from '../../../hooks/useCollections'
 import CollectionCard from './CollectionCard'
+import { Link } from 'react-router-dom'
 
 export interface RecentCollectionsProps {
   className: string
@@ -21,7 +22,11 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
   const slides = (liveCollections || []).map((collection: any, index: number) => {
     return {
       id: 0,
-      Component: () => <CollectionCard collection={collection} key={index} />,
+      Component: () => (
+        <Link to={`/collection/${collection.mint}`} key={index}>
+          <CollectionCard collection={collection} />
+        </Link>
+      ),
     }
   })
 

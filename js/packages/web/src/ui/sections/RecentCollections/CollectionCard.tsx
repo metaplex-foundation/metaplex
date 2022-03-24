@@ -1,7 +1,6 @@
 import { BuyCard } from '@oyster/common'
 import { FC } from 'react'
 import { useExtendedArt } from '../../../hooks'
-import { Link } from 'react-router-dom'
 
 interface CollectionCardProps {
   collection: any
@@ -18,9 +17,7 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection }) => {
   const { data } = useExtendedArt(collection.pubkey)
 
   return (
-    <Link to={`/collection/${collection.mint}`}>
-      <BuyCard {...dx} image={data?.image ?? ''} name={data?.name ?? ''} onClickButton={() => {}} />
-    </Link>
+    <BuyCard {...dx} image={data?.image ?? ''} name={data?.name ?? ''} onClickButton={() => {}} />
   )
 }
 
