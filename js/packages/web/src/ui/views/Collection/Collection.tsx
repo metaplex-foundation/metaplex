@@ -53,9 +53,9 @@ export const Collection: FC<CollectionProps> = () => {
   })
   const [nftItems, setNftItems] = useState<any[]>([])
 
-  const getMintData = useMintD()
+  console.log('auctions', auctions)
 
-  console.log('nftItems', nftItems)
+  const getMintData = useMintD()
 
   useEffect(() => {
     if (auctions?.length) {

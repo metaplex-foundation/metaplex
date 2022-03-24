@@ -1,6 +1,5 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { Link } from 'react-router-dom'
 import { Button, SectionHeading } from '@oyster/common'
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
 import { useCollections } from '../../../hooks/useCollections'
@@ -18,11 +17,7 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({ className })
   const slides = (liveCollections || []).map((collection: any, index: number) => {
     return {
       id: 0,
-      Component: () => (
-        <Link to='/collection'>
-          <CollectionCard collection={collection} key={index} />
-        </Link>
-      ),
+      Component: () => <CollectionCard collection={collection} key={index} />,
     }
   })
 
