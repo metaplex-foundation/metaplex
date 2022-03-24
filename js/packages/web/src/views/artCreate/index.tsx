@@ -730,9 +730,9 @@ const InfoStep = (props: {
                     <Button
                       appearance='secondary'
                       view='outline'
+                      onClick={() => add()}
                       isRounded={false}
                       iconBefore={<PlusOutlined />}>
-                      onClick={() => add()}
                       Add attribute
                     </Button>
                   </Form.Item>
