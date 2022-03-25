@@ -7,7 +7,7 @@ import { CollectionNftList } from '../../sections/CollectionNftList'
 import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
 import { useParams } from 'react-router-dom'
-import { useExtendedArt } from '../../../hooks'
+import { useExtendedArt, useExtendedCollection } from '../../../hooks'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 import {
@@ -36,6 +36,7 @@ export interface PriceRangeInterface {
 export interface AppliedFiltersInterface {
   type: string
   text: string
+  category: string
 }
 
 export const SORT_LOW_TO_HIGH = 'Low to High'
@@ -57,13 +58,30 @@ export const Collection: FC<CollectionProps> = () => {
   const { data } = useExtendedArt(pubkey)
   const [nftItems, setNftItems] = useState<any[]>([])
 
+  const { getData } = useExtendedCollection()
+
   const getMintData = useMintD()
 
   useEffect(() => {
     if (auctions?.length) {
-      setNftItems(() => filteredAuctions().map(bindAmount))
+      filteredAuctions().then(res => {
+        setNftItems(() => res)
+      })
     }
   }, [auctions])
+
+  useEffect(() => {
+    const data = nftItems
+    // console.log('data', data)
+    data.filter(i => {
+      if (i.meta.attributes) {
+        console.log('i.meta.attributes', i.meta.attributes)
+        console.log('filters', filters)
+
+        // i.meta.attributes.find()
+      }
+    })
+  }, [filters])
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
@@ -75,13 +93,19 @@ export const Collection: FC<CollectionProps> = () => {
     }, 1)
   }
 
-  const filteredAuctions = () => {
-    if (id) {
-      return auctions.filter(
-        auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
-      )
-    }
-    return auctions
+  const filteredAuctions = async () => {
+    const data = auctions.filter(
+      auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
+    )
+
+    const all = await Promise.all(
+      data.map(async auction => await getData(auction.thumbnail.metadata.pubkey))
+    )
+
+    return data.map(i => {
+      const meta = (all || []).find(({ pubkey }) => pubkey === i.thumbnail.metadata.pubkey) || null
+      return { ...bindAmount(i), meta }
+    })
   }
 
   const bindAmount = auctionView => {
@@ -101,14 +125,56 @@ export const Collection: FC<CollectionProps> = () => {
     setPriceRange(data)
   }
 
+  const getAttributesFromCollection = (data: Array<any>) => {
+    const attr: Array<any> = []
+    data.forEach(elements => {
+      elements?.forEach(({ trait_type, value }) => {
+        if (trait_type) {
+          const attrExist = attr.find(t => t.trait_type.trim() == trait_type.trim()) || null
+          if (attrExist) {
+            if (!attrExist.values.find(text => text === value)) {
+              attrExist.values.push(value)
+            }
+          } else {
+            attr.push({
+              trait_type: trait_type,
+              values: [value],
+            })
+          }
+        }
+      })
+    })
+    return attr
+  }
+
   const applyRange = () => {
     if (priceRange.max && priceRange.min) {
       setFilters([
         ...filters.filter(({ type }) => type !== 'RANGE'),
-        { type: 'RANGE', text: `${priceRange.min} - ${priceRange.max}` },
+        { category: 'Range', type: 'RANGE', text: `${priceRange.min} - ${priceRange.max}` },
       ])
     }
   }
+
+  const addAttributeFilters = (data: { attr: string; label: string }) => {
+    setFilters([
+      ...filters.filter(({ type, text }) => type !== data.attr && text !== data.label),
+      { category: 'Attribute', type: data.attr, text: data.label },
+    ])
+  }
+
+  const removeAppliedAttr = data => {
+    setFilters([...filters.filter(({ type, text }) => type !== data.type && text !== data.text)])
+  }
+
+  const filterAttributes = getAttributesFromCollection(
+    [
+      ...nftItems.map(i => {
+        return i.meta.attributes
+      }),
+      data?.attributes,
+    ] ?? []
+  )
 
   const clearFilters = () => {
     setFilters([])
@@ -135,6 +201,8 @@ export const Collection: FC<CollectionProps> = () => {
               applyRange={applyRange}
               range={priceRange}
               setPriceRange={onChangeRange}
+              filterAttributes={filterAttributes}
+              addAttributeFilters={addAttributeFilters}
             />
           </div>
 
@@ -156,7 +224,11 @@ export const Collection: FC<CollectionProps> = () => {
             {showExplore && (
               <div className='flex flex-col gap-[28px]'>
                 {!!filters.length && (
-                  <CollectionAppliedFilters filters={filters} clearFilters={clearFilters} />
+                  <CollectionAppliedFilters
+                    removeAppliedAttr={removeAppliedAttr}
+                    filters={filters}
+                    clearFilters={clearFilters}
+                  />
                 )}
                 <CollectionNftList auctions={nftItems} />
               </div>
