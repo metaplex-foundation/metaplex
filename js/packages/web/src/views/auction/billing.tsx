@@ -26,8 +26,9 @@ import {
   METAPLEX_ID,
   processMetaplexAccounts,
   subscribeProgramChanges,
+  useWallet,
 } from '@oyster/common';
-import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
