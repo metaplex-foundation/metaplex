@@ -27,13 +27,15 @@ export const AttributesCard: FC<AttributesCardProps> = ({
     <div className={AttributesCardClasses} {...restProps}>
       <div className='flex flex-col gap-[4px]'>
         <span className='label text-h6 w-full'>{label}</span>
-        <div className='flex items-center gap-[4px] text-sm'>
-          <span>Floor:</span>
-          <div className='flex items-center gap-[4px]'>
-            <SOLIcon size={12} />
-            <span>{description}</span>
+        {description && (
+          <div className='flex items-center gap-[4px] text-sm'>
+            <span>Floor:</span>
+            <div className='flex items-center gap-[4px]'>
+              <SOLIcon size={12} />
+              <span>{description}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {tag && <Tag className='ml-auto w-[80px] text-xs'>{tag}</Tag>}

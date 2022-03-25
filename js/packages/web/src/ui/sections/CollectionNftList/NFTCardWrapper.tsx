@@ -12,6 +12,7 @@ const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction }) => {
     data,
     value: { solVal, usdValFormatted },
   } = useNFTData(auction)
+  // console.log('data', data)
 
   return (
     <NFTCard

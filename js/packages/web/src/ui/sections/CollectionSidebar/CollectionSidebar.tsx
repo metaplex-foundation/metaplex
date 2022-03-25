@@ -7,69 +7,27 @@ export interface CollectionSidebarProps {
   setPriceRange: (range: PriceRangeInterface) => void
   range: PriceRangeInterface
   applyRange: () => void
+  filterAttributes: Array<any>
+  addAttributeFilters: (data: any) => void
 }
-
-const dummyAttributes = [
-  {
-    label: 'Orange',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Yellow',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Green',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Purple',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Black',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Blue',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Pink',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Red',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Grey',
-    description: '57.00',
-    tag: '44.14%',
-  },
-  {
-    label: 'Sky Blue',
-    description: '57.00',
-    tag: '44.14%',
-  },
-]
 
 export const CollectionSidebar: FC<CollectionSidebarProps> = ({
   setPriceRange,
   range,
   applyRange,
+  filterAttributes,
+  addAttributeFilters,
 }) => {
   const [showAttributes, setShowAttributes] = useState(false)
+  const [attr, setAttr] = useState()
 
-  const addToFilter = () => {}
+  const addToFilter = label => {
+    addAttributeFilters({
+      attr,
+      label,
+    })
+    setShowAttributes(false)
+  }
   return (
     <div className='collection-sidebar flex w-[300px] overflow-x-hidden'>
       <div
@@ -109,11 +67,17 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
             <h3 className='text-h6'>Attributes</h3>
 
             <div className='flex flex-col gap-[8px]'>
-              <Chip label='Background' tag='10' onClick={() => setShowAttributes(true)} />
-              <Chip label='Clothing' tag='12' onClick={() => setShowAttributes(true)} />
-              <Chip label='Eyewear' tag='8' onClick={() => setShowAttributes(true)} />
-              <Chip label='Hat' tag='5' onClick={() => setShowAttributes(true)} />
-              <Chip label='Glasses' tag='17' onClick={() => setShowAttributes(true)} />
+              {filterAttributes.map(({ trait_type, values }, key) => (
+                <Chip
+                  key={key}
+                  label={trait_type}
+                  tag={values.length}
+                  onClick={() => {
+                    setShowAttributes(true)
+                    setAttr(trait_type)
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -125,26 +89,33 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
                 className='ri-arrow-left-s-line cursor-pointer text-[24px]'
                 onClick={() => setShowAttributes(false)}
               />
-              <h2 className='text-h5'>Add background</h2>
+              <h2 className='text-h5'>Add {attr}</h2>
             </div>
-            <Tag className='ml-auto w-[40px] justify-center'>10</Tag>
+            <Tag className='ml-auto w-[40px] justify-center'>
+              {
+                (filterAttributes.find(({ trait_type }) => trait_type === attr)?.values || [])
+                  .length
+              }
+            </Tag>
           </div>
 
           <div className='flex flex-col gap-[8px]'>
-            {dummyAttributes.map(({ label, description, tag }: any, index: number) => (
-              <AttributesCard
-                addToFilter={addToFilter}
-                key={index}
-                label={label}
-                description={description}
-                tag={
-                  <div className='flex w-full items-center justify-center gap-[8px]'>
-                    <span>🔥</span>
-                    <span>{tag}</span>
-                  </div>
-                }
-              />
-            ))}
+            {(filterAttributes.find(({ trait_type }) => trait_type === attr)?.values || []).map(
+              (label, index: number) => (
+                <AttributesCard
+                  addToFilter={() => addToFilter(label)}
+                  key={index}
+                  label={label}
+                  // description={description}
+                  // tag={
+                  //   <div className='flex w-full items-center justify-center gap-[8px]'>
+                  //     <span>🔥</span>
+                  //     <span>{tag}</span>
+                  //   </div>
+                  // }
+                />
+              )
+            )}
           </div>
         </div>
       </div>
