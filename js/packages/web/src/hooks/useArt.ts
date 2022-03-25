@@ -233,9 +233,9 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 export const useExtendedCollection = () => {
   const { metadata } = useMeta()
 
-  const getData = async (group: any) => {
+  const getData = async (pubkey: string) => {
     try {
-      const key = pubkeyToString(group[0][0].thumbnail.metadata.pubkey)
+      const key = pubkeyToString(pubkey)
       const account = metadata.find(a => a.pubkey === key)
       //(inView || width < 768) &&
       const USE_CDN = false
@@ -267,19 +267,24 @@ export const useExtendedCollection = () => {
         }
         try {
           const cached = localStorage.getItem(uri)
+
           if (cached) {
-            return { ...group, ...processJson(JSON.parse(cached)) }
+            return { ...processJson(JSON.parse(cached)), pubkey }
           } else {
             const fetchArt = await fetch(uri)
             const data = await fetchArt.json()
+
             localStorage.setItem(uri, JSON.stringify(data))
-            return { ...group, ...processJson(data) }
+            return { ...processJson(data), pubkey }
           }
         } catch (ex) {
+          console.log('ex', ex)
           return {}
         }
       }
     } catch (error) {
+      console.log('error', error)
+
       return {}
     }
   }

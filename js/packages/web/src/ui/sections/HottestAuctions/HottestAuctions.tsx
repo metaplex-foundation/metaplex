@@ -6,6 +6,7 @@ import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/
 import AuctionsCard from './AuctionsCard'
 import { AuctionView } from '../../../hooks'
 import { ButtonGroup, Button, SectionHeading } from '@oyster/common'
+import { Link } from 'react-router-dom'
 
 export interface HottestAuctionsProps {
   activeKey: LiveAuctionViewState
@@ -25,7 +26,11 @@ export const HottestAuctions: FC<HottestAuctionsProps> = ({
   const slides = (auctions || []).map((auction: AuctionView, index: number) => {
     return {
       id: 0,
-      Component: () => <AuctionsCard auction={auction} key={index} />,
+      Component: () => (
+        <Link key={index} to={`/auction/${auction.auction.pubkey}`}>
+          <AuctionsCard auction={auction} />
+        </Link>
+      ),
     }
   })
 

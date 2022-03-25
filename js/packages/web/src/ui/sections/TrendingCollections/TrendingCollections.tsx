@@ -1,10 +1,10 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { Link } from 'react-router-dom'
 import { Button, SectionHeading } from '@oyster/common'
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
 import { useCollections } from '../../../hooks/useCollections'
 import CollectionCard from '../RecentCollections/CollectionCard'
+import { Link } from 'react-router-dom'
 
 export interface TrendingCollectionsProps {
   [x: string]: any
@@ -19,8 +19,8 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({ className })
     return {
       id: 0,
       Component: () => (
-        <Link to='/collection'>
-          <CollectionCard collection={collection} key={index} />
+        <Link to={`/collection/${collection.mint}`} key={index}>
+          <CollectionCard collection={collection} />
         </Link>
       ),
     }

@@ -17,7 +17,7 @@ export const Placeholder: FC<PlaceholderProps> = ({
   return (
     <div className={PlaceholderClasses} {...restProps}>
       <svg
-        width='auto'
+        // width='auto'
         height='40%'
         viewBox='0 0 230 200'
         fill='none'

@@ -1,4 +1,5 @@
 import React, { FC } from 'react'
+import { Link } from 'react-router-dom'
 import { AuctionView } from '../../../hooks'
 import NFTCardWrapper from './NFTCardWrapper'
 
@@ -10,7 +11,9 @@ export const CollectionNftList: FC<CollectionNftListProps> = ({ auctions }) => {
   return (
     <div className='collection-nft-list grid grid-cols-4 gap-[28px]'>
       {auctions.map((auction, key) => (
-        <NFTCardWrapper key={key} auction={auction} />
+        <Link to={`/auction/${auction.auction.pubkey}`} key={key}>
+          <NFTCardWrapper auction={auction} />
+        </Link>
       ))}
     </div>
   )

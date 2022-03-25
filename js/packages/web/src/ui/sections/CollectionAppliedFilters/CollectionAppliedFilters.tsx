@@ -5,11 +5,13 @@ import { AppliedFiltersInterface } from '../../views'
 export interface CollectionAppliedFiltersProps {
   filters: AppliedFiltersInterface[]
   clearFilters: () => void
+  removeAppliedAttr: (data: any) => void
 }
 
 export const CollectionAppliedFilters: FC<CollectionAppliedFiltersProps> = ({
   filters,
   clearFilters,
+  removeAppliedAttr,
 }) => {
   return (
     <div className='collection-applied-filters relative rounded-[8px] border border-slate-200 bg-slate-10 px-[20px] py-[24px]'>
@@ -25,7 +27,17 @@ export const CollectionAppliedFilters: FC<CollectionAppliedFiltersProps> = ({
             appearance='warning'
             onClick={() => {}}
             className='border border-Y-400'
-            iconAfter={<i className='ri-close-line text-[16px]' />}>
+            iconAfter={
+              <i
+                onClick={() =>
+                  removeAppliedAttr({
+                    text,
+                    type,
+                  })
+                }
+                className='ri-close-line text-[16px]'
+              />
+            }>
             <div className='flex items-center gap-[4px]'>
               <span>{type} —</span>
               <span className='font-400'>{text}</span>

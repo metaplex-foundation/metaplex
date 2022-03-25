@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import _ from 'lodash'
+import { Link } from 'react-router-dom'
 import { Button, MetaChip } from '@oyster/common'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import LiveNFTCard from './LiveNFTCard'
@@ -47,12 +48,14 @@ export const Hero: FC<HeroProps> = ({ className }) => {
           </div>
 
           <div className='hero__actions flex items-center gap-[12px]'>
-            <Button
-              appearance='primary'
-              size='lg'
-              iconAfter={<i className='ri-arrow-right-s-line' />}>
-              Discover Collections
-            </Button>
+            <Link to='/discover'>
+              <Button
+                appearance='primary'
+                size='lg'
+                iconAfter={<i className='ri-arrow-right-s-line' />}>
+                Discover Collections
+              </Button>
+            </Link>
             <Button
               appearance='ghost'
               size='lg'
@@ -64,17 +67,20 @@ export const Hero: FC<HeroProps> = ({ className }) => {
 
         {!!auctions.length && (
           <div className='hero__center group relative ml-auto flex h-[452px] w-[395px]'>
-            <LiveNFTCard
-              auction={auctions[0]}
-              className='absolute left-[-44px] right-0 m-auto w-[320px] rotate-[-6deg] shadow transition-all group-hover:rotate-[-8deg]'
-              onClickButton={() => {}}
-            />
-
-            <LiveNFTCard
-              auction={auctions[2]}
-              className='absolute left-0 right-0 m-auto w-[320px] rotate-[10deg] shadow transition-all group-hover:rotate-[0]'
-              hasIndicator
-            />
+            <Link to={`/auction/${auctions[0].auction.pubkey}`}>
+              <LiveNFTCard
+                auction={auctions[0]}
+                className='absolute left-[-44px] right-0 m-auto w-[320px] rotate-[-6deg] shadow transition-all group-hover:rotate-[-8deg]'
+                onClickButton={() => {}}
+              />
+            </Link>
+            <Link to={`/auction/${auctions[2].auction.pubkey}`}>
+              <LiveNFTCard
+                auction={auctions[2]}
+                className='absolute left-0 right-0 m-auto w-[320px] rotate-[10deg] shadow transition-all group-hover:rotate-[0]'
+                hasIndicator
+              />
+            </Link>
           </div>
         )}
 
