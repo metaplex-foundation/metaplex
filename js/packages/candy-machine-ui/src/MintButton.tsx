@@ -27,7 +27,6 @@ export const MintButton = ({
   onMint,
   candyMachine,
   isMinting,
-  rpcUrl,
   setIsMinting,
   isActive,
 }: {
@@ -36,7 +35,6 @@ export const MintButton = ({
   isMinting: boolean;
   setIsMinting: (val: boolean) => void;
   isActive: boolean;
-  rpcUrl: string;
 }) => {
   const wallet = useWallet();
   const connection = useConnection();
@@ -127,13 +125,8 @@ export const MintButton = ({
             if (gatewayToken?.isValid()) {
               await onMint();
             } else {
-              let endpoint = rpcUrl;
-              if (endpoint.endsWith('/')) endpoint = endpoint.slice(0, -1);
-              if (!endpoint.startsWith('https'))
-                endpoint = 'https' + endpoint.slice(4);
-
               window.open(
-                `https://verify.encore.fans/?endpoint=${endpoint}&gkNetwork=${network}`,
+                `https://verify.encore.fans/?gkNetwork=${network}`,
                 '_blank',
               );
 
