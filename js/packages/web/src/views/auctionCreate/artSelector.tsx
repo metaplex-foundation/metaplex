@@ -3,7 +3,8 @@ import { Row, Button, Modal, ButtonProps } from 'antd'
 import { useUserArts } from '../../hooks'
 import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import AuctionItemCard from './AuctionItemCard'
-import { BuyCard } from '@oyster/common'
+import { BuyCard, Loader } from '@oyster/common'
+import CN from 'classnames'
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[]
@@ -43,7 +44,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
 
   return (
     <>
-      <div className='grid grid-cols-3 gap-[16px]'>
+      <div className='grid gap-[16px] w-full'>
         {selected.map(m => {
           const key = m?.metadata.pubkey || ''
 
@@ -65,10 +66,15 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         })}
         {(allowMultiple || selectedItems.size === 0) && (
           <div
-            className='ant-card ant-card-bordered ant-card-hoverable art-card'
-            style={{ width: 200, height: 300, display: 'flex' }}
+            className={CN(
+              'flex h-[300px] w-[240px] cursor-pointer items-center justify-center rounded border border-slate-200 shadow-card hover:bg-slate-50',
+              props.className
+            )}
             onClick={open}>
-            <span className='text-center'>Add an NFT</span>
+            <div className='flex flex-col items-center justify-center gap-[8px]'>
+              <i className='ri-add-circle-fill text-[32px]' />
+              <span className='text-center'>Add an NFT</span>
+            </div>
           </div>
         )}
       </div>
