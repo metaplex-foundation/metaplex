@@ -63,7 +63,7 @@ export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
   },
 ];
 
-const DEFAULT = ENDPOINTS[0].endpoint;
+const DEFAULT = ENDPOINTS[1].endpoint;
 const DEFAULT_CONNECTION_TIMEOUT = 30 * 1000;
 
 interface ConnectionConfig {
@@ -82,7 +82,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
     commitment: 'recent',
     confirmTransactionInitialTimeout: DEFAULT_CONNECTION_TIMEOUT,
   }),
-  env: ENDPOINTS[0].name,
+  env: ENDPOINTS[1].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
 });
@@ -99,7 +99,7 @@ export function ConnectionProvider({
 
   const [savedEndpoint, setEndpoint] = useLocalStorageState(
     'connectionEndpoint',
-    ENDPOINTS[0].endpoint,
+    ENDPOINTS[1].endpoint,
   );
   const endpoint = queryEndpoint || savedEndpoint;
 
@@ -113,7 +113,7 @@ export function ConnectionProvider({
   );
 
   const env =
-    ENDPOINTS.find(end => end.endpoint === endpoint)?.name || ENDPOINTS[0].name;
+    ENDPOINTS.find(end => end.endpoint === endpoint)?.name || ENDPOINTS[1].name;
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
