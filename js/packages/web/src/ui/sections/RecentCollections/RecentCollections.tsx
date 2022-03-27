@@ -2,22 +2,22 @@ import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { Button, SectionHeading } from '@oyster/common'
 import { BlockCarousel, PrevButton, NextButton } from '../BlockCarousel'
-import { useCollections } from '../../../hooks/useCollections'
+import { CollectionView } from '../../../hooks/useCollections'
 import CollectionCard from './CollectionCard'
 import { Link } from 'react-router-dom'
 
 export interface RecentCollectionsProps {
   className: string
+  liveCollections: CollectionView[]
 }
 
 export const RecentCollections: FC<RecentCollectionsProps> = ({
   className,
+  liveCollections,
   ...restProps
 }: RecentCollectionsProps) => {
   const RecentCollectionsClasses = CN(`recent-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
-
-  const { liveCollections } = useCollections()
 
   const slides = (liveCollections || []).map((collection: any, index: number) => {
     return {
