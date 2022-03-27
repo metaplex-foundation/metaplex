@@ -71,6 +71,8 @@ export const Collection: FC<CollectionProps> = () => {
   const pubkey = liveCollections.find(({ mint }) => mint === id)?.pubkey || undefined
   const { data } = useExtendedArt(pubkey)
 
+  console.log('data', data)
+
   const { getData } = useExtendedCollection()
 
   const tokenList = useTokenList()
