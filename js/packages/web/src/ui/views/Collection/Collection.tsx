@@ -17,10 +17,16 @@ import {
   PriceFloorType,
   pubkeyToString,
   useConnection,
+  WRAPPED_SOL_MINT,
 } from '@oyster/common'
 import { PublicKey } from '@solana/web3.js'
 import { BN } from 'bn.js'
 import { useCollections } from '../../../hooks/useCollections'
+import { useAllSplPrices, useSolPrice } from '../../../contexts'
+import { useTokenList } from '../../../contexts/tokenList'
+
+const ATTRIBUTE_FILTERS = 'Attribute'
+const RANGE_FILTERS = 'Range'
 
 export interface CollectionProps {}
 
@@ -37,51 +43,57 @@ export interface AppliedFiltersInterface {
   type: string
   text: string
   category: string
+  min?: number
+  max?: number
 }
 
 export const SORT_LOW_TO_HIGH = 'Low to High'
 export const SORT_HIGH_TO_LOW = 'High to Low'
+const WITH_FILTER = true
 
 export const Collection: FC<CollectionProps> = () => {
   const [showActivity, setShowActivity] = useState<boolean>(false)
   const [showExplore, setShowExplore] = useState<boolean>(true)
-  const { id }: ParamsInterface = useParams()
-  const { liveCollections } = useCollections()
-
-  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const [filters, setFilters] = useState<AppliedFiltersInterface[]>([])
+  const [nftItems, setNftItems] = useState<any[]>([])
+  const [auctionsAttr, setAuctionAttr] = useState<any[]>([])
+  const [searchText, setSearchText] = useState<string>('')
   const [priceRange, setPriceRange] = useState<PriceRangeInterface>({
     min: null,
     max: null,
   })
+
+  const { id }: ParamsInterface = useParams()
+  const { liveCollections } = useCollections()
+
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+
   const pubkey = liveCollections.find(({ mint }) => mint === id)?.pubkey || undefined
   const { data } = useExtendedArt(pubkey)
-  const [nftItems, setNftItems] = useState<any[]>([])
 
   const { getData } = useExtendedCollection()
 
+  const tokenList = useTokenList()
+  const allSplPrices = useAllSplPrices()
+
   const getMintData = useMintD()
+  const solPrice = useSolPrice()
 
   useEffect(() => {
     if (auctions?.length) {
-      filteredAuctions().then(res => {
-        setNftItems(() => res)
+      filteredAuctions(!WITH_FILTER).then(res => {
+        setAuctionAttr(() => res)
       })
     }
   }, [auctions])
 
   useEffect(() => {
-    const data = nftItems
-    // console.log('data', data)
-    data.filter(i => {
-      if (i.meta.attributes) {
-        console.log('i.meta.attributes', i.meta.attributes)
-        console.log('filters', filters)
-
-        // i.meta.attributes.find()
-      }
-    })
-  }, [filters])
+    if (auctions?.length) {
+      filteredAuctions(WITH_FILTER).then(res => {
+        setNftItems(() => res)
+      })
+    }
+  }, [auctions, filters, searchText])
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
@@ -93,7 +105,7 @@ export const Collection: FC<CollectionProps> = () => {
     }, 1)
   }
 
-  const filteredAuctions = async () => {
+  const filteredAuctions = async (withFilter: boolean) => {
     const data = auctions.filter(
       auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
     )
@@ -102,10 +114,55 @@ export const Collection: FC<CollectionProps> = () => {
       data.map(async auction => await getData(auction.thumbnail.metadata.pubkey))
     )
 
-    return data.map(i => {
+    const allItems = data.map(i => {
       const meta = (all || []).find(({ pubkey }) => pubkey === i.thumbnail.metadata.pubkey) || null
       return { ...bindAmount(i), meta }
     })
+
+    if (withFilter) {
+      return allItems.filter(filterFun)
+    }
+    return allItems
+  }
+
+  const filterFun = (auction: any) => {
+    if (!filters.length && !searchText) {
+      return true
+    }
+
+    let hasAttr: boolean = false
+
+    // Attribute filter
+    const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
+    if (attrFilters.length) {
+      auction.meta.attributes.forEach(i => {
+        const a =
+          filters.filter(
+            ({ type, text }) =>
+              type.trim() === i.trait_type.trim() && text.trim() === i.value.trim()
+          ) || []
+
+        if (a.length) {
+          hasAttr = true
+        }
+      })
+    }
+
+    // Price Range filter
+    const rangeFilters = filters.find(({ category }) => category === RANGE_FILTERS) || null
+
+    return (
+      (rangeFilters &&
+        (rangeFilters.max || rangeFilters.max === 0) &&
+        (rangeFilters.min || rangeFilters.min === 0) &&
+        rangeFilters?.min <= Number(auction.usdAmount) &&
+        rangeFilters?.max >= Number(auction.usdAmount)) ||
+      hasAttr ||
+      (searchText &&
+        auction.meta &&
+        auction.meta.name &&
+        auction.meta.name.toLowerCase().includes(searchText.toLowerCase()))
+    )
   }
 
   const bindAmount = auctionView => {
@@ -118,7 +175,14 @@ export const Collection: FC<CollectionProps> = () => {
         : 0
     const amount = fromLamports(participationOnly ? participationFixedPrice : priceFloor, dx.info)
 
-    return { ...auctionView, amount }
+    const tokenInfo = tokenList.subscribedTokens.filter(
+      m => m.address == auctionView.auction.info.tokenMint
+    )[0]
+
+    const altSplPrice = allSplPrices.filter(a => a.tokenMint == tokenInfo?.address)[0]?.tokenPrice
+    const tokenPrice = tokenInfo?.address == WRAPPED_SOL_MINT.toBase58() ? solPrice : altSplPrice
+
+    return { ...auctionView, amount, usdAmount: tokenPrice * amount }
   }
 
   const onChangeRange = (data: PriceRangeInterface) => {
@@ -148,10 +212,20 @@ export const Collection: FC<CollectionProps> = () => {
   }
 
   const applyRange = () => {
-    if (priceRange.max && priceRange.min) {
+    if (
+      (priceRange.max || priceRange.max === 0) &&
+      (priceRange.min || priceRange.min === 0) &&
+      Number(priceRange.min) <= Number(priceRange.max)
+    ) {
       setFilters([
         ...filters.filter(({ type }) => type !== 'RANGE'),
-        { category: 'Range', type: 'RANGE', text: `${priceRange.min} - ${priceRange.max}` },
+        {
+          category: RANGE_FILTERS,
+          type: 'RANGE',
+          text: `${priceRange.min} - ${priceRange.max}`,
+          min: Number(priceRange.min),
+          max: Number(priceRange.max),
+        },
       ])
     }
   }
@@ -159,7 +233,7 @@ export const Collection: FC<CollectionProps> = () => {
   const addAttributeFilters = (data: { attr: string; label: string }) => {
     setFilters([
       ...filters.filter(({ type, text }) => type !== data.attr && text !== data.label),
-      { category: 'Attribute', type: data.attr, text: data.label },
+      { category: ATTRIBUTE_FILTERS, type: data.attr, text: data.label },
     ])
   }
 
@@ -169,7 +243,7 @@ export const Collection: FC<CollectionProps> = () => {
 
   const filterAttributes = getAttributesFromCollection(
     [
-      ...nftItems.map(i => {
+      ...auctionsAttr.map(i => {
         return i.meta.attributes
       }),
       data?.attributes,
@@ -183,6 +257,8 @@ export const Collection: FC<CollectionProps> = () => {
       min: null,
     })
   }
+
+  // console.log('searchText', searchText)
 
   return (
     <div className='collection'>
@@ -219,6 +295,8 @@ export const Collection: FC<CollectionProps> = () => {
               showActivity={showActivity}
               showExplore={showExplore}
               shortByPrice={shortByPrice}
+              searchText={searchText}
+              onChangeSearchText={e => setSearchText(e.target.value)}
             />
 
             {showExplore && (
