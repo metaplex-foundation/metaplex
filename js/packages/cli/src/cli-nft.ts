@@ -32,10 +32,8 @@ programCommand('mint')
   .option('-um, --use-method <string>', 'Optional: Single, Multiple, or Burn')
   .option('-tum, --total-uses <number>', 'Optional: Allowed Number of Uses')
   .option('-ms, --max-supply <number>', 'Optional: Max Supply')
-  .option(
-    '-nvc, --no-verify-creators',
-    'Optional: Disable Verification of Creators',
-  )
+  .option('-nvc, --no-verify-creators', 'Optional: Disable Verification of Creators',)
+  .option('-mm, --mint-multiple <number>', 'Optional: Mint Multiple Tokens',)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (directory, cmd) => {
     const {
@@ -48,7 +46,11 @@ programCommand('mint')
       totalUses,
       maxSupply,
       verifyCreators,
+      MintMultiple,
     } = cmd.opts();
+    if (MintMultiple > maxSupply){
+      log.error('Number of mints can not be bigger than max supply.');
+    }
     const solConnection = new web3.Connection(getCluster(env));
     let structuredUseMethod;
     try {
@@ -66,18 +68,32 @@ programCommand('mint')
     if (toWallet) {
       receivingWallet = new PublicKey(toWallet);
     }
-    await mintNFT(
-      solConnection,
-      walletKeyPair,
-      url,
-      true,
-      collectionKey,
-      supply,
-      verifyCreators,
-      structuredUseMethod,
-      receivingWallet,
-    );
-  });
+    if (MintMultiple !== undefined) MintMultiple = 1;
+    const NUMBER_OF_NFTS_TO_MINT = parseInt(MintMultiple, 10);
+    log.info('Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...');
+    const mintNFT = async index => {
+      if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
+      log.info('minting another token...');
+      await mintNFT(
+        solConnection,
+        walletKeyPair,
+        url,
+        true,
+        collectionKey,
+        supply,
+        verifyCreators,
+        structuredUseMethod,
+        receivingWallet,
+        index + 1,
+        );
+        }
+      };
+  
+      await mintNFT(0);
+  
+      if(MintMultiple > 1) log.info('minted ${NUMBER_OF_NFTS_TO_MINT} tokens');
+      else log.info('minted ${NUMBER_OF_NFTS_TO_MINT} token');
+    });
 
 programCommand('create-metadata')
   .requiredOption('-m, --mint <string>', 'base58 mint key')
