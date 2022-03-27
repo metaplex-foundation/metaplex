@@ -7,7 +7,7 @@ import CollectionCard from '../RecentCollections/CollectionCard'
 import { Link } from 'react-router-dom'
 
 export interface TrendingCollectionsProps {
-  [x: string]: any
+  className: string
 }
 
 export const TrendingCollections: FC<TrendingCollectionsProps> = ({ className }) => {

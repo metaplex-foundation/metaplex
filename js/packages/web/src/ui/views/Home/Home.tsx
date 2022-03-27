@@ -6,9 +6,7 @@ import { LaunchpadCard } from '../../sections/LaunchpadCard'
 import { TrendingCollections } from '../../sections/TrendingCollections'
 import { WhyUS } from '../../sections/WhyUS'
 
-export interface HomeProps {
-  [x: string]: any
-}
+export interface HomeProps {}
 
 export enum LiveAuctionViewState {
   All = '0',
