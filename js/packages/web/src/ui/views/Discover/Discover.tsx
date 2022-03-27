@@ -19,6 +19,7 @@ export interface DiscoverProps {}
 
 interface SearchParamsInterface {
   searchText?: string
+  page?: string
 }
 
 export const Discover: FC<DiscoverProps> = () => {
@@ -26,27 +27,40 @@ export const Discover: FC<DiscoverProps> = () => {
   const [collections, setCollections] = useState<CollectionView[]>([])
 
   const { search } = useLocation()
-  const { searchText }: SearchParamsInterface = queryString.parse(search) || {}
+  const { searchText, page }: SearchParamsInterface = queryString.parse(search) || {}
   const { onChangeSearchText, searchText: text, onSubmitSearch } = useSearch()
   const [current, setCurrent] = useState(0)
+  const [showPagination, setShowPagination] = useState(false)
+
+  const { pathname } = useLocation()
 
   useEffect(() => {
-    setCollections([
-      ...paginate([
-        ...liveCollections
-          .map(col => {
-            return {
-              ...col,
-              name: col.data.data.name,
-            }
-          })
-          .filter(filterFun),
-      ])[current],
+    setCurrent(page ? Number(page) - 1 : 0)
+  }, [page])
+
+  useEffect(() => {
+    const paginatedCollection = paginate([
+      ...liveCollections
+        .map(col => {
+          return {
+            ...col,
+            name: col.data.data.name,
+          }
+        })
+        .filter(filterFun),
     ])
+    if (paginatedCollection.length > 0) {
+      setShowPagination(true)
+    }
+    setCollections(
+      paginatedCollection.length && !!paginatedCollection[current]
+        ? paginatedCollection[current]
+        : []
+    )
   }, [liveCollections, searchText, current])
 
   const paginate = array => {
-    const chunkSize = 1
+    const chunkSize = 30
     const chunks: Array<any> = []
     for (let i = 0; i < array.length; i += chunkSize) {
       const chunk = array.slice(i, i + chunkSize)
@@ -67,7 +81,28 @@ export const Discover: FC<DiscoverProps> = () => {
       onSubmitSearch(event)
     }
   }
-  paginate(collections)
+  const getPagination = () => {
+    return paginate([
+      ...liveCollections
+        .map(col => {
+          return {
+            ...col,
+            name: col.data.data.name,
+          }
+        })
+        .filter(filterFun),
+    ]).map((i, key) => {
+      return {
+        label: `${key + 1}`,
+        isActive: key === current,
+        link: `${pathname}?${new URLSearchParams({
+          searchText: searchText ?? '',
+          page: `${key + 1}`,
+        }).toString()}`,
+      }
+    })
+  }
+
   return (
     <div className='discover container'>
       <div className='flex flex-col items-center justify-center gap-[40px] pt-[80px]'>
@@ -156,40 +191,35 @@ export const Discover: FC<DiscoverProps> = () => {
           ))}
         </ul>
 
-        <div className='flex justify-center py-[80px]'>
-          <Pagination
-            prevLink='#'
-            nextLink='#'
-            pages={[
-              {
-                label: '1',
-                isActive: true,
-                link: '#',
-              },
-              {
-                label: '2',
-                isActive: false,
-                link: '2',
-              },
-              {
-                label: '3',
-                isActive: false,
-                link: '#',
-              },
-              {
-                label: '...',
-                isActive: false,
-                isDisabled: true,
-                link: '#',
-              },
-              {
-                label: '20',
-                isActive: false,
-                link: '#',
-              },
-            ]}
-          />
-        </div>
+        {showPagination && (
+          <div className='flex justify-center py-[80px]'>
+            <Pagination
+              prevLink={
+                current > 0
+                  ? `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current}`,
+                    }).toString()}`
+                  : `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current + 1}`,
+                    }).toString()}`
+              }
+              nextLink={
+                getPagination().length >= current + 2
+                  ? `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current + 2}`,
+                    }).toString()}`
+                  : `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current + 1}`,
+                    }).toString()}`
+              }
+              pages={getPagination()}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
