@@ -41,3 +41,84 @@
     }
   }
 }
+
+/* Ant Design Table Style Overrides */
+.ant-table {
+  @apply w-full;
+
+  table {
+    @apply overflow-hidden rounded border-l border-t border-r border-slate-200;
+  }
+
+  th {
+    &.ant-table-cell {
+      @apply border-slate-200 bg-slate-10;
+    }
+  }
+
+  .ant-table-tbody > tr > td,
+  .ant-table-tbody > tr > th {
+    @apply border-slate-200;
+  }
+
+  .ant-table-thead
+    > tr
+    > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+    @apply bg-slate-200;
+  }
+
+  .ant-table-tbody > tr.ant-table-row:hover > td,
+  .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+    @apply bg-slate-50;
+  }
+}
+
+/* Ant Pagination */
+.ant-pagination {
+  .ant-pagination-item-link {
+  }
+
+  .ant-pagination-item,
+  .ant-pagination-disabled button {
+    @apply flex items-center justify-center rounded-[4px] border border-slate-200 bg-slate-10 font-500 hover:bg-slate-50;
+  }
+
+  .ant-pagination-item-active {
+    @apply border-slate-900 bg-slate-900 text-white hover:bg-slate-800;
+
+    a {
+      @apply border-slate-900 text-white;
+    }
+  }
+}
+
+/* Ant Switch */
+.ant-switch {
+  @apply flex h-[32px] items-center border border-solid border-slate-300 bg-slate-10 px-[4px] hover:bg-slate-50;
+
+  &.ant-switch-checked {
+    .ant-switch-handle {
+      @apply left-[calc(100%-18px-4px)];
+    }
+  }
+
+  .ant-switch-handle,
+  .ant-switch-inner {
+    @apply text-slate-900;
+  }
+
+  .ant-switch-handle {
+    @apply top-[7px] left-[4px];
+  }
+
+  .ant-switch-handle::before {
+    @apply bg-B-400 shadow-none;
+  }
+}
+
+/* Ant card */
+.ant-card {
+  .ant-card-head-title {
+    @apply text-slate-900;
+  }
+}
