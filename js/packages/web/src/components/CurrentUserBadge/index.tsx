@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
 import { Popover, Select } from 'antd'
-import { Button, UserChip, Avatar } from '@oyster/common'
+import { Button, UserChip } from '@oyster/common'
 import SolanaIcon from '../../components-v2/icons/Solana'
 import {
   ENDPOINTS,
