@@ -4,31 +4,27 @@ import { Button, SearchField } from '@oyster/common'
 import { SORT_HIGH_TO_LOW, SORT_LOW_TO_HIGH } from '../../views'
 
 export interface CollectionActionsBarProps {
-  [x: string]: any
   onClickActivity?: any
   onClickExplore?: any
   showExplore?: boolean
   showActivity?: boolean
+  searchText: string
+  shortByPrice: (text: string) => void
+  onChangeSearchText: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 export const CollectionActionsBar: FC<CollectionActionsBarProps> = ({
-  className,
   onClickActivity,
   onClickExplore,
   showExplore,
   showActivity,
   shortByPrice,
-  ...restProps
+  onChangeSearchText,
 }) => {
-  const CollectionActionsBarClasses = CN(
-    `collection-actions-bar flex items-center gap-[8px] w-full`,
-    className
-  )
-
   const [sortText, setSortText] = useState(SORT_LOW_TO_HIGH)
 
   return (
-    <div className={CollectionActionsBarClasses} {...restProps}>
+    <div className='collection-actions-bar flex w-full items-center gap-[8px]'>
       <Button
         isRounded={false}
         appearance={showExplore ? 'neutral' : 'ghost'}
@@ -51,7 +47,7 @@ export const CollectionActionsBar: FC<CollectionActionsBarProps> = ({
         Activity
       </Button>
 
-      <SearchField isRounded={false} className='w-full' />
+      <SearchField onChange={onChangeSearchText} isRounded={false} className='w-full' />
 
       <Button
         onClick={() => {
