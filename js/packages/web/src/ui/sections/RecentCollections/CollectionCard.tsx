@@ -4,6 +4,7 @@ import { useExtendedArt } from '../../../hooks'
 
 interface CollectionCardProps {
   collection: any
+  hasButton?: boolean
 }
 
 const dx = {
@@ -13,11 +14,17 @@ const dx = {
   link: '#',
 }
 
-const CollectionCard: FC<CollectionCardProps> = ({ collection }) => {
+const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
   const { data } = useExtendedArt(collection.pubkey)
 
   return (
-    <BuyCard {...dx} image={data?.image ?? ''} name={data?.name ?? ''} onClickButton={() => {}} />
+    <BuyCard
+      {...rest}
+      {...dx}
+      image={data?.image ?? ''}
+      name={data?.name ?? ''}
+      onClickButton={() => {}}
+    />
   )
 }
 

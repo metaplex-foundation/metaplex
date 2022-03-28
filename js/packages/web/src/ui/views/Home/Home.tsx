@@ -7,9 +7,7 @@ import { TrendingCollections } from '../../sections/TrendingCollections'
 import { WhyUS } from '../../sections/WhyUS'
 import { useCollections } from '../../../hooks/useCollections'
 
-export interface HomeProps {
-  [x: string]: any
-}
+export interface HomeProps {}
 
 export enum LiveAuctionViewState {
   All = '0',

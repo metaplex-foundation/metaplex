@@ -1,5 +1,4 @@
-import React, { FC } from 'react'
-import CN from 'classnames'
+import React, { FC, useEffect, useState } from 'react'
 import {
   SectionHeading,
   SearchField,
@@ -8,187 +7,104 @@ import {
   Button,
   DropDownBody,
   DropDownMenuItem,
-  BuyCard,
   Pagination,
 } from '@oyster/common'
+import queryString from 'query-string'
+import { CollectionView, useCollections } from '../../../hooks/useCollections'
+import { Link, useLocation } from 'react-router-dom'
+import CollectionCard from '../../sections/RecentCollections/CollectionCard'
+import useSearch from '../../../hooks/useSearch'
 
-export interface DiscoverProps {
-  [x: string]: any
+export interface DiscoverProps {}
+
+interface SearchParamsInterface {
+  searchText?: string
+  page?: string
 }
 
-const cards = [
-  {
-    id: 0,
-    name: 'Bothered Otter',
-    url: '#',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Fwww.arweave.net%2FyuhwGghXfOkPw6Qk73aMQs7bYYISBpa2LLiScFjaYPo%3Fext%3Dpng&w=1920&q=75Î',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 1,
-    name: 'Mean Pigs',
-    url: '#',
-    image: '/img/temp/nft9.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 2,
-    name: 'Bohomia',
-    url: '#',
-    image: '/img/temp/nft10.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 3,
-    name: 'Sad Sea',
-    url: '#',
-    image: '/img/temp/nft11.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 4,
-    name: 'Belugies',
-    url: '#',
-    image: '/img/temp/nft1.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 5,
-    name: 'Mean Pigs',
-    url: '#',
-    image: '/img/temp/nft3.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 6,
-    name: 'Bohomia',
-    url: '#',
-    image: '/img/temp/nft4.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 7,
-    name: 'Sad Sea',
-    url: '#',
-    image: '/img/temp/nft2.png',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 8,
-    name: 'Sol Dad',
-    url: '#',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Fwww.arweave.net%2FEOWKY7hz95x2cj9S7IN72cuRDdkvByPVQNyBUnJ6oR4%3Fext%3Dpng&w=1920&q=75',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 9,
-    name: 'Blockchain Billy',
-    url: '#',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Farweave.net%2F_wUHu496N4qSOwee3N5lOqYyiFRXdEdahLpayxSEOVw%3Fext%3Djpg&w=1920&q=75',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 10,
-    name: 'Samoyed',
-    url: '#',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Farweave.net%2F5XfG1aseTE616bfkzeDtdl53Py-CA9mFAKoCgj-hdLE&w=1920&q=75',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 11,
-    name: 'Jungle Cat Lioness',
-    url: '#',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Farweave.net%2F61rA9QIYA-eJcfYJadyKMrCJ41Svk3T0uycfXt8N9Bw%3Fext%3Djpeg&w=1920&q=75',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 13,
-    name: 'Lady Yetis',
-    url: '#',
-    image: '/img/temp/nft5.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 14,
-    name: 'Diamond Hands',
-    url: '#',
-    image: '/img/temp/nft13.gif',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 15,
-    name: 'Dapper Ape',
-    url: '#',
-    image: '/img/temp/nft8.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-  {
-    id: 16,
-    name: 'Sad Sea',
-    url: '#',
-    image: '/img/temp/nft11.webp',
-    volume: '472.54',
-    floorPrice: 'Ⓞ 0.25 SOL',
-    dollarValue: '$154.00',
-    hint: '$154.00',
-  },
-]
+export const Discover: FC<DiscoverProps> = () => {
+  const { liveCollections } = useCollections()
+  const [collections, setCollections] = useState<CollectionView[]>([])
 
-export const Discover: FC<DiscoverProps> = ({ className, ...restProps }: DiscoverProps) => {
-  const DiscoverClasses = CN(`discover container`, className)
+  const { search } = useLocation()
+  const { searchText, page }: SearchParamsInterface = queryString.parse(search) || {}
+  const { onChangeSearchText, searchText: text, onSubmitSearch } = useSearch()
+  const [current, setCurrent] = useState(0)
+  const [showPagination, setShowPagination] = useState(false)
+
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    setCurrent(page ? Number(page) - 1 : 0)
+  }, [page])
+
+  useEffect(() => {
+    const paginatedCollection = paginate([
+      ...liveCollections
+        .map(col => {
+          return {
+            ...col,
+            name: col.data.data.name,
+          }
+        })
+        .filter(filterFun),
+    ])
+    if (paginatedCollection.length > 0) {
+      setShowPagination(true)
+    }
+    setCollections(
+      paginatedCollection.length && !!paginatedCollection[current]
+        ? paginatedCollection[current]
+        : []
+    )
+  }, [liveCollections, searchText, current])
+
+  const paginate = array => {
+    const chunkSize = 30
+    const chunks: Array<any> = []
+    for (let i = 0; i < array.length; i += chunkSize) {
+      const chunk = array.slice(i, i + chunkSize)
+      chunks.push(chunk)
+    }
+    return chunks
+  }
+
+  const filterFun = (col: any) => {
+    if (!searchText) {
+      return true
+    }
+    return col.name.toLowerCase().includes(searchText.toLowerCase())
+  }
+
+  const handleKeyPress = event => {
+    if (event.key === 'Enter') {
+      onSubmitSearch(event)
+    }
+  }
+  const getPagination = () => {
+    return paginate([
+      ...liveCollections
+        .map(col => {
+          return {
+            ...col,
+            name: col.data.data.name,
+          }
+        })
+        .filter(filterFun),
+    ]).map((i, key) => {
+      return {
+        label: `${key + 1}`,
+        isActive: key === current,
+        link: `${pathname}?${new URLSearchParams({
+          searchText: searchText ?? '',
+          page: `${key + 1}`,
+        }).toString()}`,
+      }
+    })
+  }
 
   return (
-    <div className={DiscoverClasses} {...restProps}>
+    <div className='discover container'>
       <div className='flex flex-col items-center justify-center gap-[40px] pt-[80px]'>
         <SectionHeading
           commonClassName='!flex items-center !justify-center !text-center w-full'
@@ -200,6 +116,9 @@ export const Discover: FC<DiscoverProps> = ({ className, ...restProps }: Discove
 
         <div className='flex items-center gap-[12px]'>
           <SearchField
+            value={text}
+            onChange={onChangeSearchText}
+            onKeyPress={handleKeyPress}
             className='w-[528px]'
             size='lg'
             placeholder='Search by collection name'
@@ -251,7 +170,11 @@ export const Discover: FC<DiscoverProps> = ({ className, ...restProps }: Discove
             }
           />
 
-          <Button appearance='neutral' size='lg' className='h-[52px] w-[160px]'>
+          <Button
+            onClick={onSubmitSearch}
+            appearance='neutral'
+            size='lg'
+            className='h-[52px] w-[160px]'>
             Search
           </Button>
         </div>
@@ -259,54 +182,44 @@ export const Discover: FC<DiscoverProps> = ({ className, ...restProps }: Discove
 
       <div className='container pt-[80px]'>
         <ul className='grid grid-cols-4 gap-[32px]'>
-          {cards.map(({ id, name, image, volume, floorPrice, hint }, index) => (
-            <li key={id || index}>
-              <BuyCard
-                hasButton={false}
-                name={name}
-                image={image}
-                volume={volume}
-                floorPrice={floorPrice}
-                dollarValue={hint}
-              />
+          {(collections || []).map((collection: any) => (
+            <li key={collection.pubkey}>
+              <Link to={`/collection/${collection.mint}`}>
+                <CollectionCard hasButton={false} collection={collection} />
+              </Link>
             </li>
           ))}
         </ul>
 
-        <div className='flex justify-center py-[80px]'>
-          <Pagination
-            prevLink='#'
-            nextLink='#'
-            pages={[
-              {
-                label: '1',
-                isActive: true,
-                link: '#',
-              },
-              {
-                label: '2',
-                isActive: false,
-                link: '#',
-              },
-              {
-                label: '3',
-                isActive: false,
-                link: '#',
-              },
-              {
-                label: '...',
-                isActive: false,
-                isDisabled: true,
-                link: '#',
-              },
-              {
-                label: '20',
-                isActive: false,
-                link: '#',
-              },
-            ]}
-          />
-        </div>
+        {showPagination && (
+          <div className='flex justify-center py-[80px]'>
+            <Pagination
+              prevLink={
+                current > 0
+                  ? `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current}`,
+                    }).toString()}`
+                  : `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current + 1}`,
+                    }).toString()}`
+              }
+              nextLink={
+                getPagination().length >= current + 2
+                  ? `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current + 2}`,
+                    }).toString()}`
+                  : `${pathname}?${new URLSearchParams({
+                      searchText: searchText ?? '',
+                      page: `${current + 1}`,
+                    }).toString()}`
+              }
+              pages={getPagination()}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
