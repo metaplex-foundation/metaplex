@@ -1,11 +1,14 @@
 import React, { FC } from 'react'
 import { Link } from 'react-router-dom'
-import { SearchField, ConnectButton, Button, Logo } from '@oyster/common'
+import { Popover, Select } from 'antd'
+import { SearchField, ConnectButton, Button, Logo, contexts, useQuerySearch } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { CurrentUserBadge } from '../../../components/CurrentUserBadge'
 import useSearch from '../../../hooks/useSearch'
 import { useLocation } from 'react-router-dom'
 import CN from 'classnames'
+import { SettingOutlined } from '@ant-design/icons'
+import { Notifications } from '../../../components/Notifications'
 
 interface HeaderProps {}
 
@@ -13,11 +16,14 @@ const usePathname = () => {
   const location = useLocation()
   return location.pathname
 }
+const { ENDPOINTS, useConnectionConfig } = contexts.Connection
 
 export const Header: FC<HeaderProps> = () => {
   const { connected } = useWallet()
   const { onChangeSearchText, searchText, onSubmitSearch } = useSearch()
   const pathname = usePathname()
+  const { endpoint } = useConnectionConfig()
+  const routerSearchParams = useQuerySearch()
 
   console.log(pathname)
 
@@ -56,8 +62,63 @@ export const Header: FC<HeaderProps> = () => {
           {!connected && <ConnectButton allowWalletChange />}
 
           {connected && (
-            <div className='flex items-center gap-[4px]'>
+            <div className='flex items-center gap-[6px]'>
               <CurrentUserBadge showBalance={false} showAddress={true} iconSize={32} />
+              <Notifications />
+              <div className='wallet-wrapper'>
+                <Popover
+                  trigger='click'
+                  content={
+                    <>
+                      <div style={{ width: 250 }}>
+                        <h5
+                          style={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            letterSpacing: '0.02em',
+                          }}>
+                          NETWORK
+                        </h5>
+                        <Select
+                          onSelect={network => {
+                            const windowHash = window.location.hash
+                            routerSearchParams.set('network', network)
+                            const nextLocationHash = `${
+                              windowHash.split('?')[0]
+                            }?${routerSearchParams.toString()}`
+                            window.location.hash = nextLocationHash
+                            window.location.reload()
+                          }}
+                          value={endpoint.name}
+                          bordered={false}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: 8,
+                            width: '100%',
+                            marginBottom: 10,
+                          }}>
+                          {ENDPOINTS.map(({ name }) => (
+                            <Select.Option value={name} key={endpoint.name}>
+                              {name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div style={{ display: 'grid', marginTop: '10px' }}>
+                        <Link to={'/admin'} style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          <h5
+                            style={{
+                              color: 'rgba(255, 255, 255, 0.7)',
+                              letterSpacing: '0.02em',
+                            }}>
+                            Admin
+                          </h5>
+                        </Link>
+                      </div>
+                    </>
+                  }>
+                  <SettingOutlined style={{ fontSize: 18 }} />
+                </Popover>
+              </div>
             </div>
           )}
         </div>
