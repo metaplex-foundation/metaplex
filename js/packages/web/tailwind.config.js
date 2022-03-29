@@ -34,6 +34,10 @@ module.exports = {
         },
         'hola-black': '#262626',
       },
+      fontFamily: {
+        'theme-title': "var(--family-title, 'Graphik Web', sans-serif)",
+        'theme-text': "var(--family-text, 'Graphik Web', sans-serif)",
+      },
     },
   },
   plugins: [],
