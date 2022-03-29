@@ -1,7 +1,15 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Popover, Select } from 'antd'
-import { SearchField, ConnectButton, Button, Logo, contexts, useQuerySearch } from '@oyster/common'
+import {
+  SearchField,
+  ConnectButton,
+  Button,
+  Logo,
+  contexts,
+  useQuerySearch,
+  useMeta,
+} from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { CurrentUserBadge } from '../../../components/CurrentUserBadge'
 import useSearch from '../../../hooks/useSearch'
@@ -24,8 +32,18 @@ export const Header: FC<HeaderProps> = () => {
   const pathname = usePathname()
   const { endpoint } = useConnectionConfig()
   const routerSearchParams = useQuerySearch()
+  const { publicKey } = useWallet()
+  const { whitelistedCreatorsByCreator } = useMeta()
+  const pubKey = publicKey?.toBase58() || ''
+  const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
 
-  console.log(pathname)
+  const isStoreOwner = useMemo(() => {
+    if (whitelistedCreatorsByCreator[pubKey] !== undefined) {
+      return whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress
+    } else {
+      return false
+    }
+  }, [whitelistedCreatorsByCreator, pubKey])
 
   return (
     <div
@@ -103,17 +121,19 @@ export const Header: FC<HeaderProps> = () => {
                           ))}
                         </Select>
                       </div>
-                      <div style={{ display: 'grid', marginTop: '10px' }}>
-                        <Link to={'/admin'} style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                          <h5
-                            style={{
-                              color: 'rgba(255, 255, 255, 0.7)',
-                              letterSpacing: '0.02em',
-                            }}>
-                            Admin
-                          </h5>
-                        </Link>
-                      </div>
+                      {isStoreOwner ? (
+                        <div style={{ display: 'grid', marginTop: '10px' }}>
+                          <Link to={'/admin'} style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            <h5
+                              style={{
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                letterSpacing: '0.02em',
+                              }}>
+                              Admin
+                            </h5>
+                          </Link>
+                        </div>
+                      ) : null}
                     </>
                   }>
                   <SettingOutlined style={{ fontSize: 18 }} />
