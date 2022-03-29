@@ -1,7 +1,8 @@
 import type { FC } from 'react'
 
 import { CopyOutlined } from '@ant-design/icons'
-import { Button, Card } from 'antd'
+import { Card } from 'antd'
+import { Button } from '@oyster/common'
 import React, { useCallback, useRef } from 'react'
 
 interface Variables {
@@ -26,12 +27,16 @@ export const SetupVariables: FC<Variables> = ({ storeAddress, storeOwnerAddress 
   return (
     <Card
       title='Store configuration'
-      extra={<Button type='dashed' onClick={copySettings} icon={<CopyOutlined />}></Button>}
-    >
+      extra={
+        <Button
+          appearance='secondary'
+          view='outline'
+          onClick={copySettings}
+          icon={<CopyOutlined />}
+        />
+      }>
       <div ref={ref}>
-        {storeOwnerAddress && (
-          <p>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS={storeOwnerAddress}</p>
-        )}
+        {storeOwnerAddress && <p>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS={storeOwnerAddress}</p>}
       </div>
     </Card>
   )

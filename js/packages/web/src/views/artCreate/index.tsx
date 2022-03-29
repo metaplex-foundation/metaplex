@@ -189,6 +189,7 @@ export const ArtCreateView = () => {
                 confirm={() => gotoStep(3)}
               />
             )}
+
             {step === 3 && (
               <RoyaltiesStep
                 attributes={attributes}
@@ -196,6 +197,7 @@ export const ArtCreateView = () => {
                 setAttributes={setAttributes}
               />
             )}
+
             {step === 4 && (
               <LaunchStep
                 attributes={attributes}

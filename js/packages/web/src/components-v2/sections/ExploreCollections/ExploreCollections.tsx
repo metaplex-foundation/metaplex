@@ -101,7 +101,7 @@ export const ExploreCollections: FC<ExploreCollectionsProps> = ({
         </h1>
 
         <form
-          onSubmit={e => onSubmitSearch(e, pid)}
+          onSubmit={e => onSubmitSearch(e)}
           name='search'
           className='mb:pb-0 flex w-full max-w-[480px] pt-[20px] pb-[20px]'>
           <TextField
