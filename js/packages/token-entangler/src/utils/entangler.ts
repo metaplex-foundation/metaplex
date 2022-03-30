@@ -21,7 +21,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { BN } from '@project-serum/anchor';
-import { getEdition, getMetadata, getTokenAmount } from './accounts';
+import { getEdition, getMetadata, getMintInfo, getTokenAmount } from './accounts';
 import mints from './valid_mints.json';
 import { extendBorsh } from './borsh';
 export const TOKEN_ENTANGLER = 'token_entangler';
@@ -402,6 +402,8 @@ export const createEntanglement = async (
       },
     },
   );
+
+  const mintBInfo = await getMintInfo(connection, mintB);
   const instructions = [
     Token.createApproveInstruction(
       TOKEN_PROGRAM_ID,
@@ -409,7 +411,7 @@ export const createEntanglement = async (
       transferAuthority.publicKey,
       anchorWallet.publicKey,
       [],
-      1,
+      mintBInfo.info.supply,
     ),
     instruction,
     Token.createRevokeInstruction(
@@ -554,6 +556,8 @@ export const swapEntanglement = async (
       .map(k => (k.isSigner = true));
   }
 
+  const tokenMintInfo = await getMintInfo(connection, tokenMint);
+
   const instructions = [
     Token.createApproveInstruction(
       TOKEN_PROGRAM_ID,
@@ -561,7 +565,7 @@ export const swapEntanglement = async (
       transferAuthority.publicKey,
       anchorWallet.publicKey,
       [],
-      1,
+      tokenMint.info.supply,
     ),
     ...(!isNative
       ? [

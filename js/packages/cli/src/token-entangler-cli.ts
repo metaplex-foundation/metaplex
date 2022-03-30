@@ -4,6 +4,7 @@ import {
   getAtaForMint,
   getMasterEdition,
   getMetadata,
+  getMintInfo,
   getTokenAmount,
   getTokenEntanglement,
   getTokenEntanglementEscrows,
@@ -203,6 +204,8 @@ programCommand('create_entanglement')
       },
     );
 
+    const mintBInfo = await getMintInfo(anchorProgram.provider.connection, mintB);
+
     const instructions = [
       Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
@@ -210,7 +213,7 @@ programCommand('create_entanglement')
         transferAuthority.publicKey,
         walletKeyPair.publicKey,
         [],
-        1,
+        mintBInfo.info.supply,
       ),
       instruction,
       Token.createRevokeInstruction(
@@ -271,10 +274,10 @@ programCommand('swap')
     const aAta = (await getAtaForMint(mintAKey, walletKeyPair.publicKey))[0];
     const bAta = (await getAtaForMint(mintBKey, walletKeyPair.publicKey))[0];
     const currABal = await getTokenAmount(anchorProgram, aAta, mintAKey);
-    const token = currABal == 1 ? aAta : bAta,
-      replacementToken = currABal == 1 ? bAta : aAta;
-    const tokenMint = currABal == 1 ? mintAKey : mintBKey,
-      replacementTokenMint = currABal == 1 ? mintBKey : mintAKey;
+    const token = currABal > 0 ? aAta : bAta,
+      replacementToken = currABal > 0 ? bAta : aAta;
+    const tokenMint = currABal > 0 ? mintAKey : mintBKey,
+      replacementTokenMint = currABal > 0 ? mintBKey : mintAKey;
     const result = await getTokenEntanglementEscrows(mintAKey, mintBKey);
 
     const tokenAEscrow = result[0];
@@ -353,6 +356,8 @@ programCommand('swap')
         .map(k => (k.isSigner = true));
     }
 
+    const tokenMintInfo = await getMintInfo(anchorProgram.provider.connection, tokenMint);
+
     const instructions = [
       Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
@@ -360,7 +365,7 @@ programCommand('swap')
         transferAuthority.publicKey,
         walletKeyPair.publicKey,
         [],
-        1,
+        tokenMintInfo.info.supply,
       ),
       ...(!isNative
         ? [

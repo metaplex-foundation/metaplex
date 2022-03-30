@@ -1,4 +1,5 @@
 import {
+  Connection,
   Keypair,
   PublicKey,
   SystemProgram,
@@ -28,7 +29,7 @@ import fs from 'fs';
 import { createCandyMachineV2Account } from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
-import { AccountLayout, u64 } from '@solana/spl-token';
+import { AccountLayout, MintInfo, MintLayout, u64 } from '@solana/spl-token';
 import { getCluster } from './various';
 export type AccountAndPubkey = {
   pubkey: string;
@@ -743,3 +744,31 @@ function unsafeResAccounts(
     pubkey: item.pubkey,
   }));
 }
+
+export const getMintInfo = async (
+  connection: Connection,
+  mint: string,
+): Promise<{ key: PublicKey; info: MintInfo }> => {
+  let mintKey: PublicKey;
+  try {
+    mintKey = new PublicKey(mint);
+  } catch (err) {
+    throw new Error(`Invalid mint key ${err}`);
+  }
+  const mintAccount = await connection.getAccountInfo(mintKey);
+  if (mintAccount === null) {
+    throw new Error(`Could not fetch mint`);
+  }
+  if (!mintAccount.owner.equals(TOKEN_PROGRAM_ID)) {
+    const mintOwner = mintAccount.owner.toBase58();
+    throw new Error(`Invalid mint owner ${mintOwner}`);
+  }
+  if (mintAccount.data.length !== MintLayout.span) {
+    throw new Error(`Invalid mint size ${mintAccount.data.length}`);
+  }
+  const mintInfo = MintLayout.decode(Buffer.from(mintAccount.data));
+  return {
+    key: mintKey,
+    info: mintInfo,
+  };
+};
