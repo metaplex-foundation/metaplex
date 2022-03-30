@@ -52,9 +52,11 @@ module.exports = {
       ...appTypography.body.fontWeight,
     },
     boxShadow: {
-      DEFAULT: '0px 6px 12px -6px rgba(18, 16, 55, 0.12), 0px 8px 24px -4px rgba(18, 16, 55, 0.08)',
-      card: '0px 25px 120px -12px rgba(13, 39, 86, 0.08)',
-      none: 'none',
+      'DEFAULT':
+        '0px 6px 12px -6px rgba(18, 16, 55, 0.12), 0px 8px 24px -4px rgba(18, 16, 55, 0.08)',
+      'card': '0px 25px 120px -12px rgba(13, 39, 86, 0.08)',
+      'card-light': '0px 25px 120px -12px rgba(13, 39, 86, 0.04)',
+      'none': 'none',
     },
     borderRadius: {
       DEFAULT: '12px',

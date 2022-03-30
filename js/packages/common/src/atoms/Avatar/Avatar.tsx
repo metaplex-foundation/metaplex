@@ -7,6 +7,7 @@ export interface AvatarProps {
   image?: string
   onClick?: any
   label?: string
+  labelClassName?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | number
 }
 
@@ -16,6 +17,7 @@ export const Avatar: FC<AvatarProps> = ({
   onClick,
   size,
   label,
+  labelClassName,
   ...restProps
 }: AvatarProps) => {
   const AvatarClasses = CN(`avatar flex items-center gap-[8px] font-500`, className, {
@@ -40,7 +42,7 @@ export const Avatar: FC<AvatarProps> = ({
         <Image src={image} />
       </span>
 
-      {label && <span>{label}</span>}
+      {label && <span className={labelClassName}>{label}</span>}
     </div>
   )
 }
