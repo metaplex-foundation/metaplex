@@ -204,7 +204,10 @@ programCommand('create_entanglement')
       },
     );
 
-    const mintBInfo = await getMintInfo(anchorProgram.provider.connection, mintB);
+    const mintBInfo = await getMintInfo(
+      anchorProgram.provider.connection,
+      mintB,
+    );
 
     const instructions = [
       Token.createApproveInstruction(
@@ -356,7 +359,10 @@ programCommand('swap')
         .map(k => (k.isSigner = true));
     }
 
-    const tokenMintInfo = await getMintInfo(anchorProgram.provider.connection, tokenMint);
+    const tokenMintInfo = await getMintInfo(
+      anchorProgram.provider.connection,
+      tokenMint,
+    );
 
     const instructions = [
       Token.createApproveInstruction(
