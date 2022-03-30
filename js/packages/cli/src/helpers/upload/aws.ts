@@ -25,7 +25,7 @@ async function uploadFile(
     await s3Client.send(new PutObjectCommand(mediaUploadParams));
     log.info('uploaded filename:', filename);
   } catch (err) {
-    log.debug('Error', err);
+    log.info('Error', err);
   }
 
   const url = `https://${awsS3Bucket}.s3.amazonaws.com/${filename}`;
