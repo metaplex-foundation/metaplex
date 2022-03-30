@@ -30,7 +30,7 @@ export async function nftStorageUpload(
       log.info(`Media Upload ${media}`);
       // @ts-ignore - the Blob type expects a web ReadableStream, but also works with node Streams.
       const cid = await client.storeBlob({ stream: () => readStream });
-      return `https://${cid}.ipfs.dweb.link`;
+      return `https://${cid}.ipfs.nftstorage.link`;
     } catch (err) {
       log.debug(err);
       throw new Error(`Media upload error: ${err}`);
@@ -42,7 +42,7 @@ export async function nftStorageUpload(
       log.info('Upload metadata');
       const metaData = Buffer.from(JSON.stringify(manifestJson));
       const cid = await client.storeBlob(new Blob([metaData]));
-      const link = `https://${cid}.ipfs.dweb.link`;
+      const link = `https://${cid}.ipfs.nftstorage.link`;
       log.info('Upload end');
       if (animationUrl) {
         log.debug([link, imageUrl, animationUrl]);
