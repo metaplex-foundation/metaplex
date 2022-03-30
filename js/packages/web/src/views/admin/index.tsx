@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Layout, Row, Col, Table, Switch, Spin, Modal, Input, Divider } from 'antd'
+import { Layout, Table, Switch, Spin, Modal, Input } from 'antd'
 import { Button } from '@oyster/common'
 import { useMeta } from '../../contexts'
 import { Store, WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index'
@@ -34,6 +34,17 @@ export const AdminView = () => {
     [wallet.wallet, wallet.connect, setVisible]
   )
   const { storeAddress, setStoreForOwner, isConfigured } = useStore()
+  const { publicKey } = useWallet()
+  const pubKey = publicKey?.toBase58() || ''
+  const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
+
+  const isStoreOwner = useMemo(() => {
+    if (whitelistedCreatorsByCreator[pubKey] !== undefined) {
+      return whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress
+    } else {
+      return false
+    }
+  }, [whitelistedCreatorsByCreator, pubKey])
 
   useEffect(() => {
     if (
@@ -62,26 +73,35 @@ export const AdminView = () => {
         <Spin />
       ) : store && wallet ? (
         <>
-          <InnerAdminView
-            store={store}
-            whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
-            connection={connection}
-            wallet={wallet}
-            connected={wallet.connected}
-          />
-
-          {!isConfigured && (
+          {isStoreOwner ? (
             <>
-              <div className='container flex flex-col gap-[16px] py-[80px]'>
-                <p>
-                  To finish initialization please copy config below into <b>packages/web/.env</b>{' '}
-                  and restart yarn or redeploy
-                </p>
-                <SetupVariables
-                  storeAddress={storeAddress}
-                  storeOwnerAddress={wallet.publicKey?.toBase58()}
-                />
-              </div>
+              <InnerAdminView
+                store={store}
+                whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
+                connection={connection}
+                wallet={wallet}
+                connected={wallet.connected}
+              />
+
+              {!isConfigured && (
+                <>
+                  <div className='container flex flex-col gap-[16px] py-[80px]'>
+                    <p>
+                      To finish initialization please copy config below into{' '}
+                      <b>packages/web/.env</b> and restart yarn or redeploy
+                    </p>
+                    <SetupVariables
+                      storeAddress={storeAddress}
+                      storeOwnerAddress={wallet.publicKey?.toBase58()}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <p>Not a store owner account</p>
+              <Link to={`/`}>Go to initialize</Link>
             </>
           )}
         </>
