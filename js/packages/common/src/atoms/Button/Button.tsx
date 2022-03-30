@@ -37,7 +37,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size,
       view,
       isSquare,
-      isActive,
       isRounded,
       ...restProps
     }: ButtonProps,
@@ -91,7 +90,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           appearance === 'secondary' && view === 'outline' && !disabled,
         'bg-transparent text-slate-900 !border-slate-900':
           appearance === 'neutral' && view === 'outline' && !disabled,
-        'bg-transparent text-slate-900 border border-slate-300 hover:border-slate-900':
+        'bg-white text-slate-900 border border-slate-300 hover:border-slate-900':
           appearance === 'ghost' && view === 'outline' && !disabled,
         'bg-transparent text-white hover:border-white':
           appearance === 'ghost-invert' && view === 'outline' && !disabled,
