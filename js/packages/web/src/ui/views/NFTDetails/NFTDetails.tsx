@@ -1,19 +1,23 @@
 import React, { FC } from 'react'
-import CN from 'classnames'
 import { NFTDetailsTopBar } from '../../sections/NFTDetailsTopBar'
 import { NFTDetailsBody } from '../../sections/NFTDetailsBody'
+import { useParams } from 'react-router-dom'
+import { useAuction } from '../../../hooks'
 
-export interface NFTDetailsProps {
-  [x: string]: any
+export interface NFTDetailsProps {}
+export interface ParamsInterface {
+  id: string
 }
 
-export const NFTDetails: FC<NFTDetailsProps> = ({ className, ...restProps }: NFTDetailsProps) => {
-  const NFTDetailsClasses = CN(`nft-details w-full`, className)
+export const NFTDetails: FC<NFTDetailsProps> = () => {
+  const { id } = useParams<{ id: string }>()
+  const auction = useAuction(id)
+  // console.log('auction', auction)
 
   return (
-    <div className={NFTDetailsClasses} {...restProps}>
+    <div className='nft-details w-full'>
       <NFTDetailsTopBar className='pt-[20px] pb-[40px]' />
-      <NFTDetailsBody className='pb-[100px]' />
+      {auction && <NFTDetailsBody auction={auction} className='pb-[100px]' />}
     </div>
   )
 }

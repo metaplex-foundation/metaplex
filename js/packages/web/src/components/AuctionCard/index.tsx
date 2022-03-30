@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, InputNumber, Spin } from 'antd'
+import { InputNumber, Spin } from 'antd'
+import { Button } from '@oyster/common'
 import { Link, useHistory } from 'react-router-dom'
 
 import {
@@ -310,7 +311,7 @@ export const AuctionCard = ({
   }, [wallet.connected])
 
   const endInstantSale = async () => {
-    debugger
+    // debugger
     setLoading(true)
 
     try {
@@ -347,11 +348,14 @@ export const AuctionCard = ({
     return instantSale()
   }
 
+  // console.log('winningConfigType', auctionView.items)
+
   const instantSale = async () => {
-    debugger
+    // debugger
     setLoading(true)
     const winningConfigType =
       auctionView.participationItem?.winningConfigType || auctionView.items[0][0].winningConfigType
+
     const isAuctionItemMaster = [
       WinningConfigType.FullRightsTransfer,
       WinningConfigType.TokenOnlyTransfer,
@@ -733,8 +737,8 @@ export const AuctionCard = ({
             !isAlreadyBought && (
               <Button
                 type='dashed'
-                size='small'
-                className='ant-btn secondary-btn'
+                size='lg'
+                className='w-[230px]'
                 disabled={loading}
                 onClick={instantSaleAction}
                 style={{ marginTop: 20, width: '100%' }}>
