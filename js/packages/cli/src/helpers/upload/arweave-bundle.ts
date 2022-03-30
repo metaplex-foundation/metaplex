@@ -218,7 +218,8 @@ async function getFilePairSize({
       return acc;
     } else {
       const { size } = await stat(file);
-      return acc + size;
+      //Adds the 2kb buffer for the txn header and the 10kb min file upload size for bundlr
+      return acc + 2000 + Math.max(10000, size);
     }
   }, Promise.resolve(dummyAreaveManifestByteSize));
 }
@@ -560,7 +561,7 @@ export async function* makeArweaveBundleUploadGenerator(
   while (filePairs.length) {
     const { count, size } = await getBundleRange(
       filePairs,
-      storage === StorageType.ArweaveSol ? true : false,
+      storage === StorageType.ArweaveSol,
     );
 
     log.info(
