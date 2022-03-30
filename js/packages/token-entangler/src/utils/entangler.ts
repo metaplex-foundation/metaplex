@@ -565,7 +565,7 @@ export const swapEntanglement = async (
       transferAuthority.publicKey,
       anchorWallet.publicKey,
       [],
-      tokenMint.info.supply,
+      tokenMintInfo.info.supply,
     ),
     ...(!isNative
       ? [
