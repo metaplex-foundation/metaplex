@@ -6,32 +6,42 @@ echo "| WARNING: This will burn all spl-tokens from the wallet. |"
 echo "+---------------------------------------------------------+"
 echo ""
 echo "Wallet config:"
-echo " +- $(solana config get keypair)"
-echo " +- $(solana config get json_rpc_url)"
+echo "  -> $(solana config get keypair)"
+echo "  -> $(solana config get json_rpc_url)"
 echo ""
 echo -n "Continue? [Y/n] (default 'n'): "
-read RESET
+read BURN
 
-if [ -z "$RESET" ]; then
-    RESET="n"
+if [ -z "$BURN" ]; then
+    BURN="n"
 fi
 
-if [ "$RESET" = "Y" ]; then
+if [ "$BURN" = "Y" ]; then
+    ACCOUNTS=`spl-token accounts -v`
+    TOTAL=`echo "$ACCOUNTS" | tail -n +3 | wc -l | tr -d ' '`
     echo ""
-    echo "[$(date "+%T")] Burning tokens from wallet: $(solana address)"
+    echo "[$(date "+%T")] Wallet: $(solana address)"
+    echo "[$(date "+%T")] Burning/Closing $TOTAL token account(s)"
 
     # ignores the header lines (3 lines)
-    spl-token accounts -v | tail -n +3 | while read line ; do
+    echo "$ACCOUNTS" | tail -n +3 | while read line ; do
         TOKEN=`echo $line | cut -d ' ' -f 1`
         ACCOUNT=`echo $line | cut -d ' ' -f 2`
         BALANCE=`echo $line | cut -d ' ' -f 3`
 
+        # burn tokens
         if [[ $BALANCE -gt 0 ]]; then
-            echo -n "[$(date "+%T")] Closing account $ACCOUNT..."
+            echo "[$(date "+%T")] Burning token $TOKEN"
             spl-token burn $ACCOUNT $BALANCE > /dev/null
-            spl-token close $TOKEN > /dev/null
-            echo "done"
         fi
+        # closes the account
+        echo "[$(date "+%T")] Closing account $ACCOUNT"
+        spl-token close $TOKEN > /dev/null
+        EXIT_CODE=$?
+        if [[ $EXIT_CODE -eq 0 ]]; then
+            TOTAL=$(($TOTAL - 1))
+        fi
+        echo "[$(date "+%T")] $TOTAL accounts remaining"
 
     done
 

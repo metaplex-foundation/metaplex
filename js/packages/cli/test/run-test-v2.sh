@@ -31,20 +31,20 @@
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(cd -- $(dirname -- "${BASH_SOURCE[0]}") &>/dev/null && pwd)
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
-ASSETS_DIR=$SCRIPT_DIR/assets
-CACHE_DIR=$SCRIPT_DIR/.cache
+ASSETS_DIR=$CURRENT_DIR/assets
+CACHE_DIR=$CURRENT_DIR/.cache
 SRC_DIR=$PARENT_DIR/src
 CMD_CMV2="ts-node ${SRC_DIR}/candy-machine-v2-cli.ts"
 
 # Remote files to test the upload
 PNG_MIN="https://arweave.net/N3LqmO6yURUK1JxV9MJtH8YeqppEtZhKuy3RB0Tqm3A/?ext=png"
-PNG="https://arweave.net/izpWaFnueKtbRg4TY-CkUYQtwSzPNit3ZvQPY5hOK7E/?ext=png"
-GIF="https://arweave.net/3I50hy1dHhRwyxtKPL60WIl4kV0rqjnl7t_DcZPAp2o/?ext=gif"
-JPG="https://arweave.net/-KqqzJLtD8Pug-aCjbV6RWbGhfB74MBT71afqGFKYHA/?ext=jpg"
+PNG="https://arweave.net/yFoNLhe6cBK-wj0n_Wu-XuX7DC75VbMsNKwVbRSz4iQ?ext=png"
+GIF="https://arweave.net/-cksjCg70nWw-NE8F-DDR4FGQNfQQrWONWm5TIGt6e8?ext=gif"
+JPG="https://arweave.net/X5Czkw4R6EAq5kKW0VgX0oVjLlhn3MV2L0LId0PgZPQ?ext=jpg"
 MP4="https://arweave.net/kM6fxv3Qj_Gcn8tcq9dU8wpZAXHNEWvEfVoIpRJzg8c/?ext=mp4"
 
 # Metadata URL for large (max) collection tests
-METADATA_URL="https://arweave.net/kM6fxv3Qj_Gcn8tcq9dU8wpZAXHNEWvEfVoIpRJzg8c"
+METADATA_URL="https://arweave.net/K7UcRZBeLgd9rTSAcP243Pqvx9BUSVcniJ0d0EB8dBI"
 
 # output colours
 RED() { echo $'\e[1;31m'$1$'\e[0m'; }
@@ -54,7 +54,7 @@ MAG() { echo $'\e[1;35m'$1$'\e[0m'; }
 CYN() { echo $'\e[1;36m'$1$'\e[0m'; }
 
 # default test templates
-function default_settings {
+function default_settings() {
     MANUAL_CACHE="n"
     ITEMS=10
     MULTIPLE=0
@@ -71,11 +71,8 @@ function default_settings {
     AWS_BUCKET="null"
 }
 
-# default test templates
-function max_settings {
+function max_settings() {
     MANUAL_CACHE="Y"
-    ITEMS=40000
-    MULTIPLE=39999
 
     RESET="Y"
     EXT="png"
@@ -89,13 +86,13 @@ function max_settings {
     AWS_BUCKET="null"
 }
 
-function mainnet_env {
+function mainnet_env() {
     ENV_URL="mainnet-beta"
     RPC="https://ssc-dao.genesysgo.net/"
     STORAGE="arweave-sol"
 }
 
-function devnet_env {
+function devnet_env() {
     ENV_URL="devnet"
     RPC="https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/"
     STORAGE="arweave"
@@ -112,10 +109,10 @@ CYN "--------------------------------------"
 echo ""
 CYN "Test template:"
 echo "1. interactive"
-echo "2. devnet standard (default)"
-echo "3. mainnet-beta standard"
-echo "4. devnet (40k)"
-echo -n "$(CYN "Select test template [1-4]") (default 'devnet standard'): "
+echo "2. devnet (default)"
+echo "3. mainnet-beta"
+echo "4. devnet [manual cache]"
+echo -n "$(CYN "Select test template [1-4]") (default 'devnet'): "
 read Template
 case "$Template" in
     1)
@@ -362,7 +359,7 @@ echo ""
 function clean_up {
     rm $CONFIG_FILE 2>/dev/null
     rm -rf $ASSETS_DIR 2>/dev/null
-    rm -rf .cache 2>/dev/null
+    rm -rf $CACHE_DIR 2>/dev/null
 }
 
 if [ "${RESET}" = "Y" ]; then
@@ -374,7 +371,7 @@ fi
 
 WALLET_KEY="$(solana config get keypair | cut -d : -f 2)"
 CACHE_NAME="test"
-CACHE_FILE="${CURRENT_DIR}/.cache/${ENV_URL}-${CACHE_NAME}.json"
+CACHE_FILE="$CACHE_DIR/${ENV_URL}-${CACHE_NAME}.json"
 LAST_INDEX=$((ITEMS - 1))
 
 TIMESTAMP=`date "+%d/%m/%y %T"`
@@ -525,10 +522,11 @@ function upload {
 #-----------------------------------------------------------------------------#
 
 if [ "${CHANGE}" = "Y" ] && [ "$(command -v jq)" = "" ]; then
-    RED "[$(date "+%T")] Required 'jq' command could not be found, skipping reupload"
+    echo "[$(date "+%T")] $(RED "Required 'jq' command could not be found, skipping reupload")"
     CHANGE="n"
 fi
 
+echo "[$(date "+%T")] Deploying Candy Machine with $ITEMS"
 echo "[$(date "+%T")] Environment: ${ENV_URL}"
 echo "[$(date "+%T")] RPC URL: ${RPC}"
 echo "[$(date "+%T")] Testing started using ${STORAGE} storage"
