@@ -16,7 +16,7 @@ export const NFTDetails: FC<NFTDetailsProps> = () => {
 
   return (
     <div className='nft-details w-full'>
-      <NFTDetailsTopBar className='pt-[20px] pb-[40px]' />
+      <NFTDetailsTopBar id={id} className='pt-[20px] pb-[40px]' />
       {auction && <NFTDetailsBody auction={auction} className='pb-[100px]' />}
     </div>
   )

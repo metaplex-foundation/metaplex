@@ -1,18 +1,17 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
+import { AuctionView } from '../../../hooks'
 
 export interface NFTDetailsInfoProps {
-  [x: string]: any
+  auction: AuctionView
 }
 
-export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({
-  className,
-  ...restProps
-}: NFTDetailsInfoProps) => {
-  const NFTDetailsInfoClasses = CN(`nft-details-info w-full`, className)
+export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ auction }) => {
+  const NFTDetailsInfoClasses = CN(`nft-details-info w-full`)
+  // console.log('auction', auction)
 
   return (
-    <div className={NFTDetailsInfoClasses} {...restProps}>
+    <div className={NFTDetailsInfoClasses}>
       <div className='grid w-full grid-cols-1 gap-[4px]'>
         <div className='grid w-full grid-cols-2 items-center rounded-[8px] border border-slate-200 bg-white p-[8px] text-md text-slate-800 shadow-card'>
           <label className='font-500'>Mint address</label>

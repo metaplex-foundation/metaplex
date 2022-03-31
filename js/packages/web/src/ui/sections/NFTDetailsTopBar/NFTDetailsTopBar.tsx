@@ -1,19 +1,38 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
-import { Dropdown, DropDownBody, DropDownToggle, DropDownMenuItem, Button } from '@oyster/common'
+import {
+  Dropdown,
+  DropDownBody,
+  DropDownToggle,
+  DropDownMenuItem,
+  Button,
+  pubkeyToString,
+} from '@oyster/common'
+import { useCollections } from '../../../hooks/useCollections'
+import { useAuction, useExtendedArt } from '../../../hooks'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+import { LiveAuctionViewState } from '../../views'
 
 export interface NFTDetailsTopBarProps {
-  [x: string]: any
+  id: string
+  className: string
 }
 
-export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({
-  className,
-  ...restProps
-}: NFTDetailsTopBarProps) => {
+export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className }) => {
   const NFTDetailsTopBarClasses = CN(`nft-details-top-bar w-full`, className)
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+
+  const { liveCollections } = useCollections()
+  const auction = useAuction(id)
+  const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
+
+  const datax = auctions.filter(
+    auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(data?.collection)
+  )
+  console.log('datax', datax)
 
   return (
-    <div className={NFTDetailsTopBarClasses} {...restProps}>
+    <div className={NFTDetailsTopBarClasses}>
       <div className='container flex justify-between'>
         <div className='flex'>
           <Button

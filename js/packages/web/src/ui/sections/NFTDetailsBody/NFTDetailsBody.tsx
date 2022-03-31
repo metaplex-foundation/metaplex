@@ -121,7 +121,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
               </div> */}
             </div>
 
-            <NFTDetailsTabs />
+            <NFTDetailsTabs auction={auction} />
           </div>
         </div>
       </div>
