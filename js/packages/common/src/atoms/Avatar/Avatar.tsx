@@ -1,26 +1,27 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 import { Image } from '..'
+import { Identicon } from '../../components'
 
 export interface AvatarProps {
-  [x: string]: any
   image?: string
   onClick?: any
   label?: string
   labelClassName?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | number
+  address?: string
 }
 
 export const Avatar: FC<AvatarProps> = ({
-  className,
   image,
   onClick,
   size,
   label,
   labelClassName,
+  address,
   ...restProps
 }: AvatarProps) => {
-  const AvatarClasses = CN(`avatar flex items-center gap-[8px] font-500`, className, {
+  const AvatarClasses = CN(`avatar flex items-center gap-[8px] font-500`, {
     'text-lg': size === 'lg',
     'text-md': size === 'md',
     'text-sm': size === 'sm',
@@ -39,7 +40,11 @@ export const Avatar: FC<AvatarProps> = ({
           width: typeof size === 'number' ? `${size}px` : '',
           height: typeof size === 'number' ? `${size}px` : '',
         }}>
-        <Image src={image} />
+        {!image ? (
+          <Identicon alt={'ima'} address={address} style={{ width: size }} />
+        ) : (
+          <Image src={image} />
+        )}
       </span>
 
       {label && <span className={labelClassName}>{label}</span>}

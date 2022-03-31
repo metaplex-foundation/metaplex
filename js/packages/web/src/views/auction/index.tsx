@@ -109,6 +109,9 @@ export const AuctionView = () => {
   const { id } = useParams<{ id: string }>()
   const { endpoint } = useConnectionConfig()
   const auction = useAuction(id)
+
+  console.log('auction2', auction)
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const art = useArt(auction?.thumbnail.metadata.pubkey)
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)

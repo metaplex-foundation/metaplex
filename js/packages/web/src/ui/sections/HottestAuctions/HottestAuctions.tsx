@@ -27,7 +27,7 @@ export const HottestAuctions: FC<HottestAuctionsProps> = ({
     return {
       id: 0,
       Component: () => (
-        <Link key={index} to={`/auction/${auction.auction.pubkey}`}>
+        <Link key={index} to={`/nft/${auction.auction.pubkey}`}>
           <AuctionsCard auction={auction} />
         </Link>
       ),
