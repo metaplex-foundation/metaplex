@@ -87,6 +87,7 @@ export const Header: FC<HeaderProps> = () => {
 
           {connected && (
             <div className='flex items-center gap-[12px]'>
+              <CurrentUserBadge showBalance={false} showAddress={true} iconSize={32} />
               <Notifications />
 
               <Dropdown>
@@ -175,8 +176,6 @@ export const Header: FC<HeaderProps> = () => {
                   )
                 }}
               </Dropdown>
-
-              <CurrentUserBadge showBalance={false} showAddress={true} iconSize={32} />
             </div>
           )}
 
