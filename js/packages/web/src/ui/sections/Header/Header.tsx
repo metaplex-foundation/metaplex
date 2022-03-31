@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Popover, Select } from 'antd'
 import {
@@ -9,6 +9,7 @@ import {
   contexts,
   useQuerySearch,
   useMeta,
+  useStore,
 } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { CurrentUserBadge } from '../../../components/CurrentUserBadge'
@@ -32,18 +33,36 @@ export const Header: FC<HeaderProps> = () => {
   const pathname = usePathname()
   const { endpoint } = useConnectionConfig()
   const routerSearchParams = useQuerySearch()
+  const [ isStoreOwner, setIsStoreOwner ] = useState<boolean>()
+  const [ visible, setVisible ] = useState<boolean>(false)
+  const { storeAddress } = useStore()
   const { publicKey } = useWallet()
-  const { whitelistedCreatorsByCreator } = useMeta()
+  const { store, whitelistedCreatorsByCreator } = useMeta()
   const pubKey = publicKey?.toBase58() || ''
   const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
 
-  const isStoreOwner = useMemo(() => {
-    if (whitelistedCreatorsByCreator[pubKey] !== undefined) {
-      return whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress
-    } else {
-      return false
+  const handleVisible = () => {
+    setVisible(!visible)
+  }
+
+  const hidePopover = () => {
+    setVisible(false)
+  }
+
+  useEffect(() => {
+    if (
+      whitelistedCreatorsByCreator[pubKey] &&
+      whitelistedCreatorsByCreator[pubKey].info &&
+      whitelistedCreatorsByCreator[pubKey].info.address
+    ) {
+      console.log("Inside header condition", whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress)
+      if (whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress) {
+        setIsStoreOwner(true)
+      } else {
+        setIsStoreOwner(false)
+      }
     }
-  }, [whitelistedCreatorsByCreator, pubKey])
+  }, [store, storeAddress, publicKey])
 
   return (
     <div
@@ -86,6 +105,9 @@ export const Header: FC<HeaderProps> = () => {
               <div className='wallet-wrapper'>
                 <Popover
                   trigger='click'
+                  placement="bottomRight"
+                  visible={visible}
+                  onVisibleChange={handleVisible}
                   content={
                     <>
                       <div style={{ width: 250 }}>
@@ -115,14 +137,14 @@ export const Header: FC<HeaderProps> = () => {
                             marginBottom: 10,
                           }}>
                           {ENDPOINTS.map(({ name }) => (
-                            <Select.Option value={name} key={endpoint.name}>
+                            <Select.Option value={name} key={name}>
                               {name}
                             </Select.Option>
                           ))}
                         </Select>
                       </div>
                       {isStoreOwner ? (
-                        <div style={{ display: 'grid', marginTop: '10px' }}>
+                        <div style={{ display: 'grid', marginTop: '10px' }} onClick={hidePopover}>
                           <Link to={'/admin'} style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                             <h5
                               style={{
