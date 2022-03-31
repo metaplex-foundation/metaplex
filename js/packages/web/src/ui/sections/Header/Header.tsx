@@ -1,6 +1,5 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Popover, Select } from 'antd'
 import {
   SearchField,
   ConnectButton,
@@ -9,6 +8,7 @@ import {
   contexts,
   useQuerySearch,
   useMeta,
+  useStore,
   Dropdown,
   DropDownBody,
   DropDownToggle,
@@ -19,7 +19,6 @@ import { CurrentUserBadge } from '../../../components/CurrentUserBadge'
 import useSearch from '../../../hooks/useSearch'
 import { useLocation } from 'react-router-dom'
 import CN from 'classnames'
-import { SettingOutlined } from '@ant-design/icons'
 import { Notifications } from '../../../components/Notifications'
 
 interface HeaderProps {}
@@ -36,18 +35,27 @@ export const Header: FC<HeaderProps> = () => {
   const pathname = usePathname()
   const { endpoint } = useConnectionConfig()
   const routerSearchParams = useQuerySearch()
+  const [ isStoreOwner, setIsStoreOwner ] = useState<boolean>()
+  const { storeAddress } = useStore()
   const { publicKey } = useWallet()
-  const { whitelistedCreatorsByCreator } = useMeta()
+  const { store, whitelistedCreatorsByCreator } = useMeta()
   const pubKey = publicKey?.toBase58() || ''
   const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
 
-  const isStoreOwner = useMemo(() => {
-    if (whitelistedCreatorsByCreator[pubKey] !== undefined) {
-      return whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress
-    } else {
-      return false
+  useEffect(() => {
+    if (
+      whitelistedCreatorsByCreator[pubKey] &&
+      whitelistedCreatorsByCreator[pubKey].info &&
+      whitelistedCreatorsByCreator[pubKey].info.address
+    ) {
+      console.log("Inside header condition", whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress)
+      if (whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress) {
+        setIsStoreOwner(true)
+      } else {
+        setIsStoreOwner(false)
+      }
     }
-  }, [whitelistedCreatorsByCreator, pubKey])
+  }, [store, storeAddress, publicKey])
 
   return (
     <div
@@ -79,6 +87,7 @@ export const Header: FC<HeaderProps> = () => {
 
           {connected && (
             <div className='flex items-center gap-[12px]'>
+              <CurrentUserBadge showBalance={false} showAddress={true} iconSize={32} />
               <Notifications />
 
               <Dropdown>
@@ -131,7 +140,7 @@ export const Header: FC<HeaderProps> = () => {
                                           <DropDownBody align='center' className='w-[200px]'>
                                             {ENDPOINTS.map(({ name }) => (
                                               <DropDownMenuItem
-                                                key={endpoint.name}
+                                                key={name}
                                                 onClick={() => onSelectOption(name)}>
                                                 {name}
                                               </DropDownMenuItem>
@@ -147,15 +156,15 @@ export const Header: FC<HeaderProps> = () => {
                           </div>
 
                           {isStoreOwner && (
-                            <div className='flex w-full flex-col gap-[8px]'>
-                              <label className='text-h6'>Network</label>
-
+                            <div className='flex w-full flex-col gap-[8px] mt-3'>
                               <Link to={'/admin'}>
                                 <Button
                                   appearance='ghost'
                                   view='outline'
                                   className='w-full'
-                                  isRounded={false}>
+                                  isRounded={false}
+                                  onClick={() => setIsOpen(false)}
+                                >
                                   Admin
                                 </Button>
                               </Link>
@@ -167,8 +176,6 @@ export const Header: FC<HeaderProps> = () => {
                   )
                 }}
               </Dropdown>
-
-              <CurrentUserBadge showBalance={false} showAddress={true} iconSize={32} />
             </div>
           )}
 

@@ -34,17 +34,10 @@ export const AdminView = () => {
     [wallet.wallet, wallet.connect, setVisible]
   )
   const { storeAddress, setStoreForOwner, isConfigured } = useStore()
+  const [isStoreOwner, setIsStoreOwner] = useState<boolean>()
   const { publicKey } = useWallet()
   const pubKey = publicKey?.toBase58() || ''
   const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
-
-  const isStoreOwner = useMemo(() => {
-    if (whitelistedCreatorsByCreator[pubKey] !== undefined) {
-      return whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress
-    } else {
-      return false
-    }
-  }, [whitelistedCreatorsByCreator, pubKey])
 
   useEffect(() => {
     if (
@@ -54,6 +47,18 @@ export const AdminView = () => {
       !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
     ) {
       setStoreForOwner(wallet.publicKey.toBase58())
+    }
+
+    if (
+      whitelistedCreatorsByCreator[pubKey] &&
+      whitelistedCreatorsByCreator[pubKey].info &&
+      whitelistedCreatorsByCreator[pubKey].info.address
+    ) {
+      if (whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress) {
+        setIsStoreOwner(true)
+      } else {
+        setIsStoreOwner(false)
+      }
     }
   }, [store, storeAddress, wallet.publicKey])
   console.log('@admin', wallet.connected, storeAddress, isLoading, store)
@@ -99,10 +104,14 @@ export const AdminView = () => {
               )}
             </>
           ) : (
-            <>
-              <p>Not a store owner account</p>
-              <Link to={`/`}>Go to initialize</Link>
-            </>
+            <div className='container py-[80px]'>
+              <p className='flex items-center gap-[16px]'>
+                <Button isRounded={false} appearance='neutral' onClick={connect}>
+                  Connect
+                </Button>
+                <span>to admin store.</span>
+              </p>
+            </div>
           )}
         </>
       ) : (
