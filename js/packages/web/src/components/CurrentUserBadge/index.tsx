@@ -4,7 +4,14 @@ import { Link } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
 import { Popover, Select } from 'antd'
-import { Button, UserChip } from '@oyster/common'
+import {
+  Button,
+  UserChip,
+  Dropdown,
+  DropDownBody,
+  DropDownToggle,
+  DropDownMenuItem,
+} from '@oyster/common'
 import SolanaIcon from '../../components-v2/icons/Solana'
 import {
   ENDPOINTS,
@@ -240,49 +247,81 @@ export const CurrentUserBadge = (props: {
         <span>{formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL</span>
       )}
 
-      <Popover
-        trigger='click'
-        placement='bottomRight'
-        content={
-          <Settings
-            additionalSettings={
-              <div className='w-[250px]'>
-                <div className='flex flex-col pt-[16px]'>
-                  <label className='text-sm font-500 uppercase'>Balance</label>
+      <Dropdown>
+        {({ isOpen, setIsOpen, innerValue, setInnerValue }: any) => {
+          const onSelectOption = (value: string) => {
+            setInnerValue(value)
+            setIsOpen(false)
+          }
 
-                  <div className='flex items-center gap-[8px] pt-[8px]'>
-                    <SolanaIcon width={16} height={16} />
-                    <span className='text-base font-500 text-white'>
-                      {formatNumber.format(balance)} SOL
-                    </span>
-                    <span className='text-md text-gray-400'>{formatUSD.format(balanceInUSD)}</span>
-                  </div>
-                </div>
+          const options = [
+            { label: 'Product: A to Z', value: 'Product: A to Z' },
+            { label: 'Product: Z to A', value: 'Product: Z to A' },
+            { label: 'Brand: A to Z', value: 'Brand: A to Z' },
+            { label: 'Brand: Z to A', value: 'Brand: Z to A' },
+            { label: 'Price: Low to High', value: 'Price: Low to High' },
+            { label: 'Price: High to Low', value: 'Price: High to Low' },
+          ]
 
-                <div className='flex items-center gap-[8px] py-[16px]'>
-                  <Button onClick={() => setShowAddFundsModal(true)} className='w-full'>
-                    Add Funds
-                  </Button>
+          return (
+            <>
+              <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
+                <UserChip
+                  avatar={image}
+                  iconAfter={<i className='ri-arrow-down-s-line text-[20px]' />}
+                  onClick={() => {}}>
+                  {name}
+                </UserChip>
+              </DropDownToggle>
 
-                  <Button onClick={disconnect} className='w-full' appearance='secondary'>
-                    Disconnect
-                  </Button>
-                </div>
+              {isOpen && (
+                <DropDownBody align='center' className='w-[300px] !p-[28px]'>
+                  <Settings
+                    additionalSettings={
+                      <div className='w-full'>
+                        <div className='flex flex-col pt-[16px]'>
+                          <label className='text-h6 font-500'>Balance</label>
 
-                <UserActions />
-              </div>
-            }
-          />
-        }>
-        <button>
-          <UserChip
-            avatar={image}
-            iconAfter={<i className='ri-arrow-down-s-line text-[20px]' />}
-            onClick={() => {}}>
-            {name}
-          </UserChip>
-        </button>
-      </Popover>
+                          <div className='flex items-center gap-[8px] pt-[8px]'>
+                            <SolanaIcon width={16} height={16} />
+                            <span className='text-lg font-500'>
+                              {formatNumber.format(balance)} SOL
+                            </span>
+                            <span className='text-md text-slate-600'>
+                              {formatUSD.format(balanceInUSD)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className='flex items-center gap-[8px] py-[16px]'>
+                          <Button
+                            onClick={() => setShowAddFundsModal(true)}
+                            className='w-full'
+                            appearance='neutral'
+                            isRounded={false}>
+                            Add Funds
+                          </Button>
+
+                          <Button
+                            onClick={disconnect}
+                            className='w-full'
+                            appearance='ghost'
+                            view='outline'
+                            isRounded={false}>
+                            Disconnect
+                          </Button>
+                        </div>
+
+                        <UserActions />
+                      </div>
+                    }
+                  />
+                </DropDownBody>
+              )}
+            </>
+          )
+        }}
+      </Dropdown>
 
       <AddFundsModal
         setShowAddFundsModal={setShowAddFundsModal}

@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Popover, Select } from 'antd'
 import {
   SearchField,
   ConnectButton,
@@ -10,13 +9,16 @@ import {
   useQuerySearch,
   useMeta,
   useStore,
+  Dropdown,
+  DropDownBody,
+  DropDownToggle,
+  DropDownMenuItem,
 } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { CurrentUserBadge } from '../../../components/CurrentUserBadge'
 import useSearch from '../../../hooks/useSearch'
 import { useLocation } from 'react-router-dom'
 import CN from 'classnames'
-import { SettingOutlined } from '@ant-design/icons'
 import { Notifications } from '../../../components/Notifications'
 
 interface HeaderProps {}
@@ -34,20 +36,11 @@ export const Header: FC<HeaderProps> = () => {
   const { endpoint } = useConnectionConfig()
   const routerSearchParams = useQuerySearch()
   const [ isStoreOwner, setIsStoreOwner ] = useState<boolean>()
-  const [ visible, setVisible ] = useState<boolean>(false)
   const { storeAddress } = useStore()
   const { publicKey } = useWallet()
   const { store, whitelistedCreatorsByCreator } = useMeta()
   const pubKey = publicKey?.toBase58() || ''
   const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
-
-  const handleVisible = () => {
-    setVisible(!visible)
-  }
-
-  const hidePopover = () => {
-    setVisible(false)
-  }
 
   useEffect(() => {
     if (
@@ -72,18 +65,14 @@ export const Header: FC<HeaderProps> = () => {
       })}>
       <span className="absolute top-0 left-0 right-0 z-[-1] h-[692px] w-full bg-[url('/img/hero-bg-pattern.png')] bg-top" />
 
-      <div className='container relative flex items-center justify-between'>
+      <div className='container relative flex items-center justify-between gap-[24px]'>
         <div className='header__left relative z-10 flex w-full items-center gap-[24px]'>
           <Link to='/'>
             <Logo className='cursor-pointer' />
           </Link>
 
-          <form name='search' onSubmit={onSubmitSearch}>
-            <SearchField
-              value={searchText}
-              onChange={onChangeSearchText}
-              className='min-w-[368px]'
-            />
+          <form name='search' onSubmit={onSubmitSearch} className='w-full max-w-[368px]'>
+            <SearchField value={searchText} onChange={onChangeSearchText} className='w-full' />
           </form>
         </div>
 
@@ -96,73 +85,102 @@ export const Header: FC<HeaderProps> = () => {
           <Button appearance='link'>Resources</Button>
           <Button appearance='link'>Donate</Button>
 
-          {!connected && <ConnectButton allowWalletChange />}
-
           {connected && (
-            <div className='flex items-center gap-[6px]'>
-              <CurrentUserBadge showBalance={false} showAddress={true} iconSize={32} />
+            <div className='flex items-center gap-[12px]'>
               <Notifications />
-              <div className='wallet-wrapper'>
-                <Popover
-                  trigger='click'
-                  placement="bottomRight"
-                  visible={visible}
-                  onVisibleChange={handleVisible}
-                  content={
+
+              <Dropdown>
+                {({ isOpen, setIsOpen }: any) => {
+                  return (
                     <>
-                      <div style={{ width: 250 }}>
-                        <h5
-                          style={{
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            letterSpacing: '0.02em',
-                          }}>
-                          NETWORK
-                        </h5>
-                        <Select
-                          onSelect={network => {
-                            const windowHash = window.location.hash
-                            routerSearchParams.set('network', network)
-                            const nextLocationHash = `${
-                              windowHash.split('?')[0]
-                            }?${routerSearchParams.toString()}`
-                            window.location.hash = nextLocationHash
-                            window.location.reload()
-                          }}
-                          value={endpoint.name}
-                          bordered={false}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            borderRadius: 8,
-                            width: '100%',
-                            marginBottom: 10,
-                          }}>
-                          {ENDPOINTS.map(({ name }) => (
-                            <Select.Option value={name} key={name}>
-                              {name}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </div>
-                      {isStoreOwner ? (
-                        <div style={{ display: 'grid', marginTop: '10px' }} onClick={hidePopover}>
-                          <Link to={'/admin'} style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            <h5
-                              style={{
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                letterSpacing: '0.02em',
-                              }}>
-                              Admin
-                            </h5>
-                          </Link>
-                        </div>
-                      ) : null}
+                      <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
+                        <Button
+                          appearance='link'
+                          icon={<i className='ri-settings-4-line text-[24px] font-400' />}
+                        />
+                      </DropDownToggle>
+
+                      {isOpen && (
+                        <DropDownBody isOpen align='right' className='w-[260px]'>
+                          <div className='flex w-full flex-col gap-[8px]'>
+                            <label className='text-h6'>Network</label>
+
+                            <div className='flex w-full flex-col'>
+                              <div className='flex w-full'>
+                                <Dropdown className='w-full'>
+                                  {({ isOpen, setIsOpen }: any) => {
+                                    const onSelectOption = (network: string) => {
+                                      setIsOpen(false)
+                                      const windowHash = window.location.hash
+                                      routerSearchParams.set('network', network)
+                                      const nextLocationHash = `${
+                                        windowHash.split('?')[0]
+                                      }?${routerSearchParams.toString()}`
+                                      window.location.hash = nextLocationHash
+                                      window.location.reload()
+                                    }
+
+                                    return (
+                                      <>
+                                        <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
+                                          <Button
+                                            appearance='ghost'
+                                            view='outline'
+                                            className='w-full'
+                                            isRounded={false}
+                                            iconAfter={
+                                              <i className='ri-arrow-down-s-line font-400' />
+                                            }>
+                                            {endpoint.name}
+                                          </Button>
+                                        </DropDownToggle>
+
+                                        {isOpen && (
+                                          <DropDownBody align='center' className='w-[200px]'>
+                                            {ENDPOINTS.map(({ name }) => (
+                                              <DropDownMenuItem
+                                                key={name}
+                                                onClick={() => onSelectOption(name)}>
+                                                {name}
+                                              </DropDownMenuItem>
+                                            ))}
+                                          </DropDownBody>
+                                        )}
+                                      </>
+                                    )
+                                  }}
+                                </Dropdown>
+                              </div>
+                            </div>
+                          </div>
+
+                          {isStoreOwner && (
+                            <div className='flex w-full flex-col gap-[8px] mt-3'>
+                              <Link to={'/admin'}>
+                                <Button
+                                  appearance='ghost'
+                                  view='outline'
+                                  className='w-full'
+                                  isRounded={false}
+                                  onClick={() => setIsOpen(false)}
+                                >
+                                  Admin
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
+                        </DropDownBody>
+                      )}
                     </>
-                  }>
-                  <SettingOutlined style={{ fontSize: 18 }} />
-                </Popover>
-              </div>
+                  )
+                }}
+              </Dropdown>
+
+              <CurrentUserBadge showBalance={false} showAddress={true} iconSize={32} />
             </div>
           )}
+
+          {!connected && <ConnectButton allowWalletChange />}
         </div>
       </div>
     </div>

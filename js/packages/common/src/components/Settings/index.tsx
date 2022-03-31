@@ -10,7 +10,7 @@ export const Settings = ({ additionalSettings }: { additionalSettings?: JSX.Elem
 
   return (
     <>
-      <div className='flex flex-col items-center justify-center w-full gap-[8px] p-[16px] border-b border-gray-700'>
+      <div className='flex flex-col items-center justify-center w-full gap-[8px] p-[16px] border-b border-slate-200'>
         <Identicon
           address={publicKey?.toBase58()}
           style={{
@@ -22,7 +22,7 @@ export const Settings = ({ additionalSettings }: { additionalSettings?: JSX.Elem
           <>
             <Tooltip title='Address copied'>
               <div
-                className='flex items-center gap-[4px] text-white font-500'
+                className='flex items-center gap-[4px] font-500'
                 onClick={() => navigator.clipboard.writeText(publicKey?.toBase58() || '')}
               >
                 <CopyOutlined />

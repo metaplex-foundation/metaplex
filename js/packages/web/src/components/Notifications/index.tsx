@@ -16,10 +16,12 @@ import {
   VaultState,
   WalletSigner,
   WRAPPED_SOL_MINT,
+  Button,
+  Tag,
 } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Connection } from '@solana/web3.js'
-import { Badge, Popover, List } from 'antd'
+import { Popover, List } from 'antd'
 import { Link } from 'react-router-dom'
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow'
 import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes'
@@ -522,18 +524,21 @@ export function Notifications() {
 
   const justContent = (
     <Popover placement='bottomLeft' content={content} trigger='click'>
-      <BellOutlined style={{ cursor: 'pointer', fontSize: 18 }} />
-      {!!notifications.length && (
-        <div className='mobile-notification'>{notifications.length - 1}</div>
-      )}
+      <Button
+        appearance='link'
+        className='relative'
+        iconAfter={
+          !!notifications.length && (
+            <Tag appearance='danger' className='absolute right-[-8px] top-[-4px]'>
+              {notifications.length - 1}
+            </Tag>
+          )
+        }>
+        <i className='ri-notification-4-line text-[24px] font-400' />
+      </Button>
     </Popover>
   )
 
   if (notifications.length === 0) return justContent
-  else
-    return (
-      <Badge count={notifications.length - 1} style={{ backgroundColor: 'black', color: 'black' }}>
-        {justContent}
-      </Badge>
-    )
+  else return justContent
 }
