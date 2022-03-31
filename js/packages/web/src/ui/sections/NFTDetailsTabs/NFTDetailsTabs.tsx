@@ -2,20 +2,18 @@ import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { Button } from '@oyster/common'
 import { NFTDetailsCurrentOffers, NFTDetailsActivity, NFTDetailsInfo } from '..'
+import { AuctionView } from '../../../hooks'
 
 export interface NFTDetailsTabsProps {
-  [x: string]: any
+  auction: AuctionView
 }
 
-export const NFTDetailsTabs: FC<NFTDetailsTabsProps> = ({
-  className,
-  ...restProps
-}: NFTDetailsTabsProps) => {
-  const NFTDetailsTabsClasses = CN(`nft-details-tabs w-full pt-[20px]`, className)
+export const NFTDetailsTabs: FC<NFTDetailsTabsProps> = ({ auction }) => {
+  const NFTDetailsTabsClasses = CN(`nft-details-tabs w-full pt-[20px]`)
   const [activeTab, setActiveTab] = useState('offers')
 
   return (
-    <div className={NFTDetailsTabsClasses} {...restProps}>
+    <div className={NFTDetailsTabsClasses}>
       <div className='tabs flex flex-col gap-[20px]'>
         <div className='flex items-center gap-[8px] border-b border-slate-200'>
           <Button
@@ -53,7 +51,7 @@ export const NFTDetailsTabs: FC<NFTDetailsTabsProps> = ({
         <div className='flex flex-col'>
           {activeTab === 'offers' && <NFTDetailsCurrentOffers />}
           {activeTab === 'activity' && <NFTDetailsActivity />}
-          {activeTab === 'details' && <NFTDetailsInfo />}
+          {activeTab === 'details' && <NFTDetailsInfo auction={auction} />}
         </div>
       </div>
     </div>
