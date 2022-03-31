@@ -10,6 +10,7 @@ export interface AvatarProps {
   labelClassName?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | number
   address?: string
+  className?: string
 }
 
 export const Avatar: FC<AvatarProps> = ({
@@ -19,9 +20,10 @@ export const Avatar: FC<AvatarProps> = ({
   label,
   labelClassName,
   address,
+  className,
   ...restProps
-}: AvatarProps) => {
-  const AvatarClasses = CN(`avatar flex items-center gap-[8px] font-500`, {
+}) => {
+  const AvatarClasses = CN(`avatar flex items-center gap-[8px] font-500`, className, {
     'text-lg': size === 'lg',
     'text-md': size === 'md',
     'text-sm': size === 'sm',
@@ -55,5 +57,3 @@ export const Avatar: FC<AvatarProps> = ({
 Avatar.defaultProps = {
   size: 'md',
 }
-
-export default Avatar
