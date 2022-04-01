@@ -100,7 +100,7 @@ export const CONFIG_LINE_SIZE = 4 + 32 + 4 + 200;
 
 export const CACHE_PATH = './.cache';
 
-export const DEFAULT_TIMEOUT = 15000;
+export const DEFAULT_TIMEOUT = 30000;
 
 export const EXTENSION_PNG = '.png';
 export const EXTENSION_JPG = '.jpg';
