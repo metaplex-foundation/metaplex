@@ -28,6 +28,7 @@ import { chunks, sleep } from '../helpers/various';
 import { nftStorageUpload } from '../helpers/upload/nft-storage';
 import { pinataUpload } from '../helpers/upload/pinata';
 import { setCollection } from './set-collection';
+import {djibUpload} from "../helpers/upload/djib";
 
 export async function uploadV2({
   files,
@@ -336,6 +337,17 @@ export async function uploadV2({
                   image,
                   animation,
                   manifestBuffer,
+                );
+                break;
+              case StorageType.Djib:
+                [link, imageLink, animationLink] = await djibUpload(
+                  asset.index,
+                  image,
+                  animation,
+                  manifestBuffer,
+                  walletKeyPair,
+                  anchorProgram,
+                  env
                 );
                 break;
               case StorageType.Arweave:
