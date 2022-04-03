@@ -3,7 +3,7 @@ import CN from 'classnames'
 import { AttributesCard } from '@oyster/common'
 import { Image, Avatar, SOLIcon } from '@oyster/common'
 import { NFTDetailsTabs } from './../NFTDetailsTabs'
-import { AuctionView, useBidsForAuction, useCreators, useExtendedArt } from '../../../hooks'
+import { AuctionView, useCreators, useExtendedArt } from '../../../hooks'
 import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
@@ -23,11 +23,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
     value: { solVal, usdValFormatted },
   } = useNFTData(auction)
 
-  // const bids = useBidsForAuction(auction.auction.pubkey)
-
   const url = data?.image
-
-  // console.log('bids', bids)
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
   return (
@@ -70,10 +66,12 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
             <div className='flex flex-col gap-[16px]'>
               <div className='flex flex-col gap-[4px]'>
                 <h2 className='text-h2 font-500 text-slate-800'>{data?.name}</h2>
-                <div className='flex items-center gap-[4px]'>
-                  <h6 className='text-h6 font-400'>{collection?.name}</h6>
-                  <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
-                </div>
+                {collection?.name && (
+                  <div className='flex items-center gap-[4px]'>
+                    <h6 className='text-h6 font-400'>{collection?.name}</h6>
+                    <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
+                  </div>
+                )}
               </div>
               {(creators || []).map(({ image, address }) => {
                 return (
