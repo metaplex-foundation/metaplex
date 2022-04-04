@@ -172,11 +172,41 @@ const Home = (props: HomeProps) => {
         setIsPresale((cndy.state.isPresale = presale));
         setCandyMachine(cndy);
       } catch (e) {
-        console.log('There was a problem fetching Candy Machine state');
+        if (e instanceof Error) {
+          if (e.message === `Account does not exist ${props.candyMachineId}`) {
+            setAlertState({
+              open: true,
+              message: `Couldn't fetch candy machine state from candy machine with address: ${props.candyMachineId}, using rpc: ${props.rpcHost}! You probably typed the REACT_APP_CANDY_MACHINE_ID value in wrong in your .env file, or you are using the wrong RPC!`,
+              severity: 'error',
+              noHide: true,
+            });
+          } else if (e.message.startsWith('failed to get info about account')) {
+            setAlertState({
+              open: true,
+              message: `Couldn't fetch candy machine state with rpc: ${props.rpcHost}! This probably means you have an issue with the REACT_APP_SOLANA_RPC_HOST value in your .env file, or you are not using a custom RPC!`,
+              severity: 'error',
+              noHide: true,
+            });
+          }
+        } else {
+          setAlertState({
+            open: true,
+            message: `${e}`,
+            severity: 'error',
+            noHide: true,
+          });
+        }
         console.log(e);
       }
+    } else {
+      setAlertState({
+        open: true,
+        message: `Your REACT_APP_CANDY_MACHINE_ID value in the .env file doesn't look right! Make sure you enter it in as plain base-58 address!`,
+        severity: 'error',
+        noHide: true,
+      });
     }
-  }, [anchorWallet, props.candyMachineId, props.connection]);
+  }, [anchorWallet, props.candyMachineId, props.connection, props.rpcHost]);
 
   const onMint = async (
     beforeTransactions: Transaction[] = [],
@@ -511,7 +541,7 @@ const Home = (props: HomeProps) => {
 
       <Snackbar
         open={alertState.open}
-        autoHideDuration={6000}
+        autoHideDuration={alertState.noHide ? null : 6000}
         onClose={() => setAlertState({ ...alertState, open: false })}
       >
         <Alert
