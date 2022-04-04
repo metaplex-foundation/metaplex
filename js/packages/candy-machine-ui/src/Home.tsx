@@ -176,14 +176,14 @@ const Home = (props: HomeProps) => {
           if (e.message === `Account does not exist ${props.candyMachineId}`) {
             setAlertState({
               open: true,
-              message: `Couldn't fetch candy machine state from candy machine with address: ${props.candyMachineId}, using rpc: ${props.rpcHost}! You probably typed the candy machine address in wrong or are using the wrong RPC!`,
+              message: `Couldn't fetch candy machine state from candy machine with address: ${props.candyMachineId}, using rpc: ${props.rpcHost}! You probably typed the REACT_APP_CANDY_MACHINE_ID value in wrong in your .env file, or you are using the wrong RPC!`,
               severity: 'error',
               noHide: true,
             });
           } else if (e.message.startsWith('failed to get info about account')) {
             setAlertState({
               open: true,
-              message: `Couldn't fetch candy machine state with rpc: ${props.rpcHost}! This probably means you have an issue with the REACT_APP_SOLANA_RPC_HOST value in your .env file or are not using a custom RPC!`,
+              message: `Couldn't fetch candy machine state with rpc: ${props.rpcHost}! This probably means you have an issue with the REACT_APP_SOLANA_RPC_HOST value in your .env file, or you are not using a custom RPC!`,
               severity: 'error',
               noHide: true,
             });
