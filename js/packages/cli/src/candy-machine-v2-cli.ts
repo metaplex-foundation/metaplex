@@ -1068,7 +1068,7 @@ programCommand('sign_all')
 
 programCommand('update_existing_nfts_from_latest_cache_file')
   .option('-b, --batch-size <string>', 'Batch size', '2')
-  .option('-nc, --new-cache <string>', 'Path to new updated cache file')
+  .option('-nc, --new-cache <string>', 'New cache file name')
   .option('-d, --daemon', 'Run updating continuously', false)
   .option(
     '-r, --rpc-url <string>',
