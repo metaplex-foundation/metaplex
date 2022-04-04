@@ -28,7 +28,7 @@ import {
 
 /* UI v2 Upgraded Views */
 import ScrollToTop from './ScrollToTop'
-import { Home, Collection, Discover, NFTDetails } from './ui/views'
+import { Home, Collection, Discover, NFTDetails, NftNext } from './ui/views'
 
 import { SalesListView } from './views/home/components/SalesList'
 
@@ -71,6 +71,7 @@ export function Routes() {
               {/* <Route path='/collection/:id' component={() => <CollectionDetailView />} /> */}
               <Route path='/collection/:id' component={() => <Collection />} />
               <Route path='/nft/:id' component={() => <NFTDetails />} />
+              <Route path='/nft-next/:id' component={() => <NftNext />} />
               <Route path='/' component={() => <Home />} />
               {/* <Route exact path='/auction/:id' component={() => <AuctionView />} />
             <Route exact path='/auction/:id/billing' component={() => <BillingView />} /> */}
