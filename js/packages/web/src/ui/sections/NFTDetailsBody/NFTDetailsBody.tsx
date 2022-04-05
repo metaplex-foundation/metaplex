@@ -18,6 +18,9 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const { liveCollections } = useCollections()
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
+  console.log('data', data)
+  console.log('auction', auction)
+
   const creators = useCreators(auction)
   const {
     value: { solVal, usdValFormatted },
