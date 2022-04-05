@@ -33,12 +33,6 @@ export const useCollections = () => {
   ) => {
     const usedCollections = new Set<string>(filterMints?.map(c => c.mint))
     const collections: CollectionView[] = []
-    // console.log(
-    //   'auctions',
-    //   auctions.filter(auction => {
-    //     return auction?.thumbnail?.metadata?.info?.collection?.key === undefined
-    //   })
-    // )
 
     auctions.forEach(auction => {
       const collection = auction?.thumbnail?.metadata?.info?.collection?.key
@@ -59,7 +53,10 @@ export const useCollections = () => {
         }
       } else {
         getData(auction?.thumbnail?.metadata.pubkey).then(res => {
-          if (res?.collection?.name) {
+          const isExit = !!collections.find(
+            ({ pubkey }) => pubkey === auction?.thumbnail?.metadata.pubkey
+          )
+          if (res?.collection?.name && !isExit) {
             collections.push({
               pubkey: auction?.thumbnail?.metadata.pubkey,
               mint: collection,
