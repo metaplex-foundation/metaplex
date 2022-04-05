@@ -1,74 +1,38 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
+import { AuctionView } from '../../../hooks'
+import { getSalesRecords } from '../../../api'
+import moment from 'moment'
 
 export interface NFTDetailsActivityProps {
-  [x: string]: any
+  [x: string]: any,
+  auction: AuctionView,
 }
-
-const activity = [
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-  {
-    type: 'Sale',
-    price: '1.25',
-    from: '6grFa...Vun5',
-    to: '7hk...JaoW',
-    time: '12 hours ago',
-  },
-]
 
 export const NFTDetailsActivity: FC<NFTDetailsActivityProps> = ({
   className,
   ...restProps
 }: NFTDetailsActivityProps) => {
   const NFTDetailsActivityClasses = CN(`nft-details-activity w-full`, className)
+  const [ activity, setActivity ] = useState([])
+
+  useEffect(() => {
+    const mintKey = restProps.auction.auction.pubkey;
+    const fetchSalesRecords = async () => {
+      const sales = await getSalesRecords(mintKey)
+      
+      sales.data.forEach((record) => {
+        record.type = record.tnx_type
+        record.price = record.tnx_sol_amount
+        record.from = `${record.from_address.substring(0,3)}...${record.from_address.substring(record.from_address.length - 4)}`
+        record.to = `${record.to_address.substring(0,3)}...${record.to_address.substring(record.to_address.length - 4)}`
+        record.time = moment(record.datetime).startOf('hour').fromNow()
+      })
+      setActivity(sales.data)
+    }
+
+    fetchSalesRecords()
+  }, [])
 
   return (
     <div className={NFTDetailsActivityClasses} {...restProps}>
