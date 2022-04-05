@@ -28,13 +28,13 @@ import {
   Bid,
   BidderPot,
   shortenAddress,
-  toLamports,
 } from '@oyster/common'
 import {
   AuctionView,
   AuctionViewState,
   useBidsForAuction,
   useCreators,
+  useExtendedArt,
   useUserBalance,
 } from '../../hooks'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -52,9 +52,6 @@ import { QUOTE_MINT } from '../../constants'
 import {
   Connection,
   LAMPORTS_PER_SOL,
-  sendAndConfirmTransaction,
-  SystemProgram,
-  Transaction,
 } from '@solana/web3.js'
 import { useMeta } from '../../contexts'
 import moment from 'moment'
@@ -65,7 +62,7 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-  WinningConfigType,
+  // WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index'
 import { useActionButtonContent } from './hooks/useActionButtonContent'
 import { endSale } from './utils/endSale'
@@ -73,6 +70,9 @@ import { useInstantSaleState } from './hooks/useInstantSaleState'
 import { useTokenList } from '../../contexts/tokenList'
 import CongratulationsModal from '../Modals/CongratulationsModal'
 import { sendStoreFee } from '../../actions/getStoreOwnerFee'
+import useNFTData from '../../hooks/useNFTData'
+import { useCollections } from '../../hooks/useCollections'
+import { createSaleRecord } from '../../api'
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -206,9 +206,15 @@ export const AuctionCard = ({
   )
 
   const mintInfo = useMint(auctionView.auction.info.tokenMint)
+  const { value: { solVal, usdVal }} = useNFTData(auctionView);
   const { prizeTrackingTickets, bidRedemptions } = useMeta()
   const bids = useBidsForAuction(auctionView.auction.pubkey)
   const creators = useCreators(auctionView)
+  const creator = creators.map(({ address }) => { return address })
+  const { liveCollections } = useCollections()
+  const { data } = useExtendedArt(auctionView?.thumbnail.metadata.pubkey)
+  const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
+  const { data: collection } = useExtendedArt(pubkey)
 
   const [value, setValue] = useState<number>()
   const [loading, setLoading] = useState<boolean>(false)
@@ -348,25 +354,23 @@ export const AuctionCard = ({
     return instantSale()
   }
 
-  // console.log('winningConfigType', auctionView.items)
-
   const instantSale = async () => {
     // debugger
     setLoading(true)
-    const winningConfigType =
-      auctionView.participationItem?.winningConfigType || auctionView.items[0][0].winningConfigType
+    // const winningConfigType =
+    //   auctionView.participationItem?.winningConfigType || auctionView.items[0][0].winningConfigType
 
-    const isAuctionItemMaster = [
-      WinningConfigType.FullRightsTransfer,
-      WinningConfigType.TokenOnlyTransfer,
-    ].includes(winningConfigType)
-    const allowBidToPublic =
-      myPayingAccount && !auctionView.myBidderPot && isAuctionManagerAuthorityNotWalletOwner
-    const allowBidToAuctionOwner =
-      myPayingAccount && !isAuctionManagerAuthorityNotWalletOwner && isAuctionItemMaster
+    // const isAuctionItemMaster = [
+    //   WinningConfigType.FullRightsTransfer,
+    //   WinningConfigType.TokenOnlyTransfer,
+    // ].includes(winningConfigType)
+    // const allowBidToPublic =
+    //   myPayingAccount && !auctionView.myBidderPot && isAuctionManagerAuthorityNotWalletOwner
+    // const allowBidToAuctionOwner =
+    //   myPayingAccount && !isAuctionManagerAuthorityNotWalletOwner && isAuctionItemMaster
 
     // Placing a "bid" of the full amount results in a purchase to redeem.
-    if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
+    if (instantSalePrice /* && (allowBidToPublic || allowBidToAuctionOwner) */) {
       try {
         console.log('sendPlaceBid')
         const bid = await sendPlaceBid(
@@ -438,6 +442,22 @@ export const AuctionCard = ({
         bidRedemptions,
         bids
       )
+
+      // API call to create sale record
+      const apiData = {
+        tnx_hash: null,
+        tnx_type: 'Sale',
+        datetime: new Date(),
+        tnx_sol_amount: solVal,
+        tnx_usd_amount: usdVal,
+        from_address: creator.length > 0 ? creator[0] : null,
+        to_address: myPayingAccount.pubkey,
+        mint: auctionView.auction.pubkey,
+        collection: collection?.name,
+        auction: auctionView.auction.info,
+      }
+
+      await createSaleRecord(apiData)
       await update()
       if (canClaimPurchasedItem) setIsOpenClaim(true)
       else setIsOpenPurchase(true)

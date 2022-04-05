@@ -50,7 +50,7 @@ export const NFTDetailsTabs: FC<NFTDetailsTabsProps> = ({ auction }) => {
 
         <div className='flex flex-col'>
           {activeTab === 'offers' && <NFTDetailsCurrentOffers />}
-          {activeTab === 'activity' && <NFTDetailsActivity />}
+          {activeTab === 'activity' && <NFTDetailsActivity auction={auction} />}
           {activeTab === 'details' && <NFTDetailsInfo auction={auction} />}
         </div>
       </div>

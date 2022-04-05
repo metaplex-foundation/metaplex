@@ -40,7 +40,7 @@ import { LoadingOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/
 import { useTokenList } from '../../contexts/tokenList'
 import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import { ArtSelector } from '../auctionCreate/artSelector'
-import { createTokenForNft } from '../../api'
+// import { createTokenForNft } from '../../api'
 
 const { Step } = Steps
 const { Dragger } = Upload
@@ -126,9 +126,9 @@ export const ArtCreateView = () => {
         attributes.properties?.maxSupply
       )
 
-      if (_nft && _nft.metadataAccount) {
-        await createTokenForNft(_nft.metadataAccount, metadata.tag, metadata)
-      }
+      // if (_nft && _nft.metadataAccount) {
+      //   await createTokenForNft(_nft.metadataAccount, metadata.tag, metadata)
+      // }
 
       if (_nft) setNft(_nft)
       setAlertMessage('')
