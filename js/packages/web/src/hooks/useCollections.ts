@@ -52,21 +52,23 @@ export const useCollections = () => {
           }
         }
       } else {
-        getData(auction?.thumbnail?.metadata.pubkey).then(res => {
-          const isExit = !!collections.find(
-            ({ pubkey }) => pubkey === auction?.thumbnail?.metadata.pubkey
-          )
-          if (res?.collection?.name && !isExit) {
-            collections.push({
-              pubkey: auction?.thumbnail?.metadata.pubkey,
-              mint: collection,
-              data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
-              state: auction.state,
-              isExternal: true,
-              _meta: res,
-            })
-          }
-        })
+        const isExit = !!collections.find(
+          ({ pubkey }) => pubkey === auction?.thumbnail?.metadata.pubkey
+        )
+        if (!isExit) {
+          getData(auction?.thumbnail?.metadata.pubkey).then(res => {
+            if (res?.collection?.name && !isExit) {
+              collections.push({
+                pubkey: auction?.thumbnail?.metadata.pubkey,
+                mint: collection,
+                data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
+                state: auction.state,
+                isExternal: true,
+                _meta: res,
+              })
+            }
+          })
+        }
       }
     })
     setStateFunc(collections)
