@@ -49,10 +49,7 @@ import { startAuctionManually } from '../../actions/startAuctionManually'
 import BN from 'bn.js'
 import { Confetti } from '../Confetti'
 import { QUOTE_MINT } from '../../constants'
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-} from '@solana/web3.js'
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { useMeta } from '../../contexts'
 import moment from 'moment'
 import { AmountLabel } from '../AmountLabel'
@@ -206,11 +203,15 @@ export const AuctionCard = ({
   )
 
   const mintInfo = useMint(auctionView.auction.info.tokenMint)
-  const { value: { solVal, usdVal }} = useNFTData(auctionView);
+  const {
+    value: { solVal, usdVal },
+  } = useNFTData(auctionView)
   const { prizeTrackingTickets, bidRedemptions } = useMeta()
   const bids = useBidsForAuction(auctionView.auction.pubkey)
   const creators = useCreators(auctionView)
-  const creator = creators.map(({ address }) => { return address })
+  const creator = creators.map(({ address }) => {
+    return address
+  })
   const { liveCollections } = useCollections()
   const { data } = useExtendedArt(auctionView?.thumbnail.metadata.pubkey)
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
@@ -511,12 +512,12 @@ export const AuctionCard = ({
 
       <div className={'bid-info'}>
         <div className='bid-info-container'>
-          <AuctionNumbers
+          {/* <AuctionNumbers
             auctionView={auctionView}
             showAsRow={true}
             hideCountdown={true}
             displaySymbol={true}
-          />
+          /> */}
 
           {showPlaceBid &&
             !hideDefaultAction &&
@@ -591,7 +592,7 @@ export const AuctionCard = ({
             )}
           {showPlaceBid ? (
             <div className='show-place-bid'>
-              <AmountLabel
+              {/* <AmountLabel
                 title='in your wallet'
                 displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
                 style={{ marginBottom: 0 }}
@@ -600,7 +601,7 @@ export const AuctionCard = ({
                 customPrefix={
                   <Identicon address={wallet?.publicKey?.toBase58()} style={{ width: 36 }} />
                 }
-              />
+              /> */}
             </div>
           ) : (
             <div className='actions-place-bid'>
