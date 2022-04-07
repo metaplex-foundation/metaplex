@@ -16,12 +16,8 @@ export const NFTDetails: FC<NFTDetailsProps> = () => {
   const [auction, setAuction] = useState<AuctionView>()
 
   useEffect(() => {
-    // console.log('calling')
-
     setAuction(item)
   }, [item])
-
-  // console.log('auction=>', auction)
 
   const onSetAuction = (data: AuctionView) => {
     // console.log('data', data)

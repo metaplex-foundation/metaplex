@@ -4,12 +4,15 @@ import { useAuctionsList } from '../views/home/components/SalesList/hooks/useAuc
 import { LiveAuctionViewState } from '../views/home/components/SalesList'
 import { useEffect, useState } from 'react'
 import { StringPublicKey, useMeta } from '@oyster/common'
+import { useExtendedCollection } from './useArt'
 
 export interface CollectionView {
   pubkey: StringPublicKey
   mint: StringPublicKey
   data: MetadataData
   state: AuctionViewState
+  isExternal: boolean
+  _meta?: any
 }
 
 export const useCollections = () => {
@@ -21,6 +24,8 @@ export const useCollections = () => {
   const [liveCollections, setLiveCollections] = useState<CollectionView[]>([])
   const [endedCollections, setEndedCollections] = useState<CollectionView[]>([])
 
+  const { getData } = useExtendedCollection()
+
   const setCollections = (
     auctions: AuctionView[],
     setStateFunc: (c: CollectionView[]) => void,
@@ -28,17 +33,40 @@ export const useCollections = () => {
   ) => {
     const usedCollections = new Set<string>(filterMints?.map(c => c.mint))
     const collections: CollectionView[] = []
+
     auctions.forEach(auction => {
       const collection = auction?.thumbnail?.metadata?.info?.collection?.key
-      if (collection && !usedCollections.has(collection)) {
-        const metadata = metadataByCollection[collection]
-        if (metadata) {
-          usedCollections.add(collection)
-          collections.push({
-            pubkey: metadata.pubkey,
-            mint: collection,
-            data: metadata.info as unknown as MetadataData,
-            state: auction.state,
+
+      if (collection) {
+        if (!usedCollections.has(collection)) {
+          const metadata = metadataByCollection[collection]
+          if (metadata) {
+            usedCollections.add(collection)
+            collections.push({
+              pubkey: metadata.pubkey,
+              mint: collection,
+              data: metadata.info as unknown as MetadataData,
+              state: auction.state,
+              isExternal: false,
+            })
+          }
+        }
+      } else {
+        const isExit = !!collections.find(
+          ({ pubkey }) => pubkey === auction?.thumbnail?.metadata.pubkey
+        )
+        if (!isExit) {
+          getData(auction?.thumbnail?.metadata.pubkey).then(res => {
+            if (res?.collection?.name && !isExit) {
+              collections.push({
+                pubkey: auction?.thumbnail?.metadata.pubkey,
+                mint: collection,
+                data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
+                state: auction.state,
+                isExternal: true,
+                _meta: res,
+              })
+            }
           })
         }
       }

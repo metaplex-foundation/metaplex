@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
-import { AttributesCard } from '@oyster/common'
+import { AttributesCard, Button } from '@oyster/common'
 import { Image, Avatar, SOLIcon } from '@oyster/common'
 import { NFTDetailsTabs } from './../NFTDetailsTabs'
 import { AuctionView, useCreators, useExtendedArt } from '../../../hooks'
@@ -16,8 +16,10 @@ export interface NFTDetailsBodyProps {
 export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) => {
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const { liveCollections } = useCollections()
+
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
+
   const creators = useCreators(auction)
   const {
     value: { solVal, usdValFormatted },
@@ -50,7 +52,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                       key={`${index}-${label}`}
                       overline={label}
                       label={value}
-                      // tag={`🔥 ${tag}`}
+                      tag={`🔥 '14.14%`}
                       hasHoverEffect={false}
                       className='cursor-auto !py-[12px] !px-[16px]'
                     />
@@ -98,9 +100,9 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
               </div>
             </div>
 
-            <div className='flex items-center gap-[16px]'>
-              {auction && <AuctionCard auctionView={auction} hideDefaultAction={false} />}
-              {/* <Button size='lg' className='w-[230px]'>
+            {auction && <AuctionCard auctionView={auction} hideDefaultAction={false} />}
+            {/* <div className='flex items-center gap-[16px]'>
+              <Button size='lg' className='w-[230px]'>
                 Buy Now
               </Button>
 
@@ -116,8 +118,8 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                 <Button appearance='neutral' size='md' className='h-full w-[180px] flex-shrink-0'>
                   Place Bid
                 </Button>
-              </div> */}
-            </div>
+              </div>
+            </div> */}
 
             <NFTDetailsTabs auction={auction} />
           </div>
