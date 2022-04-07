@@ -70,7 +70,38 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
       watchSlidesProgress: true,
       ...restOptions,
     })
-  }, [slides])
+  }, [])
+
+  useEffect(() => {
+    Swiper.use([Navigation, Autoplay, Mousewheel])
+
+    const swiper = new Swiper(`#${id}` || '.block-carousel', {
+      autoplay: autoPlay || false,
+      centeredSlides: false,
+      direction: 'horizontal',
+      slideClass: slideClass || 'block-carousel__item',
+      slidePrevClass: slidePrevClass || 'block-carousel__item__prev',
+      slidesPerView: slidesPerView || 4,
+      spaceBetween: spaceBetween || 32,
+      updateOnWindowResize: updateOnWindowResize || true,
+      wrapperClass: wrapperClass || 'block-carousel__wrapper',
+      navigation: {
+        nextEl: `.${id}-next-button`,
+        prevEl: `.${id}-prev-button`,
+      },
+      resizeObserver: resizeObserver || true,
+      mousewheel: { forceToAxis: true },
+      on: {
+        slideChange: function () {
+          onChangeIndex(
+            (swiper.isBeginning && 'isFirst') || (swiper.isEnd && 'isLast') || swiper.activeIndex
+          )
+        },
+      },
+      watchSlidesProgress: true,
+      ...restOptions,
+    })
+  }, [slides?.length])
 
   return (
     <div id={id} className={BlockCarouselClasses}>
