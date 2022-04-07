@@ -23,11 +23,11 @@ export const HottestAuctions: FC<HottestAuctionsProps> = ({
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
   const { auctions } = useAuctionsList(activeKey)
 
-  const slides = (auctions || []).map((auction: AuctionView, index: number) => {
+  const slides = (auctions || []).map((auction: AuctionView) => {
     return {
-      id: 0,
-      Component: () => (
-        <Link key={index} to={`/nft/${auction.auction.pubkey}`}>
+      id: auction.auction.pubkey,
+      Component: (
+        <Link key={auction.auction.pubkey} to={`/nft/${auction.auction.pubkey}`}>
           <AuctionsCard auction={auction} />
         </Link>
       ),

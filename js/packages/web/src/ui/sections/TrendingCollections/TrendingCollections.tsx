@@ -18,11 +18,11 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({
   const TrendingCollectionsClasses = CN(`trending-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
 
-  const slides = (liveCollections || []).map((collection: any, index: number) => {
+  const slides = (liveCollections || []).map((collection: any) => {
     return {
-      id: 0,
-      Component: () => (
-        <Link to={`/collection/${collection.mint}`} key={index}>
+      id: collection.pubkey,
+      Component: (
+        <Link to={`/collection/${collection.mint}`} key={collection.pubkey}>
           <CollectionCard collection={collection} />
         </Link>
       ),
