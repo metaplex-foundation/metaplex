@@ -19,11 +19,11 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
   const RecentCollectionsClasses = CN(`recent-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
 
-  const slides = (liveCollections || []).map((collection: any, index: number) => {
+  const slides = (liveCollections || []).map((collection: any) => {
     return {
-      id: 0,
-      Component: () => (
-        <Link to={`/collection/${collection.mint}`} key={index}>
+      id: collection.pubkey,
+      Component: (
+        <Link to={`/collection/${collection.mint ?? ''}`} key={collection.pubkey}>
           <CollectionCard collection={collection} />
         </Link>
       ),
