@@ -65,16 +65,16 @@ export const Hero: FC<HeroProps> = ({ className }) => {
           </div>
         </div>
 
-        {!!auctions.length && (
+        {!!auctions.length && auctions.length > 2 && (
           <div className='hero__center group relative ml-auto flex h-[452px] w-[395px]'>
-            <Link to={`/auction/${auctions[0].auction.pubkey}`}>
+            <Link to={`/nft/${auctions[0].auction.pubkey}`}>
               <LiveNFTCard
                 auction={auctions[0]}
                 className='absolute left-[-44px] right-0 m-auto w-[320px] rotate-[-6deg] shadow transition-all group-hover:rotate-[-8deg]'
                 onClickButton={() => {}}
               />
             </Link>
-            <Link to={`/auction/${auctions[2].auction.pubkey}`}>
+            <Link to={`/nft/${auctions[2].auction.pubkey}`}>
               <LiveNFTCard
                 auction={auctions[2]}
                 className='absolute left-0 right-0 m-auto w-[320px] rotate-[10deg] shadow transition-all group-hover:rotate-[0]'
