@@ -74,7 +74,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/codetill5/solmart"
+    "url": "https://github.com/metaplex-foundation/metaplex"
   },
   "homepage": ".",
   "devDependencies": {
