@@ -952,10 +952,10 @@ const RoyaltiesStep = (props: {
             min={0}
             max={100}
             placeholder='Between 0 and 100'
-            onChange={(val: number) => {
+            onChange={(val) => {
               props.setAttributes({
                 ...props.attributes,
-                seller_fee_basis_points: val * 100,
+                seller_fee_basis_points: val.target.value * 100,
               })
             }}
           />
