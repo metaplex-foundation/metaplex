@@ -21,5 +21,5 @@ export const useActionButtonContent = (auctionView: AuctionView): string => {
     return 'End sale & claim item'
   }
 
-  return 'Quick Buy'
+  return 'Buy Now'
 }
