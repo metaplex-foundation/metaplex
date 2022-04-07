@@ -2,7 +2,7 @@ import { AuctionView, AuctionViewState } from './useAuctions'
 import { MetadataData } from '@metaplex-foundation/mpl-token-metadata'
 import { useAuctionsList } from '../views/home/components/SalesList/hooks/useAuctionsList'
 import { LiveAuctionViewState } from '../views/home/components/SalesList'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { StringPublicKey, useMeta } from '@oyster/common'
 import { useExtendedCollection } from './useArt'
 
@@ -13,6 +13,7 @@ export interface CollectionView {
   state: AuctionViewState
   isExternal: boolean
   _meta?: any
+  name?: string
 }
 
 export const useCollections = () => {
@@ -52,23 +53,20 @@ export const useCollections = () => {
           }
         }
       } else {
-        const isExit = !!collections.find(
-          ({ pubkey }) => pubkey === auction?.thumbnail?.metadata.pubkey
-        )
-        if (!isExit) {
-          getData(auction?.thumbnail?.metadata.pubkey).then(res => {
-            if (res?.collection?.name && !isExit) {
-              collections.push({
-                pubkey: auction?.thumbnail?.metadata.pubkey,
-                mint: collection,
-                data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
-                state: auction.state,
-                isExternal: true,
-                _meta: res,
-              })
-            }
-          })
-        }
+        getData(auction?.thumbnail?.metadata.pubkey).then(res => {
+          const isExit = !!collections.find(({ name }) => name === res?.collection?.name)
+          if (res?.collection?.name && !isExit) {
+            collections.push({
+              pubkey: auction?.thumbnail?.metadata.pubkey,
+              mint: collection,
+              data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
+              state: auction.state,
+              isExternal: true,
+              _meta: res,
+              name: res?.collection?.name,
+            })
+          }
+        })
       }
     })
     setStateFunc(collections)
@@ -118,23 +116,20 @@ export const useNFTCollections = () => {
           }
         }
       } else {
-        const isExit = !!collections.find(
-          ({ pubkey }) => pubkey === auction?.thumbnail?.metadata.pubkey
-        )
-        if (!isExit) {
-          getData(auction?.thumbnail?.metadata.pubkey).then(res => {
-            if (res?.collection?.name && !isExit) {
-              collections.push({
-                pubkey: auction?.thumbnail?.metadata.pubkey,
-                mint: collection,
-                data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
-                state: auction.state,
-                isExternal: true,
-                _meta: res,
-              })
-            }
-          })
-        }
+        getData(auction?.thumbnail?.metadata.pubkey).then(res => {
+          const isExit = !!collections.find(({ name }) => name === res?.collection?.name)
+          if (res?.collection?.name && !isExit) {
+            collections.push({
+              pubkey: auction?.thumbnail?.metadata.pubkey,
+              mint: collection,
+              data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
+              state: auction.state,
+              isExternal: true,
+              name: res?.collection?.name,
+              _meta: res,
+            })
+          }
+        })
       }
     })
     setLiveCollections(collections)

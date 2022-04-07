@@ -10,7 +10,7 @@ import {
   Pagination,
 } from '@oyster/common'
 import queryString from 'query-string'
-import { CollectionView, useCollections } from '../../../hooks/useCollections'
+import { CollectionView, useNFTCollections } from '../../../hooks/useCollections'
 import { Link, useLocation } from 'react-router-dom'
 import CollectionCard from '../../sections/RecentCollections/CollectionCard'
 import useSearch from '../../../hooks/useSearch'
@@ -23,7 +23,7 @@ interface SearchParamsInterface {
 }
 
 export const Discover: FC<DiscoverProps> = () => {
-  const { liveCollections } = useCollections()
+  const { liveCollections } = useNFTCollections()
   const [collections, setCollections] = useState<CollectionView[]>([])
 
   const { search } = useLocation()
