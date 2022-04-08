@@ -149,6 +149,11 @@ export const createMetadataAccount = async ({
   return metadataAccount;
 };
 
+export type MintResult = {
+  metadataAccount: PublicKey;
+  mint: PublicKey;
+};
+
 export const mintNFT = async (
   connection: Connection,
   walletKeypair: Keypair,
@@ -158,7 +163,8 @@ export const mintNFT = async (
   maxSupply: number = 0,
   verifyCreators: boolean,
   use: Uses = null,
-): Promise<PublicKey | void> => {
+  receivingWallet: PublicKey = null,
+): Promise<MintResult | void> => {
   // Retrieve metadata
   const data = await createMetadata(
     metadataLink,
@@ -277,6 +283,37 @@ export const mintNFT = async (
     );
   }
 
+  if (receivingWallet) {
+    const derivedAccount = await getTokenWallet(
+      receivingWallet,
+      mint.publicKey,
+    );
+    const createdAccountIx = Token.createAssociatedTokenAccountInstruction(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      mint.publicKey,
+      derivedAccount,
+      receivingWallet,
+      wallet.publicKey,
+    );
+    const transferIx = Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      userTokenAccoutAddress,
+      derivedAccount,
+      wallet.publicKey,
+      signers,
+      1,
+    );
+    const closeAccountIx = Token.createCloseAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      userTokenAccoutAddress,
+      wallet.publicKey,
+      wallet.publicKey,
+      signers,
+    );
+    instructions.push(createdAccountIx, transferIx, closeAccountIx);
+  }
+
   const res = await sendTransactionWithRetryWithKeypair(
     connection,
     walletKeypair,
@@ -292,9 +329,11 @@ export const mintNFT = async (
 
   // Force wait for max confirmations
   await connection.getParsedTransaction(res.txid, 'confirmed');
+
   log.info('NFT created', res.txid);
-  log.info('\n\nNFT: Mint Address is ', mint.publicKey.toBase58());
-  return metadataAccount;
+  log.info('\nNFT: Mint Address is ', mint.publicKey.toBase58());
+  log.info('NFT: Metadata address is ', metadataAccount.toBase58());
+  return { metadataAccount, mint: mint.publicKey };
 };
 
 export const updateMetadata = async (

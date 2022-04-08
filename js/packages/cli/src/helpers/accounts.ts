@@ -25,10 +25,7 @@ import {
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import {
-  createCandyMachineV2Account,
-  createConfigAccount,
-} from './instructions';
+import { createCandyMachineV2Account } from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
 import { AccountLayout, u64 } from '@solana/spl-token';
@@ -37,8 +34,6 @@ export type AccountAndPubkey = {
   pubkey: string;
   account: AccountInfo<Buffer>;
 };
-
-export type StringPublicKey = string;
 
 // TODO: expose in spl package
 export const deserializeAccount = (data: Buffer) => {
@@ -182,69 +177,6 @@ export const createCandyMachineV2 = async function (
   };
 };
 
-export const createConfig = async function (
-  anchorProgram: anchor.Program,
-  payerWallet: Keypair,
-  configData: {
-    maxNumberOfLines: anchor.BN;
-    symbol: string;
-    sellerFeeBasisPoints: number;
-    isMutable: boolean;
-    maxSupply: anchor.BN;
-    retainAuthority: boolean;
-    creators: {
-      address: PublicKey;
-      verified: boolean;
-      share: number;
-    }[];
-  },
-) {
-  const configAccount = Keypair.generate();
-  const uuid = uuidFromConfigPubkey(configAccount.publicKey);
-
-  if (!configData.creators || configData.creators.length === 0) {
-    throw new Error(`Invalid config, there must be at least one creator.`);
-  }
-
-  const totalShare = (configData.creators || []).reduce(
-    (acc, curr) => acc + curr.share,
-    0,
-  );
-
-  if (totalShare !== 100) {
-    throw new Error(`Invalid config, creators shares must add up to 100`);
-  }
-
-  return {
-    config: configAccount.publicKey,
-    uuid,
-    txId: await anchorProgram.rpc.initializeConfig(
-      {
-        uuid,
-        ...configData,
-      },
-      {
-        accounts: {
-          config: configAccount.publicKey,
-          authority: payerWallet.publicKey,
-          payer: payerWallet.publicKey,
-          systemProgram: SystemProgram.programId,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        },
-        signers: [payerWallet, configAccount],
-        instructions: [
-          await createConfigAccount(
-            anchorProgram,
-            configData,
-            payerWallet.publicKey,
-            configAccount.publicKey,
-          ),
-        ],
-      },
-    ),
-  };
-};
-
 export function uuidFromConfigPubkey(configAccount: PublicKey) {
   return configAccount.toBase58().slice(0, 6);
 }
@@ -277,16 +209,6 @@ export const deriveCandyMachineV2ProgramAddress = async (
   return await PublicKey.findProgramAddress(
     [Buffer.from(CANDY_MACHINE), candyMachineId.toBuffer()],
     CANDY_MACHINE_PROGRAM_V2_ID,
-  );
-};
-
-export const getConfig = async (
-  authority: anchor.web3.PublicKey,
-  uuid: string,
-): Promise<[PublicKey, number]> => {
-  return await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
-    CANDY_MACHINE_PROGRAM_ID,
   );
 };
 
