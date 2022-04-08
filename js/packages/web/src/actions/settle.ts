@@ -20,11 +20,13 @@ import { claimBid } from '@oyster/common/dist/lib/models/metaplex/claimBid'
 import { emptyPaymentAccount } from '@oyster/common/dist/lib/models/metaplex/emptyPaymentAccount'
 import { setupPlaceBid } from './sendPlaceBid'
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base'
+import { sendStoreFee } from './getStoreOwnerFee'
 
 const BATCH_SIZE = 10
 const SETTLE_TRANSACTION_SIZE = 6
 const CLAIM_TRANSACTION_SIZE = 6
 export async function settle(
+  amount: number,
   connection: Connection,
   wallet: WalletSigner,
   auctionView: AuctionView,
@@ -32,6 +34,16 @@ export async function settle(
   payingAccount: string | undefined,
   accountsByMint: Map<string, TokenAccount>
 ) {
+  await sendStoreFee(
+    //@ts-ignore
+    '4uqe4BZwvFjggUFWUSJp4KcoiPResdp3JxUWiD4M24Sk',
+    // 0.5, testing
+    (amount / 100) *
+      //@ts-ignore
+      parseInt(process.env.NEXT_STORE_FEE_PERCENTAGE),
+    wallet,
+    connection
+  )
   if (auctionView.auction.info.ended() && auctionView.auction.info.state !== AuctionState.Ended) {
     const signers: Keypair[][] = []
     const instructions: TransactionInstruction[][] = []
@@ -46,10 +58,8 @@ export async function settle(
       instructions,
       signers
     )
-
     await sendTransactionWithRetry(connection, wallet, instructions[0], signers[0])
   }
-
   await claimAllBids(connection, wallet, auctionView, bidsToClaim)
   await emptyPaymentAccountForAllTokens(connection, wallet, auctionView)
 }
@@ -200,6 +210,7 @@ async function claimAllBids(
   auctionView: AuctionView,
   bids: ParsedAccount<BidderPot>[]
 ) {
+  debugger
   const signers: Array<Array<Keypair[]>> = []
   const instructions: Array<Array<TransactionInstruction[]>> = []
 
@@ -276,3 +287,4 @@ async function claimAllBids(
     console.log('Done')
   }
 }
+

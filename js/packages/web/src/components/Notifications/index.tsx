@@ -305,6 +305,7 @@ export function useSettlementAuctions({
             )
             if (completeAuctionView) {
               await settle(
+                0,
                 connection,
                 wallet,
                 completeAuctionView,
