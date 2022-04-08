@@ -9,9 +9,9 @@ import {
   DropDownMenuItem,
   Pagination,
 } from '@oyster/common'
+import { Link, useLocation } from 'react-router-dom'
 import queryString from 'query-string'
 import { CollectionView, useNFTCollections } from '../../../hooks/useCollections'
-import { Link, useLocation } from 'react-router-dom'
 import CollectionCard from '../../sections/RecentCollections/CollectionCard'
 import useSearch from '../../../hooks/useSearch'
 

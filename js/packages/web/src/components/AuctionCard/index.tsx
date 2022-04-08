@@ -493,6 +493,15 @@ export const AuctionCard = ({
 
   const actionButtonContent = useActionButtonContent(auctionView)
 
+  // console.log('canClaimPurchasedItem', canClaimPurchasedItem)
+
+  // console.log('shouldHide', shouldHide)
+
+  // console.log('shouldHideInstantSale', shouldHideInstantSale)
+
+  // console.log('auctionView.vault.info.state', auctionView.vault.info.state)
+  // console.log('---------------------------------------------------------------')
+
   if (shouldHide) {
     return <></>
   }
@@ -585,54 +594,31 @@ export const AuctionCard = ({
           )}
         </Button>
       )}
-      {showPlaceBid ? (
-        <>
-          {/* <AmountLabel
-                title='in your wallet'
-                displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
-                style={{ marginBottom: 0 }}
-                amount={balance.balance}
-                tokenInfo={tokenInfo}
-                customPrefix={
-                  <Identicon address={wallet?.publicKey?.toBase58()} style={{ width: 36 }} />
+
+      <>
+        {/* <HowAuctionsWorkModal buttonClassName='black-btn' /> */}
+        {!hideDefaultAction &&
+          !auctionView.auction.info.ended() &&
+          wallet.connected &&
+          isAuctionNotStarted &&
+          !isAuctionManagerAuthorityNotWalletOwner && (
+            <Button
+              className='secondary-btn'
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true)
+                try {
+                  await startAuctionManually(connection, wallet, auctionView)
+                } catch (e) {
+                  console.error(e)
                 }
-              /> */}
-        </>
-      ) : (
-        <div>
-          <HowAuctionsWorkModal buttonClassName='black-btn' />
-          {!hideDefaultAction &&
-            !auctionView.auction.info.ended() &&
-            (wallet.connected && isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
-              <Button
-                className='secondary-btn'
-                disabled={loading}
-                onClick={async () => {
-                  setLoading(true)
-                  try {
-                    await startAuctionManually(connection, wallet, auctionView)
-                  } catch (e) {
-                    console.error(e)
-                  }
-                  setLoading(false)
-                }}
-                style={{ marginTop: 20 }}>
-                {loading ? <Spin /> : 'Start auction'}
-              </Button>
-            ) : (
-              !showPlaceBid && (
-                <Button
-                  className='secondary-btn'
-                  onClick={() => {
-                    if (wallet.connected) setShowPlaceBid(true)
-                    else connect()
-                  }}>
-                  Place Bid
-                </Button>
-              )
-            ))}
-        </div>
-      )}
+                setLoading(false)
+              }}
+              style={{ marginTop: 20 }}>
+              {loading ? <Spin /> : 'Start auction'}
+            </Button>
+          )}
+      </>
 
       {!hideDefaultAction &&
         wallet.connected &&
@@ -745,8 +731,8 @@ export const AuctionCard = ({
       {!hideDefaultAction && !wallet.connected && (
         <Button
           type='primary'
-          size='large'
-          className='action-btn'
+          size='md'
+          className='h-full w-[180px] flex-shrink-0'
           onClick={connect}
           style={{ marginTop: 20 }}>
           Connect wallet to {auctionView.isInstantSale ? 'purchase' : 'place bid'}
