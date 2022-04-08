@@ -1,5 +1,5 @@
 export const LABELS = {
-  STORE_NAME: 'Karmaverse',
+  STORE_NAME: 'Karmaplex',
   CONNECT_LABEL: 'Connect Wallet',
   GIVE_SOL: 'Give me SOL',
   FAUCET_INFO: 'This faucet will help you fund your accounts outside of Solana main network.',

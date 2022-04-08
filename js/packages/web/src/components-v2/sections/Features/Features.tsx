@@ -31,7 +31,7 @@ export const Features: FC<FeaturesProps> = ({ className, ...restProps }: Feature
           <FeatureCard
             icon='/svg/icon-3.svg'
             heading='Curated Collections'
-            description='We take pride in listing collections that are in alignment with <a href="#">our beliefs</a>, and are healthy to the ecosystem. We are not going to list NSFW or low-effort cash grabs on Karmaverse.'
+            description='We take pride in listing collections that are in alignment with <a href="#">our beliefs</a>, and are healthy to the ecosystem. We are not going to list NSFW or low-effort cash grabs on Karmaplex.'
           />
         </div>
       </div>

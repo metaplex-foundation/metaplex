@@ -19,7 +19,7 @@ export const Hero: FC<HeroProps> = ({ className, ...restProps }: HeroProps) => {
       <Parallax
         blur={0}
         bgImage='/img/hero-bg.png'
-        bgImageAlt='Karmaverse'
+        bgImageAlt='Karmaplex'
         strength={200}
         bgClassName='!object-cover !h-[1080px] md:!h-[900px] lg:!h-[900px] !w-full'
       >
@@ -35,7 +35,7 @@ export const Hero: FC<HeroProps> = ({ className, ...restProps }: HeroProps) => {
             </h1>
 
             <p className='mb-[20px] w-full max-w-[320px] text-base lg:max-w-[472px] lg:text-lg'>
-              Karmaverse is an eco-friendly NFT exchange that rewards users for their activity and
+              Karmaplex is an eco-friendly NFT exchange that rewards users for their activity and
               donates a portion of every trade to charitable causes.
             </p>
 

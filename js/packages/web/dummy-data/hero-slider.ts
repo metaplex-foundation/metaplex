@@ -3,7 +3,7 @@ export const heroSlider = [
     id: 0,
     heading: `Buy, sell, trade <br />
     <span class='text-B-400'>eco-friendly</span> NFTs`,
-    description: `Karmaverse is an eco-friendly NFT exchange that rewards users for their activity and donates a portion of every trade to charitable causes.`,
+    description: `Karmaplex is an eco-friendly NFT exchange that rewards users for their activity and donates a portion of every trade to charitable causes.`,
     bgImage: '/hero-banner-1.jpg',
     primaryCTA: {
       label: 'Explore',
@@ -25,7 +25,7 @@ export const heroSlider = [
     heading: `<span class='text-B-400'>Donate</span> to causes that are important to you`,
     description: `Donate crypto or USD to causes that are important to you. 
     Most importantly, unlike other donation portals who take up to 
-    5% per donation, Karmaverse takes 0% processing fee on your donations.`,
+    5% per donation, Karmaplex takes 0% processing fee on your donations.`,
     bgImage: '/hero-banner-2.jpg',
     primaryCTA: {
       label: 'Donate',
@@ -46,7 +46,7 @@ export const heroSlider = [
     id: 2,
     heading: `Buy, sell, trade <br />
     <span class='text-B-400'>eco-friendly</span> NFTs`,
-    description: `Karmaverse is an eco-friendly NFT exchange that rewards users for their activity and donates a portion of every trade to charitable causes.`,
+    description: `Karmaplex is an eco-friendly NFT exchange that rewards users for their activity and donates a portion of every trade to charitable causes.`,
     bgImage: '/hero-banner-1.jpg',
     primaryCTA: {
       label: 'Explore',
@@ -68,7 +68,7 @@ export const heroSlider = [
     heading: `<span class='text-B-400'>Donate</span> to causes that are important to you`,
     description: `Donate crypto or USD to causes that are important to you. 
     Most importantly, unlike other donation portals who take up to 
-    5% per donation, Karmaverse takes 0% processing fee on your donations.`,
+    5% per donation, Karmaplex takes 0% processing fee on your donations.`,
     bgImage: '/hero-banner-2.jpg',
     primaryCTA: {
       label: 'Donate',

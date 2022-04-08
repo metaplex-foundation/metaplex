@@ -57,7 +57,7 @@ export const header = {
           isDirectLink: true,
         },
         {
-          label: 'About Karmaverse',
+          label: 'About Karmaplex',
           value: '/static-content',
           isDirectLink: true,
         },

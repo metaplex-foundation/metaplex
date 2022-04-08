@@ -16,7 +16,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <meta name='viewport' content='width=device-width, initial-scale=1' />
-        <title>Karmaverse NFT Marketplace</title>
+        <title>Karmaplex NFT Marketplace</title>
         <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1' />
       </Head>
       <div id='root'>
