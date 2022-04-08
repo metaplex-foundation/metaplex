@@ -19,6 +19,7 @@ import { AccountAndPubkey } from '../helpers/accounts';
 import { signMetadataInstruction } from './sign';
 import log from 'loglevel';
 import { sleep } from '../helpers/various';
+import * as fs from 'fs';
 
 const SIGNING_INTERVAL = 60 * 1000; //60s
 let lastCount = 0;
@@ -64,10 +65,14 @@ async function findAndSignMetadata(
   wallet: Keypair,
   batchSize: number,
 ) {
+  let beforeTime = Date.now();
+  log.info(`start getAccountsByCreatorAddress, before = ${beforeTime}`)
   const metadataByCandyMachine = await getAccountsByCreatorAddress(
     candyMachineAddress,
     connection,
   );
+  let afterTime = Date.now();
+  log.info(`end getAccountsByCreatorAddress, time Elapsed ${afterTime - beforeTime}`)
   if (lastCount === metadataByCandyMachine.length) {
     log.debug(`Didn't find any new NFTs to sign - ${new Date()}`);
     return;
@@ -76,11 +81,15 @@ async function findAndSignMetadata(
   log.info(
     `Found ${metadataByCandyMachine.length} nft's minted by candy machine ${candyMachineAddress}`,
   );
+  beforeTime = Date.now();
+  log.info(`start getCandyMachineVerifiedMetadata, before = ${beforeTime}`)
   const candyVerifiedListToSign = await getCandyMachineVerifiedMetadata(
-    metadataByCandyMachine,
+    metadataByCandyMachine, //array of [decoded metadata, accountpubkey]
     candyMachineAddress,
     wallet.publicKey.toBase58(),
   );
+  afterTime = Date.now();
+  log.info(`end getCandyMachineVerifiedMetadata, time Elapsed ${afterTime - beforeTime}`)
   log.info(
     `Found ${
       candyVerifiedListToSign.length
@@ -248,18 +257,55 @@ async function getCandyMachineVerifiedMetadata(
 
 async function sendSignMetadata(connection, wallet, metadataList, batchsize) {
   let total = 0;
+  let counter = 0;
+
+  var size = batchsize;
+  var arrayOfArrays = [];
+  for (var i=0; i<metadataList.length; i+=size) {
+       arrayOfArrays.push(metadataList.slice(i,i+size));
+  }
+  //console.log(arrayOfArrays);
+  for (var i = 0; i < arrayOfArrays.length; i += 100) {
+    console.log('batching 10x10');
+    await Promise.allSettled(arrayOfArrays.splice(0, 100).map(async arr => {
+      var max = 30; //seconds
+      var min = 1; //seconds
+      var rand = Math.floor(Math.random() * (max - min + 1) + min);
+      //console.log(`signing ${arr}`);
+      await new Promise(f => setTimeout(f, rand * 1000));
+
+      await signMetadataBatch(arr, connection, wallet);
+    }));
+  }
+
+  /*
+  await Promise.allSettled(arrayOfArrays.map(async arr => {
+    var max = 30; //seconds
+    var min = 1; //seconds
+    var rand = Math.floor(Math.random() * (max - min + 1) + min);
+    //console.log(`signing ${arr}`);
+    await new Promise(f => setTimeout(f, rand * 1000));
+
+    await signMetadataBatch(arr, connection, wallet);
+  }));
+  */
+
+  /*
   while (metadataList.length > 0) {
-    log.debug('Signing metadata ');
+    log.info(`Signing metadata batch ${counter}`);
     let sliceAmount = batchsize;
     if (metadataList.length < batchsize) {
       sliceAmount = metadataList.length;
     }
     const removed = metadataList.splice(0, sliceAmount);
     total += sliceAmount;
-    await delay(500);
+    //await delay(500);
+    log.info('signing batch size')
     await signMetadataBatch(removed, connection, wallet);
     log.debug(`Processed ${total} nfts`);
+    counter += batchsize;
   }
+  */
   log.info(`Finished signing metadata for ${total} NFTs`);
 }
 

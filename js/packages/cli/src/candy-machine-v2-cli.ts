@@ -1002,16 +1002,27 @@ programCommand('mint_multiple_tokens')
     log.info(`Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...`);
 
     const mintToken = async index => {
+		  var max = 30; //seconds
+		  var min = 1; //seconds
+		  var rand = Math.floor(Math.random() * (max - min + 1) + min); //Generate Random number between 5 - 10
+		  log.info(`waiting ${rand} seconds`)
+		  await new Promise(f => setTimeout(f, rand * 1000)); // Wait random seconds to not get 429 too many requests
+
       const tx = await mintV2(keypair, env, candyMachine, rpcUrl);
       log.info(`transaction ${index + 1} complete`, tx);
 
-      if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
+      /*if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
         log.info('minting another token...');
         await mintToken(index + 1);
-      }
+      }*/
     };
+    //batch by 100
+    for (let i = 0; i < NUMBER_OF_NFTS_TO_MINT; i += 100){
+      await Promise.allSettled(Array.from(Array(100).keys()).map(x => mintToken(x)));
+      log.info('starting new batch');
+    }
 
-    await mintToken(0);
+    //await mintToken(0);
 
     log.info(`minted ${NUMBER_OF_NFTS_TO_MINT} tokens`);
     log.info('mint_multiple_tokens finished');

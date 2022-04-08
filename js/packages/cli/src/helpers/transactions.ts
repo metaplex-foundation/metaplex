@@ -118,7 +118,8 @@ export async function sendSignedTransaction({
   } catch (err) {
     log.error('Timeout Error caught', err);
     if (err.timeout) {
-      throw new Error('Timed out awaiting confirmation on transaction');
+      log.error('timed out but continuing');
+      //throw new Error('Timed out awaiting confirmation on transaction, timeout is ' + DEFAULT_TIMEOUT);
     }
     let simulateResult: SimulatedTransactionResponse | null = null;
     try {

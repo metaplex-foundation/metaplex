@@ -399,7 +399,7 @@ export async function mintV2(
     (data.gatekeeper ? 33 : 0) +
     (data.gatekeeper?.expireOnUse ? 66 : 0);
 
-  log.info('Transaction size estimate: ', txnEstimate);
+  //log.info('Transaction size estimate: ', txnEstimate);
   const INIT_INSTRUCTIONS_LENGTH = 4;
   const INIT_SIGNERS_LENGTH = 1;
   let initInstructions: anchor.web3.TransactionInstruction[] = [];
