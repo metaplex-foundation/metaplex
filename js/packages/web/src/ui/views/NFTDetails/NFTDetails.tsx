@@ -20,7 +20,6 @@ export const NFTDetails: FC<NFTDetailsProps> = () => {
   }, [item])
 
   const onSetAuction = (data: AuctionView) => {
-    // console.log('data', data)
     setAuction(undefined)
     if (data) {
       setAuction(() => data)
@@ -37,6 +36,5 @@ export const NFTDetails: FC<NFTDetailsProps> = () => {
 
 export function NftNext() {
   const { id } = useParams<{ id: string }>()
-
   return <Redirect to={`/nft/${id}`} />
 }

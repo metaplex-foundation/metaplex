@@ -25,7 +25,6 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const {
     value: { solVal, usdValFormatted },
   } = useNFTData(auction)
-
   const url = data?.image
   const bids = useBidsForAuction(auction.auction.pubkey || '')
 
@@ -41,6 +40,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   }, [])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
+
   return (
     <div className={NFTDetailsBodyClasses}>
       <div className='container flex gap-[40px] rounded border border-slate-200 bg-white p-[40px] shadow-card-light'>

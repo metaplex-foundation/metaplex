@@ -28,6 +28,7 @@ export const useInstantSaleState = (auctionView: AuctionView): ActionButtonConte
         if (isAlreadyBought) break
       }
     }
+
     canClaimPurchasedItem = !!(myBidderPot && !isBidCanceled) && !isAlreadyBought
   } else {
     isAlreadyBought = !!(myBidderPot && isBidCanceled)
@@ -35,6 +36,7 @@ export const useInstantSaleState = (auctionView: AuctionView): ActionButtonConte
   }
 
   const isOwner = auctionManager.authority === wallet?.publicKey?.toBase58()
+
   const isAuctionEnded = auction.info.endedAt
   const canClaimItem = !!(isOwner && isAuctionEnded)
   const canEndInstantSale = isOwner && !isAuctionEnded
