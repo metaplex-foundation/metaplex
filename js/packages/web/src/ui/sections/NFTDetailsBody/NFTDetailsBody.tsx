@@ -1,9 +1,9 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
-import { AttributesCard, Button } from '@oyster/common'
+import { AttributesCard } from '@oyster/common'
 import { Image, Avatar, SOLIcon } from '@oyster/common'
 import { NFTDetailsTabs } from './../NFTDetailsTabs'
-import { AuctionView, useCreators, useExtendedArt } from '../../../hooks'
+import { AuctionView, useBidsForAuction, useCreators, useExtendedArt } from '../../../hooks'
 import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
@@ -16,6 +16,7 @@ export interface NFTDetailsBodyProps {
 export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) => {
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const { liveCollections } = useCollections()
+  const [owner, setOwner] = useState<string>()
 
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
@@ -26,6 +27,18 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   } = useNFTData(auction)
 
   const url = data?.image
+  const bids = useBidsForAuction(auction.auction.pubkey || '')
+
+  useEffect(() => {
+    if (bids.length > 0) {
+      const lastOwner = bids.pop()
+      if (lastOwner) {
+        setOwner(lastOwner.info.bidderPubkey)
+      } else {
+        setOwner('')
+      }
+    }
+  }, [])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
   return (
@@ -75,20 +88,34 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                   </div>
                 )}
               </div>
-              {(creators || []).map(({ image, address }) => {
-                return (
-                  <Avatar
-                    key={address}
-                    address={address}
-                    image={image}
-                    label={`Owned by — ${address?.substring(0, 3)}...${address?.substring(
-                      address.length - 3
-                    )}`}
-                    size={32}
-                    labelClassName='text-sm font-500 text-B-400'
-                  />
-                )
-              })}
+              <div className='text-sm font-500 text-B-400'>
+                {owner ? (
+                  <span>
+                    Owned by -
+                    {`
+                      ${owner.substring(0, 3)}...
+                      ${owner.substring(owner.length - 4)}
+                    `}
+                  </span>
+                ) : (
+                  <span>
+                    {(creators || []).map(({ image, address }) => {
+                      return (
+                        <Avatar
+                          key={address}
+                          address={address}
+                          image={image}
+                          label={`Owned by — ${address?.substring(0, 3)}...${address?.substring(
+                            address.length - 3
+                          )}`}
+                          size={32}
+                          labelClassName='text-sm font-500 text-B-400'
+                        />
+                      )
+                    })}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className='flex flex-col gap-[12px]'>
