@@ -665,12 +665,11 @@ export const AuctionCard = ({
               <SOLIcon size={18} />
               <input
                 // type='number'
+                type='number'
                 className='h-full w-full appearance-none bg-transparent outline-none'
                 value={value ?? ''}
                 onChange={e =>
-                  e.target.value && !isNaN(Number(e.target.value))
-                    ? setValue(Number(e.target.value))
-                    : setValue(0)
+                  setValue(parseFloat(e.target.value))
                 }
                 placeholder='Enter'
               />
@@ -707,7 +706,7 @@ export const AuctionCard = ({
                   setLoading(false)
                 }
               }}>
-              {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? <Spin /> : 'Bid now'}
+              {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? <Spin /> : 'Place Bid'}
             </Button>
             {/* <div>
                 <Button

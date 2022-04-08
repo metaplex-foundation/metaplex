@@ -7,7 +7,7 @@ export const createSaleRecord = async (data: any) => {
     await axios.post(`${api}/create`, data)
   } catch (error: any) {
     console.log('Create sales API error: ', error.message)
-    throw new Error(error.message)
+    return
   }
 }
 
@@ -17,6 +17,6 @@ export const getSalesRecords = async (mintKey: string) => {
     return sales
   } catch (error: any) {
     console.log('Get sales API error: ', error.message)
-    throw new Error(error.message)
+    return
   }
 }

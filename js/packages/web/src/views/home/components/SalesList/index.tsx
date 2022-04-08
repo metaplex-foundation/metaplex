@@ -45,7 +45,7 @@ export const SalesListView = (props: { collectionMintFilter?: string }) => {
  <Banner
         src='/banner.png'
         headingText='A Community Focused Solana NFT Marketplace'
-        subHeadingText='Karmaverse is an eco-friendly NFT exchange that 
+        subHeadingText='Karmaplex is an eco-friendly NFT exchange that 
         rewards users for their activity and donates a portion
         of every trade to charitable causes.'
         actionComponent={<HowToBuyModal buttonClassName='secondary-btn' />}

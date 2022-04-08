@@ -1,6 +1,6 @@
 export const FAQ = [
   {
-    heading: 'What is Karmaverse?',
+    heading: 'What is Karmaplex?',
     body: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Illum cumque quisquam ab, asperiores distinctio molestiae aspernatur iste minima accusantium eius explicabo voluptatem assumenda, quae doloribus nobis dolore ducimus molestias ut.',
   },
   {

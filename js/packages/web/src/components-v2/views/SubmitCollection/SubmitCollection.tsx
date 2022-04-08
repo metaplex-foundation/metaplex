@@ -67,7 +67,7 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>
-              Have you or someone else applied for this collection to be listed on Karmaverse in the
+              Have you or someone else applied for this collection to be listed on Karmaplex in the
               past?
             </label>
             <div className='flex w-full'>
@@ -177,7 +177,7 @@ export const SubmitCollection: FC<SubmitCollectionProps> = ({
             </label>
             <p className='text-gray-600'>
               If you haven't finished your minting, please enter an estimated date, and then update
-              us through customer-support@karmaverse.io when you are ready to list.
+              us through customer-support@Karmaplex.io when you are ready to list.
             </p>
             <div className='flex w-full'>
               <DatePicker

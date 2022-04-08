@@ -58,7 +58,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
           <Parallax
             blur={0}
             bgImage={'/img/collection-banner.png'}
-            bgImageAlt='Karmaverse'
+            bgImageAlt='Karmaplex'
             strength={200}
             bgClassName='!object-cover !object-center !h-[200px] lg:!h-[300px] !w-full'>
             <div className='flex h-[180px] w-full lg:h-[280px]' />

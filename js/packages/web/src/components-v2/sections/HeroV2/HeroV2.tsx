@@ -26,7 +26,7 @@ export const HeroV2: FC<HeroV2Props> = ({ className, ...restProps }: HeroV2Props
         <Parallax
           blur={0}
           bgImage={bgImage || '/img/hero-bg.png'}
-          bgImageAlt={heading || 'Karmaverse'}
+          bgImageAlt={heading || 'Karmaplex'}
           strength={200}
           bgClassName='!object-cover !h-[1080px] md:!h-[900px] lg:!h-[900px] !w-full'>
           {/* <span className='absolute top-0 bottom-0 left-0 right-0 h-full w-full bg-white opacity-80' /> */}
