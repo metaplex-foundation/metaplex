@@ -21,14 +21,16 @@ export const NFTDetailsActivity: FC<NFTDetailsActivityProps> = ({
     const fetchSalesRecords = async () => {
       const sales: any = await getSalesRecords(mintKey)
       
-      sales.data.forEach((record) => {
-        record.type = record.tnx_type
-        record.price = record.tnx_sol_amount
-        record.from = `${record.from_address.substring(0,3)}...${record.from_address.substring(record.from_address.length - 4)}`
-        record.to = `${record.to_address.substring(0,3)}...${record.to_address.substring(record.to_address.length - 4)}`
-        record.time = moment(record.datetime).startOf('hour').fromNow()
-      })
-      setActivity(sales.data)
+      if (sales && sales.data && sales.data.length > 0) {
+        sales.data.forEach((record) => {
+          record.type = record.tnx_type
+          record.price = record.tnx_sol_amount
+          record.from = `${record.from_address.substring(0,3)}...${record.from_address.substring(record.from_address.length - 4)}`
+          record.to = `${record.to_address.substring(0,3)}...${record.to_address.substring(record.to_address.length - 4)}`
+          record.time = moment(record.datetime).startOf('hour').fromNow()
+        })
+        setActivity(sales.data)
+      }
     }
 
     fetchSalesRecords()
