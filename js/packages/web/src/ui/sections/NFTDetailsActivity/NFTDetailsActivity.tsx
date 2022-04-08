@@ -19,7 +19,7 @@ export const NFTDetailsActivity: FC<NFTDetailsActivityProps> = ({
   useEffect(() => {
     const mintKey = restProps.auction.auction.pubkey;
     const fetchSalesRecords = async () => {
-      const sales = await getSalesRecords(mintKey)
+      const sales: any = await getSalesRecords(mintKey)
       
       sales.data.forEach((record) => {
         record.type = record.tnx_type
