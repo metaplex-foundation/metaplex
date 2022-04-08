@@ -2597,7 +2597,7 @@
     cborg "^1.6.0"
     multiformats "^9.5.4"
 
-"@ipld/dag-pb@^2.0.2", "@ipld/dag-pb@^2.1.3":
+"@ipld/dag-pb@^2.0.2", "@ipld/dag-pb@^2.1.16", "@ipld/dag-pb@^2.1.3":
   version "2.1.16"
   resolved "https://registry.yarnpkg.com/@ipld/dag-pb/-/dag-pb-2.1.16.tgz#7133fec4f1bbce8fedb859bc2d477a0a2401de93"
   integrity sha512-5+A87ZsKZ2yEEjtW6LIzTgDJcm6O24d0lmXlubwtMblI5ZB+aTw7PH6kjc8fM6pbnNtVg4Y+c+WZ3zCxdesIBg==
@@ -3873,17 +3873,20 @@
   resolved "https://registry.yarnpkg.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-11.1.4.tgz#370c310ba197e799235492bf71084d3acbbb2c6a"
   integrity sha512-7MPXYWsCo5qGZXyyJwBLvQkYi0hKARtpjGxjt/mdxn7A7O+jKJgAuxgOo/lnZIiXfbJzxRnSD8k6WkUwN0IVmg==
 
-"@nftstorage/metaplex-auth@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@nftstorage/metaplex-auth/-/metaplex-auth-1.1.0.tgz#67c4a3503a217ecce5e657de38ea402bbd21267d"
-  integrity sha512-99NYV76vSDmmRF+aAdAdxElmcs9yHCfdf5mjqnxI1ONlzehcTaRtD6VQ5ro7qGlXNVlzru0wK1kxIAuzn17NqQ==
+"@nftstorage/metaplex-auth@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@nftstorage/metaplex-auth/-/metaplex-auth-1.2.0.tgz#e0bb756973ced690eb88223a15c3f9bc80c1ebe1"
+  integrity sha512-ffT/cZv1GWXDVrwzNUGGxApDwQJSxUZJAqnPpTk5VBc55T2RtUm2yZ11p74h2fyam1erJH38zg7S9IoaTxSZ8w==
   dependencies:
     "@dashkite/tweetnacl" "^1.0.3"
+    "@ipld/dag-pb" "^2.1.16"
     "@solana/web3.js" "^1.30.2"
     "@web-std/fetch" "^2.1.2"
     "@web-std/file" "^1.1.4"
     ajv "^8.8.1"
     files-from-path "^0.2.1"
+    ipfs-car "^0.6.2"
+    ipfs-unixfs "^6.0.6"
     multiformats "^9.6.2"
     nft.storage "^5.2.5"
     p-retry "^5.0.0"

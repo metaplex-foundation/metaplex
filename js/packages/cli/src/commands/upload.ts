@@ -25,9 +25,9 @@ import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
 import { chunks, sleep } from '../helpers/various';
-import { nftStorageUpload } from '../helpers/upload/nft-storage';
 import { pinataUpload } from '../helpers/upload/pinata';
 import { setCollection } from './set-collection';
+import { nftStorageUploadGenerator } from '../helpers/upload/nft-storage';
 
 export async function uploadV2({
   files,
@@ -38,6 +38,7 @@ export async function uploadV2({
   retainAuthority,
   mutable,
   nftStorageKey,
+  nftStorageGateway,
   ipfsCredentials,
   pinataJwt,
   pinataGateway,
@@ -68,6 +69,7 @@ export async function uploadV2({
   retainAuthority: boolean;
   mutable: boolean;
   nftStorageKey: string;
+  nftStorageGateway: string | null;
   ipfsCredentials: ipfsCreds;
   pinataJwt: string;
   pinataGateway: string;
@@ -260,6 +262,27 @@ export async function uploadV2({
         await sleep(5000);
         await withdrawBundlr(walletKeyPair);
       }
+    } else if (storage === StorageType.NftStorage) {
+      const generator = nftStorageUploadGenerator({
+        dirname,
+        assets: dedupedAssetKeys,
+        env,
+        walletKeyPair,
+        nftStorageKey,
+        nftStorageGateway,
+        batchSize,
+      });
+      for await (const result of generator) {
+        updateCacheAfterUpload(
+          cacheContent,
+          result.assets.map(a => a.cacheKey),
+          result.assets.map(a => a.metadataJsonLink),
+          result.assets.map(a => a.updatedManifest.name),
+        );
+
+        saveCache(cacheName, env, cacheContent);
+        log.info('Saved bundle upload result to cache.');
+      }
     } else {
       const progressBar = new cliProgress.SingleBar(
         {
@@ -310,16 +333,6 @@ export async function uploadV2({
                   manifestBuffer,
                   pinataJwt,
                   pinataGateway,
-                );
-                break;
-              case StorageType.NftStorage:
-                [link, imageLink, animationLink] = await nftStorageUpload(
-                  image,
-                  animation,
-                  manifestBuffer,
-                  walletKeyPair,
-                  env,
-                  nftStorageKey,
                 );
                 break;
               case StorageType.Ipfs:
