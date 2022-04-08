@@ -20,22 +20,13 @@ export interface BlockCarouselProps {
   }
 }
 
-const SampleComponent = ({ children }: any) => {
-  return (
-    <div className='flex h-[400px] w-full items-center justify-center bg-[#C2D0DE] text-[40px] font-[600] uppercase text-white'>
-      {children}
-    </div>
-  )
-}
-
 export const BlockCarousel: FC<BlockCarouselProps> = ({
   className,
   id,
   options,
   slides,
   onChangeIndex,
-  ...restProps
-}: BlockCarouselProps) => {
+}) => {
   const BlockCarouselClasses = CN(`block-carousel w-full flex flex-col relative`, className)
 
   const {
@@ -81,25 +72,49 @@ export const BlockCarousel: FC<BlockCarouselProps> = ({
     })
   }, [])
 
-  const sampleSlides = [
-    { id: 0, Component: () => <SampleComponent>Slide one</SampleComponent> },
-    { id: 1, Component: () => <SampleComponent>Slide two</SampleComponent> },
-    { id: 2, Component: () => <SampleComponent>Slide three</SampleComponent> },
-  ]
+  useEffect(() => {
+    Swiper.use([Navigation, Autoplay, Mousewheel])
+
+    const swiper = new Swiper(`#${id}` || '.block-carousel', {
+      autoplay: autoPlay || false,
+      centeredSlides: false,
+      direction: 'horizontal',
+      slideClass: slideClass || 'block-carousel__item',
+      slidePrevClass: slidePrevClass || 'block-carousel__item__prev',
+      slidesPerView: slidesPerView || 4,
+      spaceBetween: spaceBetween || 32,
+      updateOnWindowResize: updateOnWindowResize || true,
+      wrapperClass: wrapperClass || 'block-carousel__wrapper',
+      navigation: {
+        nextEl: `.${id}-next-button`,
+        prevEl: `.${id}-prev-button`,
+      },
+      resizeObserver: resizeObserver || true,
+      mousewheel: { forceToAxis: true },
+      on: {
+        slideChange: function () {
+          onChangeIndex(
+            (swiper.isBeginning && 'isFirst') || (swiper.isEnd && 'isLast') || swiper.activeIndex
+          )
+        },
+      },
+      watchSlidesProgress: true,
+      ...restOptions,
+    })
+  }, [slides?.length])
 
   return (
-    <div id={id} className={BlockCarouselClasses} {...restProps}>
+    <div id={id} className={BlockCarouselClasses}>
       <ul className='block-carousel__wrapper m-0 flex list-none p-0'>
-        {(slides || sampleSlides).map(
-          ({ id, Component, ...restProps }: SlideProps, index: number) => (
+        {slides?.map(({ id, Component }: SlideProps) => {
+          return (
             <li
-              key={id || index}
-              className='block-carousel__item flex flex-shrink-0 flex-col'
-              {...restProps}>
-              <Component />
+              key={id + 'block-carousel__item'}
+              className='block-carousel__item flex flex-shrink-0 flex-col'>
+              {Component}
             </li>
           )
-        )}
+        })}
       </ul>
     </div>
   )
@@ -266,7 +281,3 @@ export const PrevButton = (prop: any) => (
     </defs>
   </svg>
 )
-
-BlockCarousel.defaultProps = {}
-
-export default BlockCarousel

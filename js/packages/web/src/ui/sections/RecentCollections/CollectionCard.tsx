@@ -22,7 +22,7 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
   if (collection.isExternal && collection._meta?.collection?.name) {
     nameProp.name = collection._meta.collection.name
   }
-
+  // console.log('name=>', nameProp)
   return (
     <BuyCard {...rest} {...dx} image={data?.image ?? ''} {...nameProp} onClickButton={() => {}} />
   )

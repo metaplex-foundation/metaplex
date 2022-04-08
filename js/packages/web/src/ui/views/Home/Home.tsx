@@ -5,7 +5,7 @@ import { RecentCollections } from '../../sections/RecentCollections'
 import { LaunchpadCard } from '../../sections/LaunchpadCard'
 import { TrendingCollections } from '../../sections/TrendingCollections'
 import { WhyUS } from '../../sections/WhyUS'
-import { useCollections } from '../../../hooks/useCollections'
+import { useNFTCollections } from '../../../hooks/useCollections'
 
 export interface HomeProps {}
 
@@ -19,7 +19,8 @@ export enum LiveAuctionViewState {
 
 export const Home: FC<HomeProps> = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All)
-  const { liveCollections } = useCollections()
+  const { liveCollections } = useNFTCollections()
+
   return (
     <div className='home'>
       <Hero className='pt-[80px]' />
@@ -28,9 +29,9 @@ export const Home: FC<HomeProps> = () => {
         onChangeActiveKey={(key: LiveAuctionViewState) => setActiveKey(key)}
         className='pt-[80px]'
       />
-      <RecentCollections liveCollections={liveCollections} className='pt-[80px] pb-[40px]' />
+      <RecentCollections liveCollections={[...liveCollections]} className='pt-[80px] pb-[40px]' />
       <LaunchpadCard />
-      <TrendingCollections liveCollections={liveCollections} className='pt-[80px] pb-[80px]' />
+      <TrendingCollections liveCollections={[...liveCollections]} className='pt-[80px] pb-[80px]' />
       <WhyUS className='pt-[40px] pb-[120px]' />
     </div>
   )

@@ -13,6 +13,7 @@ export interface CollectionView {
   state: AuctionViewState
   isExternal: boolean
   _meta?: any
+  name?: string
 }
 
 export const useCollections = () => {
@@ -52,23 +53,20 @@ export const useCollections = () => {
           }
         }
       } else {
-        const isExit = !!collections.find(
-          ({ pubkey }) => pubkey === auction?.thumbnail?.metadata.pubkey
-        )
-        if (!isExit) {
-          getData(auction?.thumbnail?.metadata.pubkey).then(res => {
-            if (res?.collection?.name && !isExit) {
-              collections.push({
-                pubkey: auction?.thumbnail?.metadata.pubkey,
-                mint: collection,
-                data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
-                state: auction.state,
-                isExternal: true,
-                _meta: res,
-              })
-            }
-          })
-        }
+        getData(auction?.thumbnail?.metadata.pubkey).then(res => {
+          const isExit = !!collections.find(({ name }) => name === res?.collection?.name)
+          if (res?.collection?.name && !isExit) {
+            collections.push({
+              pubkey: auction?.thumbnail?.metadata.pubkey,
+              mint: collection,
+              data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
+              state: auction.state,
+              isExternal: true,
+              _meta: res,
+              name: res?.collection?.name,
+            })
+          }
+        })
       }
     })
     setStateFunc(collections)
@@ -83,4 +81,61 @@ export const useCollections = () => {
   }, [endedAuctions, liveCollections])
 
   return { liveCollections, endedCollections }
+}
+
+export const useNFTCollections = () => {
+  const [liveCollections, setLiveCollections] = useState<CollectionView[]>([])
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+  const { metadataByCollection } = useMeta()
+  const { getData } = useExtendedCollection()
+
+  useEffect(() => {
+    console.log('auctions.length', auctions.length)
+    getCollections()
+  }, [auctions.length])
+
+  const getCollections = (filterMints?: CollectionView[]) => {
+    const usedCollections = new Set<string>(filterMints?.map(c => c.mint))
+    const collections: CollectionView[] = []
+
+    auctions.forEach(auction => {
+      const collection = auction?.thumbnail?.metadata?.info?.collection?.key
+
+      if (collection) {
+        if (!usedCollections.has(collection)) {
+          const metadata = metadataByCollection[collection]
+          if (metadata) {
+            usedCollections.add(collection)
+            collections.push({
+              pubkey: metadata.pubkey,
+              mint: collection,
+              data: metadata.info as unknown as MetadataData,
+              state: auction.state,
+              isExternal: false,
+            })
+          }
+        }
+      } else {
+        getData(auction?.thumbnail?.metadata.pubkey).then(res => {
+          const isExit = !!collections.find(({ name }) => name === res?.collection?.name)
+          if (res?.collection?.name && !isExit) {
+            collections.push({
+              pubkey: auction?.thumbnail?.metadata.pubkey,
+              mint: collection,
+              data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
+              state: auction.state,
+              isExternal: true,
+              name: res?.collection?.name,
+              _meta: res,
+            })
+          }
+        })
+      }
+    })
+    setLiveCollections(collections)
+  }
+
+  return {
+    liveCollections,
+  }
 }
