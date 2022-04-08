@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react'
+import React, { FC } from 'react'
 import CN from 'classnames'
 import { SOLIcon, Avatar, formatTokenAmount } from '@oyster/common'
 import { AuctionView, useBidsForAuction } from '../../../hooks'
@@ -18,10 +18,6 @@ export const NFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
   const {
     remaining: { remainingHours },
   } = useNFTData(restProps.auction)
-
-  useEffect(() => {
-    console.log('Data: ', bids)
-  }, [])
 
   return (
     <div className={NFTDetailsCurrentOffersClasses} {...restProps}>
