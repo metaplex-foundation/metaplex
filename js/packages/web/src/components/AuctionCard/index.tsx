@@ -679,12 +679,11 @@ export const AuctionCard = ({
               <SOLIcon size={18} />
               <input
                 // type='number'
+                type='number'
                 className='h-full w-full appearance-none bg-transparent outline-none'
                 value={value ?? ''}
                 onChange={e =>
-                  e.target.value && !isNaN(Number(e.target.value))
-                    ? setValue(Number(e.target.value))
-                    : setValue(0)
+                  setValue(parseFloat(e.target.value))
                 }
                 placeholder='Enter'
               />
@@ -705,8 +704,6 @@ export const AuctionCard = ({
               className='h-full w-[180px] flex-shrink-0'
               // disabled={invalidBid}
               onClick={async () => {
-                // Invoke the API
-                console.log('Bid button clicked', value, myPayingAccount.pubkey)
                 setLoading(true)
                 if (myPayingAccount && value) {
                   const bid = await sendPlaceBid(
@@ -717,14 +714,13 @@ export const AuctionCard = ({
                     accountByMint,
                     value
                   )
-                  console.log('Bid object: ', bid)
                   setLastBid(bid)
                   // setShowBidModal(false);
                   setShowBidPlaced(true)
                   setLoading(false)
                 }
               }}>
-              {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? <Spin /> : 'Bid now'}
+              {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? <Spin /> : 'Place Bid'}
             </Button>
             {/* <div>
                 <Button
