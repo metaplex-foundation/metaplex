@@ -184,7 +184,7 @@ export const Discover: FC<DiscoverProps> = () => {
         <ul className='grid grid-cols-4 gap-[32px]'>
           {(collections || []).map((collection: any) => (
             <li key={collection.pubkey}>
-              <Link to={`/collection/${collection.mint}`}>
+              <Link to={`/collection/${collection.mint ?? collection.name}`}>
                 <CollectionCard hasButton={false} collection={collection} />
               </Link>
             </li>
