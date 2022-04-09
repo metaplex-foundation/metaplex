@@ -62,6 +62,7 @@ export const Collection: FC<CollectionProps> = () => {
     min: null,
     max: null,
   })
+  const [data, setData] = useState<any>(null)
 
   const { id }: ParamsInterface = useParams()
   const { liveCollections } = useCollections()
@@ -69,7 +70,31 @@ export const Collection: FC<CollectionProps> = () => {
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
   const pubkey = liveCollections.find(({ mint }) => mint === id)?.pubkey || undefined
-  const { data } = useExtendedArt(pubkey)
+  const { data: colData } = useExtendedArt(pubkey)
+
+  useEffect(() => {
+    if (!colData) {
+      Promise.all(
+        auctions.map(async auction => {
+          const gData = await getData(auction.thumbnail.metadata.pubkey)
+          return { ...gData, _auction: auction }
+        })
+      ).then(res => {
+        const x = res.find(i => {
+          return i.collection?.name === id
+        })
+
+        if (x) {
+          setData({
+            name: x.collection.name,
+            image: x.image,
+          })
+        }
+      })
+    } else {
+      setData(colData)
+    }
+  }, [colData, auctions])
 
   const { getData } = useExtendedCollection()
 
@@ -106,9 +131,24 @@ export const Collection: FC<CollectionProps> = () => {
   }
 
   const filteredAuctions = async (withFilter: boolean) => {
-    const data = auctions.filter(
+    let data = auctions.filter(
       auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
     )
+
+    if (!data.length && !pubkey) {
+      const allItemWithData = await Promise.all(
+        auctions.map(async auction => {
+          const gData = await getData(auction.thumbnail.metadata.pubkey)
+          return { ...gData, _auction: auction }
+        })
+      )
+
+      data = allItemWithData
+        .filter(i => {
+          return i.collection?.name === id
+        })
+        .map(({ _auction }) => _auction)
+    }
 
     const all = await Promise.all(
       data.map(async auction => await getData(auction.thumbnail.metadata.pubkey))
@@ -258,7 +298,7 @@ export const Collection: FC<CollectionProps> = () => {
     })
   }
 
-  // console.log('searchText', searchText)
+  // console.log('nftItems', nftItems)
 
   return (
     <div className='collection'>

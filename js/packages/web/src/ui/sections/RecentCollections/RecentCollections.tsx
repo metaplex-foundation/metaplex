@@ -15,7 +15,7 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
   className,
   liveCollections,
   ...restProps
-}: RecentCollectionsProps) => {
+}) => {
   const RecentCollectionsClasses = CN(`recent-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
 
@@ -23,7 +23,7 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
     return {
       id: collection.pubkey,
       Component: (
-        <Link to={`/collection/${collection.mint ?? ''}`} key={collection.pubkey}>
+        <Link to={`/collection/${collection.mint ?? collection.name}`} key={collection.pubkey}>
           <CollectionCard collection={collection} />
         </Link>
       ),

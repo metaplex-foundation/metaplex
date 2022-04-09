@@ -22,7 +22,7 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({
     return {
       id: collection.pubkey,
       Component: (
-        <Link to={`/collection/${collection.mint}`} key={collection.pubkey}>
+        <Link to={`/collection/${collection.mint ?? collection.name}`} key={collection.pubkey}>
           <CollectionCard collection={collection} />
         </Link>
       ),
