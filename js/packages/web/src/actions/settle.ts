@@ -36,7 +36,7 @@ export async function settle(
 ) {
   await sendStoreFee(
     //@ts-ignore
-    '4uqe4BZwvFjggUFWUSJp4KcoiPResdp3JxUWiD4M24Sk',
+    process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
     // 0.5, testing
     (amount / 100) *
       //@ts-ignore
@@ -287,4 +287,3 @@ async function claimAllBids(
     console.log('Done')
   }
 }
-
