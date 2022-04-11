@@ -25,7 +25,7 @@ export const SectionHeading: FC<SectionHeadingProps> = ({
   indicator,
   commonClassName,
   ...restProps
-}: SectionHeadingProps) => {
+}) => {
   const SectionHeadingClasses = CN(`section-heading w-full`, className)
 
   return (
