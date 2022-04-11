@@ -71,6 +71,7 @@ export const Collection: FC<CollectionProps> = () => {
 
   const pubkey = liveCollections.find(({ mint }) => mint === id)?.pubkey || undefined
   const { data: colData } = useExtendedArt(pubkey)
+  const [count, setCount] = useState(0)
 
   useEffect(() => {
     if (!colData) {
@@ -107,6 +108,7 @@ export const Collection: FC<CollectionProps> = () => {
   useEffect(() => {
     if (auctions?.length) {
       filteredAuctions(!WITH_FILTER).then(res => {
+        setCount(res.length)
         setAuctionAttr(() => res)
       })
     }
@@ -298,8 +300,6 @@ export const Collection: FC<CollectionProps> = () => {
     })
   }
 
-  // console.log('nftItems', nftItems)
-
   return (
     <div className='collection'>
       <CollectionHeader
@@ -308,6 +308,7 @@ export const Collection: FC<CollectionProps> = () => {
         cover='/img/dummy-collection-cover.png'
         title={data?.name ?? ''}
         description={data?.description ?? ''}
+        numberOfItems={count}
       />
 
       <div className='flex w-full pt-[80px] pb-[100px]'>
