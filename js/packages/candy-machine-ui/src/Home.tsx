@@ -61,7 +61,7 @@ const Home = (props: HomeProps) => {
   const [isWhitelistUser, setIsWhitelistUser] = useState(false);
   const [isPresale, setIsPresale] = useState(false);
   const [discountPrice, setDiscountPrice] = useState<anchor.BN>();
-  const [neexTxnSplit, setNeedTxnSplit] = useState(true);
+  const [needTxnSplit, setNeedTxnSplit] = useState(true);
   const [setupTxn, setSetupTxn] = useState<SetupState>();
 
   const rpcUrl = props.rpcHost;
