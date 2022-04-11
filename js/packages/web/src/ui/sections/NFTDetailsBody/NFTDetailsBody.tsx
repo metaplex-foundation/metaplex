@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
-import { AttributesCard, useConnection } from '@oyster/common'
+import { AttributesCard } from '@oyster/common'
 import { Image, Avatar, SOLIcon } from '@oyster/common'
 import { NFTDetailsTabs } from './../NFTDetailsTabs'
 import { AuctionView, useBidsForAuction, useCreators, useExtendedArt } from '../../../hooks'
@@ -8,7 +8,6 @@ import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
 import useAttribute from '../../../hooks/useAttribute'
-import { PublicKey } from '@solana/web3.js'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -123,17 +122,28 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                 {collection?.name && (
                   <div className='flex items-center gap-[4px]'>
                     <h6 className='text-h6 font-400'>
-                      {collection?.name ?? data?.collection?.name}
+                      {
+                        //@ts-ignore
+                        collection?.name ?? data?.collection?.name
+                      }
                     </h6>
                     <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
                   </div>
                 )}
-                {data?.collection?.name && (
-                  <div className='flex items-center gap-[4px]'>
-                    <h6 className='text-h6 font-400'>{data?.collection?.name}</h6>
-                    <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
-                  </div>
-                )}
+                {
+                  //@ts-ignore
+                  data?.collection?.name && (
+                    <div className='flex items-center gap-[4px]'>
+                      <h6 className='text-h6 font-400'>
+                        {
+                          //@ts-ignore
+                          data?.collection?.name
+                        }
+                      </h6>
+                      <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
+                    </div>
+                  )
+                }
               </div>
               <div className='text-sm font-500 text-B-400'>
                 {owner ? (
