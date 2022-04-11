@@ -453,7 +453,7 @@ export const AuctionCard = ({
         tnx_usd_amount: usdVal,
         from_address: creator.length > 0 ? creator[0] : null,
         to_address: myPayingAccount.pubkey,
-        mint: auctionView.auction.pubkey,
+        mint: auctionView.thumbnail.metadata.info.mint,
         collection: collection?.name,
         auction: auctionView.auction.info,
       }
@@ -668,9 +668,7 @@ export const AuctionCard = ({
                 type='number'
                 className='h-full w-full appearance-none bg-transparent outline-none'
                 value={value ?? ''}
-                onChange={e =>
-                  setValue(parseFloat(e.target.value))
-                }
+                onChange={e => setValue(parseFloat(e.target.value))}
                 placeholder='Enter'
               />
               {/* <InputNumber

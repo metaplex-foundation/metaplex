@@ -5,8 +5,8 @@ import { getSalesRecords } from '../../../api'
 import moment from 'moment'
 
 export interface NFTDetailsActivityProps {
-  [x: string]: any,
-  auction: AuctionView,
+  [x: string]: any
+  auction: AuctionView
 }
 
 export const NFTDetailsActivity: FC<NFTDetailsActivityProps> = ({
@@ -14,19 +14,23 @@ export const NFTDetailsActivity: FC<NFTDetailsActivityProps> = ({
   ...restProps
 }: NFTDetailsActivityProps) => {
   const NFTDetailsActivityClasses = CN(`nft-details-activity w-full`, className)
-  const [ activity, setActivity ] = useState([])
+  const [activity, setActivity] = useState([])
 
   useEffect(() => {
-    const mintKey = restProps.auction.auction.pubkey;
+    const mintKey = restProps.auction.thumbnail.metadata.info.mint
     const fetchSalesRecords = async () => {
       const sales: any = await getSalesRecords(mintKey)
-      
+
       if (sales && sales.data && sales.data.length > 0) {
-        sales.data.forEach((record) => {
+        sales.data.forEach(record => {
           record.type = record.tnx_type
           record.price = record.tnx_sol_amount
-          record.from = `${record.from_address.substring(0,3)}...${record.from_address.substring(record.from_address.length - 4)}`
-          record.to = `${record.to_address.substring(0,3)}...${record.to_address.substring(record.to_address.length - 4)}`
+          record.from = `${record.from_address.substring(0, 3)}...${record.from_address.substring(
+            record.from_address.length - 4
+          )}`
+          record.to = `${record.to_address.substring(0, 3)}...${record.to_address.substring(
+            record.to_address.length - 4
+          )}`
           record.time = moment(record.datetime).startOf('hour').fromNow()
         })
         setActivity(sales.data)
@@ -38,7 +42,7 @@ export const NFTDetailsActivity: FC<NFTDetailsActivityProps> = ({
 
   return (
     <div className={NFTDetailsActivityClasses} {...restProps}>
-      <div className='grid grid-cols-5 px-[8px] pb-[8px] text-md font-500 text-slate-500 mb-[4px]'>
+      <div className='mb-[4px] grid grid-cols-5 px-[8px] pb-[8px] text-md font-500 text-slate-500'>
         <div className='grid-cell'>Type</div>
         <div className='grid-cell'>Price</div>
         <div className='grid-cell'>From</div>
