@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
-import { AttributesCard } from '@oyster/common'
+import { AttributesCard, useConnection } from '@oyster/common'
 import { Image, Avatar, SOLIcon } from '@oyster/common'
 import { NFTDetailsTabs } from './../NFTDetailsTabs'
 import { AuctionView, useBidsForAuction, useCreators, useExtendedArt } from '../../../hooks'
@@ -8,6 +8,7 @@ import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
 import useAttribute from '../../../hooks/useAttribute'
+import { PublicKey } from '@solana/web3.js'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -19,9 +20,35 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
   const { attributesPercentages } = useAttribute(auction)
-
+  // const { userAccounts } = useUserAccounts()
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
+
+  // const connection = useConnection()
+
+  // useEffect(() => {
+  //   try {
+  //     if (pubkey) {
+  //       const mint = new PublicKey('8fDJpV69CcuUnxBkpXQfWdJt2K2DxfuXaU8pX5V8AmSM')
+
+  //       // console.log('mint', mint)
+
+  //       connection
+  //         .getProgramAccounts(mint, 'processed')
+  //         .then(res => {
+  //           console.log('res', res)
+  //         })
+  //         .catch(error => {
+  //           console.log('error', error)
+  //         })
+  //     }
+  //   } catch (error) {
+  //     console.log('error2', error)
+  //   }
+  // }, [])
+
+  // const d = useAccountByMint(auction.thumbnail.metadata.info.mint)
+  // const data = getFilteredProgramAccounts(Connection)
 
   const creators = useCreators(auction)
   const {
@@ -42,6 +69,10 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   }, [])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
+
+  const creator = creators[creators.length - 1]
+
+  // console.log('data', data)
 
   return (
     <div className={NFTDetailsBodyClasses}>
@@ -91,7 +122,15 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                 <h2 className='text-h2 font-500 text-slate-800'>{data?.name}</h2>
                 {collection?.name && (
                   <div className='flex items-center gap-[4px]'>
-                    <h6 className='text-h6 font-400'>{collection?.name}</h6>
+                    <h6 className='text-h6 font-400'>
+                      {collection?.name ?? data?.collection?.name}
+                    </h6>
+                    <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
+                  </div>
+                )}
+                {data?.collection?.name && (
+                  <div className='flex items-center gap-[4px]'>
+                    <h6 className='text-h6 font-400'>{data?.collection?.name}</h6>
                     <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
                   </div>
                 )}
@@ -107,20 +146,20 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                   </span>
                 ) : (
                   <span>
-                    {(creators || []).map(({ image, address }) => {
-                      return (
-                        <Avatar
-                          key={address}
-                          address={address}
-                          image={image}
-                          label={`Owned by — ${address?.substring(0, 3)}...${address?.substring(
-                            address.length - 3
-                          )}`}
-                          size={32}
-                          labelClassName='text-sm font-500 text-B-400'
-                        />
-                      )
-                    })}
+                    {/* {(creators || []).map(({ image, address }) => { */}
+
+                    <Avatar
+                      key={creator.address}
+                      address={creator.address}
+                      image={creator.image}
+                      label={`Owned by — ${creator.address?.substring(
+                        0,
+                        3
+                      )}...${creator.address?.substring(creator.address.length - 3)}`}
+                      size={32}
+                      labelClassName='text-sm font-500 text-B-400'
+                    />
+                    {/* })} */}
                   </span>
                 )}
               </div>
