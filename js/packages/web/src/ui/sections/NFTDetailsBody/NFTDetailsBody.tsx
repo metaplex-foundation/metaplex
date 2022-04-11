@@ -7,6 +7,7 @@ import { AuctionView, useBidsForAuction, useCreators, useExtendedArt } from '../
 import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
+import useAttribute from '../../../hooks/useAttribute'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -17,6 +18,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
+  const { attributesPercentages } = useAttribute(auction)
 
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
@@ -60,16 +62,22 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
 
               <div className='flex w-full flex-col gap-[8px]'>
                 {(data?.attributes || []).map(
-                  ({ trait_type: label, value }: any, index: number) => (
-                    <AttributesCard
-                      key={`${index}-${label}`}
-                      overline={label}
-                      label={value}
-                      tag={`🔥 '14.14%`}
-                      hasHoverEffect={false}
-                      className='cursor-auto !py-[12px] !px-[16px]'
-                    />
-                  )
+                  ({ trait_type: label, value }: any, index: number) => {
+                    const tagVal =
+                      attributesPercentages.find(
+                        p => p.trait_type === label && p.value === value
+                      ) || null
+                    return (
+                      <AttributesCard
+                        key={`${index}-${label}`}
+                        overline={label}
+                        label={value}
+                        tag={tagVal ? `🔥 ${tagVal?.percentage.toFixed(2)}%` : ''}
+                        hasHoverEffect={false}
+                        className='cursor-auto !py-[12px] !px-[16px]'
+                      />
+                    )
+                  }
                 )}
               </div>
             </div>
@@ -128,25 +136,6 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
             </div>
 
             {auction && <AuctionCard auctionView={auction} hideDefaultAction={false} />}
-            {/* <div className='flex items-center gap-[16px]'>
-              <Button size='lg' className='w-[230px]'>
-                Buy Now
-              </Button>
-
-              <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
-                <div className='flex h-full items-center gap-[8px]'>
-                  <SOLIcon size={18} />
-                  <input
-                    type='text'
-                    placeholder='Enter'
-                    className='h-full w-full appearance-none bg-transparent outline-none'
-                  />
-                </div>
-                <Button appearance='neutral' size='md' className='h-full w-[180px] flex-shrink-0'>
-                  Place Bid
-                </Button>
-              </div>
-            </div> */}
 
             <NFTDetailsTabs auction={auction} />
           </div>
