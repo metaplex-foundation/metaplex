@@ -72,6 +72,7 @@ export function Routes() {
               <Route path='/collection/:id' component={() => <Collection />} />
               <Route path='/nft/:id' component={() => <NFTDetails />} />
               <Route path='/nft-next/:id' component={() => <NftNext />} />
+              <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} /> 
               <Route path='/' component={() => <Home />} />
               {/* <Route exact path='/auction/:id' component={() => <AuctionView />} />
             <Route exact path='/auction/:id/billing' component={() => <BillingView />} /> */}
@@ -80,7 +81,7 @@ export function Routes() {
             <Route path='/collection' component={() => <Collection />} />
             <Route path='/static-content' component={() => <StaticContent />} />
             <Route path='/submit-collection' component={() => <SubmitCollection />} />
-            <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} /> */}
+            */}
             </Switch>
           </Providers>
         </ScrollToTop>
