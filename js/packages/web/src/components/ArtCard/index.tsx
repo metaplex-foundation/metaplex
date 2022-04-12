@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardProps, Button, Badge } from 'antd'
-import { MetadataCategory, StringPublicKey } from '@oyster/common'
+import { BidCardAlt, MetadataCategory, StringPublicKey } from '@oyster/common'
 import { ArtContent } from '../ArtContent'
 import { useArt } from '../../hooks'
 import { Artist, ArtType } from '../../types'
@@ -65,63 +65,67 @@ export const ArtCard = (props: ArtCardProps) => {
     badge = `${art.edition} of ${art.supply}`
   }
 
-  const card = (
-    <Card
-      hoverable={true}
-      className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
-      {...rest}
-    >
-      {onClose && (
-        <Button
-          className='card-close-button'
-          shape='circle'
-          onClick={e => {
-            e.stopPropagation()
-            e.preventDefault()
-            onClose && onClose()
-          }}
-        >
-          X
-        </Button>
-      )}
-      <div className='art-card__header'>
-        <MetaAvatar creators={creators} size={32} />
-        <div className='edition-badge'>{badge}</div>
-      </div>
-      <div className='art-content__wrapper'>
-        <ArtContent
-          pubkey={pubkey}
-          uri={image}
-          animationURL={animationURL}
-          category={category}
-          preview={preview}
-          height={height}
-          width={width}
-          artView={artView}
-        />
-      </div>
-      <Meta
-        title={`${name}`}
-        description={
-          <>
-            {/* {art.type === ArtType.Master && (
-              <>
-                <br />
-                {!endAuctionAt && (
-                  <span style={{ padding: '24px' }}>
-                    {(art.maxSupply || 0) - (art.supply || 0)}/
-                    {art.maxSupply || 0} prints remaining
-                  </span>
-                )}
-              </>
-            )} */}
+  console.log('props', props)
 
-            {count && <div className='edition-badge'>Selected count: {count}</div>}
-          </>
-        }
-      />
-    </Card>
-  )
+  // const card = (
+  //   <Card
+  //     hoverable={true}
+  //     className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
+  //     {...rest}
+  //   >
+  //     {onClose && (
+  //       <Button
+  //         className='card-close-button'
+  //         shape='circle'
+  //         onClick={e => {
+  //           e.stopPropagation()
+  //           e.preventDefault()
+  //           onClose && onClose()
+  //         }}
+  //       >
+  //         X
+  //       </Button>
+  //     )}
+  //     <div className='art-card__header'>
+  //       <MetaAvatar creators={creators} size={32} />
+  //       <div className='edition-badge'>{badge}</div>
+  //     </div>
+  //     <div className='art-content__wrapper'>
+  //       <ArtContent
+  //         pubkey={pubkey}
+  //         uri={image}
+  //         animationURL={animationURL}
+  //         category={category}
+  //         preview={preview}
+  //         height={height}
+  //         width={width}
+  //         artView={artView}
+  //       />
+  //     </div>
+  //     <Meta
+  //       title={`${name}`}
+  //       description={
+  //         <>
+  //           {/* {art.type === ArtType.Master && (
+  //             <>
+  //               <br />
+  //               {!endAuctionAt && (
+  //                 <span style={{ padding: '24px' }}>
+  //                   {(art.maxSupply || 0) - (art.supply || 0)}/
+  //                   {art.maxSupply || 0} prints remaining
+  //                 </span>
+  //               )}
+  //             </>
+  //           )} */}
+
+  //           {count && <div className='edition-badge'>Selected count: {count}</div>}
+  //         </>
+  //       }
+  //     />
+  //   </Card>
+  // )
+
+  const card = <BidCardAlt image={image} />
 
   return art.creators?.find(c => !c.verified) ? (
     <Badge.Ribbon text='Unverified'>{card}</Badge.Ribbon>
