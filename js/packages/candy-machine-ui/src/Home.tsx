@@ -236,9 +236,9 @@ const Home = (props: HomeProps) => {
     try {
       setIsUserMinting(true);
       document.getElementById('#identity')?.click();
-      let setupMint: SetupState | undefined;
       if (wallet.connected && candyMachine?.program && wallet.publicKey) {
-        if (neexTxnSplit && setupTxn === undefined) {
+        let setupMint: SetupState | undefined;
+        if (needTxnSplit && setupTxn === undefined) {
           setAlertState({
             open: true,
             message: 'Please sign account setup transaction',
