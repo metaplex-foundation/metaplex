@@ -325,7 +325,11 @@ async function getUpdatedManifest(
   const manifest: Manifest = JSON.parse(
     (await readFile(manifestPath)).toString(),
   );
+  const originalImage = manifest.image;
   manifest.image = imageLink;
+  manifest.properties.files.forEach(file => {
+    if (file.uri === originalImage) file.uri = imageLink;
+  });
   if (animationLink) {
     manifest.animation_url = animationLink;
   }
