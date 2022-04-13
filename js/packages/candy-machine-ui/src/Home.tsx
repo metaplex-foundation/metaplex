@@ -23,12 +23,16 @@ import { MintButton } from './MintButton';
 import { GatewayProvider } from '@civic/solana-gateway-react';
 import { sendTransaction } from './connection';
 
+import ORCANAUTS_VISUAL from "./orcanauts.svg";
+
+const BLUE_EUI_BUTTON_COLOR = "#006bb4"
+
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
   height: 60px;
   margin-top: 10px;
   margin-bottom: 5px;
-  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
+  background: ${BLUE_EUI_BUTTON_COLOR};
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -323,12 +327,22 @@ const Home = (props: HomeProps) => {
 
   return (
     <Container style={{ marginTop: 100 }}>
-      <Container maxWidth="xs" style={{ position: 'relative' }}>
+          <Container maxWidth="xs" style={{
+        position: 'relative',
+        marginTop: '50px',
+      }}>
+      {/* TODO: Replace with Swim visual */}
+      <img src={ORCANAUTS_VISUAL} alt="Orcanauts Visual"/>
+      </Container>
+      <Container maxWidth="xs" style={{
+        position: 'relative',
+        marginTop: '100px',
+      }}>
         <Paper
           style={{
             padding: 24,
             paddingBottom: 10,
-            backgroundColor: '#151A1F',
+            backgroundColor: '#fff', // white
             borderRadius: 6,
           }}
         >
