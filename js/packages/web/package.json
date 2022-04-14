@@ -27,6 +27,7 @@
     "classnames": "^2.3.1",
     "event-emitter": "^0.3.5",
     "eventemitter3": "^4.0.7",
+    "gh-pages": "^3.2.3",
     "isomorphic-unfetch": "^3.1.0",
     "less": "^4.1.1",
     "less-loader": "^10.0.1",
