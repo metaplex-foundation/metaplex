@@ -67,7 +67,11 @@ export async function awsUpload(
         .replace('.', '')}`
     : undefined;
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  manifestJson.image = imageUrl;
+  const originalImage = manifestJson.image;
+  manifestJson.image = imageLink;
+  manifestJson.properties.files.forEach(file => {
+    if (file.uri === originalImage) file.uri = imageLink;
+  });
   if (animation) {
     manifestJson.animation_url = animationUrl;
   }
