@@ -10,6 +10,7 @@ export interface AttributesCardProps {
   tag?: any
   overline?: string
   hasHoverEffect?: boolean
+  value?: string
 }
 
 export const AttributesCard: FC<AttributesCardProps> = ({
@@ -20,6 +21,7 @@ export const AttributesCard: FC<AttributesCardProps> = ({
   addToFilter,
   overline,
   hasHoverEffect,
+  value,
   ...restProps
 }) => {
   const AttributesCardClasses = CN(
@@ -31,7 +33,9 @@ export const AttributesCard: FC<AttributesCardProps> = ({
     <div className={AttributesCardClasses} {...restProps}>
       <div className='flex flex-col gap-[4px]'>
         {overline && <span className='flex text-sm text-slate-500'>{overline}</span>}
-        <span className='label text-h6 w-full'>{label}</span>
+
+        {label && <span className='label text-h6 w-full'>{label}</span>}
+
         {description && (
           <div className='flex items-center gap-[4px] text-sm'>
             <span>Floor:</span>
@@ -41,6 +45,8 @@ export const AttributesCard: FC<AttributesCardProps> = ({
             </div>
           </div>
         )}
+
+        {value && <span className='text-md'>{value}</span>}
       </div>
 
       {tag && <Tag className='ml-auto w-[80px] text-xs'>{tag}</Tag>}
