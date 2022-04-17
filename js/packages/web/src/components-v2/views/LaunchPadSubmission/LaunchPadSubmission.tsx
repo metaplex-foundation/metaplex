@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { TextField, TextArea, FileUpload, Button } from '@oyster/common'
-import { Select, message, DatePicker } from 'antd'
+import { Select, message, DatePicker, Typography } from 'antd'
 import { Logo } from '../../atoms/Logo'
 import axios from 'axios'
 
@@ -9,25 +9,28 @@ export interface LaunchPadSubmissionProps {
   [x: string]: any
 }
 
+const { Text } = Typography
+let formDataValidate: any = {}
+
 export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   className,
   ...restProps
 }: LaunchPadSubmissionProps) => {
   const LaunchPadSubmissionClasses = CN(`launchpad-submission`, className)
   const { Option } = Select
-  const [projectName, setProjectName] = useState('') // Done
-  const [creatorName, setCreatorName] = useState('') // Done
-  const [currentStage, setCurrentStage] = useState('') // Done
-  const [artWorkExample, setArtExample] = useState('')
-  const [collectionBanner, setCollectionBanner] = useState('')
-  const [isLegal, setIsLegal] = useState(false) // Done
-  const [isDerivative, setIsDerivative] = useState(false) // Done
-  const [discordId, setDiscordId] = useState() // Done
-  const [email, setEmail] = useState() // Done
-  const [projectDescription, setProjectDescription] = useState() // Done
-  const [longTermGoals, setLongTermGoals] = useState() // Done
-  const [teamDescription, setTeamDescription] = useState() // Done
-  const [experience, setExperience] = useState(false) // Done
+  const [collectionName, setCollectionName] = useState('')
+  const [creatorName, setCreatorName] = useState('')
+  const [currentStage, setCurrentStage] = useState('')
+  const [artWorkExample, setArtExample] = useState()
+  const [collectionBanner, setCollectionBanner] = useState()
+  const [isLegal, setIsLegal] = useState(false)
+  const [isDerivative, setIsDerivative] = useState(false)
+  const [discordId, setDiscordId] = useState()
+  const [email, setEmail] = useState()
+  const [projectDescription, setProjectDescription] = useState('')
+  const [longTermGoals, setLongTermGoals] = useState()
+  const [teamDescription, setTeamDescription] = useState()
+  const [experience, setExperience] = useState(false)
   const [twitterLink, setTwitterLink] = useState()
   const [discordServer, setDiscordServer] = useState()
   const [instagramLink, setInstagramLink] = useState()
@@ -40,7 +43,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   const [mintPrice, setMintPrice] = useState()
   const [marketingPackage, setMarketingPackage] = useState()
   const [anything, setAnything] = useState()
-  const [creatorPublicKey, setCreatorPublicKey] = useState()
+  const [creatorPublicKey, setCreatorPublicKey] = useState('')
+  const [isFormNotValid, setIsFormNotValid] = useState(false)
 
   function handleChange(value: any, option?: any) {
     if (option === 'stage' && value === 'completed') {
@@ -83,43 +87,81 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
     setExpectedMintDate(dateString)
   }
 
+  function validateForm() {
+    const data = {
+      collection_name: collectionName && collectionName.trim().length > 0 ? collectionName : null,
+      creator_public_key:
+        creatorPublicKey && creatorPublicKey.trim().length > 0 ? creatorPublicKey : null,
+      art_work: artWorkExample !== undefined ? artWorkExample : null,
+      collection_banner: collectionBanner !== undefined ? collectionBanner : null,
+      description:
+        projectDescription && projectDescription.trim().length > 0 ? projectDescription : null,
+    }
+    formDataValidate = Object.assign({}, data)
+    return true
+  }
+
   function handleFormSubmit(event: any) {
     event.preventDefault()
 
-    const formData = new FormData()
+    const isFormValid = validateForm()
 
-    const userDetails = {
-      project_name: projectName,
-      creator_name: creatorName,
-      creator_public_key: creatorPublicKey,
-      current_stage: currentStage,
-      is_legal: isLegal,
-      is_derivative: isDerivative,
-      discord_id: discordId,
-      email: email,
-      project_description: projectDescription,
-      long_trm_goals: longTermGoals,
-      team_description: teamDescription,
-      experience: experience,
-      twitter_link: twitterLink,
-      discord_server: discordServer,
-      instagram_link: instagramLink,
-      linked_in_profile: linkedInProfile,
-      website_link: websiteLink,
-      other_link: otherLink,
-      exp_mint_date: expectedMintDate,
-      exp_item_count: numberOfItemsExpected,
-      is_team_dox: isTeamDox,
-      mint_price: mintPrice,
-      marketing_package: marketingPackage,
-      other: anything,
+    if (isFormValid) {
+      const data = Object.values(formDataValidate).map(key => {
+        return key !== null
+      })
+
+      if (!data.includes(false) && artWorkExample !== undefined && collectionBanner !== undefined) {
+        setIsFormNotValid(false)
+        const formData = new FormData()
+
+        const userDetails = {
+          collection_name: collectionName,
+          creator_name: creatorName,
+          creator_public_key: creatorPublicKey,
+          current_stage: currentStage,
+          is_legal: isLegal,
+          is_derivative: isDerivative,
+          discord_id: discordId,
+          email: email,
+          project_description: projectDescription,
+          long_trm_goals: longTermGoals,
+          team_description: teamDescription,
+          experience: experience,
+          twitter_link: twitterLink,
+          discord_server: discordServer,
+          instagram_link: instagramLink,
+          linked_in_profile: linkedInProfile,
+          website_link: websiteLink,
+          other_link: otherLink,
+          exp_mint_date: expectedMintDate,
+          exp_item_count: numberOfItemsExpected,
+          is_team_dox: isTeamDox,
+          mint_price: mintPrice,
+          marketing_package: marketingPackage,
+          other: anything,
+        }
+
+        formData.append('collection_image', artWorkExample)
+        formData.append('collection_banner', collectionBanner)
+        formData.append('userDetails', JSON.stringify(userDetails))
+
+        axios
+          .post('http://localhost:9000/launchpad-submission/add', formData)
+          .then(() => {
+            alert(
+              'Your launchpad submission successfully submitted. Click Okay to navigate to the Home screen'
+            )
+            window.location.href = '/#/'
+          })
+          .catch((err: any) => {
+            alert(err.response.data.message)
+          })
+      } else {
+        setIsFormNotValid(true)
+        message.warning('Please check the input fields')
+      }
     }
-
-    formData.append('collection_image', artWorkExample)
-    formData.append('collection_banner', collectionBanner)
-    formData.append('userDetails', JSON.stringify(userDetails))
-
-    axios.post('http://localhost:9000/launchpad-submission/add', formData)
   }
 
   return (
@@ -133,11 +175,18 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
         <div className='mx-auto flex w-full max-w-[600px] flex-col gap-[40px]'>
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Collection Name</label>
-            <TextField
-              className='w-full'
-              placeholder='Enter Collection name'
-              onChange={event => setProjectName(event.target.value)}
-            />
+            <div className='flex-row'>
+              <TextField
+                className='w-full'
+                placeholder='Enter Collection name'
+                onChange={event => setCollectionName(event.target.value)}
+              />
+              {isFormNotValid && collectionName.trim().length <= 0 ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Collection name is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -153,11 +202,18 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Creator&apos;s public keys</label>
-            <TextField
-              className='w-full'
-              placeholder='Enter Collection name'
-              onChange={event => setCreatorPublicKey(event.target.value)}
-            />
+            <div className='flex-row'>
+              <TextField
+                className='w-full'
+                placeholder='Enter Collection name'
+                onChange={event => setCreatorPublicKey(event.target.value)}
+              />
+              {isFormNotValid && creatorPublicKey.trim().length <= 0 ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Creator&apos;s public keys is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -180,40 +236,52 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             <label className='text-h6 font-500 text-N-700'>
               Please upload an example of your artwork
             </label>
-
-            <FileUpload
-              onChange={info => {
-                if (info.file.status !== 'uploading') {
-                  console.log(info.file, info.fileList)
-                }
-                if (info.file.status === 'done') {
-                  setArtExample(info.file.originFileObj)
-                  message.success(`${info.file.name} file uploaded successfully`)
-                } else if (info.file.status === 'error') {
-                  message.error(`${info.file.name} file upload failed.`)
-                }
-              }}
-            />
+            <div className='flex-row'>
+              <FileUpload
+                onChange={info => {
+                  if (info.file.status !== 'uploading') {
+                    console.log(info.file, info.fileList)
+                  }
+                  if (info.file.status === 'done') {
+                    setArtExample(info.file.originFileObj)
+                    message.success(`${info.file.name} file uploaded successfully`)
+                  } else if (info.file.status === 'error') {
+                    message.error(`${info.file.name} file upload failed.`)
+                  }
+                }}
+              />
+              {isFormNotValid && artWorkExample === undefined ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Artwork is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>
               Please upload the collection banner
             </label>
-
-            <FileUpload
-              onChange={info => {
-                if (info.file.status !== 'uploading') {
-                  console.log(info.file, info.fileList)
-                }
-                if (info.file.status === 'done') {
-                  setCollectionBanner(info.file.originFileObj)
-                  message.success(`${info.file.name} file uploaded successfully`)
-                } else if (info.file.status === 'error') {
-                  message.error(`${info.file.name} file upload failed.`)
-                }
-              }}
-            />
+            <div className='flex-row'>
+              <FileUpload
+                onChange={info => {
+                  if (info.file.status !== 'uploading') {
+                    console.log(info.file, info.fileList)
+                  }
+                  if (info.file.status === 'done') {
+                    setCollectionBanner(info.file.originFileObj)
+                    message.success(`${info.file.name} file uploaded successfully`)
+                  } else if (info.file.status === 'error') {
+                    message.error(`${info.file.name} file upload failed.`)
+                  }
+                }}
+              />
+              {isFormNotValid && collectionBanner === undefined ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Collection banner is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -275,11 +343,18 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             <label className='text-h6 font-500 text-N-700'>
               Describe what makes your project unique
             </label>
-            <TextArea
-              className='w-full'
-              placeholder='Description'
-              onChange={event => setProjectDescription(event.target.value)}
-            />
+            <div className='flex-row'>
+              <TextArea
+                className='w-full'
+                placeholder='Description'
+                onChange={event => setProjectDescription(event.target.value)}
+              />
+              {isFormNotValid && projectDescription.trim().length <= 0 ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Description is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -448,7 +523,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
-            <Button size='lg' onClick={event => handleFormSubmit(event)}>
+            <Button size='lg' onClick={handleFormSubmit}>
               Submit Project
             </Button>
           </div>
