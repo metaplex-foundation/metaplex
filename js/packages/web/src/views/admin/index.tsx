@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Layout, Table, Switch, Spin, Modal, Input } from 'antd'
+import { Layout, Table, Switch, Spin, Modal, Input, Typography } from 'antd'
 import { Button } from '@oyster/common'
 import { useMeta } from '../../contexts'
 import { Store, WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index'
@@ -22,7 +22,9 @@ import { convertMasterEditions, filterMetadata } from '../../actions/convertMast
 import { Link } from 'react-router-dom'
 import { SetupVariables } from '../../components/SetupVariables'
 import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
+import { getSubmissions, statusToApprove } from '../../api'
 
+const { Text } = Typography
 const { Content } = Layout
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator, isLoading } = useMeta()
@@ -206,6 +208,7 @@ function InnerAdminView({
     available: ParsedAccount<MasterEditionV1>[]
     unavailable: ParsedAccount<MasterEditionV1>[]
   }>()
+  const [submissions, setSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState<boolean>()
   const { metadata, masterEditions } = useMeta()
   const state = useMeta()
@@ -227,6 +230,31 @@ function InnerAdminView({
   )
 
   const uniqueCreatorsWithUpdates = { ...uniqueCreators, ...updatedCreators }
+
+  useEffect(() => {
+    getSubmissions().then(submissions => {
+      console.log(submissions?.data.data)
+      setSubmissions(submissions?.data.data)
+    })
+  }, [])
+
+  const addCreatorToWhiteList = (e: any, address: string) => {
+    try {
+      setUpdatedCreators(u => ({
+        ...u,
+        ['']: new WhitelistedCreator({
+          address,
+          activated: true,
+        }),
+      }))
+      statusToApprove(address)
+    } catch (error) {
+      notify({
+        message: 'Only valid Solana addresses are supported',
+        type: 'error',
+      })
+    }
+  }
 
   const columns = [
     {
@@ -267,6 +295,43 @@ function InnerAdminView({
             }))
           }
         />
+      ),
+    },
+  ]
+
+  const submissionColumns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'creator_public_key',
+    },
+    {
+      title: 'Creator Address',
+      dataIndex: 'creator_public_key',
+      key: 'creator_public_key',
+    },
+    {
+      title: 'Collection Name',
+      dataIndex: 'collection_name',
+      key: 'collection_name',
+    },
+    {
+      title: 'Status',
+      dataIndex: 'approval_status',
+      key: 'approval_status',
+    },
+    {
+      title: 'Actions',
+      dataIndex: 'creator_public_key',
+      key: 'actions',
+      render: (record: string) => (
+        <>
+          <button
+            className='text-black-800 h-[32px] w-full appearance-none rounded-[15px] bg-green-300 px-[12px] text-md font-500 hover:bg-green-500 hover:text-white'
+            onClick={e => addCreatorToWhiteList(e, record)}>
+            Approve
+          </button>
+        </>
       ),
     },
   ]
@@ -331,6 +396,32 @@ function InnerAdminView({
             }))}
           />
         </div>
+
+        {submissions.length > 0 ? (
+          <>
+            <h5 className='text-h5'>Launchpad Submissions</h5>
+            <div className='flex w-full'>
+              <Table
+                className='ant-table'
+                columns={submissionColumns}
+                dataSource={Object.keys(submissions).map(key => ({
+                  key,
+                  name: shortenAddress(submissions[key]?.creator_public_key),
+                  creator_public_key: submissions[key]?.creator_public_key,
+                  collection_name: submissions[key]?.collection_name,
+                  approval_status:
+                    submissions[key]?.approval_status === 'Pending' ? (
+                      <Text type='warning'>Pending</Text>
+                    ) : submissions[key]?.approval_status === 'Approved' ? (
+                      <Text type='success'>Approved</Text>
+                    ) : (
+                      <Text type='secondary'>None</Text>
+                    ),
+                }))}
+              />
+            </div>
+          </>
+        ) : null}
 
         {!store.info.public && (
           <div className='flex max-w-[700px] flex-col gap-[20px]'>
