@@ -275,27 +275,22 @@ export const getCollectionAuthorityRecordPDA = async (
   )[0];
 };
 
-export const mintOneToken = async (
+export type SetupState = {
+  mint: anchor.web3.Keypair;
+  userTokenAccount: anchor.web3.PublicKey;
+  transaction: string;
+};
+
+export const createAccountsForMint = async (
   candyMachine: CandyMachineAccount,
   payer: anchor.web3.PublicKey,
-  beforeTransactions: Transaction[] = [],
-  afterTransactions: Transaction[] = [],
-): Promise<(string | undefined)[]> => {
+): Promise<SetupState> => {
   const mint = anchor.web3.Keypair.generate();
-
   const userTokenAccountAddress = (
     await getAtaForMint(mint.publicKey, payer)
   )[0];
 
-  const userPayingAccountAddress = candyMachine.state.tokenMint
-    ? (await getAtaForMint(candyMachine.state.tokenMint, payer))[0]
-    : payer;
-
-  const candyMachineAddress = candyMachine.id;
-
-  const remainingAccounts = [];
   const signers: anchor.web3.Keypair[] = [mint];
-  const cleanupInstructions = [];
   const instructions = [
     anchor.web3.SystemProgram.createAccount({
       fromPubkey: payer,
@@ -329,6 +324,88 @@ export const mintOneToken = async (
       1,
     ),
   ];
+
+  return {
+    mint: mint,
+    userTokenAccount: userTokenAccountAddress,
+    transaction: (
+      await sendTransactions(
+        candyMachine.program.provider.connection,
+        candyMachine.program.provider.wallet,
+        [instructions],
+        [signers],
+        SequenceType.StopOnFailure,
+        'singleGossip',
+        () => {},
+        () => false,
+        undefined,
+        [],
+        [],
+      )
+    ).txs[0].txid,
+  };
+};
+
+export const mintOneToken = async (
+  candyMachine: CandyMachineAccount,
+  payer: anchor.web3.PublicKey,
+  beforeTransactions: Transaction[] = [],
+  afterTransactions: Transaction[] = [],
+  setupState?: SetupState,
+): Promise<string[]> => {
+  const mint = setupState?.mint ?? anchor.web3.Keypair.generate();
+  const userTokenAccountAddress = (
+    await getAtaForMint(mint.publicKey, payer)
+  )[0];
+
+  const userPayingAccountAddress = candyMachine.state.tokenMint
+    ? (await getAtaForMint(candyMachine.state.tokenMint, payer))[0]
+    : payer;
+
+  const candyMachineAddress = candyMachine.id;
+  const remainingAccounts = [];
+  const cleanupInstructions = [];
+  const instructions = [];
+  const signers: anchor.web3.Keypair[] = [];
+  console.log('SetupState: ', setupState);
+  if (!setupState) {
+    signers.push(mint);
+    instructions.push(
+      ...[
+        anchor.web3.SystemProgram.createAccount({
+          fromPubkey: payer,
+          newAccountPubkey: mint.publicKey,
+          space: MintLayout.span,
+          lamports:
+            await candyMachine.program.provider.connection.getMinimumBalanceForRentExemption(
+              MintLayout.span,
+            ),
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitMintInstruction(
+          TOKEN_PROGRAM_ID,
+          mint.publicKey,
+          0,
+          payer,
+          payer,
+        ),
+        createAssociatedTokenAccountInstruction(
+          userTokenAccountAddress,
+          payer,
+          payer,
+          mint.publicKey,
+        ),
+        Token.createMintToInstruction(
+          TOKEN_PROGRAM_ID,
+          mint.publicKey,
+          userTokenAccountAddress,
+          payer,
+          [],
+          1,
+        ),
+      ],
+    );
+  }
 
   if (candyMachine.state.gatekeeper) {
     remainingAccounts.push({
@@ -526,38 +603,8 @@ export const mintOneToken = async (
     }
   }
 
-  const instructionsMatrix: anchor.web3.TransactionInstruction[][] = [];
-  const signersMatrix: anchor.web3.Keypair[][] = [];
-
-  const state = candyMachine.state;
-  const txnEstimate =
-    892 +
-    (collectionPDAAccount && state.retainAuthority ? 182 : 0) +
-    (state.tokenMint ? 177 : 0) +
-    (state.whitelistMintSettings ? 33 : 0) +
-    (state.whitelistMintSettings?.mode?.burnEveryTime ? 145 : 0) +
-    (state.gatekeeper ? 33 : 0) +
-    (state.gatekeeper?.expireOnUse ? 66 : 0);
-
-  const INIT_INSTRUCTIONS_LENGTH = 4;
-  const INIT_SIGNERS_LENGTH = 1;
-
-  console.log('Transaction estimate: ', txnEstimate);
-  if (txnEstimate > 1230) {
-    const initInstructions = instructions.splice(0, INIT_INSTRUCTIONS_LENGTH);
-    console.log(initInstructions);
-    instructionsMatrix.push(initInstructions);
-    const initSigners = signers.splice(0, INIT_SIGNERS_LENGTH);
-    signersMatrix.push(initSigners);
-  }
-
-  instructionsMatrix.push(instructions);
-  signersMatrix.push(signers);
-
-  if (cleanupInstructions.length > 0) {
-    instructionsMatrix.push(cleanupInstructions);
-    signersMatrix.push([]);
-  }
+  const instructionsMatrix = [instructions, cleanupInstructions];
+  const signersMatrix = [signers, []];
 
   try {
     return (
@@ -578,7 +625,6 @@ export const mintOneToken = async (
   } catch (e) {
     console.log(e);
   }
-
   return [];
 };
 
