@@ -3,8 +3,8 @@ import { Row, Button, Modal, ButtonProps } from 'antd'
 import { useUserArts } from '../../hooks'
 import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import AuctionItemCard from './AuctionItemCard'
-import { BuyCard, Loader } from '@oyster/common'
 import CN from 'classnames'
+import { BuyCard } from '@oyster/common'
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[]
@@ -44,15 +44,15 @@ export const ArtSelector = (props: ArtSelectorProps) => {
 
   return (
     <>
-      <div className='grid gap-[16px] w-full'>
+      <div className='grid w-full gap-[16px]'>
         {selected.map(m => {
           const key = m?.metadata.pubkey || ''
 
           return (
             <>
-              {/* <BuyCard key={key} onClick={open} /> */}
+              <BuyCard key={key} onClick={open} />
 
-              <AuctionItemCard
+              {/* <AuctionItemCard
                 key={key}
                 current={m}
                 onSelect={open}
@@ -60,7 +60,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   setSelected(selected.filter(_ => _.metadata.pubkey !== key))
                   confirm()
                 }}
-              />
+              /> */}
             </>
           )
         })}

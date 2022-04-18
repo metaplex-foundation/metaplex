@@ -136,8 +136,7 @@ const VideoArtContent = ({
           controlsList='nodownload'
           style={style}
           loop={true}
-          poster={uri}
-        >
+          poster={uri}>
           {likelyVideo && <source src={likelyVideo} type='video/mp4' style={style} />}
           {animationURL && <source src={animationURL} type='video/mp4' style={style} />}
           {files
@@ -206,8 +205,7 @@ const HTMLContent = ({
         style={{
           ...style,
           height: !loaded ? 0 : '100%',
-        }}
-      ></iframe>
+        }}></iframe>
     </HTMLWrapper>
   )
 }
@@ -282,7 +280,7 @@ export const ArtContent = ({
       setFilesState(data.properties.files)
       setCategoryState(data.properties.category)
     }
-  }, [pubkey, data]);
+  }, [pubkey, data])
 
   const animationUrlExt = new URLSearchParams(getLast((animationURLState || '').split('?'))).get(
     'ext'
@@ -331,5 +329,12 @@ export const ArtContent = ({
       <CachedImageContent uri={uriState} className={className} preview={preview} style={style} />
     )
 
-  return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>
+  // return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>
+  return (
+    <div
+      className='bid-card-alt group flex w-full cursor-pointer flex-col overflow-hidden rounded bg-white shadow-card'
+      ref={ref as any}>
+      <div className='flex h-[286px] w-full overflow-hidden'>{content}</div>
+    </div>
+  )
 }
