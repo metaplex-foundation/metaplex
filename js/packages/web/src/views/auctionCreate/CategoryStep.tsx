@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '@oyster/common'
 import { AuctionCategory } from './types'
 
-const CategoryStep = (props: { confirm: (category: AuctionCategory) => void }) => {
+const CategoryStep = ({ confirm }: { confirm: (category: AuctionCategory) => void }) => {
   return (
     <>
       <div className='flex max-w-[700px] flex-col gap-[40px]'>
@@ -22,7 +22,7 @@ const CategoryStep = (props: { confirm: (category: AuctionCategory) => void }) =
           appearance='neutral'
           isRounded={false}
           className='!h-[60px]'
-          onClick={() => props.confirm(AuctionCategory.InstantSale)}>
+          onClick={() => confirm(AuctionCategory.InstantSale)}>
           <div>
             <div>Instant Sale</div>
             <div className='type-btn-description font-400 normal-case'>
@@ -35,7 +35,7 @@ const CategoryStep = (props: { confirm: (category: AuctionCategory) => void }) =
           appearance='neutral'
           isRounded={false}
           className='!h-[60px]'
-          onClick={() => props.confirm(AuctionCategory.Limited)}>
+          onClick={() => confirm(AuctionCategory.Limited)}>
           <div>
             <div>Limited Edition</div>
             <div className='type-btn-description font-400 normal-case'>
@@ -48,7 +48,7 @@ const CategoryStep = (props: { confirm: (category: AuctionCategory) => void }) =
           appearance='neutral'
           isRounded={false}
           className='!h-[60px]'
-          onClick={() => props.confirm(AuctionCategory.Open)}>
+          onClick={() => confirm(AuctionCategory.Open)}>
           <div>
             <div>Open Edition</div>
             <div className='type-btn-description font-400 normal-case'>
@@ -61,7 +61,7 @@ const CategoryStep = (props: { confirm: (category: AuctionCategory) => void }) =
           appearance='neutral'
           isRounded={false}
           className='!h-[60px]'
-          onClick={() => props.confirm(AuctionCategory.Tiered)}>
+          onClick={() => confirm(AuctionCategory.Tiered)}>
           <div>
             <div>Tiered Auction</div>
             <div className='type-btn-description font-400 normal-case'>
@@ -74,7 +74,7 @@ const CategoryStep = (props: { confirm: (category: AuctionCategory) => void }) =
           appearance='neutral'
           isRounded={false}
           className='!h-[60px]'
-          onClick={() => props.confirm(AuctionCategory.Single)}>
+          onClick={() => confirm(AuctionCategory.Single)}>
           <div>
             <div>Sell an Existing Item</div>
             <div className='type-btn-description font-400 normal-case'>

@@ -4,6 +4,7 @@ import { useUserArts } from '../../hooks'
 import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import AuctionItemCard from './AuctionItemCard'
 import CN from 'classnames'
+import { BuyCard } from '@oyster/common'
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[]
@@ -49,9 +50,9 @@ export const ArtSelector = (props: ArtSelectorProps) => {
 
           return (
             <>
-              {/* <BuyCard key={key} onClick={open} /> */}
+              <BuyCard key={key} onClick={open} />
 
-              <AuctionItemCard
+              {/* <AuctionItemCard
                 key={key}
                 current={m}
                 onSelect={open}
@@ -59,7 +60,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   setSelected(selected.filter(_ => _.metadata.pubkey !== key))
                   confirm()
                 }}
-              />
+              /> */}
             </>
           )
         })}
