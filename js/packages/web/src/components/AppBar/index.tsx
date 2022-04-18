@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Menu, Modal } from 'antd';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Notifications } from '../Notifications';
+// import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { HowToBuyModal } from '../HowToBuyModal';
@@ -54,7 +54,7 @@ export const MetaplexMenu = () => {
     return (
       <>
         <Modal
-          title={<img src={'/metaplex-logo.svg'} />}
+          title={<img src={'/hq-logo.svg'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
@@ -78,10 +78,10 @@ export const MetaplexMenu = () => {
                     onClick={() => setIsModalVisible(false)}
                     className="secondary-btn"
                   />
-                  <HowToBuyModal
+                  {/* <HowToBuyModal
                     onClick={() => setIsModalVisible(false)}
                     buttonClassName="black-btn"
-                  />
+                  /> */}
                 </div>
               ) : (
                 <>
@@ -93,7 +93,7 @@ export const MetaplexMenu = () => {
                       setIsModalVisible(false);
                     }}
                   />
-                  <Notifications />
+                  {/* <Notifications /> */}
                   <Cog />
                 </>
               )}
@@ -113,7 +113,7 @@ export const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/metaplex-logo.svg'} />
+      <img src={'/hq-logo.svg'} />
     </Link>
   );
 };
@@ -126,7 +126,7 @@ export const AppBar = () => {
       <div id="desktop-navbar">
         <div className="app-left">
           <LogoLink />
-          &nbsp;&nbsp;&nbsp;
+          &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
           <MetaplexMenu />
         </div>
         <div className="app-right">
@@ -143,7 +143,7 @@ export const AppBar = () => {
                 showAddress={true}
                 iconSize={24}
               />
-              <Notifications />
+              {/* <Notifications /> */}
               <Cog />
             </>
           )}

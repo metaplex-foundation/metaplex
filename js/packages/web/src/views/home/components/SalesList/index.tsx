@@ -5,8 +5,8 @@ import React, { useMemo, useState } from 'react';
 
 import { useMeta } from '../../../../contexts';
 import { CardLoader } from '../../../../components/MyLoader';
-import { Banner } from '../../../../components/Banner';
-import { HowToBuyModal } from '../../../../components/HowToBuyModal';
+// import { Banner } from '../../../../components/Banner';
+// import { HowToBuyModal } from '../../../../components/HowToBuyModal';
 
 import { useAuctionsList } from './hooks/useAuctionsList';
 import { AuctionRenderCard } from '../../../../components/AuctionRenderCard';
@@ -41,7 +41,7 @@ export const SalesListView = (props: { collectionMintFilter?: string }) => {
 
   return (
     <>
-      {!props.collectionMintFilter && (
+      {/* {!props.collectionMintFilter && (
         <Banner
           src="/main-banner.svg"
           headingText="The amazing world of Metaplex."
@@ -49,7 +49,7 @@ export const SalesListView = (props: { collectionMintFilter?: string }) => {
           actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
           useBannerBg
         />
-      )}
+      )} */}
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 32 }}>
