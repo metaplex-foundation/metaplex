@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Layout, Table, Switch, Spin, Modal, Input, Typography } from 'antd'
+import { Layout, Table, Switch, Spin, Modal, Input, Tooltip } from 'antd'
 import { Button } from '@oyster/common'
 import { useMeta } from '../../contexts'
 import { Store, WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index'
@@ -23,8 +23,8 @@ import { Link } from 'react-router-dom'
 import { SetupVariables } from '../../components/SetupVariables'
 import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
 import { getSubmissions, statusToApprove } from '../../api'
+import { CheckCircleTwoTone } from '@ant-design/icons'
 
-const { Text } = Typography
 const { Content } = Layout
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator, isLoading } = useMeta()
@@ -234,15 +234,10 @@ function InnerAdminView({
 
   useEffect(() => {
     getSubmissions().then(submissions => {
+      console.log(submissions?.data.data)
       setSubmissions(submissions?.data.data)
     })
   }, [])
-
-  useEffect(() => {
-    getSubmissions().then(submissions => {
-      setSubmissions(submissions?.data.data)
-    })
-  }, [statusToApprove])
 
   const columns = [
     {
@@ -314,15 +309,21 @@ function InnerAdminView({
       key: 'actions',
       render: (_, row) => (
         <>
-          <button
-            className='text-black-800 h-[32px] w-full appearance-none rounded-[15px] bg-green-300 px-[12px] text-md font-500 hover:bg-green-500 hover:text-white'
-            disabled={row.approval_status === 'Approved'}
-            onClick={() => {
-              setModalOpen(true)
-              setModalAddress(row.creator_public_key)
-            }}>
-            Approve
-          </button>
+          {row.approval_status !== 'Approved' ? (
+            <button
+              className='text-black-800 h-[32px] appearance-none rounded-[15px] bg-green-400 px-[12px] text-md font-500 hover:bg-green-500 hover:text-white'
+              disabled={row.approval_status === 'Approved'}
+              onClick={() => {
+                setModalOpen(true)
+                setModalAddress(row.creator_public_key)
+              }}>
+              Approve
+            </button>
+          ) : (
+            <Tooltip placement='right' title='Submission approved'>
+              <CheckCircleTwoTone twoToneColor='#52c41a' style={{ fontSize: '22px' }} />
+            </Tooltip>
+          )}
         </>
       ),
     },
@@ -401,14 +402,7 @@ function InnerAdminView({
                   name: shortenAddress(submissions[key]?.creator_public_key),
                   creator_public_key: submissions[key]?.creator_public_key,
                   collection_name: submissions[key]?.collection_name,
-                  approval_status:
-                    submissions[key]?.approval_status === 'Pending' ? (
-                      <Text type='warning'>Pending</Text>
-                    ) : submissions[key]?.approval_status === 'Approved' ? (
-                      <Text type='success'>Approved</Text>
-                    ) : (
-                      <Text type='secondary'>None</Text>
-                    ),
+                  approval_status: submissions[key]?.approval_status,
                 }))}
               />
             </div>
@@ -444,6 +438,13 @@ function InnerAdminView({
               }))
               await saveAdmin(connection, wallet, newStore.public, Object.values(updatedCreators))
               await statusToApprove(addressToAdd)
+              setSubmissions(
+                submissions.map(item =>
+                  item.creator_public_key === addressToAdd
+                    ? { ...item, approval_status: 'Approved' }
+                    : item
+                )
+              )
             } catch (error) {
               notify({
                 message: 'Only valid Solana addresses are supported',
