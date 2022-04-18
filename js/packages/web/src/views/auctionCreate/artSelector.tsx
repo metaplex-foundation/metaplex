@@ -50,9 +50,9 @@ export const ArtSelector = (props: ArtSelectorProps) => {
 
           return (
             <>
-              <BuyCard key={key} onClick={open} />
+              {/* <BuyCard key={key} onClick={open} /> */}
 
-              {/* <AuctionItemCard
+              <AuctionItemCard
                 key={key}
                 current={m}
                 onSelect={open}
@@ -60,7 +60,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   setSelected(selected.filter(_ => _.metadata.pubkey !== key))
                   confirm()
                 }}
-              /> */}
+              />
             </>
           )
         })}

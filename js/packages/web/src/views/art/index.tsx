@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Layout, Tag } from 'antd'
 import { Button } from '@oyster/common'
 import { useParams } from 'react-router-dom'
-import { useArt, useExtendedArt } from '../../hooks'
+import { useArt, useExtendedArt, useUserArts } from '../../hooks'
 
 import { ArtContent } from '../../components/ArtContent'
 import { shortenAddress, SOLIcon, useConnection } from '@oyster/common'
@@ -12,15 +12,21 @@ import { sendSignMetadata } from '../../actions/sendSignMetadata'
 import { ViewOn } from '../../components/ViewOn'
 import { ArtType } from '../../types'
 import { ArtMinting } from '../../components/ArtMinting'
-import PutOnSale from './PutOnSale'
+import { SafetyDepositDraft } from '../../actions/createAuctionManager'
+import InstantSale from './InstantSale'
+// import PutOnSale from './PutOnSale'
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>()
+  let items = useUserArts()
+
+  const selected = [...(items || []).filter(i => i.metadata.pubkey === id)]
   const wallet = useWallet()
   const [remountArtMinting, setRemountArtMinting] = useState(0)
 
   const connection = useConnection()
   const art = useArt(id)
+
   let badge = ''
   let maxSupply = ''
   if (art.type === ArtType.NFT) {
@@ -142,7 +148,7 @@ export const ArtView = () => {
                     {/* <span className='ml-[4px] text-lg text-slate-500'>{1}</span> */}
                   </div>
                 </div>
-                <PutOnSale />
+                {!!selected.length && <InstantSale items={selected} />}
               </div>
             </div>
           </div>

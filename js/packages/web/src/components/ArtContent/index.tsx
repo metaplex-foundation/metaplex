@@ -329,12 +329,5 @@ export const ArtContent = ({
       <CachedImageContent uri={uriState} className={className} preview={preview} style={style} />
     )
 
-  // return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>
-  return (
-    <div
-      className='bid-card-alt group flex w-full cursor-pointer flex-col overflow-hidden rounded bg-white shadow-card'
-      ref={ref as any}>
-      <div className='flex h-[286px] w-full overflow-hidden'>{content}</div>
-    </div>
-  )
+  return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>
 }

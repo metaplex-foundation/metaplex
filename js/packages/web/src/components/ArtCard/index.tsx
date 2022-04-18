@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardProps, Button, Badge } from 'antd'
-import { BidCardAlt, MetadataCategory, StringPublicKey } from '@oyster/common'
+import { MetadataCategory, StringPublicKey } from '@oyster/common'
 import { ArtContent } from '../ArtContent'
 import { useArt } from '../../hooks'
 import { Artist, ArtType } from '../../types'
@@ -65,11 +65,12 @@ export const ArtCard = (props: ArtCardProps) => {
     badge = `${art.edition} of ${art.supply}`
   }
 
-  // console.log('props', props)
-
   const card = (
-    <>
-      {/* {onClose && (
+    <Card
+      hoverable={true}
+      className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
+      {...rest}>
+      {onClose && (
         <Button
           className='card-close-button'
           shape='circle'
@@ -80,11 +81,11 @@ export const ArtCard = (props: ArtCardProps) => {
           }}>
           X
         </Button>
-      )} */}
-      {/* <div className='art-card__header'>
+      )}
+      <div className='art-card__header'>
         <MetaAvatar creators={creators} size={32} />
         <div className='edition-badge'>{badge}</div>
-      </div> */}
+      </div>
       <div className='art-content__wrapper'>
         <ArtContent
           pubkey={pubkey}
@@ -97,11 +98,11 @@ export const ArtCard = (props: ArtCardProps) => {
           artView={artView}
         />
       </div>
-      {/*  <Meta
+      <Meta
         title={`${name}`}
         description={
           <>
-             {art.type === ArtType.Master && (
+            {/* {art.type === ArtType.Master && (
               <>
                 <br />
                 {!endAuctionAt && (
@@ -111,16 +112,14 @@ export const ArtCard = (props: ArtCardProps) => {
                   </span>
                 )}
               </>
-            )} 
+            )} */}
 
             {count && <div className='edition-badge'>Selected count: {count}</div>}
           </>
         }
-      />*/}
-    </>
+      />
+    </Card>
   )
-
-  // const card = <BidCardAlt image={image} />
 
   return art.creators?.find(c => !c.verified) ? (
     <Badge.Ribbon text='Unverified'>{card}</Badge.Ribbon>

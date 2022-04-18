@@ -450,6 +450,7 @@ export const CurrentUserBadgeMobile = (props: {
     <div className='current-user-mobile-badge'>
       <div className='mobile-badge'>
         {image}
+        <span>Account</span>
         {name && (
           <span
             style={{
