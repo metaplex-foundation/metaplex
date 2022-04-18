@@ -1,12 +1,16 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { TextField, TextArea, FileUpload, Button } from '@oyster/common'
-import { Select, message, DatePicker } from 'antd'
+import { Select, message, DatePicker, Typography } from 'antd'
 import { Logo } from '../../atoms/Logo'
+import axios from 'axios'
 
 export interface LaunchPadSubmissionProps {
   [x: string]: any
 }
+
+const { Text } = Typography
+let formDataValidate: any = {}
 
 export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   className,
@@ -14,15 +18,39 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
 }: LaunchPadSubmissionProps) => {
   const LaunchPadSubmissionClasses = CN(`launchpad-submission`, className)
   const { Option } = Select
-  const [isReApplying, setIsReApplying] = useState(true)
+  const [collectionName, setCollectionName] = useState('')
+  const [creatorName, setCreatorName] = useState('')
+  const [currentStage, setCurrentStage] = useState('')
+  const [artWorkExample, setArtExample] = useState()
+  const [collectionBanner, setCollectionBanner] = useState()
   const [isLegal, setIsLegal] = useState(false)
-  const [isDerivative, setIsDerivative] = useState(true)
+  const [isDerivative, setIsDerivative] = useState(false)
+  const [discordId, setDiscordId] = useState()
+  const [email, setEmail] = useState()
+  const [projectDescription, setProjectDescription] = useState('')
+  const [longTermGoals, setLongTermGoals] = useState()
+  const [teamDescription, setTeamDescription] = useState()
+  const [experience, setExperience] = useState(false)
+  const [twitterLink, setTwitterLink] = useState()
+  const [discordServer, setDiscordServer] = useState()
+  const [instagramLink, setInstagramLink] = useState()
+  const [linkedInProfile, setLinkedInProfile] = useState()
+  const [websiteLink, setWebsiteLink] = useState()
+  const [otherLink, setOtherLink] = useState()
+  const [expectedMintDate, setExpectedMintDate] = useState()
+  const [numberOfItemsExpected, setNumberOfItemsExpected] = useState()
+  const [isTeamDox, setIsTeamDox] = useState(false)
+  const [mintPrice, setMintPrice] = useState()
+  const [marketingPackage, setMarketingPackage] = useState()
+  const [anything, setAnything] = useState()
+  const [creatorPublicKey, setCreatorPublicKey] = useState('')
+  const [isFormNotValid, setIsFormNotValid] = useState(false)
 
   function handleChange(value: any, option?: any) {
-    if (option === 'reapply' && value === 'yes') {
-      setIsReApplying(true)
+    if (option === 'stage' && value === 'completed') {
+      setCurrentStage('completed')
     } else {
-      setIsReApplying(false)
+      setCurrentStage('partially-completed')
     }
 
     if (option === 'legal' && value === 'yes') {
@@ -36,10 +64,104 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
     } else {
       setIsDerivative(false)
     }
+
+    if (option === 'experience' && value === 'yes') {
+      setExperience(true)
+    } else {
+      setExperience(false)
+    }
+
+    if (option === 'is-doxed' && value === 'yes') {
+      setIsTeamDox(true)
+    } else {
+      setIsTeamDox(false)
+    }
+
+    if (option === 'package') {
+      console.log(value)
+      setMarketingPackage(value)
+    }
   }
 
-  function handleDatePicker(date: any, dateString: any) {
-    console.log(date, dateString)
+  function handleDatePicker(_date: any, dateString: any) {
+    setExpectedMintDate(dateString)
+  }
+
+  function validateForm() {
+    const data = {
+      collection_name: collectionName && collectionName.trim().length > 0 ? collectionName : null,
+      creator_public_key:
+        creatorPublicKey && creatorPublicKey.trim().length > 0 ? creatorPublicKey : null,
+      art_work: artWorkExample !== undefined ? artWorkExample : null,
+      collection_banner: collectionBanner !== undefined ? collectionBanner : null,
+      description:
+        projectDescription && projectDescription.trim().length > 0 ? projectDescription : null,
+    }
+    formDataValidate = Object.assign({}, data)
+    return true
+  }
+
+  function handleFormSubmit(event: any) {
+    event.preventDefault()
+
+    const isFormValid = validateForm()
+
+    if (isFormValid) {
+      const data = Object.values(formDataValidate).map(key => {
+        return key !== null
+      })
+
+      if (!data.includes(false) && artWorkExample !== undefined && collectionBanner !== undefined) {
+        setIsFormNotValid(false)
+        const formData = new FormData()
+
+        const userDetails = {
+          collection_name: collectionName,
+          creator_name: creatorName,
+          creator_public_key: creatorPublicKey,
+          current_stage: currentStage,
+          is_legal: isLegal,
+          is_derivative: isDerivative,
+          discord_id: discordId,
+          email: email,
+          project_description: projectDescription,
+          long_trm_goals: longTermGoals,
+          team_description: teamDescription,
+          experience: experience,
+          twitter_link: twitterLink,
+          discord_server: discordServer,
+          instagram_link: instagramLink,
+          linked_in_profile: linkedInProfile,
+          website_link: websiteLink,
+          other_link: otherLink,
+          exp_mint_date: expectedMintDate,
+          exp_item_count: numberOfItemsExpected,
+          is_team_dox: isTeamDox,
+          mint_price: mintPrice,
+          marketing_package: marketingPackage,
+          other: anything,
+        }
+
+        formData.append('collection_image', artWorkExample)
+        formData.append('collection_banner', collectionBanner)
+        formData.append('userDetails', JSON.stringify(userDetails))
+
+        axios
+          .post('http://localhost:9000/launchpad-submission/add', formData)
+          .then(() => {
+            alert(
+              'Your launchpad submission successfully submitted. Click Okay to navigate to the Home screen'
+            )
+            window.location.href = '/#/'
+          })
+          .catch((err: any) => {
+            alert(err.response.data.message)
+          })
+      } else {
+        setIsFormNotValid(true)
+        message.warning('Please check the input fields')
+      }
+    }
   }
 
   return (
@@ -52,15 +174,46 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
 
         <div className='mx-auto flex w-full max-w-[600px] flex-col gap-[40px]'>
           <div className='flex w-full flex-col gap-[16px]'>
-            <label className='text-h6 font-500 text-N-700'>Project Name</label>
-            <TextField className='w-full' placeholder='Enter Collection name' />
+            <label className='text-h6 font-500 text-N-700'>Collection Name</label>
+            <div className='flex-row'>
+              <TextField
+                className='w-full'
+                placeholder='Enter Collection name'
+                onChange={event => setCollectionName(event.target.value)}
+              />
+              {isFormNotValid && collectionName.trim().length <= 0 ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Collection name is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>
-              Creator Name (if different than Project Name)
+              Creator Name (if different than Collection Name)
             </label>
-            <TextField className='w-full' placeholder='Enter Collection name' />
+            <TextField
+              className='w-full'
+              placeholder='Enter Collection name'
+              onChange={event => setCreatorName(event.target.value)}
+            />
+          </div>
+
+          <div className='flex w-full flex-col gap-[16px]'>
+            <label className='text-h6 font-500 text-N-700'>Creator&apos;s public keys</label>
+            <div className='flex-row'>
+              <TextField
+                className='w-full'
+                placeholder='Enter Collection name'
+                onChange={event => setCreatorPublicKey(event.target.value)}
+              />
+              {isFormNotValid && creatorPublicKey.trim().length <= 0 ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Creator&apos;s public keys is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -72,8 +225,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an option'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'stage')}
-              >
+                onChange={value => handleChange(value, 'stage')}>
                 <Option value='completed'>Completed</Option>
                 <Option value='partially-completed'>Partially Completed</Option>
               </Select>
@@ -84,19 +236,52 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             <label className='text-h6 font-500 text-N-700'>
               Please upload an example of your artwork
             </label>
+            <div className='flex-row'>
+              <FileUpload
+                onChange={info => {
+                  if (info.file.status !== 'uploading') {
+                    console.log(info.file, info.fileList)
+                  }
+                  if (info.file.status === 'done') {
+                    setArtExample(info.file.originFileObj)
+                    message.success(`${info.file.name} file uploaded successfully`)
+                  } else if (info.file.status === 'error') {
+                    message.error(`${info.file.name} file upload failed.`)
+                  }
+                }}
+              />
+              {isFormNotValid && artWorkExample === undefined ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Artwork is required
+                </Text>
+              ) : null}
+            </div>
+          </div>
 
-            <FileUpload
-              onChange={info => {
-                if (info.file.status !== 'uploading') {
-                  console.log(info.file, info.fileList)
-                }
-                if (info.file.status === 'done') {
-                  message.success(`${info.file.name} file uploaded successfully`)
-                } else if (info.file.status === 'error') {
-                  message.error(`${info.file.name} file upload failed.`)
-                }
-              }}
-            />
+          <div className='flex w-full flex-col gap-[16px]'>
+            <label className='text-h6 font-500 text-N-700'>
+              Please upload the collection banner
+            </label>
+            <div className='flex-row'>
+              <FileUpload
+                onChange={info => {
+                  if (info.file.status !== 'uploading') {
+                    console.log(info.file, info.fileList)
+                  }
+                  if (info.file.status === 'done') {
+                    setCollectionBanner(info.file.originFileObj)
+                    message.success(`${info.file.name} file uploaded successfully`)
+                  } else if (info.file.status === 'error') {
+                    message.error(`${info.file.name} file upload failed.`)
+                  }
+                }}
+              />
+              {isFormNotValid && collectionBanner === undefined ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Collection banner is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -110,8 +295,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'legal')}
-              >
+                onChange={value => handleChange(value, 'legal')}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -128,8 +312,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-derivative')}
-              >
+                onChange={value => handleChange(value, 'is-derivative')}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -140,31 +323,58 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             <label className='text-h6 font-500 text-N-700'>
               Discord ID (Nickname) for main contact
             </label>
-            <TextField className='w-full' placeholder='john' />
+            <TextField
+              className='w-full'
+              placeholder='john'
+              onChange={event => setDiscordId(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Email address for main contact</label>
-            <TextField className='w-full' placeholder='john@example.com' />
+            <TextField
+              className='w-full'
+              placeholder='john@example.com'
+              onChange={event => setEmail(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>
               Describe what makes your project unique
             </label>
-            <TextArea className='w-full' placeholder='Description' />
+            <div className='flex-row'>
+              <TextArea
+                className='w-full'
+                placeholder='Description'
+                onChange={event => setProjectDescription(event.target.value)}
+              />
+              {isFormNotValid && projectDescription.trim().length <= 0 ? (
+                <Text type='danger' style={{ fontSize: 13 }}>
+                  Description is required
+                </Text>
+              ) : null}
+            </div>
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>
               Please describe the long-term goals of your project
             </label>
-            <TextArea className='w-full' placeholder='Description' />
+            <TextArea
+              className='w-full'
+              placeholder='Description'
+              onChange={event => setLongTermGoals(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Please tell us about your team</label>
-            <TextArea className='w-full' placeholder='Description' />
+            <TextArea
+              className='w-full'
+              placeholder='Description'
+              onChange={event => setTeamDescription(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -176,8 +386,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an answer'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'experience')}
-              >
+                onChange={value => handleChange(value, 'experience')}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -186,32 +395,56 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Twitter link</label>
-            <TextField className='w-full' placeholder='https://' />
+            <TextField
+              className='w-full'
+              placeholder='https://'
+              onChange={event => setTwitterLink(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Discord Server (add link)</label>
-            <TextField className='w-full' placeholder='https://' />
+            <TextField
+              className='w-full'
+              placeholder='https://'
+              onChange={event => setDiscordServer(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Instagram (add link)</label>
-            <TextField className='w-full' placeholder='https://' />
+            <TextField
+              className='w-full'
+              placeholder='https://'
+              onChange={event => setInstagramLink(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>LinkedIn Profile (add link)</label>
-            <TextField className='w-full' placeholder='https://' />
+            <TextField
+              className='w-full'
+              placeholder='https://'
+              onChange={event => setLinkedInProfile(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Website (add link)</label>
-            <TextField className='w-full' placeholder='https://' />
+            <TextField
+              className='w-full'
+              placeholder='https://'
+              onChange={event => setWebsiteLink(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Other links</label>
-            <TextField className='w-full' placeholder='https://' />
+            <TextField
+              className='w-full'
+              placeholder='https://'
+              onChange={event => setOtherLink(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -230,12 +463,16 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             <label className='text-h6 font-500 text-N-700'>
               Number of items expected in collection for next mint
             </label>
-            <TextField className='w-full' placeholder='No of items #' />
+            <TextField
+              className='w-full'
+              placeholder='No of items #'
+              onChange={event => setNumberOfItemsExpected(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>
-              Is your team dox'd or do you plan to dox?
+              Is your team dox&apos;d or do you plan to dox?
             </label>
             <p className='text-gray-600'>(either publicly or via a dox service)</p>
             <div className='flex w-full'>
@@ -244,8 +481,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-doxed')}
-              >
+                onChange={value => handleChange(value, 'is-doxed')}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -254,7 +490,11 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Mint price (in SOL)</label>
-            <TextField className='w-full' placeholder='# SOL' />
+            <TextField
+              className='w-full'
+              placeholder='# SOL'
+              onChange={event => setMintPrice(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
@@ -265,8 +505,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an option'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'package')}
-              >
+                onChange={value => handleChange(value, 'package')}>
                 <Option value='gold'>Gold</Option>
                 <Option value='silver'>Silver</Option>
                 <Option value='basic'>Basic</Option>
@@ -276,11 +515,17 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
 
           <div className='flex w-full flex-col gap-[16px]'>
             <label className='text-h6 font-500 text-N-700'>Anything else we should know?</label>
-            <TextArea className='w-full' placeholder='Message' />
+            <TextArea
+              className='w-full'
+              placeholder='Message'
+              onChange={event => setAnything(event.target.value)}
+            />
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
-            <Button size='lg'>Submit Project</Button>
+            <Button size='lg' onClick={handleFormSubmit}>
+              Submit Project
+            </Button>
           </div>
         </div>
       </div>

@@ -35,7 +35,7 @@ export const Header: FC<HeaderProps> = () => {
   const pathname = usePathname()
   const { endpoint } = useConnectionConfig()
   const routerSearchParams = useQuerySearch()
-  const [ isStoreOwner, setIsStoreOwner ] = useState<boolean>()
+  const [isStoreOwner, setIsStoreOwner] = useState<boolean>()
   const { storeAddress } = useStore()
   const { publicKey } = useWallet()
   const { store, whitelistedCreatorsByCreator } = useMeta()
@@ -48,7 +48,10 @@ export const Header: FC<HeaderProps> = () => {
       whitelistedCreatorsByCreator[pubKey].info &&
       whitelistedCreatorsByCreator[pubKey].info.address
     ) {
-      console.log("Inside header condition", whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress)
+      console.log(
+        'Inside header condition',
+        whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress
+      )
       if (whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress) {
         setIsStoreOwner(true)
       } else {
@@ -81,7 +84,9 @@ export const Header: FC<HeaderProps> = () => {
             <Button appearance='link'>Discover Collections</Button>
           </Link>
 
-          <Button appearance='link'>Launchpad</Button>
+          <Link to='/launchpad-submission'>
+            <Button appearance='link'>Launchpad</Button>
+          </Link>
           <Button appearance='link'>Resources</Button>
           <Button appearance='link'>Donate</Button>
 
@@ -156,15 +161,14 @@ export const Header: FC<HeaderProps> = () => {
                           </div>
 
                           {isStoreOwner && (
-                            <div className='flex w-full flex-col gap-[8px] mt-3'>
+                            <div className='mt-3 flex w-full flex-col gap-[8px]'>
                               <Link to={'/admin'}>
                                 <Button
                                   appearance='ghost'
                                   view='outline'
                                   className='w-full'
                                   isRounded={false}
-                                  onClick={() => setIsOpen(false)}
-                                >
+                                  onClick={() => setIsOpen(false)}>
                                   Admin
                                 </Button>
                               </Link>

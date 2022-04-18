@@ -75,6 +75,7 @@ export const Collection: FC<CollectionProps> = () => {
 
   useEffect(() => {
     if (!colData) {
+      // console.log('Collections: ', liveCollections)
       Promise.all(
         auctions.map(async auction => {
           const gData = await getData(auction.thumbnail.metadata.pubkey)
@@ -82,6 +83,7 @@ export const Collection: FC<CollectionProps> = () => {
         })
       ).then(res => {
         const x = res.find(i => {
+          console.log('Collection Name', i.collection?.id)
           return i.collection?.name === id
         })
 
@@ -90,6 +92,8 @@ export const Collection: FC<CollectionProps> = () => {
             name: x.collection.name,
             image: x.image,
           })
+        } else {
+          console.log('There is no collection data')
         }
       })
     } else {
