@@ -1,18 +1,18 @@
 import React, { useState } from 'react'
-import { Row, Col, Divider, Layout, Tag, Button, Skeleton, List, Card } from 'antd'
+import { Layout, Tag } from 'antd'
+import { Button } from '@oyster/common'
 import { useParams } from 'react-router-dom'
 import { useArt, useExtendedArt } from '../../hooks'
 
 import { ArtContent } from '../../components/ArtContent'
-import { shortenAddress, useConnection } from '@oyster/common'
+import { shortenAddress, SOLIcon, useConnection } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { MetaAvatar } from '../../components/MetaAvatar'
 import { sendSignMetadata } from '../../actions/sendSignMetadata'
 import { ViewOn } from '../../components/ViewOn'
 import { ArtType } from '../../types'
 import { ArtMinting } from '../../components/ArtMinting'
-
-const { Content } = Layout
+import PutOnSale from './PutOnSale'
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>()
@@ -70,47 +70,31 @@ export const ArtView = () => {
   )
 
   return (
-    <Content>
-      <Col>
-        <Row ref={ref}>
-          <Col xs={{ span: 24 }} md={{ span: 12 }} style={{ paddingRight: '30px' }}>
-            <ArtContent
-              style={{ width: '100%', height: 'auto', margin: '0 auto' }}
-              height={300}
-              width={300}
-              className='artwork-image'
-              pubkey={id}
-              active={true}
-              allowMeshRender={true}
-              artView={true}
-            />
-          </Col>
-          {/* <Divider /> */}
-          <Col
-            xs={{ span: 24 }}
-            md={{ span: 12 }}
-            style={{ textAlign: 'left', fontSize: '1.4rem' }}
-          >
-            <Row>
-              <div style={{ fontWeight: 700, fontSize: '4rem' }}>
-                {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-              </div>
-            </Row>
-            <Row>
-              <Col span={6}>
-                <h6>Royalties</h6>
-                <div className='royalties'>
-                  {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
+    <div className='nft-details w-full'>
+      <div className='nft-details-body w-full pb-[100px]'>
+        <div className='container flex gap-[40px] rounded border border-slate-200 bg-white p-[40px] shadow-card-light'>
+          <div className='sidebar flex w-[400px] flex-shrink-0 flex-col gap-[40px]'>
+            <span className='w-full overflow-hidden rounded-[8px]'>
+              <ArtContent
+                style={{ width: '100%', height: 'auto', margin: '0 auto' }}
+                height={300}
+                width={300}
+                className='artwork-image'
+                pubkey={id}
+                active={true}
+                allowMeshRender={true}
+                artView={true}
+              />
+            </span>
+          </div>
+          <div className='content flex w-full flex-col'>
+            <div className='flex flex-col gap-[28px]'>
+              <div className='flex flex-col gap-[16px]'>
+                <div className='flex flex-col gap-[4px]'>
+                  <h2 className='text-h2 font-500 text-slate-800'>{art.title}</h2>
                 </div>
-              </Col>
-              <Col span={12}>
-                <ViewOn id={id} />
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <h6 style={{ marginTop: 5 }}>Created By</h6>
-                <div className='creators'>
+
+                <div className='text-sm font-500 text-B-400'>
                   {(art.creators || []).map((creator, idx) => {
                     return (
                       <div
@@ -119,8 +103,7 @@ export const ArtView = () => {
                           display: 'flex',
                           alignItems: 'center',
                           marginBottom: 5,
-                        }}
-                      >
+                        }}>
                         <MetaAvatar creators={[creator]} size={64} />
                         <div>
                           <span className='creator-name'>
@@ -138,8 +121,7 @@ export const ArtView = () => {
                                       return false
                                     }
                                     return true
-                                  }}
-                                >
+                                  }}>
                                   Approve
                                 </Button>
                               ) : (
@@ -151,85 +133,21 @@ export const ArtView = () => {
                     )
                   })}
                 </div>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <h6 style={{ marginTop: 5 }}>Edition</h6>
-                <div className='art-edition'>{badge}</div>
-              </Col>
-            </Row>
-            {art.type === ArtType.Master && (
-              <Row>
-                <Col>
-                  <h6 style={{ marginTop: 5 }}>Max Supply</h6>
-                  <div className='art-edition'>{maxSupply}</div>
-                </Col>
-              </Row>
-            )}
-            {/* <Button
-                  onClick={async () => {
-                    if(!art.mint) {
-                      return;
-                    }
-                    const mint = new PublicKey(art.mint);
 
-                    const account = accountByMint.get(art.mint);
-                    if(!account) {
-                      return;
-                    }
-
-                    const owner = wallet.publicKey;
-
-                    if(!owner) {
-                      return;
-                    }
-                    const instructions: any[] = [];
-                    await updateMetadata(undefined, undefined, true, mint, owner, instructions)
-
-                    sendTransaction(connection, wallet, instructions, [], true);
-                  }}
-                >
-                  Mark as Sold
-                </Button> */}
-
-            {/* TODO: Add conversion of MasterEditionV1 to MasterEditionV2 */}
-            <ArtMinting
-              id={id}
-              key={remountArtMinting}
-              onMint={async () => await setRemountArtMinting(prev => prev + 1)}
-            />
-          </Col>
-          <Col span='12'>
-            <Divider />
-            {art.creators?.find(c => !c.verified) && unverified}
-            <br />
-            <div className='info-header'>ABOUT THE CREATION</div>
-            <div className='info-content'>{description}</div>
-            <br />
-            {/*
-              TODO: add info about artist
-            <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{art.about}</div> */}
-          </Col>
-          <Col span='12'>
-            {attributes && (
-              <>
-                <Divider />
-                <br />
-                <div className='info-header'>Attributes</div>
-                <List size='large' grid={{ column: 4 }}>
-                  {attributes.map(attribute => (
-                    <List.Item key={attribute.trait_type}>
-                      <Card title={attribute.trait_type}>{attribute.value}</Card>
-                    </List.Item>
-                  ))}
-                </List>
-              </>
-            )}
-          </Col>
-        </Row>
-      </Col>
-    </Content>
+                <div className='flex flex-col gap-[12px]'>
+                  <h5 className='text-h6 font-400'>Max supply</h5>
+                  <div className='flex items-center gap-[8px]'>
+                    <SOLIcon size={24} />
+                    <h4 className='text-h4 font-600 leading-[1]'>{maxSupply}</h4>
+                    {/* <span className='ml-[4px] text-lg text-slate-500'>{1}</span> */}
+                  </div>
+                </div>
+                <PutOnSale />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

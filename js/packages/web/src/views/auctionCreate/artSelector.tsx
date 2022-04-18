@@ -3,7 +3,6 @@ import { Row, Button, Modal, ButtonProps } from 'antd'
 import { useUserArts } from '../../hooks'
 import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import AuctionItemCard from './AuctionItemCard'
-import { BuyCard, Loader } from '@oyster/common'
 import CN from 'classnames'
 
 export interface ArtSelectorProps extends ButtonProps {
@@ -44,7 +43,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
 
   return (
     <>
-      <div className='grid gap-[16px] w-full'>
+      <div className='grid w-full gap-[16px]'>
         {selected.map(m => {
           const key = m?.metadata.pubkey || ''
 

@@ -1,70 +1,56 @@
-import React, { useEffect, useState } from 'react'
-import { Steps } from 'antd'
-import { Button } from '@oyster/common'
-import { QUOTE_MINT } from './../../constants'
 import {
-  useConnection,
-  WinnerLimit,
-  WinnerLimitType,
-  toLamports,
-  useMint,
+  AmountRange,
+  Button,
+  IPartialCreateAuctionArgs,
   PriceFloor,
   PriceFloorType,
-  IPartialCreateAuctionArgs,
-  StringPublicKey,
+  SOLIcon,
+  TextField,
+  toLamports,
+  useConnection,
+  useMeta,
+  useMint,
+  WinnerLimit,
+  WinnerLimitType,
+  WinningConfigType,
   WRAPPED_SOL_MINT,
+  ZERO,
 } from '@oyster/common'
-import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useHistory, useParams } from 'react-router-dom'
-import { WinningConfigType, AmountRange } from '@oyster/common/dist/lib/models/metaplex/index'
-import { createAuctionManager } from '../../actions/createAuctionManager'
+import { createAuctionManager, SafetyDepositDraft } from '../../actions/createAuctionManager'
 import BN from 'bn.js'
-import { constants } from '@oyster/common'
-import { useMeta } from '../../contexts'
-import useWindowDimensions from '../../utils/layout'
-import CategoryStep from './CategoryStep'
-import InstantSaleStep from './InstantSaleStep'
-import CopiesStep from './CopiesStep'
-import NumberOfWinnersStep from './NumberOfWinnersStep'
-import PriceAuction from './PriceAuction'
-import InitialPhaseStep from './InitialPhaseStep'
-import EndingPhaseAuction from './EndingPhaseAuction'
-import ParticipationStep from './ParticipationStep'
-import TierTableStep from './TierTableStep'
-import ReviewStep from './ReviewStep'
-import WaitingStep from './WaitingStep'
-import Congrats from './Congrats'
-import {
-  AuctionCategory,
-  AuctionState,
-  InstantSaleType,
-  TierDummyEntry,
-  TieredAuctionState,
-} from './types'
+import { AuctionCategory, AuctionState } from '../auctionCreate'
+import { useCallback, useState } from 'react'
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
+import { QUOTE_MINT } from '../../constants'
+import { useTokenList } from '../../contexts/tokenList'
 
-const { Step } = Steps
-const { ZERO } = constants
+enum InstantSaleType {
+  Limited,
+  Single,
+  Open,
+}
 
-export const AuctionCreateView = () => {
+interface TierDummyEntry {
+  safetyDepositBoxIndex: number
+  amount: number
+  winningConfigType: WinningConfigType
+}
+interface Tier {
+  items: (TierDummyEntry | {})[]
+  winningSpots: number[]
+}
+interface TieredAuctionState {
+  items: SafetyDepositDraft[]
+  tiers: Tier[]
+  participationNFT?: SafetyDepositDraft
+}
+
+const PutOnSale = () => {
   const connection = useConnection()
   const wallet = useWallet()
-  const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
-  const { step_param }: { step_param: string } = useParams()
-  const history = useHistory()
   const mint = useMint(QUOTE_MINT)
-  const { width } = useWindowDimensions()
-
-  const [step, setStep] = useState<number>(0)
-  const [stepsVisible, setStepsVisible] = useState<boolean>(true)
-  const [auctionObj, setAuctionObj] = useState<
-    | {
-        vault: StringPublicKey
-        auction: StringPublicKey
-        auctionManager: StringPublicKey
-      }
-    | undefined
-  >(undefined)
+  const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
@@ -86,17 +72,18 @@ export const AuctionCreateView = () => {
     tiers: [],
   })
 
-  useEffect(() => {
-    if (step_param) setStep(parseInt(step_param))
-    else gotoNextStep(0)
-  }, [step_param])
+  console.log('mint', mint)
 
-  const gotoNextStep = (_step?: number) => {
-    const nextStep = _step === undefined ? step + 1 : _step
-    history.push(`/auction/create/${nextStep.toString()}`)
-  }
+  // attributes.quoteMintAddress = !!mint ? mint.toBase58() : QUOTE_MINT.toBase58()
 
-  const createAuction = async () => {
+  // if (attributes.quoteMintAddress) {
+  //   attributes.quoteMintInfo = useMint(attributes.quoteMintAddress)!
+  //   attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(attributes.quoteMintAddress)!
+  // }
+
+  console.log('attributes', attributes)
+
+  const onSubmit = async () => {
     let winnerLimit: WinnerLimit
     //const mint = attributes.quoteMintInfo
     if (
@@ -367,189 +354,119 @@ export const AuctionCreateView = () => {
       attributes.quoteMintAddress,
       storeIndexer
     )
-    setAuctionObj(_auctionObj)
-  }
 
-  const categoryStep = (
-    <CategoryStep
-      confirm={(category: AuctionCategory) => {
-        setAttributes({
-          ...attributes,
-          category,
-        })
-        gotoNextStep()
-      }}
-    />
-  )
-
-  const instantSaleStep = (
-    <InstantSaleStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const copiesStep = (
-    <CopiesStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const winnersStep = (
-    <NumberOfWinnersStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const priceAuction = (
-    <PriceAuction
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const initialStep = (
-    <InitialPhaseStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const endingStep = (
-    <EndingPhaseAuction
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const participationStep = (
-    <ParticipationStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const tierTableStep = (
-    <TierTableStep
-      attributes={tieredAttributes}
-      setAttributes={setTieredAttributes}
-      maxWinners={attributes.winnersCount}
-      confirm={() => gotoNextStep()}
-    />
-  )
-
-  const reviewStep = (
-    <ReviewStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => {
-        setStepsVisible(false)
-        gotoNextStep()
-      }}
-      connection={connection}
-    />
-  )
-
-  const waitStep = <WaitingStep createAuction={createAuction} confirm={() => gotoNextStep()} />
-
-  const congratsStep = <Congrats auction={auctionObj} />
-
-  const stepsByCategory = {
-    [AuctionCategory.InstantSale]: [
-      ['Category', categoryStep],
-      ['Instant Sale', instantSaleStep],
-      ['Review', reviewStep],
-      ['Publish', waitStep],
-      [undefined, congratsStep],
-    ],
-    [AuctionCategory.Limited]: [
-      ['Category', categoryStep],
-      ['Copies', copiesStep],
-      ['Price', priceAuction],
-      ['Initial Phase', initialStep],
-      ['Ending Phase', endingStep],
-      ['Participation NFT', participationStep],
-      ['Review', reviewStep],
-      ['Publish', waitStep],
-      [undefined, congratsStep],
-    ],
-    [AuctionCategory.Single]: [
-      ['Category', categoryStep],
-      ['Copies', copiesStep],
-      ['Price', priceAuction],
-      ['Initial Phase', initialStep],
-      ['Ending Phase', endingStep],
-      ['Participation NFT', participationStep],
-      ['Review', reviewStep],
-      ['Publish', waitStep],
-      [undefined, congratsStep],
-    ],
-    [AuctionCategory.Open]: [
-      ['Category', categoryStep],
-      ['Copies', copiesStep],
-      ['Price', priceAuction],
-      ['Initial Phase', initialStep],
-      ['Ending Phase', endingStep],
-      ['Review', reviewStep],
-      ['Publish', waitStep],
-      [undefined, congratsStep],
-    ],
-    [AuctionCategory.Tiered]: [
-      ['Category', categoryStep],
-      ['Winners', winnersStep],
-      ['Tiers', tierTableStep],
-      ['Price', priceAuction],
-      ['Initial Phase', initialStep],
-      ['Ending Phase', endingStep],
-      ['Participation NFT', participationStep],
-      ['Review', reviewStep],
-      ['Publish', waitStep],
-      [undefined, congratsStep],
-    ],
+    console.log('_auctionObj', _auctionObj)
   }
 
   return (
-    <>
-      <div className='flex w-full pt-[80px] pb-[100px]'>
-        <div className='container flex gap-[32px]'>
-          {stepsVisible && (
-            <div className='sidebar w-[260px] flex-shrink-0 rounded'>
-              <Steps progressDot direction={width < 768 ? 'horizontal' : 'vertical'} current={step}>
-                {stepsByCategory[attributes.category]
-                  .filter(_ => !!_[0])
-                  .map((step, idx) => (
-                    <Step title={step[0]} key={idx} />
-                  ))}
-              </Steps>
-            </div>
-          )}
-
-          <div className='content-wrapper flex w-full flex-col gap-[28px]'>
-            {stepsByCategory[attributes.category][step][1]}
-
-            {0 < step && stepsVisible && (
-              <div className='flex max-w-[700px]'>
-                <Button
-                  appearance='secondary'
-                  view='outline'
-                  isRounded={false}
-                  onClick={() => gotoNextStep(step - 1)}>
-                  Back
-                </Button>
-              </div>
-            )}
-          </div>
+    <div className='flex items-center gap-[16px]'>
+      <>
+        <TextField
+          type='number'
+          min={0}
+          autoFocus
+          placeholder='Price'
+          label='Enter price'
+          onChange={info =>
+            setAttributes({
+              ...attributes,
+              priceFloor: parseFloat(info.target.value),
+              instantSalePrice: parseFloat(info.target.value),
+            })
+          }
+          iconBefore={'◎'}
+          //   iconAfter={mintInfo?.symbol || 'CUSTOM'}
+        />
+      </>
+      <div className='flex h-[56px] max-w-[395px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
+        <div className='flex h-full items-center gap-[8px]'>
+          <SOLIcon size={18} />
+          {/* <input
+            type='number'
+            className='h-full w-full appearance-none bg-transparent outline-none'
+            onChange={info =>
+              setAttributes({
+                ...attributes,
+                priceFloor: parseFloat(info.target.value),
+                instantSalePrice: parseFloat(info.target.value),
+              })
+            }
+            placeholder='List price (SOL'
+          /> */}
         </div>
+        <Button
+          onClick={onSubmit}
+          appearance='neutral'
+          size='md'
+          className='h-full w-[180px] flex-shrink-0'>
+          List now
+        </Button>
       </div>
-    </>
+    </div>
   )
 }
+
+export default PutOnSale
+
+// const Sale = ({
+//   attributes,
+//   setAttributes,
+//   confirm,
+// }: {
+//   attributes: AuctionState
+//   setAttributes: (attr: AuctionState) => void
+//   confirm: () => void
+// }) => {
+//   const [showTokenDialog, setShowTokenDialog] = useState(false)
+//   const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+//   // give default value to mint
+
+//   const { hasOtherTokens, tokenMap } = useTokenList()
+
+//   // give default value to mint
+//   const mintInfo = tokenMap.get(!mint ? QUOTE_MINT.toString() : mint.toString())
+
+//   attributes.quoteMintAddress = mint ? mint.toBase58() : QUOTE_MINT.toBase58()
+
+//   if (attributes.quoteMintAddress) {
+//     attributes.quoteMintInfo = useMint(attributes.quoteMintAddress)!
+//     attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(attributes.quoteMintAddress)!
+//   }
+
+//   //console.log("OBJ MINT", mint.toBase58())
+//   const isMasterEdition = !!attributes?.items?.[0]?.masterEdition
+
+//   const copiesEnabled = useMemo(() => {
+//     const maxSupply = attributes?.items?.[0]?.masterEdition?.info?.maxSupply
+//     return !!maxSupply && maxSupply.toNumber() > 0
+//   }, [attributes?.items?.[0]])
+//   const artistFilter = useCallback(
+//     (i: SafetyDepositDraft) =>
+//       !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
+//     []
+//   )
+
+//   const isLimitedEdition = attributes.instantSaleType === InstantSaleType.Limited
+//   const shouldRenderSelect = attributes.items.length > 0
+
+//   return (
+//     <>
+//       <TextField
+//         type='number'
+//         min={0}
+//         autoFocus
+//         placeholder='Price'
+//         label='Enter price'
+//         onChange={info =>
+//           setAttributes({
+//             ...attributes,
+//             priceFloor: parseFloat(info.target.value),
+//             instantSalePrice: parseFloat(info.target.value),
+//           })
+//         }
+//         iconBefore={'◎'}
+//         //   iconAfter={mintInfo?.symbol || 'CUSTOM'}
+//       />
+//     </>
+//   )
+// }
