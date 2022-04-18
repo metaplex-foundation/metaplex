@@ -4,6 +4,7 @@ import path from 'path';
 import { NFTStorageMetaplexor } from '@nftstorage/metaplex-auth';
 import { NFTStorage, Blob } from 'nft.storage';
 import { Keypair } from '@solana/web3.js';
+import {setImageUrlManifest} from './file-uri'
 
 export async function nftStorageUpload(
   image: string,
@@ -65,15 +66,10 @@ export async function nftStorageUpload(
         .extname(animation)
         .replace('.', '')}`
     : undefined;
-  const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  const originalImage = manifestJson.image;
-  manifestJson.image = imageUrl;
-  manifestJson.properties.files.forEach(file => {
-    if (file.uri === originalImage) file.uri = imageUrl;
-  });
-  if (animation) {
-    manifestJson.animation_url = animationUrl;
-  }
+
+  const manifestJson = await setImageUrlManifest(manifestBuffer.toString('utf8'),imageUrl,animationUrl);
 
   return uploadMetadata(manifestJson, imageUrl, animationUrl);
 }
+
+

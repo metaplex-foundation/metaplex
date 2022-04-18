@@ -5,6 +5,7 @@ import { Readable } from 'form-data';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import path from 'path';
 import { getType } from 'mime';
+import {setImageUrlManifest} from './file-uri'
 
 async function uploadFile(
   s3Client: S3Client,
@@ -66,15 +67,9 @@ export async function awsUpload(
         .extname(animation)
         .replace('.', '')}`
     : undefined;
-  const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  const originalImage = manifestJson.image;
-  manifestJson.image = imageUrl;
-  manifestJson.properties.files.forEach(file => {
-    if (file.uri === originalImage) file.uri = imageUrl;
-  });
-  if (animation) {
-    manifestJson.animation_url = animationUrl;
-  }
+
+  const manifestJson = await setImageUrlManifest(manifestBuffer.toString('utf8'),imageUrl,animationUrl);
+
 
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 
