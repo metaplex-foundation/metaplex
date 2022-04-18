@@ -63,7 +63,6 @@ export const AdminView = () => {
       }
     }
   }, [store, storeAddress, wallet.publicKey])
-  console.log('@admin', wallet.connected, storeAddress, isLoading, store)
 
   return (
     <>
@@ -230,31 +229,20 @@ function InnerAdminView({
   )
 
   const uniqueCreatorsWithUpdates = { ...uniqueCreators, ...updatedCreators }
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalAddress, setModalAddress] = useState<string>('')
 
   useEffect(() => {
     getSubmissions().then(submissions => {
-      console.log(submissions?.data.data)
       setSubmissions(submissions?.data.data)
     })
   }, [])
 
-  const addCreatorToWhiteList = (e: any, address: string) => {
-    try {
-      setUpdatedCreators(u => ({
-        ...u,
-        ['']: new WhitelistedCreator({
-          address,
-          activated: true,
-        }),
-      }))
-      statusToApprove(address)
-    } catch (error) {
-      notify({
-        message: 'Only valid Solana addresses are supported',
-        type: 'error',
-      })
-    }
-  }
+  useEffect(() => {
+    getSubmissions().then(submissions => {
+      setSubmissions(submissions?.data.data)
+    })
+  }, [statusToApprove])
 
   const columns = [
     {
@@ -322,13 +310,17 @@ function InnerAdminView({
     },
     {
       title: 'Actions',
-      dataIndex: 'creator_public_key',
+      dataIndex: 'actions',
       key: 'actions',
-      render: (record: string) => (
+      render: (_, row) => (
         <>
           <button
             className='text-black-800 h-[32px] w-full appearance-none rounded-[15px] bg-green-300 px-[12px] text-md font-500 hover:bg-green-500 hover:text-white'
-            onClick={e => addCreatorToWhiteList(e, record)}>
+            disabled={row.approval_status === 'Approved'}
+            onClick={() => {
+              setModalOpen(true)
+              setModalAddress(row.creator_public_key)
+            }}>
             Approve
           </button>
         </>
@@ -422,6 +414,51 @@ function InnerAdminView({
             </div>
           </>
         ) : null}
+
+        <Modal
+          className={'modal-box'}
+          title='Add creator to whitelist'
+          visible={modalOpen}
+          onOk={async () => {
+            const addressToAdd = modalAddress
+            setModalAddress('')
+            setModalOpen(false)
+
+            if (uniqueCreatorsWithUpdates[addressToAdd]) {
+              notify({
+                message: 'Artist already added!',
+                type: 'error',
+              })
+              return
+            }
+
+            let address: StringPublicKey
+            try {
+              address = addressToAdd
+              setUpdatedCreators(u => ({
+                ...u,
+                [modalAddress]: new WhitelistedCreator({
+                  address,
+                  activated: true,
+                }),
+              }))
+              await saveAdmin(connection, wallet, newStore.public, Object.values(updatedCreators))
+              await statusToApprove(addressToAdd)
+            } catch (error) {
+              notify({
+                message: 'Only valid Solana addresses are supported',
+                type: 'error',
+              })
+              return
+            }
+          }}
+          onCancel={() => {
+            setModalAddress('')
+            setModalOpen(false)
+          }}>
+          <div className='text-white'>Do you want to continue?</div>
+          <div className='text-white'>Click Ok to add creator to whitelist</div>
+        </Modal>
 
         {!store.info.public && (
           <div className='flex max-w-[700px] flex-col gap-[20px]'>
