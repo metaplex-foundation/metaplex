@@ -33,7 +33,7 @@ interface InstantSaleInterface {
   items: SafetyDepositDraft[]
 }
 
-const InstantSale = ({ items }: InstantSaleInterface[]) => {
+const InstantSale = ({ items }: InstantSaleInterface) => {
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
