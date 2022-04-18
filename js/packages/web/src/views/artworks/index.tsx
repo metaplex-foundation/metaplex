@@ -40,11 +40,13 @@ export const ArtworksView = () => {
 
   const isDataLoading = isLoading || isFetching
 
+  console.log('userItems', userItems)
+
   const artworkGrid = (
-    <div className="artwork-grid">
-      {isDataLoading &&
-        [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-      {!isDataLoading &&
+    <div className='artwork-grid'>
+      {/* {isDataLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)} */}
+      {
+        // !isDataLoading &&
         userItems.map(item => {
           const pubkey = isMetadata(item)
             ? item.pubkey
@@ -53,7 +55,8 @@ export const ArtworksView = () => {
             : item.edition?.pubkey || item.metadata.pubkey
 
           return <ItemCard item={item} key={pubkey} />
-        })}
+        })
+      }
     </div>
   )
 
@@ -67,8 +70,7 @@ export const ArtworksView = () => {
         <Menu className='gray-dropdown'>
           <Menu.Item onClick={() => pullAllMetadata()}>Load All Metadata</Menu.Item>
         </Menu>
-      }
-    >
+      }>
       Refresh
     </Dropdown.Button>
   )
@@ -81,24 +83,21 @@ export const ArtworksView = () => {
             <Tabs
               activeKey={activeKey}
               onTabClick={key => setActiveKey(key as ArtworkViewState)}
-              tabBarExtraContent={refreshButton}
-            >
+              tabBarExtraContent={refreshButton}>
               <TabPane tab={<span className='tab-title'>All</span>} key={ArtworkViewState.Metaplex}>
                 {artworkGrid}
               </TabPane>
               {connected && (
                 <TabPane
                   tab={<span className='tab-title'>Owned</span>}
-                  key={ArtworkViewState.Owned}
-                >
+                  key={ArtworkViewState.Owned}>
                   {artworkGrid}
                 </TabPane>
               )}
               {connected && (
                 <TabPane
                   tab={<span className='tab-title'>Created</span>}
-                  key={ArtworkViewState.Created}
-                >
+                  key={ArtworkViewState.Created}>
                   {artworkGrid}
                 </TabPane>
               )}

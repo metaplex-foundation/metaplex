@@ -4,10 +4,12 @@ import { AuctionView } from '../../../hooks'
 import useNFTData from '../../../hooks/useNFTData'
 
 interface NFTCardWrapperInterface {
+  [key: string]: any
   auction: AuctionView
+  link?: string
 }
 
-const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction }) => {
+const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction, link, ...restProps }) => {
   const {
     data,
     value: { solVal, usdValFormatted },
@@ -21,6 +23,10 @@ const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction }) => {
       price={solVal ?? ''}
       dollarValue={usdValFormatted ?? ''}
       bidPrice='3.12 SOL'
+      onClickQuickBuy={() => {}}
+      onClickDetails={() => {}}
+      link={link ?? ''}
+      {...restProps}
     />
   )
 }

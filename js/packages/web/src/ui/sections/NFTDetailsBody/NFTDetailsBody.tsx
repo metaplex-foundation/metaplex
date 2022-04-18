@@ -7,6 +7,7 @@ import { AuctionView, useBidsForAuction, useCreators, useExtendedArt } from '../
 import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
+import useAttribute from '../../../hooks/useAttribute'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -17,9 +18,36 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
-
+  const { attributesPercentages } = useAttribute(auction)
+  // const { userAccounts } = useUserAccounts()
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
+
+  // const connection = useConnection()
+
+  // useEffect(() => {
+  //   try {
+  //     if (pubkey) {
+  //       const mint = new PublicKey('8fDJpV69CcuUnxBkpXQfWdJt2K2DxfuXaU8pX5V8AmSM')
+
+  //       // console.log('mint', mint)
+
+  //       connection
+  //         .getProgramAccounts(mint, 'processed')
+  //         .then(res => {
+  //           console.log('res', res)
+  //         })
+  //         .catch(error => {
+  //           console.log('error', error)
+  //         })
+  //     }
+  //   } catch (error) {
+  //     console.log('error2', error)
+  //   }
+  // }, [])
+
+  // const d = useAccountByMint(auction.thumbnail.metadata.info.mint)
+  // const data = getFilteredProgramAccounts(Connection)
 
   const creators = useCreators(auction)
   const {
@@ -41,6 +69,10 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
 
+  const creator = creators[creators.length - 1]
+
+  // console.log('data', data)
+
   return (
     <div className={NFTDetailsBodyClasses}>
       <div className='container flex gap-[40px] rounded border border-slate-200 bg-white p-[40px] shadow-card-light'>
@@ -60,16 +92,22 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
 
               <div className='flex w-full flex-col gap-[8px]'>
                 {(data?.attributes || []).map(
-                  ({ trait_type: label, value }: any, index: number) => (
-                    <AttributesCard
-                      key={`${index}-${label}`}
-                      overline={label}
-                      label={value}
-                      tag={`🔥 '14.14%`}
-                      hasHoverEffect={false}
-                      className='cursor-auto !py-[12px] !px-[16px]'
-                    />
-                  )
+                  ({ trait_type: label, value }: any, index: number) => {
+                    const tagVal =
+                      attributesPercentages.find(
+                        p => p.trait_type === label && p.value === value
+                      ) || null
+                    return (
+                      <AttributesCard
+                        key={`${index}-${label}`}
+                        overline={label}
+                        label={value}
+                        tag={tagVal ? `🔥 ${tagVal?.percentage.toFixed(2)}%` : ''}
+                        hasHoverEffect={false}
+                        className='cursor-auto !py-[12px] !px-[16px]'
+                      />
+                    )
+                  }
                 )}
               </div>
             </div>
@@ -83,10 +121,29 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                 <h2 className='text-h2 font-500 text-slate-800'>{data?.name}</h2>
                 {collection?.name && (
                   <div className='flex items-center gap-[4px]'>
-                    <h6 className='text-h6 font-400'>{collection?.name}</h6>
+                    <h6 className='text-h6 font-400'>
+                      {
+                        //@ts-ignore
+                        collection?.name ?? data?.collection?.name
+                      }
+                    </h6>
                     <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
                   </div>
                 )}
+                {
+                  //@ts-ignore
+                  data?.collection?.name && (
+                    <div className='flex items-center gap-[4px]'>
+                      <h6 className='text-h6 font-400'>
+                        {
+                          //@ts-ignore
+                          data?.collection?.name
+                        }
+                      </h6>
+                      <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
+                    </div>
+                  )
+                }
               </div>
               <div className='text-sm font-500 text-B-400'>
                 {owner ? (
@@ -99,20 +156,20 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                   </span>
                 ) : (
                   <span>
-                    {(creators || []).map(({ image, address }) => {
-                      return (
-                        <Avatar
-                          key={address}
-                          address={address}
-                          image={image}
-                          label={`Owned by — ${address?.substring(0, 3)}...${address?.substring(
-                            address.length - 3
-                          )}`}
-                          size={32}
-                          labelClassName='text-sm font-500 text-B-400'
-                        />
-                      )
-                    })}
+                    {/* {(creators || []).map(({ image, address }) => { */}
+
+                    <Avatar
+                      key={creator.address}
+                      address={creator.address}
+                      image={creator.image}
+                      label={`Owned by — ${creator.address?.substring(
+                        0,
+                        3
+                      )}...${creator.address?.substring(creator.address.length - 3)}`}
+                      size={32}
+                      labelClassName='text-sm font-500 text-B-400'
+                    />
+                    {/* })} */}
                   </span>
                 )}
               </div>
@@ -128,25 +185,6 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
             </div>
 
             {auction && <AuctionCard auctionView={auction} hideDefaultAction={false} />}
-            {/* <div className='flex items-center gap-[16px]'>
-              <Button size='lg' className='w-[230px]'>
-                Buy Now
-              </Button>
-
-              <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
-                <div className='flex h-full items-center gap-[8px]'>
-                  <SOLIcon size={18} />
-                  <input
-                    type='text'
-                    placeholder='Enter'
-                    className='h-full w-full appearance-none bg-transparent outline-none'
-                  />
-                </div>
-                <Button appearance='neutral' size='md' className='h-full w-[180px] flex-shrink-0'>
-                  Place Bid
-                </Button>
-              </div>
-            </div> */}
 
             <NFTDetailsTabs auction={auction} />
           </div>
