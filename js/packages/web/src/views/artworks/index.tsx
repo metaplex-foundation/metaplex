@@ -74,35 +74,29 @@ export const ArtworksView = () => {
   )
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30 }}>
-      <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-        <Col style={{ width: '100%', marginTop: 10 }}>
-          <Row>
-            <Tabs
-              activeKey={activeKey}
-              onTabClick={key => setActiveKey(key as ArtworkViewState)}
-              tabBarExtraContent={refreshButton}>
-              <TabPane tab={<span className='tab-title'>All</span>} key={ArtworkViewState.Metaplex}>
+    <div className='discover container'>
+      <Col style={{ width: '100%', marginTop: 10 }}>
+        <Row>
+          <Tabs
+            activeKey={activeKey}
+            onTabClick={key => setActiveKey(key as ArtworkViewState)}
+            tabBarExtraContent={refreshButton}>
+            <TabPane tab={<span className=''>All</span>} key={ArtworkViewState.Metaplex}>
+              {artworkGrid}
+            </TabPane>
+            {connected && (
+              <TabPane tab={<span className=''>Owned</span>} key={ArtworkViewState.Owned}>
                 {artworkGrid}
               </TabPane>
-              {connected && (
-                <TabPane
-                  tab={<span className='tab-title'>Owned</span>}
-                  key={ArtworkViewState.Owned}>
-                  {artworkGrid}
-                </TabPane>
-              )}
-              {connected && (
-                <TabPane
-                  tab={<span className='tab-title'>Created</span>}
-                  key={ArtworkViewState.Created}>
-                  {artworkGrid}
-                </TabPane>
-              )}
-            </Tabs>
-          </Row>
-        </Col>
-      </Content>
-    </Layout>
+            )}
+            {connected && (
+              <TabPane tab={<span className=''>Created</span>} key={ArtworkViewState.Created}>
+                {artworkGrid}
+              </TabPane>
+            )}
+          </Tabs>
+        </Row>
+      </Col>
+    </div>
   )
 }
