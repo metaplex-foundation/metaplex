@@ -2,7 +2,7 @@ import log from 'loglevel';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 import fs from 'fs';
-import {setImageUrlManifest} from './file-uri'
+import { setImageUrlManifest } from './file-uri';
 
 async function sleep(ms: number): Promise<void> {
   console.log('waiting');
@@ -52,10 +52,11 @@ export async function pinataUpload(
     animationUrl = `${gatewayUrl}/ipfs/${animationCid}`;
   }
 
-  const manifestJson = await setImageUrlManifest(manifestBuffer.toString('utf8'),mediaUrl,animationUrl);
-
-
-
+  const manifestJson = await setImageUrlManifest(
+    manifestBuffer.toString('utf8'),
+    mediaUrl,
+    animationUrl,
+  );
 
   fs.writeFileSync('tempJson.json', JSON.stringify(manifestJson));
 
