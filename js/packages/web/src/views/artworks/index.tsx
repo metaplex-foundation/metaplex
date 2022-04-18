@@ -15,7 +15,7 @@ const { TabPane } = Tabs
 const { Content } = Layout
 
 export const ArtworksView = () => {
-  const { connected } = useWallet()
+  const { connected, publicKey } = useWallet()
   const { isLoading, pullAllMetadata, storeIndexer, pullItemsPage, isFetching } = useMeta()
   const { userAccounts } = useUserAccounts()
 
@@ -58,21 +58,6 @@ export const ArtworksView = () => {
     </div>
   )
 
-  const refreshButton = connected && storeIndexer.length !== 0 && (
-    <Dropdown.Button
-      className='refresh-button padding0'
-      onClick={() => pullItemsPage(userAccounts)}
-      icon={<DownOutlined />}
-      overlayClassName='refresh-overlay'
-      overlay={
-        <Menu className='gray-dropdown'>
-          <Menu.Item onClick={() => pullAllMetadata()}>Load All Metadata</Menu.Item>
-        </Menu>
-      }>
-      Refresh
-    </Dropdown.Button>
-  )
-
   return (
     <div className='discover container'>
       <Col style={{ width: '100%', marginTop: 10 }}>
@@ -80,12 +65,13 @@ export const ArtworksView = () => {
           <Tabs
             activeKey={activeKey}
             onTabClick={key => setActiveKey(key as ArtworkViewState)}
-            tabBarExtraContent={refreshButton}>
-            <TabPane tab={<span className=''>All</span>} key={ArtworkViewState.Metaplex}>
+            // tabBarExtraContent={refreshButton}
+          >
+            {/* <TabPane tab={<span className=''>All</span>} key={ArtworkViewState.Metaplex}>
               {artworkGrid}
-            </TabPane>
+            </TabPane> */}
             {connected && (
-              <TabPane tab={<span className=''>Owned</span>} key={ArtworkViewState.Owned}>
+              <TabPane tab={<span className=''>My Items</span>} key={ArtworkViewState.Owned}>
                 {artworkGrid}
               </TabPane>
             )}

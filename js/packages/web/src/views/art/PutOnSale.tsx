@@ -28,7 +28,7 @@ const PutOnSale = ({ setAttributes, attributes, submit, loading }) => {
             min={0}
             autoFocus
             placeholder='List Price'
-            label='Enter price'
+            // label='Enter price'
             onChange={info =>
               setAttributes({
                 ...attributes,
@@ -40,8 +40,8 @@ const PutOnSale = ({ setAttributes, attributes, submit, loading }) => {
             iconAfter={mintInfo?.symbol || 'CUSTOM'}
           />
         </div>
-        <div className='mt-10 flex w-32 flex-auto items-center justify-start'>
-          <Button disabled={loading} onClick={submit} className='w-full/2'>
+        <div className='mt-5 flex w-32 flex-auto items-center justify-start'>
+          <Button disabled={loading} onClick={submit} className='w-full'>
             List Now
           </Button>
         </div>

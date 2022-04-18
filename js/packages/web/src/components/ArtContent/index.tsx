@@ -1,6 +1,5 @@
 import React, { Ref, useCallback, useEffect, useState } from 'react'
-import { Image } from 'antd'
-import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common'
+import { Button, Image, MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common'
 import { MeshViewer } from '../MeshViewer'
 import { ThreeDots } from '../MyLoader'
 import { useCachedImage, useExtendedArt } from '../../hooks'
@@ -55,13 +54,13 @@ export const CachedImageContent = ({
 
   return (
     <Image
-      fallback='image-placeholder.svg'
+      // fallback='image-placeholder.svg'
       src={cachedBlob}
-      preview={preview}
-      wrapperClassName={className}
-      loading='lazy'
-      wrapperStyle={{ ...style }}
-      placeholder={<ThreeDots />}
+      // preview={preview}
+      // wrapperClassName={className}
+      // loading='lazy'
+      // wrapperStyle={{ ...style }}
+      // placeholder={<ThreeDots />}
     />
   )
 }
@@ -318,15 +317,15 @@ export const ArtContent = ({
   const content =
     categoryState === 'video' ? (
       <VideoArtContent
-        className={className}
-        style={style}
+        // className={className}
+        // style={style}
         files={filesState}
         uri={uriState}
         animationURL={animationURLState}
         active={active}
       />
     ) : (
-      <CachedImageContent uri={uriState} className={className} preview={preview} style={style} />
+      <CachedImageContent uri={uriState} className={className} preview={preview} />
     )
 
   return <ArtContentWrapper ref={ref as any}>{content}</ArtContentWrapper>
