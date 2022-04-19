@@ -46,8 +46,8 @@ export const ENDPOINTS: Array<Endpoint> = [
   {
     name: 'testnet',
     label: 'testnet',
-    url: clusterApiUrl('devnet'),
-    chainId: ChainId.Devnet,
+    url: clusterApiUrl('testnet'),
+    chainId: ChainId.Testnet,
   },
   {
     name: 'devnet',
