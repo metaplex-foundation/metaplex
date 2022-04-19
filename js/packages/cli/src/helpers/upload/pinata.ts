@@ -34,7 +34,6 @@ export async function pinataUpload(
 ) {
   const gatewayUrl = gateway ? gateway : `https://ipfs.io`;
 
-
   const imageCid = await uploadMedia(image, jwt);
   log.info('uploaded image: ', `${gatewayUrl}/ipfs/${imageCid}`);
   await sleep(500);
