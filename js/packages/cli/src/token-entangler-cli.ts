@@ -332,6 +332,7 @@ programCommand('swap')
         transferAuthority: transferAuthority.publicKey,
         paymentTransferAuthority: paymentTransferAuthority.publicKey,
         token,
+        tokenMint,
         replacementTokenMetadata,
         replacementToken,
         replacementTokenMint,
