@@ -11,8 +11,8 @@ export interface NFTCardProps {
   price?: string
   dollarValue?: string
   bidPrice?: string
-  onClickQuickBuy?: any
-  onClickDetails?: any
+  onClickDetails?: () => void
+  onQuickBuy: any
   link?: string
 }
 
@@ -23,33 +23,25 @@ export const NFTCard: FC<NFTCardProps> = ({
   price,
   dollarValue,
   bidPrice,
-  onClickQuickBuy,
   onClickDetails,
+  onQuickBuy,
   link,
-  ...restProps
-}: NFTCardProps) => {
+}) => {
   const NFTCardClasses = CN(
     `nft-card shadow-card flex flex-col bg-white rounded overflow-hidden w-full group cursor-pointer relative group`,
     className
   )
 
   return (
-    <div className={NFTCardClasses} {...restProps}>
+    <div className={NFTCardClasses}>
       <div className='relative flex h-[180px] w-full overflow-hidden'>
         <Link to={link ?? ''} className='h-[inherit] w-[inherit]'>
           <Image src={image} />
         </Link>
 
         <div className='absolute left-0 right-0 top-0 bottom-0 hidden flex-col  items-center justify-center gap-[8px] px-[20px] group-hover:flex'>
-          {onClickQuickBuy && (
-            <Button
-              onClick={(e: any) => {
-                e.stopPropagation()
-                onClickQuickBuy(e)
-              }}
-              className='w-full'
-              appearance='primary'
-              isRounded={false}>
+          {onQuickBuy && (
+            <Button onClick={onQuickBuy} className='w-full' appearance='primary' isRounded={false}>
               Quick Buy
             </Button>
           )}
