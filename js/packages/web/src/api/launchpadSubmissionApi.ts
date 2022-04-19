@@ -20,3 +20,23 @@ export const statusToApprove = async (id: string) => {
     return
   }
 }
+
+export const findByCollectionName = async (name: string) => {
+  try {
+    const data = await axios.get(`${api}/find/name/${name}`)
+    return data
+  } catch (error: any) {
+    console.log('Find submissions with collection name API error: ', error.message)
+    return
+  }
+}
+
+export const findByMintKey = async (mintKey: string) => {
+  try {
+    const data = await axios.get(`${api}/find/mint/${mintKey}`)
+    return data
+  } catch (error: any) {
+    console.log('Find submissions with mint key API error: ', error.message)
+    return
+  }
+}
