@@ -155,9 +155,9 @@ export async function setCollection(
       collectionPDAPubkey,
     );
   }
-  
+
   instructions.push(
-     anchorProgram.instruction.setCollection  ({
+    anchorProgram.instruction.setCollection({
       accounts: {
         candyMachine: candyMachineAddress,
         authority: wallet.publicKey,
@@ -173,7 +173,6 @@ export async function setCollection(
       },
     }),
   );
-
 
   log.info('Candy machine address: ', candyMachineAddress.toBase58());
   log.info('Collection metadata address: ', metadataPubkey.toBase58());
