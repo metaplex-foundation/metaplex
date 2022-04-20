@@ -2,6 +2,7 @@ import log from 'loglevel';
 import fetch from 'node-fetch';
 import { create, globSource } from 'ipfs-http-client';
 import path from 'path';
+import { setImageUrlManifest } from './file-uri';
 
 export interface ipfsCreds {
   projectId: string;
@@ -53,11 +54,12 @@ export async function ipfsUpload(
         .extname(animation)
         .replace('.', '')}`
     : undefined;
-  const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
-  manifestJson.image = imageUrl;
-  if (animation) {
-    manifestJson.animation_url = animationUrl;
-  }
+
+  const manifestJson = await setImageUrlManifest(
+    manifestBuffer.toString('utf8'),
+    imageUrl,
+    animationUrl,
+  );
 
   const manifestHash = await uploadToIpfs(
     Buffer.from(JSON.stringify(manifestJson)),

@@ -2,6 +2,7 @@ import log from 'loglevel';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 import fs from 'fs';
+import { setImageUrlManifest } from './file-uri';
 
 async function sleep(ms: number): Promise<void> {
   console.log('waiting');
@@ -33,8 +34,6 @@ export async function pinataUpload(
 ) {
   const gatewayUrl = gateway ? gateway : `https://ipfs.io`;
 
-  const manifestJson = JSON.parse(manifestBuffer.toString('utf8')); //JSON.parse(fs.readFileSync(manifestBuffer, 'utf-8'));
-
   const imageCid = await uploadMedia(image, jwt);
   log.info('uploaded image: ', `${gatewayUrl}/ipfs/${imageCid}`);
   await sleep(500);
@@ -47,15 +46,15 @@ export async function pinataUpload(
   }
 
   const mediaUrl = `${gatewayUrl}/ipfs/${imageCid}`;
-  manifestJson.image = mediaUrl;
-  manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    return { ...f, uri: mediaUrl };
-  });
-
   if (animationCid) {
     animationUrl = `${gatewayUrl}/ipfs/${animationCid}`;
-    manifestJson.animation_url = animationUrl;
   }
+
+  const manifestJson = await setImageUrlManifest(
+    manifestBuffer.toString('utf8'),
+    mediaUrl,
+    animationUrl,
+  );
 
   fs.writeFileSync('tempJson.json', JSON.stringify(manifestJson));
 
