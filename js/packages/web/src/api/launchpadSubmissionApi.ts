@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = 'http://localhost:9000/launchpad-submission'
+const api = 'http://ec2-54-166-54-175.compute-1.amazonaws.com:9000/launchpad-submission'
 
 export const getSubmissions = async () => {
   try {
