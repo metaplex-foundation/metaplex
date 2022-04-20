@@ -38,3 +38,5 @@ js/packages/candy-machine-ui/.env
 traits
 traits-configuration.json
 js/packages/cli/test/assets
+js/packages/**/yarn.lock
+js/yarn.lock

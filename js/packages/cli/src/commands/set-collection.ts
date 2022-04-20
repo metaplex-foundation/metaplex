@@ -19,6 +19,7 @@ import {
   CreateMetadataV2,
   Creator,
   DataV2,
+  SetAndVerifyCollectionCollection
 } from '@metaplex-foundation/mpl-token-metadata';
 import log from 'loglevel';
 import { Program } from '@project-serum/anchor';
@@ -156,23 +157,24 @@ export async function setCollection(
     );
   }
 
+
   instructions.push(
-    await anchorProgram.instruction.setCollection({
-      accounts: {
-        candyMachine: candyMachineAddress,
-        authority: wallet.publicKey,
-        collectionPda: collectionPDAPubkey,
-        payer: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        metadata: metadataPubkey,
-        mint: mintPubkey,
-        edition: masterEditionPubkey,
-        collectionAuthorityRecord: collectionAuthorityRecordPubkey,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+    ...new SetAndVerifyCollectionCollection   (
+      {
+        feePayer: wallet.publicKey,
       },
-    }),
+      {      
+        metadata: metadataPubkey,
+        collectionAuthority: candyMachineAddress,
+        collectionMint: mintPubkey,
+        updateAuthority:wallet.publicKey,
+        collectionMetadata: collectionPDAPubkey,
+        collectionMasterEdition: masterEditionPubkey,
+        collectionAuthorityRecord:collectionAuthorityRecordPubkey,       
+      },
+    ).instructions,
   );
+
 
   log.info('Candy machine address: ', candyMachineAddress.toBase58());
   log.info('Collection metadata address: ', metadataPubkey.toBase58());
