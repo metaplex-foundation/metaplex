@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react'
 import { AuctionView } from '../../../hooks'
-import NFTCardWrapper from './NFTCardWrapper'
+import { NFTCardWrapper } from './NFTCardWrapper'
 import { Modal } from '@oyster/common'
 import { QuickBuy } from '../QuickBuy'
 
@@ -20,15 +20,17 @@ export const CollectionNftList: FC<CollectionNftListProps> = ({ auctions }) => {
             auction={auction}
             link={`/nft/${auction.auction.pubkey}`}
             onClickQuickBuy={() => setShowQuickBuy(true)}
+            testAc={true}
           />
         ))}
+        {/* {showQuickBuy && (
+          <Modal
+            onClose={() => setShowQuickBuy(false)}
+            onClickOverlay={() => setShowQuickBuy(false)}>
+            <QuickBuy />
+          </Modal>
+        )} */}
       </div>
-
-      {showQuickBuy && (
-        <Modal onClose={() => setShowQuickBuy(false)} onClickOverlay={() => setShowQuickBuy(false)}>
-          <QuickBuy />
-        </Modal>
-      )}
     </>
   )
 }
