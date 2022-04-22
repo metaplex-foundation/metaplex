@@ -165,10 +165,12 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
 
   return (
     <div className={LaunchPadSubmissionClasses} {...restProps}>
-      <div className='container py-[100px]'>
+      <div className='container pt-[80px] pb-[100px]'>
         <div className='mx-auto mb-[40px] flex w-full max-w-[600px] flex-col'>
-          <Logo className='mb-[8px]' />
-          <h1 className='text-h2 font-500'>Launchpad: Submission Form</h1>
+          <h1 className='text-display-md font-500'>
+            Launchpad: <br />
+            Submission Form
+          </h1>
         </div>
 
         <div className='mx-auto flex w-full max-w-[600px] flex-col gap-[40px]'>

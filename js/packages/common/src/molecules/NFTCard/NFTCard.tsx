@@ -39,25 +39,31 @@ export const NFTCard: FC<NFTCardProps> = ({
           <Image src={image} />
         </Link>
 
-        <div className='absolute left-0 right-0 top-0 bottom-0 hidden flex-col  items-center justify-center gap-[8px] px-[20px] group-hover:flex'>
-          {onQuickBuy && (
-            <Button onClick={onQuickBuy} className='w-full' appearance='primary' isRounded={false}>
-              Quick Buy
-            </Button>
-          )}
-
-          {link && (
-            <Link to={link} className='w-full'>
+        {(onClickDetails || onQuickBuy) && (
+          <div className='absolute left-0 right-0 top-0 bottom-0 hidden flex-col  items-center justify-center gap-[8px] px-[20px] group-hover:flex'>
+            {onQuickBuy && (
               <Button
-                onClick={onClickDetails}
+                onClick={onQuickBuy}
                 className='w-full'
-                appearance='neutral'
+                appearance='primary'
                 isRounded={false}>
-                Show details
+                Quick Buy
               </Button>
-            </Link>
-          )}
-        </div>
+            )}
+
+            {link && (
+              <Link to={link} className='w-full'>
+                <Button
+                  onClick={onClickDetails}
+                  className='w-full'
+                  appearance='neutral'
+                  isRounded={false}>
+                  Show details
+                </Button>
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       <Link to={link ?? ''}>
