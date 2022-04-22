@@ -1,0 +1,43 @@
+import dedent from 'ts-dedent'
+import { ArgsTable, Canvas, Description, Meta, Preview, Source, Story } from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+
+import { LaunchCard } from './LaunchCard'
+
+<Meta title='02. Molecules / LaunchCard' component={LaunchCard} />
+
+# LaunchCard
+
+`import { LaunchCard } from '@karmaplex/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex items-center gap-4'>
+      <LaunchCard
+        image='https://bafkreifefeojhv45uxudjx73mzpqtzhtcq5acqcayw53s6clthw3hkc32y.ipfs.nftstorage.link/'
+        volume='472.54'
+        price='Ⓞ 1.00 SOL'
+        dollarValue='$102.97'
+        onClickButton={() => {}}
+        name='Dead Rejects'
+        remainingTime='20h : 35m : 08s'
+      />
+    </div>
+  </div>
+</Story>
+
+<Source language={'jsx'} code={dedent`<LaunchCard />`} />
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={LaunchCard} />

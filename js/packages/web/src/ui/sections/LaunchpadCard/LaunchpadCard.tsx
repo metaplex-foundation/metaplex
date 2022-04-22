@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 import { SectionHeading, MetaChip, Button } from '@oyster/common'
+import { Link } from 'react-router-dom'
 
 export interface LaunchpadCardProps {
   [x: string]: any
@@ -67,19 +68,24 @@ export const LaunchpadCard: FC<LaunchpadCardProps> = ({
               />
             </div>
 
-            <div className='flex items-center pt-[12px]'>
-              <Button
-                appearance='primary'
-                size='lg'
-                iconAfter={<i className='ri-arrow-right-s-line' />}>
-                Submit your collection
-              </Button>
-              <Button
-                appearance='ghost-invert'
-                size='lg'
-                iconAfter={<i className='ri-arrow-right-s-line' />}>
-                Learn More
-              </Button>
+            <div className='flex items-center pt-[12px] gap-[8px]'>
+              <Link to='/launchpad-submission'>
+                <Button
+                  appearance='primary'
+                  size='lg'
+                  iconAfter={<i className='ri-arrow-right-s-line' />}>
+                  Submit your collection
+                </Button>
+              </Link>
+
+              <Link to='/launchpad'>
+                <Button
+                  appearance='ghost-invert'
+                  size='lg'
+                  iconAfter={<i className='ri-arrow-right-s-line' />}>
+                  View Launchpad
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

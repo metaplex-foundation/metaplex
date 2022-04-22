@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 
 export interface LinkListProps {
   [x: string]: any
@@ -26,9 +26,9 @@ export const LinkList: FC<LinkListProps> = ({
         {(list || []).map(({ id, url, label }, index) => {
           return (
             <li
-              className='mb-[12px] cursor-pointer text-base text-N-600 hover:text-B-400'
+              className='text-N-600 hover:text-B-400 mb-[12px] cursor-pointer text-base'
               key={id || index}>
-              <Link href={url || ''}>
+              <Link to={url || ''}>
                 <a className={CN(labelClassName)}>{label}</a>
               </Link>
             </li>

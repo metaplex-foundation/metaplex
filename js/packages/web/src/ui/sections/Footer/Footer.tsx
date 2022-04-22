@@ -25,7 +25,7 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
     {
       id: '2',
       label: 'Cookies',
-      url: '/delivery',
+      url: '/cookies',
     },
     {
       id: '3',
@@ -94,8 +94,8 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
                   direction='vertical'
                   labelClassName='text-md font-500 text-slate-800'
                   list={[
-                    { id: 0, label: 'Explore collections', url: '#' },
-                    { id: 1, label: 'Submit collections', url: '#' },
+                    { id: 0, label: 'Explore collections', url: '/discover' },
+                    { id: 1, label: 'Submit collections', url: '/launchpad-submission' },
                     { id: 2, label: 'Help center (FAQ)', url: '#' },
                     { id: 3, label: 'Activity stats', url: '#' },
                   ]}
@@ -111,9 +111,9 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
                   direction='vertical'
                   labelClassName='text-md font-500 text-slate-800'
                   list={[
-                    { id: 0, label: 'About', url: '#' },
-                    { id: 1, label: 'Blog', url: '#' },
-                    { id: 2, label: 'Resources', url: '#' },
+                    { id: 0, label: 'Communities', url: '/communities' },
+                    { id: 1, label: 'Blog', url: '/blog' },
+                    { id: 2, label: 'Resources', url: '/resources' },
                   ]}
                 />
               </div>
@@ -127,10 +127,10 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
                   direction='vertical'
                   labelClassName='text-md font-500 text-slate-800'
                   list={[
-                    { id: 0, label: 'Donate', url: '#' },
-                    { id: 1, label: 'About', url: '#' },
-                    { id: 2, label: 'Mission', url: '#' },
-                    { id: 3, label: 'Team', url: '#' },
+                    { id: 0, label: 'Donate', url: '/donations' },
+                    { id: 1, label: 'About', url: '/about' },
+                    { id: 2, label: 'Mission', url: '/mission' },
+                    { id: 3, label: 'Team', url: '/team' },
                   ]}
                 />
               </div>

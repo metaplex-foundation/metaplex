@@ -1,0 +1,49 @@
+import dedent from 'ts-dedent'
+import { ArgsTable, Canvas, Description, Meta, Preview, Source, Story } from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+import { collageList } from '@/dummy-data/collage'
+
+import { Collage } from './Collage'
+
+<Meta title='02. Molecules / Collage' component={Collage} />
+
+# Collage
+
+`import { Collage } from '@labfriend/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex flex-col gap-10'>
+      <Collage
+        list={[collageList[0], collageList[1], collageList[2]]}
+        rowHeight={200}
+        colCount={3}
+      />
+    </div>
+  </div>
+</Story>
+
+<Source
+  language={'jsx'}
+  code={dedent`
+import {collageList} from '@/dummy-data/collage'
+<Collage
+  list={[collageList[0], collageList[1], collageList[2]]}
+  rowHeight={200}
+  colCount={3}
+/>`}
+/>
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={Collage} />

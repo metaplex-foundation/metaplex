@@ -1,0 +1,44 @@
+import dedent from 'ts-dedent'
+import { ArgsTable, Canvas, Description, Meta, Preview, Source, Story } from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+
+import { Quote } from './Quote'
+
+<Meta title='02. Molecules / Quote' component={Quote} />
+
+# Quote
+
+`import { Quote } from '@labfriend/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex items-center gap-4'>
+      <Quote
+        quote='“So that means if you had 100 patients that were positive, 15 percent of those patients would be falsely called negative. They’d be told that they’re negative for COVID when they’re really positive. That’s not too good.”'
+        author='Steve Mathews'
+      />
+    </div>
+  </div>
+</Story>
+
+<Source
+  language={'jsx'}
+  code={dedent`<Quote
+        quote='“So that means if you had 100 patients that were positive, 15 percent of those patients would be falsely called negative. They’d be told that they’re negative for COVID when they’re really positive. That’s not too good.”'
+        author='Steve Mathews'
+      />`}
+/>
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={Quote} />
