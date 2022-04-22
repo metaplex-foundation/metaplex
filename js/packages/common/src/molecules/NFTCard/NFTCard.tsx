@@ -12,7 +12,7 @@ export interface NFTCardProps {
   dollarValue?: string
   bidPrice?: string
   onClickDetails?: () => void
-  onQuickBuy: any
+  onQuickBuy?: () => void
   link?: string
 }
 
