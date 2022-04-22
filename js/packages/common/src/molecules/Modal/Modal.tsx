@@ -31,12 +31,15 @@ export const Modal: FC<ModalProps> = ({
           'modal__body absolute left-[50%] top-[20vh] w-full translate-x-[-50%] rounded bg-white',
           {
             'max-w-[860px]': size === 'lg',
+            'max-w-[340px]': size === 'sm',
           }
         )}>
         <div
           className={CN('modal__header flex w-full items-center justify-between', {
             'px-[40px] pt-[24px]': size === 'lg',
-            'pb-[24px]': heading,
+            'px-[20px] pt-[16px]': size === 'sm',
+            'pb-[24px]': heading && size === 'lg',
+            'pb-none': heading && size === 'sm',
           })}>
           <h2 dangerouslySetInnerHTML={{ __html: heading || '' }} />
           <button onClick={onClose} className='ml-auto'>
@@ -47,6 +50,7 @@ export const Modal: FC<ModalProps> = ({
         <div
           className={CN('modal__content', {
             'px-[40px] pb-[40px]': size === 'lg',
+            'px-[20px] pb-[20px]': size === 'sm',
           })}>
           {children}
         </div>

@@ -1,0 +1,39 @@
+import dedent from 'ts-dedent'
+import { ArgsTable, Canvas, Description, Meta, Preview, Source, Story } from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+
+import { IconCard } from './IconCard'
+
+<Meta title='02. Molecules / IconCard' component={IconCard} />
+
+# IconCard
+
+`import { IconCard } from '@karmaplex/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex items-center gap-4'>
+      <IconCard
+        icon='/images/icons/food.svg'
+        heading='Healthy Food'
+        description='Lorem ipsum dolor sit amet, <br /> consectetur adipiscing elit'
+      />
+    </div>
+  </div>
+</Story>
+
+<Source language={'jsx'} code={dedent`<IconCard />`} />
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={IconCard} />

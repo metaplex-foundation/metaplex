@@ -12,7 +12,7 @@ export const DropDownBody = ({ children, className, width, align }: any) => {
   return (
     <div
       className={CN(
-        'absolute z-[1100] mt-[4px] rounded-[12px] border border-slate-100 bg-white px-[16px] py-[16px] shadow',
+        'absolute z-[2000] mt-[4px] rounded-[12px] border border-slate-100 bg-white px-[16px] py-[16px] shadow',
         {
           'right-0': align === 'right',
           'left-0': align === 'left',

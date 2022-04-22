@@ -152,14 +152,14 @@ export const Collection: FC<CollectionProps> = () => {
   const getMintData = useMintD()
   const solPrice = useSolPrice()
 
-  useEffect(() => {
-    if (auctions?.length) {
-      filteredAuctions(!WITH_FILTER).then(res => {
-        setCount(res.length)
-        setAuctionAttr(() => res)
-      })
-    }
-  }, [auctions])
+  // useEffect(() => {
+  //   if (auctions?.length) {
+  //     filteredAuctions(!WITH_FILTER).then(res => {
+  //       setCount(res.length)
+  //       setAuctionAttr(() => res)
+  //     })
+  //   }
+  // }, [auctions])
 
   useEffect(() => {
     if (auctions?.length) {

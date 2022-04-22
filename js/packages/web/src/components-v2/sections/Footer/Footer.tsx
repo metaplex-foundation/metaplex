@@ -58,9 +58,11 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
                 </a>
               </Link>
 
-              <a href='#' className='text-base text-white hover:text-white/70'>
-                Donate
-              </a>
+              <Link to='/donations'>
+                <a href='#' className='text-base text-white hover:text-white/70'>
+                  Donate
+                </a>
+              </Link>
             </div>
           </div>
 

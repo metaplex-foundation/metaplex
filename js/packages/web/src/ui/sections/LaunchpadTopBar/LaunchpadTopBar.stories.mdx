@@ -1,0 +1,43 @@
+import dedent from 'ts-dedent'
+import {
+  ArgsTable,
+  Canvas,
+  Description,
+  Meta,
+  Preview,
+  Source,
+  Story,
+} from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+
+import { LaunchpadTopBar } from './LaunchpadTopBar'
+
+<Meta title='01. Atoms / LaunchpadTopBar' component={LaunchpadTopBar} />
+
+# LaunchpadTopBar
+
+`import { LaunchpadTopBar } from '@karmaplex/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex items-center gap-4'>
+      <LaunchpadTopBar />
+    </div>
+  </div>
+</Story>
+
+<Source language={'jsx'} code={dedent`<LaunchpadTopBar />`} />
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={LaunchpadTopBar} />
