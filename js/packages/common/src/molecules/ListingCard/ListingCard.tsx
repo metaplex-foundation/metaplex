@@ -61,7 +61,7 @@ export const ListingCard: FC<ListingCardProps> = ({
             align='left'
             overline='Floor Price'
             subHeading={floorPrice}
-            hint={dollarValue}
+            hint={`${dollarValue}`}
           />
         </div>
       </div>
