@@ -3,7 +3,7 @@ import CN from 'classnames'
 import { TextField, TextArea, FileUpload, Button } from '@oyster/common'
 import { Select, message, DatePicker, Typography } from 'antd'
 import { Logo } from '../../atoms/Logo'
-import axios from 'axios'
+import { addSubmission } from '../../../api'
 
 export interface LaunchPadSubmissionProps {
   [x: string]: any
@@ -146,8 +146,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
         formData.append('collection_banner', collectionBanner)
         formData.append('userDetails', JSON.stringify(userDetails))
 
-        axios
-          .post('http://localhost:9000/launchpad-submission/add', formData)
+        addSubmission(formData)
           .then(() => {
             alert(
               'Your launchpad submission successfully submitted. Click Okay to navigate to the Home screen'
