@@ -106,7 +106,7 @@ export const Collection: FC<CollectionProps> = () => {
             break
           }
         } else if (collection.mint) {
-          findByMintKey(collection.mint).then(res => {
+          findByMintKey(collection.mint, collection.data.data.name).then(res => {
             setCollectionHeaderData({
               collectionName: res?.data.collection_name,
               creatorPublicKey: res?.data.creator_public_key,

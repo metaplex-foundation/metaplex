@@ -2,8 +2,7 @@ import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { TextField, TextArea, FileUpload, Button } from '@oyster/common'
 import { Select, message, DatePicker, Typography } from 'antd'
-import { Logo } from '../../atoms/Logo'
-import axios from 'axios'
+import { addSubmission } from '../../../api'
 
 export interface LaunchPadSubmissionProps {
   [x: string]: any
@@ -11,6 +10,11 @@ export interface LaunchPadSubmissionProps {
 
 const { Text } = Typography
 let formDataValidate: any = {}
+
+interface ICategoryProps {
+  primaryCategory: string
+  secondaryCategory: string
+}
 
 export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   className,
@@ -45,6 +49,10 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   const [anything, setAnything] = useState()
   const [creatorPublicKey, setCreatorPublicKey] = useState('')
   const [isFormNotValid, setIsFormNotValid] = useState(false)
+  const [categories, setCategories] = useState<ICategoryProps>({
+    primaryCategory: '',
+    secondaryCategory: '',
+  })
 
   function handleChange(value: any, option?: any) {
     if (option === 'stage' && value === 'completed') {
@@ -78,8 +86,21 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
     }
 
     if (option === 'package') {
-      console.log(value)
       setMarketingPackage(value)
+    }
+
+    if (option === 'primary_category') {
+      setCategories({
+        primaryCategory: value,
+        secondaryCategory: categories.secondaryCategory,
+      })
+    }
+
+    if (option === 'secondary_category') {
+      setCategories({
+        secondaryCategory: value,
+        primaryCategory: categories.primaryCategory,
+      })
     }
   }
 
@@ -140,14 +161,14 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
           mint_price: mintPrice,
           marketing_package: marketingPackage,
           other: anything,
+          categories: categories,
         }
 
         formData.append('collection_image', artWorkExample)
         formData.append('collection_banner', collectionBanner)
         formData.append('userDetails', JSON.stringify(userDetails))
 
-        axios
-          .post('http://localhost:9000/launchpad-submission/add', formData)
+        addSubmission(formData)
           .then(() => {
             alert(
               'Your launchpad submission successfully submitted. Click Okay to navigate to the Home screen'
@@ -283,6 +304,38 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                   Collection banner is required
                 </Text>
               ) : null}
+            </div>
+          </div>
+
+          <div className='flex w-full flex-col gap-[16px]'>
+            <label className='text-h6 font-500 text-N-700'>Primary category</label>
+            <div className='flex w-full'>
+              <Select
+                className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
+                placeholder='Select an answer'
+                dropdownClassName=''
+                onChange={value => handleChange(value, 'primary_category')}>
+                <Option value='Collectibles'>Collectibles</Option>
+                <Option value='Charity Focused'>Charity Focused</Option>
+                <Option value='Gaming'>Gaming</Option>
+                <Option value='Utility'>Utility</Option>
+              </Select>
+            </div>
+          </div>
+
+          <div className='flex w-full flex-col gap-[16px]'>
+            <label className='text-h6 font-500 text-N-700'>Secondary category</label>
+            <div className='flex w-full'>
+              <Select
+                className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
+                placeholder='Select an answer'
+                dropdownClassName=''
+                onChange={value => handleChange(value, 'secondary_category')}>
+                <Option value='Collectibles'>Collectibles</Option>
+                <Option value='Charity Focused'>Charity Focused</Option>
+                <Option value='Gaming'>Gaming</Option>
+                <Option value='Utility'>Utility</Option>
+              </Select>
             </div>
           </div>
 

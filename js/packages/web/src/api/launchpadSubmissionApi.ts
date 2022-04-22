@@ -2,6 +2,16 @@ import axios from 'axios'
 
 const api = 'http://ec2-54-166-54-175.compute-1.amazonaws.com:9000/launchpad-submission'
 
+export const addSubmission = async (data: any) => {
+  try {
+    const res = await axios.post(`${api}/add`, data)
+    return res
+  } catch (error: any) {
+    console.log('Add submissions API error: ', error.message)
+    throw new Error(error.message)
+  }
+}
+
 export const getSubmissions = async () => {
   try {
     const submissions = await axios.get(`${api}/get`)
@@ -31,9 +41,9 @@ export const findByCollectionName = async (name: string) => {
   }
 }
 
-export const findByMintKey = async (mintKey: string) => {
+export const findByMintKey = async (mintKey: string, collectionName: string) => {
   try {
-    const data = await axios.get(`${api}/find/mint/${mintKey}`)
+    const data = await axios.get(`${api}/find/mint/${collectionName}/${mintKey}`)
     return data
   } catch (error: any) {
     console.log('Find submissions with mint key API error: ', error.message)
