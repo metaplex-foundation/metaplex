@@ -15,8 +15,8 @@ export interface MyProfileProps {
 
 export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }: MyProfileProps) => {
   const MyProfileClasses = CN(`my-profile w-full`, className)
-  const [activeTab, setActiveTab] = useState<any>('settings')
-  const [heading, setHeading] = useState<any>('Settings')
+  const [activeTab, setActiveTab] = useState<any>('collectibles')
+  const [heading, setHeading] = useState<any>('My Collectibles')
   const [tag, setTag] = useState<any>('8 NFTs')
 
   return (
