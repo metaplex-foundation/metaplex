@@ -3,9 +3,10 @@ import { useParams } from 'react-router-dom'
 import { useArt, useExtendedArt, useUserArts } from '../../hooks'
 import { ArtContent } from '../../components/ArtContent'
 import InstantSale from './InstantSale'
+import { AuctionCategory } from '../auctionCreate/types'
 
 export const ArtView = () => {
-  const { id } = useParams<{ id: string }>()
+  const { id, type } = useParams<{ id: string; type: string }>()
   const items = useUserArts()
   const { data: collection } = useExtendedArt(id)
   const selected = [...(items || []).filter(i => i.metadata.pubkey === id)]
@@ -20,6 +21,17 @@ export const ArtView = () => {
   }
 
   const collectionName = getColName()
+
+  const getCategory = () => {
+    switch (type) {
+      case 'sale':
+        return AuctionCategory.InstantSale
+      case 'auction':
+        return AuctionCategory.Tiered
+      default:
+        return 0
+    }
+  }
 
   return (
     <div className='nft-details w-full'>
@@ -51,7 +63,7 @@ export const ArtView = () => {
                     </div>
                   )}
                 </div>
-                {!!selected.length && <InstantSale items={selected} />}
+                {!!selected.length && <InstantSale category={getCategory()} items={selected} />}
               </div>
             </div>
           </div>

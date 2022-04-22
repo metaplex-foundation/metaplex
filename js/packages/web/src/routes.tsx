@@ -55,7 +55,7 @@ export function Routes() {
               <Route exact path='/allitems' component={() => <SalesListView />} />
               <Route exact path='/art/create/:step_param?' component={() => <ArtCreateView />} />
               <Route exact path='/artworks/:id?' component={() => <ArtworksView />} />
-              <Route exact path='/art/:id' component={() => <ArtView />} />
+              <Route exact path='/art/:id/:type' component={() => <ArtView />} />
               <Route exact path='/artists/:id' component={() => <ArtistView />} />
               <Route exact path='/artists' component={() => <ArtistsView />} />
 
@@ -72,7 +72,7 @@ export function Routes() {
               <Route path='/collection/:id' component={() => <Collection />} />
               <Route path='/nft/:id' component={() => <NFTDetails />} />
               <Route path='/nft-next/:id' component={() => <NftNext />} />
-              <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} /> 
+              <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} />
               <Route path='/' component={() => <Home />} />
               {/* <Route exact path='/auction/:id' component={() => <AuctionView />} />
             <Route exact path='/auction/:id/billing' component={() => <BillingView />} /> */}
