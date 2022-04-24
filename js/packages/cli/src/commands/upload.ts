@@ -21,6 +21,7 @@ import {
 } from '../helpers/upload/arweave-bundle';
 import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { djibUpload } from '../helpers/upload/djib';
 
 import { StorageType } from '../helpers/storage-type';
 import { AssetKey } from '../types';
@@ -336,6 +337,17 @@ export async function uploadV2({
                   image,
                   animation,
                   manifestBuffer,
+                );
+                break;
+              case StorageType.Djib:
+                [link, imageLink, animationLink] = await djibUpload(
+                  asset.index,
+                  image,
+                  animation,
+                  manifestBuffer,
+                  walletKeyPair,
+                  anchorProgram,
+                  env,
                 );
                 break;
               case StorageType.Arweave:
@@ -762,6 +774,17 @@ export async function upload({
                       image,
                       animation,
                       manifestBuffer,
+                    );
+                    break;
+                  case StorageType.Djib:
+                    [link, imageLink, animationLink] = await djibUpload(
+                      assetKey.index,
+                      image,
+                      animation,
+                      manifestBuffer,
+                      walletKeyPair,
+                      anchorProgram,
+                      env,
                     );
                     break;
                   case StorageType.Arweave:
