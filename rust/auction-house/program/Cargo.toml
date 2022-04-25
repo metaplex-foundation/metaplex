@@ -1,0 +1,42 @@
+[workspace]
+[package]
+name = "mpl-auction-house"
+version = "1.1.4"
+edition = "2021"
+description = "Decentralized Sales Protocol for Solana Tokens"
+authors = ["Metaplex Developers <dev@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/metaplex-program-library"
+license = "AGPL-3.0"
+readme = "README.md"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+test-bpf = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program = "~1.9.15"
+anchor-lang = "~0.24.1"
+anchor-spl = "~0.24.1"
+spl-token = { version = "~3.2",  features = ["no-entrypoint"] }
+spl-associated-token-account = {version = "~1.0.3", features = ["no-entrypoint"]}
+mpl-token-metadata = { version="~1.2.7", features = [ "no-entrypoint" ], path="../../token-metadata/program" }
+metaplex-token-metadata = { version = "0.0.1", features = [ "no-entrypoint" ] }
+thiserror = "~1.0"
+arrayref = "~0.3.6"
+
+[dev-dependencies]
+anchor-client = "~0.24.1"
+shellexpand = "~2.1.0"
+serde_json = "~1.0"
+solana-program = "~1.9.15"
+mpl-testing-utils= {path="../../core/rust/testing-utils", version="0.0.2"}
+solana-program-test = "~1.9.15"
+solana-sdk = "~1.9.15"
+env_logger="~0.9.0"

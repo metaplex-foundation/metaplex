@@ -1,77 +1,150 @@
-# Metaplex Rust Programs
+# Metaplex Program Library
 
-The Rust programs for each contract used to live here but have been moved.
+Metaplex smart contracts and SDK.
 
-## Where are those programs now?
+## Metaplex Contracts
 
-The Rust programs of all actively maintained Metaplex contracts were moved to the
-[metaplex-program-library][mpl]. They are stored there alongside their respective SDK.
+| Name                                   | Program                                                                       | SDK                                                                           | Integration Test                                                                   |
+| :------------------------------------- | :---------------------------------------------------------------------------- | :---------------------------------------------------------------------------  | :--------------------------------------------------------------------------------- |
+| [Candy Machine](./candy-machine)       | [![Program Candy Machine][p-candy-machine-svg]][p-candy-machine-yml]          | [![SDK Candy Machine][sdk-candy-machine-svg]][sdk-candy-machine-yml]          |                                                                                    |
+| [Token Vault](./token-vault)           | [![Program Token Vault][p-token-vault-svg]][p-token-vault-yml]                | [![SDK Token Vault][sdk-token-vault-svg]][sdk-token-vault-yml]                | [![Integration Token Vault][i-token-vault-svg]][i-token-vault-yml]                 |
+| [Token Entangler](./token-entangler)   | [![Program Token Entangler][p-token-entangler-svg]][p-token-entangler-yml]    | [![SDK Token Entangler][sdk-token-entangler-svg]][sdk-token-entangler-yml]    |                                                                                    |
+| [Token Metadata](./token-metadata)     | [![Program Token Metadata][p-token-metadata-svg]][p-token-metadata-yml]       | [![SDK Token Metadata][sdk-token-metadata-svg]][sdk-token-metadata-yml]       |                                                                                    |
+| [Auction](./auction)                   | [![Program Auction][p-auction-svg]][p-auction-yml]                            | [![SDK Auction][sdk-auction-svg]][sdk-auction-yml]                            |                                                                                    |
+| [Auction House](./auction-house)       | [![Program Auction House][p-auction-house-svg]][p-auction-house-yml]          | [![SDK Auction House][sdk-auction-house-svg]][sdk-auction-house-yml]          |                                                                                    |
+| [Metaplex](./metaplex)                 | [![Program Metaplex][p-metaplex-svg]][p-metaplex-yml]                         | [![SDK Metaplex][sdk-metaplex-svg]][sdk-metaplex-yml]                         |                                                                                    |
+| [NFT-Packs](./nft-packs)               | [![Program NFT-Packs][p-nft-packs-svg]][p-nft-packs-yml]                      |                                                                               |                                                                                    |
+| [Gumdrop](./gumdrop)                   | [![Program Gumdrop][p-gumdrop-svg]][p-gumdrop-yml]                            | [![SDK Gumdrop][sdk-gumdrop-svg]][sdk-gumdrop-yml]                            |                                                                                    |
+| [Fixed price sale](./fixed-price-sale) | [![Program Fixed Price Sale][p-fixed-price-sale-svg]][p-fixed-price-sale-yml] | [![SDK Fixed Price Sale][sdk-fixed-price-sale-svg]][sdk-fixed-price-sale-yml] | [![Integration Fixed Price Sale][i-fixed-price-sale-svg]][i-fixed-price-sale-yml]  |
 
-All programs of deprecated contracts were moved to the [a separate repository][deprecated]
-_aka_ the graveyard and are no longer maintained..
 
-## Why were the programs moved?
+## Development
 
-We at Metaplex determined that moving contracts into a separate repository and having the Rust
-programs live alongside the client SDK is necessary to allow us to stabilize our contracts and
-evolve them quickly and securely.
+### Versioning and Publishing Packages
 
-Structuring Solana contracts like this is a rather standard approach and demonstrated by the
-[solana program library][spl] which most of us are familiar with.
+Smart contract SDK packages are versioned independently since a contract isn't necessarily coupled
+to other contracts.
 
-This approach provides the following benefits:
+We use the following `(pre|post)(version|publish)` npm scripts to manage related checks, tagging,
+commiting and pushing the version bump.
 
-- aside from lower level Rust tests, integration tests can be easily authored using the SDK
-  that lives in the same repo
-- SDK and Rust program code can be changed and tested together and those changes can be
-  provided in _one_ pull request in _one_ repository
-- CI workflows can be setup for those tests and will run for each pull request which ensures that
-  changes that are merged don't break existing functionality in either the program or the SDK
-- pull requests are now clearly scoped to either the frontend app (this repository) or the
-  underlying contracts (the [metaplex-program-library][mpl]) which aids in reviewing them and
-  paying particular attention to contract changes as those form the core of the Metaplex
-  functionality
+- `preversion`: ensures that the package builds and its tests pass
+- `postversion`: adds and commits the version bump and adds a tag indicating package name and new
+  version, i.e. `@metaplex-foundation/mp-core@v0.0.1`
+- `prepublish`: ensures that the package builds and its tests pass again (just to be _really_ sure)
+- `postpublish`: pushes the committed change and new tag to github
 
-As a result this not only improves security but also the experience of Metaplex users and
-developers.
+In order to version and then publish a package just run the following commands from the folder of
+the package you want to update:
 
-## Which Contracts were deprecated?
+- `npm version <patch|minor|major>`
+- `npm publish`
 
-- NFT Candy Machine v1
-- Fair Launch 
+As you note if version + publish succeeds the scripts end up pushing those updates to the master
+branch. Therefore please ensure to be on and up to date `master` branch before running them. Please
+**don't ever publish from another branch** but only from the main one with only PR approved changes
+merged.
 
-**NOTE** that deprecated programs will stay available on-chain and are stored as _readonly_
-inside the [deprecated contracts repository][deprecated].
+### Rust Crates
 
-## What are the Future Plans for this Repository?
- 
-In the near future the [metaplex repository][metaplex] will become an example
-of how to use the SDK provided by the [metaplex-program-library][mpl] in order to build
-applications with Metaplex.
+| Package          | Link                                            | Version                                                        |
+| :--------------- | :---------------------------------------------- | :------------------------------------------------------------- |
+| Candy Machine    | [mpl-candy-machine][mpl-candy-machine-crate]    | [![Crate][mpl-candy-machine-img]][mpl-candy-machine-crate]     |
+| Token Metadata   | [mpl-token-metadata][mpl-token-metadata-crate]  | [![Crate][mpl-token-metadata-img]][mpl-token-metadata-crate]   |
+| Token Vault      | [mpl-token-vault][mpl-token-vault-crate]        | [![Crate][mpl-token-vault-img]][mpl-token-vault-crate]         |
+| Auction House    | [mpl-auction-house][mpl-auction-house-crate]    | [![Crate][mpl-auction-house-img]][mpl-auction-house-crate]     |
+| Testing Utils    | [mpl-testing-utils][mpl-testing-utils-crate]    | [![Crate][mpl-testing-utils-img]][mpl-testing-utils-crate]     |
 
-## I want to change contract SDK or Rust program code, where do I pull request?
+### Npm Packages
 
-First make sure that the contract has not been deprecated and then add those changes inside the
-respective folder of the [metaplex-program-library][mpl] repository. Make sure to add tests
-that show that additions/fixes work.
+| Package        | Link                                          | Version                                                    |
+| :------------- | :-------------------------------------------- | :--------------------------------------------------------- |
+| Candy Machine  | [mpl-candy-machine][mpl-candy-machine-npm]    | [![NPM][mpl-candy-machine-nimg]][mpl-candy-machine-npm]    |
+| Token Metadata | [mpl-token-metadata][mpl-token-metadata-npm]  | [![NPM][mpl-token-metadata-nimg]][mpl-token-metadata-npm]  |
+| Core           | [mpl-core][mpl-core-npm]                      | [![NPM][mpl-core-nimg]][mpl-core-npm]                      |
+| Auction House  | [mpl-auction-house][mpl-auction-house-npm]    | [![NPM][mpl-auction-house-nimg]][mpl-auction-house-npm]    |
 
-If you make changes to the SDK add an integration test.
+## Reporting security issues
 
-If you add/change API of a Rust program also update the respective SDK and add an integration
-test showing that it works end to end.
+To report a security issue, please follow the guidance on the [SECURITY](.github/SECURITY.md) page.
 
-**NOTE**: for deprecated programs found inside the [deprecated
-repository][deprecated] no changes will be accepted
+## License
 
-## I want to change the store front app, where do I pull request?
+The Rust/Cargo programs are licensed under the [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.txt) license and the JS/TS client libraries are licensed under either the [MIT](https://www.mit.edu/~amini/LICENSE.md) or the [Apache](https://www.apache.org/licenses/LICENSE-2.0.txt) licenses.
 
-Changes to the React code should still be provided via a pull request in this repository as
-before.
-Please be aware though that it will eventually see a major rewrite to use the SDK provided by
-the [metaplex program library][mpl] as stated above. Thus we may choose to hold off on
-merging features that aren't essential to most of our users and focus on merging fixes instead.
+<!-- ===================================== -->
+<!-- Links for badges and such shown above -->
+<!-- Please add any links you add to the   -->
+<!-- readme here instead of inlining them  -->
+<!-- ===================================== -->
 
-[mpl]:https://github.com/metaplex-foundation/metaplex-program-library
-[spl]:https://github.com/solana-labs/solana-program-library
-[metaplex]:https://github.com/metaplex-foundation/metaplex
-[deprecated]:https://github.com/metaplex-foundation/the-graveyard
+<!-- Program Badges -->
+[p-candy-machine-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-candy-machine.yml
+[p-candy-machine-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-candy-machine.yml/badge.svg
+[p-token-vault-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-token-vault.yml
+[p-token-vault-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-token-vault.yml/badge.svg
+[p-token-entangler-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-token-entangler.yml
+[p-token-entangler-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-token-entangler.yml/badge.svg
+[p-token-metadata-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-token-metadata.yml
+[p-token-metadata-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-token-metadata.yml/badge.svg
+[p-auction-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-auction.yml
+[p-auction-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-auction.yml/badge.svg
+[p-auction-house-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-auction-house.yml
+[p-auction-house-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-auction-house.yml/badge.svg
+[p-metaplex-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-metaplex.yml
+[p-metaplex-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-metaplex.yml/badge.svg
+[p-nft-packs-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-nft-packs.yml
+[p-nft-packs-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-nft-packs.yml/badge.svg
+[p-gumdrop-yml]:https://github.com/metaplex/teamplex/actions/workflows/program-gumdrop.yml
+[p-gumdrop-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-gumdrop.yml/badge.svg
+[p-fixed-price-sale-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-fixed-price-sale.yml
+[p-fixed-price-sale-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/program-fixed-price-sale.yml/badge.svg
+
+<!-- SDK Badges  -->
+[sdk-candy-machine-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-candy-machine.yml
+[sdk-candy-machine-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-candy-machine.yml/badge.svg
+[sdk-token-vault-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-token-vault.yml
+[sdk-token-vault-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-token-vault.yml/badge.svg
+[sdk-token-entangler-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-token-entangler.yml
+[sdk-token-entangler-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-token-entangler.yml/badge.svg
+[sdk-token-metadata-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-token-metadata.yml
+[sdk-token-metadata-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-token-metadata.yml/badge.svg
+[sdk-auction-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-auction.yml
+[sdk-auction-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-auction.yml/badge.svg
+[sdk-auction-house-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-auction-house.yml
+[sdk-auction-house-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-auction-house.yml/badge.svg
+[sdk-metaplex-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-metaplex.yml
+[sdk-metaplex-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-metaplex.yml/badge.svg
+[sdk-gumdrop-yml]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-gumdrop.yml
+[sdk-gumdrop-svg]:https://github.com/metaplex/metaplex-program-library/actions/workflows/sdk-gumdrop.yml/badge.svg
+[sdk-fixed-price-sale-yml]:https://github.com/metaplex-foundation/metaplex-program-library/actions/workflows/sdk-fixed-price-sale.yml
+[sdk-fixed-price-sale-svg]:https://github.com/metaplex-foundation/metaplex-program-library/actions/workflows/sdk-fixed-price-sale.yml/badge.svg
+
+<!-- Integration Badges -->
+[i-token-vault-svg]:https://github.com/metaplex-foundation/metaplex-program-library/actions/workflows/integration-token-vault.yml/badge.svg
+[i-token-vault-yml]:https://github.com/metaplex-foundation/metaplex-program-library/actions/workflows/integration-token-vault.yml
+[i-fixed-price-sale-svg]:https://github.com/metaplex-foundation/metaplex-program-library/actions/workflows/integration-fixed-price-sale.yml/badge.svg
+[i-fixed-price-sale-yml]:https://github.com/metaplex-foundation/metaplex-program-library/actions/workflows/integration-fixed-price-sale.yml
+
+<!-- Crates -->
+[mpl-candy-machine-crate]:https://crates.io/crates/mpl-candy-machine
+[mpl-token-metadata-crate]:https://crates.io/crates/mpl-token-metadata
+[mpl-token-vault-crate]:https://crates.io/crates/mpl-token-vault
+[mpl-auction-house-crate]:https://crates.io/crates/mpl-auction-house
+[mpl-testing-utils-crate]:https://crates.io/crates/mpl-testing-utils
+[mpl-candy-machine-img]:https://img.shields.io/crates/v/mpl-candy-machine
+[mpl-token-metadata-img]:https://img.shields.io/crates/v/mpl-token-metadata
+[mpl-token-vault-img]:https://img.shields.io/crates/v/mpl-token-vault
+[mpl-auction-house-img]:https://img.shields.io/crates/v/mpl-auction-house
+[mpl-testing-utils-img]:https://img.shields.io/crates/v/mpl-testing-utils
+
+<!-- NPM Packages -->
+[mpl-candy-machine-npm]:https://www.npmjs.com/package/@metaplex-foundation/mpl-candy-machine
+[mpl-token-metadata-npm]:https://www.npmjs.com/package/@metaplex-foundation/mpl-token-metadata
+[mpl-core-npm]:https://www.npmjs.com/package/@metaplex-foundation/mpl-core
+[mpl-auction-house-npm]:https://www.npmjs.com/package/@metaplex-foundation/mpl-auction-house
+[mpl-candy-machine-nimg]:https://img.shields.io/npm/v/@metaplex-foundation/mpl-candy-machine
+[mpl-token-metadata-nimg]:https://img.shields.io/npm/v/@metaplex-foundation/mpl-token-metadata
+[mpl-core-nimg]:https://img.shields.io/npm/v/@metaplex-foundation/mpl-core
+[mpl-auction-house-nimg]:https://img.shields.io/npm/v/@metaplex-foundation/mpl-auction-house
+

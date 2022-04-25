@@ -1,0 +1,59 @@
+{
+  "name": "@metaplex-foundation/mpl-token-metadata",
+  "version": "2.1.0",
+  "contractVersion": "1.2.5",
+  "description": "MPL Token Metadata JavaScript API.",
+  "main": "dist/mpl-token-metadata.js",
+  "types": "dist/mpl-token-metadata.d.ts",
+  "scripts": {
+    "check:publish-ready": "yarn build && yarn lint",
+    "preversion": "yarn check:publish-ready",
+    "postversion": "git add package.json && git commit -m \"chore: update $npm_package_name to v$npm_package_version\" && git tag $npm_package_name@$npm_package_version",
+    "prepublishOnly": "yarn check:publish-ready",
+    "postpublish": "git push origin && git push origin --tags",
+    "build:docs": "typedoc",
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "api:gen": "node scripts/api-gen-ts.js && yarn fix:prettier && yarn fix:lint",
+    "test": "echo 'Not testing generated code, please run program tests instead'",
+    "lint": "eslint \"{src,test}/**/*.ts\" --format stylish",
+    "fix:lint": "yarn lint --fix",
+    "prettier": "prettier \"{src,test}/**/*.ts\" --check",
+    "fix:prettier": "prettier --write src/",
+    "fix": "yarn fix:lint && yarn fix:prettier"
+  },
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [
+    "nft",
+    "metaplex",
+    "solana",
+    "blockchain"
+  ],
+  "homepage": "https://metaplex.com",
+  "repository": "https://github.com/metaplex-foundation/metaplex-program-library.git",
+  "author": "Metaplex Maintainers <contact@metaplex.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@metaplex-foundation/beet": "^0.1.0",
+    "@metaplex-foundation/beet-solana": "^0.1.1",
+    "@metaplex-foundation/cusper": "^0.0.2",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/web3.js": "^1.35.1",
+    "bn.js": "^5.2.0",
+    "debug": "^4.3.3"
+  },
+  "devDependencies": {
+    "@metaplex-foundation/solita": "^0.2.0",
+    "@types/bn.js": "^5.1.0",
+    "@types/debug": "^4.1.7",
+    "eslint": "^8.3.0",
+    "rimraf": "^3.0.2",
+    "supports-color": "^9.2.1",
+    "typescript": "^4.6.2"
+  }
+}

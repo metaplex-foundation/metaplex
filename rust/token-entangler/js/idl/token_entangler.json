@@ -1,0 +1,389 @@
+{
+  "version": "0.1.2",
+  "name": "token_entangler",
+  "instructions": [
+    {
+      "name": "createEntangledPair",
+      "accounts": [
+        {
+          "name": "treasuryMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "transferAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintA",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataA",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "editionA",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintB",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataB",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "editionB",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenB",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenAEscrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenBEscrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entangledPair",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "reverseEntangledPair",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "reverseBump",
+          "type": "u8"
+        },
+        {
+          "name": "tokenAEscrowBump",
+          "type": "u8"
+        },
+        {
+          "name": "tokenBEscrowBump",
+          "type": "u8"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "paysEveryTime",
+          "type": "bool"
+        }
+      ],
+      "returns": null
+    },
+    {
+      "name": "updateEntangledPair",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "newAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "entangledPair",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "paysEveryTime",
+          "type": "bool"
+        }
+      ],
+      "returns": null
+    },
+    {
+      "name": "swap",
+      "accounts": [
+        {
+          "name": "treasuryMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "paymentAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentTransferAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "token",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "replacementTokenMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "replacementTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "replacementToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "transferAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenAEscrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenBEscrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entangledPair",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "returns": null
+    }
+  ],
+  "accounts": [
+    {
+      "name": "EntangledPair",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "treasuryMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "mintA",
+            "type": "publicKey"
+          },
+          {
+            "name": "mintB",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenAEscrow",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenBEscrow",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "tokenAEscrowBump",
+            "type": "u8"
+          },
+          {
+            "name": "tokenBEscrowBump",
+            "type": "u8"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "paid",
+            "type": "bool"
+          },
+          {
+            "name": "paysEveryTime",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "PublicKeyMismatch",
+      "msg": "PublicKeyMismatch"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidMintAuthority",
+      "msg": "InvalidMintAuthority"
+    },
+    {
+      "code": 6002,
+      "name": "UninitializedAccount",
+      "msg": "UninitializedAccount"
+    },
+    {
+      "code": 6003,
+      "name": "IncorrectOwner",
+      "msg": "IncorrectOwner"
+    },
+    {
+      "code": 6004,
+      "name": "PublicKeysShouldBeUnique",
+      "msg": "PublicKeysShouldBeUnique"
+    },
+    {
+      "code": 6005,
+      "name": "StatementFalse",
+      "msg": "StatementFalse"
+    },
+    {
+      "code": 6006,
+      "name": "NotRentExempt",
+      "msg": "NotRentExempt"
+    },
+    {
+      "code": 6007,
+      "name": "NumericalOverflow",
+      "msg": "NumericalOverflow"
+    },
+    {
+      "code": 6008,
+      "name": "DerivedKeyInvalid",
+      "msg": "Derived key invalid"
+    },
+    {
+      "code": 6009,
+      "name": "MetadataDoesntExist",
+      "msg": "Metadata doesn't exist"
+    },
+    {
+      "code": 6010,
+      "name": "EditionDoesntExist",
+      "msg": "Edition doesn't exist"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidTokenAmount",
+      "msg": "Invalid token amount"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidMint",
+      "msg": "This token is not a valid mint for this entangled pair"
+    },
+    {
+      "code": 6013,
+      "name": "EntangledPairExists",
+      "msg": "This pair already exists as it's reverse"
+    },
+    {
+      "code": 6014,
+      "name": "MustHaveSupplyOne",
+      "msg": "Must have supply one!"
+    }
+  ],
+  "metadata": {
+    "address": "qntmGodpGkrM42mN68VCZHXnKqDCT8rdY23wFcXCLPd"
+  }
+}

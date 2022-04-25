@@ -1,0 +1,29 @@
+[package]
+name = "mpl-auction"
+version = "0.0.2"
+description = "Solana Auction Program"
+authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/metaplex"
+license = "AGPL-3.0"
+edition = "2018"
+
+[features]
+no-entrypoint = []
+test-bpf = []
+
+[dependencies]
+borsh = "~0.9.1"
+num-derive = "~0.3"
+num-traits = "~0.2"
+arrayref = "~0.3.6"
+solana-program = "~1.9.5"
+spl-token = { version="~3.2.0", features = [ "no-entrypoint" ] }
+thiserror = "~1.0"
+
+[dev-dependencies]
+solana-program-test = "~1.9.5"
+solana-sdk = "~1.9.5"
+mpl-testing-utils = {path="../../core/rust/testing-utils", version="0.0.2"}
+
+[lib]
+crate-type = ["cdylib", "lib"]

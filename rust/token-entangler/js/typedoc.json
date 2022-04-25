@@ -1,0 +1,6 @@
+{
+  "entryPoints": ["src/mpl-token-entangler.ts"],
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "out": "./docs"
+}

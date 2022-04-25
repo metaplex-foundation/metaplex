@@ -1,0 +1,20 @@
+[package]
+name = "mpl-fixed-price-sale-cli"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+thiserror = "1.0.30"
+clap = { version = "3.0.5", features = [ "derive" ] }
+solana-sdk = "1.9.5"
+solana-client = "1.9.5"
+mpl-fixed-price-sale = { path = "../program", features = [ "no-entrypoint" ] }
+mpl-token-metadata = { features = [ "no-entrypoint" ], version="~1.1.0" }
+borsh = "0.9.1"
+spl-token = { version = "3.2.0", features = [ "no-entrypoint" ] }
+anchor-lang = "0.22.1"
+chrono = "0.4.19"
+spl-associated-token-account = "1.0.3"
+serde_json = "1.0.79"

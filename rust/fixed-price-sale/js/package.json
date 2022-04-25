@@ -1,0 +1,63 @@
+{
+  "name": "@metaplex-foundation/mpl-fixed-price-sale",
+  "version": "0.9.1",
+  "description": "MPL Fixed Price Sale JavaScript API.",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "postversion": "git add package.json && git commit -m \"chore: update $npm_package_name to v$npm_package_version\" && git tag $npm_package_name@$npm_package_version",
+    "postpublish": "git push origin && git push origin --tags",
+    "build:docs": "typedoc",
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "amman:start": "DEBUG=\"amman*\" amman validator",
+    "amman:stop": "pkill -f solana-test-validator",
+    "test": "DEBUG=\"mpl:tm-test:*\" tape ./dist/test/*.test.js",
+    "test:local": "yarn build && yarn test",
+    "api:gen": "node scripts/api-gen-ts.js && prettier --write ./src/**/*.ts",
+    "lint": "eslint \"{src,test}/**/*.ts\" --format stylish",
+    "fix:lint": "yarn lint --fix",
+    "prettier": "prettier \"{src,test}/**/*.ts\" --check",
+    "fix:prettier": "prettier --write src/",
+    "fix": "yarn fix:lint && yarn fix:prettier"
+  },
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [
+    "nft",
+    "metaplex",
+    "solana",
+    "blockchain"
+  ],
+  "homepage": "https://metaplex.com",
+  "repository": "https://github.com/metaplex-foundation/metaplex-program-library.git",
+  "author": "Metaplex Maintainers <contact@metaplex.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@metaplex-foundation/beet": "^0.1.0",
+    "@metaplex-foundation/beet-solana": "^0.1.1",
+    "@metaplex-foundation/mpl-core": "^0.0.5",
+    "@solana/buffer-layout": "^4.0.0",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/web3.js": "^1.37.0"
+  },
+  "devDependencies": {
+    "@metaplex-foundation/amman": "^0.1.0",
+    "@metaplex-foundation/mpl-token-metadata": "2.0.0",
+    "@metaplex-foundation/solita": "^0.2.0",
+    "@types/bn.js": "^5.1.0",
+    "@types/debug": "^4.1.7",
+    "@types/tape": "^4.13.2",
+    "debug": "^4.3.3",
+    "eslint": "^8.3.0",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2",
+    "supports-color": "^9.2.1",
+    "tape": "^5.5.2",
+    "typescript": "^4.6.2"
+  }
+}

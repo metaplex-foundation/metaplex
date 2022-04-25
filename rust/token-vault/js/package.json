@@ -1,0 +1,70 @@
+{
+  "name": "@metaplex-foundation/mpl-token-vault",
+  "version": "0.0.2",
+  "description": "MPL Token Vault JavaScript API.",
+  "main": "dist/src/mpl-token-vault.js",
+  "types": "dist/src/mpl-token-vault.d.ts",
+  "scripts": {
+    "check:publish-ready": "yarn build && yarn test",
+    "preversion": "yarn check:publish-ready",
+    "postversion": "git add package.json && git commit -m \"chore: update $npm_package_name to v$npm_package_version\" && git tag $npm_package_name@$npm_package_version",
+    "prepublish": "yarn check:publish-ready",
+    "postpublish": "git push origin && git push origin --tags",
+    "build:docs": "typedoc",
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "api:gen": "node scripts/api-gen-ts.js && prettier --write ./src/**/*.ts",
+    "amman:start": "DEBUG='amman*' amman validator",
+    "amman:stop": "pkill solana-test-validator",
+    "pretest": "yarn build && yarn amman:start",
+    "test": "tape dist/test/*.js && yarn ex:all",
+    "ex:all": " yarn ex:init-vault && yarn ex:add-token-1 && yarn ex:add-token-2 && yarn ex:life-of-vault",
+    "ex:init-vault": "node dist/examples/init-vault.js",
+    "ex:add-token-1": "node dist/examples/add-token-to-inactive-vault.single-transaction.js",
+    "ex:add-token-2": "node dist/examples/add-token-to-inactive-vault.two-transactions.js",
+    "ex:life-of-vault": "node dist/examples/life-of-vault.js",
+    "posttest": "yarn build && yarn amman:stop",
+    "lint": "eslint \"{src,test}/**/*.ts\" --format stylish",
+    "fix:lint": "yarn lint --fix",
+    "prettier": "prettier \"{src,test}/**/*.ts\" --check",
+    "fix:prettier": "prettier --write src/",
+    "fix": "yarn fix:lint && yarn fix:prettier"
+  },
+  "files": [
+    "/dist/src"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [
+    "nft",
+    "metaplex",
+    "solana",
+    "blockchain"
+  ],
+  "homepage": "https://metaplex.com",
+  "repository": "https://github.com/metaplex-foundation/metaplex-program-library.git",
+  "author": "Metaplex Maintainers <contact@metaplex.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@metaplex-foundation/beet": "^0.1.0",
+    "@metaplex-foundation/beet-solana": "^0.1.1",
+    "@metaplex-foundation/cusper": "^0.0.2",
+    "@metaplex-foundation/mpl-core": "^0.0.5",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/web3.js": "^1.35.1",
+    "debug": "^4.3.3",
+    "utility-types": "^3.10.0"
+  },
+  "devDependencies": {
+    "@metaplex-foundation/amman": "^0.1.0",
+    "@types/debug": "^4.1.7",
+    "bn.js": "^5.2.0",
+    "eslint": "^8.3.0",
+    "rimraf": "^3.0.2",
+    "spok": "^1.4.3",
+    "tape": "^5.5.0",
+    "typedoc": "^0.22.11",
+    "typescript": "^4.6.2"
+  }
+}

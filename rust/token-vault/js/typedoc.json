@@ -1,0 +1,21 @@
+{
+  "entryPoints": ["src/mpl-token-vault.ts"],
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "categorizeByGroup": false,
+  "defaultCategory": "sdk",
+  "categoryOrder": [
+    "*",
+    "Accounts",
+    "Instructions",
+    "Errors",
+    "constants",
+    "enums",
+    "userTypes",
+    "sdk",
+    "generated"
+  ],
+  "readme": "none",
+  "emit": "both",
+  "out": "../../docs/token-vault"
+}

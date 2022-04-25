@@ -1,0 +1,49 @@
+{
+  "name": "@metaplex-foundation/mpl-auction",
+  "version": "0.0.2",
+  "description": "MPL Token Metadata JavaScript API.",
+  "main": "dist/src/mpl-auction.js",
+  "types": "dist/src/mpl-auction.d.ts",
+  "scripts": {
+    "check:publish-ready": "yarn build && yarn test",
+    "preversion": "yarn check:publish-ready",
+    "postversion": "git add package.json && git commit -m \"chore: update $npm_package_name to v$npm_package_version\" && git tag $npm_package_name@$npm_package_version",
+    "prepublish": "yarn check:publish-ready",
+    "postpublish": "git push origin && git push origin --tags",
+    "build:docs": "typedoc",
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "test": "echo mpl-auction tests coming up ...",
+    "lint": "eslint \"{src,test}/**/*.ts\" --format stylish",
+    "fix:lint": "yarn lint --fix",
+    "prettier": "prettier \"{src,test}/**/*.ts\" --check",
+    "fix:prettier": "prettier --write src/",
+    "fix": "yarn fix:lint && yarn fix:prettier"
+  },
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [
+    "nft",
+    "metaplex",
+    "solana",
+    "blockchain"
+  ],
+  "homepage": "https://metaplex.com",
+  "repository": "https://github.com/metaplex-foundation/metaplex-program-library.git",
+  "author": "Metaplex Maintainers <contact@metaplex.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@metaplex-foundation/mpl-core": "^0.0.5",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/web3.js": "^1.35.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.3.0",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.6.2"
+  }
+}

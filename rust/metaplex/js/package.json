@@ -1,0 +1,61 @@
+{
+  "name": "@metaplex-foundation/mpl-metaplex",
+  "version": "0.0.5",
+  "description": "MPL Metaplex JavaScript API.",
+  "main": "dist/src/mpl-metaplex.js",
+  "types": "dist/src/mpl-metaplex.d.ts",
+  "scripts": {
+    "check:publish-ready": "yarn build && yarn test",
+    "preversion": "yarn check:publish-ready",
+    "postversion": "git add package.json && git commit -m \"chore: update $npm_package_name to v$npm_package_version\" && git tag $npm_package_name@$npm_package_version",
+    "prepublish": "yarn check:publish-ready",
+    "postpublish": "git push origin && git push origin --tags",
+    "build:docs": "typedoc",
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "pretest": "yarn build",
+    "test:build": "esr ./test/setup/build.ts",
+    "amman:start": "DEBUG=\"amman*\" amman validator",
+    "amman:stop": "pkill solana-test-validator",
+    "test:all": "yarn test:build && yarn amman:start && yarn test",
+    "test": "tape ./dist/test/*.test.js",
+    "lint": "eslint \"{src,test}/**/*.ts\" --format stylish",
+    "fix:lint": "yarn lint --fix",
+    "prettier": "prettier \"{src,test}/**/*.ts\" --check",
+    "fix:prettier": "prettier --write src/",
+    "fix": "yarn fix:lint && yarn fix:prettier"
+  },
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [
+    "nft",
+    "metaplex",
+    "solana",
+    "blockchain"
+  ],
+  "homepage": "https://metaplex.com",
+  "repository": "https://github.com/metaplex-foundation/metaplex-program-library.git",
+  "author": "Metaplex Maintainers <contact@metaplex.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@metaplex-foundation/mpl-auction": "^0.0.2",
+    "@metaplex-foundation/mpl-core": "^0.0.5",
+    "@metaplex-foundation/mpl-token-metadata": "^0.0.2",
+    "@metaplex-foundation/mpl-token-vault": "^0.0.2",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/web3.js": "^1.35.1"
+  },
+  "devDependencies": {
+    "@metaplex-foundation/amman": "^0.1.0",
+    "esbuild": "^0.14.14",
+    "esbuild-runner": "^2.2.1",
+    "eslint": "^8.3.0",
+    "rimraf": "^3.0.2",
+    "tape": "^5.5.2",
+    "typescript": "^4.6.2"
+  }
+}

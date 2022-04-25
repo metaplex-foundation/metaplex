@@ -1,0 +1,6 @@
+{
+  "entryPoints": ["src/mpl-auction.ts"],
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "out": "./docs"
+}

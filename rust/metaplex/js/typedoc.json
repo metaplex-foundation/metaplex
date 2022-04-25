@@ -1,0 +1,6 @@
+{
+  "entryPoints": ["src/mpl-metaplex.ts"],
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "out": "./docs"
+}

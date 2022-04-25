@@ -1,0 +1,40 @@
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/devnet.json"
+
+[programs.localnet]
+mpl_auction_house="hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk"
+
+[[test.genesis]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+program = "target/deploy/mpl_token_metadata.so"
+
+[[test.genesis]]
+address = "hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk"
+program = "target/deploy/mpl_auction_house.so"
+
+[[test.genesis]]
+address = "qntmGodpGkrM42mN68VCZHXnKqDCanchorT8rdY23wFcXCLPd"
+program = "target/deploy/mpl_token_entangler.so"
+
+[[test.genesis]]
+address = "SaLeTjyUa5wXHnGuewUSyJ5JWZaHwz3TxqUntCE9czo"
+program = "target/deploy/mpl_fixed_price_sale.so"
+
+[[test.genesis]]
+address = "gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a"
+program = "target/deploy/mpl_gumdrop.so"
+
+[workspace]
+members = [   
+    "token-vault/program",
+    "token-metadata/program",
+    "token-entangler/program",
+    "auction/program",
+    "metaplex/program",
+    "auction-house/program",    
+    "candy-machine/program",    
+]

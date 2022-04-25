@@ -1,0 +1,43 @@
+{
+  "name": "@metaplex-foundation/metaplex-program-library",
+  "packageManager": "yarn@3.2.0-rc.12",
+  "version": "0.0.0",
+  "description": "Web interface to Smart Contracts by the Metaplex team.",
+  "scripts": {
+    "build:core": "lerna run build --scope @metaplex-foundation/mpl-core",
+    "build:auction": "lerna run build --scope @metaplex-foundation/mpl-auction",
+    "build:parallel": "lerna run --ignore @metaplex-foundation/mpl-core --ignore @metaplex-foundation/mpl-auction --ignore @metaplex-foundation/mpl-metaplex --parallel build",
+    "build:metaplex": "lerna run build --scope @metaplex-foundation/mpl-metaplex",
+    "build": "yarn build:core && yarn build:auction && yarn build:parallel && yarn build:metaplex",
+    "test": "lerna run --parallel test",
+    "lint": "lerna run --parallel lint",
+    "fix": "lerna run --parallel fix"
+  },
+  "workspaces": [
+    "core/js",
+    "token-vault/js",
+    "token-metadata/js",
+    "token-entangler/js",
+    "auction/js",
+    "metaplex/js",
+    "auction-house/js",
+    "gumdrop/js",
+    "candy-machine/js",
+    "fixed-price-sale/js"
+  ],
+  "repository": "git@github.com:metaplex-foundation/metaplex-program-library.git",
+  "author": "Metaplex Maintainers <contact@metaplex.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@project-serum/anchor": "^0.19.0",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "esbuild-runner": "^2.2.1",
+    "eslint": "^8.3.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "lerna": "^4.0.0",
+    "prettier": "^2.4.1"
+  }
+}
