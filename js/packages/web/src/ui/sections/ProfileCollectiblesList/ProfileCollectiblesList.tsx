@@ -1,68 +1,59 @@
 import React, { FC } from 'react'
-import CN from 'classnames'
-import { NFTCard } from '@oyster/common'
+import { NFTCard, pubkeyToString, Button } from '@oyster/common'
+import { useItems } from '../../../views/artworks/hooks/useItems'
+import { ArtworkViewState, Item } from '../../../views/artworks/types'
+import { useExtendedArt } from '../../../hooks'
+import { useHistory } from 'react-router-dom'
+// import { Button } from '../../../../../common/src/atoms/'
 
-export interface ProfileCollectiblesListProps {
-  [x: string]: any
+interface ProfileCollectiblesListProps {}
+interface NFTCardWrapperProps {
+  nft: Item
 }
 
-export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({
-  className,
-  ...restProps
-}: ProfileCollectiblesListProps) => {
-  const ProfileCollectiblesListClasses = CN(
-    `profile-collectibles-list grid grid-cols-4 gap-[28px]`,
-    className
+const NFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
+  //@ts-ignore
+  const pubkey = nft?.metadata.pubkey
+  const id = pubkeyToString(pubkey)
+  const { data } = useExtendedArt(id)
+  const image = data?.image || ''
+  const name = data?.name || ''
+
+  const { push } = useHistory()
+  return (
+    <NFTCard
+      hoverButtons={[
+        <Button
+          onClick={() => push(`/art/${pubkey}/sale`)}
+          key='btn1'
+          className='w-full'
+          appearance='primary'
+          isRounded={false}>
+          Put on sale
+        </Button>,
+        <Button
+          onClick={() => push(`/art/${pubkey}/auction`)}
+          key='btn1'
+          className='w-full'
+          appearance='neutral'
+          isRounded={false}>
+          Put on auction
+        </Button>,
+      ]}
+      image={image}
+      title={name}
+    />
   )
+}
+
+export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = () => {
+  const userItems = useItems({ activeKey: ArtworkViewState.Owned })
 
   return (
-    <div className={ProfileCollectiblesListClasses} {...restProps}>
-      <NFTCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/ukZ3DgqeaTyx5qifyooXV-rO5CM8CjKnKFJZVlVQFaU'
-        title='Degen Ape #2314'
-        price='2.36 SOL'
-        dollarValue='$4.19'
-      />
-      <NFTCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/LlrUIT49BxcHsSGBXmQcJ70G_jjZMgcPZJh3CxqziuA'
-        title='Degen Ape #2314'
-        price='2.36 SOL'
-        dollarValue='$4.19'
-      />
-      <NFTCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/HYGi_EMu8Dhu9cWHaIBdJW0DPJkaZnDr0yJIMy5hlak'
-        title='Degen Ape #2314'
-        price='2.36 SOL'
-        dollarValue='$4.19'
-      />
-      <NFTCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/Mleow4hOmjLDz7diwt2E-VDGg38VEW9ct3JNAQKiexg'
-        title='Degen Ape #2314'
-        price='2.36 SOL'
-        dollarValue='$4.19'
-      />
-      <NFTCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/r5GlraCv8mrssgQMRO8_7oXHiHOBHA7UPnCAINxeAFc'
-        title='Degen Ape #2314'
-        price='2.36 SOL'
-        dollarValue='$4.19'
-      />
-      <NFTCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/yytjymgHK5Y64dJLHZlkCB-zbayUpAmLNB49VapL30g'
-        title='Degen Ape #2314'
-        price='2.36 SOL'
-        dollarValue='$4.19'
-      />
-      <NFTCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/K3EhMzFeRDkprpTjpPyBgmHor-1Ow_jcU4uEqLVYZmk'
-        title='Degen Ape #2314'
-        price='2.36 SOL'
-        dollarValue='$4.19'
-      />
+    <div className='profile-collectibles-list grid grid-cols-4 gap-[28px]'>
+      {(userItems || []).map((i, key) => (
+        <NFTCardWrapper nft={i} key={key} />
+      ))}
     </div>
   )
 }
-
-ProfileCollectiblesList.defaultProps = {}
-
-export default ProfileCollectiblesList

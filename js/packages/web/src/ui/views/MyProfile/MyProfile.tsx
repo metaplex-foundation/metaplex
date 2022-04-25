@@ -13,7 +13,7 @@ export interface MyProfileProps {
   [x: string]: any
 }
 
-export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }: MyProfileProps) => {
+export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const MyProfileClasses = CN(`my-profile w-full`, className)
   const [activeTab, setActiveTab] = useState<any>('collectibles')
   const [heading, setHeading] = useState<any>('My Collectibles')
