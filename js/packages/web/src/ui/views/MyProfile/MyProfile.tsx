@@ -17,7 +17,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const MyProfileClasses = CN(`my-profile w-full`, className)
   const [activeTab, setActiveTab] = useState<any>('collectibles')
   const [heading, setHeading] = useState<any>('My Collectibles')
-  const [tag, setTag] = useState<any>('8 NFTs')
+  const [tag, setTag] = useState<any>(null)
 
   return (
     <div className={MyProfileClasses} {...restProps}>
@@ -36,7 +36,6 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               onClick={() => {
                 setActiveTab('collectibles')
                 setHeading('My Collectibles')
-                setTag('8 NFTs')
               }}>
               My Collectibles
             </Button>
@@ -111,7 +110,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
           </div>
 
           <div className='flex w-full flex-col'>
-            {activeTab === 'collectibles' && <ProfileCollectiblesList />}
+            {activeTab === 'collectibles' && <ProfileCollectiblesList setTag={setTag} />}
             {activeTab === 'listings' && <ProfileListings />}
             {activeTab === 'offers-made' && <ProfileOffersMade />}
             {activeTab === 'offers-received' && <ProfileOffersReceived />}

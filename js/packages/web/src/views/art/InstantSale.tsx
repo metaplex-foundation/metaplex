@@ -377,9 +377,10 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
   return (
     <>
       {renderForm()}
-      <div className='mt-5 flex w-32 flex-auto items-center justify-start'>
+      <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
         <Button disabled={listing} onClick={createAuction} className='w-full'>
-          List Now
+          {category === AuctionCategory.InstantSale && 'List Now'}
+          {category === AuctionCategory.Tiered && 'Put on auction'}
         </Button>
       </div>
     </>

@@ -25,7 +25,6 @@ export const NFTCard: FC<NFTCardProps> = ({
   bidPrice,
   onClickDetails,
   onQuickBuy,
-  hoverButtons,
   link,
 }) => {
   const NFTCardClasses = CN(
@@ -65,9 +64,6 @@ export const NFTCard: FC<NFTCardProps> = ({
             )}
           </div>
         )}
-        <div className='absolute left-0 right-0 top-0 bottom-0 hidden flex-col  items-center justify-center gap-[8px] px-[20px] group-hover:flex'>
-          {(hoverButtons || []).map((btn: any) => btn)}
-        </div>
       </div>
 
       <Link to={link ?? ''}>

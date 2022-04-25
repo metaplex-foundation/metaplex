@@ -17,7 +17,7 @@ const PutOnAuction = ({ setAttributes, attributes }) => {
   }
 
   return (
-    <>
+    <div className='w-64 flex-auto'>
       <TextField
         type='number'
         min={0}
@@ -39,7 +39,7 @@ const PutOnAuction = ({ setAttributes, attributes }) => {
           })
         }
       />
-    </>
+    </div>
   )
 }
 
