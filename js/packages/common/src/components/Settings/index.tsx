@@ -21,9 +21,10 @@ export const Settings = ({ additionalSettings }: { additionalSettings?: JSX.Elem
           />
         </Link>
 
-        <Link to='/artworks'>
+        <Link to='/profile'>
           <p className='font-100'>My Account</p>
         </Link>
+
         {publicKey && (
           <>
             <Tooltip title='Address copied'>

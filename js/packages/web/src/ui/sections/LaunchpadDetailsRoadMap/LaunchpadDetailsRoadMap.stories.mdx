@@ -1,0 +1,43 @@
+import dedent from 'ts-dedent'
+import {
+  ArgsTable,
+  Canvas,
+  Description,
+  Meta,
+  Preview,
+  Source,
+  Story,
+} from '@storybook/addon-docs'
+import { DocStory } from '@karapincha/hydra-ui'
+
+import { LaunchpadDetailsRoadMap } from './LaunchpadDetailsRoadMap'
+
+<Meta title='01. Atoms / LaunchpadDetailsRoadMap' component={LaunchpadDetailsRoadMap} />
+
+# LaunchpadDetailsRoadMap
+
+`import { LaunchpadDetailsRoadMap } from '@karmaplex/ui'`
+
+<br />
+<br />
+
+### Default
+
+<br />
+
+<Story name='Default'>
+  <div className='doc-story__preview' style={{ zoom: '100%' }}>
+    <div className='flex items-center gap-4'>
+      <LaunchpadDetailsRoadMap />
+    </div>
+  </div>
+</Story>
+
+<Source language={'jsx'} code={dedent`<LaunchpadDetailsRoadMap />`} />
+
+<br />
+<br />
+
+### Properties
+
+<ArgsTable of={LaunchpadDetailsRoadMap} />

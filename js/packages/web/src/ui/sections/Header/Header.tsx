@@ -84,11 +84,13 @@ export const Header: FC<HeaderProps> = () => {
             <Button appearance='link'>Discover Collections</Button>
           </Link>
 
-          <Link to='/launchpad-submission'>
+          <Link to='/launchpad'>
             <Button appearance='link'>Launchpad</Button>
           </Link>
-          <Button appearance='link'>Resources</Button>
-          <Button appearance='link'>Donate</Button>
+
+          <Link to='/donations'>
+            <Button appearance='link'>Donate</Button>
+          </Link>
 
           {connected && (
             <div className='flex items-center gap-[12px]'>

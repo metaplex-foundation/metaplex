@@ -11,7 +11,6 @@ import {
   ArtCreateView,
   StaticPageView,
   AuctionCreateView,
-  HomeView,
 } from './views'
 import { AdminView } from './views/admin'
 import PackView from './views/pack'
@@ -19,16 +18,23 @@ import { PackCreateView } from './views/packCreate'
 import { BillingView } from './views/auction/billing'
 
 /* New view components */
-import {
-  Explore,
-  StaticContent,
-  SubmitCollection,
-  LaunchPadSubmission,
-} from './components-v2/views'
+import { LaunchPadSubmission } from './components-v2/views'
 
 /* UI v2 Upgraded Views */
 import ScrollToTop from './ScrollToTop'
-import { Home, Collection, Discover, NFTDetails, NftNext } from './ui/views'
+import {
+  Home,
+  Collection,
+  Discover,
+  NFTDetails,
+  NftNext,
+  Donations,
+  Launchpad,
+  LaunchpadDetails,
+  Community,
+  MyProfile,
+  Article,
+} from './ui/views'
 
 import { SalesListView } from './views/home/components/SalesList'
 
@@ -58,7 +64,6 @@ export function Routes() {
               <Route exact path='/art/:id/:type' component={() => <ArtView />} />
               <Route exact path='/artists/:id' component={() => <ArtistView />} />
               <Route exact path='/artists' component={() => <ArtistsView />} />
-
               <Route
                 exact
                 path='/auction/create/:step_param?'
@@ -66,14 +71,30 @@ export function Routes() {
               />
               <Route exact path='/auction/:id' component={() => <AuctionView />} />
               <Route exact path='/auction/:id/billing' component={() => <BillingView />} />
-              <Route path='/about' component={() => <StaticPageView />} />
               <Route path='/discover' component={() => <Discover />} />
-              {/* <Route path='/collection/:id' component={() => <CollectionDetailView />} /> */}
               <Route path='/collection/:id' component={() => <Collection />} />
               <Route path='/nft/:id' component={() => <NFTDetails />} />
               <Route path='/nft-next/:id' component={() => <NftNext />} />
               <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} />
+              <Route exact path='/launchpad' component={() => <Launchpad />} />
+              <Route exact path='/communities' component={() => <Community />} />
+              <Route exact path='/profile' component={() => <MyProfile />} />
+              <Route exact path='/launchpad/:id' component={() => <LaunchpadDetails />} />
+              <Route path='/donations' component={() => <Donations />} />
+
+              <Route path='/about' component={() => <Article />} />
+              <Route path='/mission' component={() => <Article />} />
+              <Route path='/team' component={() => <Article />} />
+              <Route path='/activity-stats' component={() => <Article />} />
+              <Route path='/resources' component={() => <Article />} />
+              <Route path='/return-policy' component={() => <Article />} />
+              <Route path='/terms-of-condition' component={() => <Article />} />
+              <Route path='/cookies' component={() => <Article />} />
+              <Route path='/privacy-policy' component={() => <Article />} />
+
               <Route path='/' component={() => <Home />} />
+
+              {/* <Route path='/collection/:id' component={() => <CollectionDetailView />} /> */}
               {/* <Route exact path='/auction/:id' component={() => <AuctionView />} />
             <Route exact path='/auction/:id/billing' component={() => <BillingView />} /> */}
               {/* <Route path='/about' component={() => <StaticPageView />} />

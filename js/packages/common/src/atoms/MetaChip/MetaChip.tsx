@@ -28,9 +28,9 @@ export const MetaChip: FC<MetaChipProps> = ({
   ...restProps
 }: MetaChipProps) => {
   const MetaChipClasses = CN(`meta-chip flex flex-col`, className, {
-    'text-left': align === 'left',
-    'text-right': align === 'right',
-    'text-center': align === 'center',
+    'text-left items-left': align === 'left',
+    'text-right items-end': align === 'right',
+    'text-center items-center': align === 'center',
   })
 
   return (
@@ -96,7 +96,7 @@ export const MetaChip: FC<MetaChipProps> = ({
       {hint && (
         <p
           className={CN('font-500 text-sm text-slate-600', commonClassName)}
-          dangerouslySetInnerHTML={{ __html: hint }}
+          dangerouslySetInnerHTML={{ __html: hint || '' }}
         />
       )}
     </div>

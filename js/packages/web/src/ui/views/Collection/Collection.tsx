@@ -24,6 +24,7 @@ import { BN } from 'bn.js'
 import { useCollections } from '../../../hooks/useCollections'
 import { useAllSplPrices, useSolPrice } from '../../../contexts'
 import { useTokenList } from '../../../contexts/tokenList'
+import { findByCollectionName, findByMintKey } from '../../../api'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
 const RANGE_FILTERS = 'Range'
@@ -45,6 +46,14 @@ export interface AppliedFiltersInterface {
   category: string
   min?: number
   max?: number
+}
+
+interface ICollectionHeader {
+  collectionName: string
+  creatorPublicKey: string
+  description: string
+  collectionImageURL: string
+  collectionBannerURL: string
 }
 
 export const SORT_LOW_TO_HIGH = 'Low to High'
@@ -72,10 +81,47 @@ export const Collection: FC<CollectionProps> = () => {
   const pubkey = liveCollections.find(({ mint }) => mint === id)?.pubkey || undefined
   const { data: colData } = useExtendedArt(pubkey)
   const [count, setCount] = useState(0)
+  const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
+    collectionName: '',
+    description: '',
+    creatorPublicKey: '',
+    collectionImageURL: '',
+    collectionBannerURL: '',
+  })
+
+  useEffect(() => {
+    if (id && liveCollections.length > 0) {
+      for (const collection of liveCollections) {
+        if (collection.name) {
+          if (collection.name === id) {
+            findByCollectionName(collection.name).then(res => {
+              setCollectionHeaderData({
+                collectionName: res?.data.collection_name,
+                creatorPublicKey: res?.data.creator_public_key,
+                description: res?.data.project_description,
+                collectionImageURL: res?.data.collection_image_url,
+                collectionBannerURL: res?.data.collection_banner_url,
+              })
+            })
+            break
+          }
+        } else if (collection.mint) {
+          findByMintKey(collection.mint, collection.data.data.name).then(res => {
+            setCollectionHeaderData({
+              collectionName: res?.data.collection_name,
+              creatorPublicKey: res?.data.creator_public_key,
+              description: res?.data.project_description,
+              collectionImageURL: res?.data.collection_image_url,
+              collectionBannerURL: res?.data.collection_banner_url,
+            })
+          })
+        }
+      }
+    }
+  }, [liveCollections, pubkey])
 
   useEffect(() => {
     if (!colData) {
-      // console.log('Collections: ', liveCollections)
       Promise.all(
         auctions.map(async auction => {
           const gData = await getData(auction.thumbnail.metadata.pubkey)
@@ -83,7 +129,6 @@ export const Collection: FC<CollectionProps> = () => {
         })
       ).then(res => {
         const x = res.find(i => {
-          console.log('Collection Name', i.collection?.id)
           return i.collection?.name === id
         })
 
@@ -92,8 +137,6 @@ export const Collection: FC<CollectionProps> = () => {
             name: x.collection.name,
             image: x.image,
           })
-        } else {
-          console.log('There is no collection data')
         }
       })
     } else {
@@ -109,14 +152,14 @@ export const Collection: FC<CollectionProps> = () => {
   const getMintData = useMintD()
   const solPrice = useSolPrice()
 
-  useEffect(() => {
-    if (auctions?.length) {
-      filteredAuctions(!WITH_FILTER).then(res => {
-        setCount(res.length)
-        setAuctionAttr(() => res)
-      })
-    }
-  }, [auctions])
+  // useEffect(() => {
+  //   if (auctions?.length) {
+  //     filteredAuctions(!WITH_FILTER).then(res => {
+  //       setCount(res.length)
+  //       setAuctionAttr(() => res)
+  //     })
+  //   }
+  // }, [auctions])
 
   useEffect(() => {
     if (auctions?.length) {
@@ -308,10 +351,10 @@ export const Collection: FC<CollectionProps> = () => {
     <div className='collection'>
       <CollectionHeader
         isVerified
-        avatar={data?.image ?? ''}
-        cover='/img/dummy-collection-cover.png'
+        avatar={collectionHeaderData.collectionImageURL}
+        cover={collectionHeaderData.collectionBannerURL}
         title={data?.name ?? ''}
-        description={data?.description ?? ''}
+        description={collectionHeaderData.description}
         numberOfItems={count}
       />
 
