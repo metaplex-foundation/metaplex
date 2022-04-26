@@ -51,6 +51,7 @@ export const CachedImageContent = ({
   style?: React.CSSProperties
 }) => {
   const { cachedBlob } = useCachedImage(uri || '')
+  console.log('uri=>', uri)
 
   return (
     <Image
@@ -175,10 +176,15 @@ const HTMLContent = ({
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false)
   if (!artView) {
+    console.log('uri1', uri)
+
     return <CachedImageContent uri={uri} className={className} preview={preview} style={style} />
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string' ? files[0] : animationUrl
+
+  console.log('htmlURL', htmlURL)
+
   return (
     <HTMLWrapper>
       {!loaded && (

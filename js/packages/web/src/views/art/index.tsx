@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useArt, useExtendedArt, useUserArts } from '../../hooks'
 import { ArtContent } from '../../components/ArtContent'
 import InstantSale from './InstantSale'
+import { AuctionCategory } from '../auctionCreate/types'
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>()
@@ -51,7 +52,15 @@ export const ArtView = () => {
                     </div>
                   )}
                 </div>
-                {!!selected.length && <InstantSale items={selected} />}
+                <h6 className='text-h6 font-400'>Instant Sale</h6>
+                {!!selected.length && (
+                  <InstantSale category={AuctionCategory.InstantSale} items={selected} />
+                )}
+                <hr />
+                <h6 className='text-h6 font-400'>Auction</h6>
+                {!!selected.length && (
+                  <InstantSale category={AuctionCategory.Tiered} items={selected} />
+                )}
               </div>
             </div>
           </div>

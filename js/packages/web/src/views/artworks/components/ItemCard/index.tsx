@@ -39,15 +39,9 @@ const ItemCard = ({ item }: { item: Item }): ReactElement => {
   const pubkey = isMetadata(item) ? item.pubkey : item.metadata.pubkey
 
   return (
-    <Link to={`/art/${pubkey}`}>
-      <ArtCard
-        pubkey={pubkey}
-        preview={false}
-        height={ART_CARD_SIZE}
-        width={ART_CARD_SIZE}
-        artView
-      />
-    </Link>
+    // <Link to={`/art/${pubkey}`}>
+    <ArtCard pubkey={pubkey} preview={false} height={ART_CARD_SIZE} width={ART_CARD_SIZE} artView />
+    // </Link>
   )
 }
 

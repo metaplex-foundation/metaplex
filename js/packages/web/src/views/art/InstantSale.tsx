@@ -15,6 +15,8 @@ import {
   WRAPPED_SOL_MINT,
   ZERO,
 } from '@oyster/common'
+import { Button } from '@oyster/common'
+
 import { useWallet } from '@solana/wallet-adapter-react'
 import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { BN } from 'bn.js'
@@ -28,12 +30,14 @@ import {
   TieredAuctionState,
 } from '../auctionCreate/types'
 import PutOnSale from './PutOnSale'
+import PutOnAuction from './PutOnAuction'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
+  category: AuctionCategory
 }
 
-const InstantSale = ({ items }: InstantSaleInterface) => {
+const InstantSale = ({ items, category }: InstantSaleInterface) => {
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
@@ -51,7 +55,7 @@ const InstantSale = ({ items }: InstantSaleInterface) => {
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items,
-    category: AuctionCategory.InstantSale,
+    category,
     auctionDurationType: 'minutes',
     gapTimeType: 'minutes',
     winnersCount: 1,
@@ -355,13 +359,31 @@ const InstantSale = ({ items }: InstantSaleInterface) => {
       console.log('error2', error)
     }
   }
+
+  console.log(attributes)
+
+  const renderForm = () => {
+    const category = attributes.category
+    switch (category) {
+      case AuctionCategory.InstantSale:
+        return <PutOnSale attributes={attributes} setAttributes={setAttributes} />
+      case AuctionCategory.Tiered:
+        return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
+      default:
+        return <></>
+    }
+  }
+
   return (
-    <PutOnSale
-      loading={listing}
-      attributes={attributes}
-      setAttributes={setAttributes}
-      submit={createAuction}
-    />
+    <>
+      {renderForm()}
+      <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
+        <Button disabled={listing} onClick={createAuction} className='w-full'>
+          {category === AuctionCategory.InstantSale && 'List Now'}
+          {category === AuctionCategory.Tiered && 'Put on auction'}
+        </Button>
+      </div>
+    </>
   )
 }
 
