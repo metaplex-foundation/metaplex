@@ -48,7 +48,6 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               onClick={() => {
                 setActiveTab('listings')
                 setHeading('My Listings')
-                setTag('2 Collections')
               }}>
               Listings
             </Button>
@@ -111,7 +110,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
 
           <div className='flex w-full flex-col'>
             {activeTab === 'collectibles' && <ProfileCollectiblesList setTag={setTag} />}
-            {activeTab === 'listings' && <ProfileListings />}
+            {activeTab === 'listings' && <ProfileListings setTag={setTag} />}
             {activeTab === 'offers-made' && <ProfileOffersMade />}
             {activeTab === 'offers-received' && <ProfileOffersReceived />}
             {activeTab === 'settings' && <ProfileSettings />}

@@ -42,6 +42,7 @@ const NFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
 
 export const ProfileListings: FC<ProfileListingsProps> = ({
   className,
+  setTag,
   ...restProps
 }: ProfileListingsProps) => {
   const ProfileListingsClasses = CN(`profile-listings grid grid-cols-4 gap-[28px]`, className)
@@ -58,7 +59,10 @@ export const ProfileListings: FC<ProfileListingsProps> = ({
       setUserAuctions([...data])
     }
   }, [auctions, wallet])
-  console.log('userAuctions', userAuctions)
+
+  useEffect(() => {
+    setTag(`${userAuctions.length} NFTs`)
+  }, [userAuctions])
 
   return (
     <div className={ProfileListingsClasses} {...restProps}>
