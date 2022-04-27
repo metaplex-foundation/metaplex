@@ -309,14 +309,16 @@ programCommand('upload')
     process.exit(0);
   });
 
+let rpcMessage: string[] = ['-r, --rpc-url <string>',
+  'custom rpc url since this is a heavy command'];
+
 programCommand('withdraw')
   .argument('<candy_machine_id>', 'Candy machine id')
   .option('-d, --dry', 'Show Candy Machine withdraw amount without withdrawing')
   .option('-ch, --charity <string>', 'Which charity?', '')
   .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (candyMachineId, _, cmd) => {
     const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
@@ -403,8 +405,7 @@ programCommand('withdraw_all')
   .option('-ch, --charity <string>', 'Which charity?', '')
   .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, dry, charity, charityPercent, rpcUrl } = cmd.opts();
@@ -523,8 +524,7 @@ program
 
 programCommand('verify_upload')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { env, keypair, rpcUrl, cacheName } = cmd.opts();
@@ -622,8 +622,7 @@ programCommand('verify_price')
   .requiredOption('-p, --price <string>')
   .option('--cache-path <string>')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, price, cacheName, rpcUrl, cachePath } = cmd.opts();
@@ -667,8 +666,7 @@ programCommand('verify_price')
 programCommand('show')
   .option('--cache-path <string>')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .option(
     '-cm, --candy-machine-address <string>',
@@ -820,8 +818,7 @@ programCommand('update_candy_machine')
     'JSON file with candy machine settings',
   )
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .option('--new-authority <Pubkey>', 'New Authority. Base58-encoded')
   .action(async (directory, cmd) => {
@@ -925,8 +922,7 @@ programCommand('set_collection')
     'optional collection mint ID. Will be randomly generated if not provided',
   )
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, cacheName, rpcUrl, collectionMint } = cmd.opts();
@@ -952,8 +948,7 @@ programCommand('set_collection')
 
 programCommand('remove_collection')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, cacheName, rpcUrl } = cmd.opts();
@@ -973,8 +968,7 @@ programCommand('remove_collection')
 
 programCommand('mint_one_token')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, cacheName, rpcUrl } = cmd.opts();
@@ -989,8 +983,7 @@ programCommand('mint_one_token')
 programCommand('mint_multiple_tokens')
   .requiredOption('-n, --number <string>', 'Number of tokens')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (_, cmd) => {
     const { keypair, env, cacheName, number, rpcUrl } = cmd.opts();
@@ -1021,8 +1014,7 @@ programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .requiredOption('-m, --metadata <string>', 'base58 metadata account id')
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, rpcUrl, metadata } = cmd.opts();
@@ -1034,8 +1026,7 @@ programCommand('sign_all')
   .option('-b, --batch-size <string>', 'Batch size', '10')
   .option('-d, --daemon', 'Run signing continuously', false)
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, cacheName, rpcUrl, batchSize, daemon } = cmd.opts();
@@ -1071,8 +1062,7 @@ programCommand('update_existing_nfts_from_latest_cache_file')
   .option('-nc, --new-cache <string>', 'New cache file name')
   .option('-d, --daemon', 'Run updating continuously', false)
   .option(
-    '-r, --rpc-url <string>',
-    'custom rpc url since this is a heavy command',
+    rpcMessage[0], rpcMessage[1]
   )
   .action(async (directory, cmd) => {
     const { keypair, env, cacheName, rpcUrl, batchSize, daemon, newCache } =
