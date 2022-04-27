@@ -17,7 +17,6 @@ export const ListingCard: FC<ListingCardProps> = ({
   className,
   image,
   name,
-  count,
   volume,
   floorPrice,
   dollarValue,
@@ -40,35 +39,28 @@ export const ListingCard: FC<ListingCardProps> = ({
         </h2>
 
         <div className='flex flex-col gap-[8px]'>
-          <MetaChip
+          {/* <MetaChip
             align='left'
             overline='Items'
             subHeading={2000}
             className='border-b border-slate-100 pb-[8px]'
-          />
-          <MetaChip
-            align='left'
-            overline='Volume'
-            subHeading={
-              <div className='flex items-center gap-[4px]'>
-                <Solana size={16} className='flex items-center' />
-                <span className='flex items-center'>{volume}</span>
-              </div>
-            }
-            className='border-b border-slate-100 pb-[8px]'
-          />
-          <MetaChip
-            align='left'
-            overline='Floor Price'
-            subHeading={floorPrice}
-            hint={`${dollarValue}`}
-          />
+          /> */}
+          {volume && (
+            <MetaChip
+              align='left'
+              overline='Volume'
+              subHeading={
+                <div className='flex items-center gap-[4px]'>
+                  <Solana size={16} className='flex items-center' />
+                  <span className='flex items-center'>{volume}</span>
+                </div>
+              }
+              className='border-b border-slate-100 pb-[8px]'
+            />
+          )}
+          <MetaChip align='left' overline='Price' subHeading={floorPrice} hint={`${dollarValue}`} />
         </div>
       </div>
     </div>
   )
 }
-
-ListingCard.defaultProps = {}
-
-export default ListingCard
