@@ -433,7 +433,7 @@ type Manifest = {
  * Assets which should be uploaded either are not present in the Cache object,
  * or do not truthy value for the `link` property.
  */
-function getAssetKeysNeedingUpload(
+export function getAssetKeysNeedingUpload(
   items: Cache['items'],
   files: string[],
 ): AssetKey[] {
@@ -606,7 +606,7 @@ function setAuthority(publicKey, cache, cacheName, env) {
  * asset should later be appended to the deployed Candy Machine program's
  * configuration on chain.
  */
-function updateCacheAfterUpload(
+export function updateCacheAfterUpload(
   cache: Cache,
   cacheKeys: Array<keyof Cache['items']>,
   links: string[],
