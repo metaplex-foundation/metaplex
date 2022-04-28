@@ -5,6 +5,7 @@ import { ArtContent } from '../ArtContent'
 import { useArt } from '../../hooks'
 import { Artist, ArtType } from '../../types'
 import { MetaAvatar } from '../MetaAvatar'
+import { useHistory } from 'react-router-dom'
 
 const { Meta } = Card
 
@@ -65,6 +66,8 @@ export const ArtCard = (props: ArtCardProps) => {
     badge = `${art.edition} of ${art.supply}`
   }
 
+  const { push } = useHistory()
+
   const card = (
     <div className='buy-card group flex w-full cursor-pointer flex-col overflow-hidden rounded bg-white shadow-card transition-all'>
       <div className='flex h-[286px] w-full overflow-hidden transition-all'>
@@ -81,6 +84,25 @@ export const ArtCard = (props: ArtCardProps) => {
       </div>
       <div className='flex flex-col rounded-b px-[20px] pt-[12px] pb-[20px] transition-all'>
         <h2 className='w-full border-b border-slate-100 pb-[8px] text-center text-h5'>{name}</h2>
+
+        <div className='flex justify-between pt-[12px]'></div>
+
+        <div className='flex w-full pt-[12px]'>
+          <Button
+            onClick={() => push(`/art/${pubkey}/sale`)}
+            type='primary'
+            className='action-btn w-full'>
+            Put on sale
+          </Button>
+        </div>
+        <div className='flex w-full pt-[12px]'>
+          <Button
+            onClick={() => push(`/art/${pubkey}/auction`)}
+            appearance='neutral'
+            className='w-full'>
+            Put on auction
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -12,7 +12,7 @@ export const Settings = ({ additionalSettings }: { additionalSettings?: JSX.Elem
   return (
     <>
       <div className='flex w-full flex-col items-center justify-center gap-[8px] border-b border-slate-200 p-[16px]'>
-        <Link to='/artworks'>
+        <Link to='/profile'>
           <Identicon
             address={publicKey?.toBase58()}
             style={{

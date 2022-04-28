@@ -1,35 +1,74 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
-import { ListingCard } from '@oyster/common'
+import { ListingCard, pubkeyToString } from '@oyster/common'
+import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { AuctionView, useExtendedArt } from '../../../hooks'
+import { Link } from 'react-router-dom'
+import useNFTData from '../../../hooks/useNFTData'
 
 export interface ProfileListingsProps {
   [x: string]: any
 }
 
+interface NFTCardWrapperProps {
+  nft: AuctionView
+}
+
+const NFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
+  const pubkey = nft.thumbnail.metadata.pubkey
+  const id = pubkeyToString(pubkey)
+  const { data } = useExtendedArt(id)
+  const {
+    value: { priceNaN, solVal, usdValFormatted },
+  } = useNFTData(nft)
+  const image = data?.image || ''
+  const name = data?.name || ''
+
+  return (
+    <Link to={`/nft/${nft.auction.pubkey}`}>
+      <ListingCard
+        image={image}
+        name={name}
+        count={2000}
+        // volume='472.54'
+        floorPrice={!priceNaN ? `Ⓞ ${solVal} SOL` : ''}
+        dollarValue={usdValFormatted}
+      />
+    </Link>
+  )
+}
+
 export const ProfileListings: FC<ProfileListingsProps> = ({
   className,
+  setTag,
   ...restProps
 }: ProfileListingsProps) => {
   const ProfileListingsClasses = CN(`profile-listings grid grid-cols-4 gap-[28px]`, className)
 
+  const [userAuctions, setUserAuctions] = useState<AuctionView[]>([])
+  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+  const wallet = useWallet()
+
+  useEffect(() => {
+    if (auctions.length) {
+      const data = auctions.filter(auction => {
+        return auction.auctionManager.authority === wallet.publicKey?.toBase58()
+      })
+      setUserAuctions([...data])
+    }
+  }, [auctions, wallet])
+
+  useEffect(() => {
+    setTag(`${userAuctions.length} NFTs`)
+  }, [userAuctions])
+
   return (
     <div className={ProfileListingsClasses} {...restProps}>
-      <ListingCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/ukZ3DgqeaTyx5qifyooXV-rO5CM8CjKnKFJZVlVQFaU'
-        name='Belugies'
-        count={2000}
-        volume='472.54'
-        floorPrice='Ⓞ 0.25 SOL'
-        dollarValue='$154.00'
-      />
-      <ListingCard
-        image='https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/LlrUIT49BxcHsSGBXmQcJ70G_jjZMgcPZJh3CxqziuA'
-        name='Degen Ape #2314'
-        count={2000}
-        volume='472.54'
-        floorPrice='Ⓞ 0.25 SOL'
-        dollarValue='$154.00'
-      />
+      {userAuctions.map((auction, key) => (
+        <NFTCardWrapper key={key} nft={auction} />
+      ))}
     </div>
   )
 }
