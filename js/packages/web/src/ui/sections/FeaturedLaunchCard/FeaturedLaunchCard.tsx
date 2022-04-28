@@ -43,7 +43,7 @@ export const FeaturedLaunchCard: FC<FeaturedLaunchCardProps> = ({
           Go to Launch
         </Button>
       </div>
-      <img src={image} className='rounded-[12px] object-cover' />
+      <img src={image} className='h-[332px] w-[500px] rounded-[12px] object-cover object-center' />
     </div>
   )
 }

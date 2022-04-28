@@ -50,3 +50,23 @@ export const findByMintKey = async (mintKey: string, collectionName: string) => 
     return
   }
 }
+
+export const markAsFeatured = async (id: string) => {
+  try {
+    const data = await axios.put(`${api}/mark-featured/${id}`)
+    return data
+  } catch (error: any) {
+    console.log('Mark submission as featured API error: ', error.message)
+    return
+  }
+}
+
+export const getFeaturedSubmission = async () => {
+  try {
+    const data = await axios.get(`${api}/featured`)
+    return data.data
+  } catch (error: any) {
+    console.log('Mark submission as featured API error: ', error.message)
+    return null
+  }
+}

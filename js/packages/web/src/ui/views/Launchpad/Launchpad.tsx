@@ -1,8 +1,9 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { SectionHeading, LaunchCard } from '@oyster/common'
 import { FeaturedLaunchCard } from '../../sections'
 import { useHistory } from 'react-router-dom'
+import { getFeaturedSubmission } from '../../../api'
 
 export interface LaunchpadProps {
   [x: string]: any
@@ -94,6 +95,21 @@ const cards = [
 export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: LaunchpadProps) => {
   const { push } = useHistory()
   const LaunchpadClasses = CN(`launchpad container pt-[80px] pb-[100px]`, className)
+  const [heading, setHeading] = useState('The Stoned Frogs')
+  const [description, setDescription] = useState(
+    'A collection of 8,400 Stoned Frogs coming to grow $SEEDS and take over the cannabis world.'
+  )
+  const [image, setImage] = useState('/img/frog.png')
+  const [navigatePage, setNavigatePage] = useState('stoned-frogs')
+
+  useEffect(() => {
+    getFeaturedSubmission().then(submission => {
+      setHeading(submission.collection_name)
+      setDescription(submission.project_description)
+      setImage(submission.collection_image_url)
+      setNavigatePage(submission.collection_name_query_string.replace('%', '-').toLowerCase())
+    })
+  }, [])
 
   return (
     <div className={LaunchpadClasses} {...restProps}>
@@ -108,11 +124,14 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
       <div className='pt-[80px]'>
         <FeaturedLaunchCard
           tagText='FEATURED LAUNCH'
-          heading='The Stoned Frogs'
-          description='A collection of 8,400 Stoned Frogs coming to grow $SEEDS and take over the cannabis world.
-            Ribbit!'
-          image='/img/frog.png'
-          onClickButton={() => push('/launchpad/stoned-frogs')}
+          heading={heading}
+          description={
+            description && description.length >= 250
+              ? `${description.slice(0, 250)}.....`
+              : description
+          }
+          image={image}
+          onClickButton={() => push(`/launchpad/${navigatePage}`)}
         />
       </div>
 

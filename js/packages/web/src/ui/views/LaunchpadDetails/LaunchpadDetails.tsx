@@ -1,6 +1,8 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { LaunchpadTopBar, LaunchpadDetailCard, LaunchpadTabs } from '../../sections'
+import { getFeaturedSubmission } from '../../../api'
+import moment from 'moment'
 
 export interface LaunchpadDetailsProps {
   [x: string]: any
@@ -11,6 +13,32 @@ export const LaunchpadDetails: FC<LaunchpadDetailsProps> = ({
   ...restProps
 }: LaunchpadDetailsProps) => {
   const LaunchpadDetailsClasses = CN(`launchpad-details w-full`, className)
+  const [heading, setHeading] = useState('The Stoned Frogs')
+  const [description, setDescription] = useState(
+    'A collection of 8,400 Stoned Frogs coming to grow $SEEDS and take over the cannabis world.'
+  )
+  const [image, setImage] = useState('/img/frog.png')
+  const [launchTime, setLaunchTime] = useState<any>()
+  const [primaryCategory, setPrimaryCategory] = useState()
+  const [secondaryCategory, setSecondaryCategory] = useState()
+
+  useEffect(() => {
+    getFeaturedSubmission().then(submission => {
+      setHeading(submission.collection_name)
+      setDescription(submission.project_description)
+      setImage(submission.collection_image_url)
+      setLaunchTime(moment(submission.exp_mint_date).format('LL'))
+      if (submission.categories) {
+        if (submission.categories.primaryCategory) {
+          setPrimaryCategory(submission.categories.primaryCategory)
+        }
+
+        if (submission.categories.secondaryCategory) {
+          setSecondaryCategory(submission.categories.secondaryCategory)
+        }
+      }
+    })
+  }, [])
 
   return (
     <div className={LaunchpadDetailsClasses} {...restProps}>
@@ -21,32 +49,33 @@ export const LaunchpadDetails: FC<LaunchpadDetailsProps> = ({
           <div className='flex justify-between'>
             <div className='flex max-w-[564px] flex-col gap-[16px]'>
               <div className='flex flex-col gap-[16px]'>
-                <h2 className='text-h2 font-500 text-slate-800'>The Stoned Frogs</h2>
-                <p className='text-base font-400 text-gray-800'>
-                  A collection of 8,400 Stoned Frogs coming to grow $SEEDS and take <br /> over the
-                  cannabis world. Ribbit!
-                </p>
+                <h2 className='text-h2 font-500 text-slate-800'>{heading}</h2>
+                <p className='text-base font-400 text-gray-800'>{description}</p>
               </div>
 
               <LaunchpadDetailCard
                 price='Ⓞ 2.36 SOL'
                 priceInDollars='$4.19'
-                launchTime='20h : 35m : 08s'
+                launchTime={launchTime}
               />
 
               <div className='flex gap-[16px]'>
-                <div className='rounded-[4px] bg-red-100 px-[8px] py-[4px]'>
-                  <p className='text-sm font-500 text-red-700'>DOXXED</p>
-                </div>
-                <div className='rounded-[4px] bg-red-100 px-[8px] py-[4px]'>
-                  <p className='text-sm font-500 text-red-700'>Escrow 1 day</p>
-                </div>
+                {primaryCategory && (
+                  <div className='rounded-[4px] bg-red-100 px-[8px] py-[4px]'>
+                    <p className='text-sm font-500 text-red-700'>{primaryCategory}</p>
+                  </div>
+                )}
+                {secondaryCategory && (
+                  <div className='rounded-[4px] bg-red-100 px-[8px] py-[4px]'>
+                    <p className='text-sm font-500 text-red-700'>{secondaryCategory}</p>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className='flex flex-shrink-0'>
               <img
-                src='/img/frog.png'
+                src={image}
                 className='h-[332px] w-[500px] rounded-[12px] object-cover object-center'
               />
             </div>

@@ -41,7 +41,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   const [linkedInProfile, setLinkedInProfile] = useState()
   const [websiteLink, setWebsiteLink] = useState()
   const [otherLink, setOtherLink] = useState()
-  const [expectedMintDate, setExpectedMintDate] = useState()
+  const [expectedMintDate, setExpectedMintDate] = useState('')
   const [numberOfItemsExpected, setNumberOfItemsExpected] = useState()
   const [isTeamDox, setIsTeamDox] = useState(false)
   const [mintPrice, setMintPrice] = useState()
@@ -117,6 +117,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
       collection_banner: collectionBanner !== undefined ? collectionBanner : null,
       description:
         projectDescription && projectDescription.trim().length > 0 ? projectDescription : null,
+      expectedDate:
+        expectedMintDate && expectedMintDate.trim().length > 0 ? expectedMintDate : null,
     }
     formDataValidate = Object.assign({}, data)
     return true
@@ -175,8 +177,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             )
             window.location.href = '/#/'
           })
-          .catch((err: any) => {
-            alert(err.response.data.message)
+          .catch(() => {
+            alert('There was an error while saving your submission. Please try again.')
           })
       } else {
         setIsFormNotValid(true)
@@ -512,6 +514,11 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 onChange={handleDatePicker}
               />
             </div>
+            {isFormNotValid && expectedMintDate.trim().length <= 0 ? (
+              <Text type='danger' style={{ fontSize: 13 }}>
+                Expected mint date is required
+              </Text>
+            ) : null}
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>

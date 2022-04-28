@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Layout, Table, Switch, Spin, Modal, Input, Tooltip } from 'antd'
-import { Button } from '@oyster/common'
+import { Layout, Table, Switch, Spin, Modal, Input, Tooltip, Menu, Dropdown, Space } from 'antd'
+import { Badge, Button } from '@oyster/common'
 import { useMeta } from '../../contexts'
 import { Store, WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index'
 import {
@@ -22,8 +22,8 @@ import { convertMasterEditions, filterMetadata } from '../../actions/convertMast
 import { Link } from 'react-router-dom'
 import { SetupVariables } from '../../components/SetupVariables'
 import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
-import { getSubmissions, statusToApprove } from '../../api'
-import { CheckCircleTwoTone } from '@ant-design/icons'
+import { getSubmissions, markAsFeatured, statusToApprove } from '../../api'
+import { CheckCircleTwoTone, EditTwoTone, EllipsisOutlined } from '@ant-design/icons'
 
 const { Content } = Layout
 export const AdminView = () => {
@@ -234,7 +234,6 @@ function InnerAdminView({
 
   useEffect(() => {
     getSubmissions().then(submissions => {
-      console.log(submissions?.data.data)
       setSubmissions(submissions?.data.data)
     })
   }, [])
@@ -292,6 +291,16 @@ function InnerAdminView({
       title: 'Creator Address',
       dataIndex: 'creator_public_key',
       key: 'creator_public_key',
+      render: (_, row) => (
+        <span style={{ display: 'flex' }}>
+          {row.creator_public_key}
+          {row.featured ? (
+            <Badge style={{ backgroundColor: '#52c41a', marginLeft: 5, borderRadius: 15 }}>
+              Featured
+            </Badge>
+          ) : null}
+        </span>
+      ),
     },
     {
       title: 'Collection Name',
@@ -309,25 +318,68 @@ function InnerAdminView({
       key: 'actions',
       render: (_, row) => (
         <>
-          {row.approval_status !== 'Approved' ? (
-            <button
-              className='text-black-800 h-[32px] appearance-none rounded-[15px] bg-green-400 px-[12px] text-md font-500 hover:bg-green-500 hover:text-white'
-              disabled={row.approval_status === 'Approved'}
-              onClick={() => {
-                setModalOpen(true)
-                setModalAddress(row.creator_public_key)
-              }}>
-              Approve
-            </button>
-          ) : (
-            <Tooltip placement='right' title='Submission approved'>
-              <CheckCircleTwoTone twoToneColor='#52c41a' style={{ fontSize: '22px' }} />
-            </Tooltip>
-          )}
+          <Dropdown
+            overlay={
+              <Menu>
+                {row.approval_status === 'Pending' && (
+                  <Menu.Item
+                    onClick={() => {
+                      setModalOpen(true)
+                      setModalAddress(row.creator_public_key)
+                    }}>
+                    <CheckCircleTwoTone
+                      twoToneColor='#52c41a'
+                      style={{ verticalAlign: 'middle', paddingRight: 5 }}
+                    />
+                    Approve
+                  </Menu.Item>
+                )}
+                {!row.featured && (
+                  <Menu.Item
+                    disabled={row.approval_status === 'Pending'}
+                    onClick={() => {
+                      handleMarkAsFeatured(row.id)
+                    }}>
+                    <EditTwoTone style={{ verticalAlign: 'middle', paddingRight: 5 }} />
+                    <Tooltip
+                      title={
+                        row.approval_status === 'Pending'
+                          ? 'Approve the submission before mark as featured'
+                          : 'Once you make this submission as Featured, it will appear on the launchpad page'
+                      }>
+                      Mark as Featured
+                    </Tooltip>
+                  </Menu.Item>
+                )}
+              </Menu>
+            }
+            trigger={['click']}>
+            <a onClick={e => e.preventDefault()}>
+              <Space>
+                <EllipsisOutlined />
+              </Space>
+            </a>
+          </Dropdown>
         </>
       ),
     },
   ]
+
+  const handleMarkAsFeatured = async (id: string) => {
+    if (submissions.length > 0) {
+      submissions.forEach(submission => {
+        if (submission.featured) {
+          submission.featured = false
+        }
+        if (id === submission.id) {
+          submission.featured = true
+        }
+      })
+      setSubmissions([...submissions])
+      await markAsFeatured(id)
+      await getSubmissions()
+    }
+  }
 
   return (
     <Content className={'admin-content'}>
@@ -389,7 +441,6 @@ function InnerAdminView({
             }))}
           />
         </div>
-
         {submissions.length > 0 ? (
           <>
             <h5 className='text-h5'>Launchpad Submissions</h5>
@@ -399,10 +450,12 @@ function InnerAdminView({
                 columns={submissionColumns}
                 dataSource={Object.keys(submissions).map(key => ({
                   key,
+                  id: submissions[key]?.id,
                   name: shortenAddress(submissions[key]?.creator_public_key),
                   creator_public_key: submissions[key]?.creator_public_key,
                   collection_name: submissions[key]?.collection_name,
                   approval_status: submissions[key]?.approval_status,
+                  featured: submissions[key]?.featured,
                 }))}
               />
             </div>
