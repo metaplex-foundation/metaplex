@@ -1103,109 +1103,124 @@ programCommand('update_existing_nfts_from_latest_cache_file')
     );
   });
 
-programCommand('get_all_mint_addresses').action(async (directory, cmd) => {
-  const { env, cacheName, keypair } = cmd.opts();
+programCommand('get_all_mint_addresses')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url as the public rpc pool\'s default timeout often won\'t support this operation',
+  )
+  .action(async (directory, cmd) => {
+    const { env, cacheName, keypair, rpcUrl } = cmd.opts();
 
-  const cacheContent = loadCache(cacheName, env);
-  const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
-  const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
-  const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
-    candyMachineId,
-  );
+    const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+    const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+      candyMachineId,
+    );
 
-  log.info('Getting mint addresses...');
-  const addresses = await getAddressesByCreatorAddress(
-    candyMachineAddr.toBase58(),
-    anchorProgram.provider.connection,
-  );
-  fs.writeFileSync('./mint-addresses.json', JSON.stringify(addresses, null, 2));
-  log.info('Successfully saved mint addresses to mint-addresses.json');
-});
+    log.info('Getting mint addresses...');
+    const addresses = await getAddressesByCreatorAddress(
+      candyMachineAddr.toBase58(),
+      anchorProgram.provider.connection,
+    );
+    fs.writeFileSync('./mint-addresses.json', JSON.stringify(addresses, null, 2));
+    log.info('Successfully saved mint addresses to mint-addresses.json');
+  });
 
-programCommand('get_all_owners_addresses').action(async (directory, cmd) => {
-  const { env, cacheName, keypair } = cmd.opts();
+programCommand('get_all_owners_addresses')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url as the public rpc pool\'s default timeout often won\'t support this operation',
+  )
+  .action(async (directory, cmd) => {
+    const { env, cacheName, keypair, rpcUrl } = cmd.opts();
 
-  const cacheContent = loadCache(cacheName, env);
-  const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
 
-  const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
-  const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
-    candyMachineId,
-  );
+    const candyMachineId = new PublicKey(cacheContent.program.candyMachine);
+    const [candyMachineAddr] = await deriveCandyMachineV2ProgramAddress(
+      candyMachineId,
+    );
 
-  log.info('Getting mint addresses...');
-  const addresses = await getAddressesByCreatorAddress(
-    candyMachineAddr.toBase58(),
-    anchorProgram.provider.connection,
-  );
+    log.info('Getting mint addresses...');
+    const addresses = await getAddressesByCreatorAddress(
+      candyMachineAddr.toBase58(),
+      anchorProgram.provider.connection,
+    );
 
-  log.info('Getting owner addresses...');
-  const owners = await getOwnersByMintAddresses(
-    addresses,
-    anchorProgram.provider.connection,
-  );
-  fs.writeFileSync('./owner-addresses.json', JSON.stringify(owners, null, 2));
-  log.info('Successfully saved owner addresses to owner-addresses.json');
-});
+    log.info('Getting owner addresses...');
+    const owners = await getOwnersByMintAddresses(
+      addresses,
+      anchorProgram.provider.connection,
+    );
+    fs.writeFileSync('./owner-addresses.json', JSON.stringify(owners, null, 2));
+    log.info('Successfully saved owner addresses to owner-addresses.json');
+  });
 
-programCommand('get_unminted_tokens').action(async (directory, cmd) => {
-  const { keypair, env, cacheName } = cmd.opts();
-  const cacheContent = loadCache(cacheName, env);
-  const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgramV2(walletKeyPair, env);
-  const candyAddress = cacheContent.program.candyMachine;
+programCommand('get_unminted_tokens')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url as the public rpc pool\'s default timeout often won\'t support this operation',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, rpcUrl } = cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
+    const candyAddress = cacheContent.program.candyMachine;
 
-  log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
-  log.debug('Environment: ', env);
-  log.debug('Candy machine address: ', candyAddress);
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
 
-  const itemsAvailable = Object.keys(cacheContent.items).length;
+    const itemsAvailable = Object.keys(cacheContent.items).length;
 
-  const candyMachine = await anchorProgram.provider.connection.getAccountInfo(
-    new anchor.web3.PublicKey(candyAddress),
-  );
+    const candyMachine = await anchorProgram.provider.connection.getAccountInfo(
+      new anchor.web3.PublicKey(candyAddress),
+    );
 
-  const thisSlice = candyMachine.data.slice(
-    CONFIG_ARRAY_START_V2 +
-      4 +
-      CONFIG_LINE_SIZE_V2 * itemsAvailable +
-      4 +
-      Math.floor(itemsAvailable / 8) +
-      4,
-    candyMachine.data.length,
-  );
+    const thisSlice = candyMachine.data.slice(
+      CONFIG_ARRAY_START_V2 +
+        4 +
+        CONFIG_LINE_SIZE_V2 * itemsAvailable +
+        4 +
+        Math.floor(itemsAvailable / 8) +
+        4,
+      candyMachine.data.length,
+    );
 
-  let index = 0;
-  const unminted = {};
+    let index = 0;
+    const unminted = {};
 
-  for (let i = 0; i < thisSlice.length; i++) {
-    const start = 1 << 7;
-    for (let j = 0; j < 8 && index < itemsAvailable; j++) {
-      if (!(thisSlice[i] & (start >> j))) {
-        unminted[index.toString()] = cacheContent.items[index.toString()];
-        log.debug('Unminted token index', index);
+    for (let i = 0; i < thisSlice.length; i++) {
+      const start = 1 << 7;
+      for (let j = 0; j < 8 && index < itemsAvailable; j++) {
+        if (!(thisSlice[i] & (start >> j))) {
+          unminted[index.toString()] = cacheContent.items[index.toString()];
+          log.debug('Unminted token index', index);
+        }
+        index++;
       }
-      index++;
     }
-  }
 
-  const found = Object.keys(unminted).length;
+    const found = Object.keys(unminted).length;
 
-  if (found > 0) {
-    fs.writeFileSync(
-      './unminted-tokens.json',
-      JSON.stringify(unminted, null, 2),
-    );
-    log.info(
-      `Done - successfully saved ${found} unminted token(s) information to 'unminted-tokens.json' file`,
-    );
-  } else {
-    log.info('Nothing to do - all tokens have been minted');
-  }
-});
+    if (found > 0) {
+      fs.writeFileSync(
+        './unminted-tokens.json',
+        JSON.stringify(unminted, null, 2),
+      );
+      log.info(
+        `Done - successfully saved ${found} unminted token(s) information to 'unminted-tokens.json' file`,
+      );
+    } else {
+      log.info('Nothing to do - all tokens have been minted');
+    }
+  });
 
 function programCommand(
   name: string,
