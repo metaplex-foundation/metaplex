@@ -9,7 +9,6 @@ import {
   ArtworksView,
   AnalyticsView,
   ArtCreateView,
-  StaticPageView,
   AuctionCreateView,
 } from './views'
 import { AdminView } from './views/admin'
