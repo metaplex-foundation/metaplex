@@ -157,7 +157,7 @@ export async function setCollection(
   }
 
   instructions.push(
-    await anchorProgram.instruction.setCollection({
+    anchorProgram.instruction.setCollection({
       accounts: {
         candyMachine: candyMachineAddress,
         authority: wallet.publicKey,

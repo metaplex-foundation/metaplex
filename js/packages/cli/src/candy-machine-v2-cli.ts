@@ -11,7 +11,7 @@ import {
   parseCollectionMintPubkey,
   parsePrice,
 } from './helpers/various';
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL, Keypair } from '@solana/web3.js';
 import {
   CACHE_PATH,
   CONFIG_LINE_SIZE_V2,
@@ -86,6 +86,14 @@ programCommand('version', { requireWallet: false }).action(async () => {
     .trim();
   log.info(`Candy Machine Version: ${revision}`);
 });
+
+programCommand('versionIDL', { requireWallet: false }).action(
+  async (options, cmd) => {
+    const { env, rpcUrl } = cmd.opts();
+    const anchorProgram = await loadCandyProgramV2(new Keypair(), env, rpcUrl);
+    log.info('Idl Version', anchorProgram.idl.version);
+  },
+);
 
 programCommand('upload')
   .argument(
