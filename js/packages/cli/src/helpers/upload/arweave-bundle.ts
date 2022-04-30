@@ -81,6 +81,7 @@ type ProcessedBundleFilePairs = {
   dataItems: DataItem[];
   arweavePathManifestLinks: string[];
   updatedManifests: Manifest[];
+  arweavePathManifestimageLinks: string[];
 };
 
 /**
@@ -584,53 +585,64 @@ export async function* makeArweaveBundleUploadGenerator(
     );
 
     progressBar.start(bundleFilePairs.length, 0);
-    const { cacheKeys, dataItems, arweavePathManifestLinks, updatedManifests } =
-      await bundleFilePairs.reduce<Promise<ProcessedBundleFilePairs>>(
-        // Process a bundle file pair (image + manifest).
-        // - retrieve image data, put it in a DataItem
-        // - sign the image DataItem and build the image link from the txId.
-        // - retrieve & update the asset manifest w/ the image link
-        // - put the manifest in a DataItem
-        // - sign the manifest DataItem and build the manifest link form the txId.
-        // - create the Arweave Path Manifest w/ both asset image + manifest txIds pair.
-        // - fill the results accumulator
-        async function processBundleFilePair(accP, filePair) {
-          const acc = await accP;
-          log.debug('Processing File Pair', filePair.key);
+    const {
+      cacheKeys,
+      dataItems,
+      arweavePathManifestLinks,
+      updatedManifests,
+      arweavePathManifestimageLinks,
+    } = await bundleFilePairs.reduce<Promise<ProcessedBundleFilePairs>>(
+      // Process a bundle file pair (image + manifest).
+      // - retrieve image data, put it in a DataItem
+      // - sign the image DataItem and build the image link from the txId.
+      // - retrieve & update the asset manifest w/ the image link
+      // - put the manifest in a DataItem
+      // - sign the manifest DataItem and build the manifest link form the txId.
+      // - create the Arweave Path Manifest w/ both asset image + manifest txIds pair.
+      // - fill the results accumulator
+      async function processBundleFilePair(accP, filePair) {
+        const acc = await accP;
+        log.debug('Processing File Pair', filePair.key);
 
-          const {
-            imageDataItem,
-            animationDataItem,
-            manifestDataItem,
-            arweavePathManifestDataItem,
-            manifest,
-          } = await processFiles({ storageType, signer, bundlr, filePair });
+        const {
+          imageDataItem,
+          animationDataItem,
+          manifestDataItem,
+          arweavePathManifestDataItem,
+          manifest,
+        } = await processFiles({ storageType, signer, bundlr, filePair });
+        const imageExt = path.extname(filePair.image);
+        const arweavePathManifestLink = `https://arweave.net/${manifestDataItem.id}`;
+        //const arweavePathManifestimageLink = `https://arweave.net/${imageDataItem.id}`;
+        const arweavePathManifestimageLink = `https://arweave.net/${
+          imageDataItem.id
+        }?ext=${imageExt.replace('.', '')}`;
 
-          const arweavePathManifestLink = `https://arweave.net/${manifestDataItem.id}`;
+        acc.cacheKeys.push(filePair.key);
+        acc.dataItems.push(
+          imageDataItem as DataItem,
+          manifestDataItem as DataItem,
+          arweavePathManifestDataItem as DataItem,
+        );
+        if (filePair.animation) {
+          acc.dataItems.push(animationDataItem as DataItem);
+        }
+        acc.arweavePathManifestLinks.push(arweavePathManifestLink);
+        acc.arweavePathManifestimageLinks.push(arweavePathManifestimageLink);
+        acc.updatedManifests.push(manifest);
 
-          acc.cacheKeys.push(filePair.key);
-          acc.dataItems.push(
-            imageDataItem as DataItem,
-            manifestDataItem as DataItem,
-            arweavePathManifestDataItem as DataItem,
-          );
-          if (filePair.animation) {
-            acc.dataItems.push(animationDataItem as DataItem);
-          }
-          acc.arweavePathManifestLinks.push(arweavePathManifestLink);
-          acc.updatedManifests.push(manifest);
-
-          log.debug('Processed File Pair', filePair.key);
-          progressBar.increment();
-          return acc;
-        },
-        Promise.resolve({
-          cacheKeys: [],
-          dataItems: [],
-          arweavePathManifestLinks: [],
-          updatedManifests: [],
-        }),
-      );
+        log.debug('Processed File Pair', filePair.key);
+        progressBar.increment();
+        return acc;
+      },
+      Promise.resolve({
+        cacheKeys: [],
+        dataItems: [],
+        arweavePathManifestLinks: [],
+        updatedManifests: [],
+        arweavePathManifestimageLinks: [],
+      }),
+    );
     progressBar.stop();
     if (storageType === StorageType.ArweaveSol) {
       const bundlrTransactions = [
@@ -708,7 +720,12 @@ export async function* makeArweaveBundleUploadGenerator(
       log.info('Bundle uploaded!', tx.id);
     }
 
-    yield { cacheKeys, arweavePathManifestLinks, updatedManifests };
+    yield {
+      cacheKeys,
+      arweavePathManifestLinks,
+      updatedManifests,
+      arweavePathManifestimageLinks,
+    };
   }
 }
 

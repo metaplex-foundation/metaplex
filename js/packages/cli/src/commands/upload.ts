@@ -242,13 +242,19 @@ export async function uploadV2({
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
       for await (const value of arweaveBundleUploadGenerator) {
-        const { cacheKeys, arweavePathManifestLinks, updatedManifests } = value;
+        const {
+          cacheKeys,
+          arweavePathManifestLinks,
+          updatedManifests,
+          arweavePathManifestimageLinks,
+        } = value;
 
         updateCacheAfterUpload(
           cacheContent,
           cacheKeys,
           arweavePathManifestLinks,
           updatedManifests.map(m => m.name),
+          arweavePathManifestimageLinks,
         );
 
         saveCache(cacheName, env, cacheContent);
@@ -611,10 +617,12 @@ function updateCacheAfterUpload(
   cacheKeys: Array<keyof Cache['items']>,
   links: string[],
   names: string[],
+  imagelinks: string[],
 ) {
   cacheKeys.forEach((cacheKey, idx) => {
     cache.items[cacheKey] = {
       link: links[idx],
+      imageLink: imagelinks[idx],
       name: names[idx],
       onChain: false,
     };
@@ -707,13 +715,19 @@ export async function upload({
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
       for await (const value of arweaveBundleUploadGenerator) {
-        const { cacheKeys, arweavePathManifestLinks, updatedManifests } = value;
+        const {
+          cacheKeys,
+          arweavePathManifestLinks,
+          updatedManifests,
+          arweavePathManifestimageLinks,
+        } = value;
 
         updateCacheAfterUpload(
           cache,
           cacheKeys,
           arweavePathManifestLinks,
           updatedManifests.map(m => m.name),
+          arweavePathManifestimageLinks,
         );
         saveCache(cacheName, env, cache);
         log.info('Saved bundle upload result to cache.');
