@@ -30,7 +30,7 @@ interface CandyMachineState {
   itemsRedeemed: number;
   itemsRemaining: number;
   treasury: anchor.web3.PublicKey;
-  tokenMint: anchor.web3.PublicKey;
+  tokenMint: null | anchor.web3.PublicKey;
   isSoldOut: boolean;
   isActive: boolean;
   isPresale: boolean;
@@ -346,13 +346,18 @@ export const createAccountsForMint = async (
   };
 };
 
+type MintResult = {
+  mintTxId: string;
+  metadataKey: anchor.web3.PublicKey;
+};
+
 export const mintOneToken = async (
   candyMachine: CandyMachineAccount,
   payer: anchor.web3.PublicKey,
   beforeTransactions: Transaction[] = [],
   afterTransactions: Transaction[] = [],
   setupState?: SetupState,
-): Promise<string[]> => {
+): Promise<MintResult | null> => {
   const mint = setupState?.mint ?? anchor.web3.Keypair.generate();
   const userTokenAccountAddress = (
     await getAtaForMint(mint.publicKey, payer)
@@ -607,7 +612,7 @@ export const mintOneToken = async (
   const signersMatrix = [signers, []];
 
   try {
-    return (
+    const txns = (
       await sendTransactions(
         candyMachine.program.provider.connection,
         candyMachine.program.provider.wallet,
@@ -622,10 +627,15 @@ export const mintOneToken = async (
         afterTransactions,
       )
     ).txs.map(t => t.txid);
+    const mintTxn = txns[0];
+    return {
+      mintTxId: mintTxn,
+      metadataKey: metadataAddress,
+    };
   } catch (e) {
     console.log(e);
   }
-  return [];
+  return null;
 };
 
 export const shortenAddress = (address: string, chars = 4): string => {

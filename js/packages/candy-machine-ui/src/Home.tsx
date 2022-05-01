@@ -60,6 +60,7 @@ const Home = (props: HomeProps) => {
   const [itemsRemaining, setItemsRemaining] = useState<number>();
   const [isWhitelistUser, setIsWhitelistUser] = useState(false);
   const [isPresale, setIsPresale] = useState(false);
+  const [isValidBalance, setIsValidBalance] = useState(false);
   const [discountPrice, setDiscountPrice] = useState<anchor.BN>();
   const [needTxnSplit, setNeedTxnSplit] = useState(true);
   const [setupTxn, setSetupTxn] = useState<SetupState>();
@@ -99,6 +100,11 @@ const Home = (props: HomeProps) => {
         let active =
           cndy?.state.goLiveDate?.toNumber() < new Date().getTime() / 1000;
         let presale = false;
+
+        // duplication of state to make sure we have the right values!
+        let isWLUser = false;
+        let userPrice = cndy.state.price;
+
         // whitelist mint?
         if (cndy?.state.whitelistMintSettings) {
           // is it a presale mint?
@@ -112,6 +118,7 @@ const Home = (props: HomeProps) => {
           // is there a discount?
           if (cndy.state.whitelistMintSettings.discountPrice) {
             setDiscountPrice(cndy.state.whitelistMintSettings.discountPrice);
+            userPrice = cndy.state.whitelistMintSettings.discountPrice;
           } else {
             setDiscountPrice(undefined);
             // when presale=false and discountPrice=null, mint is restricted
@@ -130,10 +137,13 @@ const Home = (props: HomeProps) => {
             const balance = await props.connection.getTokenAccountBalance(
               token,
             );
-            let valid = parseInt(balance.value.amount) > 0;
+            isWLUser = parseInt(balance.value.amount) > 0;
             // only whitelist the user if the balance > 0
-            setIsWhitelistUser(valid);
-            active = (presale && valid) || active;
+            setIsWhitelistUser(isWLUser);
+
+            if (cndy.state.isWhitelistOnly) {
+              active = isWLUser && (presale || active);
+            }
           } catch (e) {
             setIsWhitelistUser(false);
             // no whitelist user, no mint
@@ -144,6 +154,38 @@ const Home = (props: HomeProps) => {
             console.log(e);
           }
         }
+        userPrice = isWLUser ? userPrice : cndy.state.price;
+
+        if (cndy?.state.tokenMint) {
+          // retrieves the SPL token
+          const mint = new anchor.web3.PublicKey(cndy.state.tokenMint);
+          const token = (await getAtaForMint(mint, anchorWallet.publicKey))[0];
+          try {
+            const balance = await props.connection.getTokenAccountBalance(
+              token,
+            );
+
+            const valid = new anchor.BN(balance.value.amount).gte(userPrice);
+
+            // only allow user to mint if token balance >  the user if the balance > 0
+            setIsValidBalance(valid);
+            active = active && valid;
+          } catch (e) {
+            setIsValidBalance(false);
+            active = false;
+            // no whitelist user, no mint
+            console.log('There was a problem fetching SPL token balance');
+            console.log(e);
+          }
+        } else {
+          const balance = new anchor.BN(
+            await props.connection.getBalance(anchorWallet.publicKey),
+          );
+          const valid = balance.gte(userPrice);
+          setIsValidBalance(valid);
+          active = active && valid;
+        }
+
         // datetime to stop the mint?
         if (cndy?.state.endSettings?.endSettingType.date) {
           setEndDate(toDate(cndy.state.endSettings.number));
@@ -282,26 +324,33 @@ const Home = (props: HomeProps) => {
           });
         }
 
-        let mintOne = await mintOneToken(
+        let mintResult = await mintOneToken(
           candyMachine,
           wallet.publicKey,
           beforeTransactions,
           afterTransactions,
           setupMint ?? setupTxn,
         );
-        const mintTxId = mintOne[0];
 
         let status: any = { err: true };
-        if (mintTxId) {
+        let metadataStatus = null;
+        if (mintResult) {
           status = await awaitTransactionSignatureConfirmation(
-            mintTxId,
+            mintResult.mintTxId,
             props.txTimeout,
             props.connection,
             true,
           );
+
+          metadataStatus =
+            await candyMachine.program.provider.connection.getAccountInfo(
+              mintResult.metadataKey,
+              'processed',
+            );
+          console.log('Metadata status: ', !!metadataStatus);
         }
 
-        if (status && !status.err) {
+        if (status && !status.err && metadataStatus) {
           // manual update since the refresh might not detect
           // the change immediately
           let remaining = itemsRemaining! - 1;
@@ -313,6 +362,13 @@ const Home = (props: HomeProps) => {
             open: true,
             message: 'Congratulations! Mint succeeded!',
             severity: 'success',
+          });
+        } else if (status && !status.err) {
+          setAlertState({
+            open: true,
+            message:
+              'Mint probably failed! Anti-Bot fee probably charged! Check the explorer to confirm the mint failed and if so, make sure you are eligible to mint and try again.',
+            severity: 'error',
           });
         } else {
           setAlertState({
@@ -580,7 +636,10 @@ const Home = (props: HomeProps) => {
                       isMinting={isUserMinting}
                       setIsMinting={val => setIsUserMinting(val)}
                       onMint={onMint}
-                      isActive={isActive || (isPresale && isWhitelistUser)}
+                      isActive={
+                        isActive ||
+                        (isPresale && isWhitelistUser && isValidBalance)
+                      }
                     />
                   </GatewayProvider>
                 ) : (
@@ -589,7 +648,10 @@ const Home = (props: HomeProps) => {
                     isMinting={isUserMinting}
                     setIsMinting={val => setIsUserMinting(val)}
                     onMint={onMint}
-                    isActive={isActive || (isPresale && isWhitelistUser)}
+                    isActive={
+                      isActive ||
+                      (isPresale && isWhitelistUser && isValidBalance)
+                    }
                   />
                 )}
               </MintContainer>
