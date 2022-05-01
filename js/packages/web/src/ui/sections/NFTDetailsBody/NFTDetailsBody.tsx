@@ -3,7 +3,7 @@ import CN from 'classnames'
 import { AttributesCard } from '@oyster/common'
 import { Image, Avatar, SOLIcon } from '@oyster/common'
 import { NFTDetailsTabs } from './../NFTDetailsTabs'
-import { AuctionView, useBidsForAuction, useCreators, useExtendedArt } from '../../../hooks'
+import { AuctionView, useExtendedArt } from '../../../hooks'
 import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
@@ -19,59 +19,19 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
   const { attributesPercentages } = useAttribute(auction)
-  // const { userAccounts } = useUserAccounts()
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
 
-  // const connection = useConnection()
-
-  // useEffect(() => {
-  //   try {
-  //     if (pubkey) {
-  //       const mint = new PublicKey('8fDJpV69CcuUnxBkpXQfWdJt2K2DxfuXaU8pX5V8AmSM')
-
-  //       // console.log('mint', mint)
-
-  //       connection
-  //         .getProgramAccounts(mint, 'processed')
-  //         .then(res => {
-  //           console.log('res', res)
-  //         })
-  //         .catch(error => {
-  //           console.log('error', error)
-  //         })
-  //     }
-  //   } catch (error) {
-  //     console.log('error2', error)
-  //   }
-  // }, [])
-
-  // const d = useAccountByMint(auction.thumbnail.metadata.info.mint)
-  // const data = getFilteredProgramAccounts(Connection)
-
-  const creators = useCreators(auction)
   const {
     value: { solVal, usdValFormatted },
   } = useNFTData(auction)
   const url = data?.image
-  const bids = useBidsForAuction(auction.auction.pubkey || '')
 
   useEffect(() => {
-    if (bids.length > 0) {
-      const lastOwner = bids.pop()
-      if (lastOwner) {
-        setOwner(lastOwner.info.bidderPubkey)
-      } else {
-        setOwner('')
-      }
-    }
+    setOwner(auction?.auctionManager?.authority || '')
   }, [])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
-
-  const creator = creators[creators.length - 1]
-
-  // console.log('data', data)
 
   return (
     <div className={NFTDetailsBodyClasses}>
@@ -146,32 +106,15 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                 }
               </div>
               <div className='text-sm font-500 text-B-400'>
-                {owner ? (
-                  <span>
-                    Owned by -
-                    {`
-                      ${owner.substring(0, 3)}...
-                      ${owner.substring(owner.length - 4)}
-                    `}
-                  </span>
-                ) : (
-                  <span>
-                    {/* {(creators || []).map(({ image, address }) => { */}
-
-                    <Avatar
-                      key={creator.address}
-                      address={creator.address}
-                      image={creator.image}
-                      label={`Owned by — ${creator.address?.substring(
-                        0,
-                        3
-                      )}...${creator.address?.substring(creator.address.length - 3)}`}
-                      size={32}
-                      labelClassName='text-sm font-500 text-B-400'
-                    />
-                    {/* })} */}
-                  </span>
-                )}
+                <Avatar
+                  key={owner}
+                  address={owner}
+                  label={`Owned by — ${owner?.substring(0, 3)}...${owner?.substring(
+                    owner.length - 3
+                  )}`}
+                  size={32}
+                  labelClassName='text-sm font-500 text-B-400'
+                />
               </div>
             </div>
 
