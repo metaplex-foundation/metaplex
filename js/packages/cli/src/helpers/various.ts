@@ -178,6 +178,16 @@ export async function getCandyMachineV2Config(
   }
 
   if (endSettings) {
+    const hasEndSettingType = Object.getOwnPropertyDescriptor(
+      endSettings,
+      'endSettingType',
+    );
+    if (!hasEndSettingType) {
+      throw new Error(
+        'Invalid Config: `endSettingType` must be present under `endSettings`.',
+      );
+    }
+
     const isEndSettingTypeDatePresent = Object.getOwnPropertyDescriptor(
       endSettings.endSettingType,
       'date',
@@ -187,9 +197,11 @@ export async function getCandyMachineV2Config(
       'amount',
     );
 
+    const isNoEndSettingTypePresent =
+      !isEndSettingTypeDatePresent && !isEndSettingTypeAmountPresent;
     const isBothEndSettingTypePresent =
       isEndSettingTypeDatePresent && isEndSettingTypeAmountPresent;
-    if (isBothEndSettingTypePresent) {
+    if (isBothEndSettingTypePresent || isNoEndSettingTypePresent) {
       throw new Error(
         'Invalid Config: `endSettingType` must include only one property of "date" or "amount".',
       );
