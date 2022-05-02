@@ -195,6 +195,18 @@ export async function getCandyMachineV2Config(
       );
     }
 
+    if (isEndSettingTypeDatePresent && !endSettings.endSettingType.date) {
+      throw new Error(
+        'Invalid Config: `endSettingType.date` must be `true` when present.',
+      );
+    }
+
+    if (isEndSettingTypeAmountPresent && !endSettings.endSettingType.amount) {
+      throw new Error(
+        'Invalid Config: `endSettingType.amount` must be `true` when present.',
+      );
+    }
+
     if (isEndSettingTypeDatePresent) {
       endSettings.number = new BN(parseDate(endSettings.value));
     } else if (isEndSettingTypeAmountPresent) {
