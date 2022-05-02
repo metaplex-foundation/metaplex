@@ -1232,7 +1232,7 @@ function programCommand(
   return cmProgram;
 }
 
-programCommand('create-key-array', { requireWallet: false })
+programCommand('decode_private_key', { requireWallet: false })
   .argument('<private key>', 'Base58 encoded Private key')
   .action(async privKey => {
     const decodedPrivKey = Uint8Array.from(bs58.decode(privKey));
