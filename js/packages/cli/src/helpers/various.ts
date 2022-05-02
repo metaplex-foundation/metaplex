@@ -178,9 +178,26 @@ export async function getCandyMachineV2Config(
   }
 
   if (endSettings) {
-    if (endSettings.endSettingType.date) {
+    const isEndSettingTypeDatePresent = Object.getOwnPropertyDescriptor(
+      endSettings.endSettingType,
+      'date',
+    );
+    const isEndSettingTypeAmountPresent = Object.getOwnPropertyDescriptor(
+      endSettings.endSettingType,
+      'amount',
+    );
+
+    const isBothEndSettingTypePresent =
+      isEndSettingTypeDatePresent && isEndSettingTypeAmountPresent;
+    if (isBothEndSettingTypePresent) {
+      throw new Error(
+        'Invalid Config: `endSettingType` must include only one property of "date" or "amount".',
+      );
+    }
+
+    if (isEndSettingTypeDatePresent) {
       endSettings.number = new BN(parseDate(endSettings.value));
-    } else if (endSettings.endSettingType.amount) {
+    } else if (isEndSettingTypeAmountPresent) {
       endSettings.number = new BN(endSettings.value);
     }
     delete endSettings.value;
