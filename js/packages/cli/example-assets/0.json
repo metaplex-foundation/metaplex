@@ -1,0 +1,19 @@
+{
+  "name": "1",
+  "symbol": "",
+  "image": "0.png",
+  "properties": {
+    "files": [{ "uri": "0.png", "type": "image/png" }],
+    "category": "image",
+    "creators": []
+  },
+  "description": "",
+  "seller_fee_basis_points": 500,
+  "attributes": [
+    { "trait_type": "background", "value": "blue" },
+    { "trait_type": "eyes", "value": "star-eyes" },
+    { "trait_type": "mouth", "value": "triangle-mouth" },
+    { "trait_type": "face", "value": "teal-face" }
+  ],
+  "collection": {}
+}

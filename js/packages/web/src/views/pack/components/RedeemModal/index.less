@@ -1,0 +1,196 @@
+@import './components/ClaimingStep/index.less';
+@import './components/InitialStep/index.less';
+@import './components/RedeemCard/index.less';
+@import './components/TransactionApprovalStep/index.less';
+@import './components/ClaimingStep/ClaimingError/index.less';
+
+.modal-redeem-wr {
+  .ant-modal-body {
+    border-radius: 12px;
+  }
+
+  @media (max-width: @mobile-xs-max) {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw !important;
+    max-width: none;
+
+    .ant-modal-body {
+      border-radius: 0 !important;
+    }
+
+    .ant-modal-content {
+      width: 100%;
+      border-radius: 0 !important;
+      height: 100%;
+
+      .ant-modal-close {
+        display: none;
+      }
+    }
+  }
+}
+
+.modal-redeem {
+  p {
+    color: @accent-color;
+    font-family: @fontFamilyInter;
+    margin: 0;
+  }
+
+  &__title-container {
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    height: 80px;
+
+    .text {
+      font-family: @fontFamilyInter;
+      font-weight: bold;
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .arrow-back {
+      position: absolute;
+      left: 24px;
+    }
+
+    @media (max-width: @mobile-xs-max) {
+      padding: 0;
+      height: 64px;
+
+      & > p {
+        display: flex;
+        align-items: center;
+        padding: 0;
+      }
+
+      .arrow-back svg {
+        width: 15px;
+        height: 15px;
+      }
+    }
+  }
+
+  &__body {
+    flex-grow: 10;
+    background: @grey-60;
+    border-radius: 12px 12px 0 0;
+    padding: 20px 24px 0;
+    font-family: @fontFamilyInter;
+    height: 400px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .general-desc {
+      color: white;
+      font-size: 16px;
+      line-height: 20px;
+      margin-bottom: 16px;
+    }
+  }
+
+  &__footer {
+    flex-grow: 1;
+    background: @grey-60;
+    border-radius: 0 0 12px 12px;
+    padding: 20px 24px;
+
+    & > p {
+      margin-bottom: 16px;
+    }
+  }
+
+  &__cards {
+    margin-top: 30px;
+
+    .small-loader {
+      text-align: center;
+
+      svg {
+        height: 24px;
+        width: 24px;
+      }
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: @scrollbar-color;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: @metaplex-primary-color;
+    border-radius: 10px;
+  }
+
+  &__cards > p {
+    font-size: 14px;
+    line-height: 17px;
+    color: @grey-20;
+    margin: 0 0 8px 0;
+  }
+
+  &__open-nft {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    outline: none;
+    background: @metaplex-primary-color;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+
+    height: 64px;
+    width: 100%;
+
+    span {
+      display: block;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: @fontFamilyInter;
+      color: @black-100;
+      padding: 0 20px;
+    }
+  }
+
+  @media (max-width: @mobile-xs-max) {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+
+    & > div:first-of-type {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 7;
+
+      & > p {
+        flex-grow: 1;
+        max-height: 64px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    &__footer {
+      border-radius: 0;
+    }
+  }
+}

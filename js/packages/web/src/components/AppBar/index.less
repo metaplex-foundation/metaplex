@@ -1,0 +1,61 @@
+.App-Bar {
+  padding: 0px;
+  justify-content: space-between !important;
+
+  button.ant-btn:not(.connector) {
+    height: 32px;
+    background: none;
+  }
+}
+
+.title {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 26px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+
+  color: #ffffff;
+  padding: 10px 14px 10px 6px;
+
+  margin-bottom: 0px;
+}
+
+.divider {
+  border-left: 1px solid #282828;
+  width: 2px;
+  height: 40px;
+  margin-right: 14px;
+}
+.wallet-wrapper {
+  padding-right: 0.7rem;
+}
+.app-btn {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 16px;
+  line-height: 19px;
+  border-width: 0px;
+}
+
+.app-bar-inner {
+  display: flex;
+  min-width: 50%;
+  justify-content: center;
+  position: relative;
+  height: auto;
+  .app-bar-item {
+    cursor: pointer;
+    padding: 0 30px;
+    color: @tungsten-60;
+    font-size: 18px;
+    a {
+      color: inherit;
+    }
+    &.active {
+      color: white;
+    }
+  }
+}

@@ -1,0 +1,57 @@
+@background-input-content: #282828;
+
+.artist-alley-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+
+  .title {
+    position: relative;
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 38px;
+    margin-bottom: 52px;
+    margin-top: 65px;
+    left: 20%;
+    max-width: 60%;
+  }
+
+  .artist-alley-form {
+    position: relative;
+    display: inline-block;
+    left: 20%;
+    max-width: 60%;
+
+    .input-content {
+      flex: auto;
+      max-width: 100%;
+      background-color: @background-input-content;
+      border-radius: 8px;
+    }
+
+    .ant-form-item .ant-upload.ant-upload-drag {
+      background: rgba(255, 255, 255, 0.04);
+      height: 100px;
+    }
+
+    .dragger-container {
+      background-color: @background-input-content;
+      border-radius: 8px;
+      height:100px;
+
+
+      .ant-upload-text {
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 22px;
+      }
+    }
+
+    .form-button {
+      width: 100%;
+    }
+  }
+}
+
+
+

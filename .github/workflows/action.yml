@@ -1,0 +1,20 @@
+name: 'Close stale issues and PRs'
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron: '14 3 * * *'
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        with:
+          stale-issue-message: 'This Issue has received no activity for 30 days. We will close it in 2 days, please reopen if you are still experiencing this issue.'
+          stale-pr-message: 'This PR has received no activity for 30 days. We will close it in 2 days, please reopen if you would still like to get this change in.'
+          days-before-stale: 30
+          days-before-close: 3
+          exempt-pr-labels: 'wip,reviewing'
+          operations-per-run: 500
+permissions:
+  issues: write
+  pull-requests: write

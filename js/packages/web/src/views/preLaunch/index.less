@@ -1,0 +1,402 @@
+@prelauch-gradient-color: @metaplex-primary-color; //Change for store
+
+.magic-iframe {
+  display: none !important;
+}
+
+body {
+  background-color: @black-100;
+}
+
+.mb32 {
+  margin-bottom: 32px !important;
+}
+
+.mb40 {
+  margin-bottom: 40px !important;
+}
+
+&#pre-launch-layout {
+  min-height: 100vh;
+  background: linear-gradient(100.3deg, fade(@prelauch-gradient-color, 32%) 8.28%, fade(@prelauch-gradient-color, 0%) 45%),
+  linear-gradient(235.61deg, fade(@black-100, 0%) 34.14%, @black-100 72%) !important;
+
+  .main-asset-banner {
+    position: absolute;
+    min-width: calc(50% - 128px);
+    right: 0;
+    top: 0;
+    background-image: url("/main-banner.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% auto;
+    height: 720px;
+    @media (max-width: @mobile-breakpoint) {
+      height: 300px;
+      width: 100%;
+    }
+    .right-gradient {
+      background: linear-gradient(90deg, #121212 4.17%, rgba(18, 18, 18, 0) 100%);
+      position: relative;
+      width: 100%;
+      height: 100%;
+      //filter: drop-shadow(0px 4px 24px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  #width-layout {
+    max-width: 1440px;
+  }
+
+  .pre-main-content {
+    max-width: 884px;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    padding: 64px;
+    @media (max-width: @mobile-breakpoint) {
+      padding: 32px;
+    }
+    .verify-message {
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 30px;
+      margin-bottom: 14px;
+      @media (max-width: @mobile-breakpoint) {
+        display: flex;
+        flex-direction: column;
+      }
+      .high-light {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 8px 16px;
+        margin-left: 8px;
+        @media (max-width: @mobile-breakpoint) {
+          margin-left: 0;
+          padding: 8px 0;
+          word-break: break-word;
+          margin-top: 10px;
+          margin-bottom: 10px;
+        }
+      }
+    }
+
+    &.third {
+    }
+
+    &.second {
+      justify-content: flex-start;
+
+      .pre-input.wallet {
+        height: 56px;
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 64px;
+        @media (max-width: @mobile-breakpoint) {
+          height: inherit !important;
+          flex-direction: column;
+        }
+        input {
+          @media (max-width: @mobile-breakpoint) {
+            width: 100%;
+            margin-bottom: 25px;
+          }
+          width: 384px;
+          height: 100%;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          font-size: 16px;
+          line-height: 16px;
+          padding: 20px;
+          margin-bottom: 64px;
+        }
+
+        button {
+          width: 128px;
+          box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+          border-radius: 8px;
+          margin-left: 8px;
+          position: relative;
+          top: 0;
+          height: 56px;
+          @media (max-width: @mobile-breakpoint) {
+            margin-left: 0;
+            width: 100%;
+          }
+        }
+      }
+
+      .steps {
+        max-width: 520px;
+
+        .step {
+          display: flex;
+          flex-direction: column;
+
+          & > * {
+          }
+
+          .step-title {
+            font-weight: 600;
+            font-size: 18px;
+            line-height: 18px;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            margin-top: 24px;
+          }
+
+          .step-desc {
+            font-weight: normal;
+            font-size: 18px;
+            line-height: 18px;
+            letter-spacing: -0.02em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 16px;
+          }
+
+          .step-asset {
+            width: 520px;
+            height: 260px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background-size: cover;
+            margin-bottom: 16px;
+
+            @media (max-width: @mobile-breakpoint) {
+              width: 100%;
+              background-size: contain;
+              height: 150px;
+              background-repeat: no-repeat;
+              background-position: center;
+            }
+
+            &.step1 {
+              background-image: url("/preLaunch/step1.png");
+            }
+
+            &.step2 {
+              background-image: url("/preLaunch/step2.png");
+            }
+
+            &.step3 {
+              background-image: url("/preLaunch/step3.png");
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .pre-title {
+    /* 48 - Bold - Solid */
+    font-weight: 600;
+    font-size: 48px;
+    line-height: 48px;
+    margin-bottom: 16px;
+  }
+
+  .pre-context {
+    font-size: 24px;
+    line-height: 30px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 32px;
+  }
+
+  .pre-input {
+    max-width: 480px;
+    height: 56px;
+    position: relative;
+    @media (max-width: @mobile-breakpoint) {
+      height: inherit;
+    }
+
+    button.sign-up {
+      width: 140px;
+      height: 48px;
+      box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+      border-radius: 8px;
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      @media (max-width: @mobile-breakpoint) {
+        width: 100%;
+        position: relative;
+        top: 0;
+        right: 0;
+      }
+    }
+
+    input {
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 16px;
+    }
+  }
+
+  .logo {
+    height: 40px;
+    margin-bottom: 48px;
+  }
+
+  .upper-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lower-content {
+    display: flex;
+    flex-direction: column;
+
+    .how-to-get {
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 24px;
+      display: flex;
+      align-items: center;
+      color: #FFFFFF;
+      margin-bottom: 32px;
+      @media (max-width: @mobile-breakpoint) {
+        margin-top: 40px;
+      }
+
+    }
+
+    .how-to-description {
+      font-weight: normal;
+      font-size: 18px;
+      line-height: 24px;
+      display: flex;
+      align-items: center;
+      color: rgba(255, 255, 255, 0.7);
+      margin-left: 16px;
+    }
+  }
+}
+
+.how-to-step {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  &.fst {
+    margin-bottom: 16px;
+  }
+
+  .how-to-logo {
+    height: 56px;
+    flex-basis: 56px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 56px;
+
+    &.s64 {
+      height: 64px;
+      flex-basis: 64px;
+      border-radius: 64px;
+
+    }
+
+    &.email {
+      background-image: url("/preLaunch/mail.svg");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    &.wallet {
+      background-image: url("/preLaunch/wallet.svg");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    &.ok {
+      background-image: url("/preLaunch/check.svg");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+  }
+}
+
+.pre-modal {
+  .ant-modal-content {
+    border-radius: 12px;
+    max-width: 500px;
+  }
+
+  .ant-modal-body {
+    border-radius: 12px;
+    background: linear-gradient(180deg, fade(@prelauch-gradient-color, 20%) 27.5%, fade(@prelauch-gradient-color, 0%) 100%), #2A2A2A;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 100px 56px;
+
+    .how-to-step {
+      width: 64px;
+      margin-bottom: 36px;
+    }
+
+    .got-title {
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 24px;
+      margin-bottom: 20px;
+    }
+
+    .got-description {
+      font-weight: normal;
+      font-size: 18px;
+      line-height: 24px;
+    }
+  }
+}
+
+.ant-input:focus, .ant-input:hover {
+  border-color: initial !important;
+  border-right-width: 0 !important;
+  outline: 0;
+}
+
+.discord-button {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 56px;
+  width: 200px;
+  background: #FFFFFF;
+  box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+  border-radius: 8px;
+  padding: 20px;
+  background-size: cover;
+  margin-top: 32px;
+  color: @black-100 !important;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 17px;
+  /* identical to box height, or 106% */
+
+  text-align: center;
+  letter-spacing: -0.02em;
+  &:link, &:active, &:visited {
+    color: @black-100 !important;
+  }
+
+  span {
+    background-image: url("/preLaunch/discord.svg");
+    margin-right: 10px;
+    width: 24px;
+    height: 18px;
+  }
+
+  @media (max-width: @mobile-breakpoint) {
+    width: 100%;
+  }
+}
+
+.display-block {
+  display: block;
+}

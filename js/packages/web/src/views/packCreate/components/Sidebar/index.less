@@ -1,0 +1,78 @@
+@sidebar-width: 320px;
+
+.sidebar-wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+
+  width: @sidebar-width;
+  padding: 0 16px;
+
+  .sidebar-btn {
+    margin-top: 16px;
+    width: 100%;
+  }
+}
+
+.sidebar-steps {
+  .ant-steps-item {
+    margin-bottom: 8px;
+  }
+
+  .ant-steps-item-container {
+    padding: 4px 16px;
+  }
+
+  .ant-steps-item-container {
+    display: flex;
+    align-items: center;
+
+    .ant-steps-item-title {
+      font-family: Inter, sans-serif;
+      font-size: 16px;
+      line-height: 16px;
+      color: @grey-20;
+    }
+  }
+
+  .ant-steps-item-active {
+    background: @grey-50;
+    border-radius: 8px;
+
+    .ant-steps-item-title {
+      font-weight: bold;
+      color: @white !important;
+    }
+
+    .ant-steps-item-icon {
+      background-color: @white;
+
+      .ant-steps-icon {
+        color: @grey-100;
+      }
+    }
+  }
+
+  .ant-steps-item-tail {
+    display: none !important;
+  }
+
+  .ant-steps-item-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    float: none !important;
+    background-color: transparent;
+    border: 2px solid @grey-20;
+
+    .ant-steps-icon {
+      font-weight: bold;
+      color: @grey-20;
+    }
+  }
+
+  .ant-steps-item-content {
+    display: flex !important;
+    align-items: center;
+  }
+}

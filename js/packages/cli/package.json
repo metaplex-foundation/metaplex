@@ -1,0 +1,69 @@
+{
+  "name": "@metaplex/cli",
+  "version": "0.0.3",
+  "main": "./build/cli.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./src",
+    "watch": "tsc -w -p ./src",
+    "format": "prettier --loglevel warn --write \"**/*.{ts,js,json,yaml}\"",
+    "format:check": "prettier --loglevel warn --check \"**/*.{ts,js,json,yaml}\"",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "lint:check": "eslint \"src/**/*.ts\"",
+    "test": "jest"
+  },
+  "pkg": {
+    "scripts": "./build/**/*.{js|json}"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ],
+      "@babel/preset-typescript"
+    ]
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "<rootDir>/build/",
+      "<rootDir>/node_modules/"
+    ]
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.36.0",
+    "@bundlr-network/client": "^0.5.18",
+    "@metaplex/arweave-cost": "^1.0.4",
+    "@nftstorage/metaplex-auth": "^1.1.0",
+    "@project-serum/anchor": "^0.17.0",
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "1.33.0",
+    "@supercharge/promise-pool": "2.1.0",
+    "arbundles": "^0.6.15",
+    "arweave": "^1.10.23",
+    "borsh": "^0.4.0",
+    "cli-progress": "^3.10.0",
+    "commander": "^9.0.0",
+    "form-data": "^4.0.0",
+    "ipfs-http-client": "^52.0.3",
+    "jsonschema": "^1.4.0",
+    "lodash": "^4.17.21",
+    "loglevel": "^1.7.1",
+    "mime": "^3.0.0",
+    "node-fetch": "^2.6.1",
+    "weighted": "^0.3.0",
+    "@metaplex-foundation/mpl-token-metadata": "1.2.5"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.15.6",
+    "@babel/preset-typescript": "^7.15.0",
+    "@types/jest": "^27.0.1",
+    "@types/webgl2": "^0.0.6",
+    "jest": "^27.4.5",
+    "typescript": "^4.3.5"
+  }
+}

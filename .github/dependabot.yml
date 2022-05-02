@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "04:00"
+      timezone: America/Los_Angeles
+    labels:
+      - "automerge"
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "cbindgen"

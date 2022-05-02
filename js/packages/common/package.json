@@ -1,0 +1,76 @@
+{
+  "name": "@oyster/common",
+  "version": "0.0.2",
+  "description": "Oyster common utilities",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": "./dist/lib",
+    "./dist/*": "./dist/*.js",
+    "./styles.css": "./dist/lib/styles.css"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "build": "run-s build-ts build-css",
+    "build-ts": "tsc",
+    "build-css": "less-watch-compiler src/ dist/lib/ --run-once",
+    "start": "npm-run-all --parallel watch watch-css watch-css-src",
+    "watch-css": "less-watch-compiler src/ dist/lib/",
+    "watch-css-src": "less-watch-compiler src/ src/",
+    "watch": "tsc --watch",
+    "test": "jest test --passWithNoTests",
+    "clean": "rm -rf dist",
+    "prepare": "run-s clean build",
+    "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
+  },
+  "dependencies": {
+    "@metaplex/arweave-cost": "^1.0.4",
+    "@project-serum/serum": "^0.13.52",
+    "@solana/spl-token": "0.1.6",
+    "@solana/spl-token-registry": "0.2.202",
+    "@solana/wallet-adapter-base": "^0.4.1",
+    "@solana/wallet-adapter-react": "^0.7.2",
+    "@solana/wallet-adapter-wallets": "^0.6.2",
+    "@solana/web3.js": "^1.21.0",
+    "antd": "^4.18.4",
+    "bn.js": "^5.1.3",
+    "borsh": "^0.4.0",
+    "bs58": "^4.0.1",
+    "buffer-layout": "^1.2.0",
+    "eventemitter3": "^4.0.7",
+    "@metamask/jazzicon": "^2.0.0",
+    "lodash": "^4.17.20",
+    "mime": "^3.0.0",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "typescript": "^4.1.3"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/bs58": "^4.0.1",
+    "@types/jest": "^24.9.1",
+    "@types/mime": "^2.0.3",
+    "@types/node": "^12.12.62",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/user-event": "^7.2.1",
+    "@types/react-router-dom": "^5.1.6",
+    "gh-pages": "^3.1.0",
+    "less": "^4.1.1",
+    "less-watch-compiler": "v1.14.6",
+    "prettier": "^2.1.2"
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*"
+  }
+}

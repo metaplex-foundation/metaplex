@@ -1,0 +1,19 @@
+{
+  "name": "6",
+  "symbol": "",
+  "image": "5.png",
+  "properties": {
+    "files": [{ "uri": "5.png", "type": "image/png" }],
+    "category": "image",
+    "creators": []
+  },
+  "description": "",
+  "seller_fee_basis_points": 500,
+  "attributes": [
+    { "trait_type": "background", "value": "yellow" },
+    { "trait_type": "eyes", "value": "square-eyes" },
+    { "trait_type": "mouth", "value": "triangle-mouth" },
+    { "trait_type": "face", "value": "purple-face" }
+  ],
+  "collection": {}
+}

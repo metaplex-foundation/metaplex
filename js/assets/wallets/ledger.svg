@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 35">
+    <defs>
+        <style>.prefix__cls-1{fill:#FFFFFF}</style>
+    </defs>
+    <g id="prefix__Group_26536" data-name="Group 26536" transform="translate(-80 -205)">
+        <path id="prefix__Shape" d="M23.588 0h-16v21.583h21.6v-16A5.585 5.585 0 0023.588 0z" class="prefix__cls-1"
+              transform="translate(85.739 205)"/>
+        <path id="prefix__Path_8749" d="M8.342 0H5.585A5.585 5.585 0 000 5.585v2.757h8.342z" class="prefix__cls-1"
+              data-name="Path 8749" transform="translate(80 205)"/>
+        <path id="prefix__Rectangle-path" d="M0 7.59h8.342v8.342H0z" class="prefix__cls-1"
+              transform="translate(80 210.739)"/>
+        <path id="prefix__Path_8750" d="M15.18 23.451h2.757a5.585 5.585 0 005.585-5.6V15.18H15.18z"
+              class="prefix__cls-1" data-name="Path 8750" transform="translate(91.478 216.478)"/>
+        <path id="prefix__Path_8751" d="M7.59 15.18h8.342v8.342H7.59z" class="prefix__cls-1" data-name="Path 8751"
+              transform="translate(85.739 216.478)"/>
+        <path id="prefix__Path_8752" d="M0 15.18v2.757a5.585 5.585 0 005.585 5.585h2.757V15.18z" class="prefix__cls-1"
+              data-name="Path 8752" transform="translate(80 216.478)"/>
+    </g>
+</svg>

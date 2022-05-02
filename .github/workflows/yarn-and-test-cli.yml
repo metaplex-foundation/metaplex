@@ -1,0 +1,30 @@
+name: Yarn Install and Test CandyMachine
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - uses: actions/cache@v2
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install modules
+        run: yarn install
+        working-directory: js/packages/cli
+
+      - name: Run Tests
+        run: yarn test
+        working-directory: js/packages/cli
