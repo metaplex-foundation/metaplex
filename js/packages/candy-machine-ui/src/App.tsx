@@ -71,6 +71,7 @@ const App = () => {
               connection={connection}
               txTimeout={DEFAULT_TIMEOUT}
               rpcHost={rpcHost}
+              network={network}
             />
           </WalletDialogProvider>
         </WalletProvider>

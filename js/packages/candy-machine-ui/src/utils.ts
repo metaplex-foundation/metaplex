@@ -11,7 +11,7 @@ export interface AlertState {
   open: boolean;
   message: string;
   severity: 'success' | 'info' | 'warning' | 'error' | undefined;
-  noHide?: boolean;
+  hideDuration?: number | null;
 }
 
 export const toDate = (value?: anchor.BN) => {
