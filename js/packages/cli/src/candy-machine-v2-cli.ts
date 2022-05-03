@@ -763,18 +763,15 @@ programCommand('show')
 
       //@ts-ignore
       log.info('hidden settings: ', machine.data.hiddenSettings);
-      if (machine.data.endSettings) {
-        log.info('End settings: ');
+      const endSettings = machine.data.endSettings;
+      if (endSettings) {
+        log.info('End settings:');
 
-        if (machine.data.endSettings.endSettingType.date) {
+        if (endSettings.endSettingType.date) {
           //@ts-ignore
-          log.info('End on', new Date(machine.data.endSettings.number * 1000));
-        } else {
-          log.info(
-            'End when',
-            machine.data.endSettings.number.toNumber(),
-            'sold',
-          );
+          log.info('\tEnd on', new Date(endSettings.number * 1000));
+        } else if (endSettings.endSettingType.amount) {
+          log.info('\tEnd when', endSettings.number.toNumber(), 'sold');
         }
       } else {
         log.info('No end settings detected');

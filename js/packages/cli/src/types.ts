@@ -253,3 +253,8 @@ export interface CollectionData {
 }
 
 export type AssetKey = { mediaExt: string; index: string };
+
+export enum EndSettingType {
+  AMOUNT = 'Amount',
+  DATE = 'Date',
+}

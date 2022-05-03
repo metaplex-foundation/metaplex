@@ -12,6 +12,7 @@ import { StorageType } from './storage-type';
 
 import { getAtaForMint } from './accounts';
 import { CLUSTERS, DEFAULT_CLUSTER } from './constants';
+import { EndSettingType } from '../types';
 import {
   Uses,
   UseMethod,
@@ -178,9 +179,31 @@ export async function getCandyMachineV2Config(
   }
 
   if (endSettings) {
-    if (endSettings.endSettingType.date) {
+    const endSettingType = endSettings.endSettingType as EndSettingType;
+    if (!endSettingType || typeof endSettingType !== 'string') {
+      throw new Error(
+        'Invalid Config: `endSettingType` must be set to a string.',
+      );
+    }
+
+    const isValidEndSettingType = [
+      EndSettingType.AMOUNT,
+      EndSettingType.DATE,
+    ].includes(endSettingType);
+
+    if (!isValidEndSettingType) {
+      throw new Error(
+        'Invalid Config: `endSettingType` must be set to "Date" or "Amount".',
+      );
+    }
+
+    // override endSettingType with `date` or `amount` as property set to true
+    // such that it serializes correctly
+    if (endSettingType === EndSettingType.DATE) {
+      endSettings.endSettingType = { date: true };
       endSettings.number = new BN(parseDate(endSettings.value));
-    } else if (endSettings.endSettingType.amount) {
+    } else if (endSettingType === EndSettingType.AMOUNT) {
+      endSettings.endSettingType = { amount: true };
       endSettings.number = new BN(endSettings.value);
     }
     delete endSettings.value;
