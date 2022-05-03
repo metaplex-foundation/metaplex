@@ -107,6 +107,8 @@ export async function createAuctionManager(
   auction: StringPublicKey
   auctionManager: StringPublicKey
 }> {
+  console.log('calling.......')
+
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span)
 
   const {

@@ -266,7 +266,7 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
               }
             }
           })
-          console.log('Ranges')
+
           config.amountRanges = ranges
         })
 
@@ -279,7 +279,6 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
             toLamports(attributes.participationFixedPrice, mint) || 0
           )
         }
-        console.log('Tiered settings', tieredAttributes.items)
       }
 
       const isInstantSale =
@@ -359,8 +358,6 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
       console.log('error2', error)
     }
   }
-
-  console.log(attributes)
 
   const renderForm = () => {
     const category = attributes.category

@@ -1,7 +1,7 @@
 import React, { FC, useEffect } from 'react'
 import CN from 'classnames'
 import { Tooltip } from 'antd'
-import { AuctionView, useArt, useBidsForAuction } from '../../../hooks'
+import { AuctionView, useArt } from '../../../hooks'
 import { useState } from 'react'
 import { CopyOutlined } from '@ant-design/icons'
 
@@ -12,7 +12,6 @@ export interface NFTDetailsInfoProps {
 export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ auction }) => {
   const NFTDetailsInfoClasses = CN(`nft-details-info w-full`)
   const art = useArt(auction.thumbnail.metadata.pubkey)
-  const bids = useBidsForAuction(auction.auction.pubkey || '')
   const [mint, setMint] = useState<string>()
   const [tokenAddress, setTokenAddress] = useState<string>()
   const [owner, setOwner] = useState<any>()
@@ -33,17 +32,7 @@ export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ auction }) => {
       setRoyalties(art.seller_fee_basis_points)
       setTransactionFee('2')
     }
-
-    if (bids.length > 0) {
-      const lastOwner = bids.pop()
-      if (lastOwner) {
-        setOwner(lastOwner.info.bidderPubkey)
-      } else {
-        setOwner(auction.thumbnail.metadata.info.updateAuthority)
-      }
-    } else {
-      setOwner(auction.thumbnail.metadata.info.updateAuthority)
-    }
+    setOwner(auction?.auctionManager?.authority || '')
   }, [])
 
   return (

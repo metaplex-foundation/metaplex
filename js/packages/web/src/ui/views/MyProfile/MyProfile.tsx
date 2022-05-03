@@ -8,6 +8,7 @@ import {
   ProfileOffersReceived,
   ProfileSettings,
 } from '../../sections'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export interface MyProfileProps {
   [x: string]: any
@@ -18,6 +19,13 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const [activeTab, setActiveTab] = useState<any>('collectibles')
   const [heading, setHeading] = useState<any>('My Collectibles')
   const [tag, setTag] = useState<any>(null)
+  const { publicKey } = useWallet()
+
+  console.log('publicKey', publicKey?.toBase58())
+
+  const address = `${publicKey?.toBase58()?.substring(0, 13)}...${publicKey
+    ?.toBase58()
+    ?.substring(publicKey?.toBase58().length - 5)}`
 
   return (
     <div className={MyProfileClasses} {...restProps}>
@@ -101,7 +109,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
             </div>
 
             <div className='flex items-center gap-[4px]'>
-              <span className='text-md font-500'>AUQwXJGYXVqyc....CekHG</span>
+              <span className='text-md font-500'>{address}</span>
               <span>
                 <i className='ri-file-copy-line' />
               </span>
