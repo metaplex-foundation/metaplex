@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = 'http://ec2-54-166-54-175.compute-1.amazonaws.com:9000'
+const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000'
 
 export const createSaleRecord = async (data: any) => {
   try {
