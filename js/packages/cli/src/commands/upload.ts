@@ -487,6 +487,11 @@ export function getAssetManifest(dirname: string, assetKey: string): Manifest {
   const manifest: Manifest = JSON.parse(
     fs.readFileSync(manifestPath).toString(),
   );
+  if (!('symbol' in manifest)) {
+    throw new Error(`Invalid asset manifest, field 'symbol' must be defined.`);
+  } else if (typeof manifest.symbol !== 'string') {
+    throw new Error(`Invalid asset manifest, field 'symbol' must be a string.`);
+  }
   manifest.image = manifest.image.replace('image', assetIndex);
 
   if ('animation_url' in manifest) {
