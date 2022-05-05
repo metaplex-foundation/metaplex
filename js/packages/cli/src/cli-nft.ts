@@ -4,6 +4,7 @@ import {
   createMetadata,
   createMetadataAccount,
   mintNFT,
+  setAndVerifyCollection,
   updateMetadata,
   validateMetadata,
   verifyCollection,
@@ -180,6 +181,31 @@ programCommand('update-metadata')
       collectionKey,
       verifyCreators,
       structuredUseMethod,
+    );
+  });
+
+programCommand('set-and-verify-collection')
+  .option('-m, --mint <string>', 'base58 mint key')
+  .option(
+    '-c, --collection-mint <string>',
+    'base58 mint key: A collection is an NFT that can be verified as the collection for this nft',
+  )
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const { keypair, env, mint, collectionMint, rpcUrl } = cmd.opts();
+    const mintKey = new PublicKey(mint);
+    const collectionMintKey = new PublicKey(collectionMint);
+    const solConnection = new web3.Connection(rpcUrl || getCluster(env));
+    const walletKeyPair = loadWalletKey(keypair);
+    await setAndVerifyCollection(
+      mintKey,
+      solConnection,
+      walletKeyPair,
+      collectionMintKey,
     );
   });
 

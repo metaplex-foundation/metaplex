@@ -29,6 +29,7 @@ import {
   CreateMetadataV2,
   CreateMasterEditionV3,
   UpdateMetadataV2,
+  SetAndVerifyCollectionCollection,
 } from '@metaplex-foundation/mpl-token-metadata';
 
 export const createMetadata = async (
@@ -378,6 +379,36 @@ export const updateMetadata = async (
   console.log('Metadata updated', txid);
   log.info('\n\nUpdated NFT: Mint Address is ', mintKey.toBase58());
   return metadataAccount;
+};
+
+export const setAndVerifyCollection = async (
+  mintKey: PublicKey,
+  connection: Connection,
+  walletKeypair: Keypair,
+  collectionMint: PublicKey,
+) => {
+  const metadataAccount = await getMetadata(mintKey);
+  const collectionMetadataAccount = await getMetadata(collectionMint);
+  const collectionMasterEdition = await getMasterEdition(collectionMint);
+  const signers: anchor.web3.Keypair[] = [walletKeypair];
+  const tx = new SetAndVerifyCollectionCollection(
+    { feePayer: walletKeypair.publicKey },
+    {
+      updateAuthority: walletKeypair.publicKey,
+      metadata: metadataAccount,
+      collectionAuthority: walletKeypair.publicKey,
+      collectionMint: collectionMint,
+      collectionMetadata: collectionMetadataAccount,
+      collectionMasterEdition: collectionMasterEdition,
+    },
+  );
+  const txid = await sendTransactionWithRetryWithKeypair(
+    connection,
+    walletKeypair,
+    tx.instructions,
+    signers,
+  );
+  return txid;
 };
 
 export const verifyCollection = async (
