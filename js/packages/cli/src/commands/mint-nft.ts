@@ -31,6 +31,9 @@ import {
   UpdateMetadataV2,
   SetAndVerifyCollectionCollection,
 } from '@metaplex-foundation/mpl-token-metadata';
+import PromisePool from '@supercharge/promise-pool/dist';
+import * as cliProgress from 'cli-progress';
+import { sleep } from '../helpers/various';
 
 export const createMetadata = async (
   metadataLink: string,
@@ -409,6 +412,45 @@ export const setAndVerifyCollection = async (
     signers,
   );
   return txid;
+};
+
+export const setAndVerifyCollectionAll = async (
+  hashlist: string[],
+  connection: Connection,
+  walletKeyPair: Keypair,
+  collectionMint: PublicKey,
+  rateLimit?: number,
+) => {
+  const progressBar = new cliProgress.SingleBar(
+    {
+      format: 'Progress: [{bar}] {percentage}% | {value}/{total}',
+    },
+    cliProgress.Presets.shades_classic,
+  );
+  progressBar.start(hashlist.length, 0);
+
+  await PromisePool.withConcurrency(rateLimit || 10)
+    .for(hashlist)
+    .handleError(async (err, mint) => {
+      log.error(
+        `\nFailed in set and verify collection for ${mint}: ${err.message}`,
+      );
+      await sleep(5000);
+    })
+    .process(async mint => {
+      try {
+        const mintKey = new PublicKey(mint);
+        await setAndVerifyCollection(
+          mintKey,
+          connection,
+          walletKeyPair,
+          collectionMint,
+        );
+      } finally {
+        progressBar.increment();
+      }
+    });
+  progressBar.stop();
 };
 
 export const verifyCollection = async (

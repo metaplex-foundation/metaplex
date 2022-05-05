@@ -5,6 +5,7 @@ import {
   createMetadataAccount,
   mintNFT,
   setAndVerifyCollection,
+  setAndVerifyCollectionAll,
   updateMetadata,
   validateMetadata,
   verifyCollection,
@@ -206,6 +207,38 @@ programCommand('set-and-verify-collection')
       solConnection,
       walletKeyPair,
       collectionMintKey,
+    );
+  });
+
+programCommand('set-and-verify-collection-all')
+  .requiredOption('-h, --hashlist <path>', 'hashlist for the collection')
+  .requiredOption(
+    '-c, --collection-mint <string>',
+    'base58 mint key: A collection is an NFT that can be verified as the collection for this nft',
+  )
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
+  .option(
+    '-rl, --rate-limit <number>',
+    'max number of concurrent requests for the write indices command',
+  )
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const { keypair, env, hashlist, collectionMint, rpcUrl, rateLimit } =
+      cmd.opts();
+    const collectionMintKey = new PublicKey(collectionMint);
+    const solConnection = new web3.Connection(rpcUrl || getCluster(env));
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const mintList: string[] = JSON.parse(fs.readFileSync(hashlist, 'utf-8'));
+    await setAndVerifyCollectionAll(
+      mintList,
+      solConnection,
+      walletKeyPair,
+      collectionMintKey,
+      rateLimit,
     );
   });
 
