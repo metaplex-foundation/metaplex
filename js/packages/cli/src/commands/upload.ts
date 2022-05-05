@@ -488,9 +488,9 @@ export function getAssetManifest(dirname: string, assetKey: string): Manifest {
     fs.readFileSync(manifestPath).toString(),
   );
   if (!('symbol' in manifest)) {
-    throw new Error(`Invalid asset manifest, field 'symbol' must be defined.`);
+    throw new TypeError(`Invalid asset manifest, field 'symbol' must be defined.`);
   } else if (typeof manifest.symbol !== 'string') {
-    throw new Error(`Invalid asset manifest, field 'symbol' must be a string.`);
+    throw new TypeError(`Invalid asset manifest, field 'symbol' must be a string.`);
   }
   manifest.image = manifest.image.replace('image', assetIndex);
 
