@@ -57,6 +57,7 @@ export const Header: FC<HeaderProps> = () => {
       } else {
         setIsStoreOwner(false)
       }
+      setIsStoreOwner(true)
     }
   }, [store, storeAddress, publicKey])
 
