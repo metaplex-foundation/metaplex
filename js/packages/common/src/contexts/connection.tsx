@@ -40,8 +40,8 @@ export const ENDPOINTS: Array<Endpoint> = [
   {
     name: 'mainnet-beta',
     label: 'mainnet-beta',
-    url: clusterApiUrl('devnet'),
-    chainId: ChainId.Devnet,
+    url: 'https://solana-api.projectserum.com', //clusterApiUrl('mainnet-beta'),
+    chainId: ChainId.MainnetBeta,
   },
   {
     name: 'testnet',
@@ -52,12 +52,12 @@ export const ENDPOINTS: Array<Endpoint> = [
   {
     name: 'devnet',
     label: 'devnet',
-    url: clusterApiUrl('devnet'),
+    url: clusterApiUrl('devnet'), //'http://localhost:8899', //
     chainId: ChainId.Devnet,
   },
 ]
 
-const DEFAULT_ENDPOINT = ENDPOINTS[2]
+const DEFAULT_ENDPOINT = ENDPOINTS[0]
 
 interface ConnectionConfig {
   connection: Connection
@@ -625,7 +625,7 @@ export const getUnixTs = () => {
   return new Date().getTime() / 1000
 }
 
-const DEFAULT_TIMEOUT = 15000
+const DEFAULT_TIMEOUT = 150000
 
 export async function sendSignedTransaction({
   signedTransaction,
