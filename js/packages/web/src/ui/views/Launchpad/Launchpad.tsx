@@ -3,94 +3,20 @@ import CN from 'classnames'
 import { SectionHeading, LaunchCard } from '@oyster/common'
 import { FeaturedLaunchCard } from '../../sections'
 import { useHistory } from 'react-router-dom'
-import { getFeaturedSubmission } from '../../../api'
+import moment from 'moment'
+import { getFeaturedSubmission, getSubmissions } from '../../../api'
 
 export interface LaunchpadProps {
   [x: string]: any
 }
 
-const cards = [
-  {
-    id: 0,
-    name: 'Dead Rejects',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Fbafybeie73m6lnfdndoqll6w35klzfykflfhhcvmutvw7ig6zputz7e6tga.ipfs.nftstorage.link%2F365.png%3Fext%3Dpng&w=1920&q=75',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-  {
-    id: 1,
-    name: 'Miners of Mars',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Fbafybeietzwairdwnm3rkoc2rcnn5rjehtl76gs3d3aqy6ltofsauxzocq4.ipfs.nftstorage.link%2F4603.png%3Fext%3Dpng&w=1920&q=75',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-  {
-    id: 2,
-    name: 'Everseed',
-    image:
-      'https://dl.airtable.com/.attachmentThumbnails/e435b9e1a178278258f79255bc7c4dbf/b0021a95',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-  {
-    id: 3,
-    name: 'Mindfolk Pirates',
-    image:
-      'https://img-cdn.magiceden.dev/rs:fill:640:640:0:0/plain/https://www.arweave.net/eU7DjKk3-f45hp5SIE5tf0y6bRsw3tKaIkecjPa4mfc?ext=png',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-  {
-    id: 4,
-    name: 'Dead Rejects',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Fbafybeie73m6lnfdndoqll6w35klzfykflfhhcvmutvw7ig6zputz7e6tga.ipfs.nftstorage.link%2F365.png%3Fext%3Dpng&w=1920&q=75',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-  {
-    id: 5,
-    name: 'Miners of Mars',
-    image:
-      'https://solanart.io/_next/image?url=https%3A%2F%2Fcdn-image.solanart.io%2Funsafe%2F600x600%2Ffilters%3Aformat(webp)%2Fbafybeietzwairdwnm3rkoc2rcnn5rjehtl76gs3d3aqy6ltofsauxzocq4.ipfs.nftstorage.link%2F4603.png%3Fext%3Dpng&w=1920&q=75',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-  {
-    id: 6,
-    name: 'Everseed',
-    image:
-      'https://dl.airtable.com/.attachmentThumbnails/e435b9e1a178278258f79255bc7c4dbf/b0021a95',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-  {
-    id: 7,
-    name: 'Mindfolk Pirates',
-    image:
-      'https://img-cdn.magiceden.dev/rs:fill:640:640:0:0/plain/https://www.arweave.net/eU7DjKk3-f45hp5SIE5tf0y6bRsw3tKaIkecjPa4mfc?ext=png',
-    volume: '472.54',
-    price: 'Ⓞ 1.00 SOL',
-    dollarValue: '$102.97',
-    remainingTime: '20h : 35m : 08s',
-  },
-]
+interface ILaunchpadCard {
+  id: string;
+  collection_name: string;
+  collection_image_url: string;
+  exp_mint_date: string;
+  mint_price: string;
+}
 
 export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: LaunchpadProps) => {
   const { push } = useHistory()
@@ -101,6 +27,7 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
   )
   const [image, setImage] = useState('/img/frog.png')
   const [navigatePage, setNavigatePage] = useState('stoned-frogs')
+  const [submissions, setSubmissions] = useState<ILaunchpadCard[]>([])
 
   useEffect(() => {
     getFeaturedSubmission().then(submission => {
@@ -108,6 +35,10 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
       setDescription(submission.project_description)
       setImage(submission.collection_image_url)
       setNavigatePage(submission.collection_name_query_string.replace('%', '-').toLowerCase())
+    })
+
+    getSubmissions().then(submissions => {
+      setSubmissions(submissions?.data.data)
     })
   }, [])
 
@@ -135,26 +66,28 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
         />
       </div>
 
-      <div className='pt-[80px]'>
-        <SectionHeading overline='🤠 Promising' heading='Upcoming launches' />
+      {submissions.length > 0 && (
+        <div className='pt-[80px]'>
+          <SectionHeading overline='🤠 Promising' heading='Upcoming launches' />
 
-        <div className='pt-[60px]'>
-          <ul className='grid grid-cols-4 gap-[32px]'>
-            {cards.map(({ id, name, image, price, dollarValue, remainingTime }, index) => (
-              <li key={id || index}>
-                <LaunchCard
-                  name={name}
-                  image={image}
-                  price={price}
-                  dollarValue={dollarValue}
-                  onClickButton={() => {}}
-                  remainingTime={remainingTime}
-                />
-              </li>
-            ))}
-          </ul>
+          <div className='pt-[60px]'>
+            <ul className='grid grid-cols-4 gap-[32px]'>
+              {submissions.map((submission: ILaunchpadCard, index) => (
+                <li key={submission.id || index}>
+                  <LaunchCard
+                    name={submission.collection_name}
+                    image={submission.collection_image_url}
+                    price={`Ⓞ ${parseFloat(submission.mint_price).toFixed(2)} SOL`}
+                    dollarValue={'$102.97'}
+                    onClickButton={() => {}}
+                    remainingTime={moment(submission.exp_mint_date).format('LL')}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
