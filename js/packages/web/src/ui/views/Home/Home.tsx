@@ -6,6 +6,8 @@ import { LaunchpadCard } from '../../sections/LaunchpadCard'
 import { TrendingCollections } from '../../sections/TrendingCollections'
 import { WhyUS } from '../../sections/WhyUS'
 import { useNFTCollections } from '../../../hooks/useCollections'
+import { SetupView } from '../../../views/home/setup'
+import { useMeta, useStore } from '@oyster/common'
 
 export interface HomeProps {}
 
@@ -20,6 +22,19 @@ export enum LiveAuctionViewState {
 export const Home: FC<HomeProps> = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All)
   const { liveCollections } = useNFTCollections()
+
+  const { isLoading, store } = useMeta()
+  const { isConfigured } = useStore()
+
+  const showAuctions = (store && isConfigured) || isLoading
+
+  if (!showAuctions) {
+    return (
+      <div className='home'>
+        <SetupView />
+      </div>
+    )
+  }
 
   return (
     <div className='home'>

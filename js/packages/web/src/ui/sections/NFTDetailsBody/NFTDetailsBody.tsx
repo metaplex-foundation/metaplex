@@ -27,6 +27,8 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   } = useNFTData(auction)
   const url = data?.image
 
+  console.log('auction', auction)
+
   useEffect(() => {
     setOwner(auction?.auctionManager?.authority || '')
   }, [])
