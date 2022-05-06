@@ -44,7 +44,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   const [expectedMintDate, setExpectedMintDate] = useState('')
   const [numberOfItemsExpected, setNumberOfItemsExpected] = useState()
   const [isTeamDox, setIsTeamDox] = useState(false)
-  const [mintPrice, setMintPrice] = useState()
+  const [mintPrice, setMintPrice] = useState('')
   const [marketingPackage, setMarketingPackage] = useState()
   const [anything, setAnything] = useState()
   const [creatorPublicKey, setCreatorPublicKey] = useState('')
@@ -119,6 +119,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
         projectDescription && projectDescription.trim().length > 0 ? projectDescription : null,
       expectedDate:
         expectedMintDate && expectedMintDate.trim().length > 0 ? expectedMintDate : null,
+      mintPrice: mintPrice && mintPrice.trim().length > 0 ? mintPrice : null,
     }
     formDataValidate = Object.assign({}, data)
     return true
@@ -557,6 +558,11 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               placeholder='# SOL'
               onChange={event => setMintPrice(event.target.value)}
             />
+            {isFormNotValid && mintPrice.trim().length <= 0 ? (
+              <Text type='danger' style={{ fontSize: 13 }}>
+                Mint price is required
+              </Text>
+            ) : null}
           </div>
 
           <div className='flex w-full flex-col gap-[16px]'>
