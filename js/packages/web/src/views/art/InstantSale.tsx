@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   AmountRange,
   IPartialCreateAuctionArgs,
@@ -35,13 +35,18 @@ import PutOnAuction from './PutOnAuction'
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
   category: AuctionCategory
+  setProcessing: (status: boolean) => void
 }
 
-const InstantSale = ({ items, category }: InstantSaleInterface) => {
+const InstantSale = ({ items, category, setProcessing }: InstantSaleInterface) => {
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
   const [listing, setListing] = useState(false)
+
+  useEffect(() => {
+    setProcessing(listing)
+  }, [listing])
 
   const mint = useMint(QUOTE_MINT)
   const [auctionObj, setAuctionObj] = useState<
@@ -54,9 +59,10 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
   >(undefined)
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
-    items,
+    items: category === AuctionCategory.InstantSale ? items : [],
     category,
     auctionDurationType: 'minutes',
+    participationNFT: category === AuctionCategory.Tiered ? items[0] : undefined,
     gapTimeType: 'minutes',
     winnersCount: 1,
     startSaleTS: undefined,
@@ -67,6 +73,9 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
     //@ts-ignore
     quoteMintInfoExtended: undefined,
   })
+  console.log('items1', items[0])
+
+  console.log('attributes1', attributes)
 
   const [tieredAttributes, setTieredAttributes] = useState<TieredAuctionState>({
     items: [],
@@ -335,6 +344,23 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
       const participationSafetyDepositDraft = isOpenEdition
         ? attributes.items[0]
         : attributes.participationNFT
+      console.log('-----------------------START--------------------------------------')
+      console.log('connection', connection)
+      console.log('------------------------------->2')
+      console.log('wallet', wallet)
+      console.log('------------------------------->3')
+      console.log('whitelistedCreatorsByCreator', whitelistedCreatorsByCreator)
+      console.log('------------------------------->4')
+      console.log('auctionSettings', auctionSettings)
+      console.log('------------------------------->5')
+      console.log('safetyDepositDrafts', safetyDepositDrafts)
+      console.log('------------------------------->6')
+      console.log('participationSafetyDepositDraft', participationSafetyDepositDraft)
+      console.log('------------------------------->7')
+      console.log('attributes.quoteMintAddress', attributes.quoteMintAddress)
+      console.log('------------------------------->8')
+      console.log('storeIndexer', storeIndexer)
+      console.log('-----------------------END--------------------------------------')
 
       createAuctionManager(
         connection,
@@ -351,6 +377,7 @@ const InstantSale = ({ items, category }: InstantSaleInterface) => {
           console.log('res', res)
         })
         .catch(error => {
+          setListing(false)
           console.log('error', error)
         })
     } catch (error) {

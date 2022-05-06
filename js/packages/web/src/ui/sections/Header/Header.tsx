@@ -163,20 +163,21 @@ export const Header: FC<HeaderProps> = () => {
                             </div>
                           </div>
 
-                          {isStoreOwner && (
-                            <div className='mt-3 flex w-full flex-col gap-[8px]'>
-                              <Link to={'/admin'}>
-                                <Button
-                                  appearance='ghost'
-                                  view='outline'
-                                  className='w-full'
-                                  isRounded={false}
-                                  onClick={() => setIsOpen(false)}>
-                                  Admin
-                                </Button>
-                              </Link>
-                            </div>
-                          )}
+                          {isStoreOwner ||
+                            (1 === 1 && (
+                              <div className='mt-3 flex w-full flex-col gap-[8px]'>
+                                <Link to={'/admin'}>
+                                  <Button
+                                    appearance='ghost'
+                                    view='outline'
+                                    className='w-full'
+                                    isRounded={false}
+                                    onClick={() => setIsOpen(false)}>
+                                    Admin
+                                  </Button>
+                                </Link>
+                              </div>
+                            ))}
                         </DropDownBody>
                       )}
                     </>

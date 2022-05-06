@@ -51,6 +51,8 @@ export const ProfileListings: FC<ProfileListingsProps> = ({
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const wallet = useWallet()
 
+  console.log('auctions', auctions)
+
   useEffect(() => {
     if (auctions.length) {
       const data = auctions.filter(auction => {

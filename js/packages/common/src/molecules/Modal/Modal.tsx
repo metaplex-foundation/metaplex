@@ -42,9 +42,11 @@ export const Modal: FC<ModalProps> = ({
             'pb-none': heading && size === 'sm',
           })}>
           <h2 dangerouslySetInnerHTML={{ __html: heading || '' }} />
-          <button onClick={onClose} className='ml-auto'>
-            <i className='ri-close-line text-[24px]' />
-          </button>
+          {onClose && (
+            <button onClick={onClose} className='ml-auto'>
+              <i className='ri-close-line text-[24px]' />
+            </button>
+          )}
         </div>
 
         <div
