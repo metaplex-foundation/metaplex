@@ -42,3 +42,4 @@ js/packages/gumdrop
 js/packages/cli
 js/packages/candy-machine-ui
 js/packages/token-entangler
+Dockerfile
