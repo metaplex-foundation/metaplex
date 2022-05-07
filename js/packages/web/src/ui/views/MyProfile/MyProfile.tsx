@@ -40,7 +40,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               isRounded={false}
               appearance={activeTab === 'collectibles' ? 'neutral' : 'ghost'}
               view={activeTab === 'collectibles' ? 'solid' : 'outline'}
-              contentClassName='w-full text-left'
+              className='w-full text-left'
               onClick={() => {
                 setActiveTab('collectibles')
                 setHeading('My Collectibles')
@@ -52,7 +52,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               isRounded={false}
               appearance={activeTab === 'listings' ? 'neutral' : 'ghost'}
               view={activeTab === 'listings' ? 'solid' : 'outline'}
-              contentClassName='w-full text-left'
+              className='w-full text-left'
               onClick={() => {
                 setActiveTab('listings')
                 setHeading('My Listings')
@@ -64,7 +64,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               isRounded={false}
               appearance={activeTab === 'offers-made' ? 'neutral' : 'ghost'}
               view={activeTab === 'offers-made' ? 'solid' : 'outline'}
-              contentClassName='w-full text-left'
+              className='w-full text-left'
               onClick={() => {
                 setActiveTab('offers-made')
                 setHeading('Offers Made')
@@ -77,7 +77,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               isRounded={false}
               appearance={activeTab === 'offers-received' ? 'neutral' : 'ghost'}
               view={activeTab === 'offers-received' ? 'solid' : 'outline'}
-              contentClassName='w-full text-left'
+              className='w-full text-left'
               onClick={() => {
                 setActiveTab('offers-received')
                 setHeading('Offers Received')
@@ -90,7 +90,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               isRounded={false}
               appearance={activeTab === 'settings' ? 'neutral' : 'ghost'}
               view={activeTab === 'settings' ? 'solid' : 'outline'}
-              contentClassName='w-full text-left'
+              className='w-full text-left'
               onClick={() => {
                 setActiveTab('settings')
                 setHeading('Settings')

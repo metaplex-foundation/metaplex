@@ -1,11 +1,16 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useArt, useExtendedArt, useUserArts } from '../../hooks'
 import { ArtContent } from '../../components/ArtContent'
 import InstantSale from './InstantSale'
 import { AuctionCategory } from '../auctionCreate/types'
 import { Creator, Modal } from '@oyster/common'
-import { LoadingOutlined } from '@ant-design/icons'
+import { CheckCircleOutlined, IssuesCloseOutlined, LoadingOutlined } from '@ant-design/icons'
+import { Spin } from 'antd'
+
+export const PROCESSING = 1
+export const SUCCESS = 2
+export const ERROR = 3
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>()
@@ -13,7 +18,14 @@ export const ArtView = () => {
   const { data: collection } = useExtendedArt(id)
   const selected = [...(items || []).filter(i => i.metadata.pubkey === id)]
   const art = useArt(id)
-  const [processing, setProcessing] = useState<boolean>(false)
+  const [status, setStatus] = useState(0)
+  const [showModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    if (status) {
+      setShowModal(true)
+    }
+  }, [status])
 
   const getColName = () => {
     if (collection) {
@@ -24,6 +36,45 @@ export const ArtView = () => {
   }
 
   const collectionName = getColName()
+
+  const getModalContent = () => {
+    switch (status) {
+      case PROCESSING:
+        return (
+          <>
+            <Spin indicator={<LoadingOutlined style={{ fontSize: '100px' }} />} />
+            <h2 className='mt-20 text-center text-h2 font-500	 text-slate-800'>
+              Your item is processing
+            </h2>
+          </>
+        )
+      case SUCCESS:
+        return (
+          <>
+            <CheckCircleOutlined style={{ fontSize: '100px' }} />
+            <h2 className='mt-10 text-center text-h2 font-500	 text-slate-800'>Congratulations</h2>
+            <div className='flex justify-center'>
+              <a
+                className='mt-10 w-1/4 rounded bg-blue-500 py-2 px-4 text-center font-bold text-white hover:bg-blue-700'
+                href='#/profile'>
+                RELOAD
+              </a>
+            </div>
+          </>
+        )
+      case ERROR:
+        return (
+          <>
+            <IssuesCloseOutlined style={{ fontSize: '100px' }} />
+            <h2 className='mt-20 text-center text-h2 font-500	 text-slate-800'>
+              Something went wrong
+            </h2>
+          </>
+        )
+      default:
+        return <></>
+    }
+  }
 
   return (
     <>
@@ -64,9 +115,10 @@ export const ArtView = () => {
                       <>
                         <h6 className='text-h6 font-400'>Instant Sale</h6>
                         <InstantSale
-                          setProcessing={setProcessing}
+                          setStatus={setStatus}
                           category={AuctionCategory.InstantSale}
                           items={selected}
+                          status={status}
                         />
                       </>
                     )}
@@ -78,9 +130,10 @@ export const ArtView = () => {
                       <>
                         <h6 className='text-h6 font-400'>Auction</h6>
                         <InstantSale
-                          setProcessing={setProcessing}
+                          setStatus={setStatus}
                           category={AuctionCategory.Tiered}
                           items={selected}
+                          status={status}
                         />
                       </>
                     )}
@@ -90,14 +143,9 @@ export const ArtView = () => {
           </div>
         </div>
       </div>
-      {processing && (
+      {showModal && (
         <Modal>
-          <>
-            <div className='flex flex-col	 justify-center	'>
-              <LoadingOutlined style={{ fontSize: '100px' }} />
-              <h1 className='mt-10	 text-center text-xl'>Your item is processing</h1>
-            </div>
-          </>
+          <div className='flex flex-col justify-center	 p-20	'>{getModalContent()}</div>
         </Modal>
       )}
     </>
