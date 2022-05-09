@@ -7,6 +7,7 @@ import {
   DropDownMenuItem,
   Button,
   pubkeyToString,
+  useConnectionConfig,
 } from '@oyster/common'
 import { AuctionView, useAuction, useExtendedArt } from '../../../hooks'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
@@ -26,6 +27,7 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
   const auction = useAuction(id)
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const history = useHistory()
+  const { endpoint } = useConnectionConfig()
 
   const allAuctions =
     typeof data?.collection === 'string'
@@ -130,7 +132,7 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
           </Button>
           {mintAddress && (
             <a
-              href={`https://solscan.io/token/${mintAddress}?cluster=devnet`}
+              href={`https://solscan.io/token/${mintAddress}?cluster=${endpoint.name}`}
               target='_blank'
               rel='noreferrer'>
               <Button
