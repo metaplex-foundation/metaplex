@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   AmountRange,
   IPartialCreateAuctionArgs,
@@ -31,32 +31,29 @@ import {
 } from '../auctionCreate/types'
 import PutOnSale from './PutOnSale'
 import PutOnAuction from './PutOnAuction'
+import { ERROR, PROCESSING, SUCCESS } from '.'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
   category: AuctionCategory
-  setProcessing: (status: boolean) => void
+  setStatus: (status: number) => void
+  status: number
 }
 
-const InstantSale = ({ items, category, setProcessing }: InstantSaleInterface) => {
+const InstantSale = ({ items, category, setStatus, status }: InstantSaleInterface) => {
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
-  const [listing, setListing] = useState(false)
-
-  useEffect(() => {
-    setProcessing(listing)
-  }, [listing])
 
   const mint = useMint(QUOTE_MINT)
-  const [auctionObj, setAuctionObj] = useState<
-    | {
-        vault: StringPublicKey
-        auction: StringPublicKey
-        auctionManager: StringPublicKey
-      }
-    | undefined
-  >(undefined)
+  // const [auctionObj, setAuctionObj] = useState<
+  //   | {
+  //       vault: StringPublicKey
+  //       auction: StringPublicKey
+  //       auctionManager: StringPublicKey
+  //     }
+  //   | undefined
+  // >(undefined)
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: category === AuctionCategory.InstantSale ? items : [],
@@ -84,7 +81,7 @@ const InstantSale = ({ items, category, setProcessing }: InstantSaleInterface) =
 
   const createAuction = () => {
     try {
-      setListing(true)
+      setStatus(PROCESSING)
       let winnerLimit: WinnerLimit
       //const mint = attributes.quoteMintInfo
       if (
@@ -373,15 +370,15 @@ const InstantSale = ({ items, category, setProcessing }: InstantSaleInterface) =
         storeIndexer
       )
         .then(res => {
-          setListing(false)
+          setStatus(SUCCESS)
           console.log('res', res)
         })
         .catch(error => {
-          setListing(false)
+          setStatus(ERROR)
           console.log('error', error)
         })
     } catch (error) {
-      setListing(false)
+      setStatus(ERROR)
       console.log('error2', error)
     }
   }
@@ -402,7 +399,7 @@ const InstantSale = ({ items, category, setProcessing }: InstantSaleInterface) =
     <>
       {renderForm()}
       <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
-        <Button disabled={listing} onClick={createAuction} className='w-full'>
+        <Button disabled={status} onClick={createAuction} className='w-full'>
           {category === AuctionCategory.InstantSale && 'List Now'}
           {category === AuctionCategory.Tiered && 'Put on auction'}
         </Button>

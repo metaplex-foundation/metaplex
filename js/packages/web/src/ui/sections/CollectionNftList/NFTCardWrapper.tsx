@@ -16,12 +16,8 @@ export const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction, link, ...
     data,
     value: { solVal, usdValFormatted },
   } = useNFTData(auction)
-  // console.log('data', data)
-  const [showQuickBuy, setShowQuickBuy] = useState(false)
 
-  // useEffect(() => {
-  //   setShowQuickBuy(true)
-  // }, [])
+  const [showQuickBuy, setShowQuickBuy] = useState(false)
 
   return (
     <>
@@ -31,7 +27,6 @@ export const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction, link, ...
         price={solVal ?? ''}
         dollarValue={usdValFormatted ?? ''}
         bidPrice='3.12 SOL'
-        //onClickQuickBuy={() => {}}
         onClickDetails={() => {
           console.log('On click details')
           setShowQuickBuy(true)

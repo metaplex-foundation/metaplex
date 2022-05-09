@@ -1,8 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-
 import { useAuctions, AuctionView } from '../../../../../../hooks'
-
 import { LiveAuctionViewState } from '../..'
 import { getFilterFunction, resaleAuctionsFilter } from './utils'
 import { useMeta } from '@oyster/common'

@@ -21,10 +21,11 @@ import {
 } from '@oyster/common'
 import { PublicKey } from '@solana/web3.js'
 import { BN } from 'bn.js'
-import { useCollections } from '../../../hooks/useCollections'
+import { useNFTCollections } from '../../../hooks/useCollections'
 import { useAllSplPrices, useSolPrice } from '../../../contexts'
 import { useTokenList } from '../../../contexts/tokenList'
-import { findByCollectionName, findByMintKey } from '../../../api'
+import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
+import { getCollectionHeaderInfo } from '../../../api'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
 const RANGE_FILTERS = 'Range'
@@ -49,38 +50,37 @@ export interface AppliedFiltersInterface {
 }
 
 interface ICollectionHeader {
-  collectionName: string
-  creatorPublicKey: string
-  description: string
-  collectionImageURL: string
-  collectionBannerURL: string
+  collectionName?: string
+  creatorPublicKey?: string
+  description?: string
+  collectionImageURL?: string
+  collectionBannerURL?: string
 }
 
 export const SORT_LOW_TO_HIGH = 'Low to High'
 export const SORT_HIGH_TO_LOW = 'High to Low'
-const WITH_FILTER = true
 
 export const Collection: FC<CollectionProps> = () => {
   const [showActivity, setShowActivity] = useState<boolean>(false)
   const [showExplore, setShowExplore] = useState<boolean>(true)
   const [filters, setFilters] = useState<AppliedFiltersInterface[]>([])
-  const [nftItems, setNftItems] = useState<any[]>([])
-  const [auctionsAttr, setAuctionAttr] = useState<any[]>([])
   const [searchText, setSearchText] = useState<string>('')
   const [priceRange, setPriceRange] = useState<PriceRangeInterface>({
     min: null,
     max: null,
   })
-  const [data, setData] = useState<any>(null)
 
   const { id }: ParamsInterface = useParams()
-  const { liveCollections } = useCollections()
+  const { nftItems, attributes } = useCollectionNFT(id)
+  const { liveCollections } = useNFTCollections()
 
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
-  const pubkey = liveCollections.find(({ mint }) => mint === id)?.pubkey || undefined
+  const selectedCollection = liveCollections.find(({ mint }) => mint === id) || null
+
+  const pubkey = selectedCollection?.pubkey
   const { data: colData } = useExtendedArt(pubkey)
-  const [count, setCount] = useState(0)
+  const [nfts, setNfts] = useState<NFTItemInterface[]>([])
   const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
     collectionName: '',
     description: '',
@@ -90,59 +90,44 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   useEffect(() => {
-    if (id && liveCollections.length > 0) {
-      for (const collection of liveCollections) {
-        if (collection.name) {
-          if (collection.name === id) {
-            findByCollectionName(collection.name).then(res => {
-              setCollectionHeaderData({
-                collectionName: res?.data.collection_name,
-                creatorPublicKey: res?.data.creator_public_key,
-                description: res?.data.project_description,
-                collectionImageURL: res?.data.collection_image_url,
-                collectionBannerURL: res?.data.collection_banner_url,
-              })
-            })
-            break
-          }
-        } else if (collection.mint) {
-          findByMintKey(collection.mint, collection.data.data.name).then(res => {
+    setNfts(nftItems)
+    if (
+      colData &&
+      colData.properties &&
+      colData.properties.creators &&
+      colData.properties.creators.length > 0 &&
+      colData.collection
+    ) {
+      const collection = JSON.parse(JSON.stringify(colData.collection))
+      getCollectionHeaderInfo(colData?.properties.creators[0].address, collection.name).then(
+        data => {
+          if (data) {
             setCollectionHeaderData({
-              collectionName: res?.data.collection_name,
-              creatorPublicKey: res?.data.creator_public_key,
-              description: res?.data.project_description,
-              collectionImageURL: res?.data.collection_image_url,
-              collectionBannerURL: res?.data.collection_banner_url,
+              collectionName: data.collection_name,
+              description: data.project_description,
+              creatorPublicKey: data.creator_public_key,
+              collectionImageURL: data.collection_image_url,
+              collectionBannerURL: data.collection_banner_url,
             })
-          })
+          } else {
+            setCollectionHeaderData({
+              collectionName: collection.name,
+              description: colData.description,
+              collectionImageURL: colData.image,
+              collectionBannerURL: '/img/dummy-collection-cover.png',
+            })
+          }
         }
-      }
-    }
-  }, [liveCollections, pubkey])
-
-  useEffect(() => {
-    if (!colData) {
-      Promise.all(
-        auctions.map(async auction => {
-          const gData = await getData(auction.thumbnail.metadata.pubkey)
-          return { ...gData, _auction: auction }
-        })
-      ).then(res => {
-        const x = res.find(i => {
-          return i.collection?.name === id
-        })
-
-        if (x) {
-          setData({
-            name: x.collection.name,
-            image: x.image,
-          })
-        }
-      })
+      )
     } else {
-      setData(colData)
+      setCollectionHeaderData({
+        collectionName: colData?.name,
+        description: colData?.description,
+        collectionImageURL: colData?.image,
+        collectionBannerURL: '/img/dummy-collection-cover.png',
+      })
     }
-  }, [colData, auctions])
+  }, [colData])
 
   const { getData } = useExtendedCollection()
 
@@ -161,21 +146,21 @@ export const Collection: FC<CollectionProps> = () => {
   //   }
   // }, [auctions])
 
-  useEffect(() => {
-    if (auctions?.length) {
-      filteredAuctions(WITH_FILTER).then(res => {
-        setNftItems(() => res)
-      })
-    }
-  }, [auctions, filters, searchText])
+  // useEffect(() => {
+  //   if (auctions?.length) {
+  //     filteredAuctions(WITH_FILTER).then(res => {
+  //       setNftItems(() => res)
+  //     })
+  //   }
+  // }, [auctions, filters, searchText])
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
       return val === SORT_LOW_TO_HIGH ? a.amount - b.amount : b.amount - a.amount
     })
-    setNftItems([])
+    // setNftItems([])
     setTimeout(() => {
-      setNftItems(() => [...dataArray])
+      // setNftItems(() => [...dataArray])
     }, 1)
   }
 
@@ -278,28 +263,6 @@ export const Collection: FC<CollectionProps> = () => {
     setPriceRange(data)
   }
 
-  const getAttributesFromCollection = (data: Array<any>) => {
-    const attr: Array<any> = []
-    data.forEach(elements => {
-      elements?.forEach(({ trait_type, value }) => {
-        if (trait_type) {
-          const attrExist = attr.find(t => t.trait_type.trim() == trait_type.trim()) || null
-          if (attrExist) {
-            if (!attrExist.values.find(text => text === value)) {
-              attrExist.values.push(value)
-            }
-          } else {
-            attr.push({
-              trait_type: trait_type,
-              values: [value],
-            })
-          }
-        }
-      })
-    })
-    return attr
-  }
-
   const applyRange = () => {
     if (
       (priceRange.max || priceRange.max === 0) &&
@@ -330,15 +293,6 @@ export const Collection: FC<CollectionProps> = () => {
     setFilters([...filters.filter(({ type, text }) => type !== data.type && text !== data.text)])
   }
 
-  const filterAttributes = getAttributesFromCollection(
-    [
-      ...auctionsAttr.map(i => {
-        return i.meta.attributes
-      }),
-      data?.attributes,
-    ] ?? []
-  )
-
   const clearFilters = () => {
     setFilters([])
     setPriceRange({
@@ -353,9 +307,13 @@ export const Collection: FC<CollectionProps> = () => {
         isVerified
         avatar={collectionHeaderData.collectionImageURL}
         cover={collectionHeaderData.collectionBannerURL}
-        title={data?.name ?? ''}
-        description={collectionHeaderData.description}
-        numberOfItems={count}
+        title={collectionHeaderData.collectionName}
+        description={
+          collectionHeaderData.description && collectionHeaderData.description.length >= 250
+            ? `${collectionHeaderData.description?.slice(0, 250)}.....`
+            : collectionHeaderData.description
+        }
+        numberOfItems={nfts.length}
       />
 
       <div className='flex w-full pt-[80px] pb-[100px]'>
@@ -365,7 +323,7 @@ export const Collection: FC<CollectionProps> = () => {
               applyRange={applyRange}
               range={priceRange}
               setPriceRange={onChangeRange}
-              filterAttributes={filterAttributes}
+              filterAttributes={attributes}
               addAttributeFilters={addAttributeFilters}
             />
           </div>
@@ -396,7 +354,7 @@ export const Collection: FC<CollectionProps> = () => {
                     clearFilters={clearFilters}
                   />
                 )}
-                <CollectionNftList auctions={nftItems} />
+                <CollectionNftList auctions={nfts} />
               </div>
             )}
 

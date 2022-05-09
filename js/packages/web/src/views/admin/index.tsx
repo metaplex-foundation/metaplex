@@ -23,7 +23,7 @@ import { Link } from 'react-router-dom'
 import { SetupVariables } from '../../components/SetupVariables'
 import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
 import { getSubmissions, markAsFeatured, statusToApprove } from '../../api'
-import { CheckCircleTwoTone, EditTwoTone, EllipsisOutlined } from '@ant-design/icons'
+import { CheckCircleTwoTone, EditFilled, EditTwoTone, EllipsisOutlined } from '@ant-design/icons'
 
 const { Content } = Layout
 export const AdminView = () => {
@@ -36,10 +36,8 @@ export const AdminView = () => {
     [wallet.wallet, wallet.connect, setVisible]
   )
   const { storeAddress, setStoreForOwner, isConfigured } = useStore()
-  const [isStoreOwner, setIsStoreOwner] = useState<boolean>()
-  const { publicKey } = useWallet()
-  const pubKey = publicKey?.toBase58() || ''
-  const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
+  const [isStoreOwner, setIsStoreOwner] = useState<boolean>(false)
+  const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS || ''
 
   useEffect(() => {
     if (
@@ -52,11 +50,11 @@ export const AdminView = () => {
     }
 
     if (
-      whitelistedCreatorsByCreator[pubKey] &&
-      whitelistedCreatorsByCreator[pubKey].info &&
-      whitelistedCreatorsByCreator[pubKey].info.address
+      whitelistedCreatorsByCreator[storeOwnerAddress] &&
+      whitelistedCreatorsByCreator[storeOwnerAddress].info &&
+      whitelistedCreatorsByCreator[storeOwnerAddress].info.address
     ) {
-      if (whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress) {
+      if (whitelistedCreatorsByCreator[storeOwnerAddress].info.address === storeOwnerAddress) {
         setIsStoreOwner(true)
       } else {
         setIsStoreOwner(false)
@@ -351,6 +349,15 @@ function InnerAdminView({
                     </Tooltip>
                   </Menu.Item>
                 )}
+                <Menu.Item>
+                  <a
+                    href={`/#/launchpad-submission/${
+                      row.creator_public_key
+                    }/${row.collection_name.replace(/\s/g, '%')}`}>
+                    <EditFilled style={{ verticalAlign: 'middle', paddingRight: 5 }} />
+                    <Tooltip title='Edit launchpad submission'>Edit submission</Tooltip>
+                  </a>
+                </Menu.Item>
               </Menu>
             }
             trigger={['click']}>

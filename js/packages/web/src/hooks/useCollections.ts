@@ -90,7 +90,6 @@ export const useNFTCollections = () => {
   const { getData } = useExtendedCollection()
 
   useEffect(() => {
-    console.log('auctions.length', auctions.length)
     getCollections()
   }, [auctions.length])
 
@@ -104,6 +103,18 @@ export const useNFTCollections = () => {
       if (collection) {
         if (!usedCollections.has(collection)) {
           const metadata = metadataByCollection[collection]
+
+          if (!metadata) {
+            collections.push({
+              pubkey: auction.thumbnail.metadata.pubkey,
+              mint: auction.thumbnail.metadata.info.mint,
+              //@ts-ignore
+              data: auction.thumbnail.metadata.info,
+              state: auction.state,
+              isExternal: false,
+            })
+          }
+
           if (metadata) {
             usedCollections.add(collection)
             collections.push({

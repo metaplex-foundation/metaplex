@@ -70,3 +70,41 @@ export const getFeaturedSubmission = async () => {
     return null
   }
 }
+
+export const getCollectionHeaderInfo = async (creatorId: any, collectionName: string) => {
+  try {
+    let modifiedCollectionName
+    if (collectionName && /\s/g.test(collectionName)) {
+      modifiedCollectionName = collectionName.replace(/\s/g, '%')
+    } else {
+      modifiedCollectionName = collectionName
+    }
+    const data = await axios.get(
+      `${api}/collection/header/info/${creatorId}/${modifiedCollectionName}`
+    )
+    return data.data
+  } catch (error: any) {
+    console.log('Get collection header info API error: ', error.message)
+    return null
+  }
+}
+
+export const getSubmission = async (id: string, name: string) => {
+  try {
+    const data = await axios.get(`${api}/submission/${id}/${name}`)
+    return data.data
+  } catch (error: any) {
+    console.log('Get submission API error: ', error.message)
+    return null
+  }
+}
+
+export const updateSubmission = async (id: string, submissionData: any) => {
+  try {
+    const data = await axios.put(`${api}/update/${id}`, submissionData)
+    return data.data
+  } catch (error: any) {
+    console.log('Update submission API error: ', error.message)
+    return error.message
+  }
+}
