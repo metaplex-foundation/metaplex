@@ -24,7 +24,8 @@ import { BN } from 'bn.js'
 import { useNFTCollections } from '../../../hooks/useCollections'
 import { useAllSplPrices, useSolPrice } from '../../../contexts'
 import { useTokenList } from '../../../contexts/tokenList'
-import useCollectionNFT from './useCollectionNft'
+import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
+import { getCollectionHeaderInfo } from '../../../api'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
 const RANGE_FILTERS = 'Range'
@@ -68,7 +69,6 @@ export const Collection: FC<CollectionProps> = () => {
     min: null,
     max: null,
   })
-  const [data, setData] = useState<any>(null)
 
   const { id }: ParamsInterface = useParams()
   const { nftItems, attributes } = useCollectionNFT(id)
@@ -80,6 +80,7 @@ export const Collection: FC<CollectionProps> = () => {
 
   const pubkey = selectedCollection?.pubkey
   const { data: colData } = useExtendedArt(pubkey)
+  const [nfts, setNfts] = useState<NFTItemInterface[]>([])
   const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
     collectionName: '',
     description: '',
@@ -89,20 +90,44 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   useEffect(() => {
-    if (colData) {
+    setNfts(nftItems)
+    if (
+      colData &&
+      colData.properties &&
+      colData.properties.creators &&
+      colData.properties.creators.length > 0 &&
+      colData.collection
+    ) {
+      const collection = JSON.parse(JSON.stringify(colData.collection))
+      getCollectionHeaderInfo(colData?.properties.creators[0].address, collection.name).then(
+        data => {
+          if (data) {
+            setCollectionHeaderData({
+              collectionName: data.collection_name,
+              description: data.project_description,
+              creatorPublicKey: data.creator_public_key,
+              collectionImageURL: data.collection_image_url,
+              collectionBannerURL: data.collection_banner_url,
+            })
+          } else {
+            setCollectionHeaderData({
+              collectionName: collection.name,
+              description: colData.description,
+              collectionImageURL: colData.image,
+              collectionBannerURL: '/img/dummy-collection-cover.png',
+            })
+          }
+        }
+      )
+    } else {
       setCollectionHeaderData({
-        collectionName: colData.name,
-        // creatorPublicKey: res?.data.creator_public_key,
-        description: colData.description,
-        collectionImageURL: colData.image,
-        // collectionBannerURL: res?.data.collection_banner_url,
+        collectionName: colData?.name,
+        description: colData?.description,
+        collectionImageURL: colData?.image,
+        collectionBannerURL: '/img/dummy-collection-cover.png',
       })
     }
   }, [colData])
-
-  useEffect(() => {
-    setData(colData)
-  }, [colData, auctions])
 
   const { getData } = useExtendedCollection()
 
@@ -282,9 +307,13 @@ export const Collection: FC<CollectionProps> = () => {
         isVerified
         avatar={collectionHeaderData.collectionImageURL}
         cover={collectionHeaderData.collectionBannerURL}
-        title={data?.name ?? ''}
-        description={collectionHeaderData.description}
-        numberOfItems={nftItems.length}
+        title={collectionHeaderData.collectionName}
+        description={
+          collectionHeaderData.description && collectionHeaderData.description.length >= 250
+            ? `${collectionHeaderData.description?.slice(0, 250)}.....`
+            : collectionHeaderData.description
+        }
+        numberOfItems={nfts.length}
       />
 
       <div className='flex w-full pt-[80px] pb-[100px]'>
@@ -325,7 +354,7 @@ export const Collection: FC<CollectionProps> = () => {
                     clearFilters={clearFilters}
                   />
                 )}
-                <CollectionNftList auctions={nftItems} />
+                <CollectionNftList auctions={nfts} />
               </div>
             )}
 

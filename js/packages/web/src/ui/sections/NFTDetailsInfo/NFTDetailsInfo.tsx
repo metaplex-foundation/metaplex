@@ -43,7 +43,7 @@ export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ auction }) => {
           <Tooltip title='Address copied'>
             <div
               className='flex items-center gap-[4px] font-500'
-              onClick={() => navigator.clipboard.writeText(mint || '')}>
+              onMouseOver={() => navigator.clipboard.writeText(mint || '')}>
               <CopyOutlined />
               {`${mint?.substring(0, 3)}...${mint?.substring(mint.length - 4)}`}
             </div>
@@ -55,7 +55,7 @@ export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ auction }) => {
           <Tooltip title='Address copied'>
             <div
               className='flex items-center gap-[4px] font-500'
-              onClick={() => navigator.clipboard.writeText(tokenAddress || '')}>
+              onMouseOver={() => navigator.clipboard.writeText(tokenAddress || '')}>
               <CopyOutlined />
               {`${tokenAddress?.substring(0, 3)}...${tokenAddress?.substring(
                 tokenAddress.length - 4
@@ -69,7 +69,7 @@ export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ auction }) => {
           <Tooltip title='Address copied'>
             <div
               className='flex items-center gap-[4px] font-500'
-              onClick={() => navigator.clipboard.writeText(owner || '')}>
+              onMouseOver={() => navigator.clipboard.writeText(owner || '')}>
               <CopyOutlined />
               {`${owner?.substring(0, 3)}...${owner?.substring(owner.length - 4)}`}
             </div>

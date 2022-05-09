@@ -74,6 +74,10 @@ export function Routes() {
               <Route path='/collection/:id' component={() => <Collection />} />
               <Route path='/nft/:id' component={() => <NFTDetails />} />
               <Route path='/nft-next/:id' component={() => <NftNext />} />
+              <Route
+                path='/launchpad-submission/:id/:name'
+                component={() => <LaunchPadSubmission />}
+              />
               <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} />
               <Route exact path='/launchpad' component={() => <Launchpad />} />
               <Route exact path='/communities' component={() => <Community />} />
