@@ -1,8 +1,10 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { TextField, TextArea, FileUpload, Button } from '@oyster/common'
 import { Select, message, DatePicker, Typography } from 'antd'
-import { addSubmission } from '../../../api'
+import { addSubmission, getSubmission, updateSubmission } from '../../../api'
+import { useParams } from 'react-router-dom'
+import moment from 'moment'
 
 export interface LaunchPadSubmissionProps {
   [x: string]: any
@@ -21,7 +23,9 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   ...restProps
 }: LaunchPadSubmissionProps) => {
   const LaunchPadSubmissionClasses = CN(`launchpad-submission`, className)
+  const { id, name } = useParams<{ id: string; name: string }>()
   const { Option } = Select
+  const [submissionId, setSubmissionId] = useState('')
   const [collectionName, setCollectionName] = useState('')
   const [creatorName, setCreatorName] = useState('')
   const [currentStage, setCurrentStage] = useState('')
@@ -32,8 +36,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
   const [discordId, setDiscordId] = useState()
   const [email, setEmail] = useState()
   const [projectDescription, setProjectDescription] = useState('')
-  const [longTermGoals, setLongTermGoals] = useState()
-  const [teamDescription, setTeamDescription] = useState()
+  const [longTermGoals, setLongTermGoals] = useState('')
+  const [teamDescription, setTeamDescription] = useState('')
   const [experience, setExperience] = useState(false)
   const [twitterLink, setTwitterLink] = useState()
   const [discordServer, setDiscordServer] = useState()
@@ -53,6 +57,42 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
     primaryCategory: '',
     secondaryCategory: '',
   })
+
+  useEffect(() => {
+    if (id && name) {
+      getSubmission(id, name).then(data => {
+        setSubmissionId(data.id)
+        setCollectionName(data.collection_name)
+        setCreatorName(data.creator_name)
+        setCurrentStage(data.current_stage)
+        setIsLegal(data.is_legal)
+        setIsDerivative(data.is_derivative)
+        setDiscordId(data.discord_id)
+        setEmail(data.email)
+        setProjectDescription(data.project_description)
+        setLongTermGoals(data.long_trm_goals)
+        setTeamDescription(data.team_description)
+        setExperience(data.experience)
+        setTwitterLink(data.twitter_link)
+        setDiscordServer(data.discord_server)
+        setInstagramLink(data.instagram_link)
+        setLinkedInProfile(data.linked_in_profile)
+        setWebsiteLink(data.website_link)
+        setOtherLink(data.other_link)
+        setExpectedMintDate(data.exp_mint_date)
+        setNumberOfItemsExpected(data.exp_item_count)
+        setIsTeamDox(data.is_team_dox)
+        setMintPrice(data.mint_price.toString())
+        setMarketingPackage(data.marketing_package)
+        setAnything(data.other)
+        setCreatorPublicKey(data.creator_public_key)
+        setCategories({
+          primaryCategory: data.categories.primaryCategory,
+          secondaryCategory: data.categories.secondaryCategory,
+        })
+      })
+    }
+  }, [])
 
   function handleChange(value: any, option?: any) {
     if (option === 'stage' && value === 'completed') {
@@ -115,6 +155,21 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
         creatorPublicKey && creatorPublicKey.trim().length > 0 ? creatorPublicKey : null,
       art_work: artWorkExample !== undefined ? artWorkExample : null,
       collection_banner: collectionBanner !== undefined ? collectionBanner : null,
+      description:
+        projectDescription && projectDescription.trim().length > 0 ? projectDescription : null,
+      expectedDate:
+        expectedMintDate && expectedMintDate.trim().length > 0 ? expectedMintDate : null,
+      mintPrice: mintPrice && mintPrice.trim().length > 0 ? mintPrice : null,
+    }
+    formDataValidate = Object.assign({}, data)
+    return true
+  }
+
+  function updateFormValidate() {
+    const data = {
+      collection_name: collectionName && collectionName.trim().length > 0 ? collectionName : null,
+      creator_public_key:
+        creatorPublicKey && creatorPublicKey.trim().length > 0 ? creatorPublicKey : null,
       description:
         projectDescription && projectDescription.trim().length > 0 ? projectDescription : null,
       expectedDate:
@@ -188,6 +243,76 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
     }
   }
 
+  function handleFormUpdate(event: any) {
+    event.preventDefault()
+
+    const isFormValid = updateFormValidate()
+
+    if (isFormValid) {
+      const data = Object.values(formDataValidate).map(key => {
+        console.log(key !== null)
+        return key !== null
+      })
+
+      if (!data.includes(false)) {
+        setIsFormNotValid(false)
+        const formData = new FormData()
+
+        const userDetails = {
+          collection_name: collectionName,
+          creator_name: creatorName,
+          creator_public_key: creatorPublicKey,
+          current_stage: currentStage,
+          is_legal: isLegal,
+          is_derivative: isDerivative,
+          discord_id: discordId,
+          email: email,
+          project_description: projectDescription,
+          long_trm_goals: longTermGoals,
+          team_description: teamDescription,
+          experience: experience,
+          twitter_link: twitterLink,
+          discord_server: discordServer,
+          instagram_link: instagramLink,
+          linked_in_profile: linkedInProfile,
+          website_link: websiteLink,
+          other_link: otherLink,
+          exp_mint_date: expectedMintDate,
+          exp_item_count: numberOfItemsExpected,
+          is_team_dox: isTeamDox,
+          mint_price: mintPrice,
+          marketing_package: marketingPackage,
+          other: anything,
+          categories: categories,
+        }
+
+        if (artWorkExample !== undefined) {
+          formData.append('collection_image', artWorkExample)
+        }
+
+        if (collectionBanner !== undefined) {
+          formData.append('collection_banner', collectionBanner)
+        }
+
+        formData.append('userDetails', JSON.stringify(userDetails))
+
+        updateSubmission(submissionId, formData)
+          .then(() => {
+            alert(
+              'Your launchpad submission successfully updated. Click Okay to navigate to the Admin page'
+            )
+            window.location.href = '/#/admin'
+          })
+          .catch(() => {
+            alert('There was an error while saving your submission. Please try again.')
+          })
+      } else {
+        setIsFormNotValid(true)
+        message.warning('Please check the input fields')
+      }
+    }
+  }
+
   return (
     <div className={LaunchPadSubmissionClasses} {...restProps}>
       <div className='container pt-[80px] pb-[100px]'>
@@ -206,6 +331,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full'
                 placeholder='Enter Collection name'
                 onChange={event => setCollectionName(event.target.value)}
+                value={collectionName}
               />
               {isFormNotValid && collectionName.trim().length <= 0 ? (
                 <Text type='danger' style={{ fontSize: 13 }}>
@@ -223,6 +349,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='Enter Collection name'
               onChange={event => setCreatorName(event.target.value)}
+              value={creatorName}
             />
           </div>
 
@@ -233,6 +360,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full'
                 placeholder='Enter Collection name'
                 onChange={event => setCreatorPublicKey(event.target.value)}
+                value={creatorPublicKey}
               />
               {isFormNotValid && creatorPublicKey.trim().length <= 0 ? (
                 <Text type='danger' style={{ fontSize: 13 }}>
@@ -251,7 +379,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an option'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'stage')}>
+                onChange={value => handleChange(value, 'stage')}
+                value={currentStage}>
                 <Option value='completed'>Completed</Option>
                 <Option value='partially-completed'>Partially Completed</Option>
               </Select>
@@ -276,7 +405,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                   }
                 }}
               />
-              {isFormNotValid && artWorkExample === undefined ? (
+              {!id && !name && isFormNotValid && artWorkExample === undefined ? (
                 <Text type='danger' style={{ fontSize: 13 }}>
                   Artwork is required
                 </Text>
@@ -302,7 +431,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                   }
                 }}
               />
-              {isFormNotValid && collectionBanner === undefined ? (
+              {!id && !name && isFormNotValid && collectionBanner === undefined ? (
                 <Text type='danger' style={{ fontSize: 13 }}>
                   Collection banner is required
                 </Text>
@@ -317,7 +446,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an answer'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'primary_category')}>
+                onChange={value => handleChange(value, 'primary_category')}
+                value={categories.primaryCategory}>
                 <Option value='Collectibles'>Collectibles</Option>
                 <Option value='Charity Focused'>Charity Focused</Option>
                 <Option value='Gaming'>Gaming</Option>
@@ -333,7 +463,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an answer'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'secondary_category')}>
+                onChange={value => handleChange(value, 'secondary_category')}
+                value={categories.secondaryCategory}>
                 <Option value='Collectibles'>Collectibles</Option>
                 <Option value='Charity Focused'>Charity Focused</Option>
                 <Option value='Gaming'>Gaming</Option>
@@ -349,11 +480,12 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             </label>
             <div className='flex w-full'>
               <Select
-                defaultValue='no'
+                defaultValue='yes'
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'legal')}>
+                onChange={value => handleChange(value, 'legal')}
+                value={isLegal ? 'yes' : 'no'}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -370,7 +502,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-derivative')}>
+                onChange={value => handleChange(value, 'is-derivative')}
+                value={isDerivative ? 'yes' : 'no'}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -385,6 +518,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='john'
               onChange={event => setDiscordId(event.target.value)}
+              value={discordId}
             />
           </div>
 
@@ -394,6 +528,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='john@example.com'
               onChange={event => setEmail(event.target.value)}
+              value={email}
             />
           </div>
 
@@ -406,6 +541,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full'
                 placeholder='Description'
                 onChange={event => setProjectDescription(event.target.value)}
+                value={projectDescription}
               />
               {isFormNotValid && projectDescription.trim().length <= 0 ? (
                 <Text type='danger' style={{ fontSize: 13 }}>
@@ -423,6 +559,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='Description'
               onChange={event => setLongTermGoals(event.target.value)}
+              value={longTermGoals}
             />
           </div>
 
@@ -432,6 +569,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='Description'
               onChange={event => setTeamDescription(event.target.value)}
+              value={teamDescription}
             />
           </div>
 
@@ -444,7 +582,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an answer'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'experience')}>
+                onChange={value => handleChange(value, 'experience')}
+                value={experience ? 'yes' : 'no'}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -457,6 +596,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='https://'
               onChange={event => setTwitterLink(event.target.value)}
+              value={twitterLink}
             />
           </div>
 
@@ -466,6 +606,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='https://'
               onChange={event => setDiscordServer(event.target.value)}
+              value={discordServer}
             />
           </div>
 
@@ -475,6 +616,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='https://'
               onChange={event => setInstagramLink(event.target.value)}
+              value={instagramLink}
             />
           </div>
 
@@ -484,6 +626,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='https://'
               onChange={event => setLinkedInProfile(event.target.value)}
+              value={linkedInProfile}
             />
           </div>
 
@@ -493,6 +636,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='https://'
               onChange={event => setWebsiteLink(event.target.value)}
+              value={websiteLink}
             />
           </div>
 
@@ -502,6 +646,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='https://'
               onChange={event => setOtherLink(event.target.value)}
+              value={otherLink}
             />
           </div>
 
@@ -513,6 +658,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               <DatePicker
                 className='h-[46px] w-full rounded-[4px] !border-N-200 text-gray-900 shadow-none duration-[50ms] ease-in-out focus-within:!border-B-400 focus-within:!shadow-[0px_0px_0px_1px_#2492F6]'
                 onChange={handleDatePicker}
+                value={expectedMintDate ? moment(expectedMintDate) : moment()}
               />
             </div>
             {isFormNotValid && expectedMintDate.trim().length <= 0 ? (
@@ -530,6 +676,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='No of items #'
               onChange={event => setNumberOfItemsExpected(event.target.value)}
+              value={numberOfItemsExpected}
             />
           </div>
 
@@ -544,7 +691,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'is-doxed')}>
+                onChange={value => handleChange(value, 'is-doxed')}
+                value={isTeamDox ? 'yes' : 'no'}>
                 <Option value='yes'>Yes</Option>
                 <Option value='no'>No</Option>
               </Select>
@@ -557,6 +705,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='# SOL'
               onChange={event => setMintPrice(event.target.value)}
+              value={mintPrice}
             />
             {isFormNotValid && mintPrice.trim().length <= 0 ? (
               <Text type='danger' style={{ fontSize: 13 }}>
@@ -573,7 +722,8 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
                 className='w-full rounded-[4px] border-N-500 text-gray-900 placeholder:text-N-300'
                 placeholder='Select an option'
                 dropdownClassName=''
-                onChange={value => handleChange(value, 'package')}>
+                onChange={value => handleChange(value, 'package')}
+                value={marketingPackage}>
                 <Option value='gold'>Gold</Option>
                 <Option value='silver'>Silver</Option>
                 <Option value='basic'>Basic</Option>
@@ -587,14 +737,23 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
               className='w-full'
               placeholder='Message'
               onChange={event => setAnything(event.target.value)}
+              value={anything}
             />
           </div>
 
-          <div className='flex w-full flex-col gap-[16px]'>
-            <Button size='lg' onClick={handleFormSubmit}>
-              Submit Project
-            </Button>
-          </div>
+          {id && name ? (
+            <div className='flex w-full flex-col gap-[16px]'>
+              <Button size='lg' onClick={handleFormUpdate}>
+                Update Submission
+              </Button>
+            </div>
+          ) : (
+            <div className='flex w-full flex-col gap-[16px]'>
+              <Button size='lg' onClick={handleFormSubmit}>
+                Submit Project
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
