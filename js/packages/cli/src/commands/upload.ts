@@ -487,10 +487,8 @@ export function getAssetManifest(dirname: string, assetKey: string): Manifest {
   const manifest: Manifest = JSON.parse(
     fs.readFileSync(manifestPath).toString(),
   );
-  if (!('symbol' in manifest)) {
-    throw new TypeError(
-      `Invalid asset manifest, field 'symbol' must be defined.`,
-    );
+  if (manifest.symbol === undefined) {
+    manifest.symbol = '';
   } else if (typeof manifest.symbol !== 'string') {
     throw new TypeError(
       `Invalid asset manifest, field 'symbol' must be a string.`,
