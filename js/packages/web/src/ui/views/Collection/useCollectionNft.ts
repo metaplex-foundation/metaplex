@@ -13,11 +13,16 @@ export interface Attribute {
   values: Array<any>
 }
 
+// interface FilterFunctionInterface {
+//   callBackFun: (items: NFTItemInterface) => void
+// }
+
 const useCollectionNFT = (id: string) => {
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const { getData } = useExtendedCollection()
   const [nftItems, setNFTItems] = useState<NFTItemInterface[]>([])
   const [attributes, setAttributes] = useState<Attribute[]>([])
+  const [nftAuctions, setNFTAuctions] = useState<NFTItemInterface[]>([])
 
   useEffect(() => {
     if (auctions) {
@@ -31,13 +36,21 @@ const useCollectionNFT = (id: string) => {
             itemsArray.push({ ...auction, offChainData: res })
           })
         })
-      setNFTItems(itemsArray)
+      console.log('itemsArray', itemsArray)
+
+      setNFTAuctions(itemsArray)
     }
   }, [auctions.length])
 
   useEffect(() => {
+    if (nftAuctions) {
+      setNFTItems(nftAuctions)
+    }
+  }, [nftAuctions.length])
+
+  useEffect(() => {
     const aT: Attribute[] = []
-    nftItems.forEach(item => {
+    nftAuctions.forEach(item => {
       if (item.offChainData?.attributes) {
         item.offChainData.attributes.forEach(attribute => {
           if (attribute.trait_type) {
@@ -59,8 +72,13 @@ const useCollectionNFT = (id: string) => {
       }
     })
     setAttributes(aT)
-  }, [nftItems.length])
+  }, [nftAuctions.length])
 
-  return { nftItems, attributes }
+  const filterFunction = callBackFun => {
+    setNFTItems([])
+    setNFTItems(() => (callBackFun(nftAuctions) ? [...callBackFun(nftAuctions)] : []))
+  }
+
+  return { nftItems, attributes, filterFunction }
 }
 export default useCollectionNFT

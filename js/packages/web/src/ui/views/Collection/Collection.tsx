@@ -24,7 +24,7 @@ import { BN } from 'bn.js'
 import { useNFTCollections } from '../../../hooks/useCollections'
 import { useAllSplPrices, useSolPrice } from '../../../contexts'
 import { useTokenList } from '../../../contexts/tokenList'
-import useCollectionNFT from './useCollectionNft'
+import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
 const RANGE_FILTERS = 'Range'
@@ -71,7 +71,7 @@ export const Collection: FC<CollectionProps> = () => {
   const [data, setData] = useState<any>(null)
 
   const { id }: ParamsInterface = useParams()
-  const { nftItems, attributes } = useCollectionNFT(id)
+  const { nftItems, attributes, filterFunction } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
 
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
@@ -129,13 +129,22 @@ export const Collection: FC<CollectionProps> = () => {
   //   }
   // }, [auctions, filters, searchText])
 
+  useEffect(() => {
+    console.log('searchText', searchText)
+    filterFunction((items: NFTItemInterface[]) => {
+      console.log('items1', items)
+      return items.filter(filterFun)
+    })
+  }, [searchText])
+
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
       return val === SORT_LOW_TO_HIGH ? a.amount - b.amount : b.amount - a.amount
     })
     // setNftItems([])
+    filterFunction([])
     setTimeout(() => {
-      // setNftItems(() => [...dataArray])
+      filterFunction(() => [...dataArray])
     }, 1)
   }
 
@@ -175,6 +184,8 @@ export const Collection: FC<CollectionProps> = () => {
   }
 
   const filterFun = (auction: any) => {
+    // console.log('filters', filters)
+
     if (!filters.length && !searchText) {
       return true
     }
@@ -182,20 +193,27 @@ export const Collection: FC<CollectionProps> = () => {
     let hasAttr: boolean = false
 
     // Attribute filter
-    const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
-    if (attrFilters.length) {
-      auction.meta.attributes.forEach(i => {
-        const a =
-          filters.filter(
-            ({ type, text }) =>
-              type.trim() === i.trait_type.trim() && text.trim() === i.value.trim()
-          ) || []
+    // const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
+    // if (attrFilters.length) {
+    //   auction.meta.attributes.forEach(i => {
+    //     const a =
+    //       filters.filter(
+    //         ({ type, text }) =>
+    //           type.trim() === i.trait_type.trim() && text.trim() === i.value.trim()
+    //       ) || []
 
-        if (a.length) {
-          hasAttr = true
-        }
-      })
-    }
+    //     if (a.length) {
+    //       hasAttr = true
+    //     }
+    //   })
+    // }
+
+    return (
+      searchText &&
+      auction.offChainData &&
+      auction.offChainData.name &&
+      auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase())
+    )
 
     // Price Range filter
     const rangeFilters = filters.find(({ category }) => category === RANGE_FILTERS) || null
@@ -208,9 +226,9 @@ export const Collection: FC<CollectionProps> = () => {
         rangeFilters?.max >= Number(auction.usdAmount)) ||
       hasAttr ||
       (searchText &&
-        auction.meta &&
-        auction.meta.name &&
-        auction.meta.name.toLowerCase().includes(searchText.toLowerCase()))
+        auction.offChainData &&
+        auction.offChainData.name &&
+        auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase()))
     )
   }
 
