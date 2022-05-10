@@ -49,12 +49,8 @@ export const AdminView = () => {
       setStoreForOwner(wallet.publicKey.toBase58())
     }
 
-    if (
-      whitelistedCreatorsByCreator[storeOwnerAddress] &&
-      whitelistedCreatorsByCreator[storeOwnerAddress].info &&
-      whitelistedCreatorsByCreator[storeOwnerAddress].info.address
-    ) {
-      if (whitelistedCreatorsByCreator[storeOwnerAddress].info.address === storeOwnerAddress) {
+    if (wallet && wallet.publicKey) {
+      if (wallet.publicKey.toBase58() === storeOwnerAddress) {
         setIsStoreOwner(true)
       } else {
         setIsStoreOwner(false)
