@@ -7,8 +7,6 @@ import {
   Logo,
   contexts,
   useQuerySearch,
-  useMeta,
-  useStore,
   Dropdown,
   DropDownBody,
   DropDownToggle,
@@ -35,31 +33,19 @@ export const Header: FC<HeaderProps> = () => {
   const pathname = usePathname()
   const { endpoint } = useConnectionConfig()
   const routerSearchParams = useQuerySearch()
-  const [isStoreOwner, setIsStoreOwner] = useState<boolean>()
-  const { storeAddress } = useStore()
+  const [isStoreOwner, setIsStoreOwner] = useState<boolean>(false)
   const { publicKey } = useWallet()
-  const { store, whitelistedCreatorsByCreator } = useMeta()
-  const pubKey = publicKey?.toBase58() || ''
-  const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
+  const storeOwnerAddress = process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS || ''
 
   useEffect(() => {
-    if (
-      whitelistedCreatorsByCreator[pubKey] &&
-      whitelistedCreatorsByCreator[pubKey].info &&
-      whitelistedCreatorsByCreator[pubKey].info.address
-    ) {
-      console.log(
-        'Inside header condition',
-        whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress
-      )
-      if (whitelistedCreatorsByCreator[pubKey].info.address === storeOwnerAddress) {
+    if (publicKey) {
+      if (publicKey.toBase58() === storeOwnerAddress) {
         setIsStoreOwner(true)
       } else {
         setIsStoreOwner(false)
       }
-      setIsStoreOwner(true)
     }
-  }, [store, storeAddress, publicKey])
+  })
 
   return (
     <div
@@ -163,21 +149,20 @@ export const Header: FC<HeaderProps> = () => {
                             </div>
                           </div>
 
-                          {isStoreOwner ||
-                            (1 === 1 && (
-                              <div className='mt-3 flex w-full flex-col gap-[8px]'>
-                                <Link to={'/admin'}>
-                                  <Button
-                                    appearance='ghost'
-                                    view='outline'
-                                    className='w-full'
-                                    isRounded={false}
-                                    onClick={() => setIsOpen(false)}>
-                                    Admin
-                                  </Button>
-                                </Link>
-                              </div>
-                            ))}
+                          {isStoreOwner && (
+                            <div className='mt-3 flex w-full flex-col gap-[8px]'>
+                              <Link to={'/admin'}>
+                                <Button
+                                  appearance='ghost'
+                                  view='outline'
+                                  className='w-full'
+                                  isRounded={false}
+                                  onClick={() => setIsOpen(false)}>
+                                  Admin
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
                         </DropDownBody>
                       )}
                     </>
