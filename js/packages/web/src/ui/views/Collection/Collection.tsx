@@ -7,23 +7,26 @@ import { CollectionNftList } from '../../sections/CollectionNftList'
 import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
 import { useParams } from 'react-router-dom'
-import { useExtendedArt, useExtendedCollection } from '../../../hooks'
-import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
-import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
+import {
+  useExtendedArt,
+  // useExtendedCollection
+} from '../../../hooks'
+// import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
+// import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 import {
   cache,
-  fromLamports,
+  // fromLamports,
   MintParser,
-  PriceFloorType,
-  pubkeyToString,
+  // PriceFloorType,
+  // pubkeyToString,
   useConnection,
-  WRAPPED_SOL_MINT,
+  // WRAPPED_SOL_MINT,
 } from '@oyster/common'
 import { PublicKey } from '@solana/web3.js'
-import { BN } from 'bn.js'
+// import { BN } from 'bn.js'
 import { useNFTCollections } from '../../../hooks/useCollections'
-import { useAllSplPrices, useSolPrice } from '../../../contexts'
-import { useTokenList } from '../../../contexts/tokenList'
+// import { useAllSplPrices, useSolPrice } from '../../../contexts'
+// import { useTokenList } from '../../../contexts/tokenList'
 import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
 import { getCollectionHeaderInfo } from '../../../api'
 
@@ -74,7 +77,7 @@ export const Collection: FC<CollectionProps> = () => {
   const { nftItems, attributes, filterFunction } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
 
-  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+  // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
   const selectedCollection = liveCollections.find(({ mint }) => mint === id) || null
 
@@ -129,13 +132,13 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }, [colData])
 
-  const { getData } = useExtendedCollection()
+  // const { getData } = useExtendedCollection()
 
-  const tokenList = useTokenList()
-  const allSplPrices = useAllSplPrices()
+  // const tokenList = useTokenList()
+  // const allSplPrices = useAllSplPrices()
 
-  const getMintData = useMintD()
-  const solPrice = useSolPrice()
+  // const getMintData = useMintD()
+  // const solPrice = useSolPrice()
 
   // useEffect(() => {
   //   if (auctions?.length) {
@@ -173,40 +176,40 @@ export const Collection: FC<CollectionProps> = () => {
     }, 1)
   }
 
-  const filteredAuctions = async (withFilter: boolean) => {
-    let data = auctions.filter(
-      auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
-    )
+  // const filteredAuctions = async (withFilter: boolean) => {
+  //   let data = auctions.filter(
+  //     auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
+  //   )
 
-    if (!data.length && !pubkey) {
-      const allItemWithData = await Promise.all(
-        auctions.map(async auction => {
-          const gData = await getData(auction.thumbnail.metadata.pubkey)
-          return { ...gData, _auction: auction }
-        })
-      )
+  //   if (!data.length && !pubkey) {
+  //     const allItemWithData = await Promise.all(
+  //       auctions.map(async auction => {
+  //         const gData = await getData(auction.thumbnail.metadata.pubkey)
+  //         return { ...gData, _auction: auction }
+  //       })
+  //     )
 
-      data = allItemWithData
-        .filter(i => {
-          return i.collection?.name === id
-        })
-        .map(({ _auction }) => _auction)
-    }
+  //     data = allItemWithData
+  //       .filter(i => {
+  //         return i.collection?.name === id
+  //       })
+  //       .map(({ _auction }) => _auction)
+  //   }
 
-    const all = await Promise.all(
-      data.map(async auction => await getData(auction.thumbnail.metadata.pubkey))
-    )
+  //   const all = await Promise.all(
+  //     data.map(async auction => await getData(auction.thumbnail.metadata.pubkey))
+  //   )
 
-    const allItems = data.map(i => {
-      const meta = (all || []).find(({ pubkey }) => pubkey === i.thumbnail.metadata.pubkey) || null
-      return { ...bindAmount(i), meta }
-    })
+  //   const allItems = data.map(i => {
+  //     const meta = (all || []).find(({ pubkey }) => pubkey === i.thumbnail.metadata.pubkey) || null
+  //     return { ...bindAmount(i), meta }
+  //   })
 
-    if (withFilter) {
-      return allItems.filter(filterFun)
-    }
-    return allItems
-  }
+  //   if (withFilter) {
+  //     return allItems.filter(filterFun)
+  //   }
+  //   return allItems
+  // }
 
   const filterFun = (auction: any) => {
     // console.log('filters', filters)
@@ -215,7 +218,7 @@ export const Collection: FC<CollectionProps> = () => {
       return true
     }
 
-    let hasAttr: boolean = false
+    // let hasAttr: boolean = false
 
     // Attribute filter
     // const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
@@ -241,41 +244,42 @@ export const Collection: FC<CollectionProps> = () => {
     )
 
     // Price Range filter
-    const rangeFilters = filters.find(({ category }) => category === RANGE_FILTERS) || null
+    // const rangeFilters = filters.find(({ category }) => category === RANGE_FILTERS) || null
 
-    return (
-      (rangeFilters &&
-        (rangeFilters.max || rangeFilters.max === 0) &&
-        (rangeFilters.min || rangeFilters.min === 0) &&
-        rangeFilters?.min <= Number(auction.usdAmount) &&
-        rangeFilters?.max >= Number(auction.usdAmount)) ||
-      hasAttr ||
-      (searchText &&
-        auction.offChainData &&
-        auction.offChainData.name &&
-        auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase()))
-    )
+    // return (
+    //   (rangeFilters &&
+    //     rangeFilters &&
+    //     (rangeFilters.max || rangeFilters.max === 0) &&
+    //     (rangeFilters.min || rangeFilters.min === 0) &&
+    //     rangeFilters?.min <= Number(auction.usdAmount) &&
+    //     rangeFilters?.max >= Number(auction.usdAmount)) ||
+    //   hasAttr ||
+    //   (searchText &&
+    //     auction.offChainData &&
+    //     auction.offChainData.name &&
+    //     auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase()))
+    // )
   }
 
-  const bindAmount = auctionView => {
-    const dx: any = getMintData(auctionView.auction.info.tokenMint)
-    const participationFixedPrice = auctionView.auctionManager.participationConfig?.fixedPrice || 0
-    const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0))
-    const priceFloor =
-      auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
-        ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
-        : 0
-    const amount = fromLamports(participationOnly ? participationFixedPrice : priceFloor, dx.info)
+  // const bindAmount = auctionView => {
+  //   const dx: any = getMintData(auctionView.auction.info.tokenMint)
+  //   const participationFixedPrice = auctionView.auctionManager.participationConfig?.fixedPrice || 0
+  //   const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0))
+  //   const priceFloor =
+  //     auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
+  //       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
+  //       : 0
+  //   const amount = fromLamports(participationOnly ? participationFixedPrice : priceFloor, dx.info)
 
-    const tokenInfo = tokenList.subscribedTokens.filter(
-      m => m.address == auctionView.auction.info.tokenMint
-    )[0]
+  //   const tokenInfo = tokenList.subscribedTokens.filter(
+  //     m => m.address == auctionView.auction.info.tokenMint
+  //   )[0]
 
-    const altSplPrice = allSplPrices.filter(a => a.tokenMint == tokenInfo?.address)[0]?.tokenPrice
-    const tokenPrice = tokenInfo?.address == WRAPPED_SOL_MINT.toBase58() ? solPrice : altSplPrice
+  //   const altSplPrice = allSplPrices.filter(a => a.tokenMint == tokenInfo?.address)[0]?.tokenPrice
+  //   const tokenPrice = tokenInfo?.address == WRAPPED_SOL_MINT.toBase58() ? solPrice : altSplPrice
 
-    return { ...auctionView, amount, usdAmount: tokenPrice * amount }
-  }
+  //   return { ...auctionView, amount, usdAmount: tokenPrice * amount }
+  // }
 
   const onChangeRange = (data: PriceRangeInterface) => {
     setPriceRange(data)
