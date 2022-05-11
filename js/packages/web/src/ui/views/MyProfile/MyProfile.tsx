@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { Button, Image, Tag } from '@oyster/common'
 import {
@@ -9,43 +9,99 @@ import {
   ProfileSettings,
 } from '../../sections'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { getProfile } from '../../../api'
+import { message } from 'antd'
 
 export interface MyProfileProps {
   [x: string]: any
 }
 
+export interface IProfile {
+  publicKey: string
+  userName: string
+  email: string
+  twitterLink: string
+  discordLink: string
+  telegram: string
+  bio: string
+  image: string
+}
+
 export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const MyProfileClasses = CN(`my-profile w-full`, className)
-  const [activeTab, setActiveTab] = useState<any>('collectibles')
-  const [heading, setHeading] = useState<any>('My Collectibles')
+  const [activeTab, setActiveTab] = useState<any>('collections')
+  const [heading, setHeading] = useState<any>('My Collections')
   const [tag, setTag] = useState<any>(null)
+  const [profile, setProfile] = useState<IProfile>()
+  const [isProfileUpdated, setIsProfilUpdated] = useState<boolean>(false)
   const { publicKey } = useWallet()
-
-  console.log('publicKey', publicKey?.toBase58())
 
   const address = `${publicKey?.toBase58()?.substring(0, 13)}...${publicKey
     ?.toBase58()
     ?.substring(publicKey?.toBase58().length - 5)}`
+
+  useEffect(() => {
+    if (publicKey) {
+      getProfile(publicKey.toBase58())
+        .then(res => {
+          const profile: IProfile = {
+            publicKey: res.data.public_key,
+            userName: res.data.user_name,
+            email: res.data.email,
+            twitterLink: res.data.twitter_link,
+            discordLink: res.data.discord_link,
+            telegram: res.data.telegram,
+            bio: res.data.bio,
+            image: res.data.image,
+          }
+          setProfile(profile)
+        })
+        .catch(() => {
+          message.error('Error with get profile information')
+        })
+    }
+  }, [])
+
+  if (isProfileUpdated && publicKey) {
+    getProfile(publicKey.toBase58())
+      .then(res => {
+        const profile: IProfile = {
+          publicKey: res.data.public_key,
+          userName: res.data.user_name,
+          email: res.data.email,
+          twitterLink: res.data.twitter_link,
+          discordLink: res.data.discord_link,
+          telegram: res.data.telegram,
+          bio: res.data.bio,
+          image: res.data.image,
+        }
+        setProfile(profile)
+        setIsProfilUpdated(false)
+      })
+      .catch(() => {
+        message.error('Error with get profile information')
+      })
+  }
 
   return (
     <div className={MyProfileClasses} {...restProps}>
       <div className='container flex gap-[48px] pt-[40px] pb-[100px]'>
         <div className='sidebar w-[260px] flex-shrink-0'>
           <div className='flex w-full overflow-hidden rounded-[12px]'>
-            <Image src='/img/profile-pic.png' />
+            <Image src={profile?.image ? profile.image : '/img/profile-pic.png'} />
           </div>
 
           <div className='flex flex-col gap-[12px] pt-[12px]'>
             <Button
               isRounded={false}
-              appearance={activeTab === 'collectibles' ? 'neutral' : 'ghost'}
-              view={activeTab === 'collectibles' ? 'solid' : 'outline'}
+              appearance={activeTab === 'collections' ? 'neutral' : 'ghost'}
+              view={activeTab === 'collections' ? 'solid' : 'outline'}
               className='w-full text-left'
               onClick={() => {
-                setActiveTab('collectibles')
-                setHeading('My Collectibles')
+                setActiveTab('collections')
+                setHeading('My Collections')
               }}>
-              My Collectibles
+              My Collections
             </Button>
 
             <Button
@@ -117,11 +173,13 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
           </div>
 
           <div className='flex w-full flex-col'>
-            {activeTab === 'collectibles' && <ProfileCollectiblesList setTag={setTag} />}
+            {activeTab === 'collections' && <ProfileCollectiblesList setTag={setTag} />}
             {activeTab === 'listings' && <ProfileListings setTag={setTag} />}
             {activeTab === 'offers-made' && <ProfileOffersMade />}
             {activeTab === 'offers-received' && <ProfileOffersReceived />}
-            {activeTab === 'settings' && <ProfileSettings />}
+            {activeTab === 'settings' && (
+              <ProfileSettings profile={profile} profileupdate={setIsProfilUpdated} />
+            )}
           </div>
         </div>
       </div>
