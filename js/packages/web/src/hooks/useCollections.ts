@@ -105,9 +105,16 @@ export const useNFTCollections = () => {
           const metadata = metadataByCollection[collection]
 
           if (!metadata) {
+            console.log('collection', collection)
+
+            console.log(
+              'auction.thumbnail.metadata.info.mint->',
+              auction.thumbnail.metadata.info.mint
+            )
+
             collections.push({
               pubkey: auction.thumbnail.metadata.pubkey,
-              mint: auction.thumbnail.metadata.info.mint,
+              mint: collection,
               //@ts-ignore
               data: auction.thumbnail.metadata.info,
               state: auction.state,

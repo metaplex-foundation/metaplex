@@ -14,9 +14,9 @@ export const CollectionNftList: FC<CollectionNftListProps> = ({ auctions }) => {
   return (
     <>
       <div className='collection-nft-list grid grid-cols-4 gap-[28px]'>
-        {auctions.map((auction, key) => (
+        {auctions.map(auction => (
           <NFTCardWrapper
-            key={key}
+            key={auction.auction.pubkey}
             auction={auction}
             link={`/nft/${auction.auction.pubkey}`}
             onClickQuickBuy={() => setShowQuickBuy(true)}
