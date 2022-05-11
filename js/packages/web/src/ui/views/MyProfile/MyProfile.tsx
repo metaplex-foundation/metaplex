@@ -9,6 +9,7 @@ import {
   ProfileSettings,
 } from '../../sections'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { useParams } from 'react-router-dom'
 
 export interface MyProfileProps {
   [x: string]: any
@@ -20,12 +21,13 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const [heading, setHeading] = useState<any>('My Collectibles')
   const [tag, setTag] = useState<any>(null)
   const { publicKey } = useWallet()
+  const { id } = useParams<{ id: string }>()
 
-  console.log('publicKey', publicKey?.toBase58())
+  const userPubKey = id || publicKey?.toBase58()
 
-  const address = `${publicKey?.toBase58()?.substring(0, 13)}...${publicKey
-    ?.toBase58()
-    ?.substring(publicKey?.toBase58().length - 5)}`
+  const address = `${userPubKey?.substring(0, 13)}...${userPubKey?.substring(
+    userPubKey.length - 5
+  )}`
 
   return (
     <div className={MyProfileClasses} {...restProps}>

@@ -81,7 +81,7 @@ export function Routes() {
               <Route path='/launchpad-submission' component={() => <LaunchPadSubmission />} />
               <Route exact path='/launchpad' component={() => <Launchpad />} />
               <Route exact path='/communities' component={() => <Community />} />
-              <Route exact path='/profile' component={() => <MyProfile />} />
+              <Route exact path='/profile/:id?' component={() => <MyProfile />} />
               <Route exact path='/launchpad/:id' component={() => <LaunchpadDetails />} />
               <Route path='/donations' component={() => <Donations />} />
 

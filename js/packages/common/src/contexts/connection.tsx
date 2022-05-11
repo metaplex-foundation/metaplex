@@ -40,7 +40,7 @@ export const ENDPOINTS: Array<Endpoint> = [
   {
     name: 'mainnet-beta',
     label: 'mainnet-beta',
-    url: 'https://solana-api.projectserum.com', // clusterApiUrl('mainnet-beta'), //
+    url: 'https://api.metaplex.solana.com', // clusterApiUrl('mainnet-beta'), //
     chainId: ChainId.MainnetBeta,
   },
   {

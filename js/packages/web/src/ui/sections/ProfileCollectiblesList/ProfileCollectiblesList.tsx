@@ -1,9 +1,9 @@
 import React, { FC, useEffect } from 'react'
-import { NFTCard, pubkeyToString } from '@oyster/common'
+import { NFTCard, pubkeyToString, toPublicKey } from '@oyster/common'
 import { useItems } from '../../../views/artworks/hooks/useItems'
 import { ArtworkViewState, Item } from '../../../views/artworks/types'
 import { useExtendedArt } from '../../../hooks'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 interface ProfileCollectiblesListProps {
   setTag: (tag: string) => void
@@ -28,7 +28,8 @@ const NFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
 }
 
 export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({ setTag }) => {
-  const userItems = useItems({ activeKey: ArtworkViewState.Owned })
+  const { id } = useParams<{ id: string }>()
+  const userItems = useItems({ activeKey: ArtworkViewState.Owned, userPublicKey: toPublicKey(id) })
 
   useEffect(() => {
     if (userItems) {
