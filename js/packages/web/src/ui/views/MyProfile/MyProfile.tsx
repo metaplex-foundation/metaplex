@@ -87,6 +87,8 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
       })
   }
 
+  console.log('profile', profile)
+
   return (
     <div className={MyProfileClasses} {...restProps}>
       <div className='container flex gap-[48px] pt-[40px] pb-[100px]'>
@@ -182,7 +184,10 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
             {activeTab === 'offers-made' && <ProfileOffersMade />}
             {activeTab === 'offers-received' && <ProfileOffersReceived />}
             {activeTab === 'settings' && (
-              <ProfileSettings profile={profile} profileupdate={setIsProfilUpdated} />
+              <ProfileSettings
+                profile={profile ?? { publicKey: publicKey?.toBase58() }}
+                profileupdate={setIsProfilUpdated}
+              />
             )}
           </div>
         </div>
