@@ -37,6 +37,8 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
         )
       : []
 
+  // console.log('allAuctions', allAuctions)
+
   const getNextPubKey = () => {
     const currentPubKey = id
     const currentIndex = allAuctions
@@ -64,6 +66,8 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
   }
   const nextPubKey = getNextPubKey()
   const previousPubKey = getPreviousPubKey()
+
+  console.log('nextPubKey', !!nextPubKey)
 
   const next = () => {
     if (nextPubKey) {
@@ -113,7 +117,7 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
 
         <div className='flex gap-[8px]'>
           <Button
-            disabled={previousPubKey || true}
+            disabled={!previousPubKey}
             onClick={previous}
             appearance='ghost'
             view='outline'
@@ -122,7 +126,7 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
             Previous NFT
           </Button>
           <Button
-            disabled={nextPubKey || true}
+            disabled={!nextPubKey}
             onClick={next}
             appearance='ghost'
             view='outline'
