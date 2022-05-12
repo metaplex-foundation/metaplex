@@ -58,6 +58,7 @@ const LiveNFTCard: FC<LiveNFTCardProps> = ({ collection, ...rest }) => {
       avatar={user?.image ?? ''}
       avatarLabel={avatarLabel}
       image={data?.image ?? ''}
+      onClickButton={() => {}}
       // remainingTime={`${remainingHours}h : ${remainingMinutes}m : ${remainingSeconds}s`}
       // price={!priceNaN ? `Ⓞ ${solVal} SOL` : ''}
       // dollarValue={usdValFormatted}
