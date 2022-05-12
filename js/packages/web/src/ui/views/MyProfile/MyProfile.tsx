@@ -11,6 +11,7 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react'
 import { getProfile } from '../../../api'
 import { message } from 'antd'
+import { useParams } from 'react-router-dom'
 
 export interface MyProfileProps {
   [x: string]: any
@@ -35,10 +36,13 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const [profile, setProfile] = useState<IProfile>()
   const [isProfileUpdated, setIsProfilUpdated] = useState<boolean>(false)
   const { publicKey } = useWallet()
+  const { id } = useParams<{ id: string }>()
 
-  const address = `${publicKey?.toBase58()?.substring(0, 13)}...${publicKey
-    ?.toBase58()
-    ?.substring(publicKey?.toBase58().length - 5)}`
+  const userPubKey = id || publicKey?.toBase58()
+
+  const address = `${userPubKey?.substring(0, 13)}...${userPubKey?.substring(
+    userPubKey.length - 5
+  )}`
 
   useEffect(() => {
     if (publicKey) {

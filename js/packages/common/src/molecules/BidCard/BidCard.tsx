@@ -47,16 +47,18 @@ export const BidCard: FC<BidCardProps> = ({
       </div>
 
       <div className='flex justify-between'>
-        <div className='flex flex-col gap-[8px]'>
-          <MetaChip overline='Remaining Time' subHeading={remainingTime} />
-          <Button appearance='neutral' onClick={onClickButton}>
-            Bid now
-          </Button>
-        </div>
+        {onClickButton && (
+          <div className='flex flex-col gap-[8px]'>
+            <MetaChip overline='Remaining Time' subHeading={remainingTime} />
+            <Button appearance='neutral' onClick={onClickButton}>
+              Bid now
+            </Button>
+          </div>
+        )}
 
-        <div className='flex'>
+        {/* <div className='flex'>
           <MetaChip align='right' overline='Starting Bid' subHeading={price} hint={dollarValue} />
-        </div>
+        </div> */}
       </div>
     </div>
   )

@@ -1,11 +1,11 @@
 import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
-import { ListingCard, pubkeyToString } from '@oyster/common'
+import { ListingCard, pubkeyToString, toPublicKey } from '@oyster/common'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { AuctionView, useExtendedArt } from '../../../hooks'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import useNFTData from '../../../hooks/useNFTData'
 
 export interface ProfileListingsProps {
@@ -50,17 +50,18 @@ export const ProfileListings: FC<ProfileListingsProps> = ({
   const [userAuctions, setUserAuctions] = useState<AuctionView[]>([])
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const wallet = useWallet()
-
-  console.log('auctions', auctions)
+  const { id } = useParams<{ id: string }>()
 
   useEffect(() => {
     if (auctions.length) {
       const data = auctions.filter(auction => {
-        return auction.auctionManager.authority === wallet.publicKey?.toBase58()
+        return auction.auctionManager.authority === id
+          ? toPublicKey(id).toBase58()
+          : wallet.publicKey?.toBase58()
       })
       setUserAuctions([...data])
     }
-  }, [auctions, wallet])
+  }, [auctions, wallet, id])
 
   useEffect(() => {
     setTag(`${userAuctions.length} NFTs`)
