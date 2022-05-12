@@ -90,12 +90,12 @@ export const Hero: FC<HeroProps> = ({ className }) => {
         )}
 
         <div className='hero__right flex flex-col gap-[28px] pr-[64px]'>
-          <MetaChip heading={`${NFTsMinted}+`} description='NFTs minted' />
+          {/* <MetaChip heading={`${NFTsMinted}+`} description='NFTs minted' />
           <MetaChip heading={`${talentedArtists}+`} description='Talented artists' />
           <MetaChip
             heading={`<span class="text-[24px]">Ⓞ</span> 2,398+`}
             description='Daily SOL volume'
-          />
+          /> */}
         </div>
       </div>
     </div>
