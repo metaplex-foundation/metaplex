@@ -15,6 +15,7 @@ export const NFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
 }: NFTDetailsCurrentOffersProps) => {
   const NFTDetailsCurrentOffersClasses = CN(`nft-details-current-offers w-full`, className)
   const bids = useBidsForAuction(restProps.auction.auction.pubkey || '')
+
   const {
     remaining: { remainingHours },
   } = useNFTData(restProps.auction)
