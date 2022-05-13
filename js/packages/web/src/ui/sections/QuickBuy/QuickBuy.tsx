@@ -106,7 +106,7 @@ export const QuickBuy: FC<QuickBuyProps> = ({ auction }: QuickBuyProps) => {
         </div>
       </div>
 
-      <div className='flex flex-col gap-[20px]'>
+      {/* <div className='flex flex-col gap-[20px]'>
         <h5 className='text-h5'>Attributes</h5>
         <div className='grid grid-cols-3 gap-[8px]'>
           {(data?.attributes || []).map(({ trait_type: label, value }: any, index: number) => {
@@ -124,7 +124,7 @@ export const QuickBuy: FC<QuickBuyProps> = ({ auction }: QuickBuyProps) => {
             )
           })}
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }
