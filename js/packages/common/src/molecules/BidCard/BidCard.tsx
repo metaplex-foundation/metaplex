@@ -12,6 +12,7 @@ export interface BidCardProps {
   dollarValue?: string
   onClickButton?: any
   hasIndicator?: boolean
+  name?: string
 }
 
 export const BidCard: FC<BidCardProps> = ({
@@ -24,6 +25,7 @@ export const BidCard: FC<BidCardProps> = ({
   dollarValue,
   onClickButton,
   hasIndicator,
+  name,
   ...restProps
 }: BidCardProps) => {
   const BidCardClasses = CN(
@@ -49,6 +51,7 @@ export const BidCard: FC<BidCardProps> = ({
       <div className='flex justify-between'>
         {onClickButton && (
           <div className='flex flex-col gap-[8px]'>
+            <h2 className='text-h5 w-full border-b border-slate-100 pb-[8px] '>{name ?? ''}</h2>
             {/* <MetaChip overline='Remaining Time' subHeading={remainingTime} /> */}
             <Button appearance='neutral' onClick={onClickButton}>
               View Collection

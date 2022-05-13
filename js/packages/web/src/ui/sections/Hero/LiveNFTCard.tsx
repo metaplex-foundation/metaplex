@@ -55,6 +55,7 @@ const LiveNFTCard: FC<LiveNFTCardProps> = ({ collection, ...rest }) => {
   return (
     <BidCard
       {...rest}
+      {...nameProp}
       avatar={user?.image ?? ''}
       avatarLabel={avatarLabel}
       image={data?.image ?? ''}
