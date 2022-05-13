@@ -24,7 +24,7 @@ export const NFTDetailsTabs: FC<NFTDetailsTabsProps> = ({ auction }) => {
               'border border-transparent': activeTab !== 'offers',
             })}
             onClick={() => setActiveTab('offers')}>
-            Current offers
+            Current Bids
           </Button>
           <Button
             isRounded={false}
