@@ -74,7 +74,7 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   const { id }: ParamsInterface = useParams()
-  const { nftItems, attributes, filterFunction } = useCollectionNFT(id)
+  const { nftItems, attributes, filterFunction, count } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
 
   // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
@@ -83,7 +83,7 @@ export const Collection: FC<CollectionProps> = () => {
 
   const pubkey = selectedCollection?.pubkey
   const { data: colData } = useExtendedArt(pubkey)
-  const [nfts, setNfts] = useState<NFTItemInterface[]>([])
+
   const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
     collectionName: '',
     description: '',
@@ -93,7 +93,6 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   useEffect(() => {
-    setNfts(nftItems)
     if (
       colData &&
       colData.properties &&
@@ -335,7 +334,7 @@ export const Collection: FC<CollectionProps> = () => {
             ? `${collectionHeaderData.description?.slice(0, 250)}.....`
             : collectionHeaderData.description
         }
-        numberOfItems={nfts.length}
+        numberOfItems={count}
       />
 
       <div className='flex w-full pt-[80px] pb-[100px]'>
@@ -376,7 +375,7 @@ export const Collection: FC<CollectionProps> = () => {
                     clearFilters={clearFilters}
                   />
                 )}
-                <CollectionNftList auctions={nfts} />
+                <CollectionNftList auctions={nftItems} />
               </div>
             )}
 

@@ -36,7 +36,6 @@ const useCollectionNFT = (id: string) => {
             itemsArray.push({ ...auction, offChainData: res })
           })
         })
-      console.log('itemsArray', itemsArray)
 
       setNFTAuctions(itemsArray)
     }
@@ -79,6 +78,6 @@ const useCollectionNFT = (id: string) => {
     setNFTItems(() => (callBackFun(nftAuctions) ? [...callBackFun(nftAuctions)] : []))
   }
 
-  return { nftItems, attributes, filterFunction }
+  return { nftItems, attributes, filterFunction, count: nftAuctions.length }
 }
 export default useCollectionNFT

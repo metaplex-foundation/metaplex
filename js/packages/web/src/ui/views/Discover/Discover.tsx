@@ -1,19 +1,11 @@
 import React, { FC, useEffect, useState } from 'react'
-import {
-  SectionHeading,
-  SearchField,
-  Dropdown,
-  DropDownToggle,
-  Button,
-  DropDownBody,
-  DropDownMenuItem,
-  Pagination,
-} from '@oyster/common'
+import { SectionHeading, SearchField, Button, Pagination } from '@oyster/common'
 import { Link, useLocation } from 'react-router-dom'
 import queryString from 'query-string'
 import { CollectionView, useNFTCollections } from '../../../hooks/useCollections'
 import CollectionCard from '../../sections/RecentCollections/CollectionCard'
 import useSearch from '../../../hooks/useSearch'
+import { useExtendedCollection } from '../../../hooks'
 
 export interface DiscoverProps {}
 
@@ -31,8 +23,27 @@ export const Discover: FC<DiscoverProps> = () => {
   const { onChangeSearchText, searchText: text, onSubmitSearch } = useSearch()
   const [current, setCurrent] = useState(0)
   const [showPagination, setShowPagination] = useState(false)
+  const [colMeta, setColMeta] = useState<any[]>([])
 
   const { pathname } = useLocation()
+  const { getData } = useExtendedCollection()
+
+  useEffect(() => {
+    if (liveCollections.length) {
+      const colData: any[] = []
+      liveCollections.forEach(element => {
+        console.log('element', element)
+
+        getData(element.pubkey).then(res => {
+          console.log('res', res)
+
+          const data = { name: res.collection?.name ?? res.name, pubkey: element.pubkey }
+          colData.push({ ...data })
+        })
+      })
+      setColMeta(colData)
+    }
+  }, [liveCollections.length])
 
   useEffect(() => {
     setCurrent(page ? Number(page) - 1 : 0)
@@ -42,9 +53,10 @@ export const Discover: FC<DiscoverProps> = () => {
     const paginatedCollection = paginate([
       ...liveCollections
         .map(col => {
+          const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
           return {
             ...col,
-            name: col.data.data.name,
+            name: collectionName,
           }
         })
         .filter(filterFun),
@@ -85,9 +97,10 @@ export const Discover: FC<DiscoverProps> = () => {
     return paginate([
       ...liveCollections
         .map(col => {
+          const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
           return {
             ...col,
-            name: col.data.data.name,
+            name: collectionName,
           }
         })
         .filter(filterFun),
@@ -122,52 +135,6 @@ export const Discover: FC<DiscoverProps> = () => {
             className='w-[528px]'
             size='lg'
             placeholder='Search by collection name'
-            actions={
-              <Dropdown>
-                {({ isOpen, setIsOpen, innerValue, setInnerValue }: any) => {
-                  const onSelectOption = (value: string) => {
-                    setInnerValue(value)
-                    setIsOpen(false)
-                  }
-
-                  const options = [
-                    { label: 'Recent', value: 'Recent' },
-                    { label: 'Price: Low to High', value: 'Price: Low to High' },
-                    { label: 'Price High to Low', value: 'Price High to Low' },
-                  ]
-
-                  return (
-                    <>
-                      <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
-                        <Button
-                          appearance='ghost'
-                          iconBefore={<i className='ri-filter-3-line text-[20px] font-400' />}
-                          className='focus!shadow-none focus!border-0'>
-                          {innerValue || 'Recent'}
-                        </Button>
-                      </DropDownToggle>
-
-                      {isOpen && (
-                        <DropDownBody align='right' className='mt-[12px] w-[200px]'>
-                          {options.map((option: any, index: number) => {
-                            const { label, value } = option
-
-                            return (
-                              <DropDownMenuItem
-                                key={index}
-                                onClick={() => onSelectOption(value)}
-                                {...option}>
-                                {label}
-                              </DropDownMenuItem>
-                            )
-                          })}
-                        </DropDownBody>
-                      )}
-                    </>
-                  )
-                }}
-              </Dropdown>
-            }
           />
 
           <Button
