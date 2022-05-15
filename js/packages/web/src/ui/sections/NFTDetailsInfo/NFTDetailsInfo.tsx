@@ -93,12 +93,12 @@ export const NFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ auction }) => {
 
         <div className='grid w-full grid-cols-2 items-center rounded-[8px] border border-slate-200 bg-white p-[8px] text-md text-slate-800 shadow-card'>
           <label className='font-500'>Moonrank</label>
-          <span>5711</span>
+          {/* <span>5711</span> */}
         </div>
 
         <div className='grid w-full grid-cols-2 items-center rounded-[8px] border border-slate-200 bg-white p-[8px] text-md text-slate-800 shadow-card'>
           <label className='font-500'>HowRare.is</label>
-          <span>5917</span>
+          {/* <span>5917</span> */}
         </div>
       </div>
     </div>
