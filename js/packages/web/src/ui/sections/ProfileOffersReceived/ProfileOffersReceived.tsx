@@ -77,7 +77,7 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
         <span>Date</span>
       </div>
 
-      {offersList.map(({ image, title, price, owner, time }: any, index: number) => (
+      {/* {offersList.map(({ image, title, price, owner, time }: any, index: number) => (
         <div
           key={index}
           className='grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-[8px] rounded-[8px] border border-slate-200 bg-white py-[4px] px-[4px] text-md hover:bg-slate-50'>
@@ -91,7 +91,7 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
           <span>{owner}</span>
           <span>{time}</span>
         </div>
-      ))}
+      ))} */}
     </div>
   )
 }

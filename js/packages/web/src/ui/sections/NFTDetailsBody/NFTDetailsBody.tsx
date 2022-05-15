@@ -8,6 +8,7 @@ import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
 import useAttribute from '../../../hooks/useAttribute'
+import { Link } from 'react-router-dom'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -26,8 +27,6 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
     value: { solVal, usdValFormatted },
   } = useNFTData(auction)
   const url = data?.image
-
-  console.log('auction', auction)
 
   useEffect(() => {
     setOwner(auction?.auctionManager?.authority || '')
@@ -107,16 +106,19 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                   )
                 }
               </div>
+
               <div className='text-sm font-500 text-B-400'>
-                <Avatar
-                  key={owner}
-                  address={owner}
-                  label={`Owned by — ${owner?.substring(0, 3)}...${owner?.substring(
-                    owner.length - 3
-                  )}`}
-                  size={32}
-                  labelClassName='text-sm font-500 text-B-400'
-                />
+                <Link to={`/profile/${owner}`}>
+                  <Avatar
+                    key={owner}
+                    address={owner}
+                    label={`Owned by — ${owner?.substring(0, 3)}...${owner?.substring(
+                      owner.length - 3
+                    )}`}
+                    size={32}
+                    labelClassName='text-sm font-500 text-B-400'
+                  />
+                </Link>
               </div>
             </div>
 

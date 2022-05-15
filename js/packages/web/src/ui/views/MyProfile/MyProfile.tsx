@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { Button, Image, Tag } from '@oyster/common'
 import {
@@ -9,6 +9,8 @@ import {
   ProfileSettings,
 } from '../../sections'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { getProfile } from '../../../api'
+import { useParams } from 'react-router-dom'
 
 export interface MyProfileProps {
   [x: string]: any
@@ -16,36 +18,74 @@ export interface MyProfileProps {
 
 export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const MyProfileClasses = CN(`my-profile w-full`, className)
-  const [activeTab, setActiveTab] = useState<any>('collectibles')
-  const [heading, setHeading] = useState<any>('My Collectibles')
+  const [activeTab, setActiveTab] = useState<any>('collections')
+  const [heading, setHeading] = useState<any>('My Collections')
   const [tag, setTag] = useState<any>(null)
+  const [profileImage, setProfileImage] = useState<string | null>('')
+  const [isProfileUpdated, setIsProfilUpdated] = useState<boolean>(false)
+  const [isOtherAccount, setIsOtherAccount] = useState<boolean>(false)
   const { publicKey } = useWallet()
+  const { id } = useParams<{ id: string }>()
 
-  console.log('publicKey', publicKey?.toBase58())
+  const userPubKey = id || publicKey?.toBase58()
 
-  const address = `${publicKey?.toBase58()?.substring(0, 13)}...${publicKey
-    ?.toBase58()
-    ?.substring(publicKey?.toBase58().length - 5)}`
+  const address = `${userPubKey?.substring(0, 13)}...${userPubKey?.substring(
+    userPubKey.length - 5
+  )}`
+
+  useEffect(() => {
+    if (id && publicKey && publicKey.toBase58() !== id) {
+      setIsOtherAccount(true)
+      getProfile(id)
+        .then(res => {
+          setProfileImage(res.data.image)
+        })
+        .catch((error: any) => {
+          console.log(error.message)
+        })
+    } else if (publicKey) {
+      setIsOtherAccount(false)
+      getProfile(publicKey.toBase58())
+        .then(res => {
+          setProfileImage(res.data.image)
+        })
+        .catch((error: any) => {
+          console.log(error.message)
+        })
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (isProfileUpdated && userPubKey) {
+      getProfile(userPubKey)
+        .then(res => {
+          setProfileImage(res.data.image)
+        })
+        .catch((error: any) => {
+          console.log(error.message)
+        })
+    }
+  }, [isProfileUpdated])
 
   return (
     <div className={MyProfileClasses} {...restProps}>
       <div className='container flex gap-[48px] pt-[40px] pb-[100px]'>
         <div className='sidebar w-[260px] flex-shrink-0'>
           <div className='flex w-full overflow-hidden rounded-[12px]'>
-            <Image src='/img/profile-pic.png' />
+            <Image src={profileImage ? profileImage : '/img/profile-pic.png'} />
           </div>
 
           <div className='flex flex-col gap-[12px] pt-[12px]'>
             <Button
               isRounded={false}
-              appearance={activeTab === 'collectibles' ? 'neutral' : 'ghost'}
-              view={activeTab === 'collectibles' ? 'solid' : 'outline'}
+              appearance={activeTab === 'collections' ? 'neutral' : 'ghost'}
+              view={activeTab === 'collections' ? 'solid' : 'outline'}
               className='w-full text-left'
               onClick={() => {
-                setActiveTab('collectibles')
-                setHeading('My Collectibles')
+                setActiveTab('collections')
+                setHeading('My Collections')
               }}>
-              My Collectibles
+              {isOtherAccount ? 'Collections' : 'My Collections'}
             </Button>
 
             <Button
@@ -93,10 +133,10 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               className='w-full text-left'
               onClick={() => {
                 setActiveTab('settings')
-                setHeading('Settings')
+                setHeading(isOtherAccount ? 'Profile' : 'Settings')
                 setTag(null)
               }}>
-              Settings
+              {isOtherAccount ? 'Profile' : 'Settings'}
             </Button>
           </div>
         </div>
@@ -117,11 +157,13 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
           </div>
 
           <div className='flex w-full flex-col'>
-            {activeTab === 'collectibles' && <ProfileCollectiblesList setTag={setTag} />}
+            {activeTab === 'collections' && <ProfileCollectiblesList setTag={setTag} />}
             {activeTab === 'listings' && <ProfileListings setTag={setTag} />}
             {activeTab === 'offers-made' && <ProfileOffersMade />}
             {activeTab === 'offers-received' && <ProfileOffersReceived />}
-            {activeTab === 'settings' && <ProfileSettings />}
+            {activeTab === 'settings' && (
+              <ProfileSettings profileupdate={setIsProfilUpdated} profileImage={setProfileImage} />
+            )}
           </div>
         </div>
       </div>

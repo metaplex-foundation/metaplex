@@ -39,7 +39,7 @@ export const BuyCard: FC<BuyCardProps> = ({
 
       <div className='flex flex-col rounded-b px-[20px] pt-[12px] pb-[20px] transition-all'>
         <h2 className='text-h5 w-full border-b border-slate-100 pb-[8px] text-center'>
-          {name || 'Collection'}
+          {name ?? ''}
         </h2>
 
         <div className='flex justify-between pt-[12px]'>
