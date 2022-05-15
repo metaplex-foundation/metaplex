@@ -17,7 +17,6 @@ export const useItems = ({
 }): Item[] => {
   const { publicKey } = useWallet()
   const { metadata } = useMeta()
-  console.log('publicKey', publicKey)
 
   const createdMetadata = useCreatorArts(
     (userPublicKey ? userPublicKey?.toBase58() : publicKey?.toBase58()) || ''

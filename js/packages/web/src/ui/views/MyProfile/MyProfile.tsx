@@ -10,22 +10,10 @@ import {
 } from '../../sections'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { getProfile } from '../../../api'
-import { message } from 'antd'
 import { useParams } from 'react-router-dom'
 
 export interface MyProfileProps {
   [x: string]: any
-}
-
-export interface IProfile {
-  publicKey: string
-  userName: string
-  email: string
-  twitterLink: string
-  discordLink: string
-  telegram: string
-  bio: string
-  image: string
 }
 
 export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
@@ -33,8 +21,9 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const [activeTab, setActiveTab] = useState<any>('collections')
   const [heading, setHeading] = useState<any>('My Collections')
   const [tag, setTag] = useState<any>(null)
-  const [profile, setProfile] = useState<IProfile>()
+  const [profileImage, setProfileImage] = useState<string | null>('')
   const [isProfileUpdated, setIsProfilUpdated] = useState<boolean>(false)
+  const [isOtherAccount, setIsOtherAccount] = useState<boolean>(false)
   const { publicKey } = useWallet()
   const { id } = useParams<{ id: string }>()
 
@@ -45,54 +34,45 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   )}`
 
   useEffect(() => {
-    if (publicKey) {
+    if (id && publicKey && publicKey.toBase58() !== id) {
+      setIsOtherAccount(true)
+      getProfile(id)
+        .then(res => {
+          setProfileImage(res.data.image)
+        })
+        .catch((error: any) => {
+          console.log(error.message)
+        })
+    } else if (publicKey) {
+      setIsOtherAccount(false)
       getProfile(publicKey.toBase58())
         .then(res => {
-          const profile: IProfile = {
-            publicKey: res.data.public_key,
-            userName: res.data.user_name,
-            email: res.data.email,
-            twitterLink: res.data.twitter_link,
-            discordLink: res.data.discord_link,
-            telegram: res.data.telegram,
-            bio: res.data.bio,
-            image: res.data.image,
-          }
-          setProfile(profile)
+          setProfileImage(res.data.image)
         })
-        .catch(() => {
-          message.error('Error with get profile information')
+        .catch((error: any) => {
+          console.log(error.message)
         })
     }
-  }, [])
+  }, [id])
 
-  if (isProfileUpdated && publicKey) {
-    getProfile(publicKey.toBase58())
-      .then(res => {
-        const profile: IProfile = {
-          publicKey: res.data.public_key,
-          userName: res.data.user_name,
-          email: res.data.email,
-          twitterLink: res.data.twitter_link,
-          discordLink: res.data.discord_link,
-          telegram: res.data.telegram,
-          bio: res.data.bio,
-          image: res.data.image,
-        }
-        setProfile(profile)
-        setIsProfilUpdated(false)
-      })
-      .catch(() => {
-        message.error('Error with get profile information')
-      })
-  }
+  useEffect(() => {
+    if (isProfileUpdated && userPubKey) {
+      getProfile(userPubKey)
+        .then(res => {
+          setProfileImage(res.data.image)
+        })
+        .catch((error: any) => {
+          console.log(error.message)
+        })
+    }
+  }, [isProfileUpdated])
 
   return (
     <div className={MyProfileClasses} {...restProps}>
       <div className='container flex gap-[48px] pt-[40px] pb-[100px]'>
         <div className='sidebar w-[260px] flex-shrink-0'>
           <div className='flex w-full overflow-hidden rounded-[12px]'>
-            <Image src={profile?.image ? profile.image : '/img/profile-pic.png'} />
+            <Image src={profileImage ? profileImage : '/img/profile-pic.png'} />
           </div>
 
           <div className='flex flex-col gap-[12px] pt-[12px]'>
@@ -105,7 +85,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
                 setActiveTab('collections')
                 setHeading('My Collections')
               }}>
-              My Collections
+              {isOtherAccount ? 'Collections' : 'My Collections'}
             </Button>
 
             <Button
@@ -153,10 +133,10 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               className='w-full text-left'
               onClick={() => {
                 setActiveTab('settings')
-                setHeading('Settings')
+                setHeading(isOtherAccount ? 'Profile' : 'Settings')
                 setTag(null)
               }}>
-              Settings
+              {isOtherAccount ? 'Profile' : 'Settings'}
             </Button>
           </div>
         </div>
@@ -182,7 +162,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
             {activeTab === 'offers-made' && <ProfileOffersMade />}
             {activeTab === 'offers-received' && <ProfileOffersReceived />}
             {activeTab === 'settings' && (
-              <ProfileSettings profile={profile} profileupdate={setIsProfilUpdated} />
+              <ProfileSettings profileupdate={setIsProfilUpdated} profileImage={setProfileImage} />
             )}
           </div>
         </div>

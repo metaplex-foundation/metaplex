@@ -17,7 +17,11 @@ export const getProfile = async (publicKey: string) => {
     const res = await axios.get(`${api}/${publicKey}`)
     return res.data
   } catch (error: any) {
-    console.log('Get profile API error: ', error.message)
-    throw new Error(error.message)
+    console.log('Get profile API error: ', error.response.data.message)
+    if (error.response && error.response.data && error.response.data.message) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error(error.message)
+    }
   }
 }
