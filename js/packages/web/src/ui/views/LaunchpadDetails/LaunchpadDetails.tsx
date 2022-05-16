@@ -17,6 +17,8 @@ export const LaunchpadDetails: FC<LaunchpadDetailsProps> = ({
   const [description, setDescription] = useState(
     'A collection of 8,400 Stoned Frogs coming to grow $SEEDS and take over the cannabis world.'
   )
+  const [longTermGoals, setLongTermGoals] = useState<string>('')
+  const [teamDescription, setTeamDescription] = useState<string>('')
   const [image, setImage] = useState('/img/frog.png')
   const [launchTime, setLaunchTime] = useState<any>()
   const [primaryCategory, setPrimaryCategory] = useState()
@@ -28,6 +30,8 @@ export const LaunchpadDetails: FC<LaunchpadDetailsProps> = ({
       setDescription(submission.project_description)
       setImage(submission.collection_image_url)
       setLaunchTime(moment(submission.exp_mint_date).format('LL'))
+      setLongTermGoals(submission.long_trm_goals)
+      setTeamDescription(submission.team_description)
       if (submission.categories) {
         if (submission.categories.primaryCategory) {
           setPrimaryCategory(submission.categories.primaryCategory)
@@ -82,7 +86,7 @@ export const LaunchpadDetails: FC<LaunchpadDetailsProps> = ({
           </div>
 
           <div className='flex w-full flex-col pt-[40px] pb-[40px]'>
-            <LaunchpadTabs />
+            <LaunchpadTabs description={description} teamDescription={teamDescription} longTermGoals={longTermGoals} />
           </div>
         </div>
       </div>
