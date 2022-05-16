@@ -16,9 +16,7 @@ export const LaunchpadDetailsRoadMap: FC<LaunchpadDetailsRoadMapProps> = ({
 
   return (
     <div className={LaunchpadDetailsRoadMapClasses} {...restProps}>
-      Lorem ipsum dolor, sit amet consectetur adipisicing elit. Perferendis at soluta iusto
-      deleniti, excepturi hic sed qui, deserunt voluptatibus perspiciatis in, non minima optio
-      accusamus aliquid? Eius porro sapiente quis.
+      {restProps.discription ? restProps.discription : null}
     </div>
   )
 }

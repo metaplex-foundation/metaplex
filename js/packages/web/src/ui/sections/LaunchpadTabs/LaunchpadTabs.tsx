@@ -54,9 +54,9 @@ export const LaunchpadTabs: FC<LaunchpadTabsProps> = ({
         </div>
 
         <div className='flex w-full flex-col'>
-          {activeTab === 'about' && <LaunchpadDetailsAbout />}
-          {activeTab === 'road-map' && <LaunchpadDetailsRoadMap />}
-          {activeTab === 'team' && <LaunchpadDetailsTeam />}
+          {activeTab === 'about' && <LaunchpadDetailsAbout discription={restProps.description} />}
+          {activeTab === 'road-map' && <LaunchpadDetailsRoadMap discription={restProps.longTermGoals} />}
+          {activeTab === 'team' && <LaunchpadDetailsTeam discription={restProps.teamDescription} />}
         </div>
       </div>
     </div>
