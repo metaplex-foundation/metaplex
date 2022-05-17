@@ -75,6 +75,7 @@ const App = () => {
               startDate={startDateSeed}
               txTimeout={txTimeoutInMilliseconds}
               rpcHost={rpcHost}
+              network={network}
             />
           </WalletDialogProvider>
         </WalletProvider>

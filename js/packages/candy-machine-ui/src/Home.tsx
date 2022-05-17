@@ -39,6 +39,7 @@ export interface HomeProps {
   startDate: number;
   txTimeout: number;
   rpcHost: string;
+  network: string;
 }
 
 const Home = (props: HomeProps) => {
@@ -52,7 +53,7 @@ const Home = (props: HomeProps) => {
 
   const rpcUrl = props.rpcHost;
   const wallet = useWallet();
-
+  const cluster = props.network;
   const anchorWallet = useMemo(() => {
     if (
       !wallet ||
@@ -189,6 +190,7 @@ const Home = (props: HomeProps) => {
                       candyMachine?.state?.gatekeeper?.gatekeeperNetwork
                     }
                     clusterUrl={rpcUrl}
+                    cluster={cluster}
                     options={{ autoShowModal: false }}
                   >
                     <MintButton
