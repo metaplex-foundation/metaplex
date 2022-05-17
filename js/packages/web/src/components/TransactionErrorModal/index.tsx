@@ -9,7 +9,12 @@ interface ITransactionErrorModal {
   onDismiss: () => void;
 }
 
-const TransactionErrorModal = ({ error = '', onDismiss, open, modalView = true }: ITransactionErrorModal) => {
+const TransactionErrorModal = ({
+  error = '',
+  onDismiss,
+  open,
+  modalView = true,
+}: ITransactionErrorModal) => {
   const modalBody = (
     <div className="error-modal-content">
       <div className="warning-icon">
@@ -17,7 +22,8 @@ const TransactionErrorModal = ({ error = '', onDismiss, open, modalView = true }
       </div>
       <h4>Transaction error</h4>
       <div className="error-text">
-        Your transaction was not completed for {error ? error : 'an unknown reason. Please try again.'}
+        Your transaction was not completed for{' '}
+        {error ? error : 'an unknown reason. Please try again.'}
       </div>
       <Button onClick={onDismiss}>Dismiss</Button>
     </div>
@@ -36,13 +42,9 @@ const TransactionErrorModal = ({ error = '', onDismiss, open, modalView = true }
       >
         {modalBody}
       </Modal>
-    )
+    );
   }
-  return (
-    <div className="create-error-modal">
-      {modalBody}
-    </div>
-  )
+  return <div className="create-error-modal">{modalBody}</div>;
 };
 
 export default TransactionErrorModal;

@@ -107,7 +107,7 @@ const rerun = async ({
         totalAuctions++;
         averageBidders += extended.info.totalUncancelledBids.toNumber();
         const bids = auction.auction.info.bidState;
-        let highestBid = bids.getAmountAt(0);
+        const highestBid = bids.getAmountAt(0);
         if (highestBid && highestBid.toNumber() > newHighestSale) {
           newHighestSale = highestBid.toNumber();
         }
@@ -128,7 +128,7 @@ const rerun = async ({
     } else if (auction.items.length && auction.items[0].length) {
       type =
         auction.items[0][0].winningConfigType ==
-          WinningConfigType.TokenOnlyTransfer
+        WinningConfigType.TokenOnlyTransfer
           ? AuctionType.OneOfKind
           : AuctionType.Limited;
     } else {
@@ -167,126 +167,127 @@ const rerun = async ({
   setUsersEngaged(engaged => ({ ...engaged, ...existingUsersEngaged }));
 };
 
-const MemoizedBar = React.memo(
-  (props: { sortedSales: number[]; mint: MintInfo }) => {
-    const histogrammedData: Record<number, number> = {
-      0: 0,
-      5: 0,
-      20: 0,
-      50: 0,
-      100: 0,
-      500: 0,
-      1000: 0,
-      10000: 0,
-    };
-    const asArray = [0, 5, 20, 50, 100, 500, 1000, 10000];
+const MemoizedBar = React.memo(function BarImpl(props: {
+  sortedSales: number[];
+  mint: MintInfo;
+}) {
+  const histogrammedData: Record<number, number> = {
+    0: 0,
+    5: 0,
+    20: 0,
+    50: 0,
+    100: 0,
+    500: 0,
+    1000: 0,
+    10000: 0,
+  };
+  const asArray = [0, 5, 20, 50, 100, 500, 1000, 10000];
 
-    for (let i = 0; i < asArray.length; i++) {
-      const currRange = asArray[i];
+  for (let i = 0; i < asArray.length; i++) {
+    const currRange = asArray[i];
 
-      if (i < asArray.length - 1) {
-        const nextRange = asArray[i + 1];
-        histogrammedData[currRange] = props.sortedSales.filter(
-          s =>
-            fromLamports(s, props.mint) >= currRange &&
-            fromLamports(s, props.mint) < nextRange,
-        ).length;
-      } else {
-        histogrammedData[currRange] = props.sortedSales.filter(
-          s => fromLamports(s, props.mint) >= currRange,
-        ).length;
-      }
+    if (i < asArray.length - 1) {
+      const nextRange = asArray[i + 1];
+      histogrammedData[currRange] = props.sortedSales.filter(
+        s =>
+          fromLamports(s, props.mint) >= currRange &&
+          fromLamports(s, props.mint) < nextRange,
+      ).length;
+    } else {
+      histogrammedData[currRange] = props.sortedSales.filter(
+        s => fromLamports(s, props.mint) >= currRange,
+      ).length;
     }
+  }
 
-    const histoData = {
-      labels: [
-        '◎ [0 - 5)',
-        '◎ [5 - 20)',
-        '◎ [20 - 50)',
-        '◎ [50 - 100)',
-        '◎ [100 - 500)',
-        '◎ [500 - 1000)',
-        '◎ [1000 - 10000)',
-        '◎ [10000 -',
-      ],
-      datasets: [
-        {
-          label: '# bids in these bins',
-          data: asArray.map(a => histogrammedData[a]),
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.2)',
-            'rgba(54, 162, 235, 0.2)',
-            'rgba(255, 206, 86, 0.2)',
-            'rgba(75, 192, 192, 0.2)',
-            'rgba(153, 102, 255, 0.2)',
-            'rgba(255, 159, 64, 0.2)',
-            'rgba(255, 139, 24, 0.2)',
-            'rgba(212, 39, 24, 0.2)',
-          ],
-          borderColor: [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)',
-            'rgba(255, 139, 24, 1)',
-            'rgba(212, 39, 24, 1)',
-          ],
-          borderWidth: 1,
-        },
-      ],
-    };
-
-    const histoOptions = {
-      scales: {
-        yAxes: [
-          {
-            ticks: {
-              beginAtZero: true,
-            },
-          },
+  const histoData = {
+    labels: [
+      '◎ [0 - 5)',
+      '◎ [5 - 20)',
+      '◎ [20 - 50)',
+      '◎ [50 - 100)',
+      '◎ [100 - 500)',
+      '◎ [500 - 1000)',
+      '◎ [1000 - 10000)',
+      '◎ [10000 -',
+    ],
+    datasets: [
+      {
+        label: '# bids in these bins',
+        data: asArray.map(a => histogrammedData[a]),
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)',
+          'rgba(255, 139, 24, 0.2)',
+          'rgba(212, 39, 24, 0.2)',
         ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+          'rgba(255, 139, 24, 1)',
+          'rgba(212, 39, 24, 1)',
+        ],
+        borderWidth: 1,
       },
-    };
-    // @ts-ignore
-    return <Bar data={histoData} options={histoOptions} />;
-  },
-);
+    ],
+  };
 
-const MemoizedPie = React.memo(
-  (props: { byType: Record<AuctionType, number> }) => {
-    const pieData = {
-      labels: ['Open', 'Limited', 'Tiered', 'One of a Kind'],
-      datasets: [
+  const histoOptions = {
+    scales: {
+      yAxes: [
         {
-          label: '#',
-          data: [
-            props.byType[AuctionType.Open],
-            props.byType[AuctionType.Limited],
-            props.byType[AuctionType.Tiered],
-            props.byType[AuctionType.OneOfKind],
-          ],
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.2)',
-            'rgba(54, 162, 235, 0.2)',
-            'rgba(255, 206, 86, 0.2)',
-            'rgba(75, 192, 192, 0.2)',
-          ],
-          borderColor: [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-          ],
-          borderWidth: 1,
+          ticks: {
+            beginAtZero: true,
+          },
         },
       ],
-    };
+    },
+  };
+  // @ts-ignore
+  return <Bar data={histoData} options={histoOptions} />;
+});
 
-    return <Pie data={pieData} />;
-  },
-);
+const MemoizedPie = React.memo(function PieImpl(props: {
+  byType: Record<AuctionType, number>;
+}) {
+  const pieData = {
+    labels: ['Open', 'Limited', 'Tiered', 'One of a Kind'],
+    datasets: [
+      {
+        label: '#',
+        data: [
+          props.byType[AuctionType.Open],
+          props.byType[AuctionType.Limited],
+          props.byType[AuctionType.Tiered],
+          props.byType[AuctionType.OneOfKind],
+        ],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  return <Pie data={pieData} />;
+});
 
 function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const [usersWithMetadata, setUsersWithMetadata] = useState<

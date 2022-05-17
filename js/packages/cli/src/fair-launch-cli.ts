@@ -1160,8 +1160,8 @@ program
         walletKeyPair.publicKey,
       )
     )[0];
-
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
+    //@ts-ignore
+    const fairLaunchLotteryBitmap = (
       await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
     )[0];
 
@@ -1768,8 +1768,8 @@ program
         walletKeyPair.publicKey,
       )
     )[0];
-
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
+    //@ts-ignore
+    const fairLaunchLotteryBitmap = (
       await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
     )[0];
 
@@ -1947,7 +1947,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
+    //@ts-ignore
+    const fairLaunchLotteryBitmap = (
       await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
     )[0];
 
@@ -1989,7 +1990,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const tokenAccount = ( //@ts-ignore
+    //@ts-ignore
+    const tokenAccount = (
       await getAtaForMint(fairLaunchObj.tokenMint, walletKeyPair.publicKey)
     )[0];
 

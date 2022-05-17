@@ -150,6 +150,9 @@ export async function setupCancelBid(
       cancelInstructions,
     );
     signers.push(cancelSigners);
-    instructions.push([...cancelInstructions, ...cleanupInstructions]);
+    instructions.push([
+      ...cancelInstructions,
+      ...cleanupInstructions.reverse(),
+    ]);
   }
 }

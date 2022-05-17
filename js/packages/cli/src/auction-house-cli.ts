@@ -15,10 +15,7 @@ import {
   loadWalletKey,
 } from './helpers/accounts';
 import { BN, web3 } from '@project-serum/anchor';
-import {
-  TOKEN_PROGRAM_ID,
-  WRAPPED_SOL_MINT,
-} from './helpers/constants';
+import { TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from './helpers/constants';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { getPriceWithMantissa } from './helpers/various';
 import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
@@ -574,9 +571,20 @@ programCommand('cancel')
       ),
     );
 
-    const tokenAccountKey = (
-      await getAtaForMint(mintKey, walletKeyPair.publicKey)
-    )[0];
+    const results = await anchorProgram.provider.connection
+      .getTokenLargestAccounts(mintKey)
+      .catch(e => {
+        console.error(e);
+        return { value: [] };
+      });
+
+    if (results.value.length == 0) {
+      throw Error(
+        "The Mint(NFT, Tokens) largest token account can't be found, this could be network instability or you have the wrong mint address.",
+      );
+    }
+
+    const tokenAccountKey: web3.PublicKey = results.value[0].address;
 
     const tradeState = (
       await getAuctionHouseTradeState(
@@ -979,7 +987,7 @@ programCommand('buy')
           wallet: walletKeyPair.publicKey,
           paymentAccount: isNative ? walletKeyPair.publicKey : ata,
           transferAuthority: isNative
-            ? web3.SystemProgram.programId
+            ? walletKeyPair.publicKey
             : transferAuthority.publicKey,
           metadata: await getMetadata(mintKey),
           tokenAccount: tokenAccountKey,
@@ -1006,13 +1014,11 @@ programCommand('buy')
         .filter(k => k.pubkey.equals(auctionHouseKeypairLoaded.publicKey))
         .map(k => (k.isSigner = true));
     }
-
     if (!isNative) {
       instruction.keys
         .filter(k => k.pubkey.equals(transferAuthority.publicKey))
         .map(k => (k.isSigner = true));
     }
-
     const instructions = [
       ...(isNative
         ? []

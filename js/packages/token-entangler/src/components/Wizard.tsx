@@ -171,7 +171,7 @@ export const Wizard = () => {
                             }}
                           >
                             <img
-                            alt="Mint A Icon"
+                              alt="Mint A Icon"
                               style={{ width: '100px', height: '100px' }}
                               src={
                                 e.metadata.find(d => d.mint.equals(m.mintA))
@@ -180,7 +180,7 @@ export const Wizard = () => {
                             />
                             <p>becomes</p>
                             <img
-                             alt="Mint B Icon"
+                              alt="Mint B Icon"
                               style={{ width: '100px', height: '100px' }}
                               src={
                                 e.metadata.find(d => d.mint.equals(m.mintB))

@@ -12,6 +12,7 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
   loadAccounts,
+  pullAuctionData,
   pullYourMetadata,
   USE_SPEED_RUN,
 } from './loadAccounts';
@@ -37,14 +38,22 @@ const MetaContext = React.createContext<MetaContextState>({
   update: () => [AuctionData, BidderMetadata, BidderPot],
 });
 
-export function MetaProvider({ children = null as any }) {
+export function MetaProvider({
+  children = null,
+}: {
+  children: React.ReactNode;
+}) {
   const connection = useConnection();
   const { isReady, storeAddress } = useStore();
   const wallet = useWallet();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
   const [page, setPage] = useState(0);
-  const [lastLength, setLastLength] = useState(0);
+  const [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _lastLength,
+    setLastLength,
+  ] = useState(0);
   const { userAccounts } = useUserAccounts();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -113,6 +122,13 @@ export function MetaProvider({ children = null as any }) {
     setState(nextState);
     await updateMints(nextState.metadataByMint);
     return [];
+  }
+
+  async function pullAuctionListData(auctionAddress: StringPublicKey) {
+    const nextState = await pullAuctionData(connection, auctionAddress, state);
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return nextState;
   }
 
   async function pullAuctionPage(auctionAddress: StringPublicKey) {
@@ -336,14 +352,7 @@ export function MetaProvider({ children = null as any }) {
       update(undefined, undefined);
       updateRequestsInQueue.current = 0;
     }
-  }, [
-    connection,
-    setState,
-    updateMints,
-    storeAddress,
-    isReady,
-    page,
-  ]);
+  }, [connection, setState, updateMints, storeAddress, isReady, page]);
 
   // Fetch metadata on userAccounts change
   useEffect(() => {
@@ -378,6 +387,7 @@ export function MetaProvider({ children = null as any }) {
         pullItemsPage,
         pullPackPage,
         pullUserMetadata,
+        pullAuctionListData,
         isLoading,
         isFetching,
       }}

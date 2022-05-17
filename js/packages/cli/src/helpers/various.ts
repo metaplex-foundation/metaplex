@@ -1,15 +1,23 @@
-import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
+import {
+  LAMPORTS_PER_SOL,
+  AccountInfo,
+  PublicKey,
+  Connection,
+  Keypair,
+} from '@solana/web3.js';
 import fs from 'fs';
-import weighted from 'weighted';
-import path from 'path';
 import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { StorageType } from './storage-type';
+
 import { getAtaForMint } from './accounts';
 import { CLUSTERS, DEFAULT_CLUSTER } from './constants';
-import { Uses, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
-
-const { readFile } = fs.promises;
+import {
+  Uses,
+  UseMethod,
+  Metadata,
+  MetadataKey,
+} from '@metaplex-foundation/mpl-token-metadata';
 
 export async function getCandyMachineV2Config(
   walletKeyPair: web3.Keypair,
@@ -17,9 +25,13 @@ export async function getCandyMachineV2Config(
   configPath: any,
 ): Promise<{
   storage: StorageType;
+  nftStorageKey: string | null;
+  nftStorageGateway: string | null;
   ipfsInfuraProjectId: string;
   number: number;
   ipfsInfuraSecret: string;
+  pinataJwt: string;
+  pinataGateway: string;
   awsS3Bucket: string;
   retainAuthority: boolean;
   mutable: boolean;
@@ -57,9 +69,13 @@ export async function getCandyMachineV2Config(
 
   const {
     storage,
+    nftStorageKey,
+    nftStorageGateway,
     ipfsInfuraProjectId,
     number,
     ipfsInfuraSecret,
+    pinataJwt,
+    pinataGateway,
     awsS3Bucket,
     noRetainAuthority,
     noMutable,
@@ -185,9 +201,13 @@ export async function getCandyMachineV2Config(
 
   return {
     storage,
+    nftStorageKey,
+    nftStorageGateway,
     ipfsInfuraProjectId,
     number,
     ipfsInfuraSecret,
+    pinataJwt,
+    pinataGateway: pinataGateway ? pinataGateway : null,
     awsS3Bucket,
     retainAuthority: !noRetainAuthority,
     mutable: !noMutable,
@@ -203,10 +223,6 @@ export async function getCandyMachineV2Config(
     uuid,
     arweaveJwk,
   };
-}
-export async function readJsonFile(fileName: string) {
-  const file = await readFile(fileName, 'utf-8');
-  return JSON.parse(file);
 }
 
 export function shuffle(array) {
@@ -228,84 +244,6 @@ export function shuffle(array) {
 
   return array;
 }
-
-export const assertValidBreakdown = breakdown => {
-  const total = Object.values(breakdown).reduce(
-    (sum: number, el: number) => (sum += el),
-    0,
-  );
-  if (total > 101 || total < 99) {
-    console.log(breakdown);
-    throw new Error('Breakdown not within 1% of 100! It is: ' + total);
-  }
-};
-
-export const generateRandomSet = (breakdown, dnp) => {
-  let valid = true;
-  let tmp = {};
-
-  do {
-    valid = true;
-    const keys = shuffle(Object.keys(breakdown));
-    keys.forEach(attr => {
-      const breakdownToUse = breakdown[attr];
-
-      const formatted = Object.keys(breakdownToUse).reduce((f, key) => {
-        if (breakdownToUse[key]['baseValue']) {
-          f[key] = breakdownToUse[key]['baseValue'];
-        } else {
-          f[key] = breakdownToUse[key];
-        }
-        return f;
-      }, {});
-
-      assertValidBreakdown(formatted);
-      const randomSelection = weighted.select(formatted);
-      tmp[attr] = randomSelection;
-    });
-
-    keys.forEach(attr => {
-      let breakdownToUse = breakdown[attr];
-
-      keys.forEach(otherAttr => {
-        if (
-          tmp[otherAttr] &&
-          typeof breakdown[otherAttr][tmp[otherAttr]] != 'number' &&
-          breakdown[otherAttr][tmp[otherAttr]][attr]
-        ) {
-          breakdownToUse = breakdown[otherAttr][tmp[otherAttr]][attr];
-
-          console.log(
-            'Because this item got attr',
-            tmp[otherAttr],
-            'we are using different probabilites for',
-            attr,
-          );
-
-          assertValidBreakdown(breakdownToUse);
-          const randomSelection = weighted.select(breakdownToUse);
-          tmp[attr] = randomSelection;
-        }
-      });
-    });
-
-    Object.keys(tmp).forEach(attr1 => {
-      Object.keys(tmp).forEach(attr2 => {
-        if (
-          dnp[attr1] &&
-          dnp[attr1][tmp[attr1]] &&
-          dnp[attr1][tmp[attr1]][attr2] &&
-          dnp[attr1][tmp[attr1]][attr2].includes(tmp[attr2])
-        ) {
-          console.log('Not including', tmp[attr1], tmp[attr2], 'together');
-          valid = false;
-          tmp = {};
-        }
-      });
-    });
-  } while (!valid);
-  return tmp;
-};
 
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
@@ -405,68 +343,6 @@ export function chunks(array, size) {
   );
 }
 
-export function generateRandoms(
-  numberOfAttrs: number = 1,
-  total: number = 100,
-) {
-  const numbers = [];
-  const loose_percentage = total / numberOfAttrs;
-
-  for (let i = 0; i < numberOfAttrs; i++) {
-    const random = Math.floor(Math.random() * loose_percentage) + 1;
-    numbers.push(random);
-  }
-
-  const sum = numbers.reduce((prev, cur) => {
-    return prev + cur;
-  }, 0);
-
-  numbers.push(total - sum);
-  return numbers;
-}
-
-export const getMetadata = (
-  name: string = '',
-  symbol: string = '',
-  index: number = 0,
-  creators,
-  description: string = '',
-  seller_fee_basis_points: number = 500,
-  attrs,
-  collection,
-  treatAttributesAsFileNames: boolean,
-) => {
-  const attributes = [];
-  for (const prop in attrs) {
-    attributes.push({
-      trait_type: prop,
-      value: treatAttributesAsFileNames
-        ? path.parse(attrs[prop]).name
-        : attrs[prop],
-    });
-  }
-
-  return {
-    name: `${name}${index + 1}`,
-    symbol,
-    image: `${index}.png`,
-    properties: {
-      files: [
-        {
-          uri: `${index}.png`,
-          type: 'image/png',
-        },
-      ],
-      category: 'image',
-      creators,
-    },
-    description,
-    seller_fee_basis_points,
-    attributes,
-    collection,
-  };
-};
-
 const getMultipleAccountsCore = async (
   connection: any,
   keys: string[],
@@ -528,4 +404,49 @@ export function parseUses(useMethod: string, total: number): Uses | null {
     return new Uses({ useMethod: realUseMethod, total, remaining: total });
   }
   return null;
+}
+
+export async function parseCollectionMintPubkey(
+  collectionMint: null | PublicKey,
+  connection: Connection,
+  walletKeypair: Keypair,
+) {
+  let collectionMintPubkey: null | PublicKey = null;
+  if (collectionMint) {
+    try {
+      collectionMintPubkey = new PublicKey(collectionMint);
+    } catch (error) {
+      throw new Error(
+        'Invalid Pubkey option. Please enter it as a base58 mint id',
+      );
+    }
+    const token = new Token(
+      connection,
+      collectionMintPubkey,
+      TOKEN_PROGRAM_ID,
+      walletKeypair,
+    );
+    await token.getMintInfo();
+  }
+  if (collectionMintPubkey) {
+    const metadata = await Metadata.findByMint(
+      connection,
+      collectionMintPubkey,
+    ).catch();
+    if (metadata.data.updateAuthority !== walletKeypair.publicKey.toString()) {
+      throw new Error(
+        'Invalid collection mint option. Metadata update authority does not match provided wallet keypair',
+      );
+    }
+    const edition = await Metadata.getEdition(connection, collectionMintPubkey);
+    if (
+      edition.data.key !== MetadataKey.MasterEditionV1 &&
+      edition.data.key !== MetadataKey.MasterEditionV2
+    ) {
+      throw new Error(
+        'Invalid collection mint. Provided collection mint does not have a master edition associated with it.',
+      );
+    }
+  }
+  return collectionMintPubkey;
 }
