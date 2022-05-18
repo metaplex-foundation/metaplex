@@ -33,6 +33,7 @@ import {
   Community,
   MyProfile,
   Article,
+  About,
 } from './ui/views'
 
 import { SalesListView } from './views/home/components/SalesList'
@@ -85,7 +86,7 @@ export function Routes() {
               <Route exact path='/launchpad/:id' component={() => <LaunchpadDetails />} />
               <Route path='/donations' component={() => <Donations />} />
 
-              <Route path='/about' component={() => <Article />} />
+              <Route path='/about' component={() => <About />} />
               <Route path='/mission' component={() => <Article />} />
               <Route path='/team' component={() => <Article />} />
               <Route path='/activity-stats' component={() => <Article />} />

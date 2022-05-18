@@ -58,12 +58,15 @@ export const Hero: FC<HeroProps> = ({ className }) => {
                 Discover Collections
               </Button>
             </Link>
-            <Button
-              appearance='ghost'
-              size='lg'
-              iconAfter={<i className='ri-arrow-right-s-line' />}>
-              Learn More
-            </Button>
+
+            <Link to='/about'>
+              <Button
+                appearance='ghost'
+                size='lg'
+                iconAfter={<i className='ri-arrow-right-s-line' />}>
+                Learn More
+              </Button>
+            </Link>
           </div>
         </div>
 
