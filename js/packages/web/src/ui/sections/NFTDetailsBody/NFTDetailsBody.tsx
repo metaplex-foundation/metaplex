@@ -22,6 +22,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const { attributesPercentages } = useAttribute(auction)
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
+  const [attributes, setAttributes] = useState<any[]>([])
 
   const {
     value: { solVal, usdValFormatted },
@@ -29,10 +30,17 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const url = data?.image
 
   useEffect(() => {
+    if (data) {
+      setAttributes(data.attributes || [])
+    }
+  }, [data?.attributes?.length])
+
+  useEffect(() => {
     setOwner(auction?.auctionManager?.authority || '')
   }, [])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
+  // console.log('attributes', attributes)
 
   return (
     <div className={NFTDetailsBodyClasses}>
@@ -47,29 +55,26 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
             <p className='text-md text-slate-600'>{data?.description}</p>
           </div>
 
-          {!!data?.attributes?.length && (
+          {!!attributes.length && (
             <div className='flex flex-col gap-[16px]'>
               <h5 className='text-h5 font-500'>Attributes</h5>
 
               <div className='flex w-full flex-col gap-[8px]'>
-                {(data?.attributes || []).map(
-                  ({ trait_type: label, value }: any, index: number) => {
-                    const tagVal =
-                      attributesPercentages.find(
-                        p => p.trait_type === label && p.value === value
-                      ) || null
-                    return (
-                      <AttributesCard
-                        key={`${index}-${label}`}
-                        overline={label}
-                        label={value}
-                        tag={tagVal ? `🔥 ${tagVal?.percentage.toFixed(2)}%` : ''}
-                        hasHoverEffect={false}
-                        className='cursor-auto !py-[12px] !px-[16px]'
-                      />
-                    )
-                  }
-                )}
+                {(attributes || []).map(({ trait_type: label, value }: any, index: number) => {
+                  const tagVal =
+                    attributesPercentages.find(p => p.trait_type === label && p.value === value) ||
+                    null
+                  return (
+                    <AttributesCard
+                      key={`${index}-${label}`}
+                      overline={label}
+                      label={value}
+                      tag={tagVal ? `🔥 ${tagVal?.percentage.toFixed(2)}%` : ''}
+                      hasHoverEffect={false}
+                      className='cursor-auto !py-[12px] !px-[16px]'
+                    />
+                  )
+                })}
               </div>
             </div>
           )}
