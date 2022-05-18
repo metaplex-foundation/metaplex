@@ -21,8 +21,6 @@ const useAttribute = (auction: AuctionView) => {
         auction.thumbnail.metadata.info.collection?.key === pubkeyToString(collection?.mint)
     )
 
-    // console.log('allAuctions', allAuctions)
-
     let All = Promise.all(
       allAuctions.map(async auction => {
         const gData = await getData(auction.thumbnail.metadata.pubkey)
@@ -53,7 +51,8 @@ const useAttribute = (auction: AuctionView) => {
       }
       setMintAttrs(attrArray)
     })
-  }, [collection, auctions])
+    console.log('----------calling1-----------------------')
+  }, [collection?.mint, auctions.length])
 
   useEffect(() => {
     let allAuctions = auctions.filter(
@@ -84,9 +83,9 @@ const useAttribute = (auction: AuctionView) => {
         })
       }
     })
-
+    console.log('----------calling-----------------------')
     setAttributePercentages([...pArray])
-  }, [mintAttrs, auctions, auction])
+  }, [mintAttrs.length, auctions.length, auction.auction.pubkey])
 
   return { attributesPercentages }
 }

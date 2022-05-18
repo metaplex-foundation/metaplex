@@ -74,7 +74,7 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   const { id }: ParamsInterface = useParams()
-  const { nftItems, attributes, filterFunction, count } = useCollectionNFT(id)
+  const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
 
   // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
@@ -334,6 +334,7 @@ export const Collection: FC<CollectionProps> = () => {
             ? `${collectionHeaderData.description?.slice(0, 250)}.....`
             : collectionHeaderData.description
         }
+        owners={owners}
         numberOfItems={count}
       />
 
@@ -396,7 +397,6 @@ export default Collection
 
 export function useMintD() {
   const connection = useConnection()
-
   const getMintData = (key: string | PublicKey) => {
     const id = typeof key === 'string' ? key : key?.toBase58()
     return cache.query(connection, id, MintParser)

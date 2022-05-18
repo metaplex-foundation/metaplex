@@ -10,6 +10,7 @@ export interface StatsCardProps {
 export const StatsCard: FC<StatsCardProps> = ({
   numberOfItems,
   className,
+  owners,
   ...restProps
 }: StatsCardProps) => {
   const StatsCardClasses = CN(
@@ -21,7 +22,12 @@ export const StatsCard: FC<StatsCardProps> = ({
     <div className={StatsCardClasses} {...restProps}>
       <MetaChip className='w-full' align='center' description='Items' heading={numberOfItems} />
       <span className='flex h-[60px] w-[1px] bg-slate-200' />
-      <MetaChip className='w-full' align='center' description='Owners' heading='3.8K' />
+      <MetaChip
+        className='w-full'
+        align='center'
+        description={`Owners`}
+        heading={owners ? owners.length : ''}
+      />
       <span className='flex h-[60px] w-[1px] bg-slate-200' />
       <MetaChip className='w-full' align='center' description='Floor price' heading='0.35' />
       <span className='flex h-[60px] w-[1px] bg-slate-200' />

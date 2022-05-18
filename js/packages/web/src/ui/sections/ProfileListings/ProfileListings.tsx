@@ -55,9 +55,10 @@ export const ProfileListings: FC<ProfileListingsProps> = ({
   useEffect(() => {
     if (auctions.length) {
       const data = auctions.filter(auction => {
-        return auction.auctionManager.authority === id
-          ? toPublicKey(id).toBase58()
-          : wallet.publicKey?.toBase58()
+        if (id) {
+          return auction.auctionManager.authority === toPublicKey(id).toBase58()
+        }
+        return auction.auctionManager.authority === wallet.publicKey?.toBase58()
       })
       setUserAuctions([...data])
     }
