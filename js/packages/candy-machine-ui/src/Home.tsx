@@ -599,11 +599,7 @@ const Home = (props: HomeProps) => {
                     gatekeeperNetwork={
                       candyMachine?.state?.gatekeeper?.gatekeeperNetwork
                     }
-                    clusterUrl={
-                      props.network === WalletAdapterNetwork.Devnet
-                        ? 'https://api.devnet.solana.com'
-                        : rpcUrl
-                    }
+                    clusterUrl={rpcUrl}
                     cluster={cluster}
                     handleTransaction={async (transaction: Transaction) => {
                       setIsUserMinting(true);
