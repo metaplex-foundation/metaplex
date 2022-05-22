@@ -1,4 +1,4 @@
-import { useConnection, useStore, useWalletModal, WhitelistedCreator } from '@oyster/common'
+import { useConnection, useStore, useWalletModal, Wallet, WhitelistedCreator } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Button } from 'antd'
 import React, { useCallback, useEffect, useState } from 'react'
@@ -6,6 +6,9 @@ import { useHistory } from 'react-router-dom'
 import { saveAdmin } from '../../actions/saveAdmin'
 import { useMeta } from '../../contexts'
 import { SetupVariables } from '../../components/SetupVariables'
+import { createAuctionHouse } from '../../actions/createAuctionHouse'
+import { Transaction } from '@solana/web3.js'
+import { addAuctionHouse } from '../../api/auctionHouseApi'
 
 export const SetupView = () => {
   const [isInitalizingStore, setIsInitalizingStore] = useState(false)
@@ -35,6 +38,29 @@ export const SetupView = () => {
     }
   }, [wallet.publicKey])
 
+  const createNewAuctionHouse = async () => {
+    const auctionHouseCreateInstruction = await createAuctionHouse({
+      wallet: wallet as any,
+      sellerFeeBasisPoints: 500,
+      treasuryWithdrawalDestination: process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
+      feeWithdrawalDestination: process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
+    })
+
+    const transaction = new Transaction()
+
+    transaction.add(auctionHouseCreateInstruction)
+
+    transaction.feePayer = wallet.publicKey as any
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+
+    const signedTransaction = await wallet.signTransaction(transaction)
+
+    const txtId = await connection.sendRawTransaction(signedTransaction.serialize())
+
+    if (txtId) await connection.confirmTransaction(txtId)
+    debugger
+  }
+
   const initializeStore = async () => {
     if (!wallet.publicKey) {
       return
@@ -49,6 +75,7 @@ export const SetupView = () => {
       }),
     ])
 
+    await createNewAuctionHouse()
     // TODO: process errors
 
     await setStoreForOwner(undefined)
@@ -78,8 +105,7 @@ export const SetupView = () => {
               className='app-btn'
               type='primary'
               loading={isInitalizingStore}
-              onClick={initializeStore}
-            >
+              onClick={initializeStore}>
               Init Store
             </Button>
           </p>
