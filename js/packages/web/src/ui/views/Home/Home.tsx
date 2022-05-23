@@ -38,6 +38,9 @@ export const Home: FC<HomeProps> = () => {
 
   return (
     <div className='home'>
+      <div className='home'>
+        <SetupView />
+      </div>
       <Hero className='pt-[80px]' />
       <HottestAuctions
         activeKey={activeKey}

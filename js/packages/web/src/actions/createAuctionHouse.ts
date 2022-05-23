@@ -2,6 +2,7 @@ import { PublicKey, PublicKeyInitData, TransactionInstruction } from '@solana/we
 import { NATIVE_MINT } from '@solana/spl-token'
 import { Wallet } from '@metaplex/js'
 import { AuctionHouseProgram } from '@holaplex/mpl-auction-house'
+import { addAuctionHouse } from '../api/auctionHouseApi'
 
 const { createCreateAuctionHouseInstruction } = AuctionHouseProgram.instructions
 
@@ -27,7 +28,7 @@ export const createAuctionHouse = async (
     feeWithdrawalDestination,
     treasuryMint,
   } = params
-  debugger
+
   const twdKey = treasuryWithdrawalDestination
     ? new PublicKey(treasuryWithdrawalDestination)
     : wallet.publicKey
@@ -54,7 +55,20 @@ export const createAuctionHouse = async (
   const [treasuryAccount, treasuryBump] = await AuctionHouseProgram.findAuctionHouseTreasuryAddress(
     auctionHouse
   )
-  debugger
+
+  addAuctionHouse({
+    auction_house_wallet: auctionHouse.toBase58(),
+    fee_payer_wallet: wallet.publicKey.toBase58(),
+    treasury_wallet: wallet.publicKey.toBase58(),
+    creator_wallet: wallet.publicKey.toBase58(),
+    mint: tMintKey.toBase58(),
+  }).then((result: any) => {
+    console.log(result)
+  })
+
+  // Setting the AH to localstorage so that no need to get this via API everytime
+  localStorage.setItem('auctionHouse', auctionHouse.toBase58())
+
   return createCreateAuctionHouseInstruction(
     {
       treasuryMint: tMintKey,
