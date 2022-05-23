@@ -41,7 +41,7 @@ export const SetupView = () => {
   const createNewAuctionHouse = async () => {
     const auctionHouseCreateInstruction = await createAuctionHouse({
       wallet: wallet as any,
-      sellerFeeBasisPoints: 500,
+      sellerFeeBasisPoints: parseInt(process.env.NEXT_STORE_FEE_PERCENTAGE as string),
       treasuryWithdrawalDestination: process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
       feeWithdrawalDestination: process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
     })
