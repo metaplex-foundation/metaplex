@@ -148,21 +148,11 @@ export const Collection: FC<CollectionProps> = () => {
   //   }
   // }, [auctions])
 
-  // useEffect(() => {
-  //   if (auctions?.length) {
-  //     filteredAuctions(WITH_FILTER).then(res => {
-  //       setNftItems(() => res)
-  //     })
-  //   }
-  // }, [auctions, filters, searchText])
-
   useEffect(() => {
-    console.log('searchText', searchText)
     filterFunction((items: NFTItemInterface[]) => {
-      console.log('items1', items)
       return items.filter(filterFun)
     })
-  }, [searchText])
+  }, [searchText, filters])
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
@@ -211,35 +201,34 @@ export const Collection: FC<CollectionProps> = () => {
   // }
 
   const filterFun = (auction: any) => {
-    // console.log('filters', filters)
-
     if (!filters.length && !searchText) {
       return true
     }
 
-    // let hasAttr: boolean = false
+    let hasAttr: boolean = false
 
     // Attribute filter
-    // const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
-    // if (attrFilters.length) {
-    //   auction.meta.attributes.forEach(i => {
-    //     const a =
-    //       filters.filter(
-    //         ({ type, text }) =>
-    //           type.trim() === i.trait_type.trim() && text.trim() === i.value.trim()
-    //       ) || []
+    const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
+    if (attrFilters.length) {
+      auction.offChainData.attributes.forEach(i => {
+        const a =
+          filters.filter(
+            ({ type, text }) =>
+              type.trim() === i.trait_type.trim() && text.trim() === i.value.trim()
+          ) || []
 
-    //     if (a.length) {
-    //       hasAttr = true
-    //     }
-    //   })
-    // }
+        if (a.length) {
+          hasAttr = true
+        }
+      })
+    }
 
     return (
-      searchText &&
-      auction.offChainData &&
-      auction.offChainData.name &&
-      auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase())
+      (searchText &&
+        auction.offChainData &&
+        auction.offChainData.name &&
+        auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase())) ||
+      hasAttr
     )
 
     // Price Range filter
