@@ -93,7 +93,7 @@ export const SetupView = () => {
           to configure store.
         </p>
       )}
-      {wallet.connected && store && (
+      {wallet.connected && !store && (
         <>
           <p>Store is not initialized yet</p>
           <p>There must be some ◎ SOL in the wallet before initialization.</p>
@@ -110,7 +110,7 @@ export const SetupView = () => {
           </p>
         </>
       )}
-      {/* {wallet.connected && store && (
+      {wallet.connected && store && (
         <>
           <p>
             To finish initialization please copy config below into <b>packages/web/.env</b> and
@@ -121,7 +121,7 @@ export const SetupView = () => {
             storeOwnerAddress={wallet.publicKey?.toBase58()}
           />
         </>
-      )} */}
+      )}
     </>
   )
 }
