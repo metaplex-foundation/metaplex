@@ -475,7 +475,7 @@ const Home = (props: HomeProps) => {
       }, 20000);
     })();
   }, [refreshCandyMachineState]);
-
+  
   return (
     <Container style={{ marginTop: 100 }}>
       <Container maxWidth="xs" style={{ position: 'relative' }}>
@@ -483,7 +483,7 @@ const Home = (props: HomeProps) => {
           style={{
             padding: 24,
             paddingBottom: 10,
-            backgroundColor: '#151A1F',
+            backgroundColor: '#F804FF',
             borderRadius: 6,
           }}
         >
@@ -697,9 +697,9 @@ const Home = (props: HomeProps) => {
             variant="caption"
             align="center"
             display="block"
-            style={{ marginTop: 7, color: 'grey' }}
+            style={{ marginTop: 7, color: 'white' }}
           >
-            Powered by METAPLEX
+            glizzy
           </Typography>
         </Paper>
       </Container>
