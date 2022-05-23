@@ -77,8 +77,6 @@ export const Collection: FC<CollectionProps> = () => {
   const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
 
-  // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
-
   const selectedCollection = liveCollections.find(({ mint }) => mint === id) || null
 
   const pubkey = selectedCollection?.pubkey
@@ -131,23 +129,6 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }, [colData])
 
-  // const { getData } = useExtendedCollection()
-
-  // const tokenList = useTokenList()
-  // const allSplPrices = useAllSplPrices()
-
-  // const getMintData = useMintD()
-  // const solPrice = useSolPrice()
-
-  // useEffect(() => {
-  //   if (auctions?.length) {
-  //     filteredAuctions(!WITH_FILTER).then(res => {
-  //       setCount(res.length)
-  //       setAuctionAttr(() => res)
-  //     })
-  //   }
-  // }, [auctions])
-
   useEffect(() => {
     filterFunction((items: NFTItemInterface[]) => {
       return items.filter(filterFun)
@@ -156,49 +137,16 @@ export const Collection: FC<CollectionProps> = () => {
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
-      return val === SORT_LOW_TO_HIGH ? a.amount - b.amount : b.amount - a.amount
+      return val === SORT_LOW_TO_HIGH
+        ? a.amounts.priceFloor - b.amounts.priceFloor
+        : b.amounts.priceFloor - a.amounts.priceFloor
     })
-    // setNftItems([])
-    filterFunction([])
+
+    filterFunction(() => [])
     setTimeout(() => {
       filterFunction(() => [...dataArray])
-    }, 1)
+    }, 200)
   }
-
-  // const filteredAuctions = async (withFilter: boolean) => {
-  //   let data = auctions.filter(
-  //     auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
-  //   )
-
-  //   if (!data.length && !pubkey) {
-  //     const allItemWithData = await Promise.all(
-  //       auctions.map(async auction => {
-  //         const gData = await getData(auction.thumbnail.metadata.pubkey)
-  //         return { ...gData, _auction: auction }
-  //       })
-  //     )
-
-  //     data = allItemWithData
-  //       .filter(i => {
-  //         return i.collection?.name === id
-  //       })
-  //       .map(({ _auction }) => _auction)
-  //   }
-
-  //   const all = await Promise.all(
-  //     data.map(async auction => await getData(auction.thumbnail.metadata.pubkey))
-  //   )
-
-  //   const allItems = data.map(i => {
-  //     const meta = (all || []).find(({ pubkey }) => pubkey === i.thumbnail.metadata.pubkey) || null
-  //     return { ...bindAmount(i), meta }
-  //   })
-
-  //   if (withFilter) {
-  //     return allItems.filter(filterFun)
-  //   }
-  //   return allItems
-  // }
 
   const filterFun = (auction: any) => {
     if (!filters.length && !searchText) {

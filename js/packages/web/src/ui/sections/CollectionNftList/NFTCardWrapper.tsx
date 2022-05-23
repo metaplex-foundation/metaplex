@@ -1,7 +1,6 @@
 import { NFTCard } from '@oyster/common'
-import { FC, useState, useEffect } from 'react'
+import { FC, useState } from 'react'
 import { AuctionView } from '../../../hooks'
-import useNFTData from '../../../hooks/useNFTData'
 import { Modal } from '@oyster/common'
 import { QuickBuy } from '../QuickBuy'
 
@@ -12,20 +11,18 @@ interface NFTCardWrapperInterface {
 }
 
 export const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction, link, ...restProps }) => {
-  const {
-    data,
-    value: { solVal, usdValFormatted },
-  } = useNFTData(auction)
-
   const [showQuickBuy, setShowQuickBuy] = useState(false)
-
   return (
     <>
       <NFTCard
-        image={data?.image ?? ''}
-        title={data?.name ?? ''}
-        price={solVal ?? ''}
-        dollarValue={usdValFormatted ?? ''}
+        // @ts-ignore
+        image={auction.offChainData?.image ?? ''}
+        // @ts-ignore
+        title={auction.offChainData?.name ?? ''}
+        // @ts-ignore
+        price={auction?.amounts?.priceFloor ?? ''}
+        // @ts-ignore
+        dollarValue={auction?.amounts?.formattedUsdAmount ?? ''}
         bidPrice='3.12 SOL'
         onClickDetails={() => {
           console.log('On click details')

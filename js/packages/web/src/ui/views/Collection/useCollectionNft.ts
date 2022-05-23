@@ -10,6 +10,7 @@ import {
 } from '@oyster/common'
 import { PublicKey } from '@solana/web3.js'
 import { BN } from 'bn.js'
+import currency from 'currency.js'
 import { useEffect, useState } from 'react'
 import { useAllSplPrices, useSolPrice } from '../../../contexts'
 import { useTokenList } from '../../../contexts/tokenList'
@@ -86,7 +87,8 @@ const useCollectionNFT = (id: string) => {
     const altSplPrice = allSplPrices.filter(a => a.tokenMint == tokenInfo?.address)[0]?.tokenPrice
     const tokenPrice = tokenInfo?.address == WRAPPED_SOL_MINT.toBase58() ? solPrice : altSplPrice
     const _floor = fromLamports(priceFloor ?? 0, dx.info)
-    return { amount, usdAmount: tokenPrice * amount, priceFloor: _floor }
+    const formattedUsdAmount = currency(tokenPrice * amount || 0).format()
+    return { amount, usdAmount: tokenPrice * amount, priceFloor: _floor, formattedUsdAmount }
   }
 
   useEffect(() => {
