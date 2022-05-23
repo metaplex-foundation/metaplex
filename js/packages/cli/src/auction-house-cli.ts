@@ -1555,7 +1555,7 @@ function programCommand(name: string) {
     .command(name)
     .option(
       '-e, --env <string>',
-      'Solana cluster env name',
+      'Solana cluster env name, i.e. mainnet-beta, testnet, devnet',
       'devnet', //mainnet-beta, testnet, devnet
     )
     .option(

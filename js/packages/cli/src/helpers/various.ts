@@ -6,6 +6,7 @@ import {
   Keypair,
 } from '@solana/web3.js';
 import fs from 'fs';
+import log from 'loglevel';
 import { BN, Program, web3 } from '@project-serum/anchor';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { StorageType } from './storage-type';
@@ -387,12 +388,20 @@ export const getPriceWithMantissa = async (
 };
 
 export function getCluster(name: string): string {
+  if (name === '') {
+    log.info('Using cluster', DEFAULT_CLUSTER.name);
+    return DEFAULT_CLUSTER.url;
+  }
+
   for (const cluster of CLUSTERS) {
     if (cluster.name === name) {
+      log.info('Using cluster', cluster.name);
       return cluster.url;
     }
   }
-  return DEFAULT_CLUSTER.url;
+
+  throw new Error(`Could not get cluster: ${name}`);
+  return null;
 }
 
 export function parseUses(useMethod: string, total: number): Uses | null {
