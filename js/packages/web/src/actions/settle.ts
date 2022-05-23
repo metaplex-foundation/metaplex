@@ -210,7 +210,6 @@ async function claimAllBids(
   auctionView: AuctionView,
   bids: ParsedAccount<BidderPot>[]
 ) {
-  debugger
   const signers: Array<Array<Keypair[]>> = []
   const instructions: Array<Array<TransactionInstruction[]>> = []
 
