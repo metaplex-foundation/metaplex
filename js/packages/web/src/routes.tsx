@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { HashRouter, Route, Switch } from 'react-router-dom'
 import { Providers } from './providers'
 import {
@@ -37,9 +37,18 @@ import {
 } from './ui/views'
 
 import { SalesListView } from './views/home/components/SalesList'
+import { getCollectionTags } from './api'
 
 export function Routes() {
   const shouldEnableNftPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true'
+  const [tags, setTags] = useState<any[]>([])
+
+  useEffect(() => {
+    getCollectionTags().then(res => {
+      setTags(res.data)
+    })
+  }, [])
+
   return (
     <>
       <HashRouter basename={'/'}>
@@ -71,7 +80,7 @@ export function Routes() {
               />
               <Route exact path='/auction/:id' component={() => <AuctionView />} />
               <Route exact path='/auction/:id/billing' component={() => <BillingView />} />
-              <Route path='/discover' component={() => <Discover />} />
+              <Route path='/discover' component={() => <Discover tags={tags} />} />
               <Route path='/collection/:id' component={() => <Collection />} />
               <Route path='/nft/:id' component={() => <NFTDetails />} />
               <Route path='/nft-next/:id' component={() => <NftNext />} />
