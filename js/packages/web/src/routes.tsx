@@ -34,6 +34,7 @@ import {
   MyProfile,
   Article,
   About,
+  Statistics,
 } from './ui/views'
 
 import { SalesListView } from './views/home/components/SalesList'
@@ -104,6 +105,7 @@ export function Routes() {
               <Route path='/terms-of-condition' component={() => <Article />} />
               <Route path='/cookies' component={() => <Article />} />
               <Route path='/privacy-policy' component={() => <Article />} />
+              <Route path='/statistics' component={() => <Statistics />} />
 
               <Route path='/' component={() => <Home />} />
 
