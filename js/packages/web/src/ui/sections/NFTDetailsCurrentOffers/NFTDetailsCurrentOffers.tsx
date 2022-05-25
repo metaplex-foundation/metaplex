@@ -79,7 +79,7 @@ export const NFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
               </Button>
 
               {/* Dev note: Uncomment this button for Approve button (Different button style so Approve looks like a primary button) */}
-
+              
               {/* <Button appearance='neutral' isRounded={false} size='sm'>
                 Approve
               </Button> */}
