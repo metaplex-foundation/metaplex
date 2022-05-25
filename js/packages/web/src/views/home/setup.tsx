@@ -1,6 +1,14 @@
-import { useConnection, useStore, useWalletModal, Wallet, WhitelistedCreator } from '@oyster/common'
+import {
+  useConnection,
+  useStore,
+  useWalletModal,
+  Wallet,
+  WhitelistedCreator,
+  SectionHeading,
+  LaunchCard,
+  Button,
+} from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { Button } from 'antd'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useHistory } from 'react-router-dom'
 import { saveAdmin } from '../../actions/saveAdmin'
@@ -95,19 +103,25 @@ export const SetupView = () => {
       )}
       {wallet.connected && !store && (
         <>
-          <p>Store is not initialized yet</p>
-          <p>There must be some ◎ SOL in the wallet before initialization.</p>
-          <p>After initialization, you will be able to manage the list of creators</p>
+          <div className='container pt-[80px] pb-[100px]'>
+            <SectionHeading
+              heading='Store is not initialized yet'
+              align='center'
+              headingClassName='text-display-md text-gray-900 font-400'
+              description='There must be some ◎ SOL in the wallet before initialization. <br /> After initialization, you will be able to manage the list of creators'
+              descriptionClassName='text-gray-600 text-md'
+            />
 
-          <p>
-            <Button
-              className='app-btn'
-              type='primary'
-              loading={isInitalizingStore}
-              onClick={initializeStore}>
-              Init Store
-            </Button>
-          </p>
+            <div className='flex justify-center pt-[40px]'>
+              <Button
+                size='lg'
+                loading={isInitalizingStore}
+                onClick={initializeStore}
+                iconBefore={<i className='ri-settings-3-line' />}>
+                Init Store
+              </Button>
+            </div>
+          </div>
         </>
       )}
       {wallet.connected && store && (
