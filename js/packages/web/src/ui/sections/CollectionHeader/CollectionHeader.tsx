@@ -7,6 +7,7 @@ export interface CollectionHeaderProps {
   cover?: string
   avatar?: string
   title?: string
+  owners?: string[]
 }
 
 export const CollectionHeader: FC<CollectionHeaderProps> = ({
@@ -17,6 +18,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
   description,
   isVerified,
   numberOfItems,
+  owners,
   ...restProps
 }: CollectionHeaderProps) => {
   const CollectionHeaderClasses = CN(
@@ -63,6 +65,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
       </div>
 
       <StatsCard
+        owners={owners}
         numberOfItems={numberOfItems}
         className='relative z-30 mx-auto mt-[-50px] max-w-[728px]'
       />

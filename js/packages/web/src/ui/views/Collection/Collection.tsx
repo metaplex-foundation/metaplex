@@ -74,10 +74,8 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   const { id }: ParamsInterface = useParams()
-  const { nftItems, attributes, filterFunction, count } = useCollectionNFT(id)
+  const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
-
-  // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
 
   const selectedCollection = liveCollections.find(({ mint }) => mint === id) || null
 
@@ -131,115 +129,54 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }, [colData])
 
-  // const { getData } = useExtendedCollection()
-
-  // const tokenList = useTokenList()
-  // const allSplPrices = useAllSplPrices()
-
-  // const getMintData = useMintD()
-  // const solPrice = useSolPrice()
-
-  // useEffect(() => {
-  //   if (auctions?.length) {
-  //     filteredAuctions(!WITH_FILTER).then(res => {
-  //       setCount(res.length)
-  //       setAuctionAttr(() => res)
-  //     })
-  //   }
-  // }, [auctions])
-
-  // useEffect(() => {
-  //   if (auctions?.length) {
-  //     filteredAuctions(WITH_FILTER).then(res => {
-  //       setNftItems(() => res)
-  //     })
-  //   }
-  // }, [auctions, filters, searchText])
-
   useEffect(() => {
-    console.log('searchText', searchText)
     filterFunction((items: NFTItemInterface[]) => {
-      console.log('items1', items)
       return items.filter(filterFun)
     })
-  }, [searchText])
+  }, [searchText, filters])
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
-      return val === SORT_LOW_TO_HIGH ? a.amount - b.amount : b.amount - a.amount
+      return val === SORT_LOW_TO_HIGH
+        ? a.amounts.priceFloor - b.amounts.priceFloor
+        : b.amounts.priceFloor - a.amounts.priceFloor
     })
-    // setNftItems([])
-    filterFunction([])
+
+    filterFunction(() => [])
     setTimeout(() => {
       filterFunction(() => [...dataArray])
-    }, 1)
+    }, 200)
   }
 
-  // const filteredAuctions = async (withFilter: boolean) => {
-  //   let data = auctions.filter(
-  //     auction => auction.thumbnail.metadata.info.collection?.key === pubkeyToString(id)
-  //   )
-
-  //   if (!data.length && !pubkey) {
-  //     const allItemWithData = await Promise.all(
-  //       auctions.map(async auction => {
-  //         const gData = await getData(auction.thumbnail.metadata.pubkey)
-  //         return { ...gData, _auction: auction }
-  //       })
-  //     )
-
-  //     data = allItemWithData
-  //       .filter(i => {
-  //         return i.collection?.name === id
-  //       })
-  //       .map(({ _auction }) => _auction)
-  //   }
-
-  //   const all = await Promise.all(
-  //     data.map(async auction => await getData(auction.thumbnail.metadata.pubkey))
-  //   )
-
-  //   const allItems = data.map(i => {
-  //     const meta = (all || []).find(({ pubkey }) => pubkey === i.thumbnail.metadata.pubkey) || null
-  //     return { ...bindAmount(i), meta }
-  //   })
-
-  //   if (withFilter) {
-  //     return allItems.filter(filterFun)
-  //   }
-  //   return allItems
-  // }
-
   const filterFun = (auction: any) => {
-    // console.log('filters', filters)
-
     if (!filters.length && !searchText) {
       return true
     }
 
-    // let hasAttr: boolean = false
+    let hasAttr: boolean = false
 
     // Attribute filter
-    // const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
-    // if (attrFilters.length) {
-    //   auction.meta.attributes.forEach(i => {
-    //     const a =
-    //       filters.filter(
-    //         ({ type, text }) =>
-    //           type.trim() === i.trait_type.trim() && text.trim() === i.value.trim()
-    //       ) || []
+    const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
+    if (attrFilters.length) {
+      auction.offChainData.attributes.forEach(i => {
+        const a =
+          filters.filter(
+            ({ type, text }) =>
+              type.trim() === i.trait_type.trim() && text.trim() === i.value.trim()
+          ) || []
 
-    //     if (a.length) {
-    //       hasAttr = true
-    //     }
-    //   })
-    // }
+        if (a.length) {
+          hasAttr = true
+        }
+      })
+    }
 
     return (
-      searchText &&
-      auction.offChainData &&
-      auction.offChainData.name &&
-      auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase())
+      (searchText &&
+        auction.offChainData &&
+        auction.offChainData.name &&
+        auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase())) ||
+      hasAttr
     )
 
     // Price Range filter
@@ -334,6 +271,7 @@ export const Collection: FC<CollectionProps> = () => {
             ? `${collectionHeaderData.description?.slice(0, 250)}.....`
             : collectionHeaderData.description
         }
+        owners={owners}
         numberOfItems={count}
       />
 
@@ -396,7 +334,6 @@ export default Collection
 
 export function useMintD() {
   const connection = useConnection()
-
   const getMintData = (key: string | PublicKey) => {
     const id = typeof key === 'string' ? key : key?.toBase58()
     return cache.query(connection, id, MintParser)
