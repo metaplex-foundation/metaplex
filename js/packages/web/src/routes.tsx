@@ -35,6 +35,7 @@ import {
   Article,
   About,
   Statistics,
+  HelpCentre,
 } from './ui/views'
 
 import { SalesListView } from './views/home/components/SalesList'
@@ -106,6 +107,7 @@ export function Routes() {
               <Route path='/cookies' component={() => <Article />} />
               <Route path='/privacy-policy' component={() => <Article />} />
               <Route path='/statistics' component={() => <Statistics />} />
+              <Route path='/help-centre' component={() => <HelpCentre />} />
 
               <Route path='/' component={() => <Home />} />
 
