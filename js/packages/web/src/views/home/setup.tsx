@@ -94,12 +94,21 @@ export const SetupView = () => {
   return (
     <>
       {!wallet.connected && (
-        <p>
-          <Button type='primary' className='app-btn' onClick={connect}>
-            Connect
-          </Button>{' '}
-          to configure store.
-        </p>
+        <div className='container pt-[80px] pb-[100px]'>
+          <SectionHeading
+            heading='Connect wallet'
+            align='center'
+            headingClassName='text-display-md text-gray-900 font-400'
+            description='Connect your wallet to confugure your store'
+            descriptionClassName='text-gray-600 text-md'
+          />
+
+          <div className='flex justify-center pt-[40px]'>
+            <Button size='lg' onClick={connect} iconBefore={<i className='ri-wallet-fill' />}>
+              Connect wallet
+            </Button>
+          </div>
+        </div>
       )}
       {wallet.connected && !store && (
         <>
