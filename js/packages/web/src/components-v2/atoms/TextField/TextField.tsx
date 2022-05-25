@@ -68,7 +68,7 @@ export const TextField: FC<TextFieldProps> = forwardRef(
         !isError &&
         'outline-none focus-within:!border-blue-400 focus-within:shadow-[0px_0px_0px_1px_#60a5fa]') ||
       (disabled && 'border-gray-200') ||
-      (!disabled && isError && '!border-R-100 focus-within:!border-B-400')
+      (!disabled && isError && '!border-R-100 focus-within:!border-N-800')
 
     /* Text Color */
     const inputTextColor = (!disabled && 'text-gray-800') || (disabled && 'text-gray-400')
