@@ -1,66 +1,62 @@
 import * as cliProgress from 'cli-progress';
-import { readFile } from 'fs/promises';
+import {readFile} from 'fs/promises';
 import path from 'path';
 import log from 'loglevel';
-import {
-  createCandyMachineV2,
-  loadCandyProgram,
-  loadWalletKey,
-} from '../helpers/accounts';
-import { PublicKey } from '@solana/web3.js';
-import { BN, Program, web3 } from '@project-serum/anchor';
+import {createCandyMachineV2, loadCandyProgram, loadWalletKey,} from '../helpers/accounts';
+import {PublicKey} from '@solana/web3.js';
+import {BN, Program, web3} from '@project-serum/anchor';
 
 import fs from 'fs';
 
-import { PromisePool } from '@supercharge/promise-pool';
-import { loadCache, saveCache } from '../helpers/cache';
-import { arweaveUpload } from '../helpers/upload/arweave';
-import {
-  makeArweaveBundleUploadGenerator,
-  withdrawBundlr,
-} from '../helpers/upload/arweave-bundle';
-import { awsUpload } from '../helpers/upload/aws';
-import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import {PromisePool} from '@supercharge/promise-pool';
+import {loadCache, saveCache} from '../helpers/cache';
+import {arweaveUpload} from '../helpers/upload/arweave';
+import {makeArweaveBundleUploadGenerator, withdrawBundlr,} from '../helpers/upload/arweave-bundle';
+import {awsUpload} from '../helpers/upload/aws';
+import {ipfsCreds, ipfsUpload} from '../helpers/upload/ipfs';
 
-import { StorageType } from '../helpers/storage-type';
-import { AssetKey } from '../types';
-import { chunks, sleep } from '../helpers/various';
-import { pinataUpload } from '../helpers/upload/pinata';
-import { setCollection } from './set-collection';
-import { nftStorageUploadGenerator } from '../helpers/upload/nft-storage';
+import {StorageType} from '../helpers/storage-type';
+import {AssetKey} from '../types';
+import {chunks, sleep} from '../helpers/various';
+import {pinataUpload} from '../helpers/upload/pinata';
+import {setCollection} from './set-collection';
+import {nftStorageUploadGenerator} from '../helpers/upload/nft-storage';
+import {shadowDriveUploadGenerator} from '../helpers/upload/shadow_drive';
+import {isNull} from "lodash";
 
 export async function uploadV2({
-  files,
-  cacheName,
-  env,
-  totalNFTs,
-  storage,
-  retainAuthority,
-  mutable,
-  nftStorageKey,
-  nftStorageGateway,
-  ipfsCredentials,
-  pinataJwt,
-  pinataGateway,
-  awsS3Bucket,
-  batchSize,
-  price,
-  treasuryWallet,
-  splToken,
-  gatekeeper,
-  goLiveDate,
-  endSettings,
-  whitelistMintSettings,
-  hiddenSettings,
-  uuid,
-  walletKeyPair,
-  anchorProgram,
-  arweaveJwk,
-  rateLimit,
-  collectionMintPubkey,
-  setCollectionMint,
-  rpcUrl,
-}: {
+                                 files,
+                                 cacheName,
+                                 env,
+                                 totalNFTs,
+                                 storage,
+                                 retainAuthority,
+                                 mutable,
+                                 nftStorageKey,
+                                 nftStorageGateway,
+                                 ipfsCredentials,
+                                 pinataJwt,
+                                 pinataGateway,
+                                 awsS3Bucket,
+                                 shadowDriveAddress,
+                                 batchSize,
+                                 price,
+                                 treasuryWallet,
+                                 splToken,
+                                 gatekeeper,
+                                 goLiveDate,
+                                 endSettings,
+                                 whitelistMintSettings,
+                                 hiddenSettings,
+                                 uuid,
+                                 walletKeyPair,
+                                 anchorProgram,
+                                 arweaveJwk,
+                                 rateLimit,
+                                 collectionMintPubkey,
+                                 setCollectionMint,
+                                 rpcUrl,
+                               }: {
   files: string[];
   cacheName: string;
   env: 'mainnet-beta' | 'devnet';
@@ -74,6 +70,7 @@ export async function uploadV2({
   pinataJwt: string;
   pinataGateway: string;
   awsS3Bucket: string;
+  shadowDriveAddress: string;
   batchSize: number;
   price: BN;
   treasuryWallet: PublicKey;
@@ -244,7 +241,7 @@ export async function uploadV2({
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
       for await (const value of arweaveBundleUploadGenerator) {
-        const { cacheKeys, arweavePathManifestLinks, updatedManifests } = value;
+        const {cacheKeys, arweavePathManifestLinks, updatedManifests} = value;
 
         updateCacheAfterUpload(
           cacheContent,
@@ -283,6 +280,42 @@ export async function uploadV2({
         saveCache(cacheName, env, cacheContent);
         log.info('Saved bundle upload result to cache.');
       }
+    } else if (storage === StorageType.ShadowDrive) {
+
+      //Called if a drive is created in the process
+      const onDriveCreate = (driveID) => {
+        cacheContent.shadowDriveAddress = driveID;
+        saveCache(cacheName, env, cacheContent)
+      }
+
+      if (cacheContent.shadowDriveAddress && (shadowDriveAddress === "" || isNull(shadowDriveAddress))) {
+        shadowDriveAddress = cacheContent.shadowDriveAddress
+      }
+
+      const generator = shadowDriveUploadGenerator({
+        dirname,
+        env,
+        walletKeyPair,
+        shadowDriveAddress,
+        assets: dedupedAssetKeys,
+        batchSize,
+        rpcUrl,
+        onDriveCreate
+      })
+      for await (const result of generator) {
+        //TODO
+        updateCacheAfterUpload(
+          cacheContent,
+          result.assets.map(a => a.cacheKey),
+          result.assets.map(a => a.manifestUrl),
+          result.assets.map(a => a.updatedManifest.name),
+        );
+
+        saveCache(cacheName, env, cacheContent);
+        log.info('Saved bundle upload result to cache.');
+      }
+
+
     } else {
       const progressBar = new cliProgress.SingleBar(
         {
@@ -465,7 +498,7 @@ function getAssetKeysNeedingUpload(
 
       if (!items[key]?.link && !keyMap[key]) {
         keyMap[key] = true;
-        acc.push({ mediaExt: ext, index: key });
+        acc.push({mediaExt: ext, index: key});
       }
       return acc;
     }, [])
@@ -505,14 +538,14 @@ export function getAssetManifest(dirname: string, assetKey: string): Manifest {
  * value of `onChain` property in the Cache object, for said asset.
  */
 async function writeIndices({
-  anchorProgram,
-  cacheContent,
-  cacheName,
-  env,
-  candyMachine,
-  walletKeyPair,
-  rateLimit,
-}: {
+                              anchorProgram,
+                              cacheContent,
+                              cacheName,
+                              env,
+                              candyMachine,
+                              walletKeyPair,
+                              rateLimit,
+                            }: {
   anchorProgram: Program;
   cacheContent: any;
   cacheName: string;
@@ -534,7 +567,7 @@ async function writeIndices({
       length < 850 &&
       lineSize < 16 &&
       configLines[lineSize] !== undefined
-    ) {
+      ) {
       length +=
         cacheContent.items[keys[configLines[lineSize]]].link.length +
         cacheContent.items[keys[configLines[lineSize]]].name.length;
@@ -547,7 +580,7 @@ async function writeIndices({
     );
     const index = keys[configLines[0]];
     if (onChain.length != configLines.length) {
-      poolArray.push({ index, configLines });
+      poolArray.push({index, configLines});
     }
   }
   log.info(`Writing all indices in ${poolArray.length} transactions...`);
@@ -559,7 +592,7 @@ async function writeIndices({
   );
   progressBar.start(poolArray.length, 0);
 
-  const addConfigLines = async ({ index, configLines }) => {
+  const addConfigLines = async ({index, configLines}) => {
     const response = await anchorProgram.rpc.addConfigLines(
       index,
       configLines.map(i => ({
@@ -588,7 +621,7 @@ async function writeIndices({
 
   await PromisePool.withConcurrency(rateLimit || 5)
     .for(poolArray)
-    .handleError(async (err, { index, configLines }) => {
+    .handleError(async (err, {index, configLines}) => {
       log.error(
         `\nFailed writing indices ${index}-${
           keys[configLines[configLines.length - 1]]
@@ -597,8 +630,8 @@ async function writeIndices({
       await sleep(5000);
       uploadSuccessful = false;
     })
-    .process(async ({ index, configLines }) => {
-      await addConfigLines({ index, configLines });
+    .process(async ({index, configLines}) => {
+      await addConfigLines({index, configLines});
     });
   progressBar.stop();
   saveCache(cacheName, env, cacheContent);
@@ -646,18 +679,19 @@ type UploadParams = {
   arweaveJwk: string;
   batchSize: number;
 };
+
 export async function upload({
-  files,
-  cacheName,
-  env,
-  keypair,
-  storage,
-  rpcUrl,
-  ipfsCredentials,
-  awsS3Bucket,
-  arweaveJwk,
-  batchSize,
-}: UploadParams): Promise<boolean> {
+                               files,
+                               cacheName,
+                               env,
+                               keypair,
+                               storage,
+                               rpcUrl,
+                               ipfsCredentials,
+                               awsS3Bucket,
+                               arweaveJwk,
+                               batchSize,
+                             }: UploadParams): Promise<boolean> {
   // Read the content of the Cache file into the Cache object, initialize it
   // otherwise.
   const cache: Cache | undefined = loadCache(cacheName, env);
@@ -720,7 +754,7 @@ export async function upload({
       // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
       // and save the results to the Cache object, persist it to the Cache file.
       for await (const value of arweaveBundleUploadGenerator) {
-        const { cacheKeys, arweavePathManifestLinks, updatedManifests } = value;
+        const {cacheKeys, arweavePathManifestLinks, updatedManifests} = value;
 
         updateCacheAfterUpload(
           cache,

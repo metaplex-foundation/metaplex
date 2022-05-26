@@ -27,6 +27,7 @@ Gettting started and usage instructions can be found at https://docs.metaplex.co
   "ipfsInfuraProjectId": null,
   "ipfsInfuraSecret": null,
   "awsS3Bucket": null,
+  "shadowDriveAddress": null,
   "noRetainAuthority": false,
   "noMutable": false
 }
@@ -170,7 +171,7 @@ There are great tools that can make generative art for you. One of the open sour
 - If you are using an animation format, you must also include a numbered animation file with a supported format (`mp4`, `html`, `glb`, etc...).
 - JSON format can be checked out here: https://docs.metaplex.com/token-metadata/specification.
 
-### Example `0.json` File 
+### Example `0.json` File
 ```json
 {
   "name": "SolanaArtProject #0",

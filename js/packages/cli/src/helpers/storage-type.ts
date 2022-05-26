@@ -6,4 +6,5 @@ export enum StorageType {
   Aws = 'aws',
   NftStorage = 'nft-storage',
   Pinata = 'pinata',
+  ShadowDrive = 'shadow-drive',
 }
