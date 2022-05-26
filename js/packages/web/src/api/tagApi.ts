@@ -50,3 +50,21 @@ export async function getNftForTag() {
     return error.message
   }
 }
+
+export async function getCollectionTags() {
+  try {
+    const response = await axios.get(
+      'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/tags/get',
+      {
+        headers: {
+          'x-kmplx-token': HEADER_TOKEN,
+        },
+      }
+    )
+
+    return response.data
+  } catch (error: any) {
+    console.log(error)
+    return error.message
+  }
+}

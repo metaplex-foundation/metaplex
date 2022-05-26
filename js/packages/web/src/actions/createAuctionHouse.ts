@@ -67,7 +67,7 @@ export const createAuctionHouse = async (
   })
 
   // Setting the AH to localstorage so that no need to get this via API everytime
-  localStorage.setItem('auctionHouse', auctionHouse.toBase58())
+  // localStorage.setItem('auctionHouse', auctionHouse.toBase58())
 
   return createCreateAuctionHouseInstruction(
     {

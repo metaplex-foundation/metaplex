@@ -42,8 +42,8 @@ export const ArtView = () => {
       case PROCESSING:
         return (
           <>
-            <Spin indicator={<LoadingOutlined style={{ fontSize: '100px' }} />} />
-            <h2 className='mt-20 text-center text-h2 font-500	 text-slate-800'>
+            <Spin indicator={<LoadingOutlined style={{ fontSize: '80px' }} />} />
+            <h2 className='mt-10 text-center text-h2 font-400	 text-slate-800'>
               Your item is processing
             </h2>
           </>
@@ -51,8 +51,8 @@ export const ArtView = () => {
       case SUCCESS:
         return (
           <>
-            <CheckCircleOutlined style={{ fontSize: '100px' }} />
-            <h2 className='mt-10 text-center text-h2 font-500	 text-slate-800'>Congratulations</h2>
+            <CheckCircleOutlined style={{ fontSize: '80px' }} />
+            <h2 className='mt-10 text-center text-h2 font-400	 text-slate-800'>Congratulations</h2>
             <div className='flex justify-center'>
               <a
                 className='mt-10 w-1/4 rounded bg-blue-500 py-2 px-4 text-center font-bold text-white hover:bg-blue-700'
@@ -65,10 +65,20 @@ export const ArtView = () => {
       case ERROR:
         return (
           <>
-            <IssuesCloseOutlined style={{ fontSize: '100px' }} />
-            <h2 className='mt-20 text-center text-h2 font-500	 text-slate-800'>
+            <IssuesCloseOutlined style={{ fontSize: '80px' }} />
+            <h2 className='mt-10 text-center text-h2 font-400	 text-slate-800'>
               Something went wrong
             </h2>
+            <div className='flex justify-center'>
+              <a
+                onClick={() => {
+                  setShowModal(false)
+                  setStatus(0)
+                }}
+                className='mt-10 w-1/4 rounded bg-blue-500 py-2 px-4 text-center font-bold text-white hover:bg-blue-700'>
+                CLOSE
+              </a>
+            </div>
           </>
         )
       default:
@@ -107,8 +117,16 @@ export const ArtView = () => {
                       </div>
                     )}
                   </div>
-
-                  {!!selected.length &&
+                  <>
+                    <h6 className='text-h6 font-400'>Instant Sale</h6>
+                    <InstantSale
+                      setStatus={setStatus}
+                      category={AuctionCategory.InstantSale}
+                      items={selected}
+                      status={status}
+                    />
+                  </>
+                  {/* {!!selected.length &&
                     !(selected[0].metadata.info.data.creators || []).some(
                       (c: Creator) => !c.verified
                     ) && (
@@ -121,10 +139,18 @@ export const ArtView = () => {
                           status={status}
                         />
                       </>
-                    )}
+                    )} */}
                   <hr />
-
-                  {!!selected.length &&
+                  <>
+                    <h6 className='text-h6 font-400'>Auction</h6>
+                    <InstantSale
+                      setStatus={setStatus}
+                      category={AuctionCategory.Tiered}
+                      items={selected}
+                      status={status}
+                    />
+                  </>
+                  {/* {!!selected.length &&
                     !!selected[0]?.masterEdition &&
                     selected[0]?.masterEdition.info.maxSupply === undefined && (
                       <>
@@ -136,7 +162,7 @@ export const ArtView = () => {
                           status={status}
                         />
                       </>
-                    )}
+                    )} */}
                 </div>
               </div>
             </div>
@@ -145,7 +171,7 @@ export const ArtView = () => {
       </div>
       {showModal && (
         <Modal>
-          <div className='flex flex-col justify-center	 p-20	'>{getModalContent()}</div>
+          <div className='flex flex-col justify-center	 p-5	'>{getModalContent()}</div>
         </Modal>
       )}
     </>

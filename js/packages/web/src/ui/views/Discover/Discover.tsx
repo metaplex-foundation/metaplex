@@ -7,20 +7,23 @@ import CollectionCard from '../../sections/RecentCollections/CollectionCard'
 import useSearch from '../../../hooks/useSearch'
 import { useExtendedCollection } from '../../../hooks'
 
-export interface DiscoverProps {}
+export interface DiscoverProps {
+  tags: any[]
+}
 
 interface SearchParamsInterface {
   searchText?: string
   page?: string
 }
 
-export const Discover: FC<DiscoverProps> = () => {
+export const Discover: FC<DiscoverProps> = ({ tags }) => {
   const { liveCollections } = useNFTCollections()
   const [collections, setCollections] = useState<CollectionView[]>([])
 
   const { search } = useLocation()
   const { searchText, page }: SearchParamsInterface = queryString.parse(search) || {}
   const { onChangeSearchText, searchText: text, onSubmitSearch } = useSearch()
+
   const [current, setCurrent] = useState(0)
   const [showPagination, setShowPagination] = useState(false)
   const [colMeta, setColMeta] = useState<any[]>([])
@@ -32,44 +35,51 @@ export const Discover: FC<DiscoverProps> = () => {
     if (liveCollections.length) {
       const colData: any[] = []
       liveCollections.forEach(element => {
-        console.log('element', element)
-
         getData(element.pubkey).then(res => {
-          console.log('res', res)
-
-          const data = { name: res.collection?.name ?? res.name, pubkey: element.pubkey }
-          colData.push({ ...data })
+          const data = { name: res?.collection?.name ?? res.name, pubkey: element.pubkey }
+          const searchStrings = tags.find(i => data.name === i.collection_name_query_string) || null
+          let searchString: string = data.name + ' '
+          if (searchStrings?.tags?.length) {
+            searchString += searchStrings.tags.join(' ')
+          }
+          colData.push({ ...data, searchString })
         })
       })
       setColMeta(colData)
     }
-  }, [liveCollections.length])
+  }, [liveCollections.length, tags.length])
 
   useEffect(() => {
     setCurrent(page ? Number(page) - 1 : 0)
   }, [page])
 
   useEffect(() => {
-    const paginatedCollection = paginate([
-      ...liveCollections
-        .map(col => {
-          const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
-          return {
-            ...col,
-            name: collectionName,
-          }
-        })
-        .filter(filterFun),
-    ])
-    if (paginatedCollection.length > 0) {
-      setShowPagination(true)
+    if (colMeta.length) {
+      const paginatedCollection = paginate([
+        ...liveCollections
+          .map(col => {
+            const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
+            const searchString =
+              colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.searchString || ''
+            return {
+              ...col,
+              name: collectionName,
+              searchString,
+            }
+          })
+          .filter(filterFun),
+      ])
+      if (paginatedCollection.length > 0) {
+        setShowPagination(true)
+      }
+
+      setCollections(
+        paginatedCollection.length && !!paginatedCollection[current]
+          ? paginatedCollection[current]
+          : []
+      )
     }
-    setCollections(
-      paginatedCollection.length && !!paginatedCollection[current]
-        ? paginatedCollection[current]
-        : []
-    )
-  }, [liveCollections, searchText, current])
+  }, [liveCollections, searchText, current, colMeta.length])
 
   const paginate = array => {
     const chunkSize = 30
@@ -82,10 +92,12 @@ export const Discover: FC<DiscoverProps> = () => {
   }
 
   const filterFun = (col: any) => {
+    console.log('searchText', searchText)
     if (!searchText) {
       return true
     }
-    return col.name.toLowerCase().includes(searchText.toLowerCase())
+    console.log('col.searchString', col.searchString)
+    return col.searchString.toLowerCase().includes(searchText.toLowerCase())
   }
 
   const handleKeyPress = event => {
@@ -93,14 +105,20 @@ export const Discover: FC<DiscoverProps> = () => {
       onSubmitSearch(event)
     }
   }
+
+  // console.log('colMeta', colMeta)
+
   const getPagination = () => {
     return paginate([
       ...liveCollections
         .map(col => {
           const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
+          const searchString =
+            colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.searchString || ''
           return {
             ...col,
             name: collectionName,
+            searchString,
           }
         })
         .filter(filterFun),
@@ -134,7 +152,7 @@ export const Discover: FC<DiscoverProps> = () => {
             onKeyPress={handleKeyPress}
             className='w-[528px]'
             size='lg'
-            placeholder='Search by collection name'
+            placeholder='Search by collection name or tags'
           />
 
           <Button
