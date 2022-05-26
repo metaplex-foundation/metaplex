@@ -114,7 +114,6 @@ export const Collection: FC<CollectionProps> = () => {
               collectionName: collection.name,
               description: colData.description,
               collectionImageURL: colData.image,
-              collectionBannerURL: '/img/dummy-collection-cover.png',
             })
           }
         }
@@ -124,7 +123,6 @@ export const Collection: FC<CollectionProps> = () => {
         collectionName: colData?.name,
         description: colData?.description,
         collectionImageURL: colData?.image,
-        collectionBannerURL: '/img/dummy-collection-cover.png',
       })
     }
   }, [colData])

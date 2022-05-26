@@ -32,7 +32,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
         className={CollectionHeaderClasses}
         {...restProps}
         style={{
-          backgroundImage: `url("${cover || '/img/dummy-collection-cover.png'}")`,
+          backgroundImage: `url("${cover}")`,
         }}>
         <span className='overflow absolute left-0 right-0 top-0 bottom-0  bg-[url("/img/collection-cover-overlay.png")] bg-cover bg-center bg-no-repeat blur-[150px]' />
         <span className='overflow absolute left-0 right-0 top-0 bottom-0   bg-collection-cover backdrop-blur-[4px]' />
