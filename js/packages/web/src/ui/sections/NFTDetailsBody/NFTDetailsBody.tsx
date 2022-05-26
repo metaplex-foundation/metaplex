@@ -9,6 +9,7 @@ import useNFTData from '../../../hooks/useNFTData'
 import { AuctionCard } from '../../../components/AuctionCard'
 import useAttribute from '../../../hooks/useAttribute'
 import { Link } from 'react-router-dom'
+import { getProfile } from '../../../api'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -19,6 +20,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
+  const [user, setUser] = useState<any>({})
   const { attributesPercentages } = useAttribute(auction)
   const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(pubkey)
@@ -38,6 +40,14 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
   useEffect(() => {
     setOwner(auction?.auctionManager?.authority || '')
   }, [])
+
+  useEffect(() => {
+    if (owner) {
+      getProfile(owner).then(({ data }) => {
+        setUser(data)
+      })
+    }
+  }, [owner])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
   // console.log('attributes', attributes)
@@ -117,9 +127,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
                   <Avatar
                     key={owner}
                     address={owner}
-                    label={`Owned by — ${owner?.substring(0, 3)}...${owner?.substring(
-                      owner.length - 3
-                    )}`}
+                    label={`Owned by — ${user?.user_name || (owner?.substring(0, 3) + '...' + owner?.substring(owner.length - 3))}`}
                     size={32}
                     labelClassName='text-sm font-500 text-B-400'
                   />
