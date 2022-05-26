@@ -408,10 +408,16 @@ const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSal
     <>
       {renderForm()}
       <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
-        <Button disabled={status} onClick={createAuction} className='w-full'>
-          {category === AuctionCategory.InstantSale && 'List Now'}
-          {category === AuctionCategory.Tiered && 'Put on auction'}
-        </Button>
+        {category === AuctionCategory.InstantSale && (
+          <Button disabled={status} onClick={createAuctionHouseSale} className='w-full'>
+            List Now
+          </Button>
+        )}
+        {category === AuctionCategory.Tiered && (
+          <Button disabled={status} onClick={createAuction} className='w-full'>
+            Put on auction
+          </Button>
+        )}
       </div>
     </>
   )
