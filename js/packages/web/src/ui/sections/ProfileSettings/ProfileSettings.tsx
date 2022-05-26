@@ -70,7 +70,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({
     event.preventDefault()
     const formData = new FormData()
 
-    formData.append('public_key', userPubKey)
+    formData.append('public_key', userPubKey || publicKey?.toBase58() || '')
     formData.append('user_name', userName)
     formData.append('email', email)
     formData.append('twitter_link', twitterLink)
