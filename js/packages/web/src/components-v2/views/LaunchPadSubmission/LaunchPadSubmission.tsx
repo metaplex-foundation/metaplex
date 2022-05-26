@@ -656,7 +656,7 @@ export const LaunchPadSubmission: FC<LaunchPadSubmissionProps> = ({
             </label>
             <div className='flex w-full'>
               <DatePicker
-                className='h-[46px] w-full rounded-[4px] !border-N-200 text-gray-900 shadow-none duration-[50ms] ease-in-out focus-within:!border-B-400 focus-within:!shadow-[0px_0px_0px_1px_#2492F6]'
+                className='h-[46px] w-full rounded-[4px] !border-N-200 text-gray-900 shadow-none duration-[50ms] ease-in-out focus-within:!border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'
                 onChange={handleDatePicker}
                 value={expectedMintDate ? moment(expectedMintDate) : moment()}
               />
