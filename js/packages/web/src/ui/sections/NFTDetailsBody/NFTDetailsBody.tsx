@@ -39,15 +39,10 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
 
   useEffect(() => {
     setOwner(auction?.auctionManager?.authority || '')
+    getProfile(auction?.auctionManager?.authority || '').then(({ data }) => {
+      setUser(data)
+    })
   }, [])
-
-  useEffect(() => {
-    if (owner) {
-      getProfile(owner).then(({ data }) => {
-        setUser(data)
-      })
-    }
-  }, [owner])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
   // console.log('attributes', attributes)
