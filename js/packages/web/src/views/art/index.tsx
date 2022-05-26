@@ -35,10 +35,6 @@ export const ArtView = () => {
     return null
   }
 
-  useEffect(() => {
-    setStatus(ERROR)
-  }, [])
-
   const collectionName = getColName()
 
   const getModalContent = () => {
@@ -121,8 +117,16 @@ export const ArtView = () => {
                       </div>
                     )}
                   </div>
-
-                  {!!selected.length &&
+                  <>
+                    <h6 className='text-h6 font-400'>Instant Sale</h6>
+                    <InstantSale
+                      setStatus={setStatus}
+                      category={AuctionCategory.InstantSale}
+                      items={selected}
+                      status={status}
+                    />
+                  </>
+                  {/* {!!selected.length &&
                     !(selected[0].metadata.info.data.creators || []).some(
                       (c: Creator) => !c.verified
                     ) && (
@@ -135,10 +139,18 @@ export const ArtView = () => {
                           status={status}
                         />
                       </>
-                    )}
+                    )} */}
                   <hr />
-
-                  {!!selected.length &&
+                  <>
+                    <h6 className='text-h6 font-400'>Auction</h6>
+                    <InstantSale
+                      setStatus={setStatus}
+                      category={AuctionCategory.Tiered}
+                      items={selected}
+                      status={status}
+                    />
+                  </>
+                  {/* {!!selected.length &&
                     !!selected[0]?.masterEdition &&
                     selected[0]?.masterEdition.info.maxSupply === undefined && (
                       <>
@@ -150,7 +162,7 @@ export const ArtView = () => {
                           status={status}
                         />
                       </>
-                    )}
+                    )} */}
                 </div>
               </div>
             </div>
