@@ -19,8 +19,8 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
   //   const auctionHouseFee = (listPrice * auctionHouseSellerFee) / 10000;
 
   const getAH = async () => {
-    //const ah = await getAuctionHouse(process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS as string)
-    let ah = await getAuctionHouse('Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6')
+    let ah = await getAuctionHouse(process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS as string)
+    //let ah = await getAuctionHouse('Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6')
     ah = ah[0]
     debugger
     const auctionHouse: AuctionHouse = {
