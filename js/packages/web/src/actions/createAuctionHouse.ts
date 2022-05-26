@@ -58,8 +58,8 @@ export const createAuctionHouse = async (
 
   addAuctionHouse({
     auction_house_wallet: auctionHouse.toBase58(),
-    fee_payer_wallet: wallet.publicKey.toBase58(),
-    treasury_wallet: wallet.publicKey.toBase58(),
+    fee_payer_wallet: feeAccount.toBase58(),
+    treasury_wallet: treasuryAccount.toBase58(),
     creator_wallet: wallet.publicKey.toBase58(),
     mint: tMintKey.toBase58(),
   }).then((result: any) => {

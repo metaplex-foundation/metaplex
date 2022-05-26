@@ -32,15 +32,17 @@ import {
 import PutOnSale from './PutOnSale'
 import PutOnAuction from './PutOnAuction'
 import { ERROR, PROCESSING, SUCCESS } from '.'
+import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
   category: AuctionCategory
   setStatus: (status: number) => void
   status: number
+  mintKey: string
 }
 
-const InstantSale = ({ items, category, setStatus, status }: InstantSaleInterface) => {
+const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSaleInterface) => {
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
@@ -78,6 +80,13 @@ const InstantSale = ({ items, category, setStatus, status }: InstantSaleInterfac
     items: [],
     tiers: [],
   })
+
+  const createAuctionHouseSale = () => {
+    const { instantSalePrice } = attributes
+    const nft = items[0]
+    nft['mintKey'] = mintKey
+    listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft)
+  }
 
   const createAuction = () => {
     try {
