@@ -25,20 +25,16 @@ import {
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import {
-  createCandyMachineV2Account,
-  createConfigAccount,
-} from './instructions';
+import { createCandyMachineV2Account } from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
 import { AccountLayout, u64 } from '@solana/spl-token';
 import { getCluster } from './various';
+import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 export type AccountAndPubkey = {
   pubkey: string;
   account: AccountInfo<Buffer>;
 };
-
-export type StringPublicKey = string;
 
 // TODO: expose in spl package
 export const deserializeAccount = (data: Buffer) => {
@@ -75,9 +71,17 @@ export const deserializeAccount = (data: Buffer) => {
   return accountInfo;
 };
 
-export enum WhitelistMintMode {
-  BurnEveryTime,
-  NeverBurn,
+export interface WhitelistMintMode {
+  neverBurn: undefined | boolean;
+  burnEveryTime: undefined | boolean;
+}
+
+export interface CandyMachine {
+  authority: anchor.web3.PublicKey;
+  wallet: anchor.web3.PublicKey;
+  tokenMint: null | anchor.web3.PublicKey;
+  itemsRedeemed: anchor.BN;
+  data: CandyMachineData;
 }
 export interface CandyMachineData {
   itemsAvailable: anchor.BN;
@@ -121,6 +125,10 @@ export const createCandyMachineV2 = async function (
 ) {
   const candyAccount = Keypair.generate();
   candyData.uuid = uuidFromConfigPubkey(candyAccount.publicKey);
+
+  if (!candyData.symbol) {
+    throw new Error(`Invalid config, there must be a symbol.`);
+  }
 
   if (!candyData.creators || candyData.creators.length === 0) {
     throw new Error(`Invalid config, there must be at least one creator.`);
@@ -170,69 +178,6 @@ export const createCandyMachineV2 = async function (
   };
 };
 
-export const createConfig = async function (
-  anchorProgram: anchor.Program,
-  payerWallet: Keypair,
-  configData: {
-    maxNumberOfLines: anchor.BN;
-    symbol: string;
-    sellerFeeBasisPoints: number;
-    isMutable: boolean;
-    maxSupply: anchor.BN;
-    retainAuthority: boolean;
-    creators: {
-      address: PublicKey;
-      verified: boolean;
-      share: number;
-    }[];
-  },
-) {
-  const configAccount = Keypair.generate();
-  const uuid = uuidFromConfigPubkey(configAccount.publicKey);
-
-  if (!configData.creators || configData.creators.length === 0) {
-    throw new Error(`Invalid config, there must be at least one creator.`);
-  }
-
-  const totalShare = (configData.creators || []).reduce(
-    (acc, curr) => acc + curr.share,
-    0,
-  );
-
-  if (totalShare !== 100) {
-    throw new Error(`Invalid config, creators shares must add up to 100`);
-  }
-
-  return {
-    config: configAccount.publicKey,
-    uuid,
-    txId: await anchorProgram.rpc.initializeConfig(
-      {
-        uuid,
-        ...configData,
-      },
-      {
-        accounts: {
-          config: configAccount.publicKey,
-          authority: payerWallet.publicKey,
-          payer: payerWallet.publicKey,
-          systemProgram: SystemProgram.programId,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        },
-        signers: [payerWallet, configAccount],
-        instructions: [
-          await createConfigAccount(
-            anchorProgram,
-            configData,
-            payerWallet.publicKey,
-            configAccount.publicKey,
-          ),
-        ],
-      },
-    ),
-  };
-};
-
 export function uuidFromConfigPubkey(configAccount: PublicKey) {
   return configAccount.toBase58().slice(0, 6);
 }
@@ -265,16 +210,6 @@ export const deriveCandyMachineV2ProgramAddress = async (
   return await PublicKey.findProgramAddress(
     [Buffer.from(CANDY_MACHINE), candyMachineId.toBuffer()],
     CANDY_MACHINE_PROGRAM_V2_ID,
-  );
-};
-
-export const getConfig = async (
-  authority: anchor.web3.PublicKey,
-  uuid: string,
-): Promise<[PublicKey, number]> => {
-  return await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
-    CANDY_MACHINE_PROGRAM_ID,
   );
 };
 
@@ -405,6 +340,31 @@ export const getMetadata = async (
       TOKEN_METADATA_PROGRAM_ID,
     )
   )[0];
+};
+
+export const getCollectionPDA = async (
+  candyMachineAddress: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('collection'), candyMachineAddress.toBuffer()],
+    CANDY_MACHINE_PROGRAM_V2_ID,
+  );
+};
+
+export const getCollectionAuthorityRecordPDA = async (
+  mint: anchor.web3.PublicKey,
+  newAuthority: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('metadata'),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from('collection_authority'),
+      newAuthority.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID,
+  );
 };
 
 export const getMasterEdition = async (
@@ -563,9 +523,14 @@ export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');
   }
-  const loaded = Keypair.fromSecretKey(
-    new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
+
+  const decodedKey = new Uint8Array(
+    keypair.endsWith('.json') && !Array.isArray(keypair)
+      ? JSON.parse(fs.readFileSync(keypair).toString())
+      : bs58.decode(keypair),
   );
+
+  const loaded = Keypair.fromSecretKey(decodedKey);
   log.info(`wallet public key: ${loaded.publicKey}`);
   return loaded;
 }

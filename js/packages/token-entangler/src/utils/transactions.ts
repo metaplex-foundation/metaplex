@@ -18,7 +18,7 @@ interface BlockhashAndFeeCalculator {
   feeCalculator: FeeCalculator;
 }
 
-export const DEFAULT_TIMEOUT = 15000;
+export const DEFAULT_TIMEOUT = 30000;
 
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
@@ -140,7 +140,7 @@ export async function sendSignedTransaction({
     }
 
     slot = confirmation?.slot || 0;
-  } catch (err) {
+  } catch (err: any) {
     log.error('Timeout Error caught', err);
     if (err.timeout) {
       throw new Error('Timed out awaiting confirmation on transaction');

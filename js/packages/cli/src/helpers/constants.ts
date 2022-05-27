@@ -21,7 +21,6 @@ export const CANDY_MACHINE_PROGRAM_ID = new PublicKey(
 
 export const CANDY_MACHINE_PROGRAM_V2_ID = new PublicKey(
   'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
-  //'Ch3qpQYqr7AvLP6Eph9xxbtneAbzovzuEexAGh48URHS',
 );
 export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
@@ -43,12 +42,6 @@ export const TOKEN_ENTANGLEMENT_PROGRAM_ID = new PublicKey(
 );
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
-);
-export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(
-  'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a',
-);
-export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(
-  'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV',
 );
 
 export const CONFIG_ARRAY_START =
@@ -107,11 +100,18 @@ export const CONFIG_LINE_SIZE = 4 + 32 + 4 + 200;
 
 export const CACHE_PATH = './.cache';
 
-export const DEFAULT_TIMEOUT = 15000;
+export const DEFAULT_TIMEOUT = 30000;
 
 export const EXTENSION_PNG = '.png';
 export const EXTENSION_JPG = '.jpg';
 export const EXTENSION_GIF = '.gif';
+export const EXTENSION_MP4 = '.mp4';
+export const EXTENSION_MOV = '.mov';
+export const EXTENSION_MP3 = '.mp3';
+export const EXTENSION_FLAC = '.flac';
+export const EXTENSION_WAV = '.wav';
+export const EXTENSION_GLB = '.glb';
+export const EXTENSION_HTML = '.html';
 export const EXTENSION_JSON = '.json';
 
 type Cluster = {
