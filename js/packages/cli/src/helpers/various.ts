@@ -107,7 +107,7 @@ export async function getCandyMachineV2Config(
         )
       )[0]
     : null;
-  if (splToken) {
+  if (splTokenAccount) {
     if (solTreasuryAccount) {
       throw new Error(
         'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
