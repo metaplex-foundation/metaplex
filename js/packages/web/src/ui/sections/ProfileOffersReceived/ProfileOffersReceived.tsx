@@ -1,6 +1,8 @@
-import React, { FC } from 'react'
+import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { Image } from '@oyster/common'
+import { getOffers } from '../../../api'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export interface ProfileOffersReceivedProps {
   [x: string]: any
@@ -66,6 +68,28 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
     className
   )
 
+  const { publicKey } = useWallet()
+  const [offers, setOffers] = useState(offersList)
+
+  React.useEffect(() => {
+    console.log('Called')
+    if (publicKey && publicKey.toBase58()) {
+      getOffers('seller', publicKey.toBase58())
+        .then(res => {
+          setOffers((res || []).map(i => ({
+            image: 'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/-00FUjXIBBOHmnp8v_li6uklY_vfrwR5FvVeVHjdpAM',
+            title: 'Degen Ape #1921',
+            owner: i.buyer_wallet,
+            price: i.offer_price,
+            time: i.createdAt,
+          })))
+        })
+        .catch((error: any) => {
+          console.log(error.message)
+        })
+      }
+  }, [])
+
   return (
     <div className={ProfileOffersReceivedClasses} {...restProps}>
       <div className='grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-[8px] py-[4px] px-[4px] text-md font-500 text-slate-500 hover:bg-slate-50'>
@@ -77,7 +101,7 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
         <span>Date</span>
       </div>
 
-      {/* {offersList.map(({ image, title, price, owner, time }: any, index: number) => (
+      {offers.map(({ image, title, price, owner, time }: any, index: number) => (
         <div
           key={index}
           className='grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-[8px] rounded-[8px] border border-slate-200 bg-white py-[4px] px-[4px] text-md hover:bg-slate-50'>
@@ -91,7 +115,7 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
           <span>{owner}</span>
           <span>{time}</span>
         </div>
-      ))} */}
+      ))}
     </div>
   )
 }
