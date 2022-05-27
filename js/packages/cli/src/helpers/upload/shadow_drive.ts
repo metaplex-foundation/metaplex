@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { ShadowFile, ShdwDrive } from '@shadow-drive/sdk';
+import { ShadowFile, ShdwDrive } from '@alphabatem/metaplex-shadow-drive';
 import { AssetKey } from '../../types';
 import * as cliProgress from 'cli-progress';
 import log from 'loglevel';
