@@ -8,57 +8,6 @@ export interface ProfileOffersMadeProps {
   [x: string]: any
 }
 
-const offersList = [
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/yytjymgHK5Y64dJLHZlkCB-zbayUpAmLNB49VapL30g',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/ukZ3DgqeaTyx5qifyooXV-rO5CM8CjKnKFJZVlVQFaU',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/LlrUIT49BxcHsSGBXmQcJ70G_jjZMgcPZJh3CxqziuA',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/2HQvY0wYkzabT-3qzFZX-MpECFLFEXX1NhptwjZ98Jw',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/HYGi_EMu8Dhu9cWHaIBdJW0DPJkaZnDr0yJIMy5hlak',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/-00FUjXIBBOHmnp8v_li6uklY_vfrwR5FvVeVHjdpAM',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-]
-
 export const ProfileOffersMade: FC<ProfileOffersMadeProps> = ({
   className,
   ...restProps
@@ -66,7 +15,7 @@ export const ProfileOffersMade: FC<ProfileOffersMadeProps> = ({
   const ProfileOffersMadeClasses = CN(`profile-offers-made flex flex-col gap-[8px]`, className)
 
   const { publicKey } = useWallet()
-  const [offers, setOffers] = useState(offersList)
+  const [offers, setOffers] = useState([])
 
   React.useEffect(() => {
     console.log('Called')
