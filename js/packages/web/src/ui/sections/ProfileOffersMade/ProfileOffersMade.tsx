@@ -23,8 +23,8 @@ export const ProfileOffersMade: FC<ProfileOffersMadeProps> = ({
       getOffers('buyer', publicKey.toBase58())
         .then(res => {
           setOffers((res || []).map(i => ({
-            image: i.nft_image || 'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/-00FUjXIBBOHmnp8v_li6uklY_vfrwR5FvVeVHjdpAM',
-            title: i.nft_name || 'Degen Ape #1921',
+            image: i.url,
+            title: i.nft_name,
             owner: i.seller_wallet?.substring(0, 3) + '...' + i.seller_wallet?.substring(i.seller_wallet.length - 4),
             price: i.offer_price,
             time: i.createdAt?.replace('T', ' ').replace('Z', ''),
