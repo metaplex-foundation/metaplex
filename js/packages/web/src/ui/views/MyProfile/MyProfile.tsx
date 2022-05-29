@@ -108,7 +108,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               onClick={() => {
                 setActiveTab('offers-made')
                 setHeading('Offers Made')
-                setTag('6 Offers')
+                setTag('0 Offers')
               }}>
               Offers Made
             </Button>
@@ -121,7 +121,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               onClick={() => {
                 setActiveTab('offers-received')
                 setHeading('Offers Received')
-                setTag('6 Offers')
+                setTag('0 Offers')
               }}>
               Offers Received
             </Button>
@@ -159,8 +159,8 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
           <div className='flex w-full flex-col'>
             {activeTab === 'collections' && <ProfileCollectiblesList setTag={setTag} />}
             {activeTab === 'listings' && <ProfileListings setTag={setTag} />}
-            {activeTab === 'offers-made' && <ProfileOffersMade />}
-            {activeTab === 'offers-received' && <ProfileOffersReceived />}
+            {activeTab === 'offers-made' && <ProfileOffersMade setTag={setTag} />}
+            {activeTab === 'offers-received' && <ProfileOffersReceived setTag={setTag} />}
             {activeTab === 'settings' && (
               <ProfileSettings profileupdate={setIsProfilUpdated} profileImage={setProfileImage} />
             )}

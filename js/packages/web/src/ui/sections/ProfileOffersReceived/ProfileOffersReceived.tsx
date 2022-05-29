@@ -9,7 +9,7 @@ export interface ProfileOffersReceivedProps {
 }
 
 export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
-  className,
+  className, setTag,
   ...restProps
 }: ProfileOffersReceivedProps) => {
   const ProfileOffersReceivedClasses = CN(
@@ -26,12 +26,13 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
       getOffers('seller', publicKey.toBase58())
         .then(res => {
           setOffers((res || []).map(i => ({
-            image: 'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/-00FUjXIBBOHmnp8v_li6uklY_vfrwR5FvVeVHjdpAM',
-            title: 'Degen Ape #1921',
-            owner: i.buyer_wallet,
+            image: i.nft_image || 'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/-00FUjXIBBOHmnp8v_li6uklY_vfrwR5FvVeVHjdpAM',
+            title: i.nft_name || 'Degen Ape #1921',
+            owner: i.buyer_wallet?.substring(0, 3) + '...' + i.buyer_wallet?.substring(i.buyer_wallet.length - 4),
             price: i.offer_price,
-            time: i.createdAt,
+            time: i.createdAt?.replace('T', ' ').replace('Z', ''),
           })))
+          setTag(res.length > 1 ? res.length + ' Offers' : res.length + ' Offer')
         })
         .catch((error: any) => {
           console.log(error.message)
