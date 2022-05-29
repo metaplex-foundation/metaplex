@@ -70,7 +70,6 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
     const nft = getNFT(nftmetadata)
     const auctionHouse = await getAH()
     if (amount && nft) {
-      const lmpAmount = amount * LAMPORTS_PER_SOL
       await sdk.listings(auctionHouse).post({ amount: amount, nft })
     }
 
@@ -80,6 +79,9 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
       seller_wallet: nft.owner.address,
       sale_price: amount,
       collection: nftmetadata.metadata.info.collection.key,
+      nft_name: nftmetadata.metadata.info.data.name,
+      metadata: nftmetadata.metadata.info.data,
+      url: nftmetadata.metadata.info.data.uri,
     })
     return listing
   }
