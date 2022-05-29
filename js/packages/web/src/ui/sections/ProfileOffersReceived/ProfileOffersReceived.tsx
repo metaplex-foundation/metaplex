@@ -1,70 +1,44 @@
-import React, { FC } from 'react'
+import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { Image } from '@oyster/common'
+import { getOffers } from '../../../api'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export interface ProfileOffersReceivedProps {
   [x: string]: any
 }
 
-const offersList = [
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/yytjymgHK5Y64dJLHZlkCB-zbayUpAmLNB49VapL30g',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/ukZ3DgqeaTyx5qifyooXV-rO5CM8CjKnKFJZVlVQFaU',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/LlrUIT49BxcHsSGBXmQcJ70G_jjZMgcPZJh3CxqziuA',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/2HQvY0wYkzabT-3qzFZX-MpECFLFEXX1NhptwjZ98Jw',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/HYGi_EMu8Dhu9cWHaIBdJW0DPJkaZnDr0yJIMy5hlak',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-  {
-    image:
-      'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/-00FUjXIBBOHmnp8v_li6uklY_vfrwR5FvVeVHjdpAM',
-    title: 'Degen Ape #1921',
-    owner: '6gr...Vun5',
-    price: 'Ⓞ 49.92',
-    time: '12 hours ago',
-  },
-]
-
 export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
-  className,
+  className, setTag,
   ...restProps
 }: ProfileOffersReceivedProps) => {
   const ProfileOffersReceivedClasses = CN(
     `profile-offers-received flex flex-col gap-[8px]`,
     className
   )
+
+  const { publicKey } = useWallet()
+  const [offers, setOffers] = useState([])
+
+  React.useEffect(() => {
+    console.log('Called')
+    if (publicKey && publicKey.toBase58()) {
+      getOffers('seller', publicKey.toBase58())
+        .then(res => {
+          setOffers((res || []).map(i => ({
+            image: i.nft_image || 'https://cdn-image.solanart.io/unsafe/600x600/filters:format(webp)/arweave.net/-00FUjXIBBOHmnp8v_li6uklY_vfrwR5FvVeVHjdpAM',
+            title: i.nft_name || 'Degen Ape #1921',
+            owner: i.buyer_wallet?.substring(0, 3) + '...' + i.buyer_wallet?.substring(i.buyer_wallet.length - 4),
+            price: i.offer_price,
+            time: i.createdAt?.replace('T', ' ').replace('Z', ''),
+          })))
+          setTag(res.length > 1 ? res.length + ' Offers' : res.length + ' Offer')
+        })
+        .catch((error: any) => {
+          console.log(error.message)
+        })
+      }
+  }, [])
 
   return (
     <div className={ProfileOffersReceivedClasses} {...restProps}>
@@ -77,7 +51,7 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
         <span>Date</span>
       </div>
 
-      {/* {offersList.map(({ image, title, price, owner, time }: any, index: number) => (
+      {offers.map(({ image, title, price, owner, time }: any, index: number) => (
         <div
           key={index}
           className='grid w-full cursor-pointer grid-cols-[1.5fr_1fr_1fr_1fr] items-center gap-[8px] rounded-[8px] border border-slate-200 bg-white py-[4px] px-[4px] text-md hover:bg-slate-50'>
@@ -91,7 +65,7 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
           <span>{owner}</span>
           <span>{time}</span>
         </div>
-      ))} */}
+      ))}
     </div>
   )
 }
