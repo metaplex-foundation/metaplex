@@ -7,7 +7,7 @@ export const addAuctionHouse = async (auctionHouseInfo: any) => {
     const res = await axios.post(`${api}/create`, auctionHouseInfo)
     return res
   } catch (error: any) {
-    console.log('Add profile API error: ', error.message)
+    console.log('Add auctionHouseInfo API error: ', error.message)
     throw new Error(error.message)
   }
 }

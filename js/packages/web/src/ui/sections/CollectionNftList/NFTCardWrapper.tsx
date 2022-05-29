@@ -43,3 +43,47 @@ export const NFTCardWrapper: FC<NFTCardWrapperInterface> = ({ auction, link, ...
     </>
   )
 }
+
+interface AuctionHouseNFTCardWrapperInterface {
+  [key: string]: any
+  listing: any
+  link?: string
+}
+
+export const AuctionHouseNFTCardWrapper: FC<AuctionHouseNFTCardWrapperInterface> = ({
+  auction,
+  link,
+  ...restProps
+}) => {
+  const [showQuickBuy, setShowQuickBuy] = useState(false)
+  return (
+    <>
+      <NFTCard
+        // @ts-ignore
+        image={auction.offChainData?.image ?? ''}
+        // @ts-ignore
+        title={auction.offChainData?.name ?? ''}
+        // @ts-ignore
+        price={auction?.amounts?.priceFloor ?? ''}
+        // @ts-ignore
+        dollarValue={auction?.amounts?.formattedUsdAmount ?? ''}
+        bidPrice='3.12 SOL'
+        onClickDetails={() => {
+          console.log('On click details')
+          setShowQuickBuy(true)
+        }}
+        onQuickBuy={() => {
+          console.log('On click details')
+          setShowQuickBuy(true)
+        }}
+        link={link ?? ''}
+        {...restProps}
+      />
+      {showQuickBuy && (
+        <Modal onClose={() => setShowQuickBuy(false)} onClickOverlay={() => setShowQuickBuy(false)}>
+          <QuickBuy auction={auction} />
+        </Modal>
+      )}
+    </>
+  )
+}
