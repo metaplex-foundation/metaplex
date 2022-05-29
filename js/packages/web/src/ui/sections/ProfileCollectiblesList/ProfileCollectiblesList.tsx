@@ -1,15 +1,16 @@
 import React, { FC, useEffect } from 'react'
-import { NFTCard, pubkeyToString, toPublicKey } from '@oyster/common'
+import { NFTCard, ParsedAccount, pubkeyToString } from '@oyster/common'
 import { useItems } from '../../../views/artworks/hooks/useItems'
 import { ArtworkViewState, Item } from '../../../views/artworks/types'
-import { useExtendedArt } from '../../../hooks'
+import { useCreatorArts, useExtendedArt } from '../../../hooks'
 import { Link, useParams } from 'react-router-dom'
+import { Metadata } from '@metaplex-foundation/mpl-token-metadata'
 
 interface ProfileCollectiblesListProps {
   setTag: (tag: string) => void
 }
 interface NFTCardWrapperProps {
-  nft: Item
+  nft: Item | ParsedAccount<Metadata>
 }
 
 const NFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
@@ -27,9 +28,31 @@ const NFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
   )
 }
 
+const CreatorNFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
+  //@ts-ignore
+  const pubkey = nft?.pubkey || ''
+
+  const id = pubkeyToString(pubkey)
+
+  const { data } = useExtendedArt(id)
+
+  //@ts-ignore
+  const image = data?.image || ''
+  //@ts-ignore
+  const name = data?.name || ''
+
+  return (
+    <Link to={`/art/${pubkey}`}>
+      <NFTCard link={`/art/${pubkey}`} image={image} title={name} />
+    </Link>
+  )
+}
+
 export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({ setTag }) => {
   const { id } = useParams<{ id: string }>()
-  const userItems = useItems({ activeKey: ArtworkViewState.Owned, userPublicKey: toPublicKey(id) })
+  const userItems = id ? useCreatorArts(id) : useItems({ activeKey: ArtworkViewState.Owned })
+
+  // console.log('userItems', userItems)
 
   useEffect(() => {
     if (userItems) {
@@ -39,9 +62,9 @@ export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({ setT
 
   return (
     <div className='profile-collectibles-list grid grid-cols-4 gap-[28px]'>
-      {(userItems || []).map((i, key) => (
-        <NFTCardWrapper nft={i} key={key} />
-      ))}
+      {(userItems || []).map((i, key) =>
+        id ? <CreatorNFTCardWrapper nft={i} key={key} /> : <NFTCardWrapper nft={i} key={key} />
+      )}
     </div>
   )
 }

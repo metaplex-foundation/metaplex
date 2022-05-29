@@ -19,7 +19,7 @@ export const useItems = ({
   const { metadata } = useMeta()
 
   const createdMetadata = useCreatorArts(
-    (userPublicKey ? userPublicKey?.toBase58() : publicKey?.toBase58()) || ''
+    userPublicKey ? userPublicKey?.toBase58() : publicKey?.toBase58()
   )
   const userMetadataWithPacks = useUserMetadataWithPacks()
   const packsBasedOnProvingProcesses = usePacksBasedOnProvingProcesses()
