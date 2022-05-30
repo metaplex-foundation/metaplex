@@ -1,0 +1,54 @@
+{
+  "name": "Oiddes #0",
+  "symbol": "OIDDE",
+  "description": "Beautiful oiddes",
+  "seller_fee_basis_points": 1000,
+  "image": "0.png",
+  "external_url": "",
+  "edition": 0,
+  "attributes": [
+    {
+      "trait_type": "background",
+      "value": "waves1"
+    },
+    {
+      "trait_type": "color",
+      "value": "fluo"
+    },
+    {
+      "trait_type": "texture",
+      "value": "bricks"
+    },
+    {
+      "trait_type": "back",
+      "value": "empty"
+    },
+    {
+      "trait_type": "head",
+      "value": "winter_hat"
+    },
+    {
+      "trait_type": "hand",
+      "value": "cards"
+    },
+    {
+      "trait_type": "tail",
+      "value": "beach_ball"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "0.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "address": "6vuhHMwjSGjaKmTw3Ka5eo16Z41Lg8t8mvnwk6BhrHj4",
+        "share": 100
+      }
+    ]
+  }
+}

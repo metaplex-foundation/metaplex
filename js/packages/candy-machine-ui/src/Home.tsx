@@ -37,8 +37,8 @@ const ConnectButton = styled(WalletDialogButton)`
   height: 60px;
   margin-top: 10px;
   margin-bottom: 5px;
-  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
-  color: white;
+  background: linear-gradient(180deg, #F2EEB3 0%, #F2D43D 100%);
+  color: black;
   font-size: 16px;
   font-weight: bold;
 `;
@@ -476,197 +476,227 @@ const Home = (props: HomeProps) => {
     })();
   }, [refreshCandyMachineState]);
 
+const Images = styled("img")`
+ width: 50%;
+ border-radius: 10%;
+ margin-bottom: 20px;
+ margin-right: 25%;
+ margin-left: 25%;
+`
+
+const Textdolf = styled('h1')`
+  color: white;
+  font-family: 'Ubuntu', sans-serif;
+  text-align: center;
+`
+
   return (
-    <Container style={{ marginTop: 100 }}>
-      <Container maxWidth="xs" style={{ position: 'relative' }}>
-        <Paper
-          style={{
-            padding: 24,
-            paddingBottom: 10,
-            backgroundColor: '#151A1F',
-            borderRadius: 6,
-          }}
-        >
-          {!wallet.connected ? (
-            <ConnectButton>Connect Wallet</ConnectButton>
-          ) : (
-            <>
-              {candyMachine && (
-                <Grid
-                  container
-                  direction="row"
-                  justifyContent="center"
-                  wrap="nowrap"
-                >
-                  <Grid item xs={3}>
-                    <Typography variant="body2" color="textSecondary">
-                      Remaining
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      color="textPrimary"
-                      style={{
-                        fontWeight: 'bold',
+    <body>
+      <Container>
+        <Container style={{ position: 'relative', width: '60%'}}>
+          <div>
+            <Textdolf style={{backgroundColor: '#07B0F2', width: '50%', marginLeft: '25%', borderWidth: '5px', borderColor: '#0378A6', borderStyle: 'solid'}}>
+              Common pack
+            </Textdolf>
+            <Images src="dolfulgif.gif" alt="delfino"/>
+          </div>
+          
+          <Paper
+            style={{
+              width: '100%',
+              padding: 24,
+              paddingBottom: 10,
+              background: 'linear-gradient(180deg, #448FF2 0%, #05C7F2 100%',
+              borderRadius: 6,
+            }}
+          >
+            {!wallet.connected ? (
+              <ConnectButton>Connect Wallet</ConnectButton>
+            ) : (
+              <>
+                {candyMachine && (
+                  <Grid
+                    container
+                    direction="row"
+                    wrap="nowrap"
+                  >
+                    <Grid item xs={3}>
+                      <Textdolf>
+                        Remaining
+                      </Textdolf>
+                      <Textdolf
+                        style={{
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        {`${itemsRemaining}`}
+                      </Textdolf>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Textdolf>
+                        {isWhitelistUser && discountPrice
+                          ? 'Discount Price'
+                          : 'Price'}
+                      </Textdolf>
+                      <Textdolf
+                        style={{ fontWeight: 'bold' }}
+                      >
+                        {isWhitelistUser && discountPrice
+                          ? ` ${formatNumber.asNumber(discountPrice)} SOL`
+                          : ` ${formatNumber.asNumber(
+                              candyMachine.state.price,
+                            )} SOL`}
+                      </Textdolf>
+                    </Grid>
+                    <Grid item xs={5}>
+                      {isActive && endDate && Date.now() < endDate.getTime() ? (
+                        <>
+                          <MintCountdown
+                            key="endSettings"
+                            date={getCountdownDate(candyMachine)}
+                            style={{ justifyContent: 'flex-end' }}
+                            status="COMPLETED"
+                            onComplete={toggleMintButton}
+                          />
+                          <Typography
+                            variant="caption"
+                            align="center"
+                            display="block"
+                            style={{ fontWeight: 'bold' }}
+                          >
+                            TO END OF MINT
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <MintCountdown
+                            key="goLive"
+                            date={getCountdownDate(candyMachine)}
+                            style={{ justifyContent: 'flex-end' }}
+                            status={
+                              candyMachine?.state?.isSoldOut ||
+                              (endDate && Date.now() > endDate.getTime())
+                                ? 'COMPLETED'
+                                : isPresale
+                                ? 'PRESALE'
+                                : 'LIVE'
+                            }
+                            onComplete={toggleMintButton}
+                          />
+                          {isPresale &&
+                            candyMachine.state.goLiveDate &&
+                            candyMachine.state.goLiveDate.toNumber() >
+                              new Date().getTime() / 1000 && (
+                              <Typography
+                                variant="caption"
+                                align="center"
+                                display="block"
+                                style={{ fontWeight: 'bold'}}
+                              >
+                                UNTIL PUBLIC MINT
+                              </Typography>
+                            )}
+                        </>
+                      )}
+                    </Grid>
+                  </Grid>
+                )}
+                <MintContainer>
+                  {candyMachine?.state.isActive &&
+                  candyMachine?.state.gatekeeper &&
+                  wallet.publicKey &&
+                  wallet.signTransaction ? (
+                    <GatewayProvider
+                      wallet={{
+                        publicKey:
+                          wallet.publicKey ||
+                          new PublicKey(CANDY_MACHINE_PROGRAM),
+                        //@ts-ignore
+                        signTransaction: wallet.signTransaction,
                       }}
-                    >
-                      {`${itemsRemaining}`}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Typography variant="body2" color="textSecondary">
-                      {isWhitelistUser && discountPrice
-                        ? 'Discount Price'
-                        : 'Price'}
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      color="textPrimary"
-                      style={{ fontWeight: 'bold' }}
-                    >
-                      {isWhitelistUser && discountPrice
-                        ? `◎ ${formatNumber.asNumber(discountPrice)}`
-                        : `◎ ${formatNumber.asNumber(
-                            candyMachine.state.price,
-                          )}`}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={5}>
-                    {isActive && endDate && Date.now() < endDate.getTime() ? (
-                      <>
-                        <MintCountdown
-                          key="endSettings"
-                          date={getCountdownDate(candyMachine)}
-                          style={{ justifyContent: 'flex-end' }}
-                          status="COMPLETED"
-                          onComplete={toggleMintButton}
-                        />
-                        <Typography
-                          variant="caption"
-                          align="center"
-                          display="block"
-                          style={{ fontWeight: 'bold' }}
-                        >
-                          TO END OF MINT
-                        </Typography>
-                      </>
-                    ) : (
-                      <>
-                        <MintCountdown
-                          key="goLive"
-                          date={getCountdownDate(candyMachine)}
-                          style={{ justifyContent: 'flex-end' }}
-                          status={
-                            candyMachine?.state?.isSoldOut ||
-                            (endDate && Date.now() > endDate.getTime())
-                              ? 'COMPLETED'
-                              : isPresale
-                              ? 'PRESALE'
-                              : 'LIVE'
+                      gatekeeperNetwork={
+                        candyMachine?.state?.gatekeeper?.gatekeeperNetwork
+                      }
+                      clusterUrl={
+                        props.network === WalletAdapterNetwork.Devnet
+                          ? 'https://api.devnet.solana.com'
+                          : rpcUrl
+                      }
+                      handleTransaction={async (transaction: Transaction) => {
+                        setIsUserMinting(true);
+                        const userMustSign = transaction.signatures.find(sig =>
+                          sig.publicKey.equals(wallet.publicKey!),
+                        );
+                        if (userMustSign) {
+                          setAlertState({
+                            open: true,
+                            message: 'Please sign one-time Civic Pass issuance',
+                            severity: 'info',
+                          });
+                          try {
+                            transaction = await wallet.signTransaction!(
+                              transaction,
+                            );
+                          } catch (e) {
+                            setAlertState({
+                              open: true,
+                              message: 'User cancelled signing',
+                              severity: 'error',
+                            });
+                            // setTimeout(() => window.location.reload(), 2000);
+                            setIsUserMinting(false);
+                            throw e;
                           }
-                          onComplete={toggleMintButton}
-                        />
-                        {isPresale &&
-                          candyMachine.state.goLiveDate &&
-                          candyMachine.state.goLiveDate.toNumber() >
-                            new Date().getTime() / 1000 && (
-                            <Typography
-                              variant="caption"
-                              align="center"
-                              display="block"
-                              style={{ fontWeight: 'bold' }}
-                            >
-                              UNTIL PUBLIC MINT
-                            </Typography>
-                          )}
-                      </>
-                    )}
-                  </Grid>
-                </Grid>
-              )}
-              <MintContainer>
-                {candyMachine?.state.isActive &&
-                candyMachine?.state.gatekeeper &&
-                wallet.publicKey &&
-                wallet.signTransaction ? (
-                  <GatewayProvider
-                    wallet={{
-                      publicKey:
-                        wallet.publicKey ||
-                        new PublicKey(CANDY_MACHINE_PROGRAM),
-                      //@ts-ignore
-                      signTransaction: wallet.signTransaction,
-                    }}
-                    gatekeeperNetwork={
-                      candyMachine?.state?.gatekeeper?.gatekeeperNetwork
-                    }
-                    clusterUrl={
-                      props.network === WalletAdapterNetwork.Devnet
-                        ? 'https://api.devnet.solana.com'
-                        : rpcUrl
-                    }
-                    handleTransaction={async (transaction: Transaction) => {
-                      setIsUserMinting(true);
-                      const userMustSign = transaction.signatures.find(sig =>
-                        sig.publicKey.equals(wallet.publicKey!),
-                      );
-                      if (userMustSign) {
-                        setAlertState({
-                          open: true,
-                          message: 'Please sign one-time Civic Pass issuance',
-                          severity: 'info',
-                        });
+                        } else {
+                          setAlertState({
+                            open: true,
+                            message: 'Refreshing Civic Pass',
+                            severity: 'info',
+                          });
+                        }
                         try {
-                          transaction = await wallet.signTransaction!(
+                          await sendTransaction(
+                            props.connection,
+                            wallet,
                             transaction,
+                            [],
+                            true,
+                            'confirmed',
                           );
+                          setAlertState({
+                            open: true,
+                            message: 'Please sign minting',
+                            severity: 'info',
+                          });
                         } catch (e) {
                           setAlertState({
                             open: true,
-                            message: 'User cancelled signing',
-                            severity: 'error',
+                            message:
+                              'Solana dropped the transaction, please try again',
+                            severity: 'warning',
                           });
+                          console.error(e);
                           // setTimeout(() => window.location.reload(), 2000);
                           setIsUserMinting(false);
                           throw e;
                         }
-                      } else {
-                        setAlertState({
-                          open: true,
-                          message: 'Refreshing Civic Pass',
-                          severity: 'info',
-                        });
-                      }
-                      try {
-                        await sendTransaction(
-                          props.connection,
-                          wallet,
-                          transaction,
-                          [],
-                          true,
-                          'confirmed',
-                        );
-                        setAlertState({
-                          open: true,
-                          message: 'Please sign minting',
-                          severity: 'info',
-                        });
-                      } catch (e) {
-                        setAlertState({
-                          open: true,
-                          message:
-                            'Solana dropped the transaction, please try again',
-                          severity: 'warning',
-                        });
-                        console.error(e);
-                        // setTimeout(() => window.location.reload(), 2000);
-                        setIsUserMinting(false);
-                        throw e;
-                      }
-                      await onMint();
-                    }}
-                    broadcastTransaction={false}
-                    options={{ autoShowModal: false }}
-                  >
+                        await onMint();
+                      }}
+                      broadcastTransaction={false}
+                      options={{ autoShowModal: false }}
+                    >
+                      <MintButton
+                        candyMachine={candyMachine}
+                        isMinting={isUserMinting}
+                        setIsMinting={val => setIsUserMinting(val)}
+                        onMint={onMint}
+                        isActive={
+                          isActive ||
+                          (isPresale && isWhitelistUser && isValidBalance)
+                        }
+                      />
+                    </GatewayProvider>
+                  ) : (
                     <MintButton
                       candyMachine={candyMachine}
                       isMinting={isUserMinting}
@@ -677,48 +707,29 @@ const Home = (props: HomeProps) => {
                         (isPresale && isWhitelistUser && isValidBalance)
                       }
                     />
-                  </GatewayProvider>
-                ) : (
-                  <MintButton
-                    candyMachine={candyMachine}
-                    isMinting={isUserMinting}
-                    setIsMinting={val => setIsUserMinting(val)}
-                    onMint={onMint}
-                    isActive={
-                      isActive ||
-                      (isPresale && isWhitelistUser && isValidBalance)
-                    }
-                  />
-                )}
-              </MintContainer>
-            </>
-          )}
-          <Typography
-            variant="caption"
-            align="center"
-            display="block"
-            style={{ marginTop: 7, color: 'grey' }}
-          >
-            Powered by METAPLEX
-          </Typography>
-        </Paper>
-      </Container>
+                  )}
+                </MintContainer>
+              </>
+            )}
+          </Paper>
+        </Container>
 
-      <Snackbar
-        open={alertState.open}
-        autoHideDuration={
-          alertState.hideDuration === undefined ? 6000 : alertState.hideDuration
-        }
-        onClose={() => setAlertState({ ...alertState, open: false })}
-      >
-        <Alert
+        <Snackbar
+          open={alertState.open}
+          autoHideDuration={
+            alertState.hideDuration === undefined ? 6000 : alertState.hideDuration
+          }
           onClose={() => setAlertState({ ...alertState, open: false })}
-          severity={alertState.severity}
         >
-          {alertState.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+          <Alert
+            onClose={() => setAlertState({ ...alertState, open: false })}
+            severity={alertState.severity}
+          >
+            {alertState.message}
+          </Alert>
+        </Snackbar>
+      </Container>
+    </body>
   );
 };
 
