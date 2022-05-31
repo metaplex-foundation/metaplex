@@ -6,6 +6,7 @@ import { CollectionAppliedFilters } from '../../sections/CollectionAppliedFilter
 import { CollectionNftList } from '../../sections/CollectionNftList'
 import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
+import { getCollectionStatistics } from '../../../api'
 import { useParams } from 'react-router-dom'
 import {
   useExtendedArt,
@@ -73,6 +74,8 @@ export const Collection: FC<CollectionProps> = () => {
     max: null,
   })
 
+  const [collectionStates, setCollectionStates] = useState<any>(null)
+
   const { id }: ParamsInterface = useParams()
   const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
@@ -132,6 +135,15 @@ export const Collection: FC<CollectionProps> = () => {
       return items.filter(filterFun)
     })
   }, [searchText, filters])
+
+  useEffect(() => {
+    const collectionId = id
+    if (collectionId) {
+      getCollectionStatistics(collectionId).then((data) => {
+        setCollectionStates(data)
+      })
+    }
+}, [])
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
@@ -317,8 +329,8 @@ export const Collection: FC<CollectionProps> = () => {
 
             {showActivity && (
               <div className='flex flex-col gap-[28px]'>
-                <CollectionChart />
-                <CollectionActivityList />
+                <CollectionChart data={collectionStates} />
+                <CollectionActivityList data={collectionStates}/>
               </div>
             )}
           </div>

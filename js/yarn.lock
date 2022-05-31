@@ -2835,10 +2835,10 @@
   dependencies:
     cross-fetch "3.0.6"
 
-"@solana/spl-token-registry@^0.2.4050":
-  version "0.2.4050"
-  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.4050.tgz#1cd7e8a3758e9a245b1d9972a27fc7462c3ca420"
-  integrity sha512-SUyp5su/ggMRMneIzf0cHg8Y5Jc8HeR5ykhhIn1xusQ++v9vdQuLJRriJJh5HYIfsrQh2MqSFXf1RfkF7mHqpA==
+"@solana/spl-token-registry@^0.2.202":
+  version "0.2.4218"
+  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.4218.tgz#d9f543e7ca0b2300bac1c244aa5a5876583b64bb"
+  integrity sha512-4wbY9GRaLfpNkMEAO05O6k0NqV0XzY8x8IyKRGKyIVSXM9I59GGb+VMhTj7QJ/arUpUGyTpLO02GoW1sNl64fA==
   dependencies:
     cross-fetch "3.0.6"
 
@@ -2966,7 +2966,7 @@
     "@solana/wallet-adapter-solong" "^0.4.1"
     "@solana/wallet-adapter-torus" "^0.5.0"
 
-"@solana/web3.js@^1.12.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.30.2", "@solana/web3.js@^1.31.0", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.33.0", "@solana/web3.js@^1.35.1", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.37.1":
+"@solana/web3.js@1.35.1", "@solana/web3.js@^1.12.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.30.2", "@solana/web3.js@^1.31.0", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.33.0", "@solana/web3.js@^1.35.1", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.37.1":
   version "1.41.4"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.41.4.tgz#595aa29a4a61c181b8c8f5cf0bbef80b4739cfab"
   integrity sha512-2/mjqUcGsBkLEvKxA+rWFE1vODBycAMa62r3wm3Uzb6nmsXQQNTotB+6YoeLQmF0mxVoy8ZA+/QENzBkGkPzSg==
