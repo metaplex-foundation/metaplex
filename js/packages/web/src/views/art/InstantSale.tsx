@@ -32,15 +32,17 @@ import {
 import PutOnSale from './PutOnSale'
 import PutOnAuction from './PutOnAuction'
 import { ERROR, PROCESSING, SUCCESS } from '.'
+import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
   category: AuctionCategory
   setStatus: (status: number) => void
   status: number
+  mintKey: string
 }
 
-const InstantSale = ({ items, category, setStatus, status }: InstantSaleInterface) => {
+const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSaleInterface) => {
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
@@ -78,6 +80,13 @@ const InstantSale = ({ items, category, setStatus, status }: InstantSaleInterfac
     items: [],
     tiers: [],
   })
+
+  const createAuctionHouseSale = () => {
+    const { instantSalePrice } = attributes
+    const nft = items[0]
+    nft['mintKey'] = mintKey
+    listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft)
+  }
 
   const createAuction = () => {
     try {
@@ -399,10 +408,16 @@ const InstantSale = ({ items, category, setStatus, status }: InstantSaleInterfac
     <>
       {renderForm()}
       <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
-        <Button disabled={status} onClick={createAuction} className='w-full'>
-          {category === AuctionCategory.InstantSale && 'List Now'}
-          {category === AuctionCategory.Tiered && 'Put on auction'}
-        </Button>
+        {category === AuctionCategory.InstantSale && (
+          <Button disabled={status} onClick={createAuctionHouseSale} className='w-full'>
+            List Now
+          </Button>
+        )}
+        {category === AuctionCategory.Tiered && (
+          <Button disabled={status} onClick={createAuction} className='w-full'>
+            Put on auction
+          </Button>
+        )}
       </div>
     </>
   )

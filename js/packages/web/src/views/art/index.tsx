@@ -18,6 +18,7 @@ export const ArtView = () => {
   const { data: collection } = useExtendedArt(id)
   const selected = [...(items || []).filter(i => i.metadata.pubkey === id)]
   const art = useArt(id)
+  console.log('art', art)
   const [status, setStatus] = useState(0)
   const [showModal, setShowModal] = useState(false)
 
@@ -124,6 +125,7 @@ export const ArtView = () => {
                       category={AuctionCategory.InstantSale}
                       items={selected}
                       status={status}
+                      mintKey={art.mint as string}
                     />
                   </>
                   {/* {!!selected.length &&
@@ -137,6 +139,7 @@ export const ArtView = () => {
                           category={AuctionCategory.InstantSale}
                           items={selected}
                           status={status}
+                          mintKey={art.mint as string}
                         />
                       </>
                     )} */}
@@ -148,6 +151,7 @@ export const ArtView = () => {
                       category={AuctionCategory.Tiered}
                       items={selected}
                       status={status}
+                      mintKey={art.mint as string}
                     />
                   </>
                   {/* {!!selected.length &&
@@ -160,6 +164,7 @@ export const ArtView = () => {
                           category={AuctionCategory.Tiered}
                           items={selected}
                           status={status}
+                          mintKey={art.mint as string}
                         />
                       </>
                     )} */}
