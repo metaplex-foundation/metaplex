@@ -6,7 +6,7 @@ import { CollectionAppliedFilters } from '../../sections/CollectionAppliedFilter
 import { CollectionNftList } from '../../sections/CollectionNftList'
 import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
-import { getCollectionStatistics } from '../../../api'
+import { getCollectionStatistics, getCollectionVolumn } from '../../../api'
 import { useParams } from 'react-router-dom'
 import {
   useExtendedArt,
@@ -59,6 +59,7 @@ interface ICollectionHeader {
   description?: string
   collectionImageURL?: string
   collectionBannerURL?: string
+  volumn?:string
 }
 
 export const SORT_LOW_TO_HIGH = 'Low to High'
@@ -75,6 +76,7 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   const [collectionStates, setCollectionStates] = useState<any>(null)
+  const [collectionVolumn, setCollectionVolumn] = useState<any>("")
 
   const { id }: ParamsInterface = useParams()
   const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
@@ -144,6 +146,16 @@ export const Collection: FC<CollectionProps> = () => {
       })
     }
 }, [])
+
+  useEffect(() => {
+    const collectionId = id
+    if (collectionId) {
+      getCollectionVolumn(collectionId).then((data) => {
+        setCollectionVolumn(abbrNum(data.nftTotalSales.total_usd, 4))
+      })
+    }
+    
+  }, [])
 
   const shortByPrice = val => {
     const dataArray = [...nftItems].sort(function (a: any, b: any) {
@@ -269,6 +281,46 @@ export const Collection: FC<CollectionProps> = () => {
     })
   }
 
+  const abbrNum = (number: any, decPlaces: any) => {
+    let orig = number;
+    let dec = decPlaces;
+    // 2 decimal places => 100, 3 => 1000, etc
+    decPlaces = Math.pow(10, decPlaces);
+  
+    // Enumerate number abbreviations
+    let abbrev = ["k", "m", "b", "t"];
+  
+    // Go through the array backwards, so we do the largest first
+    for (let i = abbrev.length - 1; i >= 0; i--) {
+  
+        // Convert array index to "1000", "1000000", etc
+        let size = Math.pow(10, (i + 1) * 3);
+  
+        // If the number is bigger or equal do the abbreviation
+        if (size <= number) {
+            // Here, we multiply by decPlaces, round, and then divide by decPlaces.
+            // This gives us nice rounding to a particular decimal place.
+            number = Math.round(number * decPlaces / size) / decPlaces;
+  
+            // Handle special case where we round up to the next abbreviation
+            if((number == 1000) && (i < abbrev.length - 1)) {
+                number = 1;
+                i++;
+            }
+  
+            // console.log(number);
+            // Add the letter for the abbreviation
+            number += abbrev[i];
+  
+            // We are done... stop
+            break;
+        }
+    }
+  
+    console.log('abbrNum('+ orig + ', ' + dec + ') = ' + number);
+    return number;
+  }
+
   return (
     <div className='collection'>
       <CollectionHeader
@@ -283,6 +335,7 @@ export const Collection: FC<CollectionProps> = () => {
         }
         owners={owners}
         numberOfItems={count}
+        volumn={collectionVolumn}
       />
 
       <div className='flex w-full pt-[80px] pb-[100px]'>
