@@ -89,7 +89,7 @@ export const ArtCard = (props: ArtCardProps) => {
 
         <div className='flex justify-between pt-[12px]'></div>
 
-        {!hideButton && <div className='flex w-full pt-[12px]'>
+        {false && !hideButton && <div className='flex w-full pt-[12px]'>
           <Button
             onClick={() => push(`/art/${pubkey}/sale`)}
             type='primary'
@@ -97,7 +97,7 @@ export const ArtCard = (props: ArtCardProps) => {
             Put on sale
           </Button>
         </div>}
-        {!hideButton && <div className='flex w-full pt-[12px]'>
+        {false && !hideButton && <div className='flex w-full pt-[12px]'>
           <Button
             onClick={() => push(`/art/${pubkey}/auction`)}
             appearance='neutral'

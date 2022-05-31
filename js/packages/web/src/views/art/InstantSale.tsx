@@ -33,6 +33,7 @@ import PutOnSale from './PutOnSale'
 import PutOnAuction from './PutOnAuction'
 import { ERROR, PROCESSING, SUCCESS } from '.'
 import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
+import { useHistory } from 'react-router-dom'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
@@ -46,6 +47,7 @@ const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSal
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
+  const history = useHistory()
 
   const mint = useMint(QUOTE_MINT)
   // const [auctionObj, setAuctionObj] = useState<
@@ -89,6 +91,8 @@ const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSal
   }
 
   const createAuction = () => {
+    history.push(`/auction/create/instant/0/` + items?.[0]?.metadata?.pubkey);
+    return;
     try {
       setStatus(PROCESSING)
       let winnerLimit: WinnerLimit
