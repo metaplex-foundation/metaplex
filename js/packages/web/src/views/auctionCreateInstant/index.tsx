@@ -50,7 +50,7 @@ export const AuctionCreateInstantView = () => {
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
-  const { step_param }: { step_param: string } = useParams()
+  const { step_param, mint_param }: { step_param: string, mint_param: string } = useParams();
   const history = useHistory()
   const mint = useMint(QUOTE_MINT)
   const { width } = useWindowDimensions()
@@ -68,7 +68,7 @@ export const AuctionCreateInstantView = () => {
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
-    category: AuctionCategory.Open,
+    category: AuctionCategory.Single,
     auctionDurationType: 'minutes',
     gapTimeType: 'minutes',
     winnersCount: 1,
@@ -93,7 +93,7 @@ export const AuctionCreateInstantView = () => {
 
   const gotoNextStep = (_step?: number) => {
     const nextStep = _step === undefined ? step + 1 : _step
-    history.push(`/auction/create/${nextStep.toString()}`)
+    history.push(`/auction/create/instant/${nextStep.toString()}/${mint_param}`);
   }
 
   const createAuction = async () => {
@@ -393,6 +393,7 @@ export const AuctionCreateInstantView = () => {
   const copiesStep = (
     <CopiesStep
       attributes={attributes}
+      mint_param={mint_param}
       setAttributes={setAttributes}
       confirm={() => gotoNextStep()}
     />
@@ -483,18 +484,15 @@ export const AuctionCreateInstantView = () => {
       [undefined, congratsStep],
     ],
     [AuctionCategory.Single]: [
-      ['Category', categoryStep],
       ['Copies', copiesStep],
       ['Price', priceAuction],
       ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
-      ['Participation NFT', participationStep],
       ['Review', reviewStep],
       ['Publish', waitStep],
       [undefined, congratsStep],
     ],
     [AuctionCategory.Open]: [
-      ['Category', categoryStep],
       ['Copies', copiesStep],
       ['Price', priceAuction],
       ['Initial Phase', initialStep],

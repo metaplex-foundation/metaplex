@@ -104,7 +104,7 @@ const PriceAuction = (props: {
           </div>
         )}
 
-        <div className='flex flex-col gap-[16px]'>
+        {false && <div className='flex flex-col gap-[16px]'>
           <div className='flex flex-col gap-[8px]'>
             <h6 className='text-h6'>Tick Size</h6>
             <p>All bids must fall within this price increment.</p>
@@ -138,7 +138,7 @@ const PriceAuction = (props: {
               }
             />
           </div>
-        </div>
+        </div>}
 
         <div className='flex items-center'>
           <Button appearance='neutral' size='lg' isRounded={false} onClick={props.confirm}>

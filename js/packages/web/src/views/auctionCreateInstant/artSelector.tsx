@@ -10,17 +10,22 @@ export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[]
   setSelected: (selected: SafetyDepositDraft[]) => void
   allowMultiple: boolean
+  mint_param: string
   filter?: (i: SafetyDepositDraft) => boolean
 }
 
 export const ArtSelector = (props: ArtSelectorProps) => {
-  const { selected, setSelected, allowMultiple } = props
+  const { selected, setSelected, mint_param, allowMultiple } = props
   let items = useUserArts()
-  if (props.filter) items = items.filter(props.filter)
+  // if (props.filter) items = items.filter(props.filter)
   const selectedItems = useMemo<Set<string>>(
     () => new Set(selected.map(item => item.metadata.pubkey)),
     [selected]
   )
+
+  React.useEffect(() => {
+    setSelected(items.filter(_ => _.metadata.pubkey === mint_param));
+  }, [items.length])
 
   const [visible, setVisible] = useState(false)
 

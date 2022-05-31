@@ -54,7 +54,7 @@ const EndingPhaseAuction = (props: {
           </div>
         </div>
 
-        <div className='flex flex-col gap-[16px]'>
+        {false && <div className='flex flex-col gap-[16px]'>
           <div className='flex flex-col gap-[8px]'>
             <h6 className='text-h6'>Gap Time</h6>
             <p>
@@ -89,9 +89,9 @@ const EndingPhaseAuction = (props: {
               <Option value='days'>Days</Option>
             </Select>
           </div>
-        </div>
+        </div>}
 
-        <div className='flex flex-col gap-[16px]'>
+        {false && <div className='flex flex-col gap-[16px]'>
           <div className='flex flex-col gap-[8px]'>
             <h6 className='text-h6'>Tick Size for Ending Phase</h6>
             <p>
@@ -114,7 +114,7 @@ const EndingPhaseAuction = (props: {
               }
             />
           </div>
-        </div>
+        </div>}
 
         <div className='flex items-center'>
           <Button appearance='neutral' size='lg' isRounded={false} onClick={props.confirm}>

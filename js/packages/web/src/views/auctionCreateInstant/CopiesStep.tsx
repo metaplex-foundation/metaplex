@@ -11,6 +11,7 @@ import { AuctionCategory, AuctionState } from './types'
 
 const CopiesStep = (props: {
   attributes: AuctionState
+  mint_param: string
   setAttributes: (attr: AuctionState) => void
   confirm: () => void
 }) => {
@@ -56,6 +57,7 @@ const CopiesStep = (props: {
           <ArtSelector
             filter={overallFilter}
             selected={props.attributes.items}
+            mint_param={props.mint_param}
             setSelected={items => {
               props.setAttributes({ ...props.attributes, items })
             }}
