@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { AuctionView } from '../../../hooks'
-import { getSalesRecords } from '../../../api'
+import { getOffersRecords, getListingRecords, getSalesRecords } from '../../../api'
 import moment from 'moment'
 
 export interface NFTDetailsActivityProps {
@@ -14,31 +14,67 @@ export const NFTDetailsActivity: FC<NFTDetailsActivityProps> = ({
   ...restProps
 }: NFTDetailsActivityProps) => {
   const NFTDetailsActivityClasses = CN(`nft-details-activity w-full`, className)
-  const [activity, setActivity] = useState([])
+  const [activity, setActivity] = useState<Array<any>>([])
+  const [offers, setOffers] = useState([])
+  const [sr, setSR] = useState([])
+  const [listings, setListings] = useState([])
+
+  const mintKey = restProps.auction.thumbnail.metadata.info.mint
 
   useEffect(() => {
-    const mintKey = restProps.auction.thumbnail.metadata.info.mint
-    const fetchSalesRecords = async () => {
-      const sales: any = await getSalesRecords(mintKey)
-
-      if (sales && sales.data && sales.data.length > 0) {
-        sales.data.forEach(record => {
-          record.type = record.tnx_type
-          record.price = record.tnx_sol_amount
-          record.from = `${record.from_address.substring(0, 3)}...${record.from_address.substring(
-            record.from_address.length - 4
-          )}`
-          record.to = `${record.to_address.substring(0, 3)}...${record.to_address.substring(
-            record.to_address.length - 4
-          )}`
-          record.time = moment(record.datetime).startOf('hour').fromNow()
+    getListingRecords(mintKey).then(li => {
+      setListings(
+        li.data.map(data => {
+          return { ...data, type: 'Listing' }
         })
-        setActivity(sales.data)
-      }
-    }
+      )
+    })
 
-    fetchSalesRecords()
-  }, [])
+    getOffersRecords(mintKey).then(of => {
+      setOffers(
+        of.data.map(data => {
+          return { ...data, type: 'Offers' }
+        })
+      )
+    })
+
+    getSalesRecords(mintKey).then(sr => {
+      setSR(
+        sr.data.map(data => {
+          return { ...data, type: 'Sales' }
+        })
+      )
+    })
+  }, [mintKey])
+
+  useEffect(() => {
+    const contactArray = shortByDate(offers.concat(listings).concat(sr), 'createdAt')
+
+    setActivity([
+      ...contactArray.map(i => {
+        return {
+          type: i.type,
+          from: i.seller_wallet ? getFormattedAddress(i.seller_wallet) : '',
+          to: i.buyer_wallet ? getFormattedAddress(i.buyer_wallet) : '',
+          time: moment(i.createdAt).fromNow(),
+          price: i.type === 'Offers' ? i.offer_price : i.tnx_sol_amount,
+        }
+      }),
+    ])
+  }, [offers, sr, listings])
+
+  const getFormattedAddress = address =>
+    `${address?.substring(0, 3)}...${address?.substring(address.length - 4)}`
+
+  const shortByDate = (itemsArray, dateKey) => {
+    return itemsArray.sort((a, b) => {
+      return moment(a[dateKey]).isBefore(b[dateKey])
+        ? 1
+        : moment(b[dateKey]).isBefore(a[dateKey])
+        ? -1
+        : 0
+    })
+  }
 
   return (
     <div className={NFTDetailsActivityClasses} {...restProps}>
