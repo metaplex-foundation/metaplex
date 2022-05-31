@@ -23,6 +23,7 @@ export interface ArtCardProps extends CardProps {
   creators?: Artist[]
   preview?: boolean
   small?: boolean
+  hideButton?: boolean
   onClose?: () => void
 
   height?: number
@@ -46,6 +47,7 @@ export const ArtCard = (props: ArtCardProps) => {
     artView,
     width,
     count,
+    hideButton,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     name: _name,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -87,22 +89,22 @@ export const ArtCard = (props: ArtCardProps) => {
 
         <div className='flex justify-between pt-[12px]'></div>
 
-        <div className='flex w-full pt-[12px]'>
+        {!hideButton && <div className='flex w-full pt-[12px]'>
           <Button
             onClick={() => push(`/art/${pubkey}/sale`)}
             type='primary'
             className='action-btn w-full'>
             Put on sale
           </Button>
-        </div>
-        <div className='flex w-full pt-[12px]'>
+        </div>}
+        {!hideButton && <div className='flex w-full pt-[12px]'>
           <Button
             onClick={() => push(`/art/${pubkey}/auction`)}
             appearance='neutral'
             className='w-full'>
             Put on auction
           </Button>
-        </div>
+        </div>}
       </div>
     </div>
   )
