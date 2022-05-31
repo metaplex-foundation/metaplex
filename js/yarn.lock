@@ -2966,7 +2966,7 @@
     "@solana/wallet-adapter-solong" "^0.4.1"
     "@solana/wallet-adapter-torus" "^0.5.0"
 
-"@solana/web3.js@^1.12.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.30.2", "@solana/web3.js@^1.31.0", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.33.0", "@solana/web3.js@^1.35.1":
+"@solana/web3.js@^1.12.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.30.2", "@solana/web3.js@^1.31.0", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.33.0", "@solana/web3.js@^1.35.1", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.37.1":
   version "1.41.4"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.41.4.tgz#595aa29a4a61c181b8c8f5cf0bbef80b4739cfab"
   integrity sha512-2/mjqUcGsBkLEvKxA+rWFE1vODBycAMa62r3wm3Uzb6nmsXQQNTotB+6YoeLQmF0mxVoy8ZA+/QENzBkGkPzSg==
@@ -4482,7 +4482,7 @@ blakejs@^1.1.0:
   resolved "https://registry.yarnpkg.com/blakejs/-/blakejs-1.1.1.tgz#bf313053978b2cd4c444a48795710be05c785702"
   integrity sha512-bLG6PHOCZJKNshTjGRBvET0vTciwQE6zFKOKKXPDJfwFBd4Ac0yBfPZqcGvGJap50l7ktvlpFqc2jGVaUgbJgg==
 
-bluebird@^3.4.6, bluebird@^3.5.0, bluebird@^3.5.1, bluebird@^3.5.3, bluebird@^3.5.5:
+bluebird@3.7.2, bluebird@^3.4.6, bluebird@^3.5.0, bluebird@^3.5.1, bluebird@^3.5.3, bluebird@^3.5.5:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
   integrity sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==
