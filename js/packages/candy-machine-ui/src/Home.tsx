@@ -62,6 +62,7 @@ const Home = (props: HomeProps) => {
     severity: undefined,
   });
   const [isActive, setIsActive] = useState(false);
+  const [currentShift, setCurrentShift] = useState<number>(0);
   const [endDate, setEndDate] = useState<Date>();
   const [itemsRemaining, setItemsRemaining] = useState<number>();
   const [isWhitelistUser, setIsWhitelistUser] = useState(false);
@@ -106,8 +107,16 @@ const Home = (props: HomeProps) => {
             props.candyMachineId,
             connection,
           );
+          console.log(cndy);
+          const currentSlot = await connection.getSlot();
+          const blockTime = (await connection.getBlockTime(
+            currentSlot,
+          )) as number;
+          const shift = new Date().getTime() / 1000 - blockTime;
+
           let active =
-            cndy?.state.goLiveDate?.toNumber() < new Date().getTime() / 1000;
+            cndy?.state.goLiveDate?.toNumber() <
+            new Date().getTime() / 1000 + shift;
           let presale = false;
 
           // duplication of state to make sure we have the right values!
@@ -231,8 +240,10 @@ const Home = (props: HomeProps) => {
           const collectionPDAAccount = await connection.getAccountInfo(
             collectionPDA,
           );
-
+          console.log(active);
           setIsActive((cndy.state.isActive = active));
+          setCurrentShift(new Date().getTime() / 1000 - blockTime);
+
           setIsPresale((cndy.state.isPresale = presale));
           setCandyMachine(cndy);
 
@@ -535,7 +546,7 @@ const Home = (props: HomeProps) => {
                       <>
                         <MintCountdown
                           key="endSettings"
-                          date={getCountdownDate(candyMachine)}
+                          date={getCountdownDate(candyMachine, currentShift)}
                           style={{ justifyContent: 'flex-end' }}
                           status="COMPLETED"
                           onComplete={toggleMintButton}
@@ -553,7 +564,7 @@ const Home = (props: HomeProps) => {
                       <>
                         <MintCountdown
                           key="goLive"
-                          date={getCountdownDate(candyMachine)}
+                          date={getCountdownDate(candyMachine, currentShift)}
                           style={{ justifyContent: 'flex-end' }}
                           status={
                             candyMachine?.state?.isSoldOut ||
@@ -568,7 +579,7 @@ const Home = (props: HomeProps) => {
                         {isPresale &&
                           candyMachine.state.goLiveDate &&
                           candyMachine.state.goLiveDate.toNumber() >
-                            new Date().getTime() / 1000 && (
+                            new Date().getTime() / 1000 + currentShift && (
                             <Typography
                               variant="caption"
                               align="center"
@@ -724,6 +735,7 @@ const Home = (props: HomeProps) => {
 
 const getCountdownDate = (
   candyMachine: CandyMachineAccount,
+  currentShift: number,
 ): Date | undefined => {
   if (
     candyMachine.state.isActive &&
@@ -734,7 +746,7 @@ const getCountdownDate = (
 
   return toDate(
     candyMachine.state.goLiveDate
-      ? candyMachine.state.goLiveDate
+      ? new anchor.BN(candyMachine.state.goLiveDate.toNumber() + currentShift)
       : candyMachine.state.isPresale
       ? new anchor.BN(new Date().getTime() / 1000)
       : undefined,
