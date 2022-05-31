@@ -107,7 +107,6 @@ const Home = (props: HomeProps) => {
             props.candyMachineId,
             connection,
           );
-          console.log(cndy);
           const currentSlot = await connection.getSlot();
           const blockTime = (await connection.getBlockTime(
             currentSlot,
@@ -240,7 +239,6 @@ const Home = (props: HomeProps) => {
           const collectionPDAAccount = await connection.getAccountInfo(
             collectionPDA,
           );
-          console.log(active);
           setIsActive((cndy.state.isActive = active));
           setCurrentShift(new Date().getTime() / 1000 - blockTime);
 
