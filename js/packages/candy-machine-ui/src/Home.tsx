@@ -240,7 +240,7 @@ const Home = (props: HomeProps) => {
             collectionPDA,
           );
           setIsActive((cndy.state.isActive = active));
-          setCurrentShift(new Date().getTime() / 1000 - blockTime);
+          setCurrentShift(shift);
 
           setIsPresale((cndy.state.isPresale = presale));
           setCandyMachine(cndy);
