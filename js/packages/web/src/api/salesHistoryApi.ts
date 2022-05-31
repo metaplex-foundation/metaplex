@@ -11,12 +11,9 @@ export const createSaleRecord = async (data: any) => {
   }
 }
 
-export const getSalesRecords = async (mintKey: string) => {
-  try {
-    const sales = await axios.get(`${api}/get/${mintKey}`)
-    return sales
-  } catch (error: any) {
-    console.log('Get sales API error: ', error.message)
-    return
-  }
-}
+export const getListingRecords = async (mintKey: string) =>
+  axios.get(`${api}/nft/listing/${mintKey}`)
+
+export const getOffersRecords = async (mintKey: string) => axios.get(`${api}/offers/${mintKey}`)
+
+export const getSalesRecords = async (mintKey: string) => axios.get(`${api}/nft/sales/${mintKey}`)
