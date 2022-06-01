@@ -128,7 +128,8 @@ const Home = (props: HomeProps) => {
             if (
               cndy.state.whitelistMintSettings.presale &&
               (!cndy.state.goLiveDate ||
-                cndy.state.goLiveDate.toNumber() > new Date().getTime() / 1000)
+                cndy.state.goLiveDate.toNumber() + shift >
+                  new Date().getTime() / 1000)
             ) {
               presale = true;
             }
@@ -210,7 +211,7 @@ const Home = (props: HomeProps) => {
             setEndDate(toDate(cndy.state.endSettings.number));
             if (
               cndy.state.endSettings.number.toNumber() <
-              new Date().getTime() / 1000
+              new Date().getTime() / 1000 + shift
             ) {
               active = false;
             }
@@ -576,8 +577,9 @@ const Home = (props: HomeProps) => {
                         />
                         {isPresale &&
                           candyMachine.state.goLiveDate &&
-                          candyMachine.state.goLiveDate.toNumber() >
-                            new Date().getTime() / 1000 + currentShift && (
+                          candyMachine.state.goLiveDate.toNumber() +
+                            currentShift >
+                            new Date().getTime() / 1000 && (
                             <Typography
                               variant="caption"
                               align="center"
