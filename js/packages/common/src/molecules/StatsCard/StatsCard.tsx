@@ -1,6 +1,7 @@
-import React, { FC } from 'react'
+import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { MetaChip } from '../../atoms/MetaChip'
+import { Statistic } from 'antd'
 
 export interface StatsCardProps {
   [x: string]: any
@@ -11,6 +12,7 @@ export const StatsCard: FC<StatsCardProps> = ({
   numberOfItems,
   className,
   owners,
+  volumn,
   ...restProps
 }: StatsCardProps) => {
   const StatsCardClasses = CN(
@@ -31,7 +33,7 @@ export const StatsCard: FC<StatsCardProps> = ({
       <span className='flex h-[60px] w-[1px] bg-slate-200' />
       <MetaChip className='w-full' align='center' description='Floor price' heading='0.35' />
       <span className='flex h-[60px] w-[1px] bg-slate-200' />
-      <MetaChip className='w-full' align='center' description='Volume' heading='100K' />
+      <MetaChip className='w-full' align='center' description='Volume' heading={volumn} />
     </div>
   )
 }
