@@ -1,4 +1,5 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useState, useEffect } from 'react'
+import { getCollectionStatistics } from '../../../api'
 import CN from 'classnames'
 import { Button, MetaChip, SOLIcon } from '@oyster/common'
 
@@ -18,34 +19,6 @@ export interface CollectionChartProps {
 
 export const chart = {
   '7days': [
-    {
-      price: 0.87,
-      label: 'Monday',
-    },
-    {
-      price: 0.69,
-      label: 'Tuesday',
-    },
-    {
-      price: 0.12,
-      label: 'Wednesday',
-    },
-    {
-      price: 0.33,
-      label: 'Thursday',
-    },
-    {
-      price: 0.4,
-      label: 'Friday',
-    },
-    {
-      price: 0.76,
-      label: 'Saturday',
-    },
-    {
-      price: 0.56,
-      label: 'Sunday',
-    },
   ],
   '4weeks': [
     {
@@ -119,6 +92,7 @@ export const chart = {
 
 export const CollectionChart: FC<CollectionChartProps> = ({
   className,
+  data,
   ...restProps
 }: CollectionChartProps) => {
   const CollectionChartClasses = CN(
@@ -126,6 +100,16 @@ export const CollectionChart: FC<CollectionChartProps> = ({
     className
   )
   const [selectedChartRange, setSelectedChartRange] = useState<any>('7days')
+  const [chartData, setChartData] = useState<any>(chart)
+  const [collectionStates, setCollectionStates] = useState<any>(null)
+
+  useEffect(() => {
+    let cartOldDate = chartData;
+    cartOldDate["7days"] = data["days7"];
+
+    setChartData(cartOldDate)
+    setCollectionStates(data)
+  }, [])
 
   return (
     <div className={CollectionChartClasses} {...restProps}>
@@ -138,17 +122,17 @@ export const CollectionChart: FC<CollectionChartProps> = ({
           iconAfter={<i className='ri-arrow-down-s-line text-[20px] font-400' />}>
           Last 7 days
         </Button>
-
+        
         <div className='ml-auto flex gap-[24px]'>
           <MetaChip
             overline='7 day avg. price'
             subHeading={
               <div className='flex items-center justify-end gap-[4px]'>
                 <SOLIcon className='inline-flex items-center' />
-                <span className='flex items-center'>0.25 SOL</span>
+                <span className='flex items-center'>{collectionStates !== null ? (collectionStates.nftTotalSales.total_sol / 7).toFixed(4) : 0} SOL</span>
               </div>
             }
-            hint='$20.97.00'
+            hint={collectionStates !== null ? '$'+(collectionStates.nftTotalSales.total_usd / 7).toString(): '$0'}
             align='right'
           />
 
@@ -159,10 +143,10 @@ export const CollectionChart: FC<CollectionChartProps> = ({
             subHeading={
               <div className='flex items-center justify-end gap-[4px]'>
                 <SOLIcon className='inline-flex items-center' />
-                <span className='flex items-center'>2346 SOL</span>
+                <span className='flex items-center'>{collectionStates !== null ? collectionStates.nftTotalSales.total_sol.toFixed(3) : 0} SOL</span>
               </div>
             }
-            hint='$196805.94'
+            hint={collectionStates !== null ? '$'+ collectionStates.nftTotalSales.total_usd : '$0'}
             align='right'
           />
         </div>
@@ -172,9 +156,9 @@ export const CollectionChart: FC<CollectionChartProps> = ({
         <ResponsiveContainer width='100%' height='100%'>
           <AreaChart
             data={
-              (selectedChartRange === '7days' && chart['7days']) ||
-              (selectedChartRange === '4weeks' && chart['4weeks']) ||
-              (selectedChartRange === 'year' && chart['year']) ||
+              (selectedChartRange === '7days' && chartData['7days']) ||
+              (selectedChartRange === '4weeks' && chartData['4weeks']) ||
+              (selectedChartRange === 'year' && chartData['year']) ||
               chart['7days']
             }>
             <defs>

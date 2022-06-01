@@ -67,8 +67,6 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
   const nextPubKey = getNextPubKey()
   const previousPubKey = getPreviousPubKey()
 
-  console.log('nextPubKey', !!nextPubKey)
-
   const next = () => {
     if (nextPubKey) {
       const newAuction = allAuctions.find(i => {

@@ -128,20 +128,22 @@ export const useNFTCollections = () => {
           }
         }
       } else {
-        getData(auction?.thumbnail?.metadata.pubkey).then(res => {
-          const isExit = !!collections.find(({ name }) => name === res?.collection?.name)
-          if (res?.collection?.name && !isExit) {
-            collections.push({
-              pubkey: auction?.thumbnail?.metadata.pubkey,
-              mint: collection,
-              data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
-              state: auction.state,
-              isExternal: true,
-              name: res?.collection?.name,
-              _meta: res,
-            })
-          }
-        })
+        console.log('run.........')
+
+        // getData(auction?.thumbnail?.metadata.pubkey).then(res => {
+        //   const isExit = !!collections.find(({ name }) => name === res?.collection?.name)
+        //   if (res?.collection?.name && !isExit) {
+        //     collections.push({
+        //       pubkey: auction?.thumbnail?.metadata.pubkey,
+        //       mint: collection,
+        //       data: auction?.thumbnail?.metadata?.info as unknown as MetadataData,
+        //       state: auction.state,
+        //       isExternal: true,
+        //       name: res?.collection?.name,
+        //       _meta: res,
+        //     })
+        //   }
+        // })
       }
     })
     setLiveCollections(collections)

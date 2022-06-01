@@ -273,7 +273,7 @@ export const useExtendedCollection = () => {
             const fetchArt = await fetch(uri)
             const data = await fetchArt.json()
 
-            // localStorage.setItem(uri, JSON.stringify(data))
+            localStorage.setItem(uri, JSON.stringify(data))
             return { ...processJson(data), pubkey }
           }
         } catch (ex) {
