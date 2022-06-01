@@ -209,6 +209,7 @@ const TierTableStep = (props: {
                   <div key={itemIndex} className='flex w-full flex-col gap-[16px]'>
                     <div className='flex w-full'>
                       <ArtSelector
+                        mint_param=''
                         filter={artistFilter}
                         className='!w-full'
                         selected={
