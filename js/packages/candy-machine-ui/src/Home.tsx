@@ -114,8 +114,8 @@ const Home = (props: HomeProps) => {
           const shift = new Date().getTime() / 1000 - blockTime;
 
           let active =
-            cndy?.state.goLiveDate?.toNumber() <
-            new Date().getTime() / 1000 + shift;
+            cndy?.state.goLiveDate?.toNumber() + shift <
+            new Date().getTime() / 1000;
           let presale = false;
 
           // duplication of state to make sure we have the right values!
@@ -447,7 +447,7 @@ const Home = (props: HomeProps) => {
     }
   };
 
-  const toggleMintButton = () => {
+  const toggleMintButton = (currentShift: number) => {
     let active = !isActive || isPresale;
 
     if (active) {
@@ -458,11 +458,15 @@ const Home = (props: HomeProps) => {
         active = false;
       }
     }
-
+    console.log(
+      candyMachine!.state.goLiveDate.toNumber() + currentShift <=
+        new Date().getTime() / 1000,
+    );
     if (
       isPresale &&
       candyMachine!.state.goLiveDate &&
-      candyMachine!.state.goLiveDate.toNumber() <= new Date().getTime() / 1000
+      candyMachine!.state.goLiveDate.toNumber() + currentShift <=
+        new Date().getTime() / 1000
     ) {
       setIsPresale((candyMachine!.state.isPresale = false));
     }
@@ -550,7 +554,7 @@ const Home = (props: HomeProps) => {
                           date={getCountdownDate(candyMachine, currentShift)}
                           style={{ justifyContent: 'flex-end' }}
                           status="COMPLETED"
-                          onComplete={toggleMintButton}
+                          onComplete={() => toggleMintButton(currentShift)}
                         />
                         <Typography
                           variant="caption"
@@ -575,7 +579,7 @@ const Home = (props: HomeProps) => {
                               ? 'PRESALE'
                               : 'LIVE'
                           }
-                          onComplete={toggleMintButton}
+                          onComplete={() => toggleMintButton(currentShift)}
                         />
                         {isPresale &&
                           candyMachine.state.goLiveDate &&
