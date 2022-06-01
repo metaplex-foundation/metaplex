@@ -19,6 +19,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
   isVerified,
   numberOfItems,
   owners,
+  volumn,
   ...restProps
 }: CollectionHeaderProps) => {
   const CollectionHeaderClasses = CN(
@@ -67,6 +68,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
       <StatsCard
         owners={owners}
         numberOfItems={numberOfItems}
+        volumn={volumn}
         className='relative z-30 mx-auto mt-[-50px] max-w-[728px]'
       />
     </>
