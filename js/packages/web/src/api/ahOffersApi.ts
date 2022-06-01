@@ -12,6 +12,16 @@ export const addOffer = async (offerInfo: any) => {
   }
 }
 
+export const updateOffer = async (updateOfferInfo: any, offerKey: string) => {
+  try {
+    const res = await axios.put(`${api}/${offerKey}`, updateOfferInfo)
+    return res
+  } catch (error: any) {
+    console.log('Add API error: ', error.message)
+    throw new Error(error.message)
+  }
+}
+
 export const getAllAuctionHouseNFTOffers = async (ah: any) => {
   try {
     const res = await axios.get(`${api}`)

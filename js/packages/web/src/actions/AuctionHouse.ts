@@ -8,15 +8,10 @@ import {
 import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { getAuctionHouse } from '../api'
 import { addListing, getAllListingsByCollection } from '../api/ahListingApi'
-import { addOffer } from '../api/ahOffersApi'
+import { addOffer, updateOffer } from '../api/ahOffersApi'
 
 export function listAuctionHouseNFT(connection: any, wallet: any): any {
   const sdk = initMarketplaceSDK(connection, wallet as any)
-
-  //   const sellerFee = nft?.sellerFeeBasisPoints || 1000;
-  //   const auctionHouseSellerFee = marketplace?.auctionHouse?.sellerFeeBasisPoints || 200;
-  //   const royalties = (listPrice * sellerFee) / 10000;
-  //   const auctionHouseFee = (listPrice * auctionHouseSellerFee) / 10000;
 
   const getAH = async () => {
     let ah = await getAuctionHouse(process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS as string)
@@ -66,7 +61,6 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
   }
 
   const onSell = async (amount: number, nftmetadata: any) => {
-    debugger
     const nft = getNFT(nftmetadata)
     const auctionHouse = await getAH()
     if (amount && nft) {
@@ -111,9 +105,30 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
     return offer
   }
 
+  const onAcceptOffer = async (nftmetadata: any, offer: any) => {
+    const auctionHouse = await getAH()
+    const nft = getNFT(nftmetadata)
+    await sdk.offers(auctionHouse).accept({
+      nft: nft,
+      offer: offer,
+    })
+
+    const updatedOffer = updateOffer(
+      {
+        offer_id: offer.id,
+        tnx_sol_amount: offer.tnx_sol_amount,
+        tnx_usd_amount: offer.tnx_usd_amount,
+      },
+      offer.id
+    )
+
+    return updatedOffer
+  }
+
   return {
     onSell,
     onMakeOffer,
     getAllAuctionHouseNFTsByCollection,
+    onAcceptOffer,
   }
 }
