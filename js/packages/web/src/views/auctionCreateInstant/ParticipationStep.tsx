@@ -22,6 +22,7 @@ const ParticipationStep = (props: {
       <div className='flex max-w-[700px] flex-col gap-[40px]'>
         <div className='flex w-full'>
           <ArtSelector
+            mint_param=''
             filter={(i: SafetyDepositDraft) =>
               !!i.masterEdition && i.masterEdition.info.maxSupply === undefined
             }

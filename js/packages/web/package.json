@@ -62,7 +62,7 @@
     "swiper": "^7.4.1",
     "tailwind-scrollbar": "1.3.1",
     "three": "^0.128.0",
-    "tweetnacl": "^1.0.3",
+    "tweetnacl": "1.0.3",
     "timeago.js": "^4.0.2"
   },
   "scripts": {
