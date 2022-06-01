@@ -208,10 +208,12 @@ const Home = (props: HomeProps) => {
 
           // datetime to stop the mint?
           if (cndy?.state.endSettings?.endSettingType.date) {
-            setEndDate(toDate(cndy.state.endSettings.number));
+            setEndDate(
+              toDate(cndy.state.endSettings.number.add(new anchor.BN(shift))),
+            );
             if (
-              cndy.state.endSettings.number.toNumber() <
-              new Date().getTime() / 1000 + shift
+              new Date().getTime() / 1000 >
+              cndy.state.endSettings.number.toNumber() + shift
             ) {
               active = false;
             }
