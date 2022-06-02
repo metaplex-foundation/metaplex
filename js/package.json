@@ -34,7 +34,7 @@
   },
   "resolutions": {
     "@types/react": "^17.0.16",
-    "@solana/web3.js": "^1.33.0",
+    "@solana/web3.js": "1.35.0",
     "redstone-node": "0.4.21"
   },
   "husky": {

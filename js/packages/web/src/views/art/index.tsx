@@ -4,7 +4,7 @@ import { useArt, useExtendedArt, useUserArts } from '../../hooks'
 import { ArtContent } from '../../components/ArtContent'
 import InstantSale from './InstantSale'
 import { AuctionCategory } from '../auctionCreate/types'
-import { Creator, Modal } from '@oyster/common'
+import { Creator, Modal, useUserAccounts } from '@oyster/common'
 import { CheckCircleOutlined, IssuesCloseOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 
@@ -19,9 +19,17 @@ export const ArtView = () => {
   const selected = [...(items || []).filter(i => i.metadata.pubkey === id)]
   const art = useArt(id)
   console.log('art', art)
+  console.log('selected', selected)
   const [status, setStatus] = useState(0)
   const [showModal, setShowModal] = useState(false)
-
+  const { ref, data } = useExtendedArt(id)
+  const { accountByMint } = useUserAccounts()
+  const a = accountByMint.get(art.mint as string)
+  debugger
+  console.log('accountByMint', accountByMint)
+  console.log('mint', art.mint)
+  console.log('holder', a?.pubkey)
+  const candyNft = art
   useEffect(() => {
     if (status) {
       setShowModal(true)
@@ -124,6 +132,7 @@ export const ArtView = () => {
                       setStatus={setStatus}
                       category={AuctionCategory.InstantSale}
                       items={selected}
+                      candyNft={null}
                       status={status}
                       mintKey={art.mint as string}
                     />
@@ -152,6 +161,7 @@ export const ArtView = () => {
                       items={selected}
                       status={status}
                       mintKey={art.mint as string}
+                      candyNft={null}
                     />
                   </>
                   {/* {!!selected.length &&

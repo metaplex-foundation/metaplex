@@ -89,13 +89,13 @@ export const ArtDetails: FC<ArtDetailsProps> = ({
 
         <div className='absolute left-0 right-0 top-[32px] z-[100] flex justify-between'>
           <button
-            className='ml-[-60px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white pr-[4px] text-gray-600 shadow-lg hover:bg-B-400 hover:text-white'
+            className='shadow-lg ml-[-60px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white pr-[4px] text-gray-600 hover:bg-B-400 hover:text-white'
             onClick={() => setIsLoading(true)}>
             <LeftIcon />
           </button>
 
           <button
-            className='mr-[-60px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white pl-[4px] text-gray-600 shadow-lg hover:bg-B-400 hover:text-white'
+            className='shadow-lg mr-[-60px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-white pl-[4px] text-gray-600 hover:bg-B-400 hover:text-white'
             onClick={() => setIsLoading(true)}>
             <RightIcon />
           </button>

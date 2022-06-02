@@ -30,6 +30,7 @@ export const useUserArts = (): SafetyDepositDraft[] => {
   const safetyDeposits: SafetyDepositDraft[] = []
   let i = 0
   ownedMetadata.forEach(m => {
+    debugger
     const a = accountByMint.get(m.info.mint)
     let masterA
     const masterEdition = possibleMasterEditions[i]

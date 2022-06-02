@@ -70,6 +70,7 @@ import { sendStoreFee } from '../../actions/getStoreOwnerFee'
 import useNFTData from '../../hooks/useNFTData'
 import { useCollections } from '../../hooks/useCollections'
 import { createSaleRecord } from '../../api'
+import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -857,6 +858,81 @@ export const AuctionCard = ({
         extraButtonText='View My Items'
         onClickExtraButton={() => history.push('/artworks')}
       /> */}
+    </div>
+  )
+}
+
+export const AhAuctionCard = ({
+  sale,
+  style,
+  hideDefaultAction,
+  action,
+  className,
+}: {
+  sale: any
+  style?: React.CSSProperties
+  hideDefaultAction?: boolean
+  action?: JSX.Element
+  className?: string
+}) => {
+  const connection = useConnection()
+  const { update } = useMeta()
+
+  const wallet = useWallet()
+  const [loading, setLoading] = useState<boolean>(false)
+  const [value, setValue] = useState<number>()
+  const [offer, setOffer] = useState()
+
+  // return <></>
+
+  const makeOffer = async () => {
+    const offer_ = await listAuctionHouseNFT(connection, wallet).onMakeOffer(value, sale)
+    console.log(offer_)
+    setOffer(offer_)
+  }
+
+  return (
+    <div className='flex items-center gap-[16px]'>
+      {wallet.connected && !!sale && (
+        <Button type='dashed' size='lg' className='w-[230px]' disabled={loading} onClick={null}>
+          Buy Now
+        </Button>
+      )}
+
+      {wallet.connected && !!sale && (
+        <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
+          <div className='flex h-full items-center gap-[8px]'>
+            <SOLIcon size={18} />
+            <input
+              // type='number'
+              type='number'
+              className='h-full w-full appearance-none bg-transparent outline-none'
+              value={value ?? ''}
+              onChange={e => setValue(parseFloat(e.target.value))}
+              placeholder='Enter'
+            />
+          </div>
+          <Button
+            appearance='neutral'
+            size='md'
+            className='h-full w-[180px] flex-shrink-0'
+            // disabled={invalidBid}
+            onClick={makeOffer}>
+            Make Offer
+          </Button>
+        </div>
+      )}
+      {!wallet.connected && (
+        <Button
+          type='primary'
+          size='md'
+          className='h-full w-[180px] flex-shrink-0'
+          onClick={null}
+          style={{ marginTop: 20 }}>
+          Connect wallet to {!!sale ? 'purchase' : 'make offer'}
+        </Button>
+      )}
+      {action}
     </div>
   )
 }

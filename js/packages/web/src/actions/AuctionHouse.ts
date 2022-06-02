@@ -4,10 +4,12 @@ import {
   Nft,
   NftOwnerWallet,
   Listing,
+  Offer,
 } from '@holaplex/marketplace-js-sdk'
 import { LAMPORTS_PER_SOL } from '@solana/web3.js'
+import BN from 'bn.js'
 import { getAuctionHouse } from '../api'
-import { addListing, getAllListingsByCollection } from '../api/ahListingApi'
+import { addListing, getAllListingsByCollection, getListingByMint } from '../api/ahListingApi'
 import { addOffer, updateOffer } from '../api/ahOffersApi'
 
 export function listAuctionHouseNFT(connection: any, wallet: any): any {
@@ -17,7 +19,6 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
     let ah = await getAuctionHouse(process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS as string)
     //let ah = await getAuctionHouse('Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6')
     ah = ah[0]
-    debugger
     const auctionHouse: AuctionHouse = {
       address: ah.auction_house_wallet,
       treasuryMint: ah.mint,
@@ -44,6 +45,7 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
   }
 
   const getNFT = (nftmeta: any) => {
+    debugger
     const seller: NftOwnerWallet = {
       address: wallet.publicKey?.toBase58() as string,
       associatedTokenAccountAddress: nftmeta.holding,
@@ -60,21 +62,40 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
     return nft
   }
 
+  const getNFTOffer = (nftmeta: any) => {
+    debugger
+    const seller: NftOwnerWallet = {
+      address: nftmeta.seller_wallet,
+      associatedTokenAccountAddress: nftmeta.metadata.holding,
+    }
+
+    const nft: Nft = {
+      name: nftmeta.metadata.info.data.name,
+      address: nftmeta.metadata.pubkey,
+      mintAddress: nftmeta.mint,
+      creators: nftmeta.metadata.info.data.creators,
+      owner: seller,
+    }
+
+    return nft
+  }
+
   const onSell = async (amount: number, nftmetadata: any) => {
     const nft = getNFT(nftmetadata)
     const auctionHouse = await getAH()
     if (amount && nft) {
       await sdk.listings(auctionHouse).post({ amount: amount, nft })
     }
-
+    debugger
+    nftmetadata.metadata['holding'] = nftmetadata.holding
     const listing = await addListing({
       mint: nft.mintAddress,
       auction_house_wallet: auctionHouse.address,
       seller_wallet: nft.owner.address,
       sale_price: amount,
-      collection: nftmetadata.metadata.info.collection.key,
+      collection: nftmetadata.metadata.info.collection?.key,
       nft_name: nftmetadata.metadata.info.data.name,
-      metadata: nftmetadata.metadata.info.data,
+      metadata: nftmetadata.metadata,
       url: nftmetadata.metadata.info.data.uri,
     })
     return listing
@@ -85,11 +106,17 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
     return nfts
   }
 
+  const getNFTbyMint = async (mint: string) => {
+    return await getListingByMint(mint)
+  }
+
   const onMakeOffer = async (amount: number, nftmetadata: any) => {
-    const nft = getNFT(nftmetadata)
+    debugger
+    const nft = getNFTOffer(nftmetadata)
     const auctionHouse = await getAH()
-    const lmpAmount = amount * LAMPORTS_PER_SOL
+    const lmpAmount = amount
     if (amount && nft) {
+      const a = await sdk.offers(auctionHouse)
       await sdk.offers(auctionHouse).make({ amount: lmpAmount, nft })
     }
 
@@ -99,30 +126,51 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
       seller_wallet: nft.owner.address,
       buyer_wallet: wallet.publicKey?.toBase58(),
       offer_price: amount,
-      collection: nftmetadata.metadata.info.collection.key,
+      collection: nftmetadata.metadata.info.collection?.key,
     })
 
     return offer
   }
 
+  ///// !!!!!!! STILL WIP !!!!!!!
   const onAcceptOffer = async (nftmetadata: any, offer: any) => {
     const auctionHouse = await getAH()
-    const nft = getNFT(nftmetadata)
+    const nft = getNFTOffer(nftmetadata)
+    const lampAmount = offer.offer_price * LAMPORTS_PER_SOL
+    const ahOffer: Offer = {
+      address: '',
+      buyer: offer.buyer_wallet,
+      price: new BN(lampAmount),
+      createdAt: '',
+      auctionHouse: auctionHouse.address,
+      tradeState: '',
+    }
+    debugger
     await sdk.offers(auctionHouse).accept({
       nft: nft,
-      offer: offer,
+      offer: ahOffer,
     })
-
+    debugger
     const updatedOffer = updateOffer(
       {
         offer_id: offer.id,
-        tnx_sol_amount: offer.tnx_sol_amount,
-        tnx_usd_amount: offer.tnx_usd_amount,
+        tnx_sol_amount: offer.offer_price,
+        // tnx_usd_amount: offer.tnx_usd_amount,
       },
       offer.id
     )
-
+    debugger
     return updatedOffer
+  }
+
+  const onBuy = async (nftmetadata: any) => {
+    const auctionHouse = await getAH()
+    const nft = getNFT(nftmetadata)
+
+    await sdk.listings(auctionHouse).buy({
+      nft: nft,
+      listing: {} as any,
+    })
   }
 
   return {
@@ -130,5 +178,6 @@ export function listAuctionHouseNFT(connection: any, wallet: any): any {
     onMakeOffer,
     getAllAuctionHouseNFTsByCollection,
     onAcceptOffer,
+    getNFTbyMint,
   }
 }
