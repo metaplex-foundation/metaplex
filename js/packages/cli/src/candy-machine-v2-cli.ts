@@ -312,6 +312,235 @@ programCommand('upload')
     process.exit(0);
   });
 
+
+  /**
+   * 
+   * Please use this version of the candy machine initializer at your own risk. There is 
+   * greater freedom offered by this version of the machine initializer, in where your
+   * metadata is hosted, but the metadata must still conform to spec in terms of how it 
+   * is accessed or it will not be resolvable from your NFT's metadata URIs.
+   * 
+   * For most users, we recommend using 'upload' program command to ensure that metadata
+   * is available and properly hosted.
+   * 
+   * Establishes the collection on chain, but does not actually validate and upload metadata. 
+   * 
+   * NOTE: Compatible only with "hidden settings" style collections, because metadata is not
+   * processed, and so NFT specific metadata cannot be  pre-allocated on chain. 
+   * 
+   * CAUTION: If using this method, you'll need to make sure that the supplied URL in the
+   * hiddenSettings config must resolve to an image and metadata host that is consistent
+   * with the endpoints that would be generated if using the 'upload' program command.
+   * 
+   *
+   */
+  programCommand('init_empty_machine')
+  .requiredOption(
+    '-cp, --config-path <string>',
+    'JSON file with candy machine settings',
+  )
+  .option(
+    '-m, --collection-mint <string>',
+    'optional collection mint ID. Will be randomly generated if not provided',
+  )
+  .option(
+    '-nc, --no-set-collection-mint',
+    'optional flag to prevent the candy machine from using an on chain collection',
+  )
+  .action(async (files: string[], options, cmd) => {
+    const {
+      keypair,
+      env,
+      cacheName,
+      configPath,
+      rpcUrl,
+      rateLimit,
+      collectionMint,
+      setCollectionMint,
+    } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
+
+    const {
+      storage,
+      nftStorageKey,
+      nftStorageGateway,
+      ipfsInfuraProjectId,
+      number,
+      ipfsInfuraSecret,
+      pinataJwt,
+      pinataGateway,
+      arweaveJwk,
+      awsS3Bucket,
+      retainAuthority,
+      mutable,
+      batchSize,
+      price,
+      splToken,
+      treasuryWallet,
+      gatekeeper,
+      endSettings,
+      hiddenSettings,
+      whitelistMintSettings,
+      goLiveDate,
+      uuid,
+    } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
+
+    if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
+      log.info(
+        '\x1b[31m%s\x1b[0m',
+        'WARNING: On Devnet, the arweave-sol storage option only stores your files for 1 week. Please upload via Mainnet Beta for your final collection.\n',
+      );
+    }
+
+    if (storage === StorageType.ArweaveBundle && env !== 'mainnet-beta') {
+      throw new Error(
+        'The arweave-bundle storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
+      );
+    }
+
+    if (storage === StorageType.Arweave) {
+      log.warn(
+        'WARNING: The "arweave" storage option will be going away soon. Please migrate to arweave-bundle or arweave-sol for mainnet.\n',
+      );
+    }
+
+    if (storage === StorageType.ArweaveBundle && !arweaveJwk) {
+      throw new Error(
+        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundle',
+      );
+    }
+    if (
+      storage === StorageType.Ipfs &&
+      (!ipfsInfuraProjectId || !ipfsInfuraSecret)
+    ) {
+      throw new Error(
+        'IPFS selected as storage option but Infura project id or secret key were not provided.',
+      );
+    }
+    if (storage === StorageType.Aws && !awsS3Bucket) {
+      throw new Error(
+        'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
+      );
+    }
+
+    if (!Object.values(StorageType).includes(storage)) {
+      throw new Error(
+        `Storage option must either be ${Object.values(StorageType).join(
+          ', ',
+        )}. Got: ${storage}`,
+      );
+    }
+    const ipfsCredentials = {
+      projectId: ipfsInfuraProjectId,
+      secretKey: ipfsInfuraSecret,
+    };
+
+    let imageFileCount = 0;
+    let animationFileCount = 0;
+    let jsonFileCount = 0;
+
+    // Filter out any non-supported file types and find the JSON vs Image file count
+    const supportedFiles = files.filter(it => {
+      if (supportedImageTypes[getType(it)]) {
+        imageFileCount++;
+      } else if (supportedAnimationTypes[getType(it)]) {
+        animationFileCount++;
+      } else if (it.endsWith(EXTENSION_JSON)) {
+        jsonFileCount++;
+      } else {
+        log.warn(`WARNING: Skipping unsupported file type ${it}`);
+        return false;
+      }
+
+      return true;
+    });
+
+    if (animationFileCount !== 0 && storage === StorageType.Arweave) {
+      throw new Error(
+        'The "arweave" storage option is incompatible with animation files. Please try again with another storage option using `--storage <option>`.',
+      );
+    }
+
+    if (animationFileCount !== 0 && animationFileCount !== jsonFileCount) {
+      throw new Error(
+        `number of animation files (${animationFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
+    } else if (imageFileCount !== jsonFileCount) {
+      throw new Error(
+        `number of img files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
+    }
+
+    const elemCount = number ? number : imageFileCount;
+    if (elemCount < imageFileCount) {
+      throw new Error(
+        `max number (${elemCount}) cannot be smaller than the number of images in the source folder (${imageFileCount})`,
+      );
+    }
+
+    if (animationFileCount === 0) {
+      log.info(`Beginning the upload for ${elemCount} (img+json) pairs`);
+    } else {
+      log.info(
+        `Beginning the upload for ${elemCount} (img+animation+json) sets`,
+      );
+    }
+
+    const collectionMintPubkey = await parseCollectionMintPubkey(
+      collectionMint,
+      anchorProgram.provider.connection,
+      walletKeyPair,
+    );
+
+    const startMs = Date.now();
+    log.info('started at: ' + startMs.toString());
+    try {
+      await uploadV2({
+        files: supportedFiles,
+        cacheName,
+        env,
+        totalNFTs: elemCount,
+        gatekeeper,
+        storage,
+        retainAuthority,
+        mutable,
+        nftStorageKey,
+        nftStorageGateway,
+        ipfsCredentials,
+        pinataJwt,
+        pinataGateway,
+        awsS3Bucket,
+        batchSize,
+        price,
+        treasuryWallet,
+        anchorProgram,
+        walletKeyPair,
+        splToken,
+        endSettings,
+        hiddenSettings,
+        whitelistMintSettings,
+        goLiveDate,
+        uuid,
+        arweaveJwk,
+        rateLimit,
+        collectionMintPubkey,
+        setCollectionMint,
+        rpcUrl,
+      });
+    } catch (err) {
+      log.warn('upload was not successful, please re-run.', err);
+      process.exit(1);
+    }
+    const endMs = Date.now();
+    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
+    log.info(
+      `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
+    );
+    process.exit(0);
+  });
+
 programCommand('withdraw')
   .argument('<candy_machine_id>', 'Candy machine id')
   .option('-d, --dry', 'Show Candy Machine withdraw amount without withdrawing')
