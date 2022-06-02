@@ -6,8 +6,9 @@ import {
   createCandyMachineV2,
   loadCandyProgram,
   loadWalletKey,
+  WhitelistMintMode,
 } from '../helpers/accounts';
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN, Program, web3 } from '@project-serum/anchor';
 
 import fs from 'fs';
@@ -28,6 +29,136 @@ import { chunks, sleep } from '../helpers/various';
 import { pinataUpload } from '../helpers/upload/pinata';
 import { setCollection } from './set-collection';
 import { nftStorageUploadGenerator } from '../helpers/upload/nft-storage';
+import { program } from 'commander';
+
+
+/**
+ * 
+ * @param setCollectionMint if undefined collection mint will not be set.
+ * @param payerWallet 
+ * @param treasuryWallet 
+ * @param splToken 
+ * @param itemsAvailable 
+ * @param uuid 
+ * @param symbol 
+ * @param sellerFeeBasisPoints 
+ * @param isMutable 
+ * @param maxSupply 
+ * @param retainAuthority 
+ * @param gatekeeper 
+ * @param goLiveDate 
+ * @param price 
+ * @param endSettings 
+ * @param whitelistMintSettings 
+ * @param hiddenSettings 
+ * @returns 
+ */
+export async function initializeCandyMachine(
+  setCollectionMint: { collectionMintPubkey: null | PublicKey } | undefined,
+  payerWallet: Keypair,
+  treasuryWallet: PublicKey,
+  splToken: PublicKey,
+  itemsAvailable: BN,
+  uuid: null | string,
+  symbol: string,
+  sellerFeeBasisPoints: number,
+  isMutable: boolean,
+  maxSupply: BN,
+  retainAuthority: boolean,
+  gatekeeper: null | {
+    expireOnUse: boolean;
+    gatekeeperNetwork: web3.PublicKey;
+  },
+
+  goLiveDate: null | BN,
+  price: BN,
+  endSettings: null | [number, BN],
+  whitelistMintSettings: null | {
+    mode: WhitelistMintMode;
+    mint: web3.PublicKey;
+    presale: boolean,
+    discountPrice: null | BN,
+  },
+  hiddenSettings: null | {
+    name: string;
+    uri: string;
+    hash: Uint8Array;
+  }
+
+): Promise<Program> {
+
+
+  const anchorProgram: Program = {};
+  const remainingAccounts = [];
+
+  if (splToken) {
+    const splTokenKey = new PublicKey(splToken);
+
+    remainingAccounts.push({
+      pubkey: splTokenKey,
+      isWritable: false,
+      isSigner: false,
+    });
+  }
+
+
+
+  // initialize candy
+  log.info(`initializing candy machine`);
+
+  const res = await createCandyMachineV2(
+    anchorProgram,
+    payerWallet,
+    treasuryWallet,
+    splToken,
+    {
+      itemsAvailable: itemsAvailable,
+      uuid,
+      symbol,
+      sellerFeeBasisPoints,
+      isMutable,
+      maxSupply: new BN(0),
+      retainAuthority: retainAuthority,
+      gatekeeper,
+      goLiveDate,
+      price,
+      endSettings,
+      whitelistMintSettings,
+      hiddenSettings,
+      creators: firstAssetManifest.properties.creators.map(creator => {
+        return {
+          address: new PublicKey(creator.address),
+          verified: true,
+          share: creator.share,
+        };
+      }),
+    },
+  );
+  anchorProgram.uuid = res.uuid;
+  anchorProgram.candyMachine = res.candyMachine.toBase58();
+  candyMachine = res.candyMachine;
+
+  if (setCollectionMint) {
+    const collection = await setCollection(
+      payerWallet,
+      anchorProgram,
+      res.candyMachine,
+      setCollectionMint.collectionMintPubkey,
+    );
+    console.log('Collection: ', collection);
+    anchorProgram.collection = collection.collectionMetadata;
+  } else {
+    console.log('No collection set');
+  }
+
+  log.info(
+    `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+  );
+
+
+  return anchorProgram;
+
+}
 
 export async function uploadV2({
   files,
@@ -117,86 +248,43 @@ export async function uploadV2({
 
   const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
   const dirname = path.dirname(files[0]);
-  let candyMachine = cacheContent.program.candyMachine
-    ? new PublicKey(cacheContent.program.candyMachine)
-    : undefined;
+
 
   if (!cacheContent.program.uuid) {
+
     const firstAssetManifest = getAssetManifest(dirname, '0');
+    if (
+      !firstAssetManifest.properties?.creators?.every(
+        creator => creator.address !== undefined,
+      )
+    ) {
+      throw new Error('Creator address is missing');
+    }
 
     try {
-      const remainingAccounts = [];
 
-      if (splToken) {
-        const splTokenKey = new PublicKey(splToken);
-
-        remainingAccounts.push({
-          pubkey: splTokenKey,
-          isWritable: false,
-          isSigner: false,
-        });
-      }
-
-      if (
-        !firstAssetManifest.properties?.creators?.every(
-          creator => creator.address !== undefined,
-        )
-      ) {
-        throw new Error('Creator address is missing');
-      }
-
-      // initialize candy
-      log.info(`initializing candy machine`);
-      const res = await createCandyMachineV2(
-        anchorProgram,
+      cacheContent.program = await initializeCandyMachine(
+        setCollectionMint ? { collectionMintPubkey } : undefined,
         walletKeyPair,
         treasuryWallet,
         splToken,
-        {
-          itemsAvailable: new BN(totalNFTs),
-          uuid,
-          symbol: firstAssetManifest.symbol,
-          sellerFeeBasisPoints: firstAssetManifest.seller_fee_basis_points,
-          isMutable: mutable,
-          maxSupply: new BN(0),
-          retainAuthority: retainAuthority,
-          gatekeeper,
-          goLiveDate,
-          price,
-          endSettings,
-          whitelistMintSettings,
-          hiddenSettings,
-          creators: firstAssetManifest.properties.creators.map(creator => {
-            return {
-              address: new PublicKey(creator.address),
-              verified: true,
-              share: creator.share,
-            };
-          }),
-        },
-      );
-      cacheContent.program.uuid = res.uuid;
-      cacheContent.program.candyMachine = res.candyMachine.toBase58();
-      candyMachine = res.candyMachine;
-
-      if (setCollectionMint) {
-        const collection = await setCollection(
-          walletKeyPair,
-          anchorProgram,
-          res.candyMachine,
-          collectionMintPubkey,
-        );
-        console.log('Collection: ', collection);
-        cacheContent.program.collection = collection.collectionMetadata;
-      } else {
-        console.log('No collection set');
-      }
-
-      log.info(
-        `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
+        new BN(totalNFTs),
+        uuid,
+        firstAssetManifest.symbol,
+        firstAssetManifest.seller_fee_basis_points,
+        mutable,
+        new BN(0),
+        retainAuthority,
+        gatekeeper,
+        goLiveDate,
+        price,
+        endSettings,
+        whitelistMintSettings,
+        hiddenSettings,
       );
 
       saveCache(cacheName, env, cacheContent);
+
     } catch (exx) {
       log.error('Error deploying config to Solana network.', exx);
       throw exx;
@@ -207,6 +295,9 @@ export async function uploadV2({
     );
   }
 
+
+
+
   const uploadedItems = Object.values(cacheContent.items).filter(
     (f: { link: string }) => !!f.link,
   ).length;
@@ -215,8 +306,7 @@ export async function uploadV2({
 
   if (dedupedAssetKeys.length) {
     log.info(
-      `Starting upload for [${
-        dedupedAssetKeys.length
+      `Starting upload for [${dedupedAssetKeys.length
       }] items, format ${JSON.stringify(dedupedAssetKeys[0])}`,
     );
   }
@@ -590,8 +680,7 @@ async function writeIndices({
     .for(poolArray)
     .handleError(async (err, { index, configLines }) => {
       log.error(
-        `\nFailed writing indices ${index}-${
-          keys[configLines[configLines.length - 1]]
+        `\nFailed writing indices ${index}-${keys[configLines[configLines.length - 1]]
         }: ${err.message}`,
       );
       await sleep(5000);
