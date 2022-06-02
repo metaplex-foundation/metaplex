@@ -414,6 +414,7 @@ programCommand('init_empty_machine')
     try {
 
       await initializeCandyMachine(
+        anchorProgram,
         setCollectionMint ? {
           collectionMintPubkey: await parseCollectionMintPubkey(
             collectionMint,

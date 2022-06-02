@@ -29,7 +29,6 @@ import { chunks, sleep } from '../helpers/various';
 import { pinataUpload } from '../helpers/upload/pinata';
 import { setCollection } from './set-collection';
 import { nftStorageUploadGenerator } from '../helpers/upload/nft-storage';
-import { program } from 'commander';
 
 
 /**
@@ -51,9 +50,10 @@ import { program } from 'commander';
  * @param endSettings 
  * @param whitelistMintSettings 
  * @param hiddenSettings 
- * @returns {uuid: string, candyMachine: PublicKey, , program: Program, collection: string | undefined}. Collection is undefined if not set with "setCollectionMint"
+ * @returns {uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined}. Collection is undefined if not set with "setCollectionMint"
  */
 export async function initializeCandyMachine(
+  anchorProgram: Program,
   setCollectionMint: { collectionMintPubkey: null | PublicKey } | undefined,
   payerWallet: Keypair,
   treasuryWallet: PublicKey,
@@ -90,9 +90,7 @@ export async function initializeCandyMachine(
     share: number;
   }[]
 
-): Promise<{ uuid: string, candyMachine: PublicKey, program: Program, collectionMetadata: string | undefined }> {
-
-  const anchorProgram: Program = {} as Program/* uninitialized */;
+): Promise<{ uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined }> {
 
   // initialize candy
   log.info(`initializing candy machine`);
@@ -142,7 +140,7 @@ export async function initializeCandyMachine(
   );
 
 
-  return { ...res, program: anchorProgram, collectionMetadata };
+  return { ...res, collectionMetadata };
 
 }
 
@@ -252,8 +250,9 @@ export async function uploadV2({
 
     try {
 
-      const candyMachineResult: { uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined, program: Program } =
+      const candyMachineResult: { uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined } =
         await initializeCandyMachine(
+          anchorProgram,
           setCollectionMint ? { collectionMintPubkey } : undefined,
           walletKeyPair,
           treasuryWallet,
@@ -280,7 +279,11 @@ export async function uploadV2({
           })
         );
 
-      cacheContent.program = candyMachineResult.program;
+      cacheContent.program = {
+        uuid: candyMachineResult.uuid,
+        candyMachine: candyMachineResult.candyMachine.toBase58(),
+        collection: candyMachineResult.collectionMetadata
+      };
       candyMachine = candyMachineResult.candyMachine;
 
       saveCache(cacheName, env, cacheContent);
