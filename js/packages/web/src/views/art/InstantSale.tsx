@@ -402,7 +402,8 @@ const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSal
       case AuctionCategory.InstantSale:
         return <PutOnSale attributes={attributes} setAttributes={setAttributes} />
       case AuctionCategory.Tiered:
-        return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
+        return <></>
+        // return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
       default:
         return <></>
     }
