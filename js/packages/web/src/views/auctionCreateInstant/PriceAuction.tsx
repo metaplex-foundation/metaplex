@@ -18,7 +18,7 @@ const PriceAuction = (props: {
         <div className='flex flex-col gap-[8px]'>
           <h2 className='text-h3'>Price</h2>
           <p>
-            Set the price for your auction.
+            Set the price for your auction. This is the starting bid price for your auction.
             {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() &&
               ` Warning! the auction quote mint is `}
             {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && (
@@ -73,10 +73,10 @@ const PriceAuction = (props: {
 
         {props.attributes.category !== AuctionCategory.Open && (
           <div className='flex flex-col gap-[16px]'>
-            <div className='flex flex-col gap-[8px]'>
+            {false && <div className='flex flex-col gap-[8px]'>
               <h6 className='text-h6'>Price Floor</h6>
               <p>This is the starting bid price for your auction.</p>
-            </div>
+            </div>}
 
             <div className='flex'>
               <TextField
@@ -140,11 +140,11 @@ const PriceAuction = (props: {
           </div>
         </div>}
 
-        <div className='flex items-center'>
+        {false && <div className='flex items-center'>
           <Button appearance='neutral' size='lg' isRounded={false} onClick={props.confirm}>
             Continue
           </Button>
-        </div>
+        </div>}
       </div>
     </>
   )
