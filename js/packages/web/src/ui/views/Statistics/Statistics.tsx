@@ -1,6 +1,7 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { SectionHeading, CollectionCard, MetaChip } from '@oyster/common'
+import { getTotalStatistics } from '../../../api'
 
 export interface StatisticsProps {
   [x: string]: any
@@ -8,6 +9,16 @@ export interface StatisticsProps {
 
 export const Statistics: FC<StatisticsProps> = ({ className, ...restProps }: StatisticsProps) => {
   const StatisticsClasses = CN(`statistics`, className)
+
+  const [statistics, setStatistics] = useState<any>(null)
+
+  useEffect(() => {
+
+    getTotalStatistics().then((data) => {
+      setStatistics(data)
+    })
+
+  }, [])
 
   return (
     <div className={StatisticsClasses} {...restProps}>
@@ -21,13 +32,13 @@ export const Statistics: FC<StatisticsProps> = ({ className, ...restProps }: Sta
         />
 
         <div className='stats-card mx-auto flex h-[100px] w-full max-w-[728px] items-center justify-between gap-[32px] rounded bg-white p-[20px] shadow-card'>
-          <MetaChip className='w-full' align='center' description='Collections' heading='1343' />
+          <MetaChip className='w-full' align='center' description='Collections' heading={statistics !== null ? statistics.statBar.collection: ""} />
           <span className='flex h-[60px] w-[1px] bg-slate-200' />
-          <MetaChip className='w-full' align='center' description='Owners' heading='10k' />
+          <MetaChip className='w-full' align='center' description='Owners' heading={statistics !== null ? statistics.statBar.owners: "" } />
           <span className='flex h-[60px] w-[1px] bg-slate-200' />
-          <MetaChip className='w-full' align='center' description='Categories' heading='32' />
+          <MetaChip className='w-full' align='center' description='Categories' heading={statistics !== null ? statistics.statBar.categories: "" } />
           <span className='flex h-[60px] w-[1px] bg-slate-200' />
-          <MetaChip className='w-full' align='center' description='Volume' heading='$100M' />
+          <MetaChip className='w-full' align='center' description='Volume' heading={statistics !== null ? "$"+statistics.statBar.categories: "" } />
         </div>
       </div>
 
@@ -40,28 +51,31 @@ export const Statistics: FC<StatisticsProps> = ({ className, ...restProps }: Sta
           <p className='text-md font-500 text-B-400'>Avg. price (24hrs)</p>
           <p className='text-md font-500 text-B-400'>Floor price</p>
         </div>
-
-        <ul className='flex flex-col gap-[12px] pt-[20px]'>
-          {(dummyData || []).map(
-            (
-              { id, rank, NFTName, itemCount, image, marketCap, volume, avgPrice, floorPrice },
-              index
-            ) => (
-              <li key={id || index}>
-                <CollectionCard
-                  rank={rank}
-                  NFTName={NFTName}
-                  itemCount={itemCount}
-                  image={image}
-                  marketCap={marketCap}
-                  volume={volume}
-                  avgPrice={avgPrice}
-                  floorPrice={floorPrice}
-                />
-              </li>
-            )
-          )}
-        </ul>
+        {statistics !== null ? 
+          <ul className='flex flex-col gap-[12px] pt-[20px]'>
+            
+              {(statistics.nftStates || []).map(
+                (
+                  { id, rank, NFTName, itemCount, image, marketCap, volume, avgPrice, floorPrice },
+                  index
+                ) => (
+                  <li key={id || index}>
+                    <CollectionCard
+                      rank={rank}
+                      NFTName={NFTName}
+                      itemCount={itemCount}
+                      image={image}
+                      marketCap={marketCap}
+                      volume={volume}
+                      avgPrice={avgPrice}
+                      floorPrice={floorPrice}
+                    />
+                  </li>
+                )
+              )}
+          </ul>
+        : ""
+        }
       </div>
     </div>
   )
