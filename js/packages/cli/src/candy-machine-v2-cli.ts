@@ -347,7 +347,11 @@ programCommand('init_empty_machine')
     '-nc, --no-set-collection-mint',
     'optional flag to prevent the candy machine from using an on chain collection',
   )
-  .action(async (options, cmd) => {
+  .requiredOption(
+    '--creators',
+    'e.g. --creators "{creator1Address},{creator1Verified},{creator1Share};{creator2Address},{creator2Verified},{creator2Share};...etc',
+  )
+  .action(async (cmd) => {
     const {
       keypair,
       env,
@@ -357,7 +361,23 @@ programCommand('init_empty_machine')
       setCollectionMint,
       symbol,
       sellerFeeBasisPoints,
+      creatorsDelimited
     } = cmd.opts();
+
+
+    // e.g. --creators "{address},{verified},{share};..."
+    //  TODO: Consider adding this to the getCandyMachineV2Config schema?
+    const creators: {
+      address: PublicKey;
+      verified: boolean;
+      share: number;
+    }[] = creatorsDelimited.split(";").map(creatorConf => creatorConf.split[","]).map(creatorConfSegments => {
+      return {
+        address: new PublicKey(creatorConfSegments[0]),
+        verified: creatorConfSegments[1] as boolean,
+        share: creatorConfSegments[2] as number
+      }
+    })
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
@@ -409,7 +429,7 @@ programCommand('init_empty_machine')
         symbol,
         sellerFeeBasisPoints,
         mutable,
-        price,
+        new anchor.BN(0),
         retainAuthority,
         gatekeeper,
         goLiveDate,
@@ -417,6 +437,7 @@ programCommand('init_empty_machine')
         endSettings,
         whitelistMintSettings,
         hiddenSettings,
+        creators
       );
 
     } catch (err) {

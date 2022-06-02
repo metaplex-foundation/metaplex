@@ -51,7 +51,7 @@ import { program } from 'commander';
  * @param endSettings 
  * @param whitelistMintSettings 
  * @param hiddenSettings 
- * @returns 
+ * @returns {uuid: string, candyMachine: PublicKey, , program: Program, collection: string | undefined}. Collection is undefined if not set with "setCollectionMint"
  */
 export async function initializeCandyMachine(
   setCollectionMint: { collectionMintPubkey: null | PublicKey } | undefined,
@@ -83,25 +83,16 @@ export async function initializeCandyMachine(
     name: string;
     uri: string;
     hash: Uint8Array;
-  }
+  },
+  creators: {
+    address: PublicKey;
+    verified: boolean;
+    share: number;
+  }[]
 
-): Promise<Program> {
+): Promise<{ uuid: string, candyMachine: PublicKey, program: Program, collectionMetadata: string | undefined }> {
 
-
-  const anchorProgram: Program = {};
-  const remainingAccounts = [];
-
-  if (splToken) {
-    const splTokenKey = new PublicKey(splToken);
-
-    remainingAccounts.push({
-      pubkey: splTokenKey,
-      isWritable: false,
-      isSigner: false,
-    });
-  }
-
-
+  const anchorProgram: Program = {} as Program/* uninitialized */;
 
   // initialize candy
   log.info(`initializing candy machine`);
@@ -117,7 +108,7 @@ export async function initializeCandyMachine(
       symbol,
       sellerFeeBasisPoints,
       isMutable,
-      maxSupply: new BN(0),
+      maxSupply: maxSupply,
       retainAuthority: retainAuthority,
       gatekeeper,
       goLiveDate,
@@ -125,19 +116,14 @@ export async function initializeCandyMachine(
       endSettings,
       whitelistMintSettings,
       hiddenSettings,
-      creators: firstAssetManifest.properties.creators.map(creator => {
-        return {
-          address: new PublicKey(creator.address),
-          verified: true,
-          share: creator.share,
-        };
-      }),
+      creators,
     },
   );
-  anchorProgram.uuid = res.uuid;
-  anchorProgram.candyMachine = res.candyMachine.toBase58();
-  candyMachine = res.candyMachine;
 
+
+
+
+  let collectionMetadata: string | undefined = undefined;
   if (setCollectionMint) {
     const collection = await setCollection(
       payerWallet,
@@ -146,7 +132,7 @@ export async function initializeCandyMachine(
       setCollectionMint.collectionMintPubkey,
     );
     console.log('Collection: ', collection);
-    anchorProgram.collection = collection.collectionMetadata;
+    collectionMetadata = collection.collectionMetadata;
   } else {
     console.log('No collection set');
   }
@@ -156,7 +142,7 @@ export async function initializeCandyMachine(
   );
 
 
-  return anchorProgram;
+  return { ...res, program: anchorProgram, collectionMetadata };
 
 }
 
@@ -249,6 +235,9 @@ export async function uploadV2({
   const dedupedAssetKeys = getAssetKeysNeedingUpload(cacheContent.items, files);
   const dirname = path.dirname(files[0]);
 
+  let candyMachine = cacheContent.program.candyMachine
+    ? new PublicKey(cacheContent.program.candyMachine)
+    : undefined;
 
   if (!cacheContent.program.uuid) {
 
@@ -263,25 +252,36 @@ export async function uploadV2({
 
     try {
 
-      cacheContent.program = await initializeCandyMachine(
-        setCollectionMint ? { collectionMintPubkey } : undefined,
-        walletKeyPair,
-        treasuryWallet,
-        splToken,
-        new BN(totalNFTs),
-        uuid,
-        firstAssetManifest.symbol,
-        firstAssetManifest.seller_fee_basis_points,
-        mutable,
-        new BN(0),
-        retainAuthority,
-        gatekeeper,
-        goLiveDate,
-        price,
-        endSettings,
-        whitelistMintSettings,
-        hiddenSettings,
-      );
+      const candyMachineResult: { uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined, program: Program } =
+        await initializeCandyMachine(
+          setCollectionMint ? { collectionMintPubkey } : undefined,
+          walletKeyPair,
+          treasuryWallet,
+          splToken,
+          new BN(totalNFTs),
+          uuid,
+          firstAssetManifest.symbol,
+          firstAssetManifest.seller_fee_basis_points,
+          mutable,
+          new BN(0),
+          retainAuthority,
+          gatekeeper,
+          goLiveDate,
+          price,
+          endSettings,
+          whitelistMintSettings,
+          hiddenSettings,
+          firstAssetManifest.properties.creators.map(creator => {
+            return {
+              address: new PublicKey(creator.address),
+              verified: true,
+              share: creator.share,
+            };
+          })
+        );
+
+      cacheContent.program = candyMachineResult.program;
+      candyMachine = candyMachineResult.candyMachine;
 
       saveCache(cacheName, env, cacheContent);
 
