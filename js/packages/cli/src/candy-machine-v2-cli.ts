@@ -47,6 +47,7 @@ import { removeCollection } from './commands/remove-collection';
 import { setCollection } from './commands/set-collection';
 import { withdrawBundlr } from './helpers/upload/arweave-bundle';
 import { CollectionData } from './types';
+import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
 program.version('0.0.2');
 const supportedImageTypes = {
@@ -1232,6 +1233,13 @@ function programCommand(
 
   return cmProgram;
 }
+
+programCommand('decode_private_key', { requireWallet: false })
+  .argument('<private key>', 'Base58 encoded private key')
+  .action(async privKey => {
+    const decodedPrivKey = Uint8Array.from(bs58.decode(privKey));
+    console.log(decodedPrivKey);
+  });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setLogLevel(value, prev) {
