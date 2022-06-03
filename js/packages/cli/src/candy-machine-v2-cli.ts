@@ -372,7 +372,6 @@ programCommand('init_empty_machine')
       creatorsDelimited
     } = cmd.opts();
 
-    log.info(creatorsDelimited)
 
 
     // e.g. --creators "{address},{verified},{share};..."
@@ -385,7 +384,7 @@ programCommand('init_empty_machine')
       return {
         address: new PublicKey(creatorConfSegments[0]),
         verified: creatorConfSegments[1] as boolean,
-        share: creatorConfSegments[2] as number
+        share: Number(creatorConfSegments[2])
       }
     })
 
@@ -407,8 +406,10 @@ programCommand('init_empty_machine')
       uuid,
     } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
 
+    log.info(JSON.stringify(creators))
 
-    if (!hiddenSettings || !hiddenSettings.hash || hiddenSettings.name || !hiddenSettings.uri) {
+
+    if (!hiddenSettings || !hiddenSettings.hash || !hiddenSettings.name || !hiddenSettings.uri) {
       /**
        * When initializing an empty metadata collection, there is no metadata pre-allocation and so
        * hidden settings must be configured for the NFTs, once minted, to have resolvable metadata 
