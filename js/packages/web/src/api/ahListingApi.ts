@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.comnft/listing'
+const api = 'http://localhost:9000/nft/listing'
 
 export const getAllListingsByCollection = async (collection: any) => {
   try {
