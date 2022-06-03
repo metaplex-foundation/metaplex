@@ -351,7 +351,7 @@ programCommand('init_empty_machine')
     '--creators',
     'e.g. --creators "{creator1Address},{creator1Verified},{creator1Share};{creator2Address},{creator2Verified},{creator2Share};...etc',
   )
-  .action(async (cmd) => {
+  .action(async (args, cmd) => {
     const {
       keypair,
       env,
