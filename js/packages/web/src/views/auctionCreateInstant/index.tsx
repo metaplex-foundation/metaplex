@@ -92,7 +92,7 @@ export const AuctionCreateInstantView = () => {
   }, [step_param])
 
   const gotoNextStep = (_step?: number) => {
-    const nextStep = _step === undefined ? step + 1 : _step
+    const nextStep = _step === undefined ? step === 1 ? 4 : step + 1 : _step
     history.push(`/auction/create/instant/${nextStep.toString()}/${mint_param}`);
   }
 
@@ -407,13 +407,23 @@ export const AuctionCreateInstantView = () => {
     />
   )
 
-  const priceAuction = (
+  const priceAuction = (<>
     <PriceAuction
       attributes={attributes}
       setAttributes={setAttributes}
       confirm={() => gotoNextStep()}
     />
-  )
+    <InitialPhaseStep
+      attributes={attributes}
+      setAttributes={setAttributes}
+      confirm={() => gotoNextStep()}
+    />
+    <EndingPhaseAuction
+      attributes={attributes}
+      setAttributes={setAttributes}
+      confirm={() => gotoNextStep()}
+    />
+  </>)
 
   const initialStep = (
     <InitialPhaseStep
@@ -519,7 +529,7 @@ export const AuctionCreateInstantView = () => {
     <>
       <div className='flex w-full pt-[80px] pb-[100px]'>
         <div className='container flex gap-[32px]'>
-          {stepsVisible && (
+          {false && stepsVisible && (
             <div className='sidebar w-[260px] flex-shrink-0 rounded'>
               <Steps progressDot direction={width < 768 ? 'horizontal' : 'vertical'} current={step}>
                 {stepsByCategory[attributes.category]
@@ -534,13 +544,13 @@ export const AuctionCreateInstantView = () => {
           <div className='content-wrapper flex w-full flex-col gap-[28px]'>
             {stepsByCategory[attributes.category][step][1]}
 
-            {0 < step && stepsVisible && (
+            {1 < step && stepsVisible && (
               <div className='flex max-w-[700px]'>
                 <Button
                   appearance='secondary'
                   view='outline'
                   isRounded={false}
-                  onClick={() => gotoNextStep(step - 1)}>
+                  onClick={() => gotoNextStep(step == 4 ? 1 : step - 1)}>
                   Back
                 </Button>
               </div>

@@ -108,8 +108,8 @@ const InstantSale = ({
   }
 
   const createAuction = () => {
-    history.push(`/auction/create/instant/0/` + items?.[0]?.metadata?.pubkey)
-    return
+    history.push(`/auction/create/instant/1/` + items?.[0]?.metadata?.pubkey);
+    return;
     // try {
     //   setStatus(PROCESSING)
     //   let winnerLimit: WinnerLimit
@@ -120,7 +120,7 @@ const InstantSale = ({
     //   ) {
     //     const { items, instantSalePrice } = attributes
 
-    //     if (items.length > 0 && items[0].participationConfig) {
+    //     if (items && items.length > 0 && items[0].participationConfig) {
     //       items[0].participationConfig.fixedPrice = new BN(toLamports(instantSalePrice, mint) || 0)
     //     }
 
@@ -422,7 +422,8 @@ const InstantSale = ({
         }
         break
       case AuctionCategory.Tiered:
-        return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
+        return <></>
+        // return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
       default:
         return <></>
     }

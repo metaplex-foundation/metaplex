@@ -154,7 +154,7 @@ export const ArtView = () => {
                     )} */}
                   <hr />
                   <>
-                    <h6 className='text-h6 font-400'>Auction</h6>
+                    <h6 className='text-h6 font-400'>Create Auction for this NFT</h6>
                     <InstantSale
                       setStatus={setStatus}
                       category={AuctionCategory.Tiered}

@@ -65,6 +65,7 @@ const InstantSaleStep = ({
         <div className='flex w-full'>
           <ArtSelector
             filter={artistFilter}
+            mint_param={''}
             selected={attributes.items}
             setSelected={items => {
               setAttributes({ ...attributes, items })

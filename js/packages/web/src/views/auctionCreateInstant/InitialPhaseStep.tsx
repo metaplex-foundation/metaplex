@@ -52,8 +52,7 @@ const InitialPhaseStep = (props: {
     <>
       <div className='flex max-w-[700px] flex-col gap-[40px]'>
         <div className='flex flex-col gap-[8px]'>
-          <h2 className='text-h3'>Initial Phase</h2>
-          <p>Set the terms for your auction.</p>
+          <h2 className='text-h3'>Initial {'&'} Ending Phase</h2>
         </div>
       </div>
 
@@ -154,11 +153,11 @@ const InitialPhaseStep = (props: {
         )}
       </div>
 
-      <div className='flex items-center'>
+      {false && <div className='flex items-center'>
         <Button appearance='neutral' size='lg' isRounded={false} onClick={props.confirm}>
           Continue
         </Button>
-      </div>
+      </div>}
     </>
   )
 }
