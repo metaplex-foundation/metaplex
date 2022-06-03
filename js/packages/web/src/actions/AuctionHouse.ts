@@ -1,5 +1,4 @@
 import {
-  initMarketplaceSDK,
   AuctionHouse,
   Nft,
   NftOwnerWallet,
@@ -11,7 +10,10 @@ import {
   CancelListingParams,
   BuyListingParams,
   CancelOfferParams,
+  MarktplaceSettingsPayload,
 } from '@holaplex/marketplace-js-sdk'
+import { programs, Wallet } from '@metaplex/js'
+import { Client } from '@holaplex/marketplace-js-sdk/dist/client'
 import { AuctionHouseProgram } from '@holaplex/mpl-auction-house'
 import {
   createCancelBidReceiptInstruction,
@@ -26,6 +28,7 @@ import {
   createSellInstruction,
   createWithdrawInstruction,
 } from '@holaplex/mpl-auction-house/dist/src/generated/instructions'
+import { Creator } from '@metaplex-foundation/mpl-token-metadata'
 import {
   Connection,
   LAMPORTS_PER_SOL,
@@ -38,6 +41,7 @@ import BN from 'bn.js'
 import { getAuctionHouse } from '../api'
 import { addListing, getAllListingsByCollection, getListingByMint } from '../api/ahListingApi'
 import { addOffer, updateOffer } from '../api/ahOffersApi'
+import { updateAuctionHouse } from './instructions'
 
 export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
   const sdk = initMarketplaceSDK(connection, wallet as any)
@@ -91,6 +95,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
 
   const getNFTOffer = (nftmeta: any) => {
     debugger
+    console.log('nftmeta.metadata.holding', nftmeta.metadata.holding)
     const seller: NftOwnerWallet = {
       address: nftmeta.seller_wallet,
       associatedTokenAccountAddress: nftmeta.metadata.holding,
@@ -111,21 +116,23 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     const nft = getNFT(nftmetadata)
     const auctionHouse = await getAH()
     if (amount && nft) {
-      await sdk.listings(auctionHouse).post({ amount: amount, nft })
+      // await sdk.listings(auctionHouse).post({ amount: amount, nft })
+      const res: any = await sdk.listings(auctionHouse).post({ amount: amount, nft })
+      debugger
+      nftmetadata.metadata['holding'] = nftmetadata.holding
+      const listing = await addListing({
+        mint: nft.mintAddress,
+        auction_house_wallet: auctionHouse.address,
+        seller_wallet: nft.owner.address,
+        sale_price: amount,
+        collection: nftmetadata.metadata.info.collection?.key,
+        nft_name: nftmetadata.metadata.info.data.name,
+        metadata: nftmetadata.metadata,
+        url: nftmetadata.metadata.info.data.uri,
+        receipt: res.receipt.toBase58(),
+      })
+      return listing
     }
-    debugger
-    nftmetadata.metadata['holding'] = nftmetadata.holding
-    const listing = await addListing({
-      mint: nft.mintAddress,
-      auction_house_wallet: auctionHouse.address,
-      seller_wallet: nft.owner.address,
-      sale_price: amount,
-      collection: nftmetadata.metadata.info.collection?.key,
-      nft_name: nftmetadata.metadata.info.data.name,
-      metadata: nftmetadata.metadata,
-      url: nftmetadata.metadata.info.data.uri,
-    })
-    return listing
   }
 
   const getAllAuctionHouseNFTsByCollection = async (collection: any) => {
@@ -145,27 +152,29 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     if (amount && nft) {
       const a = await sdk.offers(auctionHouse)
       // await sdk.offers(auctionHouse).make({ amount: lmpAmount, nft })
-      await make({ amount: lmpAmount, nft })
+      const res: any = await sdk.offers(auctionHouse).make({ amount: lmpAmount, nft })
+
+      const offer = addOffer({
+        mint: nft.mintAddress,
+        auction_house_wallet: auctionHouse.address,
+        seller_wallet: nft.owner.address,
+        buyer_wallet: wallet.publicKey?.toBase58(),
+        offer_price: amount,
+        collection: nftmetadata.metadata.info.collection?.key,
+        receipt: res.receipt.toBase58(),
+      })
+
+      return offer
     }
-
-    const offer = addOffer({
-      mint: nft.mintAddress,
-      auction_house_wallet: auctionHouse.address,
-      seller_wallet: nft.owner.address,
-      buyer_wallet: wallet.publicKey?.toBase58(),
-      offer_price: amount,
-      collection: nftmetadata.metadata.info.collection?.key,
-    })
-
-    return offer
   }
 
   const onAcceptOffer = async (nftmetadata: any, offer: any) => {
     const auctionHouse = await getAH()
     const nft = getNFTOffer(nftmetadata)
     const lampAmount = offer.offer_price * LAMPORTS_PER_SOL
+    debugger
     const ahOffer: Offer = {
-      address: 'DAehDt9nZCnYGsoJsddsJbZfTiqBP7g6GF9VPy3bjgud',
+      address: offer.receipt,
       buyer: offer.buyer_wallet,
       price: new BN(lampAmount),
       createdAt: '',
@@ -202,11 +211,147 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
 
   const con = connection
 
-  // Make offer
-  const make = async ({ amount, nft }: MakeOfferParams) => {
+  // Cancel offer
+
+  const cancelOffer = async ({ nft, offer }: CancelOfferParams) => {
     const { publicKey, signTransaction } = wallet
     const connection = con
     const ah = await getAH()
+
+    const auctionHouse = new PublicKey(ah.address)
+    const authority = new PublicKey(ah.authority)
+    const auctionHouseFeeAccount = new PublicKey(ah.auctionHouseFeeAccount)
+    const tokenMint = new PublicKey(nft.mintAddress)
+    const receipt = new PublicKey(offer.address)
+    const buyerPrice = offer.price.toNumber()
+    const tradeState = new PublicKey(offer.tradeState)
+    const treasuryMint = new PublicKey(ah.treasuryMint)
+    const tokenAccount = new PublicKey(nft.owner.associatedTokenAccountAddress)
+
+    const [escrowPaymentAccount, escrowPaymentBump] =
+      await AuctionHouseProgram.findEscrowPaymentAccountAddress(auctionHouse, publicKey)
+
+    const txt = new Transaction()
+
+    const cancelInstructionAccounts = {
+      wallet: publicKey,
+      tokenAccount,
+      tokenMint,
+      authority,
+      auctionHouse,
+      auctionHouseFeeAccount,
+      tradeState,
+    }
+
+    const cancelInstructionArgs = {
+      buyerPrice,
+      tokenSize: 1,
+    }
+
+    const cancelBidReceiptInstructionAccounts = {
+      receipt: receipt,
+      instruction: SYSVAR_INSTRUCTIONS_PUBKEY,
+    }
+
+    const cancelBidInstruction = createCancelInstruction(
+      cancelInstructionAccounts,
+      cancelInstructionArgs
+    )
+
+    const cancelBidReceiptInstruction = createCancelBidReceiptInstruction(
+      cancelBidReceiptInstructionAccounts
+    )
+
+    const withdrawInstructionAccounts = {
+      receiptAccount: publicKey,
+      wallet: publicKey,
+      escrowPaymentAccount,
+      auctionHouse,
+      authority,
+      treasuryMint,
+      auctionHouseFeeAccount,
+    }
+
+    const withdrawInstructionArgs = {
+      escrowPaymentBump,
+      amount: buyerPrice,
+    }
+
+    const withdrawInstruction = createWithdrawInstruction(
+      withdrawInstructionAccounts,
+      withdrawInstructionArgs
+    )
+
+    txt.add(cancelBidInstruction).add(cancelBidReceiptInstruction).add(withdrawInstruction)
+
+    txt.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+    txt.feePayer = publicKey
+
+    const signed = await signTransaction(txt)
+
+    const signature = await connection.sendRawTransaction(signed.serialize())
+
+    await connection.confirmTransaction(signature, 'confirmed')
+  }
+
+  return {
+    onSell,
+    onMakeOffer,
+    getAllAuctionHouseNFTsByCollection,
+    onAcceptOffer,
+    getNFTbyMint,
+  }
+}
+
+interface FileUploadResponse {
+  name: string
+  type: string
+  uri: string
+  error?: string
+}
+
+interface IpfsSender {
+  uploadFile: (file: File) => Promise<FileUploadResponse>
+}
+
+const ipfsSDK = {
+  uploadFile: async file => {
+    const body = new FormData()
+    console.log('file', file)
+    body.append(file.name, file, file.name)
+    try {
+      const resp = await fetch('https://www.holaplex.com/api/ipfs/upload', {
+        method: 'POST',
+        body,
+      })
+      const json = await resp.json()
+      if (json) {
+        return json.files[0] as FileUploadResponse
+      }
+    } catch (e: any) {
+      console.error('Could not upload file', e)
+      throw new Error(e)
+    }
+  },
+} as IpfsSender
+
+const {
+  metaplex: { Store, SetStoreV2, StoreConfig },
+} = programs
+
+export class OffersClient extends Client {
+  private auctionHouse: AuctionHouse
+
+  constructor(connection: Connection, wallet: Wallet, auctionHouse: AuctionHouse) {
+    super(connection, wallet)
+
+    this.auctionHouse = auctionHouse
+  }
+  // Make offer
+  make = async ({ amount, nft }: MakeOfferParams) => {
+    const { publicKey, signTransaction } = this.wallet
+    const connection = this.connection
+    const ah = this.auctionHouse
     const buyerPrice = amount
     const auctionHouse = new PublicKey(ah.address)
     const authority = new PublicKey(ah.authority)
@@ -305,11 +450,13 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
   }
 
   //Accept Offer
-  const accept = async ({ offer, nft, cancel }: AcceptOfferParams) => {
-    const { publicKey, signTransaction } = wallet
-    const connection = con
-    const ah = await getAH()
+  accept = async ({ offer, nft, cancel }: AcceptOfferParams) => {
+    debugger
+    const { publicKey, signTransaction } = this.wallet
+    const connection = this.connection
+    const ah = this.auctionHouse
 
+    debugger
     const auctionHouse = new PublicKey(ah.address)
     const authority = new PublicKey(ah.authority)
     const auctionHouseFeeAccount = new PublicKey(ah.auctionHouseFeeAccount)
@@ -331,7 +478,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
         offer.price.toNumber(),
         1
       )
-
+    debugger
     const [buyerTradeState] = await AuctionHouseProgram.findPublicBidTradeStateAddress(
       buyerPubkey,
       auctionHouse,
@@ -340,16 +487,16 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       offer.price.toNumber(),
       1
     )
-
+    debugger
     const [purchaseReceipt, purchaseReceiptBump] =
       await AuctionHouseProgram.findPurchaseReceiptAddress(sellerTradeState, buyerTradeState)
 
     const [escrowPaymentAccount, escrowPaymentBump] =
       await AuctionHouseProgram.findEscrowPaymentAccountAddress(auctionHouse, buyerPubkey)
-
+    debugger
     const [programAsSigner, programAsSignerBump] =
       await AuctionHouseProgram.findAuctionHouseProgramAsSignerAddress()
-
+    debugger
     const [freeTradeState, freeTradeStateBump] = await AuctionHouseProgram.findTradeStateAddress(
       publicKey,
       auctionHouse,
@@ -359,15 +506,15 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       0,
       1
     )
-
+    debugger
     const [buyerReceiptTokenAccount] = await AuctionHouseProgram.findAssociatedTokenAccountAddress(
       tokenMint,
       buyerPubkey
     )
-
+    debugger
     const [listingReceipt, listingReceiptBump] =
       await AuctionHouseProgram.findListingReceiptAddress(sellerTradeState)
-
+    debugger
     const sellInstructionAccounts = {
       wallet: publicKey,
       tokenAccount,
@@ -435,7 +582,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     const executePrintPurchaseReceiptInstructionArgs = {
       purchaseReceiptBump: purchaseReceiptBump,
     }
-
+    debugger
     const createListingInstruction = createSellInstruction(
       sellInstructionAccounts,
       sellInstructionArgs
@@ -454,7 +601,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     )
 
     const txt = new Transaction()
-
+    debugger
     txt
       .add(createListingInstruction)
       .add(createPrintListingInstruction)
@@ -463,7 +610,8 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
           programId: AuctionHouseProgram.PUBKEY,
           data: executeSaleInstruction.data,
           keys: executeSaleInstruction.keys.concat(
-            nft.creators.map((creator: any) => ({
+            //@ts-ignore
+            nft.creators.map((creator: Creator) => ({
               pubkey: new PublicKey(creator.address),
               isSigner: false,
               isWritable: true,
@@ -516,12 +664,22 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
 
     await connection.confirmTransaction(signature, 'confirmed')
   }
+}
+
+export class ListingsClient extends Client {
+  private auctionHouse: AuctionHouse
+
+  constructor(connection: Connection, wallet: Wallet, auctionHouse: AuctionHouse) {
+    super(connection, wallet)
+
+    this.auctionHouse = auctionHouse
+  }
 
   // Add a listing
-  const post = async ({ amount, nft }: PostListingParams): Promise<any> => {
-    const { publicKey, signTransaction } = wallet
-    const connection = con
-    const ah = await getAH()
+  post = async ({ amount, nft }: PostListingParams): Promise<any> => {
+    const { publicKey, signTransaction } = this.wallet
+    const connection = this.connection
+    const ah = this.auctionHouse
 
     const buyerPrice = amount
     const auctionHouse = new PublicKey(ah.address)
@@ -605,13 +763,19 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     const signature = await connection.sendRawTransaction(signed.serialize())
 
     await connection.confirmTransaction(signature, 'confirmed')
+
+    return {
+      receipt,
+      signature,
+      sellerTradeState,
+    }
   }
 
   //Cancel list
-  const cancel = async ({ listing, nft }: CancelListingParams) => {
-    const { publicKey, signTransaction } = wallet
-    const connection = con
-    const ah = await getAH()
+  cancel = async ({ listing, nft }: CancelListingParams) => {
+    const { publicKey, signTransaction } = this.wallet
+    const connection = this.connection
+    const ah = this.auctionHouse
 
     const auctionHouse = new PublicKey(ah.address)
     const authority = new PublicKey(ah.authority)
@@ -674,10 +838,10 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
   }
 
   //Buy NFT
-  const buy = async ({ listing, nft }: BuyListingParams) => {
-    const { publicKey, signTransaction } = wallet
-    const connection = con
-    const ah = await getAH()
+  buy = async ({ listing, nft }: BuyListingParams) => {
+    const { publicKey, signTransaction } = this.wallet
+    const connection = this.connection
+    const ah = this.auctionHouse
 
     const auctionHouse = new PublicKey(ah.address)
     const authority = new PublicKey(ah.authority)
@@ -822,7 +986,8 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
           programId: AuctionHouseProgram.PUBKEY,
           data: executeSaleInstruction.data,
           keys: executeSaleInstruction.keys.concat(
-            nft.creators.map((creator: any) => ({
+            //@ts-ignore
+            nft.creators.map((creator: Creator) => ({
               pubkey: new PublicKey(creator.address),
               isSigner: false,
               isWritable: true,
@@ -841,95 +1006,70 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
 
     await connection.confirmTransaction(signature, 'confirmed')
   }
+}
 
-  // Cancel offer
-
-  const cancelOffer = async ({ nft, offer }: CancelOfferParams) => {
-    const { publicKey, signTransaction } = wallet
-    const connection = con
-    const ah = await getAH()
-
-    const auctionHouse = new PublicKey(ah.address)
-    const authority = new PublicKey(ah.authority)
-    const auctionHouseFeeAccount = new PublicKey(ah.auctionHouseFeeAccount)
-    const tokenMint = new PublicKey(nft.mintAddress)
-    const receipt = new PublicKey(offer.address)
-    const buyerPrice = offer.price.toNumber()
-    const tradeState = new PublicKey(offer.tradeState)
-    const treasuryMint = new PublicKey(ah.treasuryMint)
-    const tokenAccount = new PublicKey(nft.owner.associatedTokenAccountAddress)
-
-    const [escrowPaymentAccount, escrowPaymentBump] =
-      await AuctionHouseProgram.findEscrowPaymentAccountAddress(auctionHouse, publicKey)
-
-    const txt = new Transaction()
-
-    const cancelInstructionAccounts = {
-      wallet: publicKey,
-      tokenAccount,
-      tokenMint,
-      authority,
-      auctionHouse,
-      auctionHouseFeeAccount,
-      tradeState,
-    }
-
-    const cancelInstructionArgs = {
-      buyerPrice,
-      tokenSize: 1,
-    }
-
-    const cancelBidReceiptInstructionAccounts = {
-      receipt: receipt,
-      instruction: SYSVAR_INSTRUCTIONS_PUBKEY,
-    }
-
-    const cancelBidInstruction = createCancelInstruction(
-      cancelInstructionAccounts,
-      cancelInstructionArgs
-    )
-
-    const cancelBidReceiptInstruction = createCancelBidReceiptInstruction(
-      cancelBidReceiptInstructionAccounts
-    )
-
-    const withdrawInstructionAccounts = {
-      receiptAccount: publicKey,
-      wallet: publicKey,
-      escrowPaymentAccount,
-      auctionHouse,
-      authority,
-      treasuryMint,
-      auctionHouseFeeAccount,
-    }
-
-    const withdrawInstructionArgs = {
-      escrowPaymentBump,
-      amount: buyerPrice,
-    }
-
-    const withdrawInstruction = createWithdrawInstruction(
-      withdrawInstructionAccounts,
-      withdrawInstructionArgs
-    )
-
-    txt.add(cancelBidInstruction).add(cancelBidReceiptInstruction).add(withdrawInstruction)
-
-    txt.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
-    txt.feePayer = publicKey
-
-    const signed = await signTransaction(txt)
-
-    const signature = await connection.sendRawTransaction(signed.serialize())
-
-    await connection.confirmTransaction(signature, 'confirmed')
+export class MarketplaceClient extends Client {
+  async create() {
+    throw Error('Not implemented')
   }
 
-  return {
-    onSell,
-    onMakeOffer,
-    getAllAuctionHouseNFTsByCollection,
-    onAcceptOffer,
-    getNFTbyMint,
+  async update(settings: MarktplaceSettingsPayload, transactionFee: number): Promise<void> {
+    const wallet = this.wallet
+    const publicKey = wallet.publicKey as PublicKey
+    const connection = this.connection
+
+    const storePubkey = await Store.getPDA(publicKey)
+    const storeConfigPubkey = await StoreConfig.getPDA(storePubkey)
+
+    settings.address.store = storePubkey.toBase58()
+    settings.address.storeConfig = storeConfigPubkey.toBase58()
+    settings.address.owner = publicKey.toBase58()
+
+    const storefrontSettings = new File([JSON.stringify(settings)], 'storefront_settings')
+    const { uri } = await ipfsSDK.uploadFile(storefrontSettings)
+
+    const auctionHouseUpdateInstruction = await updateAuctionHouse({
+      wallet: wallet as Wallet,
+      sellerFeeBasisPoints: transactionFee,
+    })
+
+    const setStorefrontV2Instructions = new SetStoreV2(
+      {
+        feePayer: publicKey,
+      },
+      {
+        admin: publicKey,
+        store: storePubkey,
+        config: storeConfigPubkey,
+        isPublic: false,
+        settingsUri: uri,
+      }
+    )
+    const transaction = new Transaction()
+
+    if (auctionHouseUpdateInstruction) {
+      transaction.add(auctionHouseUpdateInstruction)
+    }
+
+    transaction.add(setStorefrontV2Instructions)
+    transaction.feePayer = publicKey
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+
+    const signedTransaction = await wallet.signTransaction(transaction)
+    const txtId = await connection.sendRawTransaction(signedTransaction.serialize())
+
+    if (txtId) await connection.confirmTransaction(txtId, 'confirmed')
   }
+
+  offers(auctionHouse: AuctionHouse): OffersClient {
+    return new OffersClient(this.connection, this.wallet, auctionHouse)
+  }
+
+  listings(auctionHouse: AuctionHouse): ListingsClient {
+    return new ListingsClient(this.connection, this.wallet, auctionHouse)
+  }
+}
+
+export const initMarketplaceSDK = (connection: Connection, wallet: Wallet): MarketplaceClient => {
+  return new MarketplaceClient(connection, wallet)
 }
