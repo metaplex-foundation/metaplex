@@ -898,35 +898,41 @@ export const AhAuctionCard = ({
 
   return (
     <div className='flex items-center gap-[16px]'>
-      {wallet.connected && !!sale && !!sale.active && (
-        <Button type='dashed' size='lg' className='w-[230px]' disabled={loading} onClick={buyNow}>
-          Buy Now
-        </Button>
-      )}
-
-      {wallet.connected && !!sale && !!sale.active && (
-        <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
-          <div className='flex h-full items-center gap-[8px]'>
-            <SOLIcon size={18} />
-            <input
-              // type='number'
-              type='number'
-              className='h-full w-full appearance-none bg-transparent outline-none'
-              value={value ?? ''}
-              onChange={e => setValue(parseFloat(e.target.value))}
-              placeholder='Enter'
-            />
-          </div>
-          <Button
-            appearance='neutral'
-            size='md'
-            className='h-full w-[180px] flex-shrink-0'
-            // disabled={invalidBid}
-            onClick={makeOffer}>
-            Make Offer
+      {wallet.connected &&
+        !!sale &&
+        !!sale.active &&
+        sale.seller_wallet != wallet.publicKey?.toBase58() && (
+          <Button type='dashed' size='lg' className='w-[230px]' disabled={loading} onClick={buyNow}>
+            Buy Now
           </Button>
-        </div>
-      )}
+        )}
+
+      {wallet.connected &&
+        !!sale &&
+        !!sale.active &&
+        sale.seller_wallet != wallet.publicKey?.toBase58() && (
+          <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
+            <div className='flex h-full items-center gap-[8px]'>
+              <SOLIcon size={18} />
+              <input
+                // type='number'
+                type='number'
+                className='h-full w-full appearance-none bg-transparent outline-none'
+                value={value ?? ''}
+                onChange={e => setValue(parseFloat(e.target.value))}
+                placeholder='Enter'
+              />
+            </div>
+            <Button
+              appearance='neutral'
+              size='md'
+              className='h-full w-[180px] flex-shrink-0'
+              // disabled={invalidBid}
+              onClick={makeOffer}>
+              Make Offer
+            </Button>
+          </div>
+        )}
       {!wallet.connected && (
         <Button
           type='primary'
