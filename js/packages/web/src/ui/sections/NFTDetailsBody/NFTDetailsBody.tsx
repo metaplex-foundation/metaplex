@@ -3,7 +3,7 @@ import CN from 'classnames'
 import { AttributesCard } from '@oyster/common'
 import { Image, Avatar, SOLIcon } from '@oyster/common'
 import { NFTDetailsTabs } from './../NFTDetailsTabs'
-import { AuctionView, useExtendedArt } from '../../../hooks'
+import { AuctionView, useAhExtendedArt, useExtendedArt } from '../../../hooks'
 import { useCollections } from '../../../hooks/useCollections'
 import useNFTData from '../../../hooks/useNFTData'
 import { AhAuctionCard, AuctionCard } from '../../../components/AuctionCard'
@@ -11,6 +11,7 @@ import useAttribute from '../../../hooks/useAttribute'
 import { Link } from 'react-router-dom'
 import { getProfile } from '../../../api'
 import { AhNFTDetailsTabs } from '../AhNFTDetailsTabs'
+import useAhNFTData from '../../../hooks/useAhNFTData'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -160,7 +161,7 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
 
 export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale }) => {
   debugger
-  const { data } = useExtendedArt(sale?.metadata.pubkey)
+  const { data } = useAhExtendedArt(sale?.metadata)
   // const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
   const [user, setUser] = useState<any>({})
@@ -168,11 +169,11 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
   // const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
   const { data: collection } = useExtendedArt(sale?.collection)
   const [attributes, setAttributes] = useState<any[]>([])
-  console.log(sale)
-
-  // const {
-  //   value: { solVal, usdValFormatted },
-  // } = useNFTData(sale)
+  console.log('sale?.metadata.pubkey', sale?.metadata.pubkey)
+  debugger
+  const {
+    value: { solVal, usdValFormatted },
+  } = useAhNFTData(sale)
   const url = data?.image
 
   useEffect(() => {
@@ -184,9 +185,7 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
 
   console.log('ART', data)
   console.log('url', url)
-  // console.log('value', solVal)
-  // console.log('usd', usdValFormatted)
-  // return <></>
+
   useEffect(() => {
     setOwner(sale?.seller_wallet)
     getProfile(sale?.seller_wallet || '').then(({ data }) => {
@@ -195,7 +194,6 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
   }, [])
 
   const NFTDetailsBodyClasses = CN(`nft-details-body w-full`, className)
-  // // console.log('attributes', attributes)
 
   return (
     <div className={NFTDetailsBodyClasses}>
@@ -287,8 +285,8 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
               <h5 className='text-h6 font-400'>Price</h5>
               <div className='flex items-center gap-[8px]'>
                 <SOLIcon size={24} />
-                <h4 className='text-h4 font-600 leading-[1]'>{sale?.sale_price} SOL</h4>
-                {/* <span className='ml-[4px] text-lg text-slate-500'>{usdValFormatted}</span>  */}
+                <h4 className='text-h4 font-600 leading-[1]'>{solVal} SOL</h4>
+                <span className='ml-[4px] text-lg text-slate-500'>{usdValFormatted}</span>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = 'http://localhost:9000/:9000'
+const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/:9000'
 // const api = 'http://localhost:9000'
 
 export const getCollectionStatistics = async (collection: string) => {

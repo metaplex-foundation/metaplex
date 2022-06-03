@@ -25,10 +25,12 @@ export const NFTDetails: FC<NFTDetailsProps> = () => {
     const fetchData = async () => {
       const sale = await listAuctionHouseNFT(connection, wallet).getNFTbyMint(id)
       console.log(sale)
+      if (!sale) {
+        setAuction(item)
+      }
       setSale(sale)
     }
     fetchData().catch(console.error)
-    setAuction(item)
   }, [item])
 
   const onSetAuction = (data: AuctionView) => {

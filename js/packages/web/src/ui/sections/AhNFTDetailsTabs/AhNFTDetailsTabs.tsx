@@ -4,6 +4,7 @@ import { Button } from '@oyster/common'
 import { NFTDetailsCurrentOffers, NFTDetailsActivity, NFTDetailsInfo } from '..'
 import { AuctionView } from '../../../hooks'
 import { AhNFTDetailsCurrentOffers } from '../AhNFTDetailsCurrentOffers'
+import { AhNFTDetailsInfo } from '../AhNFTDetailsInfo'
 
 export interface NFTDetailsTabsProps {
   sale: any
@@ -51,8 +52,8 @@ export const AhNFTDetailsTabs: FC<NFTDetailsTabsProps> = ({ sale }) => {
 
         <div className='flex flex-col'>
           {activeTab === 'offers' && <AhNFTDetailsCurrentOffers sale={sale} />}
-          {/* {activeTab === 'activity' && <NFTDetailsActivity auction={sale} />}
-          {activeTab === 'details' && <NFTDetailsInfo auction={sale} />} */}
+          {/* {activeTab === 'activity' && <NFTDetailsActivity auction={sale} />}*/}
+          {activeTab === 'details' && <AhNFTDetailsInfo sale={sale} />}
         </div>
       </div>
     </div>
