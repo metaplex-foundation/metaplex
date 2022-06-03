@@ -1,6 +1,6 @@
 {
-  "name": "PEACHCOIN NFT Marketplace",
-  "short_name": "PEACHCOIN NFT Marketplace",
+  "name": "Metaplex NFT Marketplace",
+  "short_name": "Metaplex NFT Marketplace",
   "display": "standalone",
   "start_url": "./",
   "theme_color": "#002140",
