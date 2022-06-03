@@ -884,16 +884,25 @@ export const AhAuctionCard = ({
   const [offer, setOffer] = useState()
 
   // return <></>
+  const { setVisible } = useWalletModal()
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible]
+  )
 
   const makeOffer = async () => {
+    setLoading(true)
     const offer_ = await listAuctionHouseNFT(connection, wallet).onMakeOffer(value, sale)
     console.log(offer_)
     setOffer(offer_)
+    setLoading(false)
   }
 
   const buyNow = async () => {
+    setLoading(true)
     const sale_ = await listAuctionHouseNFT(connection, wallet).onBuy(sale, sale)
     console.log(sale_)
+    setLoading(false)
   }
 
   return (
@@ -903,7 +912,7 @@ export const AhAuctionCard = ({
         !!sale.active &&
         sale.seller_wallet != wallet.publicKey?.toBase58() && (
           <Button type='dashed' size='lg' className='w-[230px]' disabled={loading} onClick={buyNow}>
-            Buy Now
+            {loading ? <Spin /> : 'Buy Now'}
           </Button>
         )}
 
@@ -929,7 +938,7 @@ export const AhAuctionCard = ({
               className='h-full w-[180px] flex-shrink-0'
               // disabled={invalidBid}
               onClick={makeOffer}>
-              Make Offer
+              {loading ? <Spin /> : 'Make Offer'}
             </Button>
           </div>
         )}
@@ -938,7 +947,7 @@ export const AhAuctionCard = ({
           type='primary'
           size='md'
           className='h-full w-[180px] flex-shrink-0'
-          onClick={null}
+          onClick={connect}
           style={{ marginTop: 20 }}>
           Connect wallet to {!!sale ? 'purchase' : 'make offer'}
         </Button>

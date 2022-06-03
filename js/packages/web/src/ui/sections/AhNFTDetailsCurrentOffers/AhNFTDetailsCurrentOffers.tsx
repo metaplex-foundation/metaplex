@@ -1,4 +1,5 @@
 import React, { FC, useEffect, useState } from 'react'
+import { InputNumber, Spin } from 'antd'
 import CN from 'classnames'
 import { SOLIcon, Avatar, formatTokenAmount, Button, useConnection } from '@oyster/common'
 import { AuctionView, useBidsForAuction } from '../../../hooks'
@@ -21,6 +22,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
   const [offers, setOffers] = useState<any>([])
   const wallet = useWallet()
   const connection = useConnection()
+  const [loading, setLoading] = useState<boolean>(false)
   useEffect(() => {
     const fetchData = async () => {
       const offers: any[] = await getAuctionHouseNFByMint(restProps.sale?.mint)
@@ -34,17 +36,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
       }
     }
     fetchData().catch(console.error)
-    debugger
   }, [restProps.sale.mint])
-
-  // const acceptOffer = async offer => {
-  //   debugger
-  //   const offer_ = await listAuctionHouseNFT(connection, wallet).onAcceptOffer(
-  //     restProps.sale,
-  //     offer
-  //   )
-  //   console.log(offer_)
-  // }
 
   return (
     <div className={NFTDetailsCurrentOffersClasses} {...restProps}>
@@ -97,39 +89,42 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
               {/* Dev note: Switch these two buttons conditionally */}
               {wallet.publicKey?.toBase58() === offer.seller_wallet && (
                 <Button
+                  disabled={loading}
                   appearance='neutral'
                   isRounded={false}
                   size='sm'
                   onClick={async () => {
-                    debugger
+                    setLoading(true)
                     const offer_ = await listAuctionHouseNFT(connection, wallet).onAcceptOffer(
                       restProps.sale,
                       offer
                     )
                     console.log(offer_)
+                    setLoading(false)
                   }}>
-                  Approve
+                  {loading ? <Spin /> : 'Approve'}
                 </Button>
               )}
 
               {wallet.publicKey?.toBase58() === offer.buyer_wallet && (
                 <Button
+                  disabled={loading}
                   appearance='ghost'
                   isRounded={false}
                   view='outline'
                   size='sm'
                   onClick={async () => {
+                    setLoading(true)
                     const offer_ = await listAuctionHouseNFT(connection, wallet).onCancelOffer(
                       restProps.sale,
                       offer
                     )
                     console.log(offer_)
+                    setLoading(false)
                   }}>
-                  Cancel
+                  {loading ? <Spin /> : 'Cancel'}
                 </Button>
               )}
-
-              {/* Dev note: Uncomment this button for Approve button (Different button style so Approve looks like a primary button) */}
             </div>
           </div>
         ))}

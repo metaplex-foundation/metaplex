@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { InputNumber, Spin } from 'antd'
 import {
   AmountRange,
   IPartialCreateAuctionArgs,
@@ -53,6 +54,7 @@ const InstantSale = ({
   mintKey,
   candyNft,
 }: InstantSaleInterface) => {
+  const [loading, setLoading] = useState<boolean>(false)
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
@@ -106,17 +108,21 @@ const InstantSale = ({
   }, [mintKey])
 
   const cancelListing = async () => {
+    setLoading(true)
     await listAuctionHouseNFT(connection, wallet).onCancelListing(sale)
     setSale(undefined)
+    setLoading(false)
   }
 
   const createAuctionHouseSale = async () => {
+    setLoading(true)
     debugger
     const { instantSalePrice } = attributes
     const nft = items[0]
     debugger
     nft['mintKey'] = mintKey
     setSale(await listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft))
+    setLoading(false)
   }
 
   const createAuction = () => {
@@ -445,13 +451,13 @@ const InstantSale = ({
       {renderForm()}
       <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
         {category === AuctionCategory.InstantSale && !sale && (
-          <Button disabled={status} onClick={createAuctionHouseSale} className='w-full'>
-            List Now
+          <Button disabled={loading} onClick={createAuctionHouseSale} className='w-full'>
+            {loading ? <Spin /> : 'List Now'}
           </Button>
         )}
         {category === AuctionCategory.InstantSale && !!sale && (
-          <Button disabled={status} onClick={cancelListing} className='w-full'>
-            End Sale
+          <Button disabled={loading} onClick={cancelListing} className='w-full'>
+            {loading ? <Spin /> : 'End Sale'}
           </Button>
         )}
         {category === AuctionCategory.Tiered && (
