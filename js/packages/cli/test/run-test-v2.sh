@@ -532,9 +532,9 @@ cat >$CONFIG_FILE_EMPTY_MACHINE <<-EOM
     "endSettings": null,
     "whitelistMintSettings": null,
     "hiddenSettings": {
-		"name":"test-hidden",
-		"uri":"https://127.0.0.1/",
-		"hash":"$(md5sum "https://127.0.0.1/{tokenIndex}")"
+		"name": "test-hidden",
+		"uri": "https://127.0.0.1/",
+		"hash": "$(echo -n https://127.0.0.1/{tokenIndex} | md5sum | awk '{print $1}')"
 	},
     "noRetainAuthority": false,
     "noMutable": false
