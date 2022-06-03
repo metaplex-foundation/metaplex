@@ -30,26 +30,25 @@ import { pinataUpload } from '../helpers/upload/pinata';
 import { setCollection } from './set-collection';
 import { nftStorageUploadGenerator } from '../helpers/upload/nft-storage';
 
-
 /**
- * 
+ *
  * @param setCollectionMint if undefined collection mint will not be set.
- * @param payerWallet 
- * @param treasuryWallet 
- * @param splToken 
- * @param itemsAvailable 
- * @param uuid 
- * @param symbol 
- * @param sellerFeeBasisPoints 
- * @param isMutable 
- * @param maxSupply 
- * @param retainAuthority 
- * @param gatekeeper 
- * @param goLiveDate 
- * @param price 
- * @param endSettings 
- * @param whitelistMintSettings 
- * @param hiddenSettings 
+ * @param payerWallet
+ * @param treasuryWallet
+ * @param splToken
+ * @param itemsAvailable
+ * @param uuid
+ * @param symbol
+ * @param sellerFeeBasisPoints
+ * @param isMutable
+ * @param maxSupply
+ * @param retainAuthority
+ * @param gatekeeper
+ * @param goLiveDate
+ * @param price
+ * @param endSettings
+ * @param whitelistMintSettings
+ * @param hiddenSettings
  * @returns {uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined}. Collection is undefined if not set with "setCollectionMint"
  */
 export async function initializeCandyMachine(
@@ -76,8 +75,8 @@ export async function initializeCandyMachine(
   whitelistMintSettings: null | {
     mode: WhitelistMintMode;
     mint: web3.PublicKey;
-    presale: boolean,
-    discountPrice: null | BN,
+    presale: boolean;
+    discountPrice: null | BN;
   },
   hiddenSettings: null | {
     name: string;
@@ -88,10 +87,12 @@ export async function initializeCandyMachine(
     address: PublicKey;
     verified: boolean;
     share: number;
-  }[]
-
-): Promise<{ uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined }> {
-
+  }[],
+): Promise<{
+  uuid: string;
+  candyMachine: PublicKey;
+  collectionMetadata: string | undefined;
+}> {
   // initialize candy
   log.info(`initializing candy machine`);
 
@@ -118,9 +119,6 @@ export async function initializeCandyMachine(
     },
   );
 
-
-
-
   let collectionMetadata: string | undefined = undefined;
   if (setCollectionMint) {
     const collection = await setCollection(
@@ -139,9 +137,7 @@ export async function initializeCandyMachine(
     `initialized config for a candy machine with publickey: ${res.candyMachine.toBase58()}`,
   );
 
-
   return { ...res, collectionMetadata };
-
 }
 
 export async function uploadV2({
@@ -238,7 +234,6 @@ export async function uploadV2({
     : undefined;
 
   if (!cacheContent.program.uuid) {
-
     const firstAssetManifest = getAssetManifest(dirname, '0');
     if (
       !firstAssetManifest.properties?.creators?.every(
@@ -249,45 +244,46 @@ export async function uploadV2({
     }
 
     try {
-
-      const candyMachineResult: { uuid: string, candyMachine: PublicKey, collectionMetadata: string | undefined } =
-        await initializeCandyMachine(
-          anchorProgram,
-          setCollectionMint ? { collectionMintPubkey } : undefined,
-          walletKeyPair,
-          treasuryWallet,
-          splToken,
-          new BN(totalNFTs),
-          uuid,
-          firstAssetManifest.symbol,
-          firstAssetManifest.seller_fee_basis_points,
-          mutable,
-          new BN(0),
-          retainAuthority,
-          gatekeeper,
-          goLiveDate,
-          price,
-          endSettings,
-          whitelistMintSettings,
-          hiddenSettings,
-          firstAssetManifest.properties.creators.map(creator => {
-            return {
-              address: new PublicKey(creator.address),
-              verified: true,
-              share: creator.share,
-            };
-          })
-        );
+      const candyMachineResult: {
+        uuid: string;
+        candyMachine: PublicKey;
+        collectionMetadata: string | undefined;
+      } = await initializeCandyMachine(
+        anchorProgram,
+        setCollectionMint ? { collectionMintPubkey } : undefined,
+        walletKeyPair,
+        treasuryWallet,
+        splToken,
+        new BN(totalNFTs),
+        uuid,
+        firstAssetManifest.symbol,
+        firstAssetManifest.seller_fee_basis_points,
+        mutable,
+        new BN(0),
+        retainAuthority,
+        gatekeeper,
+        goLiveDate,
+        price,
+        endSettings,
+        whitelistMintSettings,
+        hiddenSettings,
+        firstAssetManifest.properties.creators.map(creator => {
+          return {
+            address: new PublicKey(creator.address),
+            verified: true,
+            share: creator.share,
+          };
+        }),
+      );
 
       cacheContent.program = {
         uuid: candyMachineResult.uuid,
         candyMachine: candyMachineResult.candyMachine.toBase58(),
-        collection: candyMachineResult.collectionMetadata
+        collection: candyMachineResult.collectionMetadata,
       };
       candyMachine = candyMachineResult.candyMachine;
 
       saveCache(cacheName, env, cacheContent);
-
     } catch (exx) {
       log.error('Error deploying config to Solana network.', exx);
       throw exx;
@@ -298,9 +294,6 @@ export async function uploadV2({
     );
   }
 
-
-
-
   const uploadedItems = Object.values(cacheContent.items).filter(
     (f: { link: string }) => !!f.link,
   ).length;
@@ -309,7 +302,8 @@ export async function uploadV2({
 
   if (dedupedAssetKeys.length) {
     log.info(
-      `Starting upload for [${dedupedAssetKeys.length
+      `Starting upload for [${
+        dedupedAssetKeys.length
       }] items, format ${JSON.stringify(dedupedAssetKeys[0])}`,
     );
   }
@@ -683,7 +677,8 @@ async function writeIndices({
     .for(poolArray)
     .handleError(async (err, { index, configLines }) => {
       log.error(
-        `\nFailed writing indices ${index}-${keys[configLines[configLines.length - 1]]
+        `\nFailed writing indices ${index}-${
+          keys[configLines[configLines.length - 1]]
         }: ${err.message}`,
       );
       await sleep(5000);

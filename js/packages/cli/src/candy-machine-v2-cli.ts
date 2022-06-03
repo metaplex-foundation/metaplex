@@ -312,26 +312,25 @@ programCommand('upload')
     process.exit(0);
   });
 
-
 /**
- * 
- * Please use this version of the candy machine initializer at your own risk. There is 
+ *
+ * Please use this version of the candy machine initializer at your own risk. There is
  * greater freedom offered by this version of the machine initializer, in where your
- * metadata is hosted, but the metadata must still conform to spec in terms of how it 
+ * metadata is hosted, but the metadata must still conform to spec in terms of how it
  * is accessed or it will not be resolvable from your NFT's metadata URIs.
- * 
+ *
  * For most users, we recommend using 'upload' program command to ensure that metadata
  * is available and properly hosted.
- * 
- * Establishes the collection on chain, but does not actually validate and upload metadata. 
- * 
+ *
+ * Establishes the collection on chain, but does not actually validate and upload metadata.
+ *
  * NOTE: Compatible only with "hidden settings" style collections, because metadata is not
- * processed, and so NFT specific metadata cannot be  pre-allocated on chain. 
- * 
+ * processed, and so NFT specific metadata cannot be  pre-allocated on chain.
+ *
  * CAUTION: If using this method, you'll need to make sure that the supplied URL in the
  * hiddenSettings config must resolve to an image and metadata host that is consistent
  * with the endpoints that would be generated if using the 'upload' program command.
- * 
+ *
  *
  */
 programCommand('init_empty_machine')
@@ -363,16 +362,15 @@ programCommand('init_empty_machine')
     const {
       keypair,
       env,
+      cacheName,
       configPath,
       rpcUrl,
       collectionMint,
       setCollectionMint,
       symbol,
       sellerFeeBasisPoints,
-      creatorsDelimited
+      creatorsDelimited,
     } = cmd.opts();
-
-
 
     // e.g. --creators "{address},{verified},{share};..."
     //  TODO: Consider adding this to the getCandyMachineV2Config schema?
@@ -380,13 +378,16 @@ programCommand('init_empty_machine')
       address: PublicKey;
       verified: boolean;
       share: number;
-    }[] = creatorsDelimited.split(';').map(creatorConf => creatorConf.split(',')).map(creatorConfSegments => {
-      return {
-        address: new PublicKey(creatorConfSegments[0]),
-        verified: creatorConfSegments[1] as boolean,
-        share: Number(creatorConfSegments[2])
-      }
-    })
+    }[] = creatorsDelimited
+      .split(';')
+      .map(creatorConf => creatorConf.split(','))
+      .map(creatorConfSegments => {
+        return {
+          address: new PublicKey(creatorConfSegments[0]),
+          verified: creatorConfSegments[1] as boolean,
+          share: Number(creatorConfSegments[2]),
+        };
+      });
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
@@ -406,16 +407,22 @@ programCommand('init_empty_machine')
       uuid,
     } = await getCandyMachineV2Config(walletKeyPair, anchorProgram, configPath);
 
-    log.info(JSON.stringify(creators))
+    log.info(JSON.stringify(creators));
 
-
-    if (!hiddenSettings || !hiddenSettings.hash || !hiddenSettings.name || !hiddenSettings.uri) {
+    if (
+      !hiddenSettings ||
+      !hiddenSettings.hash ||
+      !hiddenSettings.name ||
+      !hiddenSettings.uri
+    ) {
       /**
        * When initializing an empty metadata collection, there is no metadata pre-allocation and so
-       * hidden settings must be configured for the NFTs, once minted, to have resolvable metadata 
+       * hidden settings must be configured for the NFTs, once minted, to have resolvable metadata
        * URIs.
        */
-      log.error('Empty Collection Intitialize is Only Supported with Hidden Settings');
+      log.error(
+        'Empty Collection Intitialize is Only Supported with Hidden Settings',
+      );
       process.exit(1);
     }
 
@@ -423,16 +430,21 @@ programCommand('init_empty_machine')
     log.info('started at: ' + startMs.toString());
 
     try {
-
-      await initializeCandyMachine(
+      const candyMachineResult: {
+        uuid: string;
+        candyMachine: PublicKey;
+        collectionMetadata: string | undefined;
+      } = await initializeCandyMachine(
         anchorProgram,
-        setCollectionMint ? {
-          collectionMintPubkey: await parseCollectionMintPubkey(
-            collectionMint,
-            anchorProgram.provider.connection,
-            walletKeyPair,
-          )
-        } : undefined,
+        setCollectionMint
+          ? {
+              collectionMintPubkey: await parseCollectionMintPubkey(
+                collectionMint,
+                anchorProgram.provider.connection,
+                walletKeyPair,
+              ),
+            }
+          : undefined,
         walletKeyPair,
         treasuryWallet,
         splToken,
@@ -449,9 +461,17 @@ programCommand('init_empty_machine')
         endSettings,
         whitelistMintSettings,
         hiddenSettings,
-        creators
+        creators,
       );
 
+      const cacheContent = {
+        program: {
+          uuid: candyMachineResult.uuid,
+          candyMachine: candyMachineResult.candyMachine.toBase58(),
+          collection: candyMachineResult.collectionMetadata,
+        },
+      };
+      saveCache(cacheName, env, cacheContent);
     } catch (err) {
       log.warn('Empty collection init was not successful, please re-run.', err);
       process.exit(1);
@@ -729,7 +749,7 @@ programCommand('verify_upload')
           if (name != cacheItem.name || uri != cacheItem.link) {
             log.debug(
               `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
-              `and (${cacheItem.link}). marking to rerun for image`,
+                `and (${cacheItem.link}). marking to rerun for image`,
               key,
             );
             cacheItem.onChain = false;
@@ -756,12 +776,14 @@ programCommand('verify_upload')
     );
 
     log.info(
-      `uploaded (${lineCount.toNumber()}) out of (${candyMachineObj.data.itemsAvailable
+      `uploaded (${lineCount.toNumber()}) out of (${
+        candyMachineObj.data.itemsAvailable
       })`,
     );
     if (candyMachineObj.data.itemsAvailable > lineCount.toNumber()) {
       throw new Error(
-        `predefined number of NFTs (${candyMachineObj.data.itemsAvailable
+        `predefined number of NFTs (${
+          candyMachineObj.data.itemsAvailable
         }) is smaller than the uploaded one (${lineCount.toNumber()})`,
       );
     } else {
@@ -894,7 +916,7 @@ programCommand('show')
         //@ts-ignore
         machine.data.goLiveDate
           ? //@ts-ignore
-          new Date(machine.data.goLiveDate * 1000)
+            new Date(machine.data.goLiveDate * 1000)
           : 'N/A',
       );
       //@ts-ignore
@@ -1323,11 +1345,11 @@ programCommand('get_unminted_tokens').action(async (directory, cmd) => {
 
   const thisSlice = candyMachine.data.slice(
     CONFIG_ARRAY_START_V2 +
-    4 +
-    CONFIG_LINE_SIZE_V2 * itemsAvailable +
-    4 +
-    Math.floor(itemsAvailable / 8) +
-    4,
+      4 +
+      CONFIG_LINE_SIZE_V2 * itemsAvailable +
+      4 +
+      Math.floor(itemsAvailable / 8) +
+      4,
     candyMachine.data.length,
   );
 
