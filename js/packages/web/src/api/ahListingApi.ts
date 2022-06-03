@@ -40,6 +40,16 @@ export const getListingByMint = async (mint: any) => {
   }
 }
 
+export const addSaleEvent = async (updateOfferInfo: any, saleKey: string) => {
+  try {
+    const res = await axios.patch(`${api}/${saleKey}`, updateOfferInfo)
+    return res
+  } catch (error: any) {
+    console.log('Add API error: ', error.message)
+    throw new Error(error.message)
+  }
+}
+
 export const getListingsBySeller = async (seller_pubkey: any) => {
   try {
     const res = await axios.get(`${api}?seller=${seller_pubkey}`)
