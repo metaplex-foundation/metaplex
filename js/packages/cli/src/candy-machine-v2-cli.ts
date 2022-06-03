@@ -348,8 +348,16 @@ programCommand('init_empty_machine')
     'optional flag to prevent the candy machine from using an on chain collection',
   )
   .requiredOption(
-    '--creators',
-    'e.g. --creators "{creator1Address},{creator1Verified},{creator1Share};{creator2Address},{creator2Verified},{creator2Share};...etc',
+    '--symbol <string>',
+    'Token metadata symbol. Symbol will be shared by all generated tokens.',
+  )
+  .requiredOption(
+    '--seller-fee-basis-points <string>',
+    'Token metadata symbol. Symbol will be shared by all generated tokens.',
+  )
+  .requiredOption(
+    '--creators-delimited <string>',
+    'e.g. --creators-delimited "{creator1Address},{creator1Verified},{creator1Share};{creator2Address},{creator2Verified},{creator2Share};...etc',
   )
   .action(async (args, cmd) => {
     const {
@@ -364,6 +372,8 @@ programCommand('init_empty_machine')
       creatorsDelimited
     } = cmd.opts();
 
+    log.info(creatorsDelimited)
+
 
     // e.g. --creators "{address},{verified},{share};..."
     //  TODO: Consider adding this to the getCandyMachineV2Config schema?
@@ -371,7 +381,7 @@ programCommand('init_empty_machine')
       address: PublicKey;
       verified: boolean;
       share: number;
-    }[] = creatorsDelimited.split(";").map(creatorConf => creatorConf.split[","]).map(creatorConfSegments => {
+    }[] = creatorsDelimited.split(';').map(creatorConf => creatorConf.split(',')).map(creatorConfSegments => {
       return {
         address: new PublicKey(creatorConfSegments[0]),
         verified: creatorConfSegments[1] as boolean,
