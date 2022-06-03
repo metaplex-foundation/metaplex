@@ -63,3 +63,17 @@ export const getListingsBySeller = async (seller_pubkey: any) => {
     }
   }
 }
+
+export const cancelListing = async (listing_id: string) => {
+  try {
+    const res = await axios.delete(`${api}/${listing_id}`)
+    return res.data
+  } catch (error: any) {
+    console.log('Delete API error: ', error.response.data.message)
+    if (error.response && error.response.data && error.response.data.message) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error(error.message)
+    }
+  }
+}

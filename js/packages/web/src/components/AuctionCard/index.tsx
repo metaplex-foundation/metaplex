@@ -891,15 +891,20 @@ export const AhAuctionCard = ({
     setOffer(offer_)
   }
 
+  const buyNow = async () => {
+    const sale_ = await listAuctionHouseNFT(connection, wallet).onBuy(sale, sale)
+    console.log(sale_)
+  }
+
   return (
     <div className='flex items-center gap-[16px]'>
-      {wallet.connected && !!sale && (
-        <Button type='dashed' size='lg' className='w-[230px]' disabled={loading} onClick={null}>
+      {wallet.connected && !!sale && !!sale.active && (
+        <Button type='dashed' size='lg' className='w-[230px]' disabled={loading} onClick={buyNow}>
           Buy Now
         </Button>
       )}
 
-      {wallet.connected && !!sale && (
+      {wallet.connected && !!sale && !!sale.active && (
         <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
           <div className='flex h-full items-center gap-[8px]'>
             <SOLIcon size={18} />

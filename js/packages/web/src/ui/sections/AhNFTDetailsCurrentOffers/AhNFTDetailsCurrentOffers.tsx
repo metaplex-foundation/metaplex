@@ -26,8 +26,11 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
       const offers: any[] = await getAuctionHouseNFByMint(restProps.sale?.mint)
       debugger
       if (!!offers) {
-        setOffers(offers)
-        console.log(offers)
+        const activeOffers = offers.filter((elem: any) => {
+          return elem.active == true
+        })
+        setOffers(activeOffers)
+        console.log(activeOffers)
       }
     }
     fetchData().catch(console.error)
@@ -110,7 +113,18 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
               )}
 
               {wallet.publicKey?.toBase58() === offer.buyer_wallet && (
-                <Button appearance='ghost' isRounded={false} view='outline' size='sm'>
+                <Button
+                  appearance='ghost'
+                  isRounded={false}
+                  view='outline'
+                  size='sm'
+                  onClick={async () => {
+                    const offer_ = await listAuctionHouseNFT(connection, wallet).onCancelOffer(
+                      restProps.sale,
+                      offer
+                    )
+                    console.log(offer_)
+                  }}>
                   Cancel
                 </Button>
               )}

@@ -105,6 +105,11 @@ const InstantSale = ({
     }
   }, [mintKey])
 
+  const cancelListing = async () => {
+    await listAuctionHouseNFT(connection, wallet).onCancelListing(sale)
+    setSale(undefined)
+  }
+
   const createAuctionHouseSale = async () => {
     debugger
     const { instantSalePrice } = attributes
@@ -445,7 +450,7 @@ const InstantSale = ({
           </Button>
         )}
         {category === AuctionCategory.InstantSale && !!sale && (
-          <Button disabled={status} onClick={createAuctionHouseSale} className='w-full'>
+          <Button disabled={status} onClick={cancelListing} className='w-full'>
             End Sale
           </Button>
         )}

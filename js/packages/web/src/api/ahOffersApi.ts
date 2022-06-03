@@ -64,6 +64,20 @@ export const getAuctionHouseNFBySeller = async (seller_pubkey: any) => {
   }
 }
 
+export const cancelOffer = async (offer_id: string) => {
+  try {
+    const res = await axios.delete(`${api}/${offer_id}`)
+    return res.data
+  } catch (error: any) {
+    console.log('Delete API error: ', error.response.data.message)
+    if (error.response && error.response.data && error.response.data.message) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error(error.message)
+    }
+  }
+}
+
 export const getAuctionHouseNFByBuyer = async (buyer_pubkey: any) => {
   try {
     const res = await axios.get(`${api}?buyer=${buyer_pubkey}`)

@@ -6,7 +6,7 @@
     "@babel/preset-typescript": "^7.12.13",
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
-    "@chathuranga/marketplace-js-sdk": "0.2.2",
+    "@chathuranga/marketplace-js-sdk": "0.2.4",
     "@holaplex/mpl-auction-house": "^0.0.7",
     "@magic-ext/solana": "^0.2.0",
     "@metaplex-foundation/mpl-token-metadata": "1.1.0",
