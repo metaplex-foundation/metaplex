@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react'
 import { InputNumber, Spin } from 'antd'
 import CN from 'classnames'
-import { SOLIcon, Avatar, formatTokenAmount, Button, useConnection } from '@oyster/common'
+import { SOLIcon, Avatar, formatTokenAmount, Button, useConnection, notify } from '@oyster/common'
 import { AuctionView, useBidsForAuction } from '../../../hooks'
 import useNFTData from '../../../hooks/useNFTData'
 import { getAuctionHouseNFByMint } from '../../../api/ahOffersApi'
@@ -101,6 +101,9 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
                     )
                     console.log(offer_)
                     setLoading(false)
+                    notify({
+                      message: 'Offer Approved',
+                    })
                   }}>
                   {loading ? <Spin /> : 'Approve'}
                 </Button>
@@ -121,6 +124,9 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
                     )
                     console.log(offer_)
                     setLoading(false)
+                    notify({
+                      message: 'Offer Cancelled',
+                    })
                   }}>
                   {loading ? <Spin /> : 'Cancel'}
                 </Button>

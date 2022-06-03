@@ -1,38 +1,14 @@
 import { useEffect, useState } from 'react'
-import { InputNumber, Spin } from 'antd'
-import {
-  AmountRange,
-  IPartialCreateAuctionArgs,
-  PriceFloor,
-  PriceFloorType,
-  StringPublicKey,
-  toLamports,
-  useConnection,
-  useMeta,
-  useMint,
-  WinnerLimit,
-  WinnerLimitType,
-  WinningConfigType,
-  WRAPPED_SOL_MINT,
-  ZERO,
-} from '@oyster/common'
+import { Spin } from 'antd'
+import { notify, useConnection, useMeta, useMint } from '@oyster/common'
 import { Button } from '@oyster/common'
 
 import { useWallet } from '@solana/wallet-adapter-react'
-import { LAMPORTS_PER_SOL } from '@solana/web3.js'
-import { BN } from 'bn.js'
-import { createAuctionManager, SafetyDepositDraft } from '../../actions/createAuctionManager'
+import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import { QUOTE_MINT } from '../../constants'
-import {
-  AuctionCategory,
-  AuctionState,
-  InstantSaleType,
-  TierDummyEntry,
-  TieredAuctionState,
-} from '../auctionCreate/types'
+import { AuctionCategory, AuctionState, TieredAuctionState } from '../auctionCreate/types'
 import PutOnSale from './PutOnSale'
 import PutOnAuction from './PutOnAuction'
-import { ERROR, PROCESSING, SUCCESS } from '.'
 import { useHistory } from 'react-router-dom'
 import { getListingByMint } from '../../api/ahListingApi'
 import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
@@ -112,6 +88,9 @@ const InstantSale = ({
     await listAuctionHouseNFT(connection, wallet).onCancelListing(sale)
     setSale(undefined)
     setLoading(false)
+    notify({
+      message: 'Listing Cancelled',
+    })
   }
 
   const createAuctionHouseSale = async () => {
@@ -123,6 +102,9 @@ const InstantSale = ({
     nft['mintKey'] = mintKey
     setSale(await listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft))
     setLoading(false)
+    notify({
+      message: 'Listing added',
+    })
   }
 
   const createAuction = () => {

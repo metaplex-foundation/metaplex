@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { InputNumber, Spin } from 'antd'
-import { Button, SOLIcon } from '@oyster/common'
+import { Button, notify, SOLIcon } from '@oyster/common'
 import { Link, useHistory } from 'react-router-dom'
 
 import {
@@ -896,6 +896,9 @@ export const AhAuctionCard = ({
     console.log(offer_)
     setOffer(offer_)
     setLoading(false)
+    notify({
+      message: 'Offer Made',
+    })
   }
 
   const buyNow = async () => {
@@ -903,6 +906,9 @@ export const AhAuctionCard = ({
     const sale_ = await listAuctionHouseNFT(connection, wallet).onBuy(sale, sale)
     console.log(sale_)
     setLoading(false)
+    notify({
+      message: 'Buying Successful',
+    })
   }
 
   return (
