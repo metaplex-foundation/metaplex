@@ -519,6 +519,8 @@ function upload {
     fi
 }
 
+CONFIG_FILE_EMPTY_MACHINE="config-empty-machine.json"
+
 # NOTE: Using a uri template as a hash, so that the hash still offers proof for a composed metadata URI, and yet can be generated in advance of minting without an arduous task to hash all permutations. 
 cat >$CONFIG_FILE_EMPTY_MACHINE <<-EOM
 {
