@@ -371,7 +371,9 @@ fi
 
 WALLET_KEY="$(solana config get keypair | cut -d : -f 2)"
 CACHE_NAME="test"
+CACHE_NAME_EMPTY_INIT="test-empty-init"
 CACHE_FILE="$CACHE_DIR/${ENV_URL}-${CACHE_NAME}.json"
+CACHE_FILE_EMPTY_INIT="$CACHE_DIR/${ENV_URL}-${CACHE_NAME_EMPTY_INIT}.json"
 LAST_INDEX=$((ITEMS - 1))
 
 TIMESTAMP=`date "+%d/%m/%y %T"`
@@ -517,6 +519,40 @@ function upload {
     fi
 }
 
+# NOTE: Using a uri template as a hash, so that the hash still offers proof for a composed metadata URI, and yet can be generated in advance of minting without an arduous task to hash all permutations. 
+cat >$CONFIG_FILE_EMPTY_MACHINE <<-EOM
+{
+    "price": 0.1,
+    "number": $ITEMS,
+    "gatekeeper": null,
+    "solTreasuryAccount": "$(solana address)",
+    "splTokenAccount": null,
+    "splToken": null,
+    "goLiveDate": "$(date "+%d %b %Y %T %Z")",
+    "endSettings": null,
+    "whitelistMintSettings": null,
+    "hiddenSettings": {
+		"name":"test-hidden",
+		"uri":"https://127.0.0.1/",
+		"hash":"$(md5sum "https://127.0.0.1/{tokenIndex}")"
+	},
+    "noRetainAuthority": false,
+    "noMutable": false
+}
+EOM
+
+
+# run the init_empty_machine command
+function init_empty_machine {
+    $CMD_CMV2 init_empty_machine --env $ENV_URL --keypair $WALLET_KEY -cp ${CONFIG_FILE_EMPTY_MACHINE} -c $CACHE_NAME_EMPTY_INIT --symbol TEST --seller-fee-basis-points 500 --creators-delimited "${WALLET_KEY},true,100"
+    EXIT_CODE=$?
+    if [ ! $EXIT_CODE -eq 0 ]; then
+        MAG "<<<"
+        RED "[$(date "+%T")] Aborting: init_empty_machine failed"
+        exit 1
+    fi
+}
+
 #-----------------------------------------------------------------------------#
 # COMMAND EXECUTION                                                           #
 #-----------------------------------------------------------------------------#
@@ -598,6 +634,27 @@ if [ "${CLOSE}" = "Y" ]; then
     fi
 
     clean_up
+fi
+
+echo ""
+CYN "5. Testing initialization of an 'empty' machine"
+echo ""
+MAG ">>>"
+init_empty_machine
+MAG "<<<"
+echo ""
+
+echo ""
+CYN "6. Minting from 'empty' machine"
+echo ""
+echo "mint_one_token $(MAG ">>>")"
+$CMD_CMV2 mint_one_token --keypair $WALLET_KEY --env $ENV_URL -c $CACHE_NAME_EMPTY_INIT -r $RPC
+EXIT_CODE=$?
+MAG "<<<"
+
+if [ ! $EXIT_CODE -eq 0 ]; then
+    RED "[$(date "+%T")] Aborting: mint failed"
+    exit 1
 fi
 
 echo ""
