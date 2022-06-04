@@ -143,14 +143,14 @@ export const ArtCreateView = () => {
     <>
       <div className='flex w-full pt-[80px] pb-[100px]'>
         <div className='container flex gap-[32px]'>
-          <div className='sidebar w-[260px] flex-shrink-0 rounded'>
+          {false && <div className='sidebar w-[260px] flex-shrink-0 rounded'>
             <Steps progressDot direction={width < 768 ? 'horizontal' : 'vertical'} current={step - 1}>
               <Step title='Upload' />
               <Step title='Info' />
               <Step title='Royalties' />
               <Step title='Launch' />
             </Steps>
-          </div>
+          </div>}
 
           <div className='content-wrapper flex w-full flex-col gap-[28px]'>
             {step === 0 && (
@@ -698,7 +698,7 @@ const InfoStep = (props: {
           )}
         </div>
 
-        {false && <div className='flex flex-col gap-[16px]'>
+        <div className='flex flex-col gap-[16px]'>
           <h4 className='text-h6 font-500'>Add attributes</h4>
 
           <Form name='dynamic_attributes' form={form} autoComplete='off'>
@@ -741,7 +741,7 @@ const InfoStep = (props: {
               )}
             </Form.List>
           </Form>
-        </div>}
+        </div>
 
         {false && <div className='flex flex-col gap-[16px]'>
           <h4 className='text-h6 font-500'>Add a Tag</h4>
