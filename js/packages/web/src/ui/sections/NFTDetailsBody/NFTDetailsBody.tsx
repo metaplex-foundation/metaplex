@@ -160,7 +160,6 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
 }
 
 export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale }) => {
-  debugger
   const { data } = useAhExtendedArt(sale?.metadata)
   // const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
@@ -170,7 +169,7 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
   const { data: collection } = useExtendedArt(sale?.collection)
   const [attributes, setAttributes] = useState<any[]>([])
   console.log('sale?.metadata.pubkey', sale?.metadata.pubkey)
-  debugger
+
   const {
     value: { solVal, usdValFormatted },
   } = useAhNFTData(sale)

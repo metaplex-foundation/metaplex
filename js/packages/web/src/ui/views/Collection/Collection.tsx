@@ -3,7 +3,7 @@ import { CollectionHeader } from '../../sections/CollectionHeader'
 import { CollectionSidebar } from '../../sections/CollectionSidebar'
 import { CollectionActionsBar } from '../../sections/CollectionActionsBar'
 import { CollectionAppliedFilters } from '../../sections/CollectionAppliedFilters'
-import { CollectionNftList } from '../../sections/CollectionNftList'
+import { AhCollectionNftList, CollectionNftList } from '../../sections/CollectionNftList'
 import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
 import { getCollectionStatistics, getCollectionVolumn } from '../../../api'
@@ -30,6 +30,7 @@ import { useNFTCollections } from '../../../hooks/useCollections'
 // import { useTokenList } from '../../../contexts/tokenList'
 import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
 import { getCollectionHeaderInfo } from '../../../api'
+import { getAllListingsByCollection } from '../../../api/ahListingApi'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
 const RANGE_FILTERS = 'Range'
@@ -59,7 +60,7 @@ interface ICollectionHeader {
   description?: string
   collectionImageURL?: string
   collectionBannerURL?: string
-  volumn?:string
+  volumn?: string
 }
 
 export const SORT_LOW_TO_HIGH = 'Low to High'
@@ -76,11 +77,13 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   const [collectionStates, setCollectionStates] = useState<any>(null)
-  const [collectionVolumn, setCollectionVolumn] = useState<any>("")
+  const [collectionVolumn, setCollectionVolumn] = useState<any>('')
 
   const { id }: ParamsInterface = useParams()
   const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
+
+  const [nftListings, setnftListings] = useState()
 
   const selectedCollection = liveCollections.find(({ mint }) => mint === id) || null
 
@@ -94,6 +97,17 @@ export const Collection: FC<CollectionProps> = () => {
     collectionImageURL: '',
     collectionBannerURL: '',
   })
+
+  useEffect(() => {
+    debugger
+    const fetchData = async () => {
+      const listings = await getAllListingsByCollection(id)
+      if (!!listings) {
+        setnftListings(listings)
+      }
+    }
+    fetchData().catch(console.error)
+  }, [id])
 
   useEffect(() => {
     if (
@@ -141,20 +155,19 @@ export const Collection: FC<CollectionProps> = () => {
   useEffect(() => {
     const collectionId = id
     if (collectionId) {
-      getCollectionStatistics(collectionId).then((data) => {
+      getCollectionStatistics(collectionId).then(data => {
         setCollectionStates(data)
       })
     }
-}, [])
+  }, [])
 
   useEffect(() => {
     const collectionId = id
     if (collectionId) {
-      getCollectionVolumn(collectionId).then((data) => {
+      getCollectionVolumn(collectionId).then(data => {
         setCollectionVolumn(abbrNum(data.nftTotalSales.total_usd, 4))
       })
     }
-    
   }, [])
 
   const shortByPrice = val => {
@@ -282,43 +295,42 @@ export const Collection: FC<CollectionProps> = () => {
   }
 
   const abbrNum = (number: any, decPlaces: any) => {
-    let orig = number;
-    let dec = decPlaces;
+    let orig = number
+    let dec = decPlaces
     // 2 decimal places => 100, 3 => 1000, etc
-    decPlaces = Math.pow(10, decPlaces);
-  
+    decPlaces = Math.pow(10, decPlaces)
+
     // Enumerate number abbreviations
-    let abbrev = ["k", "m", "b", "t"];
-  
+    let abbrev = ['k', 'm', 'b', 't']
+
     // Go through the array backwards, so we do the largest first
     for (let i = abbrev.length - 1; i >= 0; i--) {
-  
-        // Convert array index to "1000", "1000000", etc
-        let size = Math.pow(10, (i + 1) * 3);
-  
-        // If the number is bigger or equal do the abbreviation
-        if (size <= number) {
-            // Here, we multiply by decPlaces, round, and then divide by decPlaces.
-            // This gives us nice rounding to a particular decimal place.
-            number = Math.round(number * decPlaces / size) / decPlaces;
-  
-            // Handle special case where we round up to the next abbreviation
-            if((number == 1000) && (i < abbrev.length - 1)) {
-                number = 1;
-                i++;
-            }
-  
-            // console.log(number);
-            // Add the letter for the abbreviation
-            number += abbrev[i];
-  
-            // We are done... stop
-            break;
+      // Convert array index to "1000", "1000000", etc
+      let size = Math.pow(10, (i + 1) * 3)
+
+      // If the number is bigger or equal do the abbreviation
+      if (size <= number) {
+        // Here, we multiply by decPlaces, round, and then divide by decPlaces.
+        // This gives us nice rounding to a particular decimal place.
+        number = Math.round((number * decPlaces) / size) / decPlaces
+
+        // Handle special case where we round up to the next abbreviation
+        if (number == 1000 && i < abbrev.length - 1) {
+          number = 1
+          i++
         }
+
+        // console.log(number);
+        // Add the letter for the abbreviation
+        number += abbrev[i]
+
+        // We are done... stop
+        break
+      }
     }
-  
-    console.log('abbrNum('+ orig + ', ' + dec + ') = ' + number);
-    return number;
+
+    console.log('abbrNum(' + orig + ', ' + dec + ') = ' + number)
+    return number
   }
 
   return (
@@ -376,14 +388,14 @@ export const Collection: FC<CollectionProps> = () => {
                     clearFilters={clearFilters}
                   />
                 )}
-                <CollectionNftList auctions={nftItems} />
+                <AhCollectionNftList listings={nftListings} />
               </div>
             )}
 
             {showActivity && (
               <div className='flex flex-col gap-[28px]'>
                 <CollectionChart data={collectionStates} />
-                <CollectionActivityList data={collectionStates}/>
+                <CollectionActivityList data={collectionStates} />
               </div>
             )}
           </div>

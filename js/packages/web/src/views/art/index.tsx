@@ -25,7 +25,7 @@ export const ArtView = () => {
   const { ref, data } = useExtendedArt(id)
   const { accountByMint } = useUserAccounts()
   const a = accountByMint.get(art.mint as string)
-  debugger
+
   console.log('accountByMint', accountByMint)
   console.log('mint', art.mint)
   console.log('holder', a?.pubkey)

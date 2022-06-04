@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 
 export interface RecentCollectionsProps {
   className: string
-  liveCollections: CollectionView[]
+  liveCollections: any[]
 }
 
 export const RecentCollections: FC<RecentCollectionsProps> = ({
@@ -18,12 +18,11 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
 }) => {
   const RecentCollectionsClasses = CN(`recent-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
-
   const slides = (liveCollections || []).map((collection: any) => {
     return {
-      id: collection.pubkey,
+      id: collection.collection,
       Component: (
-        <Link to={`/collection/${collection.mint ?? collection.name}`} key={collection.pubkey}>
+        <Link to={`/collection/${collection.collection}`} key={collection.collection}>
           <CollectionCard collection={collection} />
         </Link>
       ),

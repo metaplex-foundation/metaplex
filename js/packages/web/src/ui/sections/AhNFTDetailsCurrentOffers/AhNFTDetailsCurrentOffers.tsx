@@ -26,7 +26,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       const offers: any[] = await getAuctionHouseNFByMint(restProps.sale?.mint)
-      debugger
+
       if (!!offers) {
         const activeOffers = offers.filter((elem: any) => {
           return elem.active == true

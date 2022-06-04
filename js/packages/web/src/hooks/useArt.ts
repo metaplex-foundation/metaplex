@@ -155,7 +155,7 @@ export const useArt = (key?: StringPublicKey) => {
 
 export const useExtendedArt = (id?: StringPublicKey) => {
   const { metadata } = useMeta()
-  debugger
+
   const [data, setData] = useState<IMetadataExtension>()
   const { width } = useWindowDimensions()
   const { ref, inView } = useInView({ root: null, rootMargin: '-100px 0px' })
@@ -232,7 +232,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 
 export const useAhExtendedArt = (account?: any) => {
   // const { metadata } = useMeta()
-  debugger
+
   const [data, setData] = useState<IMetadataExtension>()
   const { width } = useWindowDimensions()
   const { ref, inView } = useInView({ root: null, rootMargin: '-100px 0px' })
@@ -367,3 +367,56 @@ export const useExtendedCollection = () => {
 
   return { getData }
 }
+
+// export const useAhExtendedCollection = pubkey => {
+//   const { data } = useAhExtendedArt('3fjw8AT15cZdxtirnwpx456FCGaaaYeajaa1DPXYwr3')
+//   const account = data
+//   console.log('useArt', account)
+//   const getData = async (pubkey: string) => {
+//     // try {
+//     //   //(inView || width < 768) &&
+//     //   const USE_CDN = false
+//     //   const routeCDN = (uri: string) => {
+//     //     let result = uri
+//     //     if (USE_CDN) {
+//     //       result = uri.replace('https://arweave.net/', 'https://coldcdn.com/api/cdn/bronil/')
+//     //     }
+//     //     return result
+//     //   }
+//     //   if (account && account.uri) {
+//     //     const uri = routeCDN(account.uri)
+//     //     const processJson = (extended: any) => {
+//     //       if (!extended || extended?.properties?.files?.length === 0) {
+//     //         return
+//     //       }
+//     //       if (extended?.image) {
+//     //         const file = extended.image.startsWith('http')
+//     //           ? extended.image
+//     //           : `${account.uri}/${extended.image}`
+//     //         extended.image = routeCDN(file)
+//     //       }
+//     //       return extended
+//     //     }
+//     //     try {
+//     //       const cached = localStorage.getItem(uri)
+//     //       if (cached) {
+//     //         return { ...processJson(JSON.parse(cached)), pubkey }
+//     //       } else {
+//     //         const fetchArt = await fetch(uri)
+//     //         const data = await fetchArt.json()
+//     //         localStorage.setItem(uri, JSON.stringify(data))
+//     //         return { ...processJson(data), pubkey }
+//     //       }
+//     //     } catch (ex) {
+//     //       console.log('ex', ex)
+//     //       return {}
+//     //     }
+//     //   }
+//     // } catch (error) {
+//     //   console.log('error', error)
+//     //   return {}
+//     // }
+//   }
+
+//   return { getData }
+// }

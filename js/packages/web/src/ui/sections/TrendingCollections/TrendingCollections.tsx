@@ -20,9 +20,9 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({
 
   const slides = (liveCollections || []).map((collection: any) => {
     return {
-      id: collection.pubkey,
+      id: collection.collection,
       Component: (
-        <Link to={`/collection/${collection.mint ?? collection.name}`} key={collection.pubkey}>
+        <Link to={`/collection/${collection.collection}`} key={collection.collection}>
           <CollectionCard collection={collection} />
         </Link>
       ),

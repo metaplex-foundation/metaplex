@@ -36,7 +36,7 @@ const InstantSale = ({
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
   const history = useHistory()
   const [sale, setSale] = useState()
-  debugger
+
   const mint = useMint(QUOTE_MINT)
   // const [auctionObj, setAuctionObj] = useState<
   //   | {
@@ -95,12 +95,13 @@ const InstantSale = ({
 
   const createAuctionHouseSale = async () => {
     setLoading(true)
-    debugger
+
     const { instantSalePrice } = attributes
     const nft = items[0]
-    debugger
+
     nft['mintKey'] = mintKey
-    setSale(await listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft))
+    const sale = await listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft)
+    setSale(sale)
     setLoading(false)
     notify({
       message: 'Listing added',
@@ -108,8 +109,8 @@ const InstantSale = ({
   }
 
   const createAuction = () => {
-    history.push(`/auction/create/instant/1/` + items?.[0]?.metadata?.pubkey);
-    return;
+    history.push(`/auction/create/instant/1/` + items?.[0]?.metadata?.pubkey)
+    return
     // try {
     //   setStatus(PROCESSING)
     //   let winnerLimit: WinnerLimit
@@ -423,7 +424,7 @@ const InstantSale = ({
         break
       case AuctionCategory.Tiered:
         return <></>
-        // return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
+      // return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
       default:
         return <></>
     }

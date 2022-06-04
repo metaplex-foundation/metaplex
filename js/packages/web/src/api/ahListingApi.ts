@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/nft/listing'
+// const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/nft/listing'
+const api = 'http://localhost:9000/nft/listing'
 
 export const getAllListingsByCollection = async (collection: any) => {
   try {
@@ -44,6 +45,16 @@ export const addSaleEvent = async (updateOfferInfo: any, saleKey: string) => {
   try {
     const res = await axios.patch(`${api}/${saleKey}`, updateOfferInfo)
     return res
+  } catch (error: any) {
+    console.log('Add API error: ', error.message)
+    throw new Error(error.message)
+  }
+}
+
+export const getNFTGroupedByCollection = async () => {
+  try {
+    const res = await axios.get(`${api}/collections`)
+    return res.data
   } catch (error: any) {
     console.log('Add API error: ', error.message)
     throw new Error(error.message)

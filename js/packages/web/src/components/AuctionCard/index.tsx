@@ -319,7 +319,7 @@ export const AuctionCard = ({
   }, [wallet.connected])
 
   const endInstantSale = async () => {
-    // debugger
+    //
     setLoading(true)
 
     try {
@@ -357,7 +357,7 @@ export const AuctionCard = ({
   }
 
   const instantSale = async () => {
-    // debugger
+    //
     setLoading(true)
     // const winningConfigType =
     //   auctionView.participationItem?.winningConfigType || auctionView.items[0][0].winningConfigType
