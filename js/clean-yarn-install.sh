@@ -1,11 +1,11 @@
-echo "Starting to clean install"
-echo "Removing js node modules"
+echo "Starting to clean install ....."
+echo "Removing js node modules ...."
 rm -rf ./node_modules
-echo "Removing web node modules"
+echo "Removing web node modules ...."
 rm -rf ./web/node_modules
-echo "Removing js yarn lock file"
+echo "Removing js yarn lock file ...."
 rm ./yarn.lock
-echo "Clearning npm cache"
+echo "Clearning npm cache ...."
 npm cache clear --force
 
 echo "yarn install"
