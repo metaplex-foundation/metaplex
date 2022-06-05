@@ -41,7 +41,7 @@ export const CollectionCard: FC<CollectionCardProps> = ({
       <div className='flex items-center gap-[16px]'>
         <img src={image} className='h-[60px] w-[60px] rounded-full' />
         <div className='flex flex-col gap-[4px]'>
-          <p className='text-md font-500 text-black'>{NFTName}</p>
+          <p className='text-md font-500 text-black nft-name'>{NFTName}</p>
           <p className='font-500 text-sm text-slate-600'>{itemCount}</p>
         </div>
       </div>

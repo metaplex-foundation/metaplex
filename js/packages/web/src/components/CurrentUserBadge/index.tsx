@@ -68,7 +68,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
                     </Button>
                   </Link>
                 )}
-                <Link to={`/auction/create/0`}>
+                {false && <Link to={`/auction/create/0`}>
                   <Button
                     onClick={() => {
                       props.onClick ? props.onClick() : null
@@ -76,7 +76,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
                     className='black-btn'>
                     Sell
                   </Button>
-                </Link>
+                </Link>}
               </div>
             ) : null}
           </>
@@ -97,11 +97,11 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
                     &nbsp;&nbsp;
                   </>
                 )}
-                <Link to={`/auction/create/0`} style={{ width: '100%' }}>
+                {false && <Link to={`/auction/create/0`} style={{ width: '100%' }}>
                   <Button className='metaplex-button-default' style={btnStyle}>
                     Sell
                   </Button>
-                </Link>
+                </Link>}
               </div>
             ) : null}
           </>
