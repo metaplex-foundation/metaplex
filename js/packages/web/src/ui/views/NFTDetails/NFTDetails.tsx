@@ -31,6 +31,7 @@ export const NFTDetails: FC<NFTDetailsProps> = () => {
       setSale(sale)
     }
     fetchData().catch(console.error)
+    setAuction(item)
   }, [item])
 
   const onSetAuction = (data: AuctionView) => {

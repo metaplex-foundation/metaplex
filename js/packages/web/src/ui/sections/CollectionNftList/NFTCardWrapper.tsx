@@ -3,6 +3,7 @@ import { FC, useState } from 'react'
 import { AuctionView, useAhExtendedArt } from '../../../hooks'
 import { Modal } from '@oyster/common'
 import { QuickBuy } from '../QuickBuy'
+import { AhQuickBuy } from '../AhQuickBuy'
 
 interface NFTCardWrapperInterface {
   [key: string]: any
@@ -87,7 +88,7 @@ export const AuctionHouseNFTCardWrapper: FC<AuctionHouseNFTCardWrapperInterface>
           <Modal
             onClose={() => setShowQuickBuy(false)}
             onClickOverlay={() => setShowQuickBuy(false)}>
-            <QuickBuy auction={listing} />
+            <AhQuickBuy auction={listing} />
           </Modal>
         )}
       </>

@@ -26,7 +26,7 @@ export const AhNFTDetailsTabs: FC<NFTDetailsTabsProps> = ({ sale }) => {
               'border border-transparent': activeTab !== 'offers',
             })}
             onClick={() => setActiveTab('offers')}>
-            Current Bids
+            Current Offers
           </Button>
           <Button
             isRounded={false}

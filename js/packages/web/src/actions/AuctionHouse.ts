@@ -23,30 +23,30 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
   const sdk = initMarketplaceSDK(connection, wallet as any)
 
   const getAH = async () => {
-    // let ah = await getAuctionHouse(process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS as string)
+    let ah = await getAuctionHouse(process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS as string)
 
-    // ah = ah[0]
-    // const auctionHouse: AuctionHouse = {
-    //   address: ah.auction_house_wallet,
-    //   treasuryMint: ah.mint,
-    //   auctionHouseTreasury: ah.treasury_wallet,
-    //   treasuryWithdrawalDestination: ah.creator_wallet,
-    //   feeWithdrawalDestination: ah.creator_wallet,
-    //   authority: ah.creator_wallet,
-    //   creator: ah.creator_wallet,
-    //   auctionHouseFeeAccount: ah.fee_payer_wallet,
-    // }
-    // For testing
+    ah = ah[0]
     const auctionHouse: AuctionHouse = {
-      address: '5RBV8e6zWkTekobvjnAWUQQKHk8PgyCV8tBt8p2Lb1Ak',
-      treasuryMint: 'So11111111111111111111111111111111111111112',
-      auctionHouseTreasury: '85FN2jMypCfcsNgJXZ1YoWoPvLa7idQ23Z3Ke5Ev2X5t',
-      treasuryWithdrawalDestination: 'GoWy6NSsJuUhVg15ZQ11Ye4exnwYpGsQmiP9Eh5KWZUA',
-      feeWithdrawalDestination: 'GoWy6NSsJuUhVg15ZQ11Ye4exnwYpGsQmiP9Eh5KWZUA',
-      authority: 'Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6',
-      creator: 'Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6',
-      auctionHouseFeeAccount: 'r31oFdcGe7XSAoQb7uhfKu7Q3brVfRRxTykYZ81pA7J',
+      address: ah.auction_house_wallet,
+      treasuryMint: ah.mint,
+      auctionHouseTreasury: ah.treasury_wallet,
+      treasuryWithdrawalDestination: ah.creator_wallet,
+      feeWithdrawalDestination: ah.creator_wallet,
+      authority: ah.creator_wallet,
+      creator: ah.creator_wallet,
+      auctionHouseFeeAccount: ah.fee_payer_wallet,
     }
+    // For testing
+    // const auctionHouse: AuctionHouse = {
+    //   address: '5RBV8e6zWkTekobvjnAWUQQKHk8PgyCV8tBt8p2Lb1Ak',
+    //   treasuryMint: 'So11111111111111111111111111111111111111112',
+    //   auctionHouseTreasury: '85FN2jMypCfcsNgJXZ1YoWoPvLa7idQ23Z3Ke5Ev2X5t',
+    //   treasuryWithdrawalDestination: 'GoWy6NSsJuUhVg15ZQ11Ye4exnwYpGsQmiP9Eh5KWZUA',
+    //   feeWithdrawalDestination: 'GoWy6NSsJuUhVg15ZQ11Ye4exnwYpGsQmiP9Eh5KWZUA',
+    //   authority: 'Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6',
+    //   creator: 'Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6',
+    //   auctionHouseFeeAccount: 'r31oFdcGe7XSAoQb7uhfKu7Q3brVfRRxTykYZ81pA7J',
+    // }
 
     return auctionHouse
   }
@@ -124,6 +124,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     const lmpAmount = amount
     if (amount && nft) {
       const res: any = await sdk.offers(auctionHouse).make({ amount: lmpAmount, nft })
+      debugger
       const offer = await addOffer({
         mint: nft.mintAddress,
         auction_house_wallet: auctionHouse.address,
@@ -247,6 +248,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
   const onCancelOffer = async (nftmetadata: any, offer: any) => {
     const auctionHouse = await getAH()
     const nft = getNFTOffer(nftmetadata)
+    debugger
     const lampAmount = offer.offer_price * LAMPORTS_PER_SOL
     const ahOffer: Offer = {
       address: offer.receipt,
