@@ -23,6 +23,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
   const wallet = useWallet()
   const connection = useConnection()
   const [loading, setLoading] = useState<boolean>(false)
+  const [refresh, setRefresh] = useState(false)
   useEffect(() => {
     const fetchData = async () => {
       const offers: any[] = await getAuctionHouseNFByMint(restProps.sale?.mint)
@@ -87,7 +88,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
 
             <div className='grid-cell flex items-center gap-[4px]'>
               {/* Dev note: Switch these two buttons conditionally */}
-              {wallet.publicKey?.toBase58() === offer.seller_wallet && (
+              {wallet.publicKey?.toBase58() === offer.seller_wallet && !refresh && (
                 <Button
                   disabled={loading}
                   appearance='neutral'
@@ -104,6 +105,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
                     notify({
                       message: 'Offer Approved',
                     })
+                    setRefresh(true)
                   }}>
                   {loading ? <Spin /> : 'Approve'}
                 </Button>
@@ -127,6 +129,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
                     notify({
                       message: 'Offer Cancelled',
                     })
+                    setRefresh(true)
                   }}>
                   {loading ? <Spin /> : 'Cancel'}
                 </Button>
