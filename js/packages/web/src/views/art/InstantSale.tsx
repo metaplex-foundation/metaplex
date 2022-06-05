@@ -1,39 +1,17 @@
-import { useState } from 'react'
-import {
-  AmountRange,
-  IPartialCreateAuctionArgs,
-  PriceFloor,
-  PriceFloorType,
-  StringPublicKey,
-  toLamports,
-  useConnection,
-  useMeta,
-  useMint,
-  WinnerLimit,
-  WinnerLimitType,
-  WinningConfigType,
-  WRAPPED_SOL_MINT,
-  ZERO,
-} from '@oyster/common'
+import { useEffect, useState } from 'react'
+import { Spin } from 'antd'
+import { notify, useConnection, useMeta, useMint } from '@oyster/common'
 import { Button } from '@oyster/common'
 
 import { useWallet } from '@solana/wallet-adapter-react'
-import { LAMPORTS_PER_SOL } from '@solana/web3.js'
-import { BN } from 'bn.js'
-import { createAuctionManager, SafetyDepositDraft } from '../../actions/createAuctionManager'
+import { SafetyDepositDraft } from '../../actions/createAuctionManager'
 import { QUOTE_MINT } from '../../constants'
-import {
-  AuctionCategory,
-  AuctionState,
-  InstantSaleType,
-  TierDummyEntry,
-  TieredAuctionState,
-} from '../auctionCreate/types'
+import { AuctionCategory, AuctionState, TieredAuctionState } from '../auctionCreate/types'
 import PutOnSale from './PutOnSale'
 import PutOnAuction from './PutOnAuction'
-import { ERROR, PROCESSING, SUCCESS } from '.'
-import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
 import { useHistory } from 'react-router-dom'
+import { getListingByMint } from '../../api/ahListingApi'
+import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
@@ -41,13 +19,23 @@ interface InstantSaleInterface {
   setStatus: (status: number) => void
   status: number
   mintKey: string
+  candyNft?: any
 }
 
-const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSaleInterface) => {
+const InstantSale = ({
+  items,
+  category,
+  setStatus,
+  status,
+  mintKey,
+  candyNft,
+}: InstantSaleInterface) => {
+  const [loading, setLoading] = useState<boolean>(false)
   const connection = useConnection()
   const wallet = useWallet()
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
   const history = useHistory()
+  const [sale, setSale] = useState()
 
   const mint = useMint(QUOTE_MINT)
   // const [auctionObj, setAuctionObj] = useState<
@@ -83,16 +71,46 @@ const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSal
     tiers: [],
   })
 
-  const createAuctionHouseSale = () => {
+  useEffect(() => {
+    if (!!mintKey) {
+      const fetchData = async () => {
+        const sale = await getListingByMint(mintKey)
+        if (!!sale) {
+          setSale(sale)
+        }
+      }
+      fetchData().catch(console.error)
+    }
+  }, [mintKey])
+
+  const cancelListing = async () => {
+    setLoading(true)
+    await listAuctionHouseNFT(connection, wallet).onCancelListing(sale)
+    setSale(undefined)
+    setLoading(false)
+    notify({
+      message: 'Listing Cancelled',
+    })
+  }
+
+  const createAuctionHouseSale = async () => {
+    setLoading(true)
+
     const { instantSalePrice } = attributes
     const nft = items[0]
+
     nft['mintKey'] = mintKey
-    listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft)
+    const sale = await listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft)
+    setSale(sale)
+    setLoading(false)
+    notify({
+      message: 'Listing added',
+    })
   }
 
   const createAuction = () => {
-    history.push(`/auction/create/instant/1/` + items?.[0]?.metadata?.pubkey);
-    return;
+    history.push(`/auction/create/instant/1/` + items?.[0]?.metadata?.pubkey)
+    return
     // try {
     //   setStatus(PROCESSING)
     //   let winnerLimit: WinnerLimit
@@ -400,10 +418,13 @@ const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSal
     const category = attributes.category
     switch (category) {
       case AuctionCategory.InstantSale:
-        return <PutOnSale attributes={attributes} setAttributes={setAttributes} />
+        if (!sale) {
+          return <PutOnSale attributes={attributes} setAttributes={setAttributes} />
+        }
+        break
       case AuctionCategory.Tiered:
         return <></>
-        // return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
+      // return <PutOnAuction attributes={attributes} setAttributes={setAttributes} />
       default:
         return <></>
     }
@@ -413,9 +434,14 @@ const InstantSale = ({ items, category, setStatus, status, mintKey }: InstantSal
     <>
       {renderForm()}
       <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
-        {category === AuctionCategory.InstantSale && (
-          <Button disabled={status} onClick={createAuctionHouseSale} className='w-full'>
-            List Now
+        {category === AuctionCategory.InstantSale && !sale && (
+          <Button disabled={loading} onClick={createAuctionHouseSale} className='w-full'>
+            {loading ? <Spin /> : 'List Now'}
+          </Button>
+        )}
+        {category === AuctionCategory.InstantSale && !!sale && (
+          <Button disabled={loading} onClick={cancelListing} className='w-full'>
+            {loading ? <Spin /> : 'End Sale'}
           </Button>
         )}
         {category === AuctionCategory.Tiered && (

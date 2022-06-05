@@ -1,6 +1,6 @@
 import { NFTCard } from '@oyster/common'
 import { FC, useState } from 'react'
-import { AuctionView } from '../../../hooks'
+import { AuctionView, useAhExtendedArt } from '../../../hooks'
 import { Modal } from '@oyster/common'
 import { QuickBuy } from '../QuickBuy'
 
@@ -51,39 +51,47 @@ interface AuctionHouseNFTCardWrapperInterface {
 }
 
 export const AuctionHouseNFTCardWrapper: FC<AuctionHouseNFTCardWrapperInterface> = ({
-  auction,
+  listing,
   link,
   ...restProps
 }) => {
+  debugger
   const [showQuickBuy, setShowQuickBuy] = useState(false)
-  return (
-    <>
-      <NFTCard
-        // @ts-ignore
-        image={auction.offChainData?.image ?? ''}
-        // @ts-ignore
-        title={auction.offChainData?.name ?? ''}
-        // @ts-ignore
-        price={auction?.amounts?.priceFloor ?? ''}
-        // @ts-ignore
-        dollarValue={auction?.amounts?.formattedUsdAmount ?? ''}
-        bidPrice='3.12 SOL'
-        onClickDetails={() => {
-          console.log('On click details')
-          setShowQuickBuy(true)
-        }}
-        onQuickBuy={() => {
-          console.log('On click details')
-          setShowQuickBuy(true)
-        }}
-        link={link ?? ''}
-        {...restProps}
-      />
-      {showQuickBuy && (
-        <Modal onClose={() => setShowQuickBuy(false)} onClickOverlay={() => setShowQuickBuy(false)}>
-          <QuickBuy auction={auction} />
-        </Modal>
-      )}
-    </>
-  )
+  const { data } = useAhExtendedArt(listing?.metadata)
+  console.log('data', data)
+  if (!!data) {
+    return (
+      <>
+        <NFTCard
+          // @ts-ignore
+          image={data.image ?? ''}
+          // @ts-ignore
+          title={data.name ?? ''}
+          // @ts-ignore
+          price={listing?.seller_price}
+          // @ts-ignore
+          dollarValue={listing?.seller_price?.formattedUsdAmount ?? ''}
+          bidPrice={listing?.seller_price}
+          onClickDetails={() => {
+            console.log('On click details')
+            setShowQuickBuy(true)
+          }}
+          onQuickBuy={() => {
+            console.log('On click details')
+            setShowQuickBuy(true)
+          }}
+          link={link ?? ''}
+          {...restProps}
+        />
+        {showQuickBuy && (
+          <Modal
+            onClose={() => setShowQuickBuy(false)}
+            onClickOverlay={() => setShowQuickBuy(false)}>
+            <QuickBuy auction={listing} />
+          </Modal>
+        )}
+      </>
+    )
+  }
+  return <></>
 }

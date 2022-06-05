@@ -1,10 +1,21 @@
 import axios from 'axios'
 
-const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/offers'
+// const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/offers'
+const api = 'http://localhost:9000/offers'
 
 export const addOffer = async (offerInfo: any) => {
   try {
     const res = await axios.post(`${api}`, offerInfo)
+    return res
+  } catch (error: any) {
+    console.log('Add API error: ', error.message)
+    throw new Error(error.message)
+  }
+}
+
+export const updateOffer = async (updateOfferInfo: any, offerKey: string) => {
+  try {
+    const res = await axios.put(`${api}/${offerKey}`, updateOfferInfo)
     return res
   } catch (error: any) {
     console.log('Add API error: ', error.message)
@@ -46,6 +57,20 @@ export const getAuctionHouseNFBySeller = async (seller_pubkey: any) => {
     return res.data
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
+    if (error.response && error.response.data && error.response.data.message) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error(error.message)
+    }
+  }
+}
+
+export const cancelOffer = async (offer_id: string) => {
+  try {
+    const res = await axios.delete(`${api}/${offer_id}`)
+    return res.data
+  } catch (error: any) {
+    console.log('Delete API error: ', error.response.data.message)
     if (error.response && error.response.data && error.response.data.message) {
       throw new Error(error.response.data.message)
     } else {

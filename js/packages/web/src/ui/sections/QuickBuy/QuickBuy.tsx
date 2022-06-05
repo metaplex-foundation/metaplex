@@ -3,7 +3,7 @@ import CN from 'classnames'
 import { AttributesCard, Image, Tag, Button, SOLIcon } from '@oyster/common'
 import { AuctionView, useBidsForAuction, useCreators, useExtendedArt, useArt } from '../../../hooks'
 import useNFTData from '../../../hooks/useNFTData'
-import { AuctionCard } from '../../../components/AuctionCard'
+import { AhAuctionCard, AuctionCard } from '../../../components/AuctionCard'
 import { useCollections } from '../../../hooks/useCollections'
 import useAttribute from '../../../hooks/useAttribute'
 
@@ -97,7 +97,7 @@ export const QuickBuy: FC<QuickBuyProps> = ({ auction }: QuickBuyProps) => {
               <span className='ml-[4px] text-lg text-slate-500'>{usdValFormatted ?? ''}</span>
             </div>
           </div>
-          {auction && <AuctionCard auctionView={auction} hideDefaultAction={false} />}
+          {auction && <AhAuctionCard sale={auction} hideDefaultAction={false} />}
           {/* <div className='flex items-center gap-[16px]'>
             <Button size='lg' className='w-[230px]'>
               Buy Now

@@ -5,6 +5,7 @@ import { LiveAuctionViewState } from '../views/home/components/SalesList'
 import { useEffect, useState } from 'react'
 import { StringPublicKey, useMeta } from '@oyster/common'
 import { useExtendedCollection } from './useArt'
+import { getNFTGroupedByCollection } from '../api/ahListingApi'
 
 export interface CollectionView {
   pubkey: StringPublicKey
@@ -146,6 +147,26 @@ export const useNFTCollections = () => {
         // })
       }
     })
+    setLiveCollections(collections)
+  }
+
+  return {
+    liveCollections,
+  }
+}
+
+export const useAhNFTCollections = () => {
+  const [liveCollections, setLiveCollections] = useState<any[]>()
+  const { metadataByCollection } = useMeta()
+
+  useEffect(() => {
+    getCollections()
+  }, [])
+
+  const getCollections = async () => {
+    let collections: any[] = await getNFTGroupedByCollection()
+
+    console.log('collections', collections)
     setLiveCollections(collections)
   }
 

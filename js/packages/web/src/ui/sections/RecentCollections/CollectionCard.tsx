@@ -1,7 +1,10 @@
-import { BuyCard } from '@oyster/common'
-import { FC } from 'react'
-import { useExtendedArt } from '../../../hooks'
-
+import { BuyCard, useConnection } from '@oyster/common'
+import { FC, useEffect, useState } from 'react'
+import { useAhExtendedArt, useExtendedArt } from '../../../hooks'
+import { Connection, programs } from '@metaplex/js'
+const {
+  metadata: { Metadata },
+} = programs
 interface CollectionCardProps {
   collection: any
   hasButton?: boolean
@@ -15,21 +18,25 @@ const dx = {
 }
 
 const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
-  const { data } = useExtendedArt(collection.pubkey)
+  const { data } = useAhExtendedArt(collection.nfts[0].metadata)
+  if (!!data) {
+    // // console.log('CollectionCard', data)
+    const nameProp: { name: string } = { name: (data?.collection as any).name ?? '' }
 
-  const nameProp: { name: string } = { name: data?.name ?? '' }
-
-  if (collection.isExternal && collection._meta?.collection?.name) {
-    nameProp.name = collection._meta.collection.name
-  }
-  //@ts-ignore
-  if (data?.collection?.name) {
+    if (collection.isExternal && collection._meta?.collection?.name) {
+      nameProp.name = collection._meta.collection.name
+    }
     //@ts-ignore
-    nameProp.name = data?.collection?.name
+    if (data?.collection?.name) {
+      //@ts-ignore
+      nameProp.name = data?.collection?.name
+    }
+
+    return (
+      <BuyCard {...rest} {...dx} image={data?.image ?? ''} {...nameProp} onClickButton={() => {}} />
+    )
   }
-  return (
-    <BuyCard {...rest} {...dx} image={data?.image ?? ''} {...nameProp} onClickButton={() => {}} />
-  )
+  return <></>
 }
 
 export default CollectionCard
