@@ -30,3 +30,17 @@ export const getCollectionVolumn = async (collection: string) => {
     }
   }
 }
+
+export const getTotalStatistics = async () => {
+  try {
+    const res = await axios.get(`${api}/nft/total-statistics`)
+    return res.data
+  } catch (error: any) {
+    console.log('Get collection statistics API error: ', error.response.data.message)
+    if (error.response && error.response.data && error.response.data.message) {
+      throw new Error(error.response.data.message)
+    } else {
+      throw new Error(error.message)
+    }
+  }
+}
