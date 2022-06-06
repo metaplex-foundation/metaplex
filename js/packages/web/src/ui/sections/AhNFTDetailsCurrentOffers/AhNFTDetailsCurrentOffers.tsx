@@ -24,6 +24,7 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
   const connection = useConnection()
   const [loading, setLoading] = useState<boolean>(false)
   const [refresh, setRefresh] = useState(false)
+  const [walletHasActions, setwalletHasActions] = useState(false)
   useEffect(() => {
     const fetchData = async () => {
       const offers: any[] = await getAuctionHouseNFByMint(restProps.sale?.mint)
@@ -33,11 +34,19 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
           return elem.active == true
         })
         setOffers(activeOffers)
+        const walletHasActions_ =
+          offers.filter((elem: any) => {
+            return (
+              elem.buyer_wallet == wallet.publicKey?.toBase58() ||
+              elem.seller_wallet == wallet.publicKey?.toBase58()
+            )
+          }).length > 0
+        setwalletHasActions(walletHasActions_)
         console.log(activeOffers)
       }
     }
     fetchData().catch(console.error)
-  }, [restProps.sale.mint])
+  }, [refresh])
 
   return (
     <div className={NFTDetailsCurrentOffersClasses} {...restProps}>
@@ -45,7 +54,8 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
         <div className='grid-cell'>From</div>
         <div className='grid-cell'>Price</div>
         <div className='grid-cell'>Floor difference</div>
-        <div className='grid-cell flex items-center'>Action</div>
+        {walletHasActions ||
+          (offers.length > 0 && <div className='grid-cell flex items-center'>Action</div>)}
       </div>
 
       <div className='flex flex-col gap-[4px]'>
@@ -83,7 +93,21 @@ export const AhNFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
                 </span>
               </div> */}
             <div className='grid-cell'>
-              <span className='flex items-center gap-[4px]'>0</span>
+              <span className='flex items-center gap-[4px]'>
+                {Math.ceil(
+                  ((offer.offer_price - restProps.sale.sale_price) / restProps.sale.sale_price) *
+                    100
+                )}{' '}
+                %
+                {Math.ceil(
+                  ((offer.offer_price - restProps.sale.sale_price) / restProps.sale.sale_price) *
+                    100
+                ) > 0 ? (
+                  <i className='ri-arrow-up-line text-[16px] font-400' />
+                ) : (
+                  <i className='ri-arrow-down-line text-[16px] font-400' />
+                )}
+              </span>
             </div>
 
             <div className='grid-cell flex items-center gap-[4px]'>

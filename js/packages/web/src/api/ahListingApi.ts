@@ -61,6 +61,16 @@ export const getNFTGroupedByCollection = async () => {
   }
 }
 
+export const getAllActivitiesForNFT = async (mint: any) => {
+  try {
+    const res = await axios.get(`${api}/sales/${mint}`)
+    return res.data
+  } catch (error: any) {
+    console.log('Add API error: ', error.message)
+    console.log(error.message)
+  }
+}
+
 export const getListingsBySeller = async (seller_pubkey: any) => {
   try {
     const res = await axios.get(`${api}/listing?seller=${seller_pubkey}`)
