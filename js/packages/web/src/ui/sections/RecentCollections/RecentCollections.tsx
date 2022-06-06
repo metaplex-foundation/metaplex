@@ -18,14 +18,23 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
 }) => {
   const RecentCollectionsClasses = CN(`recent-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
+
+  if (!Array.isArray(liveCollections)) {
+    liveCollections = [liveCollections]
+  }
+
   const slides = (liveCollections || []).map((collection: any) => {
-    return {
-      id: collection.collection,
-      Component: (
-        <Link to={`/collection/${collection.collection}`} key={collection.collection}>
-          <CollectionCard collection={collection} />
-        </Link>
-      ),
+    if (collection) {
+      return {
+        id: collection.collection,
+        Component: (
+          <Link to={`/collection/${collection.collection}`} key={collection.collection}>
+            <CollectionCard collection={collection} />
+          </Link>
+        ),
+      }
+    } else {
+      return <></>
     }
   })
 
