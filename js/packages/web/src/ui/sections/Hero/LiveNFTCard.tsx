@@ -1,7 +1,7 @@
 import { BidCard, pubkeyToString } from '@oyster/common'
 import { FC, useEffect, useState } from 'react'
 import { getProfile } from '../../../api'
-import { useExtendedArt } from '../../../hooks'
+import { useAhExtendedArt, useExtendedArt } from '../../../hooks'
 import { CollectionView } from '../../../hooks/useCollections'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import { LiveAuctionViewState } from '../../views'
@@ -10,11 +10,11 @@ interface LiveNFTCardProps {
   className: string
   onClickButton?: () => void
   hasIndicator?: boolean
-  collection: CollectionView
+  collection: any
 }
 
 const LiveNFTCard: FC<LiveNFTCardProps> = ({ collection, ...rest }) => {
-  const { data } = useExtendedArt(collection.pubkey)
+  const { data } = useAhExtendedArt(collection?.nfts[0].metadata)
 
   const nameProp: { name: string } = { name: data?.name ?? '' }
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
@@ -25,30 +25,28 @@ const LiveNFTCard: FC<LiveNFTCardProps> = ({ collection, ...rest }) => {
     nameProp.name = data?.collection?.name
   }
 
-  const firstAuction =
-    auctions.find(auction => {
-      return auction.thumbnail.metadata.info.collection?.key === pubkeyToString(collection.mint)
-    }) || null
+  // const firstAuction =
+  //   auctions.find(auction => {
+  //     return auction.thumbnail.metadata.info.collection?.key === pubkeyToString(collection.mint)
+  //   }) || null
 
   useEffect(() => {
     if (!user) {
-      const userPubKey = firstAuction?.auctionManager?.authority || null
+      const userPubKey = collection?.nfts[0]?.seller_wallet || null
       if (userPubKey) {
         getProfile(userPubKey).then(({ data }) => {
           setUser(data)
         })
       }
     }
-  }, [firstAuction, user])
+  }, [collection, user])
 
   let avatarLabel = ''
-  if (firstAuction?.auctionManager?.authority && !user) {
+  if (collection?.nfts[0]?.seller_wallet && !user) {
     avatarLabel =
-      firstAuction?.auctionManager?.authority.slice(0, 6) +
+      collection?.nfts[0]?.seller_wallet.slice(0, 6) +
       '...' +
-      firstAuction?.auctionManager?.authority.slice(
-        firstAuction?.auctionManager?.authority.length - 6
-      )
+      collection?.nfts[0]?.seller_wallet.slice(collection?.nfts[0]?.seller_wallet.length - 6)
   } else if (user) {
     avatarLabel = user.user_name
   }

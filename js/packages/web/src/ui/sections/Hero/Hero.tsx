@@ -6,7 +6,7 @@ import { Button, MetaChip } from '@oyster/common'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import LiveNFTCard from './LiveNFTCard'
 import { LiveAuctionViewState } from '../../views/Home'
-import { useNFTCollections } from '../../../hooks/useCollections'
+import { useAhNFTCollections, useNFTCollections } from '../../../hooks/useCollections'
 
 export interface HeroProps {
   className: string
@@ -16,7 +16,7 @@ export const Hero: FC<HeroProps> = ({ className }) => {
   const HeroClasses = CN(`hero w-full`, className)
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const [talentedArtists, setTalentedArtists] = useState(0)
-  const { liveCollections } = useNFTCollections()
+  const { liveCollections } = useAhNFTCollections() as any
 
   useEffect(() => {
     const newArray: any[] = []
@@ -70,7 +70,7 @@ export const Hero: FC<HeroProps> = ({ className }) => {
           </div>
         </div>
 
-        {liveCollections.length && (
+        {liveCollections?.length && (
           <div className='hero__center group relative ml-auto flex h-[452px] w-[395px]'>
             {liveCollections.length >= 2 && (
               <Link to={`/collection/${liveCollections[1].mint}`}>
@@ -80,7 +80,7 @@ export const Hero: FC<HeroProps> = ({ className }) => {
                 />
               </Link>
             )}
-            {liveCollections.length >= 1 && (
+            {liveCollections?.length >= 1 && (
               <Link to={`/collection/${liveCollections[0].mint}`}>
                 <LiveNFTCard
                   collection={liveCollections[0]}
