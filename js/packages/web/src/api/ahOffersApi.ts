@@ -9,7 +9,7 @@ export const addOffer = async (offerInfo: any) => {
     return res
   } catch (error: any) {
     console.log('Add API error: ', error.message)
-    throw new Error(error.message)
+    console.log(error.message)
   }
 }
 
@@ -19,7 +19,7 @@ export const updateOffer = async (updateOfferInfo: any, offerKey: string) => {
     return res
   } catch (error: any) {
     console.log('Add API error: ', error.message)
-    throw new Error(error.message)
+    console.log(error.message)
   }
 }
 
@@ -30,9 +30,9 @@ export const getAllAuctionHouseNFTOffers = async (ah: any) => {
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
     if (error.response && error.response.data && error.response.data.message) {
-      throw new Error(error.response.data.message)
+      console.log(error.response.data.message)
     } else {
-      throw new Error(error.message)
+      console.log(error.message)
     }
   }
 }
@@ -44,9 +44,9 @@ export const getAuctionHouseNFByMint = async (mint: any) => {
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
     if (error.response && error.response.data && error.response.data.message) {
-      throw new Error(error.response.data.message)
+      console.log(error.response.data.message)
     } else {
-      throw new Error(error.message)
+      console.log(error.message)
     }
   }
 }
@@ -58,9 +58,9 @@ export const getAuctionHouseNFBySeller = async (seller_pubkey: any) => {
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
     if (error.response && error.response.data && error.response.data.message) {
-      throw new Error(error.response.data.message)
+      console.log(error.response.data.message)
     } else {
-      throw new Error(error.message)
+      console.log(error.message)
     }
   }
 }
@@ -72,9 +72,9 @@ export const cancelOffer = async (offer_id: string) => {
   } catch (error: any) {
     console.log('Delete API error: ', error.response.data.message)
     if (error.response && error.response.data && error.response.data.message) {
-      throw new Error(error.response.data.message)
+      console.log(error.response.data.message)
     } else {
-      throw new Error(error.message)
+      console.log(error.message)
     }
   }
 }
@@ -86,9 +86,9 @@ export const getAuctionHouseNFByBuyer = async (buyer_pubkey: any) => {
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
     if (error.response && error.response.data && error.response.data.message) {
-      throw new Error(error.response.data.message)
+      console.log(error.response.data.message)
     } else {
-      throw new Error(error.message)
+      console.log(error.message)
     }
   }
 }
