@@ -281,7 +281,7 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
             </div>
 
             <div className='flex flex-col gap-[12px]'>
-              <h5 className='text-h6 font-400'>Price</h5>
+              <h5 className='text-h6 font-400'>Current price</h5>
               <div className='flex items-center gap-[8px]'>
                 <SOLIcon size={24} />
                 <h4 className='text-h4 font-600 leading-[1]'>{solVal} SOL</h4>
