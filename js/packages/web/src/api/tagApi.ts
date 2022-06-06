@@ -2,6 +2,9 @@ import axios from 'axios'
 
 const HEADER_TOKEN = '4Kk`c,+p?;7<Na<vTKt{d;Pg.K#=FzsuM+c}c-FKn#AhQA$>cdAcwHX:wc]>=3Gq'
 
+const api = `${process.env.NEXT_API_URL}`
+
+
 export async function createTokenForNft(publicKey: string, tagName: string, metadata: any) {
   try {
     const bodyData = {
@@ -54,7 +57,7 @@ export async function getNftForTag() {
 export async function getCollectionTags() {
   try {
     const response = await axios.get(
-      'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/tags/get',
+      `${api}/tags/get`,
       {
         headers: {
           'x-kmplx-token': HEADER_TOKEN,

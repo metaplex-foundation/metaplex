@@ -17,6 +17,7 @@
     "build": "lerna run build --ignore=token-entangler --ignore=candy-machine-ui",
     "build-web": "lerna run build --stream --scope @oyster/common --scope web --scope ui",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web --scope ui",
+    "start:local": "cross-env CI=true lerna run start:local --scope @oyster/common --stream --parallel --scope web --scope ui ",
     "lint": "prettier -c 'packages/*/{src,test}/**/*.{ts,tsx}' && npm run lint:eslint",
     "lint:eslint": "eslint 'packages/*/{src,test}/**/*.{ts,tsx}'",
     "lint:fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && eslint --fix 'packages/*/{src,test}/**/*.{ts,tsx}'",
