@@ -170,7 +170,7 @@ export const Collection: FC<CollectionProps> = () => {
   }, [colData])
 
   useEffect(() => {
-    filterFunction((items: NFTItemInterface[]) => {
+    filterFunction((items: any[]) => {
       return items.filter(filterFun)
     })
   }, [searchText, filters])

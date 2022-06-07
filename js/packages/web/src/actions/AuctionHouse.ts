@@ -86,7 +86,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     return nft
   }
 
-  const onSell = async (amount: number, nftmetadata: any) => {
+  const onSell = async (amount: number, nftmetadata: any, extendedData?: any) => {
     const nft = getNFT(nftmetadata)
     const auctionHouse = await getAH()
     if (amount && nft) {
@@ -104,6 +104,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
         url: nftmetadata.metadata.info.data.uri,
         receipt: res.receipt,
         sellerTradeState: res.sellerTradeState,
+        extendedData: extendedData,
       })
       return listing
     }
