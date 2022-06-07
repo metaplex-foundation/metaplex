@@ -9,6 +9,8 @@ import { CollectionActivityList } from '../../sections/CollectionActivityList'
 import { getCollectionStatistics, getCollectionVolumn } from '../../../api'
 import { useParams } from 'react-router-dom'
 import {
+  useAhExtendedArt,
+  useArt,
   useExtendedArt,
   // useExtendedCollection
 } from '../../../hooks'
@@ -31,6 +33,7 @@ import { useNFTCollections } from '../../../hooks/useCollections'
 import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
 import { getCollectionHeaderInfo } from '../../../api'
 import { getAllListingsByCollection } from '../../../api/ahListingApi'
+import { AnyMxRecord } from 'dns'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
 const RANGE_FILTERS = 'Range'
@@ -82,13 +85,8 @@ export const Collection: FC<CollectionProps> = () => {
   const { id }: ParamsInterface = useParams()
   const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
   const { liveCollections } = useNFTCollections()
-
+  const [colData, setData] = useState<any>()
   const [nftListings, setnftListings] = useState()
-
-  const selectedCollection = liveCollections.find(({ mint }) => mint === id) || null
-
-  const pubkey = selectedCollection?.pubkey
-  const { data: colData } = useExtendedArt(pubkey)
 
   const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
     collectionName: '',
@@ -99,49 +97,74 @@ export const Collection: FC<CollectionProps> = () => {
   })
 
   useEffect(() => {
-    debugger
+    const processJson = (extended: any, uri: string) => {
+      if (!extended || extended?.properties?.files?.length === 0) {
+        return
+      }
+
+      if (extended?.image) {
+        const file = extended.image.startsWith('http') ? extended.image : `${uri}/${extended.image}`
+        extended.image = file
+      }
+
+      return extended
+    }
+
     const fetchData = async () => {
       const listings = await getAllListingsByCollection(id)
       if (!!listings) {
         setnftListings(listings)
+
+        const uri = (listings[0] as any).metadata.info.data.uri
+        fetch(uri)
+          .then(async _ => {
+            try {
+              const data = await _.json()
+              try {
+                localStorage.setItem(uri, JSON.stringify(data))
+              } catch {
+                // ignore
+              }
+              setData(processJson(data, uri))
+            } catch {
+              return undefined
+            }
+          })
+          .catch(() => {
+            return undefined
+          })
       }
     }
     fetchData().catch(console.error)
   }, [id])
 
   useEffect(() => {
-    if (
-      colData &&
-      colData.properties &&
-      colData.properties.creators &&
-      colData.properties.creators.length > 0 &&
-      colData.collection
-    ) {
-      const collection = JSON.parse(JSON.stringify(colData.collection))
-      getCollectionHeaderInfo(colData?.properties.creators[0].address, collection.name).then(
-        data => {
-          if (data) {
-            setCollectionHeaderData({
-              collectionName: data.collection_name,
-              description: data.project_description,
-              creatorPublicKey: data.creator_public_key,
-              collectionImageURL: data.collection_image_url,
-              collectionBannerURL: data.collection_banner_url,
-            })
-          } else {
-            setCollectionHeaderData({
-              collectionName: collection.name,
-              description: colData.description,
-              collectionImageURL: colData.image,
-            })
-          }
+    if (colData) {
+      getCollectionHeaderInfo(
+        colData?.properties.creators[0].address,
+        colData.collection.name
+      ).then(data => {
+        if (data) {
+          setCollectionHeaderData({
+            collectionName: data.collection_name,
+            description: data.project_description,
+            creatorPublicKey: data.creator_public_key,
+            collectionImageURL: data.collection_image_url,
+            collectionBannerURL: data.collection_banner_url,
+          })
+        } else {
+          setCollectionHeaderData({
+            collectionName: colData.collection.name,
+            description: colData.description,
+            collectionImageURL: colData.image,
+          })
         }
-      )
+      })
     } else {
       setCollectionHeaderData({
-        collectionName: colData?.name,
-        description: colData?.description,
-        collectionImageURL: colData?.image,
+        collectionName: colData?.collection.name,
+        description: colData?.collection.description,
+        collectionImageURL: colData?.collection.image,
       })
     }
   }, [colData])
