@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/launchpad-submission'
+const api = `${process.env.NEXT_API_URL}/launchpad-submission`
 
 export const addSubmission = async (data: any) => {
   try {

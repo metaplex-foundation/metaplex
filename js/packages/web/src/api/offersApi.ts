@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/offers'
+// const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/offers'
+const api = `${process.env.NEXT_API_URL}/offers`
 
 export const getOffers = async (type: string, publicKey: string) => {
   try {

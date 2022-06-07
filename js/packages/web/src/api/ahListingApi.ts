@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/nft'
+// const api = 'http://ec2-18-208-135-190.compute-1.amazonaws.com:9000/nft'
+const api = `${process.env.NEXT_API_URL}/nft`
 // const api = 'http://localhost:9000/nft'
 
 export const getAllListingsByCollection = async (collection: any) => {

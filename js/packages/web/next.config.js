@@ -41,6 +41,7 @@ module.exports = withPlugins(plugins, {
     NEXT_CG_SPL_TOKEN_IDS: process.env.CG_SPL_TOKEN_IDS,
     NEXT_ENABLE_NFT_PACKS: process.env.REACT_APP_ENABLE_NFT_PACKS,
     NEXT_ENABLE_NFT_PACKS_REDEEM: process.env.REACT_APP_ENABLE_NFT_PACKS_REDEEM,
+    NEXT_API_URL: process.env.API_URL
   },
   async rewrites() {
     return [
