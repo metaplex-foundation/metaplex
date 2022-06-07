@@ -67,10 +67,11 @@
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",
-    "start": "next dev",
+    "start": "env-cmd -f .env.production next dev",
+    "start:local": "env-cmd -f .env.local next dev",
     "build": "next build",
     "export": "next export -o ../../build/web",
-    "start:prod": "next start",
+    "start:prod": "env-cmd -f .env.production next start",
     "test": "jest --passWithNoTests",
     "deploy:ar": "yarn export && arweave deploy-dir  ../../build/web --key-file ",
     "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/hellomuffintech/Karmaverse -t true",
