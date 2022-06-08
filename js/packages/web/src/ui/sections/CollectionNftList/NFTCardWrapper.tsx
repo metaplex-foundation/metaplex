@@ -56,11 +56,10 @@ export const AuctionHouseNFTCardWrapper: FC<AuctionHouseNFTCardWrapperInterface>
   link,
   ...restProps
 }) => {
-  debugger
   const [showQuickBuy, setShowQuickBuy] = useState(false)
   const { data } = useAhExtendedArt(listing?.metadata)
   console.log('data', data)
-  debugger
+
   if (!!data) {
     return (
       <>
