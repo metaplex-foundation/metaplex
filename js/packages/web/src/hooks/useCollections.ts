@@ -160,13 +160,14 @@ export const useAhNFTCollections = () => {
   const { metadataByCollection } = useMeta()
 
   useEffect(() => {
-    getCollections()
+    const fetchData = async () => {
+      await getCollections()
+    }
+    fetchData().catch(console.error)
   }, [])
 
   const getCollections = async () => {
     let collections: any[] = await getNFTGroupedByCollection()
-
-    console.log('collections', collections)
     setLiveCollections(collections)
   }
 
