@@ -61,6 +61,7 @@ export const WalletModal: FC = () => {
         iconBefore={<img src={phatomWallet?.icon} style={{ width: '1.2rem' }} />}
         size='lg'
         appearance='ghost'
+        style={{color: 'white'}}
         className='mb-[12px] w-full'
       >
         Connect to Phantom

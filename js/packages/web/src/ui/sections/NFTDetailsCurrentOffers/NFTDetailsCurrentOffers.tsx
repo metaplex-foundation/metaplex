@@ -20,6 +20,7 @@ export const NFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
     remaining: { remainingHours },
   } = useNFTData(restProps.auction)
 
+  const floorPrice = restProps?.auction?.auction?.info?.priceFloor?.minPrice?.toNumber() || 0;
   return (
     <div className={NFTDetailsCurrentOffersClasses} {...restProps}>
       <div className='mb-[4px] grid grid-cols-[1fr_1fr_1fr_1fr_0.5fr] px-[8px] pb-[8px] text-md font-500 text-slate-500'>
@@ -27,7 +28,7 @@ export const NFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
         <div className='grid-cell'>Price</div>
         <div className='grid-cell'>Floor difference</div>
         <div className='grid-cell'>Expiration</div>
-        <div className='grid-cell flex items-center'>Action</div>
+        {/* <div className='grid-cell flex items-center'>Action</div> */}
       </div>
 
       <div className='flex flex-col gap-[4px]'>
@@ -66,24 +67,38 @@ export const NFTDetailsCurrentOffers: FC<NFTDetailsCurrentOffersProps> = ({
                 </span>
               </div> */}
             <div className='grid-cell'>
-              <span className='flex items-center gap-[4px]'>0</span>
+              <span className='flex items-center gap-[4px]'>
+                {Math.ceil(
+                  ((bid?.info?.lastBid.toNumber() - floorPrice) / floorPrice) *
+                    100
+                )}{' '}
+                %
+                {Math.ceil(
+                  ((bid?.info?.lastBid.toNumber() - floorPrice) / floorPrice) *
+                    100
+                ) > 0 ? (
+                  <i className='ri-arrow-up-line text-[16px] font-400' />
+                ) : (
+                  <i className='ri-arrow-down-line text-[16px] font-400' />
+                )}
+              </span>
             </div>
 
             <div className='grid-cell'>{remainingHours}h</div>
 
-            <div className='grid-cell flex items-center gap-[4px]'>
+            {/* <div className='grid-cell flex items-center gap-[4px]'> */}
               {/* Dev note: Switch these two buttons conditionally */}
 
-              <Button appearance='ghost' isRounded={false} view='outline' size='sm'>
+              {/* <Button appearance='ghost' isRounded={false} view='outline' size='sm'>
                 Cancel
-              </Button>
+              </Button> */}
 
               {/* Dev note: Uncomment this button for Approve button (Different button style so Approve looks like a primary button) */}
               
               {/* <Button appearance='neutral' isRounded={false} size='sm'>
                 Approve
               </Button> */}
-            </div>
+            {/* </div> */}
           </div>
         ))}
       </div>
