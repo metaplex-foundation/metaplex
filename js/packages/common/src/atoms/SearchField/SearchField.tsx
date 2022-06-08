@@ -43,7 +43,7 @@ export const SearchField: FC<SearchFieldProps> = ({
 }
 
 SearchField.defaultProps = {
-  placeholder: 'Search collections, NFTs, or Tags',
+  placeholder: 'Search NFTs',
   size: 'md',
   view: 'solid',
   isRounded: true,

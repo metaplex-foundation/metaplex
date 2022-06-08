@@ -20,6 +20,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
   numberOfItems,
   owners,
   volumn,
+  floorPrice,
   ...restProps
 }: CollectionHeaderProps) => {
   const CollectionHeaderClasses = CN(
@@ -69,6 +70,7 @@ export const CollectionHeader: FC<CollectionHeaderProps> = ({
         owners={owners}
         numberOfItems={numberOfItems}
         volumn={volumn}
+        floorPrice={floorPrice}
         className='relative z-30 mx-auto mt-[-50px] max-w-[728px]'
       />
     </>
