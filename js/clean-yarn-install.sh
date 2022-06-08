@@ -6,7 +6,7 @@ rm -rf ./web/node_modules
 echo "Removing js yarn lock file ...."
 rm ./yarn.lock
 echo "Clearning npm cache ...."
-npm cache clear --force
+yarn cache clean
 
 echo "yarn install"
 yarn install 

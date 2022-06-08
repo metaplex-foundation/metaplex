@@ -1,28 +1,34 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 import { AttributesCard, Image, Tag, Button, SOLIcon } from '@oyster/common'
-import { AuctionView, useBidsForAuction, useCreators, useExtendedArt, useArt } from '../../../hooks'
+import {
+  AuctionView,
+  useBidsForAuction,
+  useCreators,
+  useExtendedArt,
+  useArt,
+  useAhExtendedArt,
+} from '../../../hooks'
 import useNFTData from '../../../hooks/useNFTData'
 import { AhAuctionCard, AuctionCard } from '../../../components/AuctionCard'
 import { useCollections } from '../../../hooks/useCollections'
 import useAttribute from '../../../hooks/useAttribute'
+import useAhNFTData from '../../../hooks/useAhNFTData'
 
 export interface QuickBuyProps {
-  auction: AuctionView
+  auction: any
 }
 
 export const AhQuickBuy: FC<QuickBuyProps> = ({ auction }: QuickBuyProps) => {
   const QuickBuyClasses = CN(`quick-buy flex flex-col gap-[32px]`)
-  const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
+  const { data } = useAhExtendedArt(auction?.metadata)
   const {
     value: { solVal, usdValFormatted },
-  } = useNFTData(auction)
+  } = useAhNFTData(auction)
   const url = data?.image
-  const { liveCollections } = useCollections()
-  const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
-  const { data: collection } = useExtendedArt(pubkey)
-  const { attributesPercentages } = useAttribute(auction)
-  const art = useArt(auction.thumbnail.metadata.pubkey)
+  const { data: collection } = useAhExtendedArt(auction?.metadata)
+  // const { attributesPercentages } = useAttribute(auction)
+  const art = useArt(auction.metadata.pubkey)
 
   console.log('auction', auction)
   console.log('Quick Buy', data)
@@ -60,7 +66,7 @@ export const AhQuickBuy: FC<QuickBuyProps> = ({ auction }: QuickBuyProps) => {
             <h5 className='text-h6 font-500'>Current price</h5>
             <div className='flex items-center gap-[8px]'>
               <SOLIcon size={24} />
-              <h4 className='text-h4 font-600 leading-[1]'>{solVal ?? ''} SOL</h4>
+              <h4 className='text-h4 font-600 leading-[1]'>{auction?.sale_price ?? ''} SOL</h4>
               <span className='ml-[4px] text-lg text-slate-500'>{usdValFormatted ?? ''}</span>
             </div>
           </div>

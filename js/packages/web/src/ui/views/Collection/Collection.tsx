@@ -139,6 +139,7 @@ export const Collection: FC<CollectionProps> = () => {
   }, [id])
 
   useEffect(() => {
+    console.log('colData', colData)
     if (colData) {
       getCollectionHeaderInfo(
         colData?.properties.creators[0].address,
@@ -206,7 +207,7 @@ export const Collection: FC<CollectionProps> = () => {
     }, 200)
   }
 
-  const filterFun = (auction: any) => {
+  const filterFun = (sale: any) => {
     if (!filters.length && !searchText) {
       return true
     }
@@ -216,7 +217,7 @@ export const Collection: FC<CollectionProps> = () => {
     // Attribute filter
     const attrFilters = filters.filter(({ category }) => category === ATTRIBUTE_FILTERS)
     if (attrFilters.length) {
-      auction.offChainData.attributes.forEach(i => {
+      sale.attributes.forEach(i => {
         const a =
           filters.filter(
             ({ type, text }) =>
@@ -231,9 +232,9 @@ export const Collection: FC<CollectionProps> = () => {
 
     return (
       (searchText &&
-        auction.offChainData &&
-        auction.offChainData.name &&
-        auction.offChainData.name.toLowerCase().includes(searchText.toLowerCase())) ||
+        sale.extendedData &&
+        sale.extendedData.name &&
+        sale.extendedData.name.toLowerCase().includes(searchText.toLowerCase())) ||
       hasAttr
     )
 

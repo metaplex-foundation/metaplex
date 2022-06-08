@@ -29,7 +29,7 @@ const useAhNFTData = (sale: any) => {
   const tokenPrice = tokenInfo?.address == WRAPPED_SOL_MINT.toBase58() ? solPrice : altSplPrice
 
   useEffect(() => {
-    setPriceUSD(tokenPrice * amount)
+    setPriceUSD(solPrice * amount)
   }, [amount, tokenPrice, altSplPrice])
 
   const usdValFormatted = currency(priceUSD || 0).format()
