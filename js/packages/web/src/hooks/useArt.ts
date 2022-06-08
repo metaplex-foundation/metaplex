@@ -233,6 +233,8 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 export const useAhExtendedArt = (account?: any) => {
   // const { metadata } = useMeta()
 
+  if (!account) return {}
+
   const [data, setData] = useState<IMetadataExtension>()
   const { width } = useWindowDimensions()
   const { ref, inView } = useInView({ root: null, rootMargin: '-100px 0px' })

@@ -12,6 +12,7 @@ import PutOnAuction from './PutOnAuction'
 import { useHistory } from 'react-router-dom'
 import { getListingByMint } from '../../api/ahListingApi'
 import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
+import { useAhExtendedArt } from '../../hooks'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
@@ -36,6 +37,10 @@ const InstantSale = ({
   const { whitelistedCreatorsByCreator, storeIndexer } = useMeta()
   const history = useHistory()
   const [sale, setSale] = useState()
+
+  const { data: extended } = useAhExtendedArt(items[0].metadata)
+
+  console.log('extended', extended)
 
   const mint = useMint(QUOTE_MINT)
   // const [auctionObj, setAuctionObj] = useState<
@@ -100,7 +105,11 @@ const InstantSale = ({
     const nft = items[0]
 
     nft['mintKey'] = mintKey
-    const sale = await listAuctionHouseNFT(connection, wallet).onSell(instantSalePrice, nft)
+    const sale = await listAuctionHouseNFT(connection, wallet).onSell(
+      instantSalePrice,
+      nft,
+      extended
+    )
     setSale(sale)
     setLoading(false)
     notify({
