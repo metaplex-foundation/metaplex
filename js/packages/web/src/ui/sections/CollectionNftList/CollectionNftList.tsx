@@ -3,6 +3,7 @@ import { AuctionView } from '../../../hooks'
 import { AuctionHouseNFTCardWrapper, NFTCardWrapper } from './NFTCardWrapper'
 import { Modal } from '@oyster/common'
 import { QuickBuy } from '../QuickBuy'
+import { AhQuickBuy } from '../AhQuickBuy'
 
 export interface CollectionNftListProps {
   auctions: AuctionView[]
@@ -54,13 +55,13 @@ export const AhCollectionNftList: FC<AhCollectionNftListProps> = ({ listings }) 
               testAc={true}
             />
           ))}
-          {/* {showQuickBuy && (
-          <Modal
-            onClose={() => setShowQuickBuy(false)}
-            onClickOverlay={() => setShowQuickBuy(false)}>
-            <QuickBuy />
-          </Modal>
-        )} */}
+          {showQuickBuy && (
+            <Modal
+              onClose={() => setShowQuickBuy(false)}
+              onClickOverlay={() => setShowQuickBuy(false)}>
+              <AhQuickBuy auction={listings} />
+            </Modal>
+          )}
         </div>
       </>
     )

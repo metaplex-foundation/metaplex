@@ -21,6 +21,8 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
   const [showAttributes, setShowAttributes] = useState(false)
   const [attr, setAttr] = useState()
 
+  console.log('filterAttributes', filterAttributes)
+
   const addToFilter = label => {
     addAttributeFilters({
       attr,
