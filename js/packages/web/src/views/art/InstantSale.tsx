@@ -105,6 +105,7 @@ const InstantSale = ({
     const nft = items[0]
 
     nft['mintKey'] = mintKey
+
     const sale = await listAuctionHouseNFT(connection, wallet).onSell(
       instantSalePrice,
       nft,

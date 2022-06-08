@@ -36,7 +36,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       creator: ah.creator_wallet,
       auctionHouseFeeAccount: ah.fee_payer_wallet,
     }
-    // For testing
+    // // For testing
     // const auctionHouse: AuctionHouse = {
     //   address: '5RBV8e6zWkTekobvjnAWUQQKHk8PgyCV8tBt8p2Lb1Ak',
     //   treasuryMint: 'So11111111111111111111111111111111111111112',
@@ -125,7 +125,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     const lmpAmount = amount
     if (amount && nft) {
       const res: any = await sdk.offers(auctionHouse).make({ amount: lmpAmount, nft })
-      debugger
+
       const offer = await addOffer({
         mint: nft.mintAddress,
         auction_house_wallet: auctionHouse.address,
@@ -219,7 +219,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
   const onCancelListing = async (nftmetadata: any) => {
     const auctionHouse = await getAH()
     const nft = getNFTOffer(nftmetadata)
-    debugger
+
     const amount = nftmetadata.sale_price * LAMPORTS_PER_SOL
     const saleList = {
       address: nftmetadata.receipt,
@@ -249,7 +249,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
   const onCancelOffer = async (nftmetadata: any, offer: any) => {
     const auctionHouse = await getAH()
     const nft = getNFTOffer(nftmetadata)
-    debugger
+
     const lampAmount = offer.offer_price * LAMPORTS_PER_SOL
     const ahOffer: Offer = {
       address: offer.receipt,
@@ -270,6 +270,13 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     return offer_
   }
 
+  const onWithdrawFromTreasury = async (amount: number = 0) => {
+    const auctionHouse = await getAH()
+    console.log(auctionHouse)
+    await sdk.listings(auctionHouse).withdrawFromTreasury(new BN(amount))
+    return true
+  }
+
   return {
     onSell,
     onMakeOffer,
@@ -279,5 +286,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     onBuy,
     onCancelOffer,
     onCancelListing,
+    onWithdrawFromTreasury,
+    getAH,
   }
 }
