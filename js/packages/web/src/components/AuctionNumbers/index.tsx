@@ -12,6 +12,7 @@ import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks'
 import { AmountLabel } from '../AmountLabel'
 import { useAuctionCountdown } from '../../hooks/useAuctionCountdown'
 import { useTokenList } from '../../contexts/tokenList'
+import { SOLIcon } from '@oyster/common'
 
 export const AuctionCountdown = (props: { auctionView: AuctionView; labels: boolean }) => {
   const { auctionView } = props
@@ -70,16 +71,24 @@ export const AuctionNumbers = (props: {
             />
           )}
           {!auctionView.isInstantSale && isStarted && bids.length > 0 && (
-            <AmountLabel
-              displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
-              style={{ marginBottom: props.showAsRow ? 0 : 10 }}
-              containerStyle={{
-                flexDirection: props.showAsRow ? ' row' : 'column',
-              }}
-              title="Highest bid"
-              tokenInfo={tokenInfo}
-              amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
-            />
+            <div className='flex flex-col gap-[12px]'>
+              <h5 className='text-h6 font-400'>Current price</h5>
+              <div className='flex items-center gap-[8px]'>
+                <SOLIcon size={24} />
+                <h4 className='text-h4 font-600 leading-[1]'>{formatTokenAmount(bids[0].info.lastBid, mintInfo)} SOL</h4>
+                <span className='ml-[4px] text-lg text-slate-500'>{'$34'}</span>
+              </div>
+            </div>
+            // <AmountLabel
+            //   displaySymbol={tokenInfo?.symbol || 'CUSTOM'}
+            //   style={{ marginBottom: props.showAsRow ? 0 : 10 }}
+            //   containerStyle={{
+            //     flexDirection: props.showAsRow ? ' row' : 'column',
+            //   }}
+            //   title="Highest bid"
+            //   tokenInfo={tokenInfo}
+            //   amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
+            // />
           )}
         </>
       )}

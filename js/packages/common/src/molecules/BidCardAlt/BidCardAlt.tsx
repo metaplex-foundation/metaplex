@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 import { Image, Button, MetaChip } from '../../atoms'
+import { Link } from 'react-router-dom'
 
 export interface BidCardAltProps {
   [x: string]: any
@@ -37,9 +38,11 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
       <div className='flex justify-between rounded-b p-[20px] transition-all'>
         <div className='flex flex-col gap-[8px]'>
           <MetaChip overline='Remaining Time' subHeading={remainingTime} />
-          <Button appearance='neutral' onClick={onClickButton}>
-            Bid Now
-          </Button>
+          <Link to={onClickButton}>
+            <Button appearance='neutral'>
+              Bid Now
+            </Button>
+          </Link>
         </div>
 
         <div className='flex'>
