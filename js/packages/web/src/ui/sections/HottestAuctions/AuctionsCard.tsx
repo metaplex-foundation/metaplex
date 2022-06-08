@@ -20,7 +20,7 @@ const AuctionsCard: FC<AuctionsCardProps> = ({ auction }) => {
       remainingTime={`${remainingHours}h : ${remainingMinutes}m : ${remainingSeconds}s`}
       price={!priceNaN ? `Ⓞ ${solVal} SOL` : ''}
       dollarValue={usdValFormatted}
-      onClickButton={() => {}}
+      onClickButton={`/auction/${auction.auction.pubkey}`}
     />
   )
 }

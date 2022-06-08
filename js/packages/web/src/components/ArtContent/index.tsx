@@ -52,7 +52,7 @@ export const CachedImageContent = ({
 }) => {
   const { cachedBlob } = useCachedImage(uri || '')
 
-  return (
+  return (<span className='w-full overflow-hidden rounded-[8px]'>
     <Image
       // fallback='image-placeholder.svg'
       src={cachedBlob}
@@ -62,7 +62,7 @@ export const CachedImageContent = ({
       // wrapperStyle={{ ...style }}
       // placeholder={<ThreeDots />}
     />
-  )
+  </span>)
 }
 
 const VideoArtContent = ({
