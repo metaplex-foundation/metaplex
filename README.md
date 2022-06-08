@@ -1,5 +1,7 @@
 modify    js/packages/candy-machine-ui/src
+
 modify    js/packages/candy-machine-ui/.env
+
 modify    config.json
 
 assets folder contains metadatas and pngs
