@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import {
   Dropdown,
@@ -13,11 +13,19 @@ import { AuctionView, useAuction, useExtendedArt } from '../../../hooks'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import { LiveAuctionViewState } from '../../views'
 import { useHistory } from 'react-router-dom'
+import { getAllListingsByCollection } from '../../../api/ahListingApi'
 
 export interface NFTDetailsTopBarProps {
   id: string
   className: string
   onSetAuction: (data: AuctionView) => void
+}
+
+export interface AhNFTDetailsTopBarProps {
+  id: string
+  className: string
+  sale: any
+  mintAddress: string
 }
 
 export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onSetAuction }) => {
@@ -103,6 +111,170 @@ export const NFTDetailsTopBar: FC<NFTDetailsTopBarProps> = ({ id, className, onS
             onClick={() => {
               if (collection) {
                 history.push(`/collection/${collection}`)
+              }
+            }}
+            appearance='ghost'
+            view='outline'
+            isRounded={false}
+            iconBefore={<i className='ri-arrow-left-s-line text-[20px] font-400' />}>
+            Back to collection
+          </Button>
+        </div>
+
+        <div className='flex gap-[8px]'>
+          <Button
+            disabled={!previousPubKey}
+            onClick={previous}
+            appearance='ghost'
+            view='outline'
+            isRounded={false}
+            iconBefore={<i className='ri-arrow-left-s-line text-[20px] font-400' />}>
+            Previous NFT
+          </Button>
+          <Button
+            disabled={!nextPubKey}
+            onClick={next}
+            appearance='ghost'
+            view='outline'
+            isRounded={false}
+            iconAfter={<i className='ri-arrow-right-s-line text-[20px] font-400' />}>
+            Next NFT
+          </Button>
+          {mintAddress && (
+            <a
+              href={`https://solscan.io/token/${mintAddress}?cluster=${endpoint.name}`}
+              target='_blank'
+              rel='noreferrer'>
+              <Button
+                appearance='ghost'
+                view='outline'
+                isRounded={false}
+                iconAfter={<i className='ri-arrow-right-up-line text-[20px] font-400' />}>
+                Explore on Solana
+              </Button>
+            </a>
+          )}
+
+          <Dropdown>
+            {({ isOpen, setIsOpen, setInnerValue }: any) => {
+              const onSelectOption = (value: string) => {
+                setInnerValue(value)
+                setIsOpen(false)
+              }
+
+              const options = [
+                { label: 'Telegram', value: 'Telegram' },
+                { label: 'Twitter', value: 'Twitter' },
+                { label: 'Email', value: 'Email' },
+                { label: 'Copy link', value: 'Copy link' },
+              ]
+
+              return (
+                <>
+                  <DropDownToggle onClick={() => setIsOpen(!isOpen)}>
+                    <Button
+                      appearance='ghost'
+                      view='outline'
+                      isRounded={false}
+                      iconAfter={<i className='ri-share-forward-fill text-[20px] font-400' />}
+                    />
+                  </DropDownToggle>
+
+                  {isOpen && (
+                    <DropDownBody align='right' className='w-[200px]'>
+                      {options.map((option: any, index: number) => {
+                        const { label, value } = option
+
+                        return (
+                          <DropDownMenuItem
+                            key={index}
+                            onClick={() => onSelectOption(value)}
+                            {...option}>
+                            {label}
+                          </DropDownMenuItem>
+                        )
+                      })}
+                    </DropDownBody>
+                  )}
+                </>
+              )
+            }}
+          </Dropdown>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export const AhNFTDetailsTopBar: FC<AhNFTDetailsTopBarProps> = ({
+  id,
+  className,
+  mintAddress,
+  sale,
+}) => {
+  const NFTDetailsTopBarClasses = CN(`nft-details-top-bar w-full`, className)
+  const history = useHistory()
+  const { endpoint } = useConnectionConfig()
+  const [nftListings, setnftListings] = useState()
+  const [nextPubKey, setnextPubKey] = useState()
+  const [previousPubKey, setpreviousPubKey] = useState()
+
+  useEffect(() => {
+    debugger
+    const fetchData = async () => {
+      const listings = await getAllListingsByCollection(sale.collection)
+      if (!!listings) {
+        setnftListings(listings)
+        setnextPubKey(getNextPubKey(listings))
+        setpreviousPubKey(getPreviousPubKey(listings))
+      }
+    }
+    fetchData().catch(console.error)
+  }, [id])
+
+  const getNextPubKey = listings => {
+    if (listings) {
+      const index = (listings as any).findIndex(element => element.mint === mintAddress)
+      try {
+        return (listings as any)[index + 1].mint
+      } catch {
+        return null
+      }
+    }
+  }
+
+  const getPreviousPubKey = listings => {
+    if (listings) {
+      const index = (listings as any).findIndex(element => element.mint === mintAddress)
+      try {
+        return (listings as any)[index - 1].mint
+      } catch {
+        return null
+      }
+    }
+  }
+
+  const next = () => {
+    if (nextPubKey) {
+      history.replace(`/nft-next/${nextPubKey}`)
+    }
+  }
+
+  const previous = () => {
+    if (previousPubKey) {
+      history.replace(`/nft-next/${previousPubKey}`)
+    }
+  }
+
+  return (
+    <div className={NFTDetailsTopBarClasses}>
+      <div className='container flex justify-between'>
+        <div className='flex'>
+          <Button
+            disabled={!sale}
+            onClick={() => {
+              if (sale) {
+                history.push(`/collection/${sale.collection}`)
               }
             }}
             appearance='ghost'
