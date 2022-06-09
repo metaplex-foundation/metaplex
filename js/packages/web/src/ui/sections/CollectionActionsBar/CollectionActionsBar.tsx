@@ -9,7 +9,7 @@ export interface CollectionActionsBarProps {
   showExplore?: boolean
   showActivity?: boolean
   searchText: string
-  shortByPrice: (text: string) => void
+  sortByPrice: (text: string) => void
   onChangeSearchText: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
@@ -18,7 +18,7 @@ export const CollectionActionsBar: FC<CollectionActionsBarProps> = ({
   onClickExplore,
   showExplore,
   showActivity,
-  shortByPrice,
+  sortByPrice,
   onChangeSearchText,
 }) => {
   const [sortText, setSortText] = useState(SORT_LOW_TO_HIGH)
@@ -52,10 +52,10 @@ export const CollectionActionsBar: FC<CollectionActionsBarProps> = ({
       <Button
         onClick={() => {
           if (sortText === SORT_LOW_TO_HIGH) {
-            shortByPrice(SORT_HIGH_TO_LOW)
+            sortByPrice(SORT_HIGH_TO_LOW)
             setSortText(SORT_HIGH_TO_LOW)
           } else {
-            shortByPrice(SORT_LOW_TO_HIGH)
+            sortByPrice(SORT_LOW_TO_HIGH)
             setSortText(SORT_LOW_TO_HIGH)
           }
         }}

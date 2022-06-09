@@ -219,17 +219,13 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }, [])
 
-  const shortByPrice = val => {
-    const dataArray = [...nftItems].sort(function (a: any, b: any) {
-      return val === SORT_LOW_TO_HIGH
-        ? a.amounts.priceFloor - b.amounts.priceFloor
-        : b.amounts.priceFloor - a.amounts.priceFloor
+  const sortByPrice = val => {
+    //@ts-ignore
+    const dataArray = [...filteredNftListings].sort(function (a: any, b: any) {
+      return val === SORT_LOW_TO_HIGH ? a.sale_price - b.sale_price : b.sale_price - a.sale_price
     })
-
-    filterFunction(() => [])
-    setTimeout(() => {
-      filterFunction(() => [...dataArray])
-    }, 200)
+    //@ts-ignore
+    setfilteredNftListings(dataArray)
   }
 
   const filterFun = (sale: any) => {
@@ -424,7 +420,7 @@ export const Collection: FC<CollectionProps> = () => {
               }}
               showActivity={showActivity}
               showExplore={showExplore}
-              shortByPrice={shortByPrice}
+              sortByPrice={sortByPrice}
               searchText={searchText}
               onChangeSearchText={e => setSearchText(e.target.value)}
             />
