@@ -213,24 +213,11 @@ export const AhNFTDetailsTopBar: FC<AhNFTDetailsTopBarProps> = ({
   sale,
 }) => {
   const NFTDetailsTopBarClasses = CN(`nft-details-top-bar w-full`, className)
-  // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
-
-  // const auction = useAuction(id)
-  // const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey)
   const history = useHistory()
   const { endpoint } = useConnectionConfig()
   const [nftListings, setnftListings] = useState()
   const [nextPubKey, setnextPubKey] = useState()
   const [previousPubKey, setpreviousPubKey] = useState()
-  // const allAuctions =
-  //   typeof data?.collection === 'string'
-  //     ? auctions.filter(
-  //         auction =>
-  //           auction.thumbnail.metadata.info.collection?.key === pubkeyToString(data?.collection)
-  //       )
-  //     : []
-
-  // console.log('allAuctions', allAuctions)
 
   useEffect(() => {
     debugger
@@ -247,7 +234,6 @@ export const AhNFTDetailsTopBar: FC<AhNFTDetailsTopBarProps> = ({
 
   const getNextPubKey = listings => {
     if (listings) {
-      debugger
       const index = (listings as any).findIndex(element => element.mint === mintAddress)
       try {
         return (listings as any)[index + 1].mint
