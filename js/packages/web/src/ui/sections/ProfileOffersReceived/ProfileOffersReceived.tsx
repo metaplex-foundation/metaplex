@@ -8,6 +8,18 @@ export interface ProfileOffersReceivedProps {
   [x: string]: any
 }
 
+const date = time => {
+  const m = Math.floor((+(new Date()) - +(new Date(time))) / 60000)
+  const h = Math.floor(m / (60))
+  const d = Math.floor(m / (60 * 24))
+
+  if (d === 1) return d + ' day ago'
+  if (d !== 0) return d + ' days ago'
+  if (h !== 0) return h + ' hours ago'
+  if (m !== 0) return m + ' months ago'
+  return 'just now'
+}
+
 export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
   className, setTag,
   ...restProps
@@ -63,7 +75,7 @@ export const ProfileOffersReceived: FC<ProfileOffersReceivedProps> = ({
           </div>
           <span>{price}</span>
           <span>{owner}</span>
-          <span>{time}</span>
+          <span>{date(time)}</span>
         </div>
       ))}
     </div>

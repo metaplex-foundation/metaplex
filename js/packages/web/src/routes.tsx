@@ -10,6 +10,7 @@ import {
   AnalyticsView,
   ArtCreateView,
   AuctionCreateView,
+  AuctionCreateInstantView,
 } from './views'
 import { AdminView } from './views/admin'
 import PackView from './views/pack'
@@ -79,6 +80,11 @@ export function Routes() {
                 exact
                 path='/auction/create/:step_param?'
                 component={() => <AuctionCreateView />}
+              />
+              <Route
+                exact
+                path='/auction/create/instant/:step_param/:mint_param'
+                component={() => <AuctionCreateInstantView />}
               />
               <Route exact path='/auction/:id' component={() => <AuctionView />} />
               <Route exact path='/auction/:id/billing' component={() => <BillingView />} />

@@ -5,7 +5,7 @@ import { RecentCollections } from '../../sections/RecentCollections'
 import { LaunchpadCard } from '../../sections/LaunchpadCard'
 import { TrendingCollections } from '../../sections/TrendingCollections'
 import { WhyUS } from '../../sections/WhyUS'
-import { useNFTCollections } from '../../../hooks/useCollections'
+import { useAhNFTCollections, useNFTCollections } from '../../../hooks/useCollections'
 import { SetupView } from '../../../views/home/setup'
 import { useMeta, useStore } from '@oyster/common'
 
@@ -21,10 +21,10 @@ export enum LiveAuctionViewState {
 
 export const Home: FC<HomeProps> = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All)
-  const { liveCollections } = useNFTCollections()
 
   const { isLoading, store } = useMeta()
   const { isConfigured } = useStore()
+  const { liveCollections } = useAhNFTCollections()
 
   const showAuctions = (store && isConfigured) || isLoading
 
@@ -35,7 +35,7 @@ export const Home: FC<HomeProps> = () => {
       </div>
     )
   }
-
+  console.log('liveCollections', liveCollections)
   return (
     <div className='home'>
       <Hero className='pt-[80px]' />
@@ -44,9 +44,15 @@ export const Home: FC<HomeProps> = () => {
         onChangeActiveKey={(key: LiveAuctionViewState) => setActiveKey(key)}
         className='pt-[80px]'
       />
-      <RecentCollections liveCollections={[...liveCollections]} className='pt-[80px] pb-[40px]' />
+      <RecentCollections
+        liveCollections={liveCollections as any[]}
+        className='pt-[80px] pb-[40px]'
+      />
       <LaunchpadCard />
-      <TrendingCollections liveCollections={[...liveCollections]} className='pt-[80px] pb-[80px]' />
+      <TrendingCollections
+        liveCollections={liveCollections as any[]}
+        className='pt-[80px] pb-[80px]'
+      />
       <WhyUS className='pt-[40px] pb-[120px]' />
     </div>
   )

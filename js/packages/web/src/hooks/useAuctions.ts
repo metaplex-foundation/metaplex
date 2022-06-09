@@ -57,7 +57,6 @@ export interface AuctionView {
   vault: ParsedAccount<Vault>
   totallyComplete: boolean
   isInstantSale: boolean
-  moredata: any
 }
 
 type CachedRedemptionKeys = Record<
@@ -320,7 +319,8 @@ export function processAccountsIntoAuctionView(
     )
     let participationMetadata: ParsedAccount<Metadata> | undefined = undefined
     let participationBox: ParsedAccount<SafetyDepositBox> | undefined = undefined
-    let participationMaster: ParsedAccount<MasterEditionV1 | MasterEditionV2> | undefined =
+    let participationMaster:
+      | ParsedAccount<MasterEditionV1 | MasterEditionV2> | undefined =
       undefined
     if (
       auctionManager.participationConfig !== null &&

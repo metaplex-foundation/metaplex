@@ -51,7 +51,6 @@ const useAttribute = (auction: AuctionView) => {
       }
       setMintAttrs(attrArray)
     })
-    console.log('----------calling1-----------------------')
   }, [collection?.mint, auctions.length])
 
   useEffect(() => {
@@ -83,7 +82,6 @@ const useAttribute = (auction: AuctionView) => {
         })
       }
     })
-    console.log('----------calling-----------------------')
     setAttributePercentages([...pArray])
   }, [mintAttrs.length, auctions.length, auction.auction.pubkey])
 

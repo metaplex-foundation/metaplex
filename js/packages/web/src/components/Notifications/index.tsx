@@ -78,7 +78,7 @@ function RunAction({
   switch (state) {
     case RunActionState.NotRunning:
       component = (
-        <span className='hover-button' onClick={run}>
+        <span className='hover-button' style={{color: 'white'}} onClick={run}>
           {icon}
         </span>
       )

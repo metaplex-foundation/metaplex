@@ -56,7 +56,7 @@ export const ArtCreateView = () => {
   const { width } = useWindowDimensions()
   const [nftCreateProgress, setNFTcreateProgress] = useState<number>(0)
 
-  const [step, setStep] = useState<number>(0)
+  const [step, setStep] = useState<number>(1)
   const [stepsVisible, setStepsVisible] = useState<boolean>(true)
   const [isMinting, setMinting] = useState<boolean>(false)
   const [nft, setNft] = useState<{ metadataAccount: StringPublicKey } | undefined>(undefined)
@@ -90,7 +90,7 @@ export const ArtCreateView = () => {
 
   useEffect(() => {
     if (step_param) setStep(parseInt(step_param))
-    else gotoStep(0)
+    else gotoStep(1)
   }, [step_param, gotoStep])
 
   // store files
@@ -143,15 +143,14 @@ export const ArtCreateView = () => {
     <>
       <div className='flex w-full pt-[80px] pb-[100px]'>
         <div className='container flex gap-[32px]'>
-          <div className='sidebar w-[260px] flex-shrink-0 rounded'>
-            <Steps progressDot direction={width < 768 ? 'horizontal' : 'vertical'} current={step}>
-              <Step title='Category' />
+          {false && <div className='sidebar w-[260px] flex-shrink-0 rounded'>
+            <Steps progressDot direction={width < 768 ? 'horizontal' : 'vertical'} current={step - 1}>
               <Step title='Upload' />
               <Step title='Info' />
               <Step title='Royalties' />
               <Step title='Launch' />
             </Steps>
-          </div>
+          </div>}
 
           <div className='content-wrapper flex w-full flex-col gap-[28px]'>
             {step === 0 && (
@@ -639,7 +638,7 @@ const InfoStep = (props: {
           />
         </div>
 
-        <div className='flex'>
+        {false && <div className='flex'>
           <CheckBox
             checked={isCollection}
             onChange={val => {
@@ -647,9 +646,9 @@ const InfoStep = (props: {
             }}>
             Is parent collection?
           </CheckBox>
-        </div>
+        </div>}
 
-        {!isCollection && (
+        {false && !isCollection && (
           <div className='flex flex-col gap-[12px]'>
             <h4 className='text-h6 font-500'>Collection</h4>
             <ArtSelector
@@ -744,7 +743,7 @@ const InfoStep = (props: {
           </Form>
         </div>
 
-        <div className='flex flex-col gap-[16px]'>
+        {false && <div className='flex flex-col gap-[16px]'>
           <h4 className='text-h6 font-500'>Add a Tag</h4>
 
           <div className='flex'>
@@ -796,7 +795,7 @@ const InfoStep = (props: {
               }}
             </Dropdown>
           </div>
-        </div>
+        </div>}
 
         <div className='flex items-center pt-[20px]'>
           <Button

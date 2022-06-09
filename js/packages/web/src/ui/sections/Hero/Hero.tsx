@@ -6,7 +6,7 @@ import { Button, MetaChip } from '@oyster/common'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import LiveNFTCard from './LiveNFTCard'
 import { LiveAuctionViewState } from '../../views/Home'
-import { useNFTCollections } from '../../../hooks/useCollections'
+import { useAhNFTCollections, useNFTCollections } from '../../../hooks/useCollections'
 
 export interface HeroProps {
   className: string
@@ -16,7 +16,7 @@ export const Hero: FC<HeroProps> = ({ className }) => {
   const HeroClasses = CN(`hero w-full`, className)
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const [talentedArtists, setTalentedArtists] = useState(0)
-  const { liveCollections } = useNFTCollections()
+  const { liveCollections } = useAhNFTCollections() as any
 
   useEffect(() => {
     const newArray: any[] = []
@@ -70,18 +70,18 @@ export const Hero: FC<HeroProps> = ({ className }) => {
           </div>
         </div>
 
-        {liveCollections.length && (
+        {liveCollections?.length && (
           <div className='hero__center group relative ml-auto flex h-[452px] w-[395px]'>
             {liveCollections.length >= 2 && (
-              <Link to={`/collection/${liveCollections[1].mint}`}>
+              <Link to={`/collection/${liveCollections[1].collection}`}>
                 <LiveNFTCard
                   collection={liveCollections[1]}
                   className='absolute left-[-44px] right-0 m-auto w-[320px] rotate-[-6deg] shadow transition-all group-hover:rotate-[-8deg]'
                 />
               </Link>
             )}
-            {liveCollections.length >= 1 && (
-              <Link to={`/collection/${liveCollections[0].mint}`}>
+            {liveCollections?.length >= 1 && (
+              <Link to={`/collection/${liveCollections[0].collection}`}>
                 <LiveNFTCard
                   collection={liveCollections[0]}
                   className='absolute left-0 right-0 m-auto w-[320px] rotate-[10deg] shadow transition-all group-hover:rotate-[0]'
