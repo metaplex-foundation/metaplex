@@ -33,10 +33,11 @@ export const sendTransactionWithRetryWithKeypair = async (
   const transaction = new Transaction();
   instructions.forEach(instruction => transaction.add(instruction));
   transaction.recentBlockhash = (
-    block || (await connection.getRecentBlockhash(commitment))
+    block || (await connection.getLatestBlockhash(commitment))
   ).blockhash;
 
   if (includesFeePayer) {
+    transaction.feePayer = wallet.publicKey;
     transaction.setSigners(...signers.map(s => s.publicKey));
   } else {
     transaction.setSigners(
@@ -157,10 +158,12 @@ async function simulateTransaction(
   commitment: Commitment,
 ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
   // @ts-ignore
-  transaction.recentBlockhash = await connection._recentBlockhash(
-    // @ts-ignore
-    connection._disableBlockhashCaching,
-  );
+  transaction.recentBlockhash = (
+    await connection.getLatestBlockhash(
+      // @ts-ignore
+      commitment,
+    )
+  ).blockhash;
 
   const signData = transaction.serializeMessage();
   // @ts-ignore
@@ -259,8 +262,11 @@ async function awaitTransactionSignatureConfirmation(
   });
 
   //@ts-ignore
-  if (connection._signatureSubscriptions[subId])
-    connection.removeSignatureListener(subId);
+  try {
+    await connection.removeSignatureListener(subId);
+  } catch (err) {
+    console.log(err);
+  }
   done = true;
   log.debug('Returning status', status);
   return status;
