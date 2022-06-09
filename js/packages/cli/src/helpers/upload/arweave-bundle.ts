@@ -2,23 +2,19 @@ import * as cliProgress from 'cli-progress';
 import { readFile, stat } from 'fs/promises';
 import { PromisePool } from '@supercharge/promise-pool';
 import path from 'path';
-import Arweave from 'arweave';
-
-import { signers, bundleAndSignData, createData, DataItem } from 'arbundles';
-import { ArweaveSigner, Signer } from 'arbundles/src/signing';
+import { signers, DataItem } from 'arbundles';
+import { ArweaveSigner } from 'arbundles/src/signing';
 import log from 'loglevel';
 import { StorageType } from '../storage-type';
 import { Keypair } from '@solana/web3.js';
 import { getType, getExtension } from 'mime';
 import { AssetKey } from '../../types';
 import { sleep } from '../various';
-import Transaction from 'arweave/node/lib/transaction';
 import Bundlr from '@bundlr-network/client';
-
 import { getAssetManifest } from '../../commands/upload';
 import BundlrTransaction from '@bundlr-network/client/build/common/transaction';
-
 export const LAMPORTS = 1_000_000_000;
+export const WINSTON = 1_000_000_000_000;
 /**
  * The Arweave Path Manifest object for a given asset file pair.
  * https://github.com/ArweaveTeam/arweave/blob/master/doc/path-manifest-schema.md
@@ -71,7 +67,15 @@ type Manifest = {
     files: Array<{ type: string; uri: string }>;
   };
 };
-
+/**
+ * Type for different currencies.
+ */
+type BundleCurrency = {
+  symbol: string;
+  currency: string;
+  units: number;
+  gas: number;
+};
 /**
  * The result of the processing of a set of assets file pairs, to be bundled
  * before upload.
@@ -112,20 +116,6 @@ const contentTypeTags = {
 };
 
 /**
- * Create an Arweave instance with sane defaults.
- */
-function getArweave(): Arweave {
-  return new Arweave({
-    host: 'arweave.net',
-    port: 443,
-    protocol: 'https',
-    timeout: 20000,
-    logging: false,
-    logger: console.log,
-  });
-}
-
-/**
  * Simplistic helper to convert a bytes value to its MB counterpart.
  */
 function sizeMB(bytes: number): string {
@@ -135,6 +125,22 @@ function sizeMB(bytes: number): string {
     precision,
   );
 }
+
+function getNetwork(storageType: StorageType): BundleCurrency {
+  switch (storageType) {
+    case StorageType.ArweaveSol:
+      return { symbol: 'SOL', currency: 'solana', units: LAMPORTS, gas: 5000 };
+    case StorageType.ArweaveBundle:
+      return { symbol: 'AR', currency: 'arweave', units: WINSTON, gas: 50000 };
+    default:
+      throw storageError(storageType);
+  }
+}
+
+const storageError = (storageType: StorageType) =>
+  new Error(
+    `Invalid storage type for bundler: ${storageType}. Must be ${StorageType.ArweaveSol} or ${StorageType.ArweaveBundle}`,
+  );
 
 /**
  * Create the Arweave Path Manifest from the asset image / manifest
@@ -273,45 +279,13 @@ async function getBundleRange(
 }
 
 const imageTags = [...BASE_TAGS];
-/**
- * Retrieve a DataItem which will hold the asset's image binary data
- * & represent an individual Arweave transaction which can be signed & bundled.
- */
-async function getImageDataItem(
-  signer: Signer,
-  image: Buffer,
-  contentType: string,
-): Promise<DataItem> {
-  return createData(image, signer, {
-    tags: imageTags.concat({ name: 'Content-Type', value: contentType }),
-  });
-}
 
 const manifestTags = [...BASE_TAGS, contentTypeTags['json']];
-/**
- * Retrieve a DataItem which will hold the asset's manifest binary data
- * & represent an individual Arweave transaction which can be signed & bundled.
- */
-function getManifestDataItem(signer: Signer, manifest: Manifest): DataItem {
-  return createData(JSON.stringify(manifest), signer, { tags: manifestTags });
-}
 
 const arweavePathManifestTags = [
   ...BASE_TAGS,
   contentTypeTags['arweave-manifest'],
 ];
-/**
- * Retrieve a DataItem which will hold the Arweave Path Manifest binary data
- * & represent an individual Arweave transaction which can be signed & bundled.
- */
-function getArweavePathManifestDataItem(
-  signer: Signer,
-  arweavePathManifest: ArweavePathManifest,
-): DataItem {
-  return createData(JSON.stringify(arweavePathManifest), signer, {
-    tags: arweavePathManifestTags,
-  });
-}
 
 /**
  * Retrieve an asset's manifest from the filesystem & update it with the link
@@ -354,7 +328,10 @@ async function processFiles({
 
   const imageContentType = getType(filePair.image);
   const imageBuffer = await readFile(filePair.image);
-  if (storageType === StorageType.ArweaveSol) {
+  if (
+    storageType === StorageType.ArweaveSol ||
+    storageType === StorageType.ArweaveBundle
+  ) {
     //@ts-ignore
     imageDataItem = bundlr.createTransaction(imageBuffer, {
       tags: imageTags.concat({
@@ -363,20 +340,16 @@ async function processFiles({
       }),
     });
     await (imageDataItem as unknown as BundlrTransaction).sign();
-  } else if (storageType === StorageType.ArweaveBundle) {
-    imageDataItem = await getImageDataItem(
-      signer,
-      imageBuffer,
-      imageContentType,
-    );
-    await (imageDataItem as DataItem).sign(signer);
   }
 
   let animationContentType = undefined;
   if (filePair.animation) {
     animationContentType = getType(filePair.animation);
     const animationBuffer = await readFile(filePair.animation);
-    if (storageType === StorageType.ArweaveSol) {
+    if (
+      storageType === StorageType.ArweaveSol ||
+      storageType === StorageType.ArweaveBundle
+    ) {
       //@ts-ignore
       animationDataItem = bundlr.createTransaction(animationBuffer, {
         tags: imageTags.concat({
@@ -385,13 +358,8 @@ async function processFiles({
         }),
       });
       await (animationDataItem as unknown as BundlrTransaction).sign();
-    } else if (storageType === StorageType.ArweaveBundle) {
-      animationDataItem = await getImageDataItem(
-        signer,
-        animationBuffer,
-        animationContentType,
-      );
-      await (animationDataItem as DataItem).sign(signer);
+    } else {
+      throw storageError(storageType);
     }
   }
 
@@ -410,16 +378,18 @@ async function processFiles({
     animationLink,
   );
 
-  if (storageType === StorageType.ArweaveSol) {
+  if (
+    storageType === StorageType.ArweaveSol ||
+    storageType === StorageType.ArweaveBundle
+  ) {
     //@ts-ignore
     manifestDataItem = bundlr.createTransaction(JSON.stringify(manifest), {
       tags: manifestTags,
     });
 
     await (manifestDataItem as unknown as BundlrTransaction).sign();
-  } else if (storageType === StorageType.ArweaveBundle) {
-    manifestDataItem = getManifestDataItem(signer, manifest);
-    await (manifestDataItem as DataItem).sign(signer);
+  } else {
+    throw storageError(storageType);
   }
 
   const arweavePathManifest = createArweavePathManifest(
@@ -430,7 +400,10 @@ async function processFiles({
     filePair.animation ? `.${getExtension(animationContentType)}` : undefined,
   );
 
-  if (storageType === StorageType.ArweaveSol) {
+  if (
+    storageType === StorageType.ArweaveSol ||
+    storageType === StorageType.ArweaveBundle
+  ) {
     //@ts-ignore
     arweavePathManifestDataItem = bundlr.createTransaction(
       JSON.stringify(arweavePathManifest),
@@ -438,13 +411,9 @@ async function processFiles({
     );
 
     await (arweavePathManifestDataItem as unknown as BundlrTransaction).sign();
-    await arweavePathManifestDataItem.sign(signer);
-  } else if (storageType === StorageType.ArweaveBundle) {
-    arweavePathManifestDataItem = getArweavePathManifestDataItem(
-      signer,
-      arweavePathManifest,
-    );
-    await (arweavePathManifestDataItem as DataItem).sign(signer);
+    signer ? await arweavePathManifestDataItem.sign(signer) : Promise.resolve();
+  } else {
+    throw storageError(storageType);
   }
 
   return {
@@ -476,9 +445,10 @@ export async function* makeArweaveBundleUploadGenerator(
 ): AsyncGenerator<UploadGeneratorResult> {
   let signer: ArweaveSigner;
   const storageType: StorageType = storage;
+  const bundleCurrency = getNetwork(storageType);
   if (storageType === StorageType.ArweaveSol && !walletKeyPair) {
     throw new Error(
-      'To pay for uploads with SOL, you need to pass a Solana Keypair',
+      `To pay for uploads with SOL, you need to pass a Solana Keypair`,
     );
   }
   if (storageType === StorageType.ArweaveBundle && !jwk) {
@@ -491,30 +461,40 @@ export async function* makeArweaveBundleUploadGenerator(
     signer = new signers.ArweaveSigner(jwk);
   }
 
-  const arweave = getArweave();
-  const bundlr =
-    storageType === StorageType.ArweaveSol
-      ? env === 'mainnet-beta'
-        ? new Bundlr(
-            'https://node1.bundlr.network',
-            'solana',
-            walletKeyPair.secretKey,
-            {
-              timeout: 60000,
-              providerUrl: rpcUrl ?? 'https://api.metaplex.solana.com',
-            },
-          )
-        : new Bundlr(
-            'https://devnet.bundlr.network',
-            'solana',
-            walletKeyPair.secretKey,
-            {
-              timeout: 60000,
-              providerUrl: 'https://metaplex.devnet.rpcpool.com',
-            },
-          )
-      : undefined;
-  log.debug('Bundlr type is: ', env);
+  let bundlr = undefined;
+  if (storageType === StorageType.ArweaveSol && env) {
+    if (env === 'mainnet-beta') {
+      bundlr = new Bundlr(
+        'https://node1.bundlr.network',
+        bundleCurrency.currency,
+        walletKeyPair.secretKey,
+        {
+          timeout: 1200000,
+          providerUrl: rpcUrl ?? 'https://api.metaplex.solana.com',
+        },
+      );
+    } else {
+      bundlr = new Bundlr(
+        'https://devnet.bundlr.network',
+        bundleCurrency.currency,
+        walletKeyPair.secretKey,
+        {
+          timeout: 1200000,
+          providerUrl: 'https://metaplex.devnet.rpcpool.com',
+        },
+      );
+    }
+  } else if (storageType === StorageType.ArweaveBundle) {
+    bundlr = new Bundlr(
+      'https://node1.bundlr.network',
+      bundleCurrency.currency,
+      jwk,
+    );
+  } else {
+    throw storageError(storageType);
+  }
+
+  log.debug(`Bundlr type is: ${storageType} on ${env}`);
   const filePairs = assets.map((asset: AssetKey) => {
     const manifestPath = path.join(dirname, `${asset.index}.json`);
     const manifestData = getAssetManifest(dirname, asset.index);
@@ -530,23 +510,26 @@ export async function* makeArweaveBundleUploadGenerator(
     };
   });
 
-  if (storageType === StorageType.ArweaveSol) {
+  if (
+    storageType === StorageType.ArweaveSol ||
+    storageType === StorageType.ArweaveBundle
+  ) {
     const bytes = (await Promise.all(filePairs.map(getFilePairSize))).reduce(
       (a, b) => a + b,
       0,
     );
-    const cost = await bundlr.utils.getPrice('solana', bytes);
+    const cost = await bundlr.utils.getPrice(bundleCurrency.currency, bytes);
     const bufferCost = cost.multipliedBy(3).dividedToIntegerBy(2);
     log.info(
-      `${bufferCost.toNumber() / LAMPORTS} SOL to upload ${sizeMB(
-        bytes,
-      )}MB with buffer`,
+      `${bufferCost.toNumber() / bundleCurrency.units} ${
+        bundleCurrency.symbol
+      } to upload ${sizeMB(bytes)}MB with buffer`,
     );
     const currentBalance = await bundlr.getLoadedBalance();
     if (currentBalance.lt(bufferCost)) {
       log.info(
         `Current balance ${
-          currentBalance.toNumber() / LAMPORTS
+          currentBalance.toNumber() / bundleCurrency.units
         }. Sending fund txn...`,
       );
       await bundlr.fund(bufferCost.minus(currentBalance));
@@ -554,7 +537,7 @@ export async function* makeArweaveBundleUploadGenerator(
     } else {
       log.info(
         `Current balance ${
-          currentBalance.toNumber() / LAMPORTS
+          currentBalance.toNumber() / bundleCurrency.units
         } is sufficient.`,
       );
     }
@@ -565,7 +548,7 @@ export async function* makeArweaveBundleUploadGenerator(
   while (filePairs.length) {
     const { count, size } = await getBundleRange(
       filePairs,
-      storage === StorageType.ArweaveSol,
+      storage === (StorageType.ArweaveSol || StorageType.ArweaveBundle),
     );
 
     log.info(
@@ -632,7 +615,10 @@ export async function* makeArweaveBundleUploadGenerator(
         }),
       );
     progressBar.stop();
-    if (storageType === StorageType.ArweaveSol) {
+    if (
+      storageType === StorageType.ArweaveSol ||
+      storageType === StorageType.ArweaveBundle
+    ) {
       const bundlrTransactions = [
         ...dataItems,
       ] as unknown as BundlrTransaction[];
@@ -683,63 +669,67 @@ export async function* makeArweaveBundleUploadGenerator(
       log.info('Bundle uploaded!');
     }
 
-    if (storageType === StorageType.ArweaveBundle) {
-      const startBundleTime = Date.now();
-
-      log.info('Bundling...');
-
-      const bundle = await bundleAndSignData(dataItems, signer);
-      const endBundleTime = Date.now();
-      log.info(
-        `Bundled ${dataItems.length} data items in ${
-          (endBundleTime - startBundleTime) / 1000
-        }s`,
-      );
-      // @ts-ignore
-      // Argument of type
-      // 'import("node_modules/arweave/node/common").default'
-      // is not assignable to parameter of type
-      // 'import("node_modules/arbundles/node_modules/arweave/node/common").default'.
-      // Types of property 'api' are incompatible.
-      const tx = await bundle.toTransaction(arweave, jwk);
-      await arweave.transactions.sign(tx as Transaction, jwk);
-      log.info('Uploading bundle via arbundle...');
-      await arweave.transactions.post(tx);
-      log.info('Bundle uploaded!', tx.id);
-    }
-
     yield { cacheKeys, arweavePathManifestLinks, updatedManifests };
   }
 }
 
-export const withdrawBundlr = async (walletKeyPair: Keypair) => {
-  const bundlr = new Bundlr(
-    'https://node1.bundlr.network',
-    'solana',
-    walletKeyPair.secretKey,
-  );
+export const withdrawBundlr = async (
+  walletKeyPair: Keypair,
+  jwk?: any,
+  storageType: StorageType = StorageType.ArweaveSol,
+) => {
+  let bundlr = undefined;
+  const bundleCurrency = getNetwork(storageType);
+  switch (storageType) {
+    case StorageType.ArweaveSol:
+      bundlr = new Bundlr(
+        'https://node1.bundlr.network',
+        bundleCurrency.currency,
+        walletKeyPair.secretKey,
+      );
+      await withdrawBundlrInternal(bundlr, bundleCurrency);
+      break;
+    case StorageType.ArweaveBundle:
+      bundlr = new Bundlr(
+        'https://node1.bundlr.network',
+        bundleCurrency.currency,
+        jwk,
+      );
+      await withdrawBundlrInternal(bundlr, bundleCurrency);
+      break;
+    default:
+      throw storageError(storageType);
+  }
+};
+
+const withdrawBundlrInternal = async (
+  bundlr: Bundlr,
+  bundleCurrency: BundleCurrency,
+) => {
   const balance = await bundlr.getLoadedBalance();
-  if (balance.minus(5000).lte(0)) {
+  if (balance.minus(bundleCurrency.gas).lte(0)) {
     log.error(
       `Error: Balance in Bundlr node (${balance.dividedBy(
-        LAMPORTS,
-      )} SOL) is too low to withdraw.`,
+        bundleCurrency.units,
+      )} ${bundleCurrency.symbol}) is too low to withdraw.`,
     );
   } else {
     log.info(
       `Requesting a withdrawal of ${balance
-        .minus(5000)
-        .dividedBy(LAMPORTS)} SOL from Bundlr...`,
+        .minus(bundleCurrency.gas)
+        .dividedBy(bundleCurrency.units)} ${
+        bundleCurrency.symbol
+      } from Bundlr...`,
     );
     try {
       const withdrawResponse = await bundlr.withdrawBalance(
-        balance.minus(5000),
+        balance.minus(bundleCurrency.gas),
       );
       if (withdrawResponse.status == 200) {
         log.info(
           `Successfully withdrew ${
-            withdrawResponse.data.final / LAMPORTS
-          } SOL.`,
+            withdrawResponse.data.final / bundleCurrency.units
+          } ${bundleCurrency.symbol}.`,
         );
       } else if (withdrawResponse.status == 400) {
         log.info(withdrawResponse.data);
@@ -751,7 +741,7 @@ export const withdrawBundlr = async (walletKeyPair: Keypair) => {
       log.error(
         'Error processing withdrawal request. Please try again using the withdraw_bundlr command in our CLI',
       );
-      log.error('Error: ', err);
+      log.error('Error: ', err, err.message);
     }
   }
 };

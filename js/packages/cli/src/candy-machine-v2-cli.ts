@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node
 import * as fs from 'fs';
 import * as path from 'path';
+import { readFile } from 'fs/promises';
 import { InvalidArgumentError, program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 
@@ -30,7 +31,7 @@ import {
 
 import { uploadV2 } from './commands/upload';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
-import { loadCache, saveCache } from './helpers/cache';
+import { cachePath, loadCache, saveCache } from './helpers/cache';
 import { mintV2 } from './commands/mint';
 import { signMetadata } from './commands/sign';
 import {
@@ -132,7 +133,7 @@ programCommand('upload')
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
-
+    log.info('Cache Path:', cachePath(env, cacheName, CACHE_PATH));
     const {
       storage,
       nftStorageKey,
@@ -492,11 +493,22 @@ programCommand('withdraw_all')
     }
   });
 
-programCommand('withdraw_bundlr').action(async (_, cmd) => {
-  const { keypair } = cmd.opts();
-  const walletKeyPair = loadWalletKey(keypair);
-  await withdrawBundlr(walletKeyPair);
-});
+programCommand('withdraw_bundlr', { requireWallet: false })
+  .option(
+    '-jwk, --arweaveWallet <string>',
+    'Arweave wallet keypair to withdraw',
+  )
+  .action(async (_, cmd) => {
+    const { keypair, arweaveWallet } = cmd.opts();
+    if (keypair) {
+      const walletKeyPair = loadWalletKey(keypair);
+      await withdrawBundlr(walletKeyPair);
+    } else if (arweaveWallet) {
+      log.info('Withdraw started from arweave bundlr');
+      const jwk = JSON.parse((await readFile(arweaveWallet)).toString());
+      await withdrawBundlr(undefined, jwk, StorageType.ArweaveBundle);
+    }
+  });
 
 program
   .command('verify_assets')
