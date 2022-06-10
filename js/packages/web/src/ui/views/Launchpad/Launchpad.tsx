@@ -38,7 +38,7 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
     })
 
     getSubmissions().then(submissions => {
-      setSubmissions(submissions?.data.data)
+      setSubmissions((submissions?.data.data || []).filter(i => i?.actions?.status === "Approved"))
     })
   }, [])
 
@@ -79,7 +79,7 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
                     image={submission.collection_image_url}
                     price={`Ⓞ ${parseFloat(submission.mint_price).toFixed(2)} SOL`}
                     dollarValue={'$102.97'}
-                    onClickButton={() => {}}
+                    onClickButton={() => push(`/launchpad/${submission.collection_name.replace('%', '-')}`)}
                     remainingTime={moment(submission.exp_mint_date).format('LL')}
                   />
                 </li>

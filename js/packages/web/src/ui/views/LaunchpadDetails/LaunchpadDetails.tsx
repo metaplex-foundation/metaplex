@@ -1,8 +1,9 @@
 import React, { FC, useEffect, useState } from 'react'
 import CN from 'classnames'
 import { LaunchpadTopBar, LaunchpadDetailCard, LaunchpadTabs } from '../../sections'
-import { getFeaturedSubmission } from '../../../api'
+import { findByCollectionName } from '../../../api'
 import moment from 'moment'
+import { useParams } from 'react-router-dom'
 
 export interface LaunchpadDetailsProps {
   [x: string]: any
@@ -23,22 +24,23 @@ export const LaunchpadDetails: FC<LaunchpadDetailsProps> = ({
   const [launchTime, setLaunchTime] = useState<any>()
   const [primaryCategory, setPrimaryCategory] = useState()
   const [secondaryCategory, setSecondaryCategory] = useState()
+  const { id } = useParams<{ id: string; }>()
 
   useEffect(() => {
-    getFeaturedSubmission().then(submission => {
-      setHeading(submission.collection_name)
-      setDescription(submission.project_description)
-      setImage(submission.collection_image_url)
-      setLaunchTime(moment(submission.exp_mint_date).format('LL'))
-      setLongTermGoals(submission.long_trm_goals)
-      setTeamDescription(submission.team_description)
-      if (submission.categories) {
-        if (submission.categories.primaryCategory) {
-          setPrimaryCategory(submission.categories.primaryCategory)
+    findByCollectionName(id).then(submission => {
+      setHeading(submission?.data?.collection_name)
+      setDescription(submission?.data?.project_description)
+      setImage(submission?.data?.collection_image_url)
+      setLaunchTime(moment(submission?.data?.exp_mint_date).format('LL'))
+      setLongTermGoals(submission?.data?.long_trm_goals)
+      setTeamDescription(submission?.data?.team_description)
+      if (submission?.data?.categories) {
+        if (submission?.data?.categories?.primaryCategory) {
+          setPrimaryCategory(submission?.data?.categories?.primaryCategory)
         }
 
-        if (submission.categories.secondaryCategory) {
-          setSecondaryCategory(submission.categories.secondaryCategory)
+        if (submission?.data?.categories?.secondaryCategory) {
+          setSecondaryCategory(submission?.data?.categories?.secondaryCategory)
         }
       }
     })

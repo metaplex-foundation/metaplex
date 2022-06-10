@@ -20,6 +20,7 @@ export const LaunchCard: FC<LaunchCardProps> = ({
   price,
   dollarValue,
   remainingTime,
+  onClickButton,
   ...restProps
 }: LaunchCardProps) => {
   const LaunchCardClasses = CN(
@@ -28,7 +29,7 @@ export const LaunchCard: FC<LaunchCardProps> = ({
   )
 
   return (
-    <div className={LaunchCardClasses} {...restProps}>
+    <div className={LaunchCardClasses} {...restProps} onClick={onClickButton}>
       <div className='flex h-[286px] w-full overflow-hidden transition-all'>
         <Image src={image} />
       </div>
