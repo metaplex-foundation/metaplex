@@ -1,6 +1,8 @@
-import React, { FC } from 'react'
+import React, { FC, useState } from 'react'
 import CN from 'classnames'
 import { SectionHeading, Accordion, TextField, TextArea, Button } from '@oyster/common'
+import { inquire } from '../../../api'
+
 
 export interface HelpCentreProps {
   [x: string]: any
@@ -8,6 +10,41 @@ export interface HelpCentreProps {
 
 export const HelpCentre: FC<HelpCentreProps> = ({ className, ...restProps }: HelpCentreProps) => {
   const HelpCentreClasses = CN(`help-centre w-full`, className)
+
+  const [email, setEmail] = useState<any>(null)
+  const [message, setMessage] = useState<any>(null)
+
+  const validateEmail = (email) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
+
+  const inqureEmail = async () => {
+    try {
+      console.log(email, message)
+
+      if(validateEmail(email)){
+        await inquire({
+          email: email,
+          message: message
+        })
+  
+        alert("Our support will contact you via Email. Thank you");
+  
+        setEmail("")
+        setMessage("")
+      }else{
+        alert("please enter correct email.");
+      }
+
+
+    } catch (error) {
+      console.error(error)
+    } 
+  }
 
   return (
     <div className={HelpCentreClasses} {...restProps}>
@@ -139,12 +176,12 @@ export const HelpCentre: FC<HelpCentreProps> = ({ className, ...restProps }: Hel
           </div>
 
           <div className='flex flex-col gap-[20px] pt-[40px]'>
-            <TextField label='Your email address' placeHolder='ex. john@example.com' />
-            <TextArea label='Message' placeHolder='Please enter your question in detail...' />
+            <TextField label='Your email address' placeHolder='ex. john@example.com' onChange={e => setEmail(e.target.value)} />
+            <TextArea label='Message' placeHolder='Please enter your question in detail...' onChange={e => setMessage(e.target.value)} />
           </div>
 
           <div className='pt-[40px]'>
-            <Button isRounded={false} className='w-[300px] rounded-[8px]' size='lg'>
+            <Button isRounded={false} className='w-[300px] rounded-[8px]' size='lg' onClick={inqureEmail}>
               Submit Question
             </Button>
           </div>
