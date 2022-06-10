@@ -172,7 +172,7 @@ export const Header: FC<HeaderProps> = () => {
             </div>
           )}
 
-          {!connected && <ConnectButton allowWalletChange />}
+          {!connected && <ConnectButton allowWalletChange={false} />}
         </div>
       </div>
     </div>
