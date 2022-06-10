@@ -83,10 +83,13 @@ export const Collection: FC<CollectionProps> = () => {
   const [collectionVolumn, setCollectionVolumn] = useState<any>('')
 
   const { id }: ParamsInterface = useParams()
-  const { nftItems, attributes, filterFunction, count, owners } = useCollectionNFT(id)
-  const { liveCollections } = useNFTCollections()
+  const { nftItems, attributes, filterFunction } = useCollectionNFT(id)
+  const [owners, setOwners] = useState<any>()
+  const [count, setCount] = useState(0)
+  const [floorPrice, setfloorPrice] = useState(0.0)
   const [colData, setData] = useState<any>()
   const [nftListings, setnftListings] = useState()
+  const [filteredNftListings, setfilteredNftListings] = useState()
 
   const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
     collectionName: '',
@@ -110,11 +113,29 @@ export const Collection: FC<CollectionProps> = () => {
       return extended
     }
 
+    const getUniqueOwnersCount = (listings: any[]) => {
+      const uniqueOwnerIds = listings
+        .map(item => item.seller_wallet)
+        .filter((value, index, self) => self.indexOf(value) === index)
+
+      return uniqueOwnerIds
+    }
+
+    const findFloorPrice = (listings: any[]) => {
+      var res = listings.reduce(function (prev, current) {
+        return prev.sale_price < current.sale_price ? prev : current
+      })
+      return res
+    }
+
     const fetchData = async () => {
       const listings = await getAllListingsByCollection(id)
       if (!!listings) {
         setnftListings(listings)
-
+        setfilteredNftListings(listings)
+        setCount(listings.length)
+        setOwners(getUniqueOwnersCount(listings))
+        setfloorPrice(findFloorPrice(listings).sale_price)
         const uri = (listings[0] as any).metadata.info.data.uri
         fetch(uri)
           .then(async _ => {
@@ -171,9 +192,13 @@ export const Collection: FC<CollectionProps> = () => {
   }, [colData])
 
   useEffect(() => {
-    filterFunction((items: any[]) => {
-      return items.filter(filterFun)
-    })
+    if (!!nftListings) {
+      setfilteredNftListings(
+        (nftListings as any[]).filter(elem => {
+          return elem.nft_name.includes(searchText)
+        }) as any
+      )
+    }
   }, [searchText, filters])
 
   useEffect(() => {
@@ -194,17 +219,13 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }, [])
 
-  const shortByPrice = val => {
-    const dataArray = [...nftItems].sort(function (a: any, b: any) {
-      return val === SORT_LOW_TO_HIGH
-        ? a.amounts.priceFloor - b.amounts.priceFloor
-        : b.amounts.priceFloor - a.amounts.priceFloor
+  const sortByPrice = val => {
+    //@ts-ignore
+    const dataArray = [...filteredNftListings].sort(function (a: any, b: any) {
+      return val === SORT_LOW_TO_HIGH ? a.sale_price - b.sale_price : b.sale_price - a.sale_price
     })
-
-    filterFunction(() => [])
-    setTimeout(() => {
-      filterFunction(() => [...dataArray])
-    }, 200)
+    //@ts-ignore
+    setfilteredNftListings(dataArray)
   }
 
   const filterFun = (sale: any) => {
@@ -360,6 +381,7 @@ export const Collection: FC<CollectionProps> = () => {
   return (
     <div className='collection'>
       <CollectionHeader
+        floorPrice={floorPrice}
         isVerified
         avatar={collectionHeaderData.collectionImageURL}
         cover={collectionHeaderData.collectionBannerURL}
@@ -398,7 +420,7 @@ export const Collection: FC<CollectionProps> = () => {
               }}
               showActivity={showActivity}
               showExplore={showExplore}
-              shortByPrice={shortByPrice}
+              sortByPrice={sortByPrice}
               searchText={searchText}
               onChangeSearchText={e => setSearchText(e.target.value)}
             />
@@ -412,7 +434,7 @@ export const Collection: FC<CollectionProps> = () => {
                     clearFilters={clearFilters}
                   />
                 )}
-                <AhCollectionNftList listings={nftListings} />
+                <AhCollectionNftList listings={filteredNftListings} />
               </div>
             )}
 

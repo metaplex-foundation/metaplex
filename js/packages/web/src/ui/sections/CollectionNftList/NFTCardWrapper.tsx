@@ -4,6 +4,7 @@ import { AuctionView, useAhExtendedArt } from '../../../hooks'
 import { Modal } from '@oyster/common'
 import { QuickBuy } from '../QuickBuy'
 import { AhQuickBuy } from '../AhQuickBuy'
+import useAhNFTData from '../../../hooks/useAhNFTData'
 
 interface NFTCardWrapperInterface {
   [key: string]: any
@@ -56,11 +57,13 @@ export const AuctionHouseNFTCardWrapper: FC<AuctionHouseNFTCardWrapperInterface>
   link,
   ...restProps
 }) => {
-  debugger
   const [showQuickBuy, setShowQuickBuy] = useState(false)
   const { data } = useAhExtendedArt(listing?.metadata)
   console.log('data', data)
-  debugger
+  const {
+    value: { solVal, usdValFormatted },
+  } = useAhNFTData(listing)
+
   if (!!data) {
     return (
       <>
@@ -70,9 +73,9 @@ export const AuctionHouseNFTCardWrapper: FC<AuctionHouseNFTCardWrapperInterface>
           // @ts-ignore
           title={data.name ?? ''}
           // @ts-ignore
-          price={listing?.seller_price}
+          price={listing?.sale_price}
           // @ts-ignore
-          dollarValue={listing?.seller_price?.formattedUsdAmount ?? ''}
+          dollarValue={usdValFormatted ?? ''}
           bidPrice={listing?.seller_price}
           onClickDetails={() => {
             console.log('On click details')

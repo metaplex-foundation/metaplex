@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Layout, Table, Switch, Spin, Modal, Input, Tooltip, Menu, Dropdown, Space } from 'antd'
-import { Badge, Button } from '@oyster/common'
+import { Badge, Button, TextField } from '@oyster/common'
 import { useMeta } from '../../contexts'
 import { Store, WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index'
 import {
@@ -16,7 +16,7 @@ import {
   WalletSigner,
 } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { Connection } from '@solana/web3.js'
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
 import { saveAdmin } from '../../actions/saveAdmin'
 import { convertMasterEditions, filterMetadata } from '../../actions/convertMasterEditions'
 import { Link } from 'react-router-dom'
@@ -24,6 +24,7 @@ import { SetupVariables } from '../../components/SetupVariables'
 import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
 import { getSubmissions, markAsFeatured, statusToApprove } from '../../api'
 import { CheckCircleTwoTone, EditFilled, EditTwoTone, EllipsisOutlined } from '@ant-design/icons'
+import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
 
 const { Content } = Layout
 export const AdminView = () => {
@@ -115,6 +116,66 @@ export const AdminView = () => {
           <Link to={`/`}>Go to initialize</Link>
         </>
       )}
+    </>
+  )
+}
+
+function TreasurySection() {
+  const connection = useConnection()
+  const wallet = useWallet()
+  const [amount, setAmount] = useState()
+  const [treasuryBalance, settreasuryBalance] = useState(0)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const ah = await listAuctionHouseNFT(connection, wallet).getAH()
+      const balance = await connection.getBalance(new PublicKey(ah.auctionHouseTreasury))
+      settreasuryBalance(balance)
+      console.log(ah.auctionHouseTreasury, ah.auctionHouseTreasury)
+      console.log(ah.auctionHouseTreasury, balance)
+    }
+    fetchData().catch(console.error)
+  })
+
+  return (
+    <>
+      <h5 className='min-w-fit text-h5'>
+        Treasury Balance: SOL {treasuryBalance / LAMPORTS_PER_SOL}
+      </h5>
+      <TextField
+        label='Amount'
+        placeholder='Enter amount to withdraw'
+        value={amount}
+        onChange={event => setAmount(event.target.value)}
+      />
+      <Button
+        className='mt-3'
+        appearance='neutral'
+        isRounded={false}
+        onClick={async () => {
+          notify({
+            message: 'Withdrawing...',
+            type: 'info',
+          })
+          const lampAmount = (amount ? amount : 0) * LAMPORTS_PER_SOL
+          const success = await listAuctionHouseNFT(connection, wallet).onWithdrawFromTreasury(
+            lampAmount
+          )
+          if (success) {
+            notify({
+              message: 'Funds withdrawn',
+              type: 'success',
+            })
+          } else {
+            notify({
+              message: 'Fund withdrawal failed',
+              type: 'error',
+            })
+          }
+        }}
+        type='primary'>
+        Withdraw
+      </Button>
     </>
   )
 }
@@ -387,6 +448,12 @@ function InnerAdminView({
   return (
     <Content className={'admin-content'}>
       <div className='container flex flex-col gap-[40px] py-[80px]'>
+        <div className='flex w-full justify-between'>
+          <div className='flex items-center gap-[16px]'>
+            <TreasurySection />
+          </div>
+        </div>
+
         <div className='flex w-full justify-between'>
           <div className='flex items-center gap-[16px]'>
             <ArtistModal

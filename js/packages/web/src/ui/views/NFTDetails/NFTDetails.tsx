@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react'
-import { NFTDetailsTopBar } from '../../sections/NFTDetailsTopBar'
+import { AhNFTDetailsTopBar, NFTDetailsTopBar } from '../../sections/NFTDetailsTopBar'
 import { AhNFTDetailsBody, NFTDetailsBody } from '../../sections/NFTDetailsBody'
 import { Redirect, useParams } from 'react-router-dom'
 import { AuctionView, useAuction } from '../../../hooks'
@@ -52,7 +52,12 @@ export const NFTDetails: FC<NFTDetailsProps> = () => {
       {sale && (
         <>
           <div className='nft-details w-full'>
-            <NFTDetailsTopBar onSetAuction={onSetAuction} id={id} className='pt-[20px] pb-[40px]' />
+            <AhNFTDetailsTopBar
+              sale={sale}
+              mintAddress={(sale as any).mint}
+              id={id}
+              className='pt-[20px] pb-[40px]'
+            />
             {sale && <AhNFTDetailsBody sale={sale} className='pb-[100px]' />}
           </div>
         </>

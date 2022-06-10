@@ -27,13 +27,11 @@ export const AhNFTDetailsActivity: FC<any> = ({
           setActivity([
             ...sale_.map(i => {
               return {
-                type: i.active === false ? 'Sold' : 'Offer made',
+                type: i.active === false ? 'Sold' : 'Listed',
                 from: i.seller_wallet ? getFormattedAddress(i.seller_wallet) : '',
-                to: i.ah_nft_offer.buyer_wallet
-                  ? getFormattedAddress(i.ah_nft_offer.buyer_wallet)
-                  : '',
+                to: i.ah_nft_offer ? getFormattedAddress(i.ah_nft_offer.buyer_wallet) : '',
                 time: moment(i.createdAt).fromNow(),
-                price: i.ah_nft_offer.offer_price,
+                price: i.ah_nft_offer ? i.ah_nft_offer.offer_price : i.sale_price,
               }
             }),
           ])
@@ -41,13 +39,11 @@ export const AhNFTDetailsActivity: FC<any> = ({
       } else {
         setActivity([
           {
-            type: sale_.active === false ? 'Sold' : 'Offer made',
+            type: sale_.active === false ? 'Sold' : 'Listed',
             from: sale_.seller_wallet ? getFormattedAddress(sale_.seller_wallet) : '',
-            to: sale_.ah_nft_offer.buyer_wallet
-              ? getFormattedAddress(sale_.ah_nft_offer.buyer_wallet)
-              : '',
+            to: sale_.ah_nft_offer ? getFormattedAddress(sale_.ah_nft_offer.buyer_wallet) : '',
             time: moment(sale_.createdAt).fromNow(),
-            price: sale_.ah_nft_offer.offer_price,
+            price: sale_.ah_nft_offer ? sale_.ah_nft_offer.offer_price : sale_.sale_price,
           } as any,
         ])
       }

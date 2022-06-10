@@ -425,10 +425,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@chathuranga/marketplace-js-sdk@0.2.4":
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/@chathuranga/marketplace-js-sdk/-/marketplace-js-sdk-0.2.4.tgz#e540d0ed5479a831e4945a635e22c5334d9ef7e1"
-  integrity sha512-6WFjXiEZUEX0fjdAWkCmS7LlzLzvWDJbDRhL2uYpZuXaMl8nASSN39kHNmEGBPDZ5v76U6S9dmA6BK4GMgbBzQ==
+"@chathuranga/marketplace-js-sdk@0.2.7":
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/@chathuranga/marketplace-js-sdk/-/marketplace-js-sdk-0.2.7.tgz#2a83d0f501243f0e9dff8d3a269173bec37ff7e3"
+  integrity sha512-IjvgLSmLRRtUo7J9got0sVyKF5O/rpAHwZM/oEL5kXQNLgXXlZT8oSV645tRq5lKmWZw7IFZsvsvFkataoXykw==
   dependencies:
     "@metaplex-foundation/mpl-auction-house" "^1.1.1"
     "@metaplex/js" "^4.12.0"
@@ -2773,9 +2773,9 @@
     cross-fetch "3.0.6"
 
 "@solana/spl-token-registry@^0.2.202":
-  version "0.2.4353"
-  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.4353.tgz#1d182fb3b9d88158337cf9180d59aba53eda587f"
-  integrity sha512-sX/nYbSR6pZx0RcnMP29kpJ0RRdnO/irafIO//sljqtHmcXkVCCi2zzpSCTMsb8D5yQwf8FGj8LGrRROmcyTFw==
+  version "0.2.4358"
+  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.4358.tgz#8ff5df79848db7413e6974eb07032ca3bfb80823"
+  integrity sha512-nnA1W6nWMpmRXBWOmUNraPpJK2sesTH8hiEeHWR8J9+SiWjfBPekVoEE22Ot1kPf2gNR3nHZgUA/bSNqtrY0Uw==
   dependencies:
     cross-fetch "3.0.6"
 
@@ -4895,9 +4895,9 @@ caseless@~0.12.0:
   integrity sha512-4tYFyifaFfGacoiObjJegolkwSU4xQNGbVgUiNYVUxbQ2x2lUsFvY4hVgVzGiIe6WLOPqycWXA40l+PWsxthUw==
 
 ccxt@^1.60.81:
-  version "1.85.62"
-  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.85.62.tgz#0ee915e205581cf13958b85394dab1fead596ae2"
-  integrity sha512-asSEN5I+07I192MO8Uset446jrt+P+EVYhYQYT/UzvNY+oBBxtkHU30vTIDQWKzhJGNoRx+MOEKxn9gq+Yk3oA==
+  version "1.85.69"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.85.69.tgz#22ac276d043c69ce2caf5700730e13fa4f40b5c1"
+  integrity sha512-siIIZFb2ctiKam0JRcNdjXtEIHOoLsICY9tI8XgnzseldNf+YrxAFFjAZg+AndzXGUYln2Ym71jJ0aQQyCWsBg==
 
 chalk@2.4.2, chalk@^2.0.0, chalk@^2.0.1, chalk@^2.1.0, chalk@^2.3.1, chalk@^2.4.1, chalk@^2.4.2:
   version "2.4.2"

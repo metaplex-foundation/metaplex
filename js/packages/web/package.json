@@ -4,7 +4,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.4.0",
     "@babel/preset-typescript": "^7.12.13",
-    "@chathuranga/marketplace-js-sdk": "0.2.4",
+    "@chathuranga/marketplace-js-sdk": "0.2.7",
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
     "@holaplex/mpl-auction-house": "^0.0.7",
@@ -70,7 +70,7 @@
     "prestart": "npm-link-shared ../common/node_modules/ . react",
     "start": "env-cmd -f .env.production next dev",
     "start:local": "env-cmd -f .env.local next dev",
-    "build": "next build",
+    "build": "env-cmd -f .env.production next build",
     "export": "next export -o ../../build/web",
     "start:prod": "env-cmd -f .env.production next start",
     "test": "jest --passWithNoTests",
