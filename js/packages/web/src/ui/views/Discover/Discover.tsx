@@ -2,7 +2,11 @@ import React, { FC, useEffect, useState } from 'react'
 import { SectionHeading, SearchField, Button, Pagination } from '@oyster/common'
 import { Link, useLocation } from 'react-router-dom'
 import queryString from 'query-string'
-import { CollectionView, useNFTCollections } from '../../../hooks/useCollections'
+import {
+  CollectionView,
+  useAhNFTCollections,
+  useNFTCollections,
+} from '../../../hooks/useCollections'
 import CollectionCard from '../../sections/RecentCollections/CollectionCard'
 import useSearch from '../../../hooks/useSearch'
 import { useExtendedCollection } from '../../../hooks'
@@ -17,7 +21,7 @@ interface SearchParamsInterface {
 }
 
 export const Discover: FC<DiscoverProps> = ({ tags }) => {
-  const { liveCollections } = useNFTCollections()
+  const { liveCollections } = useAhNFTCollections()
   const [collections, setCollections] = useState<CollectionView[]>([])
 
   const { search } = useLocation()
@@ -31,23 +35,28 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
   const { pathname } = useLocation()
   const { getData } = useExtendedCollection()
 
+  console.log('liveCollections', liveCollections)
+
   useEffect(() => {
-    if (liveCollections.length) {
-      const colData: any[] = []
-      liveCollections.forEach(element => {
-        getData(element.pubkey).then(res => {
-          const data = { name: res?.collection?.name ?? res.name, pubkey: element.pubkey }
-          const searchStrings = tags.find(i => data.name === i.collection_name_query_string) || null
-          let searchString: string = data.name + ' '
-          if (searchStrings?.tags?.length) {
-            searchString += searchStrings.tags.join(' ')
-          }
-          colData.push({ ...data, searchString })
+    if (liveCollections) {
+      if ((liveCollections as any[]).length) {
+        const colData: any[] = []
+        ;(liveCollections as any[]).forEach(element => {
+          getData(element.pubkey).then(res => {
+            const data = { name: res?.collection?.name ?? res.name, pubkey: element.pubkey }
+            const searchStrings =
+              tags.find(i => data.name === i.collection_name_query_string) || null
+            let searchString: string = data.name + ' '
+            if (searchStrings?.tags?.length) {
+              searchString += searchStrings.tags.join(' ')
+            }
+            colData.push({ ...data, searchString })
+          })
         })
-      })
-      setColMeta(colData)
+        setColMeta(colData)
+      }
     }
-  }, [liveCollections.length, tags.length])
+  }, [liveCollections, tags?.length])
 
   useEffect(() => {
     setCurrent(page ? Number(page) - 1 : 0)
@@ -56,7 +65,7 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
   useEffect(() => {
     if (colMeta.length) {
       const paginatedCollection = paginate([
-        ...liveCollections
+        ...(liveCollections as any[])
           .map(col => {
             const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
             const searchString =
@@ -110,7 +119,7 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
 
   const getPagination = () => {
     return paginate([
-      ...liveCollections
+      ...(liveCollections as any[])
         .map(col => {
           const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
           const searchString =

@@ -476,9 +476,11 @@ export const AuctionCard = ({
           {showPlaceBid &&
             !hideDefaultAction &&
             wallet.connected &&
-            auctionView.auction.info.ended() && (
-              <Button
-                className='secondary-btn'
+            auctionView.auction.info.ended() && (<div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
+              <ButtonOyster
+                appearance='neutral'
+                size='md'
+                className='h-full w-[180px] flex-shrink-0'
                 disabled={
                   !myPayingAccount ||
                   (!auctionView.myBidderMetadata && isAuctionManagerAuthorityNotWalletOwner) ||
@@ -542,8 +544,8 @@ export const AuctionCard = ({
                       : 'Refund bid'
                   }`
                 )}
-              </Button>
-            )}
+              </ButtonOyster>
+            </div>)}
           {/* {showPlaceBid ? (
             <div className="show-place-bid">
               <AmountLabel
@@ -775,15 +777,16 @@ export const AuctionCard = ({
           ) : (
             auctionView.isInstantSale &&
             !isAlreadyBought && (
-              <Button
-                type='primary'
-                size='large'
-                className='ant-btn secondary-btn'
-                disabled={loading}
-                onClick={instantSaleAction}
-                style={{ marginTop: 20, width: '100%' }}>
-                {actionButtonContent}
-              </Button>
+              <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
+                <ButtonOyster
+                    appearance='neutral'
+                    size='md'
+                    className='h-full w-[180px] flex-shrink-0'
+                    disabled={loading}
+                    onClick={instantSaleAction}>
+                      {actionButtonContent}
+                  </ButtonOyster>
+              </div>
             )
           ))}
         {!hideDefaultAction && !wallet.connected && (

@@ -6,7 +6,9 @@ const api = `${process.env.NEXT_API_URL}/nft`
 
 export const getAllListingsByCollection = async (collection: any) => {
   try {
-    const res = await axios.get(`${api}/collections/${collection}`)
+    const res = await axios.get(
+      `${api}/collections/${collection}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return res.data
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
@@ -20,7 +22,10 @@ export const getAllListingsByCollection = async (collection: any) => {
 
 export const addListing = async (listingInfo: any) => {
   try {
-    const res = await axios.post(`${api}/listing`, listingInfo)
+    const res = await axios.post(
+      `${api}/listing?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`,
+      listingInfo
+    )
     return res
   } catch (error: any) {
     console.log('Add API error: ', error.message)
@@ -30,7 +35,9 @@ export const addListing = async (listingInfo: any) => {
 
 export const getListingByMint = async (mint: any) => {
   try {
-    const res = await axios.get(`${api}/listing/${mint}`)
+    const res = await axios.get(
+      `${api}/listing/${mint}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return res.data
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
@@ -44,7 +51,10 @@ export const getListingByMint = async (mint: any) => {
 
 export const addSaleEvent = async (updateOfferInfo: any, saleKey: string) => {
   try {
-    const res = await axios.patch(`${api}/listing/${saleKey}`, updateOfferInfo)
+    const res = await axios.patch(
+      `${api}/listing/${saleKey}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`,
+      updateOfferInfo
+    )
     return res
   } catch (error: any) {
     console.log('Add API error: ', error.message)
@@ -54,7 +64,9 @@ export const addSaleEvent = async (updateOfferInfo: any, saleKey: string) => {
 
 export const getNFTGroupedByCollection = async () => {
   try {
-    const res = await axios.get(`${api}/collections`)
+    const res = await axios.get(
+      `${api}/collections?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return res.data
   } catch (error: any) {
     console.log('Add API error: ', error.message)
@@ -64,7 +76,9 @@ export const getNFTGroupedByCollection = async () => {
 
 export const getAllActivitiesForNFT = async (mint: any) => {
   try {
-    const res = await axios.get(`${api}/sales/${mint}`)
+    const res = await axios.get(
+      `${api}/sales/${mint}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return res.data
   } catch (error: any) {
     console.log('Add API error: ', error.message)
@@ -74,7 +88,9 @@ export const getAllActivitiesForNFT = async (mint: any) => {
 
 export const getListingsBySeller = async (seller_pubkey: any) => {
   try {
-    const res = await axios.get(`${api}/listing?seller=${seller_pubkey}`)
+    const res = await axios.get(
+      `${api}/listing?seller=${seller_pubkey}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return res.data
   } catch (error: any) {
     console.log('Get API error: ', error.response.data.message)
@@ -88,7 +104,9 @@ export const getListingsBySeller = async (seller_pubkey: any) => {
 
 export const cancelListing = async (listing_id: string) => {
   try {
-    const res = await axios.delete(`${api}/listing/${listing_id}`)
+    const res = await axios.delete(
+      `${api}/listing/${listing_id}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return res.data
   } catch (error: any) {
     console.log('Delete API error: ', error.response.data.message)
