@@ -157,8 +157,6 @@ export const useNFTCollections = () => {
 
 export const useAhNFTCollections = () => {
   const [liveCollections, setLiveCollections] = useState<any[]>()
-  const { metadataByCollection } = useMeta()
-
   useEffect(() => {
     const fetchData = async () => {
       await getCollections()

@@ -454,7 +454,7 @@ const InstantSale = ({
             {loading ? <Spin /> : 'End Sale'}
           </Button>
         )}
-        {category === AuctionCategory.Tiered && (
+        {category === AuctionCategory.Tiered && !sale && (
           <Button disabled={status} onClick={createAuction} className='w-full'>
             Put on auction
           </Button>

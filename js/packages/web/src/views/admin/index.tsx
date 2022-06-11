@@ -16,7 +16,7 @@ import {
   WalletSigner,
 } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js'
 import { saveAdmin } from '../../actions/saveAdmin'
 import { convertMasterEditions, filterMetadata } from '../../actions/convertMasterEditions'
 import { Link } from 'react-router-dom'
@@ -25,6 +25,7 @@ import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
 import { getSubmissions, markAsFeatured, statusToApprove } from '../../api'
 import { CheckCircleTwoTone, EditFilled, EditTwoTone, EllipsisOutlined } from '@ant-design/icons'
 import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
+import { createAuctionHouse } from '../../actions/createAuctionHouse'
 
 const { Content } = Layout
 export const AdminView = () => {
@@ -121,6 +122,7 @@ export const AdminView = () => {
 }
 
 function TreasurySection() {
+  const [loading, setLoading] = useState<boolean>(false)
   const connection = useConnection()
   const wallet = useWallet()
   const [amount, setAmount] = useState()
@@ -128,54 +130,107 @@ function TreasurySection() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const ah = await listAuctionHouseNFT(connection, wallet).getAH()
-      const balance = await connection.getBalance(new PublicKey(ah.auctionHouseTreasury))
-      settreasuryBalance(balance)
-      console.log(ah.auctionHouseTreasury, ah.auctionHouseTreasury)
-      console.log(ah.auctionHouseTreasury, balance)
+      try {
+        const ah = await listAuctionHouseNFT(connection, wallet).getAH()
+        const balance = await connection.getBalance(new PublicKey(ah.auctionHouseTreasury))
+        settreasuryBalance(balance)
+      } catch {
+        settreasuryBalance(-1)
+      }
     }
     fetchData().catch(console.error)
   })
 
+  const createNewAuctionHouse = async () => {
+    const auctionHouseCreateInstruction = await createAuctionHouse({
+      wallet: wallet as any,
+      sellerFeeBasisPoints: parseInt(process.env.NEXT_STORE_FEE_PERCENTAGE as string),
+      treasuryWithdrawalDestination: process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
+      feeWithdrawalDestination: process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS,
+    })
+
+    const transaction = new Transaction()
+
+    transaction.add(auctionHouseCreateInstruction)
+
+    transaction.feePayer = wallet.publicKey as any
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+
+    const signedTransaction = await wallet.signTransaction(transaction)
+
+    const txtId = await connection.sendRawTransaction(signedTransaction.serialize())
+
+    if (txtId) await connection.confirmTransaction(txtId)
+
+    return txtId
+  }
+
   return (
     <>
-      <h5 className='min-w-fit text-h5'>
-        Treasury Balance: SOL {treasuryBalance / LAMPORTS_PER_SOL}
-      </h5>
-      <TextField
-        label='Amount'
-        placeholder='Enter amount to withdraw'
-        value={amount}
-        onChange={event => setAmount(event.target.value)}
-      />
-      <Button
-        className='mt-3'
-        appearance='neutral'
-        isRounded={false}
-        onClick={async () => {
-          notify({
-            message: 'Withdrawing...',
-            type: 'info',
-          })
-          const lampAmount = (amount ? amount : 0) * LAMPORTS_PER_SOL
-          const success = await listAuctionHouseNFT(connection, wallet).onWithdrawFromTreasury(
-            lampAmount
-          )
-          if (success) {
-            notify({
-              message: 'Funds withdrawn',
-              type: 'success',
-            })
-          } else {
-            notify({
-              message: 'Fund withdrawal failed',
-              type: 'error',
-            })
-          }
-        }}
-        type='primary'>
-        Withdraw
-      </Button>
+      {treasuryBalance >= 0 && (
+        <>
+          <h5 className='min-w-fit text-h5'>
+            Treasury Balance: SOL {treasuryBalance / LAMPORTS_PER_SOL}
+          </h5>
+          <TextField
+            label='Amount'
+            placeholder='Enter amount to withdraw'
+            value={amount}
+            onChange={event => setAmount(event.target.value)}
+          />
+          <Button
+            className='mt-3'
+            appearance='neutral'
+            isRounded={false}
+            onClick={async () => {
+              notify({
+                message: 'Withdrawing...',
+                type: 'info',
+              })
+              const lampAmount = (amount ? amount : 0) * LAMPORTS_PER_SOL
+              const success = await listAuctionHouseNFT(connection, wallet).onWithdrawFromTreasury(
+                lampAmount
+              )
+              if (success) {
+                notify({
+                  message: 'Funds withdrawn',
+                  type: 'success',
+                })
+              } else {
+                notify({
+                  message: 'Fund withdrawal failed',
+                  type: 'error',
+                })
+              }
+            }}
+            type='primary'>
+            Withdraw
+          </Button>
+        </>
+      )}
+
+      {treasuryBalance < 0 && (
+        <>
+          <h5 className='min-w-fit text-h5'>Auction House Not Found</h5>
+          <Button
+            className='mt-3'
+            appearance='neutral'
+            isRounded={false}
+            onClick={async () => {
+              notify({
+                message: 'Initializing...',
+                type: 'info',
+              })
+              setLoading(true)
+              const success = await createNewAuctionHouse()
+              location.reload()
+            }}
+            type='primary'>
+            {loading ? <Spin /> : 'List Now'}
+            Init Auction House
+          </Button>
+        </>
+      )}
     </>
   )
 }

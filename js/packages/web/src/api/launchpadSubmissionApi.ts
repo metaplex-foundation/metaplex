@@ -4,7 +4,10 @@ const api = `${process.env.NEXT_API_URL}/launchpad-submission`
 
 export const addSubmission = async (data: any) => {
   try {
-    const res = await axios.post(`${api}/add`, data)
+    const res = await axios.post(
+      `${api}/add?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`,
+      data
+    )
     return res
   } catch (error: any) {
     console.log('Add submissions API error: ', error.message)
@@ -14,7 +17,9 @@ export const addSubmission = async (data: any) => {
 
 export const getSubmissions = async () => {
   try {
-    const submissions = await axios.get(`${api}/get`)
+    const submissions = await axios.get(
+      `${api}/get?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return submissions
   } catch (error: any) {
     console.log('Get submissions API error: ', error.message)
@@ -33,7 +38,9 @@ export const statusToApprove = async (id: string) => {
 
 export const findByCollectionName = async (name: string) => {
   try {
-    const data = await axios.get(`${api}/find/name/${name}`)
+    const data = await axios.get(
+      `${api}/find/name/${name}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return data
   } catch (error: any) {
     console.log('Find submissions with collection name API error: ', error.message)
@@ -43,7 +50,9 @@ export const findByCollectionName = async (name: string) => {
 
 export const findByMintKey = async (mintKey: string, collectionName: string) => {
   try {
-    const data = await axios.get(`${api}/find/mint/${collectionName}/${mintKey}`)
+    const data = await axios.get(
+      `${api}/find/mint/${collectionName}/${mintKey}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return data
   } catch (error: any) {
     console.log('Find submissions with mint key API error: ', error.message)
@@ -63,7 +72,9 @@ export const markAsFeatured = async (id: string) => {
 
 export const getFeaturedSubmission = async () => {
   try {
-    const data = await axios.get(`${api}/featured`)
+    const data = await axios.get(
+      `${api}/featured?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return data.data
   } catch (error: any) {
     console.log('Mark submission as featured API error: ', error.message)
@@ -80,7 +91,7 @@ export const getCollectionHeaderInfo = async (creatorId: any, collectionName: st
       modifiedCollectionName = collectionName
     }
     const data = await axios.get(
-      `${api}/collection/header/info/${creatorId}/${modifiedCollectionName}`
+      `${api}/collection/header/info/${creatorId}/${modifiedCollectionName}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
     )
     return data.data
   } catch (error: any) {
@@ -91,7 +102,9 @@ export const getCollectionHeaderInfo = async (creatorId: any, collectionName: st
 
 export const getSubmission = async (id: string, name: string) => {
   try {
-    const data = await axios.get(`${api}/submission/${id}/${name}`)
+    const data = await axios.get(
+      `${api}/submission/${id}/${name}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return data.data
   } catch (error: any) {
     console.log('Get submission API error: ', error.message)

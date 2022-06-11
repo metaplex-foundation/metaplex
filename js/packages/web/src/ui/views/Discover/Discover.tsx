@@ -10,6 +10,7 @@ import {
 import CollectionCard from '../../sections/RecentCollections/CollectionCard'
 import useSearch from '../../../hooks/useSearch'
 import { useExtendedCollection } from '../../../hooks'
+import { getNFTGroupedByCollection } from '../../../api/ahListingApi'
 
 export interface DiscoverProps {
   tags: any[]
@@ -21,8 +22,20 @@ interface SearchParamsInterface {
 }
 
 export const Discover: FC<DiscoverProps> = ({ tags }) => {
-  const { liveCollections } = useAhNFTCollections()
-  const [collections, setCollections] = useState<CollectionView[]>([])
+  const [liveCollections, setLiveCollections] = useState<any[]>()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await getCollections()
+    }
+    fetchData().catch(console.error)
+  }, [])
+
+  const getCollections = async () => {
+    let collections: any[] = await getNFTGroupedByCollection()
+    console.log('collections', collections)
+    setLiveCollections(collections)
+  }
 
   const { search } = useLocation()
   const { searchText, page }: SearchParamsInterface = queryString.parse(search) || {}
@@ -35,79 +48,75 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
   const { pathname } = useLocation()
   const { getData } = useExtendedCollection()
 
-  console.log('liveCollections', liveCollections)
-
   useEffect(() => {
     if (liveCollections) {
       if ((liveCollections as any[]).length) {
         const colData: any[] = []
         ;(liveCollections as any[]).forEach(element => {
-          getData(element.pubkey).then(res => {
-            const data = { name: res?.collection?.name ?? res.name, pubkey: element.pubkey }
-            const searchStrings =
-              tags.find(i => data.name === i.collection_name_query_string) || null
-            let searchString: string = data.name + ' '
-            if (searchStrings?.tags?.length) {
-              searchString += searchStrings.tags.join(' ')
-            }
-            colData.push({ ...data, searchString })
-          })
+          debugger
+          const data = { name: element?.collection ?? element.name, pubkey: element.mint }
+          const searchStrings = tags.find(i => data.name === i.collection_name_query_string) || null
+          let searchString: string = data.name + ' '
+          if (searchStrings?.tags?.length) {
+            searchString += searchStrings.tags.join(' ')
+          }
+          colData.push({ ...data, searchString })
         })
         setColMeta(colData)
       }
     }
   }, [liveCollections, tags?.length])
 
-  useEffect(() => {
-    setCurrent(page ? Number(page) - 1 : 0)
-  }, [page])
+  // useEffect(() => {
+  //   setCurrent(page ? Number(page) - 1 : 0)
+  // }, [page])
 
-  useEffect(() => {
-    if (colMeta.length) {
-      const paginatedCollection = paginate([
-        ...(liveCollections as any[])
-          .map(col => {
-            const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
-            const searchString =
-              colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.searchString || ''
-            return {
-              ...col,
-              name: collectionName,
-              searchString,
-            }
-          })
-          .filter(filterFun),
-      ])
-      if (paginatedCollection.length > 0) {
-        setShowPagination(true)
-      }
+  // useEffect(() => {
+  //   if (colMeta.length) {
+  //     const paginatedCollection = paginate([
+  //       ...(liveCollections as any[])
+  //         .map(col => {
+  //           const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
+  //           const searchString =
+  //             colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.searchString || ''
+  //           return {
+  //             ...col,
+  //             name: collectionName,
+  //             searchString,
+  //           }
+  //         })
+  //         .filter(filterFun),
+  //     ])
+  //     if (paginatedCollection.length > 0) {
+  //       setShowPagination(true)
+  //     }
 
-      setCollections(
-        paginatedCollection.length && !!paginatedCollection[current]
-          ? paginatedCollection[current]
-          : []
-      )
-    }
-  }, [liveCollections, searchText, current, colMeta.length])
+  //     setLiveCollections(
+  //       paginatedCollection.length && !!paginatedCollection[current]
+  //         ? paginatedCollection[current]
+  //         : []
+  //     )
+  //   }
+  // }, [liveCollections, searchText, current, colMeta.length])
 
-  const paginate = array => {
-    const chunkSize = 30
-    const chunks: Array<any> = []
-    for (let i = 0; i < array.length; i += chunkSize) {
-      const chunk = array.slice(i, i + chunkSize)
-      chunks.push(chunk)
-    }
-    return chunks
-  }
+  // const paginate = array => {
+  //   const chunkSize = 30
+  //   const chunks: Array<any> = []
+  //   for (let i = 0; i < array.length; i += chunkSize) {
+  //     const chunk = array.slice(i, i + chunkSize)
+  //     chunks.push(chunk)
+  //   }
+  //   return chunks
+  // }
 
-  const filterFun = (col: any) => {
-    console.log('searchText', searchText)
-    if (!searchText) {
-      return true
-    }
-    console.log('col.searchString', col.searchString)
-    return col.searchString.toLowerCase().includes(searchText.toLowerCase())
-  }
+  // const filterFun = (col: any) => {
+  //   console.log('searchText', searchText)
+  //   if (!searchText) {
+  //     return true
+  //   }
+  //   console.log('col.searchString', col.searchString)
+  //   return col.searchString.toLowerCase().includes(searchText.toLowerCase())
+  // }
 
   const handleKeyPress = event => {
     if (event.key === 'Enter') {
@@ -115,33 +124,33 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
     }
   }
 
-  // console.log('colMeta', colMeta)
+  // // console.log('colMeta', colMeta)
 
-  const getPagination = () => {
-    return paginate([
-      ...(liveCollections as any[])
-        .map(col => {
-          const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
-          const searchString =
-            colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.searchString || ''
-          return {
-            ...col,
-            name: collectionName,
-            searchString,
-          }
-        })
-        .filter(filterFun),
-    ]).map((i, key) => {
-      return {
-        label: `${key + 1}`,
-        isActive: key === current,
-        link: `${pathname}?${new URLSearchParams({
-          searchText: searchText ?? '',
-          page: `${key + 1}`,
-        }).toString()}`,
-      }
-    })
-  }
+  // const getPagination = () => {
+  //   return paginate([
+  //     ...(liveCollections as any[])
+  //       .map(col => {
+  //         const collectionName = colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.name || ''
+  //         const searchString =
+  //           colMeta.find(({ pubkey }) => pubkey === col.pubkey)?.searchString || ''
+  //         return {
+  //           ...col,
+  //           name: collectionName,
+  //           searchString,
+  //         }
+  //       })
+  //       .filter(filterFun),
+  //   ]).map((i, key) => {
+  //     return {
+  //       label: `${key + 1}`,
+  //       isActive: key === current,
+  //       link: `${pathname}?${new URLSearchParams({
+  //         searchText: searchText ?? '',
+  //         page: `${key + 1}`,
+  //       }).toString()}`,
+  //     }
+  //   })
+  // }
 
   return (
     <div className='discover container'>
@@ -176,16 +185,19 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
 
       <div className='container pt-[80px]'>
         <ul className='grid grid-cols-4 gap-[32px]'>
-          {(collections || []).map((collection: any) => (
-            <li key={collection.pubkey}>
-              <Link to={`/collection/${collection.mint ?? collection.name}`}>
-                <CollectionCard hasButton={false} collection={collection} />
-              </Link>
-            </li>
-          ))}
+          {(liveCollections || []).map(
+            (collection: any) =>
+              !!collection && (
+                <li key={collection?.collection}>
+                  <Link to={`/collection/${collection?.collection ?? collection?.name}`}>
+                    <CollectionCard hasButton={false} collection={collection} />
+                  </Link>
+                </li>
+              )
+          )}
         </ul>
 
-        {showPagination && (
+        {/* {showPagination && (
           <div className='flex justify-center py-[80px]'>
             <Pagination
               prevLink={
@@ -213,7 +225,7 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
               pages={getPagination()}
             />
           </div>
-        )}
+        )} */}
       </div>
     </div>
   )
