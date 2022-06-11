@@ -14,6 +14,7 @@ import {
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   CACHE_PATH,
+  CLUSTERS,
   CONFIG_LINE_SIZE_V2,
   EXTENSION_JSON,
   CANDY_MACHINE_PROGRAM_V2_ID,
@@ -129,6 +130,12 @@ programCommand('upload')
       collectionMint,
       setCollectionMint,
     } = cmd.opts();
+
+    if (!CLUSTERS.some(cluster => cluster.name === env)) {
+      throw new Error(
+        'Your environement flag is invalid\nThe valid values are "mainnet-beta", "testnet" & "devnet"',
+      );
+    }
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgramV2(walletKeyPair, env, rpcUrl);
