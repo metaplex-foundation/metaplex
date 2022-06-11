@@ -186,8 +186,8 @@ programCommand('update-metadata')
   });
 
 programCommand('set-and-verify-collection')
-  .option('-m, --mint <string>', 'base58 mint key')
-  .option(
+  .requiredOption('-m, --mint <string>', 'base58 mint key')
+  .requiredOption(
     '-c, --collection-mint <string>',
     'base58 mint key: A collection is an NFT that can be verified as the collection for this nft',
   )
