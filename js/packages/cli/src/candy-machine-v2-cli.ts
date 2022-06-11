@@ -130,7 +130,7 @@ programCommand('upload')
       collectionMint,
       setCollectionMint,
     } = cmd.opts();
-  
+
     if (!CLUSTERS.some(cluster => cluster.name === env)) {
       throw new Error(
         'Your environement flag is invalid\nThe valid values are "mainnet-beta", "testnet" & "devnet"',
