@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@babel/runtime": "^7.15.5",
-    "@civic/solana-gateway-react": "^0.6.0",
+    "@civic/solana-gateway-react": "^0.7.0",
     "@identity.com/solana-gateway-ts": "^0.8.1",
     "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",

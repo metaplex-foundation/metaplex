@@ -1089,19 +1089,27 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
-"@civic/solana-gateway-react@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.6.0.tgz#3063f76ddb238358a4cb8522382a59766b7a89e1"
-  integrity sha512-FgX0kwTOCDuizqX+wlqlO6IKP0asCw8cfJ3Jll+dNocK27aTMOKPuAqLzUtXerfCoXs+xq+hojtnh+Q1CsYDAQ==
+"@civic/common-gateway-react@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@civic/common-gateway-react/-/common-gateway-react-0.1.5.tgz#87d9fa43299445736d861785cff490fe8ad2f752"
+  integrity sha512-yobTGXNDvwsgYz4u/eumde6rtZYqtSr94pqM35KmfquQ5YYb6x22y8DHqDVg3aWOo2ohJlXKXRr1r+APXhxaog==
   dependencies:
-    "@identity.com/prove-solana-wallet" "^0.2.3"
-    "@identity.com/solana-gateway-ts" "^0.7.0"
-    "@solana/web3.js" "^1.33.0"
+    "@types/node" "^17.0.32"
     "@types/styled-components" "^5.1.15"
     fetch-retry-ts "^1.1.24"
     iframe-resizer-react "^1.1.0"
     ramda "^0.27.1"
     styled-components "^5.3.1"
+
+"@civic/solana-gateway-react@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.7.0.tgz#543717a49c75ed355dd001e1bea31d8f7d0168ed"
+  integrity sha512-RMTAyzScJ/V6BrJp0GlSukYswhvwBFmfhMRAgSAuGe4mbeG7ngPwlwxg41SeE2Xw+B3b8woQpMDeAfEZ5b3hYQ==
+  dependencies:
+    "@civic/common-gateway-react" "^0.1.5"
+    "@identity.com/prove-solana-wallet" "^0.2.3"
+    "@identity.com/solana-gateway-ts" "^0.7.0"
+    "@solana/web3.js" "^1.33.0"
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -2342,6 +2350,11 @@
   version "12.20.41"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.41.tgz#81d7734c5257da9f04354bd9084a6ebbdd5198a5"
   integrity sha512-f6xOqucbDirG7LOzedpvzjP3UTmHttRou3Mosx3vL9wr9AIQGhcPgVnqa8ihpZYnxyM1rxeNCvTyukPKZtq10Q==
+
+"@types/node@^17.0.32":
+  version "17.0.34"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.34.tgz#3b0b6a50ff797280b8d000c6281d229f9c538cef"
+  integrity sha512-XImEz7XwTvDBtzlTnm8YvMqGW/ErMWBsKZ+hMTvnDIjGCKxwK5Xpc+c/oQjOauwq8M4OS11hEkpjX8rrI/eEgA==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
