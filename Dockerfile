@@ -29,7 +29,7 @@ RUN yarn bootstrap
 
 # HERE ADD YOUR STORE WALLET ADDRESS
 
-ENV REACT_APP_STORE_OWNER_ADDRESS_ADDRESS="9Df53TwY6bFmAp6q3qELbotWQqig8F1uRKNg3ahb6gG3"
+ENV REACT_APP_STORE_OWNER_ADDRESS_ADDRESS="8nXJgsjQGKaNMvxsTEdZEY42p2LXfhHFEV4HnEXDoJ6q"
 
 # Generate the build of the application
 RUN yarn build
@@ -51,6 +51,7 @@ COPY --from=build /app/packages/web/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/packages/web/.next ./.next
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/web/package.json ./package.json
+COPY --from=build /app/packages/web/.env.production ./.env.production
 
 USER nextjs
 
