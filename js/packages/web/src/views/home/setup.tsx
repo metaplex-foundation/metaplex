@@ -28,7 +28,7 @@ export const SetupView = () => {
   const { setVisible } = useWalletModal()
   console.log('wallet.wallet', wallet.wallet, wallet)
   const connect = useCallback(
-    () => setVisible(true),
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
     [wallet.wallet, wallet.connect, setVisible]
   )
   const [storeAddress, setStoreAddress] = useState<string | undefined>()

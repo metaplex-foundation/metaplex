@@ -18,6 +18,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  Button as ButtonOyster,
   WRAPPED_SOL_MINT,
 } from '@oyster/common'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -368,32 +369,32 @@ export const InnerBillingView = ({
     auctionView,
   })
   return (
-    <Content>
+    <Content className='container'>
       <Col>
         <Row style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}>
-          <Col span={12}>
+          <Col span={12} className='p-20'>
             <ArtContent pubkey={id} className='artwork-image' allowMeshRender={true} />
           </Col>
-          <Col span={12}>
-            <div style={{ fontWeight: 700 }}>{art.title}</div>
+          <Col span={12} className='p-20'>
+            <div className='text-h2 font-500 text-slate-800'>{art.title}</div>
             <br />
-            <div className='info-header'>TOTAL AUCTION VALUE</div>
-            <div className='escrow'>
+            <div className='text-h6 font-400'>TOTAL AUCTION VALUE</div>
+            <div className='text-h4 font-600 leading-[1] pt-2'>
               {auctionView.auctionManager.acceptPayment == WRAPPED_SOL_MINT.toBase58() ? '◎' : ''}
-              {fromLamports(totalWinnerPayments + participationPossibleTotal, mint)}
+              {fromLamports(totalWinnerPayments + participationPossibleTotal, mint)} SOL
             </div>
             <br />
-            <div className='info-header'>TOTAL AUCTION REDEEMED VALUE</div>
-            <div className='escrow'>
+            <div className='text-h6 font-400'>TOTAL AUCTION REDEEMED VALUE</div>
+            <div className='text-h4 font-600 leading-[1] pt-2'>
               {auctionView.auctionManager.acceptPayment == WRAPPED_SOL_MINT.toBase58() ? '◎' : ''}
               {fromLamports(
                 totalWinnerPayments + participationPossibleTotal - participationUnredeemedTotal,
                 mint
-              )}
+              )} SOL
             </div>
             <br />
-            <div className='info-header'>TOTAL COLLECTED BY ARTISTS AND AUCTIONEER</div>
-            <div className='escrow'>
+            <div className='text-h6 font-400'>TOTAL COLLECTED BY ARTISTS AND AUCTIONEER</div>
+            <div className='text-h4 font-600 leading-[1] pt-2'>
               {auctionView.auctionManager.acceptPayment == WRAPPED_SOL_MINT.toBase58() ? '◎' : ''}
               {fromLamports(
                 Object.values(payoutTickets).reduce((acc, el) => (acc += el.sum), 0),
@@ -401,8 +402,8 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div className='info-header'>TOTAL UNSETTLED</div>
-            <div className='escrow'>
+            <div className='text-h6 font-400'>TOTAL UNSETTLED</div>
+            <div className='text-h4 font-600 leading-[1] pt-2'>
               {auctionView.auctionManager.acceptPayment == WRAPPED_SOL_MINT.toBase58() ? '◎' : ''}
               {fromLamports(
                 bidsToClaim.reduce((acc, el) => (acc += el.metadata.info.lastBid.toNumber()), 0),
@@ -410,8 +411,8 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div className='info-header'>TOTAL IN ESCROW</div>
-            <div className='escrow'>
+            <div className='text-h6 font-400'>TOTAL IN ESCROW</div>
+            <div className='text-h4 font-600 leading-[1] pt-2'>
               {escrowBalance !== undefined ? (
                 `${
                   auctionView.auction.info.tokenMint == WRAPPED_SOL_MINT.toBase58() ? '◎' : ''
@@ -434,10 +435,11 @@ export const InnerBillingView = ({
               </>
             )}
             <br />
-            <Button
-              type='primary'
-              size='large'
-              className='action-btn'
+            <div className='flex h-[56px] max-w-[295px] items-center rounded-full border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
+            <ButtonOyster
+              appearance='neutral'
+              size='md'
+              className='h-full w-[180px] flex-shrink-0'
               onClick={async () => {
                 await settle(
                   fromLamports(
@@ -457,10 +459,10 @@ export const InnerBillingView = ({
                 setEscrowBalanceRefreshCounter(ctr => ctr + 1)
               }}>
               SETTLE OUTSTANDING
-            </Button>
+            </ButtonOyster></div>
           </Col>
         </Row>
-        <Row>
+        <Row className='pl-20 pr-20'>
           <Table
             style={{ width: '100%' }}
             columns={[
