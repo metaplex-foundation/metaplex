@@ -7,7 +7,16 @@ export interface ActivityCardCollectionProps {
   [x: string]: any
   image?: string
   title?: string
-  description?: string
+  description?: {
+    pubkey: string,
+    account:object,
+    holding:string,
+    info?: {
+      data?: {
+        name?: string
+      }
+    }
+  }
   price?: string
   fromAddress?: string
   toAddress?: string
@@ -40,7 +49,7 @@ export const ActivityCardCollection: FC<ActivityCardCollectionProps> = ({
         <div className='flex h-[40px] w-[40px] overflow-hidden rounded-[8px]'>
           <Image src={image} />
         </div>
-        <span className='font-500 customCardItem' data-filetype={textShortner(description)}><p>{description}</p></span>
+        <span className='font-500 customCardItem' data-filetype={textShortner(description?.info?.data?.name)}><p>{description?.info?.data?.name}</p></span>
       </div>
       <span className='customCardItem'>Sale</span>
       <span>{price}</span>
