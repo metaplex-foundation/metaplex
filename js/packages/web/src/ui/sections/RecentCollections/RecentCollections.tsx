@@ -46,12 +46,14 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
           heading='Listed collections'
           actions={
             <div className='flex items-center gap-[12px]'>
-              <Button
-                appearance='ghost'
-                view='outline'
-                iconAfter={<i className='ri-arrow-right-s-line' />}>
-                Discover more collections
-              </Button>
+              <Link to={`/discover`}>
+                <Button
+                  appearance='ghost'
+                  view='outline'
+                  iconAfter={<i className='ri-arrow-right-s-line' />}>
+                  Discover more collections
+                </Button>
+              </Link>
             </div>
           }
         />
