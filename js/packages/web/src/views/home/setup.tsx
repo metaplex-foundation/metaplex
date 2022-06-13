@@ -83,13 +83,19 @@ export const SetupView = () => {
       }),
     ])
 
-    await createNewAuctionHouse()
+    //await createNewAuctionHouse()
     // TODO: process errors
 
     await setStoreForOwner(undefined)
     await setStoreForOwner(wallet.publicKey.toBase58())
 
-    history.push('/admin')
+    function loadAdmin() {
+      setTimeout(() => {
+        history.push('/admin')
+      }, 120000)
+    }
+
+    loadAdmin()
   }
 
   return (

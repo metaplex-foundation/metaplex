@@ -2,6 +2,7 @@ import { BuyCard, useConnection } from '@oyster/common'
 import { FC, useEffect, useState } from 'react'
 import { useAhExtendedArt, useExtendedArt } from '../../../hooks'
 import { Connection, programs } from '@metaplex/js'
+import { useAhCollectionVolume } from '../../../hooks/useCollections'
 const {
   metadata: { Metadata },
 } = programs
@@ -19,6 +20,8 @@ const dx = {
 
 const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
   const { data } = useAhExtendedArt(collection.nfts[0].metadata)
+  const { collectionVolume } = useAhCollectionVolume(collection.collection)
+
   if (!!data) {
     // // console.log('CollectionCard', data)
     const nameProp: { name: string } = { name: (data?.collection as any).name ?? '' }
@@ -30,6 +33,24 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
     if (data?.collection?.name) {
       //@ts-ignore
       nameProp.name = data?.collection?.name
+    }
+
+    let dx = {
+      volume: '472.54',
+      floorPrice: 'Ⓞ 0.25 SOL',
+      dollarValue: '$154.00',
+      link: '#',
+    }
+
+    if (!!collectionVolume) {
+      dx = {
+        volume: collectionVolume.nftTotalSales.total_sol,
+        floorPrice: '',
+        dollarValue:
+          '$' +
+          (collectionVolume.nftTotalSales.total_usd ? collectionVolume.total_usd.toString() : ''),
+        link: '#',
+      }
     }
 
     return (

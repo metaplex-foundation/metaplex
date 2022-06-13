@@ -17,7 +17,7 @@ const LiveNFTCard: FC<LiveNFTCardProps> = ({ collection, ...rest }) => {
   const { data } = useAhExtendedArt(collection?.nfts[0].metadata)
 
   const nameProp: { name: string } = { name: data?.name ?? '' }
-  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+  // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
   const [user, setUser] = useState<any>(null)
   //@ts-ignore
   if (data?.collection?.name) {
@@ -31,12 +31,16 @@ const LiveNFTCard: FC<LiveNFTCardProps> = ({ collection, ...rest }) => {
   //   }) || null
 
   useEffect(() => {
+    let isMounted = true
     if (!user) {
       const userPubKey = collection?.nfts[0]?.seller_wallet || null
       if (userPubKey) {
         getProfile(userPubKey).then(({ data }) => {
           setUser(data)
         })
+        return () => {
+          isMounted = false
+        }
       }
     }
   }, [collection, user])

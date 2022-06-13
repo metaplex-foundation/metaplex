@@ -226,8 +226,7 @@ function TreasurySection() {
               location.reload()
             }}
             type='primary'>
-            {loading ? <Spin /> : 'List Now'}
-            Init Auction House
+            {loading ? <Spin /> : 'Init Auction House'}
           </Button>
         </>
       )}
