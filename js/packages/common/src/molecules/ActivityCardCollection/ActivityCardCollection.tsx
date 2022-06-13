@@ -7,7 +7,16 @@ export interface ActivityCardCollectionProps {
   [x: string]: any
   image?: string
   title?: string
-  description?: string
+  description?: {
+    pubkey: string,
+    account:object,
+    holding:string,
+    info?: {
+      data?: {
+        name?: string
+      }
+    }
+  }
   price?: string
   fromAddress?: string
   toAddress?: string
@@ -30,19 +39,23 @@ export const ActivityCardCollection: FC<ActivityCardCollectionProps> = ({
     className
   )
 
+  const textShortner = (text: any) => {
+    return text?.substr(text?.length - 5)
+  }
+
   return (
     <div className={ActivityCardClasses} {...restProps}>
       <div className='flex items-center gap-[8px]'>
         <div className='flex h-[40px] w-[40px] overflow-hidden rounded-[8px]'>
           <Image src={image} />
         </div>
-        <span className='font-500'>{description}</span>
+        <span className='font-500 customCardItem' data-filetype={textShortner(description?.info?.data?.name)}><p>{description?.info?.data?.name}</p></span>
       </div>
-      <span className='customCardItem'>Sales</span>
+      <span className='customCardItem'>Sale</span>
       <span>{price}</span>
-      <span className='customCardItem'>{fromAddress}</span>
-      <span className='customCardItem'>{toAddress}</span>
-      <span className='customCardItem'>{moment(time).fromNow()}</span>
+      <span className='customCardItem' data-filetype={textShortner(fromAddress)}><p>{fromAddress}</p></span>
+      <span className='customCardItem' data-filetype={textShortner(toAddress)}><p>{toAddress}</p></span>
+      <span>{moment(time).fromNow()}</span>
     </div>
   )
 }

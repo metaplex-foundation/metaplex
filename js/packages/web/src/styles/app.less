@@ -176,13 +176,33 @@ code {
   background-color: transparent !important;
 }
 
-.customCardItem, .nft-name{
+.nft-name{
   text-overflow: ellipsis !important;
   width: 145px;
   white-space: nowrap;
   overflow: hidden;
   text-align: center;
 }
+
+.customCardItem {
+  position: relative;
+  width: 65px;
+}
+
+.customCardItem p {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.customCardItem:after {
+  content: attr(data-filetype);
+  position: absolute;
+  left: 100%;
+  top: 0;
+}
+
+
 // .ant-steps-item-process
 //   > .ant-steps-item-container
 //   > .ant-steps-item-content

@@ -32,7 +32,7 @@ export const HelpCentre: FC<HelpCentreProps> = ({ className, ...restProps }: Hel
           message: message
         })
   
-        alert("Our support will contact you via Email. Thank you");
+        alert("Thank you for getting in touch! We appreciate you contacting us at Karmaverse. One of our colleagues will get back in touch with you soon!");
   
         setEmail("")
         setMessage("")
@@ -176,8 +176,8 @@ export const HelpCentre: FC<HelpCentreProps> = ({ className, ...restProps }: Hel
           </div>
 
           <div className='flex flex-col gap-[20px] pt-[40px]'>
-            <TextField label='Your email address' placeHolder='ex. john@example.com' onChange={e => setEmail(e.target.value)} />
-            <TextArea label='Message' placeHolder='Please enter your question in detail...' onChange={e => setMessage(e.target.value)} />
+            <TextField label='Your email address' placeHolder='ex. john@example.com' value={email} onChange={e => setEmail(e.target.value)} />
+            <TextArea label='Message' placeHolder='Please enter your question in detail...' value={message} onChange={e => setMessage(e.target.value)} />
           </div>
 
           <div className='pt-[40px]'>
