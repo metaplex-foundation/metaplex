@@ -97,7 +97,7 @@ export const Footer: FC<FooterProps> = ({ className, ...restProps }: FooterProps
                     { id: 0, label: 'Explore collections', url: '/discover' },
                     { id: 1, label: 'Submit collections', url: '/launchpad-submission' },
                     { id: 2, label: 'Help center (FAQ)', url: '/help-centre' },
-                    { id: 3, label: 'Activity stats', url: '#' },
+                    { id: 3, label: 'Activity stats', url: '/statistics' },
                   ]}
                 />
               </div>
