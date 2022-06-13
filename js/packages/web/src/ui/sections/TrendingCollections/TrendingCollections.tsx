@@ -45,12 +45,14 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({
           heading='Collections'
           actions={
             <div className='flex items-center gap-[12px]'>
-              <Button
-                appearance='ghost'
-                view='outline'
-                iconAfter={<i className='ri-arrow-right-s-line' />}>
-                Discover more collections
-              </Button>
+              <Link to={`/discover`}>
+                <Button
+                  appearance='ghost'
+                  view='outline'
+                  iconAfter={<i className='ri-arrow-right-s-line' />}>
+                  Discover more collections
+                </Button>
+              </Link>
             </div>
           }
         />
