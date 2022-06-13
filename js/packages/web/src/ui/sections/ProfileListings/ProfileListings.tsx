@@ -4,9 +4,11 @@ import { ListingCard, pubkeyToString, toPublicKey } from '@oyster/common'
 import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
 import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { AuctionView, useExtendedArt } from '../../../hooks'
+import { AuctionView, useAhExtendedArt, useExtendedArt } from '../../../hooks'
 import { Link, useParams } from 'react-router-dom'
 import useNFTData from '../../../hooks/useNFTData'
+import { getListingsBySeller } from '../../../api/ahListingApi'
+import useAhNFTData from '../../../hooks/useAhNFTData'
 
 export interface ProfileListingsProps {
   [x: string]: any
@@ -40,6 +42,30 @@ const NFTCardWrapper: FC<NFTCardWrapperProps> = ({ nft }) => {
   )
 }
 
+const AhNFTCardWrapper: FC<any> = ({ nft }) => {
+  const pubkey = nft.metadata.pubkey
+  const id = pubkeyToString(pubkey)
+  const { data } = useAhExtendedArt(nft.metadata)
+  const {
+    value: { priceNaN, solVal, usdValFormatted },
+  } = useAhNFTData(nft)
+  const image = data?.image || ''
+  const name = data?.name || ''
+
+  return (
+    <Link to={`/nft/${nft.mint}`}>
+      <ListingCard
+        image={image}
+        name={name}
+        count={2000}
+        // volume='472.54'
+        floorPrice={!priceNaN ? `Ⓞ ${solVal} SOL` : ''}
+        dollarValue={usdValFormatted}
+      />
+    </Link>
+  )
+}
+
 export const ProfileListings: FC<ProfileListingsProps> = ({
   className,
   setTag,
@@ -49,6 +75,7 @@ export const ProfileListings: FC<ProfileListingsProps> = ({
 
   const [userAuctions, setUserAuctions] = useState<AuctionView[]>([])
   const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+  const [ahListings, setAhListings] = useState<any>()
   const wallet = useWallet()
   const { id } = useParams<{ id: string }>()
 
@@ -68,11 +95,21 @@ export const ProfileListings: FC<ProfileListingsProps> = ({
     setTag(`${userAuctions.length} NFTs`)
   }, [userAuctions])
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const ahList = await getListingsBySeller(wallet.publicKey?.toBase58())
+      debugger
+      setAhListings(ahList)
+    }
+    fetchData().catch(console.error)
+  }, [wallet.publicKey])
+
   return (
     <div className={ProfileListingsClasses} {...restProps}>
       {userAuctions.map((auction, key) => (
         <NFTCardWrapper key={key} nft={auction} />
       ))}
+      {!!ahListings && ahListings.map(sale => <AhNFTCardWrapper key={sale.id} nft={sale} />)}
     </div>
   )
 }

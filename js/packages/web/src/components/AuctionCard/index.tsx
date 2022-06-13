@@ -476,76 +476,78 @@ export const AuctionCard = ({
           {showPlaceBid &&
             !hideDefaultAction &&
             wallet.connected &&
-            auctionView.auction.info.ended() && (<div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
-              <ButtonOyster
-                appearance='neutral'
-                size='md'
-                className='h-full w-[180px] flex-shrink-0'
-                disabled={
-                  !myPayingAccount ||
-                  (!auctionView.myBidderMetadata && isAuctionManagerAuthorityNotWalletOwner) ||
-                  loading ||
-                  !!auctionView.items.find(i => i.find(it => !it.metadata))
-                }
-                onClick={async () => {
-                  setLoading(true)
-                  setShowRedemptionIssue(false)
-                  if (wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority) {
-                    const totalCost = await calculateTotalCostOfRedeemingOtherPeoplesBids(
-                      connection,
-                      auctionView,
-                      bids,
-                      bidRedemptions
-                    )
-                    setPrintingCost(totalCost)
-                    setShowWarningModal(true)
+            auctionView.auction.info.ended() && (
+              <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
+                <ButtonOyster
+                  appearance='neutral'
+                  size='md'
+                  className='h-full w-[180px] flex-shrink-0'
+                  disabled={
+                    !myPayingAccount ||
+                    (!auctionView.myBidderMetadata && isAuctionManagerAuthorityNotWalletOwner) ||
+                    loading ||
+                    !!auctionView.items.find(i => i.find(it => !it.metadata))
                   }
-                  try {
-                    if (eligibleForAnything) {
-                      await sendRedeemBid(
+                  onClick={async () => {
+                    setLoading(true)
+                    setShowRedemptionIssue(false)
+                    if (wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority) {
+                      const totalCost = await calculateTotalCostOfRedeemingOtherPeoplesBids(
                         connection,
-                        wallet,
-                        myPayingAccount.pubkey,
                         auctionView,
-                        accountByMint,
-                        prizeTrackingTickets,
-                        bidRedemptions,
-                        bids
-                      ).then(() => setShowRedeemedBidModal(true))
-                    } else {
-                      await sendCancelBid(
-                        connection,
-                        wallet,
-                        myPayingAccount.pubkey,
-                        auctionView,
-                        accountByMint,
                         bids,
-                        bidRedemptions,
-                        prizeTrackingTickets
+                        bidRedemptions
                       )
+                      setPrintingCost(totalCost)
+                      setShowWarningModal(true)
                     }
-                  } catch (e) {
-                    console.error(e)
-                    setShowRedemptionIssue(true)
-                  }
-                  setLoading(false)
-                }}>
-                {loading ||
-                auctionView.items.find(i => i.find(it => !it.metadata)) ||
-                !myPayingAccount ? (
-                  <Spin />
-                ) : eligibleForAnything ? (
-                  `Redeem bid`
-                ) : (
-                  `${
-                    wallet?.publicKey &&
-                    auctionView.auctionManager.authority === wallet.publicKey.toBase58()
-                      ? 'Reclaim Items'
-                      : 'Refund bid'
-                  }`
-                )}
-              </ButtonOyster>
-            </div>)}
+                    try {
+                      if (eligibleForAnything) {
+                        await sendRedeemBid(
+                          connection,
+                          wallet,
+                          myPayingAccount.pubkey,
+                          auctionView,
+                          accountByMint,
+                          prizeTrackingTickets,
+                          bidRedemptions,
+                          bids
+                        ).then(() => setShowRedeemedBidModal(true))
+                      } else {
+                        await sendCancelBid(
+                          connection,
+                          wallet,
+                          myPayingAccount.pubkey,
+                          auctionView,
+                          accountByMint,
+                          bids,
+                          bidRedemptions,
+                          prizeTrackingTickets
+                        )
+                      }
+                    } catch (e) {
+                      console.error(e)
+                      setShowRedemptionIssue(true)
+                    }
+                    setLoading(false)
+                  }}>
+                  {loading ||
+                  auctionView.items.find(i => i.find(it => !it.metadata)) ||
+                  !myPayingAccount ? (
+                    <Spin />
+                  ) : eligibleForAnything ? (
+                    `Redeem bid`
+                  ) : (
+                    `${
+                      wallet?.publicKey &&
+                      auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+                        ? 'Reclaim Items'
+                        : 'Refund bid'
+                    }`
+                  )}
+                </ButtonOyster>
+              </div>
+            )}
           {/* {showPlaceBid ? (
             <div className="show-place-bid">
               <AmountLabel
@@ -779,13 +781,13 @@ export const AuctionCard = ({
             !isAlreadyBought && (
               <div className='flex h-[56px] max-w-[295px] items-center rounded-full border border-slate-200 py-[4px] pr-[4px] pl-[20px] focus-within:border-N-800 focus-within:!shadow-[0px_0px_0px_1px_#040D1F]'>
                 <ButtonOyster
-                    appearance='neutral'
-                    size='md'
-                    className='h-full w-[180px] flex-shrink-0'
-                    disabled={loading}
-                    onClick={instantSaleAction}>
-                      {actionButtonContent}
-                  </ButtonOyster>
+                  appearance='neutral'
+                  size='md'
+                  className='h-full w-[180px] flex-shrink-0'
+                  disabled={loading}
+                  onClick={instantSaleAction}>
+                  {actionButtonContent}
+                </ButtonOyster>
               </div>
             )
           ))}
@@ -940,29 +942,16 @@ export const AhAuctionCard = ({
   className?: string
 }) => {
   const connection = useConnection()
-  const { update } = useMeta()
-
   const wallet = useWallet()
   const [loading, setLoading] = useState<boolean>(false)
   const [value, setValue] = useState<number>()
   const [offer, setOffer] = useState()
 
-  // return <></>
   const { setVisible } = useWalletModal()
   const connect = useCallback(
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
     [wallet.wallet, wallet.connect, setVisible]
   )
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const balance = await connection.getBalance(
-  //       new PublicKey('Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6')
-  //     )
-  //     console.log('Da84ovDiz8rVAaLVw8b2JZ7qcP75cBXPTbtLq5ey4Po6', balance)
-  //   }
-  //   fetchData().catch(console.error)
-  // })
 
   const makeOffer = async () => {
     setLoading(true)

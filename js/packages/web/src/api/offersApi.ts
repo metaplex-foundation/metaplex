@@ -5,7 +5,9 @@ const api = `${process.env.NEXT_API_URL}/offers`
 
 export const getOffers = async (type: string, publicKey: string) => {
   try {
-    const res = await axios.get(`${api}?${type}=${publicKey}`)
+    const res = await axios.get(
+      `${api}?${type}=${publicKey}&store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+    )
     return res.data
   } catch (error: any) {
     console.log('Get offer API error: ', error.response.data.message)
