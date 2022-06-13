@@ -7,7 +7,8 @@ export interface AttributesCardProps {
   [x: string]: any
   label?: string
   description?: string
-  tag?: any
+  tagIcon?: any
+  tagValue?: any
   overline?: string
   hasHoverEffect?: boolean
   value?: string
@@ -17,7 +18,8 @@ export const AttributesCard: FC<AttributesCardProps> = ({
   className,
   label,
   description,
-  tag,
+  tagIcon,
+  tagValue,
   addToFilter,
   overline,
   hasHoverEffect,
@@ -28,7 +30,7 @@ export const AttributesCard: FC<AttributesCardProps> = ({
     `attributes-card flex items-start w-full flex-shrink-0 bg-white border border-slate-200 rounded-[8px] py-[16px] px-[20px] hover:bg-slate-50 transition-all cursor-pointer group relative overflow-hidden transition-all`,
     className
   )
-
+  console.log("-----tag-----", tagIcon)
   return (
     <div className={AttributesCardClasses} {...restProps}>
       <div className='flex flex-col gap-[4px]'>
@@ -48,8 +50,8 @@ export const AttributesCard: FC<AttributesCardProps> = ({
 
         {value && <span className='text-md'>{value}</span>}
       </div>
-
-      {tag && <Tag className='ml-auto w-[80px] text-xs'>{tag}</Tag>}
+          
+      {tagIcon && <Tag className='ml-auto w-[80px] text-xs' children={tagIcon} iconAfter={tagValue}/>}
 
       {hasHoverEffect && (
         <div

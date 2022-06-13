@@ -49,7 +49,7 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
     console.log('collections', collections)
     setLiveCollections(collections)
     setFilteredCollections(collections)
-    debugger
+    // debugger
     if (searchValue) {
       setText(searchValue)
     }
