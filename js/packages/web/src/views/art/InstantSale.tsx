@@ -455,9 +455,16 @@ const InstantSale = ({
           </Button>
         )}
         {category === AuctionCategory.Tiered && !sale && (
-          <Button disabled={status} onClick={createAuction} className='w-full'>
-            Put on auction
-          </Button>
+          <>
+            <div className='content flex w-full flex-col'>
+              <div className='flex flex-col gap-[28px]'>
+                <h6 className='text-h6 font-400'>Create Auction for this NFT</h6>
+                <Button disabled={status} onClick={createAuction} className='w-full'>
+                  Put on auction
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </>
