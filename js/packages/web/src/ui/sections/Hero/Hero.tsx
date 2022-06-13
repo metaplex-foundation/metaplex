@@ -14,25 +14,25 @@ export interface HeroProps {
 
 export const Hero: FC<HeroProps> = ({ className }) => {
   const HeroClasses = CN(`hero w-full`, className)
-  const { auctions } = useAuctionsList(LiveAuctionViewState.All)
-  const [talentedArtists, setTalentedArtists] = useState(0)
+  // const { auctions } = useAuctionsList(LiveAuctionViewState.All)
+  // const [talentedArtists, setTalentedArtists] = useState(0)
   const { liveCollections } = useAhNFTCollections() as any
 
-  useEffect(() => {
-    const newArray: any[] = []
-    if (auctions.length > 0) {
-      auctions.reduce((r, a) => {
-        newArray.push([a as any])
-        return r
-      })
-    }
-    const grouped = _.mapValues(
-      _.groupBy(newArray, item => item[0].thumbnail.metadata.info.data.creators[0].address)
-    )
-    setTalentedArtists(_.size(grouped))
-  }, [auctions])
+  // useEffect(() => {
+  //   const newArray: any[] = []
+  //   if (auctions.length > 0) {
+  //     auctions.reduce((r, a) => {
+  //       newArray.push([a as any])
+  //       return r
+  //     })
+  //   }
+  //   const grouped = _.mapValues(
+  //     _.groupBy(newArray, item => item[0].thumbnail.metadata.info.data.creators[0].address)
+  //   )
+  //   setTalentedArtists(_.size(grouped))
+  // }, [auctions])
 
-  const NFTsMinted = auctions.length
+  // const NFTsMinted = auctions.length
 
   return (
     <div className={HeroClasses}>

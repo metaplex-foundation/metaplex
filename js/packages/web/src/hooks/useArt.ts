@@ -304,7 +304,7 @@ export const useAhExtendedArt = (account?: any) => {
         }
       }
     }
-  }, [inView, account, data, setData, account])
+  }, [account])
 
   return { ref, data }
 }

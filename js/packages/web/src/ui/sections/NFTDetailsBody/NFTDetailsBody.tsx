@@ -161,12 +161,8 @@ export const NFTDetailsBody: FC<NFTDetailsBodyProps> = ({ className, auction }) 
 
 export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale }) => {
   const { data } = useAhExtendedArt(sale?.metadata)
-  // const { liveCollections } = useCollections()
   const [owner, setOwner] = useState<string>()
   const [user, setUser] = useState<any>({})
-  // const { attributesPercentages } = useAttribute(sale)
-  // const pubkey = liveCollections.find(({ mint }) => mint === data?.collection)?.pubkey || undefined
-  const { data: collection } = useExtendedArt(sale?.collection)
   const [attributes, setAttributes] = useState<any[]>([])
   console.log('sale?.metadata.pubkey', sale?.metadata.pubkey)
 
@@ -237,31 +233,17 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
             <div className='flex flex-col gap-[16px]'>
               <div className='flex flex-col gap-[4px]'>
                 <h2 className='text-h2 font-500 text-slate-800'>{data?.name}</h2>
-                {collection?.name && (
+                {data?.collection && (
                   <div className='flex items-center gap-[4px]'>
                     <h6 className='text-h6 font-400'>
                       {
                         //@ts-ignore
-                        collection?.name ?? data?.collection?.name
+                        data?.collection?.name
                       }
                     </h6>
                     <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
                   </div>
                 )}
-                {
-                  //@ts-ignore
-                  data?.collection?.name && (
-                    <div className='flex items-center gap-[4px]'>
-                      <h6 className='text-h6 font-400'>
-                        {
-                          //@ts-ignore
-                          data?.collection?.name
-                        }
-                      </h6>
-                      <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
-                    </div>
-                  )
-                }
               </div>
 
               <div className='text-sm font-500 text-B-400'>

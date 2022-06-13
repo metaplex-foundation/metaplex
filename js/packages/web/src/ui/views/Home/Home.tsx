@@ -35,7 +35,7 @@ export const Home: FC<HomeProps> = () => {
       </div>
     )
   }
-  console.log('liveCollections', liveCollections)
+
   return (
     <div className='home'>
       <Hero className='pt-[80px]' />

@@ -89,7 +89,7 @@ export const getAllActivitiesForNFT = async (mint: any) => {
 export const getListingsBySeller = async (seller_pubkey: any) => {
   try {
     const res = await axios.get(
-      `${api}/listing?seller=${seller_pubkey}?store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
+      `${api}/listing?seller=${seller_pubkey}&store=${process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}`
     )
     return res.data
   } catch (error: any) {
