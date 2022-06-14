@@ -1,14 +1,6 @@
 import { WalletAdapter, WalletError } from '@solana/wallet-adapter-base'
 import { useWallet, WalletProvider as BaseWalletProvider } from '@solana/wallet-adapter-react'
-import {
-  getLedgerWallet,
-  getMathWallet,
-  getPhantomWallet,
-  getSlopeWallet,
-  getSolflareWallet,
-  getSolletWallet,
-  getSolongWallet,
-} from '@solana/wallet-adapter-wallets'
+import { getSolflareWallet } from '@solana/wallet-adapter-wallets'
 import { Collapse } from 'antd'
 import React, {
   createContext,
@@ -46,7 +38,7 @@ export const WalletModal: FC = () => {
     setVisible(false)
   }, [setVisible])
 
-  const phatomWallet = useMemo(() => getPhantomWallet(), [])
+  const phatomWallet = useMemo(() => getSolflareWallet(), [])
 
   return (
     <MetaplexModal title='Connect Wallet' visible={visible} onCancel={close}>
@@ -61,10 +53,9 @@ export const WalletModal: FC = () => {
         iconBefore={<img src={phatomWallet?.icon} style={{ width: '1.2rem' }} />}
         size='lg'
         appearance='ghost'
-        style={{color: 'white'}}
-        className='mb-[12px] w-full'
-      >
-        Connect to Phantom
+        style={{ color: 'white' }}
+        className='mb-[12px] w-full'>
+        Connect to Solflare
       </Button>
 
       <Collapse
@@ -76,8 +67,7 @@ export const WalletModal: FC = () => {
               height='20'
               viewBox='0 0 20 20'
               fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
+              xmlns='http://www.w3.org/2000/svg'>
               <path
                 d='M15 7.5L10 12.5L5 7.5'
                 stroke='white'
@@ -92,8 +82,7 @@ export const WalletModal: FC = () => {
               height='20'
               viewBox='0 0 20 20'
               fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
+              xmlns='http://www.w3.org/2000/svg'>
               <path
                 d='M7.5 5L12.5 10L7.5 15'
                 stroke='white'
@@ -103,13 +92,11 @@ export const WalletModal: FC = () => {
               />
             </svg>
           )
-        }
-      >
+        }>
         <Panel
           className='mx-[-16px]'
           header={<span className='font-500 text-white'>Other Wallets</span>}
-          key='1'
-        >
+          key='1'>
           <div className='flex w-full flex-col gap-[8px]'>
             {wallets.map((wallet, idx) => {
               if (wallet.name === 'Phantom') return null
@@ -121,8 +108,7 @@ export const WalletModal: FC = () => {
                     close()
                   }}
                   view='outline'
-                  appearance='ghost-invert'
-                >
+                  appearance='ghost-invert'>
                   Connect to {wallet.name}
                 </Button>
               )
@@ -169,8 +155,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({ children }) =
       value={{
         visible,
         setVisible,
-      }}
-    >
+      }}>
       {children}
       <WalletModal />
     </WalletModalContext.Provider>
@@ -178,25 +163,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({ children }) =
 }
 
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const wallets = useMemo(
-    () => [
-      getPhantomWallet(),
-      getSolflareWallet(),
-      getSlopeWallet(),
-      // getTorusWallet({
-      //   options: {
-      //     // @FIXME: this should be changed for Metaplex, and by each Metaplex storefront
-      //     clientId:
-      //       'BOM5Cl7PXgE9Ylq1Z1tqzhpydY0RVr8k90QQ85N7AKI5QGSrr9iDC-3rvmy0K_hF0JfpLMiXoDhta68JwcxS1LQ',
-      //   },
-      // }),
-      getLedgerWallet(),
-      getSolongWallet(),
-      getMathWallet(),
-      getSolletWallet(),
-    ],
-    []
-  )
+  const wallets = useMemo(() => [getSolflareWallet()], [])
 
   const onError = useCallback((error: WalletError) => {
     console.error(error)
