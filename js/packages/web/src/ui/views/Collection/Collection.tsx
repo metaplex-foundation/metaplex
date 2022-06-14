@@ -8,6 +8,7 @@ import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
 import { getCollectionStatistics, getCollectionVolumn } from '../../../api'
 import { useParams } from 'react-router-dom'
+import CN from 'classnames'
 import {
   useAhExtendedArt,
   useArt,
@@ -93,9 +94,10 @@ export const Collection: FC<CollectionProps> = () => {
   const [nftListings, setnftListings] = useState()
   const [filteredNftListings, setfilteredNftListings] = useState()
   const [ntfAttributesFilter, setNtfAttributesFilter] = useState<any>([
-    {trait_type: "background", values:[
-      {name: "Orange",floor: 0.25, tagIcon: "🔥", tagValue: "44.44%"}
-    ]}
+    {
+      trait_type: 'background',
+      values: [{ name: 'Orange', floor: 0.25, tagIcon: '🔥', tagValue: '44.44%' }],
+    },
   ])
 
   const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
@@ -138,7 +140,7 @@ export const Collection: FC<CollectionProps> = () => {
     const fetchData = async () => {
       const listings = await getAllListingsByCollection(id)
       if (!!listings) {
-        console.log("---collections---", listings)
+        console.log('---collections---', listings)
         setnftListings(listings)
         setfilteredNftListings(listings)
         setCount(listings.length)
@@ -163,31 +165,26 @@ export const Collection: FC<CollectionProps> = () => {
             return undefined
           })
 
-          let attrs: any[] = [];
+        let attrs: any[] = []
 
-          for (const nftListing of listings) {
-            for (const attr of nftListing.extendedData?.attributes) {
+        for (const nftListing of listings) {
+          for (const attr of nftListing.extendedData?.attributes) {
+            let foundAttrIndex = _.findIndex(attrs, { trait_type: attr.trait_type })
 
-              let foundAttrIndex = _.findIndex(attrs, { 'trait_type': attr.trait_type });
+            console.log('---index found---', foundAttrIndex)
 
-              console.log("---index found---", foundAttrIndex)
-
-              if(foundAttrIndex !== null && foundAttrIndex !== -1){
-                attrs[foundAttrIndex]?.values.push({name: attr.value})
-              }else{
-                attrs.push(
-                  {
-                    "trait_type": attr.trait_type, 
-                    values:[
-                      {name: attr.value}
-                    ]
-                  }
-                )
-              }              
+            if (foundAttrIndex !== null && foundAttrIndex !== -1) {
+              attrs[foundAttrIndex]?.values.push({ name: attr.value })
+            } else {
+              attrs.push({
+                trait_type: attr.trait_type,
+                values: [{ name: attr.value }],
+              })
             }
           }
+        }
 
-          setNtfAttributesFilter(attrs)
+        setNtfAttributesFilter(attrs)
       }
     }
     fetchData().catch(console.error)
@@ -251,7 +248,6 @@ export const Collection: FC<CollectionProps> = () => {
   //     )
   //   }
   // }, [searchAttr])
-
 
   useEffect(() => {
     const collectionId = id
@@ -378,22 +374,23 @@ export const Collection: FC<CollectionProps> = () => {
     //   { category: ATTRIBUTE_FILTERS, type: data.attr, text: data.label },
     // ])
 
-    setSearchAttr(data.attr);
+    setSearchAttr(data.attr)
 
     if (nftListings) {
+      let nftListingFiltered: any[] = []
 
-    let nftListingFiltered: any[] = [];
+      for (const nftListing of nftListings as any[]) {
+        let foundAttrIndex = _.findIndex(nftListing.extendedData.attributes, {
+          trait_type: data.attr,
+          value: data.label?.name,
+        })
 
-    for (const nftListing of nftListings as any[]) {
-
-      let foundAttrIndex = _.findIndex(nftListing.extendedData.attributes, { 'trait_type': data.attr, 'value': data.label?.name});
-
-      if(foundAttrIndex !== null && foundAttrIndex !== -1){
-          nftListingFiltered.push(nftListing) 
+        if (foundAttrIndex !== null && foundAttrIndex !== -1) {
+          nftListingFiltered.push(nftListing)
+        }
       }
-    }
-      
-    setfilteredNftListings(nftListingFiltered as any);
+
+      setfilteredNftListings(nftListingFiltered as any)
       // setfilteredNftListings(
       //   (nftListings as any[]).filter(elem => {
       //     // return elem.extendedData.attributes.includes(searchAttr)
@@ -457,7 +454,13 @@ export const Collection: FC<CollectionProps> = () => {
     return number
   }
 
-  console.log("----attributes----",attributes)
+  console.log('----attributes----', attributes)
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false)
+
+  const onSidebarCollapse = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed)
+  }
 
   return (
     <div className='collection'>
@@ -479,13 +482,17 @@ export const Collection: FC<CollectionProps> = () => {
 
       <div className='flex w-full pt-[80px] pb-[100px]'>
         <div className='container flex gap-[32px]'>
-          <div className='sidebar flex-shrink-0 pr-[16px]'>
+          <div
+            className={CN('sidebar flex-shrink-0 pr-[16px]', {
+              hidden: isSidebarCollapsed,
+            })}>
             <CollectionSidebar
               applyRange={applyRange}
               range={priceRange}
               setPriceRange={onChangeRange}
               filterAttributes={ntfAttributesFilter}
               addAttributeFilters={addAttributeFilters}
+              onSidebarCollapse={onSidebarCollapse}
             />
           </div>
 
@@ -504,6 +511,8 @@ export const Collection: FC<CollectionProps> = () => {
               sortByPrice={sortByPrice}
               searchText={searchText}
               onChangeSearchText={e => setSearchText(e.target.value)}
+              isSidebarCollapsed={isSidebarCollapsed}
+              onSidebarCollapse={onSidebarCollapse}
             />
 
             {showExplore && (
@@ -515,7 +524,11 @@ export const Collection: FC<CollectionProps> = () => {
                     clearFilters={clearFilters}
                   />
                 )}
-                <AhCollectionNftList listings={filteredNftListings} />
+                <AhCollectionNftList
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  onSidebarCollapse={onSidebarCollapse}
+                  listings={filteredNftListings}
+                />
               </div>
             )}
 
