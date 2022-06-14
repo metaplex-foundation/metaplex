@@ -1,9 +1,10 @@
 import React, { FC, useState } from 'react'
 import CN from 'classnames'
-import { Button, TextField, Chip, Tag, AttributesCard } from '@oyster/common'
+import { Button, TextField, Chip, Tag, AttributesCard, ButtonGroup } from '@oyster/common'
 import { PriceRangeInterface } from '../../views'
 
 export interface CollectionSidebarProps {
+  [x: string]: any
   setPriceRange: (range: PriceRangeInterface) => void
   range: PriceRangeInterface
   applyRange: () => void
@@ -17,11 +18,10 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
   applyRange,
   filterAttributes,
   addAttributeFilters,
+  onSidebarCollapse,
 }) => {
   const [showAttributes, setShowAttributes] = useState(false)
   const [attr, setAttr] = useState()
-
-  console.log('filterAttributes', filterAttributes)
 
   const addToFilter = label => {
     addAttributeFilters({
@@ -41,7 +41,13 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
           className={CN(
             'filters-sidebar flex w-[300px] flex-shrink-0 flex-col gap-[32px] transition-all'
           )}>
-          <h2 className='text-h5'>Filters</h2>
+          <div className='flex w-full items-center justify-between'>
+            <h2 className='text-h5'>Filters</h2>
+
+            <Button appearance='ghost' isRounded={false} onClick={onSidebarCollapse}>
+              <i className='ri-arrow-left-line' />
+            </Button>
+          </div>
 
           <div className='price-filter flex flex-col gap-[12px]'>
             <h3 className='text-h6'>Price filter</h3>
@@ -102,11 +108,14 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
           </div>
           <div className='flex flex-col gap-[8px]'>
             {(filterAttributes.find(({ trait_type }) => trait_type === attr)?.values || []).map(
-              (label, index: number) => (
+              (item, index: number) => (
                 <AttributesCard
-                  addToFilter={() => addToFilter(label)}
+                  addToFilter={() => addToFilter(item)}
                   key={index}
-                  label={label}
+                  label={item.name}
+                  description={item.floor}
+                  tagIcon={item.tagIcon}
+                  tagValue={item.tagValue}
                   hasHoverEffect={true}
                 />
               )

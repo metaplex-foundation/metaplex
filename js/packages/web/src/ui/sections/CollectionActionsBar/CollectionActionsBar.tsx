@@ -4,6 +4,7 @@ import { Button, SearchField } from '@oyster/common'
 import { SORT_HIGH_TO_LOW, SORT_LOW_TO_HIGH } from '../../views'
 
 export interface CollectionActionsBarProps {
+  [x: string]: any
   onClickActivity?: any
   onClickExplore?: any
   showExplore?: boolean
@@ -20,11 +21,24 @@ export const CollectionActionsBar: FC<CollectionActionsBarProps> = ({
   showActivity,
   sortByPrice,
   onChangeSearchText,
+  isSidebarCollapsed,
+  onSidebarCollapse,
 }) => {
   const [sortText, setSortText] = useState(SORT_LOW_TO_HIGH)
 
   return (
     <div className='collection-actions-bar flex w-full items-center gap-[8px]'>
+      {isSidebarCollapsed && (
+        <Button
+          isRounded={false}
+          appearance={'ghost'}
+          view={'outline'}
+          onClick={onSidebarCollapse}
+          iconBefore={<i className='ri-equalizer-fill' />}>
+          Filters
+        </Button>
+      )}
+
       <Button
         isRounded={false}
         appearance={showExplore ? 'neutral' : 'ghost'}

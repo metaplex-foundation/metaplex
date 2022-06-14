@@ -40,7 +40,7 @@ export const BidCardAlt: FC<BidCardAltProps> = ({
           <MetaChip overline='Remaining Time' subHeading={remainingTime} />
           <Link to={onClickButton}>
             <Button appearance='neutral'>
-              Bid Now
+              {remainingTime === '0h : 0m : 0s' ? 'VIEW' : 'Bid Now'}
             </Button>
           </Link>
         </div>

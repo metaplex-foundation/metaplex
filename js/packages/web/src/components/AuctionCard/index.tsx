@@ -792,14 +792,16 @@ export const AuctionCard = ({
             )
           ))}
         {!hideDefaultAction && !wallet.connected && (
-          <Button
-            type='primary'
-            size='large'
-            className='action-btn'
-            onClick={connect}
-            style={{ marginTop: 20 }}>
-            Connect wallet to {auctionView.isInstantSale ? 'purchase' : 'place bid'}
-          </Button>
+          <div className='flex h-[56px] max-w-[395px] items-center rounded-full py-[4px] pr-[4px] pl-[20px]'>
+            <ButtonOyster
+              appearance='neutral'
+              size='md'
+              className='h-full w-[290px] flex-shrink-0'
+              onClick={connect}
+              style={{ marginTop: 20 }}>
+              Connect wallet to {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+            </ButtonOyster>
+          </div>
         )}
         {action}
         {showRedemptionIssue && (
