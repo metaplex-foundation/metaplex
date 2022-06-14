@@ -4,21 +4,28 @@ import { AuctionHouseNFTCardWrapper, NFTCardWrapper } from './NFTCardWrapper'
 import { Modal } from '@oyster/common'
 import { QuickBuy } from '../QuickBuy'
 import { AhQuickBuy } from '../AhQuickBuy'
+import CN from 'classnames'
 
 export interface CollectionNftListProps {
+  [x: string]: any
   auctions: AuctionView[]
 }
 
 export interface AhCollectionNftListProps {
+  [x: string]: any
   listings: any
 }
 
-export const CollectionNftList: FC<CollectionNftListProps> = ({ auctions }) => {
+export const CollectionNftList: FC<CollectionNftListProps> = ({ auctions, isSidebarCollapsed }) => {
   const [showQuickBuy, setShowQuickBuy] = useState(false)
 
   return (
     <>
-      <div className='collection-nft-list grid grid-cols-4 gap-[28px]'>
+      <div
+        className={CN('collection-nft-list grid gap-[28px]', {
+          'grid-cols-5': isSidebarCollapsed,
+          'grid-cols-4': !isSidebarCollapsed,
+        })}>
         {auctions.map(auction => (
           <NFTCardWrapper
             key={auction.auction.pubkey}
@@ -40,12 +47,19 @@ export const CollectionNftList: FC<CollectionNftListProps> = ({ auctions }) => {
   )
 }
 
-export const AhCollectionNftList: FC<AhCollectionNftListProps> = ({ listings }) => {
+export const AhCollectionNftList: FC<AhCollectionNftListProps> = ({
+  listings,
+  isSidebarCollapsed,
+}) => {
   const [showQuickBuy, setShowQuickBuy] = useState(false)
   if (!!listings) {
     return (
       <>
-        <div className='collection-nft-list grid grid-cols-4 gap-[28px]'>
+        <div
+          className={CN('collection-nft-list grid gap-[28px]', {
+            'grid-cols-5': isSidebarCollapsed,
+            'grid-cols-4': !isSidebarCollapsed,
+          })}>
           {listings.map(listing => (
             <AuctionHouseNFTCardWrapper
               key={listing.mint}
