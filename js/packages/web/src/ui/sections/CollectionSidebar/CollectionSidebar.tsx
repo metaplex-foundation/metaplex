@@ -102,11 +102,14 @@ export const CollectionSidebar: FC<CollectionSidebarProps> = ({
           </div>
           <div className='flex flex-col gap-[8px]'>
             {(filterAttributes.find(({ trait_type }) => trait_type === attr)?.values || []).map(
-              (label, index: number) => (
+              (item, index: number) => (
                 <AttributesCard
-                  addToFilter={() => addToFilter(label)}
+                  addToFilter={() => addToFilter(item)}
                   key={index}
-                  label={label}
+                  label={item.name}
+                  description={item.floor}
+                  tagIcon={item.tagIcon}
+                  tagValue={item.tagValue}
                   hasHoverEffect={true}
                 />
               )

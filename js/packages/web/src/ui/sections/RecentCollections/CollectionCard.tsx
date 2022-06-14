@@ -41,13 +41,13 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
       dollarValue: '$154.00',
       link: '#',
     }
-
+    console.log("--car--", collectionVolume)
     if (!!collectionVolume) {
       dx = {
         volume: collectionVolume.nftTotalSales.total_sol,
         floorPrice: '',
         dollarValue: collectionVolume.nftTotalSales.total_usd
-          ? '$' + collectionVolume.total_usd.toString()
+          ? '$' + collectionVolume.nftTotalSales.total_usd.toString()
           : '',
         link: '#',
       }

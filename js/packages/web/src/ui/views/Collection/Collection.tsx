@@ -34,6 +34,7 @@ import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
 import { getCollectionHeaderInfo } from '../../../api'
 import { getAllListingsByCollection } from '../../../api/ahListingApi'
 import { AnyMxRecord } from 'dns'
+import _ from 'lodash'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
 const RANGE_FILTERS = 'Range'
@@ -74,6 +75,7 @@ export const Collection: FC<CollectionProps> = () => {
   const [showExplore, setShowExplore] = useState<boolean>(true)
   const [filters, setFilters] = useState<AppliedFiltersInterface[]>([])
   const [searchText, setSearchText] = useState<string>('')
+  const [searchAttr, setSearchAttr] = useState<string>('')
   const [priceRange, setPriceRange] = useState<PriceRangeInterface>({
     min: null,
     max: null,
@@ -90,6 +92,11 @@ export const Collection: FC<CollectionProps> = () => {
   const [colData, setData] = useState<any>()
   const [nftListings, setnftListings] = useState()
   const [filteredNftListings, setfilteredNftListings] = useState()
+  const [ntfAttributesFilter, setNtfAttributesFilter] = useState<any>([
+    {trait_type: "background", values:[
+      {name: "Orange",floor: 0.25, tagIcon: "🔥", tagValue: "44.44%"}
+    ]}
+  ])
 
   const [collectionHeaderData, setCollectionHeaderData] = useState<ICollectionHeader>({
     collectionName: '',
@@ -131,6 +138,7 @@ export const Collection: FC<CollectionProps> = () => {
     const fetchData = async () => {
       const listings = await getAllListingsByCollection(id)
       if (!!listings) {
+        console.log("---collections---", listings)
         setnftListings(listings)
         setfilteredNftListings(listings)
         setCount(listings.length)
@@ -154,6 +162,32 @@ export const Collection: FC<CollectionProps> = () => {
           .catch(() => {
             return undefined
           })
+
+          let attrs: any[] = [];
+
+          for (const nftListing of listings) {
+            for (const attr of nftListing.extendedData?.attributes) {
+
+              let foundAttrIndex = _.findIndex(attrs, { 'trait_type': attr.trait_type });
+
+              console.log("---index found---", foundAttrIndex)
+
+              if(foundAttrIndex !== null && foundAttrIndex !== -1){
+                attrs[foundAttrIndex]?.values.push({name: attr.value})
+              }else{
+                attrs.push(
+                  {
+                    "trait_type": attr.trait_type, 
+                    values:[
+                      {name: attr.value}
+                    ]
+                  }
+                )
+              }              
+            }
+          }
+
+          setNtfAttributesFilter(attrs)
       }
     }
     fetchData().catch(console.error)
@@ -162,6 +196,7 @@ export const Collection: FC<CollectionProps> = () => {
   useEffect(() => {
     console.log('colData', colData)
     if (colData) {
+      // setNtfAttributesFilter(colData.attributes)
       getCollectionHeaderInfo(
         colData?.properties.creators[0].address,
         colData.collection.name
@@ -200,6 +235,23 @@ export const Collection: FC<CollectionProps> = () => {
       )
     }
   }, [searchText, filters])
+
+  // useEffect(() => {
+  //   if (!!nftListings) {
+  //     console.log("---filter running--");
+
+  //     setfilteredNftListings(
+  //       (nftListings as any[]).filter(elem => {
+  //         // return elem.extendedData.attributes.includes(searchAttr)
+  //         let foundAttrIndex = _.findIndex(elem.extendedData.attributes, { 'trait_type': searchAttr });
+  //         if(foundAttrIndex && foundAttrIndex !== -1){
+  //           return elem;
+  //         }
+  //       }) as any
+  //     )
+  //   }
+  // }, [searchAttr])
+
 
   useEffect(() => {
     const collectionId = id
@@ -320,11 +372,38 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }
 
-  const addAttributeFilters = (data: { attr: string; label: string }) => {
-    setFilters([
-      ...filters.filter(({ type, text }) => type !== data.attr && text !== data.label),
-      { category: ATTRIBUTE_FILTERS, type: data.attr, text: data.label },
-    ])
+  const addAttributeFilters = (data: { attr: string; label: any }) => {
+    // setFilters([
+    //   ...filters.filter(({ type, text }) => type !== data.attr && text !== data.label),
+    //   { category: ATTRIBUTE_FILTERS, type: data.attr, text: data.label },
+    // ])
+
+    setSearchAttr(data.attr);
+
+    if (nftListings) {
+
+    let nftListingFiltered: any[] = [];
+
+    for (const nftListing of nftListings as any[]) {
+
+      let foundAttrIndex = _.findIndex(nftListing.extendedData.attributes, { 'trait_type': data.attr, 'value': data.label?.name});
+
+      if(foundAttrIndex !== null && foundAttrIndex !== -1){
+          nftListingFiltered.push(nftListing) 
+      }
+    }
+      
+    setfilteredNftListings(nftListingFiltered as any);
+      // setfilteredNftListings(
+      //   (nftListings as any[]).filter(elem => {
+      //     // return elem.extendedData.attributes.includes(searchAttr)
+      //     let foundAttrIndex = _.findIndex(elem.extendedData.attributes, { 'trait_type': searchAttr });
+      //     if(foundAttrIndex && foundAttrIndex !== -1){
+      //       return elem;
+      //     }
+      //   }) as any
+      // )
+    }
   }
 
   const removeAppliedAttr = data => {
@@ -378,6 +457,8 @@ export const Collection: FC<CollectionProps> = () => {
     return number
   }
 
+  console.log("----attributes----",attributes)
+
   return (
     <div className='collection'>
       <CollectionHeader
@@ -403,7 +484,7 @@ export const Collection: FC<CollectionProps> = () => {
               applyRange={applyRange}
               range={priceRange}
               setPriceRange={onChangeRange}
-              filterAttributes={attributes}
+              filterAttributes={ntfAttributesFilter}
               addAttributeFilters={addAttributeFilters}
             />
           </div>
