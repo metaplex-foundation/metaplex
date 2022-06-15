@@ -190,6 +190,25 @@ export const Collection: FC<CollectionProps> = () => {
     fetchData().catch(console.error)
   }, [id])
 
+  const findPercentage = (listings: any, attribute : any, value: any) => {
+    let totalInListing = 0;
+    let total = 0;
+    for (const nftListing of listings) {
+
+      let foundAttrValue = _.find(nftListing.extendedData?.attributes, { 'trait_type': attribute, 'value': value });
+      let foundAttr = _.find(nftListing.extendedData?.attributes, { 'trait_type': attribute });
+      if(foundAttrValue){
+        totalInListing += 1
+      }
+
+      if(foundAttr){
+        total += 1 
+      }
+    } 
+
+    return ((totalInListing/total)*100);
+  }
+
   useEffect(() => {
     console.log('colData', colData)
     if (colData) {
