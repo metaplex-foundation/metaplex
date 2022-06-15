@@ -165,30 +165,60 @@ export const Collection: FC<CollectionProps> = () => {
             return undefined
           })
 
-        let attrs: any[] = []
+          let attrs: any[] = [];
 
-        for (const nftListing of listings) {
-          for (const attr of nftListing.extendedData?.attributes) {
-            let foundAttrIndex = _.findIndex(attrs, { trait_type: attr.trait_type })
+          for (const nftListing of listings) {
 
-            console.log('---index found---', foundAttrIndex)
+            for (const attr of nftListing.extendedData?.attributes) {
 
-            if (foundAttrIndex !== null && foundAttrIndex !== -1) {
-              attrs[foundAttrIndex]?.values.push({ name: attr.value })
-            } else {
-              attrs.push({
-                trait_type: attr.trait_type,
-                values: [{ name: attr.value }],
-              })
+              let foundAttrIndex = _.findIndex(attrs, { 'trait_type': attr.trait_type });
+
+              let percentage = findPercentage(listings, attr.trait_type, attr.value) 
+
+              if(foundAttrIndex !== null && foundAttrIndex !== -1){
+                let foundAttrValueIndex = _.findIndex( attrs[foundAttrIndex]?.values, { 'name': attr.value });
+
+                if(foundAttrValueIndex == -1){
+                  attrs[foundAttrIndex]?.values.push({name: attr.value, tagIcon: '🔥', tagValue: percentage+'%'})
+                }
+                
+              }else{
+                attrs.push(
+                  {
+                    "trait_type": attr.trait_type, 
+                    values:[
+                      {name: attr.value, tagIcon: '🔥', tagValue: percentage+'%'}
+                    ]
+                  }
+                )
+              }              
             }
           }
-        }
 
-        setNtfAttributesFilter(attrs)
+          setNtfAttributesFilter(attrs)
       }
     }
     fetchData().catch(console.error)
   }, [id])
+
+  const findPercentage = (listings: any, attribute : any, value: any) => {
+    let totalInListing = 0;
+    let total = 0;
+    for (const nftListing of listings) {
+
+      let foundAttrValue = _.find(nftListing.extendedData?.attributes, { 'trait_type': attribute, 'value': value });
+      let foundAttr = _.find(nftListing.extendedData?.attributes, { 'trait_type': attribute });
+      if(foundAttrValue){
+        totalInListing += 1
+      }
+
+      if(foundAttr){
+        total += 1 
+      }
+    } 
+
+    return ((totalInListing/total)*100);
+  }
 
   useEffect(() => {
     console.log('colData', colData)
