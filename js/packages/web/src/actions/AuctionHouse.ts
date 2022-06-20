@@ -90,7 +90,8 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     const nft = getNFT(nftmetadata)
     const auctionHouse = await getAH()
     if (amount && nft) {
-      // await sdk.listings(auctionHouse).post({ amount: amount, nft })
+      debugger
+      await sdk.listings(auctionHouse).post({ amount: amount, nft })
       const res: any = await sdk.listings(auctionHouse).post({ amount: amount, nft })
       nftmetadata.metadata['holding'] = nftmetadata.holding
       const listing = await addListing({
@@ -98,7 +99,9 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
         auction_house_wallet: auctionHouse.address,
         seller_wallet: nft.owner.address,
         sale_price: amount,
-        collection: nftmetadata.metadata.info.collection?.key,
+        collection: nftmetadata.metadata.info.collection?.key
+          ? nftmetadata.metadata.info.collection?.key
+          : extendedData.collection.name.toString('base64'),
         nft_name: nftmetadata.metadata.info.data.name,
         metadata: nftmetadata.metadata,
         url: nftmetadata.metadata.info.data.uri,

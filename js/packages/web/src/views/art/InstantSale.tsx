@@ -12,7 +12,7 @@ import PutOnAuction from './PutOnAuction'
 import { useHistory } from 'react-router-dom'
 import { getListingByMint } from '../../api/ahListingApi'
 import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
-import { useAhExtendedArt } from '../../hooks'
+import { useAhExtendedArt, useArt } from '../../hooks'
 
 interface InstantSaleInterface {
   items: SafetyDepositDraft[]
@@ -39,7 +39,8 @@ const InstantSale = ({
   const [sale, setSale] = useState()
 
   const { data: extended } = useAhExtendedArt(items[0].metadata)
-
+  const art = useArt(items[0].metadata.pubkey)
+  console.log('art art art art', art)
   console.log('whitelistedCreatorsByCreator', whitelistedCreatorsByCreator)
 
   const mint = useMint(QUOTE_MINT)
@@ -60,7 +61,7 @@ const InstantSale = ({
     //@ts-ignore
     quoteMintInfoExtended: undefined,
   })
-  console.log('items1', items[0])
+  console.log('items1', extended)
 
   console.log('attributes1', attributes)
 
@@ -74,7 +75,11 @@ const InstantSale = ({
       const nft = items[0]
       let whiteListed: any = null
       for (const creator of nft.metadata.info.data.creators as any) {
+        console.log('(creator as any).address', (creator as any).address)
         whiteListed = whitelistedCreatorsByCreator[(creator as any).address]
+        if (!!whiteListed) {
+          break
+        }
       }
       return !!whiteListed
     }
