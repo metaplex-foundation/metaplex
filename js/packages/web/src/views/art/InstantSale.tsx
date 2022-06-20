@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Spin } from 'antd'
-import { notify, useConnection, useMeta, useMint } from '@oyster/common'
+import { Creator, notify, useConnection, useMeta, useMint } from '@oyster/common'
 import { Button } from '@oyster/common'
 
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -70,11 +70,14 @@ const InstantSale = ({
   })
 
   const isWhiteListedCreator = () => {
-    if (wallet.publicKey) {
-      const whiteListed = whitelistedCreatorsByCreator[wallet?.publicKey?.toBase58()]
+    if (!!mintKey) {
+      const nft = items[0]
+      let whiteListed: any = null
+      for (const creator of nft.metadata.info.data.creators as any) {
+        whiteListed = whitelistedCreatorsByCreator[(creator as any).address]
+      }
       return !!whiteListed
     }
-    return false
   }
 
   useEffect(() => {
@@ -443,32 +446,34 @@ const InstantSale = ({
 
   return (
     <>
-      {renderForm()}
       {isWhiteListedCreator() == true && (
-        <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
-          {category === AuctionCategory.InstantSale && !sale && (
-            <Button disabled={loading} onClick={createAuctionHouseSale} className='w-full'>
-              {loading ? <Spin /> : 'List Now'}
-            </Button>
-          )}
-          {category === AuctionCategory.InstantSale && !!sale && (
-            <Button disabled={loading} onClick={cancelListing} className='w-full'>
-              {loading ? <Spin /> : 'End Sale'}
-            </Button>
-          )}
-          {category === AuctionCategory.Tiered && !sale && (
-            <>
-              <div className='content flex w-full flex-col'>
-                <div className='flex flex-col gap-[28px]'>
-                  <h6 className='text-h6 font-400'>Create Auction for this NFT</h6>
-                  <Button disabled={status} onClick={createAuction} className='w-full'>
-                    Put on auction
-                  </Button>
+        <>
+          {renderForm()}
+          <div className='mt-5 flex w-64 flex-auto items-center justify-start'>
+            {category === AuctionCategory.InstantSale && !sale && (
+              <Button disabled={loading} onClick={createAuctionHouseSale} className='w-full'>
+                {loading ? <Spin /> : 'List Now'}
+              </Button>
+            )}
+            {category === AuctionCategory.InstantSale && !!sale && (
+              <Button disabled={loading} onClick={cancelListing} className='w-full'>
+                {loading ? <Spin /> : 'End Sale'}
+              </Button>
+            )}
+            {category === AuctionCategory.Tiered && !sale && (
+              <>
+                <div className='content flex w-full flex-col'>
+                  <div className='flex flex-col gap-[28px]'>
+                    <h6 className='text-h6 font-400'>Create Auction for this NFT</h6>
+                    <Button disabled={status} onClick={createAuction} className='w-full'>
+                      Put on auction
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
-        </div>
+              </>
+            )}
+          </div>
+        </>
       )}
     </>
   )

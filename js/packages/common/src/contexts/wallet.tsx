@@ -1,6 +1,6 @@
 import { WalletAdapter, WalletError } from '@solana/wallet-adapter-base'
 import { useWallet, WalletProvider as BaseWalletProvider } from '@solana/wallet-adapter-react'
-import { getSolflareWallet } from '@solana/wallet-adapter-wallets'
+import { getPhantomWallet, getSolflareWallet } from '@solana/wallet-adapter-wallets'
 import { Collapse } from 'antd'
 import React, {
   createContext,
