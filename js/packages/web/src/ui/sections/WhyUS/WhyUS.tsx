@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import CN from 'classnames'
 import { SectionHeading, DataCard, Button } from '@oyster/common'
+import { Link } from 'react-router-dom'
 
 export interface WhyUSProps {
   [x: string]: any
@@ -48,9 +49,11 @@ export const WhyUS: FC<WhyUSProps> = ({ className, ...restProps }: WhyUSProps) =
         </div>
 
         <div className='flex items-center justify-center gap-[12px] pt-[80px]'>
-          <Button size='lg' iconAfter={<i className='ri-arrow-right-s-line' />}>
-            SUBMIT YOUR COLLECTION
-          </Button>
+          <Link to='/launchpad-submission'>
+            <Button size='lg' iconAfter={<i className='ri-arrow-right-s-line' />}>
+              SUBMIT YOUR COLLECTION
+            </Button>
+          </Link>
           <Button size='lg' appearance='ghost' iconAfter={<i className='ri-arrow-right-s-line' />}>
             LEARN MORE
           </Button>
