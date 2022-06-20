@@ -38,7 +38,7 @@ export const WalletModal: FC = () => {
     setVisible(false)
   }, [setVisible])
 
-  const phatomWallet = useMemo(() => getSolflareWallet(), [])
+  const phatomWallet = useMemo(() => getPhantomWallet(), [])
 
   return (
     <MetaplexModal title='Connect Wallet' visible={visible} onCancel={close}>
@@ -55,7 +55,7 @@ export const WalletModal: FC = () => {
         appearance='ghost'
         style={{ color: 'white' }}
         className='mb-[12px] w-full'>
-        Connect to Solflare
+        Connect to your wallet
       </Button>
 
       <Collapse
@@ -163,7 +163,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({ children }) =
 }
 
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const wallets = useMemo(() => [getSolflareWallet()], [])
+  const wallets = useMemo(() => [getPhantomWallet()], [])
 
   const onError = useCallback((error: WalletError) => {
     console.error(error)

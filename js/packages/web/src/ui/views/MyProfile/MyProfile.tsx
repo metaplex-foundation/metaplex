@@ -60,6 +60,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
     if (isProfileUpdated && userPubKey) {
       getProfile(userPubKey)
         .then(res => {
+          setUserName(res.data?.user_name)
           setProfileImage(res.data.image)
         })
         .catch((error: any) => {

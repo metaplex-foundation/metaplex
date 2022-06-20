@@ -460,18 +460,20 @@ const InstantSale = ({
                 {loading ? <Spin /> : 'End Sale'}
               </Button>
             )}
-            {category === AuctionCategory.Tiered && !sale && (
-              <>
-                <div className='content flex w-full flex-col'>
-                  <div className='flex flex-col gap-[28px]'>
-                    <h6 className='text-h6 font-400'>Create Auction for this NFT</h6>
-                    <Button disabled={status} onClick={createAuction} className='w-full'>
-                      Put on auction
-                    </Button>
+            {category === AuctionCategory.Tiered &&
+              !sale &&
+              !items[0].metadata.info.collection?.key && (
+                <>
+                  <div className='content flex w-full flex-col'>
+                    <div className='flex flex-col gap-[28px]'>
+                      <h6 className='text-h6 font-400'>Create Auction for this NFT</h6>
+                      <Button disabled={status} onClick={createAuction} className='w-full'>
+                        Put on auction
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
           </div>
         </>
       )}
