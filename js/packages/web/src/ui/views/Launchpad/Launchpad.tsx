@@ -11,11 +11,11 @@ export interface LaunchpadProps {
 }
 
 interface ILaunchpadCard {
-  id: string;
-  collection_name: string;
-  collection_image_url: string;
-  exp_mint_date: string;
-  mint_price: string;
+  id: string
+  collection_name: string
+  collection_image_url: string
+  exp_mint_date: string
+  mint_price: string
 }
 
 export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: LaunchpadProps) => {
@@ -31,14 +31,18 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
 
   useEffect(() => {
     getFeaturedSubmission().then(submission => {
-      setHeading(submission.collection_name)
-      setDescription(submission.project_description)
-      setImage(submission.collection_image_url)
-      setNavigatePage(submission.collection_name_query_string.replace('%', '-').toLowerCase())
+      if (!!submission) {
+        setHeading(submission.collection_name)
+        setDescription(submission.project_description)
+        setImage(submission.collection_image_url)
+        if (!!submission.collection_name_query_string) {
+          setNavigatePage(submission.collection_name_query_string.replace('%', '-').toLowerCase())
+        }
+      }
     })
 
     getSubmissions().then(submissions => {
-      setSubmissions((submissions?.data.data || []).filter(i => i?.actions?.status === "Approved"))
+      setSubmissions((submissions?.data.data || []).filter(i => i?.actions?.status === 'Approved'))
     })
   }, [])
 
@@ -79,7 +83,9 @@ export const Launchpad: FC<LaunchpadProps> = ({ className, ...restProps }: Launc
                     image={submission.collection_image_url}
                     price={`Ⓞ ${parseFloat(submission.mint_price).toFixed(2)} SOL`}
                     dollarValue={'$102.97'}
-                    onClickButton={() => push(`/launchpad/${submission.collection_name.replace('%', '-')}`)}
+                    onClickButton={() =>
+                      push(`/launchpad/${submission.collection_name.replace('%', '-')}`)
+                    }
                     remainingTime={moment(submission.exp_mint_date).format('LL')}
                   />
                 </li>

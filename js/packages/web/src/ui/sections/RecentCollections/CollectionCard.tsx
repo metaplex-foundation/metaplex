@@ -22,8 +22,9 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
   const { data } = useAhExtendedArt(collection.nfts[0].metadata)
   const { collectionVolume } = useAhCollectionVolume(collection.collection)
 
-  if (!!data) {
-    // // console.log('CollectionCard', data)
+  if (!!data?.collection) {
+    debugger
+    console.log('CollectionCard', data)
     const nameProp: { name: string } = { name: (data?.collection as any).name ?? '' }
 
     if (collection.isExternal && collection._meta?.collection?.name) {
@@ -41,7 +42,7 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
       dollarValue: '$154.00',
       link: '#',
     }
-    console.log("--car--", collectionVolume)
+    console.log('--car--', collectionVolume)
     if (!!collectionVolume) {
       dx = {
         volume: collectionVolume.nftTotalSales.total_sol,

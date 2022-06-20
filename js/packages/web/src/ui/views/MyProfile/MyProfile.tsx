@@ -26,7 +26,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
   const [isOtherAccount, setIsOtherAccount] = useState<boolean>(false)
   const { publicKey } = useWallet()
   const { id } = useParams<{ id: string }>()
-
+  const [userName, setUserName] = useState()
   const userPubKey = id || publicKey?.toBase58()
 
   const address = `${userPubKey?.substring(0, 13)}...${userPubKey?.substring(
@@ -47,6 +47,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
       setIsOtherAccount(false)
       getProfile(publicKey.toBase58())
         .then(res => {
+          setUserName(res.data?.user_name)
           setProfileImage(res.data.image)
         })
         .catch((error: any) => {
@@ -149,7 +150,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
             </div>
 
             <div className='flex items-center gap-[4px]'>
-              <span className='text-md font-500'>{address}</span>
+              <span className='text-md font-500'>{!!userName ? userName : address}</span>
               <span>
                 <i className='ri-file-copy-line' />
               </span>
