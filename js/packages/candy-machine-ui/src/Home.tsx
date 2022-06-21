@@ -73,7 +73,7 @@ const Home = (props: HomeProps) => {
 
   const rpcUrl = props.rpcHost;
   const wallet = useWallet();
-
+  const cluster = props.network;
   const anchorWallet = useMemo(() => {
     if (
       !wallet ||
@@ -599,11 +599,8 @@ const Home = (props: HomeProps) => {
                     gatekeeperNetwork={
                       candyMachine?.state?.gatekeeper?.gatekeeperNetwork
                     }
-                    clusterUrl={
-                      props.network === WalletAdapterNetwork.Devnet
-                        ? 'https://api.devnet.solana.com'
-                        : rpcUrl
-                    }
+                    clusterUrl={rpcUrl}
+                    cluster={cluster}
                     handleTransaction={async (transaction: Transaction) => {
                       setIsUserMinting(true);
                       const userMustSign = transaction.signatures.find(sig =>

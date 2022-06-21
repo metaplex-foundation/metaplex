@@ -50,7 +50,7 @@ This is the granddaddy contract of them all. The primary product of the Metaplex
 
 It orchestrates disbursements of those contents to winners of an auction. An AuctionManager requires both a Vault and an Auction to run, and it requires that the Auction's resource key be set to the Vault.
 
-Due to each type of NFT transfer above requiring slightly different nuanced handling and checking, Metaplex handles knowing about those things, and making the different CPI calls to the Token Metadata contract to make those things happen as required during the redemption phase. It also has full authority over all the objects like Vault and Auction, and handles all royalties payments by collecting funds from the auction into its own central escrow account and then disbursing to artists.
+Given that each type of NFT transfer above requires slightly different nuanced handling and checking, Metaplex handles these tasks by making the different CPI calls to the Token Metadata contract so the different tasks happen as required during the redemption phase. It also has full authority over all the objects like Vault and Auction, and handles all royalties payments by collecting funds from the auction into its own central escrow account and then disbursing to artists.
 
 ## Basic Single Item Auction End To End
 
