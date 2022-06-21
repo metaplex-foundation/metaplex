@@ -1114,7 +1114,7 @@
   resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.7.6.tgz#242426b3fb6ddf548e00cd177fd9c7ef1637c9c4"
   integrity sha512-Zk/b70bApgyfJ6KjXKchaNYEsXvMlOxjsd6DlnoNqccII59IZ1LUgdzMbQfD9XiDNX73ii5mJlhNM3yDLFOMNg==
   dependencies:
-    "@civic/common-gateway-react" "^0.2.0"
+    "@civic/common-gateway-react" "^0.2.0
     "@identity.com/prove-solana-wallet" "^0.2.3"
     "@identity.com/solana-gateway-ts" "^0.7.0"
     "@solana/web3.js" "^1.33.0"
@@ -2403,6 +2403,11 @@
   version "12.20.55"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.55.tgz#c329cbd434c42164f846b909bd6f85b5537f6240"
   integrity sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==
+
+"@types/node@^17.0.32":
+  version "17.0.34"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.34.tgz#3b0b6a50ff797280b8d000c6281d229f9c538cef"
+  integrity sha512-XImEz7XwTvDBtzlTnm8YvMqGW/ErMWBsKZ+hMTvnDIjGCKxwK5Xpc+c/oQjOauwq8M4OS11hEkpjX8rrI/eEgA==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
