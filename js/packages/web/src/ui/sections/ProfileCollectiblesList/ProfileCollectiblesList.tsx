@@ -5,6 +5,7 @@ import { ArtworkViewState, Item } from '../../../views/artworks/types'
 import { useCreatorArts, useExtendedArt } from '../../../hooks'
 import { Link, useParams } from 'react-router-dom'
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 interface ProfileCollectiblesListProps {
   setTag: (tag: string) => void
@@ -52,7 +53,7 @@ export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({ setT
   const { id } = useParams<{ id: string }>()
   const userItems = id ? useCreatorArts(id) : useItems({ activeKey: ArtworkViewState.Owned })
 
-  // console.log('userItems', userItems)
+  console.log('userItems', userItems)
 
   useEffect(() => {
     if (userItems) {
@@ -61,10 +62,14 @@ export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({ setT
   }, [userItems.length])
 
   return (
-    <div className='profile-collectibles-list grid grid-cols-4 gap-[28px]'>
-      {(userItems || []).map((i, key) =>
-        id ? <CreatorNFTCardWrapper nft={i} key={key} /> : <NFTCardWrapper nft={i} key={key} />
+    <>
+      {!!userItems && (
+        <div className='profile-collectibles-list grid grid-cols-4 gap-[28px]'>
+          {(userItems || []).map((i, key) =>
+            id ? <CreatorNFTCardWrapper nft={i} key={key} /> : <NFTCardWrapper nft={i} key={key} />
+          )}
+        </div>
       )}
-    </div>
+    </>
   )
 }

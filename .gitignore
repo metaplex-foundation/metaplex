@@ -11,6 +11,7 @@ js/packages/cli/assets/
 docs/lockup-ui/
 .DS_Store
 *~
+out
 .idea
 .yarn
 npm-debug.log*

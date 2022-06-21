@@ -39,11 +39,6 @@ export const Home: FC<HomeProps> = () => {
   return (
     <div className='home'>
       <Hero className='pt-[80px]' />
-      <HottestAuctions
-        activeKey={activeKey}
-        onChangeActiveKey={(key: LiveAuctionViewState) => setActiveKey(key)}
-        className='pt-[80px]'
-      />
       <RecentCollections
         liveCollections={liveCollections as any[]}
         className='pt-[80px] pb-[40px]'
@@ -52,6 +47,11 @@ export const Home: FC<HomeProps> = () => {
       <TrendingCollections
         liveCollections={liveCollections as any[]}
         className='pt-[80px] pb-[80px]'
+      />
+      <HottestAuctions
+        activeKey={activeKey}
+        onChangeActiveKey={(key: LiveAuctionViewState) => setActiveKey(key)}
+        className='pt-[80px]'
       />
       <WhyUS className='pt-[40px] pb-[120px]' />
     </div>

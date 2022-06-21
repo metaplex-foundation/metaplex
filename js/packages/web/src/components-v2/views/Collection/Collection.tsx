@@ -18,7 +18,6 @@ import {
 } from '@oyster/common'
 import bs58 from 'bs58'
 import { actions, programs } from '@metaplex/js'
-import { getPhantomWallet } from '@solana/wallet-adapter-wallets'
 
 const {
   metaplex: { Store, AuctionManager },
