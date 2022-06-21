@@ -39,8 +39,7 @@ const InstantSale = ({
   const [sale, setSale] = useState()
 
   const { data: extended } = useAhExtendedArt(items[0].metadata)
-  const art = useArt(items[0].metadata.pubkey)
-  console.log('art art art art', art)
+
   console.log('whitelistedCreatorsByCreator', whitelistedCreatorsByCreator)
 
   const mint = useMint(QUOTE_MINT)
