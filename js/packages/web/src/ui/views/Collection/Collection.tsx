@@ -217,7 +217,7 @@ export const Collection: FC<CollectionProps> = () => {
       }
     } 
 
-    return ((totalInListing/total)*100);
+    return ((totalInListing/total)*100).toFixed(2);
   }
 
   useEffect(() => {
