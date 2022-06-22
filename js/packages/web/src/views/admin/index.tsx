@@ -188,7 +188,7 @@ export const AdminView = () => {
           </p>
         </div>
       ) : !storeAddress || isLoading ? (
-        <Spin />
+        <Spin className='centered' size='large' />
       ) : store && wallet ? (
         <>
           {isStoreOwner ? (
