@@ -1,6 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from 'react'
 import { Layout, Table, Switch, Spin, Modal, Input, Tooltip, Menu, Dropdown, Space } from 'antd'
 import { Badge, Button, TextField } from '@oyster/common'
+import type { InputRef } from 'antd'
+import { Form } from 'antd'
+import type { FormInstance } from 'antd/lib/form'
 import { useMeta } from '../../contexts'
 import { Store, WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index'
 import {
@@ -22,10 +25,123 @@ import { convertMasterEditions, filterMetadata } from '../../actions/convertMast
 import { Link } from 'react-router-dom'
 import { SetupVariables } from '../../components/SetupVariables'
 import { cacheAllAuctions } from '../../actions/cacheAllAuctions'
-import { getSubmissions, markAsFeatured, statusToApprove } from '../../api'
+import {
+  addProfileInfo,
+  getProfile,
+  getProfiles,
+  getSubmissions,
+  markAsFeatured,
+  statusToApprove,
+} from '../../api'
 import { CheckCircleTwoTone, EditFilled, EditTwoTone, EllipsisOutlined } from '@ant-design/icons'
 import { listAuctionHouseNFT } from '../../actions/AuctionHouse'
 import { createAuctionHouse } from '../../actions/createAuctionHouse'
+import { basename } from 'path'
+import { profile } from 'console'
+
+const EditableContext = React.createContext<FormInstance<any> | null>(null)
+
+interface Item {
+  key: string
+  name: string
+  age: string
+  address: string
+}
+
+interface EditableRowProps {
+  index: number
+}
+
+const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
+  const [form] = Form.useForm()
+  return (
+    <Form form={form} component={false}>
+      <EditableContext.Provider value={form}>
+        <tr {...props} />
+      </EditableContext.Provider>
+    </Form>
+  )
+}
+
+interface EditableCellProps {
+  title: React.ReactNode
+  editable: boolean
+  children: React.ReactNode
+  dataIndex: keyof Item
+  record: Item
+  handleSave: (record: Item) => void
+}
+
+const EditableCell: React.FC<EditableCellProps> = ({
+  title,
+  editable,
+  children,
+  dataIndex,
+  record,
+  handleSave,
+  ...restProps
+}) => {
+  const [editing, setEditing] = useState(false)
+  const inputRef = useRef<InputRef>(null)
+  const form = useContext(EditableContext)!
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current!.focus()
+    }
+  }, [editing])
+
+  const toggleEdit = () => {
+    setEditing(!editing)
+    form.setFieldsValue({ [dataIndex]: record[dataIndex] })
+  }
+
+  const save = async () => {
+    try {
+      const values = await form.validateFields()
+
+      toggleEdit()
+      handleSave({ ...record, ...values })
+    } catch (errInfo) {
+      console.log('Save failed:', errInfo)
+    }
+  }
+
+  let childNode = children
+
+  if (editable) {
+    childNode = editing ? (
+      <Form.Item
+        style={{ margin: 0 }}
+        name={dataIndex}
+        rules={[
+          {
+            required: true,
+            message: `${title} is required.`,
+          },
+        ]}>
+        <Input ref={inputRef} placeholder='please enter name' onPressEnter={save} onBlur={save} />
+      </Form.Item>
+    ) : (
+      <div className='editable-cell-value-wrap' style={{ paddingRight: 24 }} onClick={toggleEdit}>
+        {children}
+      </div>
+    )
+  }
+
+  return <td {...restProps}>{childNode}</td>
+}
+
+type EditableTableProps = Parameters<typeof Table>[0]
+
+interface DataType {
+  key: React.Key
+  name: string
+  age: string
+  address: string
+}
+
+type ColumnTypes = Exclude<EditableTableProps['columns'], undefined>
 
 const { Content } = Layout
 export const AdminView = () => {
@@ -72,7 +188,7 @@ export const AdminView = () => {
           </p>
         </div>
       ) : !storeAddress || isLoading ? (
-        <Spin />
+        <Spin className='centered' size='large' />
       ) : store && wallet ? (
         <>
           {isStoreOwner ? (
@@ -320,6 +436,7 @@ function InnerAdminView({
   const [loading, setLoading] = useState<boolean>()
   const { metadata, masterEditions } = useMeta()
   const state = useMeta()
+  const [creatorProfiles, setCreatorProfiles] = useState<any[]>()
 
   const { accountByMint } = useUserAccounts()
   useMemo(() => {
@@ -338,20 +455,28 @@ function InnerAdminView({
   )
 
   const uniqueCreatorsWithUpdates = { ...uniqueCreators, ...updatedCreators }
+  const [uniqueCreatorsWithUpdates_, setuniqueCreatorsWithUpdates_] = useState<any>()
+
   const [modalOpen, setModalOpen] = useState(false)
   const [modalAddress, setModalAddress] = useState<string>('')
 
   useEffect(() => {
+    setuniqueCreatorsWithUpdates_(uniqueCreatorsWithUpdates)
+    getProfiles().then(profiles => {
+      setCreatorProfiles(profiles.data)
+    })
     getSubmissions().then(submissions => {
       setSubmissions(submissions?.data.data)
     })
   }, [])
 
-  const columns = [
+  const defaultColumns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      width: '20%',
+      editable: true,
     },
     {
       title: 'Address',
@@ -363,6 +488,7 @@ function InnerAdminView({
       title: 'Activated',
       dataIndex: 'activated',
       key: 'activated',
+      //@ts-ignore
       render: (
         value: boolean,
         record: {
@@ -389,6 +515,49 @@ function InnerAdminView({
       ),
     },
   ]
+
+  const handleSave = (row: DataType) => {
+    if (row.name != 'N/A') {
+      uniqueCreatorsWithUpdates[row.key].name = row.name
+    }
+    setuniqueCreatorsWithUpdates_(uniqueCreatorsWithUpdates)
+    const profileInfo = {
+      whitelist_name: row.name,
+      public_key: row.address,
+    }
+    addProfileInfo(profileInfo).then(val => {
+      getProfiles().then(profiles => {
+        setCreatorProfiles(profiles.data)
+      })
+    })
+  }
+
+  const findCreatorDetails = key => {
+    return creatorProfiles?.find(element => element.public_key == key)
+  }
+
+  const components = {
+    body: {
+      row: EditableRow,
+      cell: EditableCell,
+    },
+  }
+
+  const columns = defaultColumns.map(col => {
+    if (!col.editable) {
+      return col
+    }
+    return {
+      ...col,
+      onCell: (record: DataType) => ({
+        record,
+        editable: col.editable,
+        dataIndex: col.dataIndex,
+        title: col.title,
+        handleSave,
+      }),
+    }
+  })
 
   const submissionColumns = [
     {
@@ -549,22 +718,25 @@ function InnerAdminView({
             />
           </div>
         </div>
+        {!!uniqueCreatorsWithUpdates_ && !!creatorProfiles && (
+          <div className='flex w-full'>
+            <Table
+              className='ant-table'
+              components={components}
+              rowClassName={() => 'editable-row'}
+              bordered
+              columns={columns as ColumnTypes}
+              dataSource={Object.keys(uniqueCreatorsWithUpdates_).map(key => ({
+                key,
+                address: uniqueCreatorsWithUpdates[key].address,
+                activated: uniqueCreatorsWithUpdates[key].activated,
+                name: findCreatorDetails(key)?.whitelist_name || 'N/A',
+                image: uniqueCreatorsWithUpdates[key].image,
+              }))}
+            />
+          </div>
+        )}
 
-        <div className='flex w-full'>
-          <Table
-            className='ant-table'
-            columns={columns}
-            dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
-              key,
-              address: uniqueCreatorsWithUpdates[key].address,
-              activated: uniqueCreatorsWithUpdates[key].activated,
-              name:
-                uniqueCreatorsWithUpdates[key].name ||
-                shortenAddress(uniqueCreatorsWithUpdates[key].address),
-              image: uniqueCreatorsWithUpdates[key].image,
-            }))}
-          />
-        </div>
         {submissions.length > 0 ? (
           <>
             <h5 className='text-h5'>Launchpad Submissions</h5>
