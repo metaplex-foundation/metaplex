@@ -646,7 +646,7 @@ export async function* makeArweaveBundleUploadGenerator(
       progressBar.start(bundlrTransactions.length, 0);
 
       let errored = false;
-      await PromisePool.withConcurrency(batchSize || 20)
+      await PromisePool.withConcurrency(batchSize || 5)
         .for(bundlrTransactions)
         .handleError(async err => {
           if (!errored) {
