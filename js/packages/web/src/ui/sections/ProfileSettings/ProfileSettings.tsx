@@ -28,7 +28,6 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({
   const [image, setImage] = useState()
 
   useEffect(() => {
-    console.log('Called')
     if (id && publicKey && publicKey.toBase58() !== id) {
       setIsOtherAccount(true)
       getProfile(id)
@@ -97,64 +96,76 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({
         {isOtherAccount ? (
           <>{userName ? <div>Username - {userName}</div> : null}</>
         ) : (
-          <TextField
-            label='Username'
-            placeholder='Enter username'
-            value={userName}
-            onChange={event => setUserName(event.target.value)}
-          />
+          publicKey && (
+            <TextField
+              label='Username'
+              placeholder='Enter username'
+              value={userName}
+              onChange={event => setUserName(event.target.value)}
+            />
+          )
         )}
         {isOtherAccount ? (
-          <>{email ? <div>Email - {email}</div> : null}</>
+          <></>
         ) : (
-          <TextField
-            label='Email address'
-            placeholder='Enter email'
-            value={email}
-            onChange={event => setEmail(event.target.value)}
-          />
+          publicKey && (
+            <TextField
+              label='Email address'
+              placeholder='Enter email'
+              value={email}
+              onChange={event => setEmail(event.target.value)}
+            />
+          )
         )}
         {isOtherAccount ? (
           <>{twitterLink ? <div>Twitter - {twitterLink}</div> : null}</>
         ) : (
-          <TextField
-            label='Twitter link'
-            placeholder='Enter Twitter profile link'
-            value={twitterLink}
-            onChange={event => setTwitterLink(event.target.value)}
-          />
+          publicKey && (
+            <TextField
+              label='Twitter link'
+              placeholder='Enter Twitter profile link'
+              value={twitterLink}
+              onChange={event => setTwitterLink(event.target.value)}
+            />
+          )
         )}
         {isOtherAccount ? (
           <>{telegram ? <span>Telegram - {telegram}</span> : null}</>
         ) : (
-          <TextField
-            label='Telegram link'
-            placeholder='Enter Telegram link'
-            value={telegram}
-            onChange={event => setTelegram(event.target.value)}
-          />
+          publicKey && (
+            <TextField
+              label='Telegram link'
+              placeholder='Enter Telegram link'
+              value={telegram}
+              onChange={event => setTelegram(event.target.value)}
+            />
+          )
         )}
         {isOtherAccount ? (
           <>{discordLink ? <div>Discord - {discordLink}</div> : null}</>
         ) : (
-          <TextField
-            label='Discord server'
-            placeholder='Enter Discord server name'
-            value={discordLink}
-            onChange={event => setDiscordLink(event.target.value)}
-          />
+          publicKey && (
+            <TextField
+              label='Discord server'
+              placeholder='Enter Discord server name'
+              value={discordLink}
+              onChange={event => setDiscordLink(event.target.value)}
+            />
+          )
         )}
         {isOtherAccount ? (
           <>{bio ? <div>Bio - {bio}</div> : null}</>
         ) : (
-          <TextArea
-            label='Bio'
-            placeholder='Enter bio'
-            value={bio}
-            onChange={event => setBio(event.target.value)}
-          />
+          publicKey && (
+            <TextArea
+              label='Bio'
+              placeholder='Enter bio'
+              value={bio}
+              onChange={event => setBio(event.target.value)}
+            />
+          )
         )}
-        {!isOtherAccount ? (
+        {!isOtherAccount && publicKey ? (
           <>
             <Space direction='vertical' align='start'>
               <label style={{ fontSize: '12px' }}>Upload profile image</label>

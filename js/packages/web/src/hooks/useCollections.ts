@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { StringPublicKey, useMeta } from '@oyster/common'
 import { useExtendedCollection } from './useArt'
 import { getNFTGroupedByCollection } from '../api/ahListingApi'
-import { getCollectionVolumn } from '../api'
+import { getCollectionVolumn, getTotalStatistics } from '../api'
 
 export interface CollectionView {
   pubkey: StringPublicKey
@@ -175,7 +175,7 @@ export const useAhNFTCollections = () => {
   }
 }
 
-export const useAhCollectionVolume = collectionMint => {
+export const useAhCollectionVolume = () => {
   const [collectionVolume, setcollectionVolume] = useState<any>()
   useEffect(() => {
     const fetchData = async () => {
@@ -185,7 +185,7 @@ export const useAhCollectionVolume = collectionMint => {
   }, [])
 
   const getCollectionVolumeData = async () => {
-    const collectionVolume_: any = await getCollectionVolumn(collectionMint)
+    const collectionVolume_: any = await getTotalStatistics()
     setcollectionVolume(collectionVolume_)
   }
 

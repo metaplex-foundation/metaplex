@@ -9,11 +9,13 @@ import { Link } from 'react-router-dom'
 export interface TrendingCollectionsProps {
   liveCollections: CollectionView[]
   className: string
+  collectionVolume: any
 }
 
 export const TrendingCollections: FC<TrendingCollectionsProps> = ({
   className,
   liveCollections,
+  collectionVolume,
 }) => {
   const TrendingCollectionsClasses = CN(`trending-collections w-full`, className)
   const [currentSlide, setCurrentSlide] = useState<any>('isFirst')
@@ -28,7 +30,7 @@ export const TrendingCollections: FC<TrendingCollectionsProps> = ({
         id: collection.collection,
         Component: (
           <Link to={`/collection/${collection.collection}`} key={collection.collection}>
-            <CollectionCard collection={collection} />
+            <CollectionCard collection={collection} collectionVolume={collectionVolume} />
           </Link>
         ),
       }

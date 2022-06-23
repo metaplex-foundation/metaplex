@@ -5,7 +5,11 @@ import { RecentCollections } from '../../sections/RecentCollections'
 import { LaunchpadCard } from '../../sections/LaunchpadCard'
 import { TrendingCollections } from '../../sections/TrendingCollections'
 import { WhyUS } from '../../sections/WhyUS'
-import { useAhNFTCollections, useNFTCollections } from '../../../hooks/useCollections'
+import {
+  useAhCollectionVolume,
+  useAhNFTCollections,
+  useNFTCollections,
+} from '../../../hooks/useCollections'
 import { SetupView } from '../../../views/home/setup'
 import { useMeta, useStore } from '@oyster/common'
 
@@ -25,6 +29,7 @@ export const Home: FC<HomeProps> = () => {
   const { isLoading, store } = useMeta()
   const { isConfigured } = useStore()
   const { liveCollections } = useAhNFTCollections()
+  const { collectionVolume } = useAhCollectionVolume()
 
   const showAuctions = (store && isConfigured) || isLoading
 
@@ -41,10 +46,12 @@ export const Home: FC<HomeProps> = () => {
       <Hero className='pt-[80px]' />
       <RecentCollections
         liveCollections={liveCollections as any[]}
+        collectionVolume={collectionVolume}
         className='pt-[80px] pb-[40px]'
       />
       <LaunchpadCard />
       <TrendingCollections
+        collectionVolume={collectionVolume}
         liveCollections={liveCollections as any[]}
         className='pt-[80px] pb-[80px]'
       />

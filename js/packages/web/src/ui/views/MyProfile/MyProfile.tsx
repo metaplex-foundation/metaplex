@@ -35,6 +35,8 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
 
   useEffect(() => {
     if (id && publicKey && publicKey.toBase58() !== id) {
+      setActiveTab('settings')
+      setHeading('Profile')
       setIsOtherAccount(true)
       getProfile(id)
         .then(res => {
@@ -45,6 +47,7 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
         })
     } else if (publicKey) {
       setIsOtherAccount(false)
+
       getProfile(publicKey.toBase58())
         .then(res => {
           setUserName(res.data?.user_name)
@@ -89,44 +92,49 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
               }}>
               {isOtherAccount ? 'Collections' : 'My Collections'}
             </Button>
+            {!isOtherAccount && (
+              <Button
+                isRounded={false}
+                appearance={activeTab === 'listings' ? 'neutral' : 'ghost'}
+                view={activeTab === 'listings' ? 'solid' : 'outline'}
+                className='w-full text-left'
+                onClick={() => {
+                  setActiveTab('listings')
+                  setHeading('My Listings')
+                }}>
+                Listings
+              </Button>
+            )}
 
-            <Button
-              isRounded={false}
-              appearance={activeTab === 'listings' ? 'neutral' : 'ghost'}
-              view={activeTab === 'listings' ? 'solid' : 'outline'}
-              className='w-full text-left'
-              onClick={() => {
-                setActiveTab('listings')
-                setHeading('My Listings')
-              }}>
-              Listings
-            </Button>
+            {!isOtherAccount && (
+              <Button
+                isRounded={false}
+                appearance={activeTab === 'offers-made' ? 'neutral' : 'ghost'}
+                view={activeTab === 'offers-made' ? 'solid' : 'outline'}
+                className='w-full text-left'
+                onClick={() => {
+                  setActiveTab('offers-made')
+                  setHeading('Offers Made')
+                  setTag('0 Offers')
+                }}>
+                Offers Made
+              </Button>
+            )}
 
-            <Button
-              isRounded={false}
-              appearance={activeTab === 'offers-made' ? 'neutral' : 'ghost'}
-              view={activeTab === 'offers-made' ? 'solid' : 'outline'}
-              className='w-full text-left'
-              onClick={() => {
-                setActiveTab('offers-made')
-                setHeading('Offers Made')
-                setTag('0 Offers')
-              }}>
-              Offers Made
-            </Button>
-
-            <Button
-              isRounded={false}
-              appearance={activeTab === 'offers-received' ? 'neutral' : 'ghost'}
-              view={activeTab === 'offers-received' ? 'solid' : 'outline'}
-              className='w-full text-left'
-              onClick={() => {
-                setActiveTab('offers-received')
-                setHeading('Offers Received')
-                setTag('0 Offers')
-              }}>
-              Offers Received
-            </Button>
+            {!isOtherAccount && (
+              <Button
+                isRounded={false}
+                appearance={activeTab === 'offers-received' ? 'neutral' : 'ghost'}
+                view={activeTab === 'offers-received' ? 'solid' : 'outline'}
+                className='w-full text-left'
+                onClick={() => {
+                  setActiveTab('offers-received')
+                  setHeading('Offers Received')
+                  setTag('0 Offers')
+                }}>
+                Offers Received
+              </Button>
+            )}
 
             <Button
               isRounded={false}
@@ -160,9 +168,13 @@ export const MyProfile: FC<MyProfileProps> = ({ className, ...restProps }) => {
 
           <div className='flex w-full flex-col'>
             {activeTab === 'collections' && <ProfileCollectiblesList setTag={setTag} />}
-            {activeTab === 'listings' && <ProfileListings setTag={setTag} />}
-            {activeTab === 'offers-made' && <ProfileOffersMade setTag={setTag} />}
-            {activeTab === 'offers-received' && <ProfileOffersReceived setTag={setTag} />}
+            {activeTab === 'listings' && !isOtherAccount && <ProfileListings setTag={setTag} />}
+            {activeTab === 'offers-made' && !isOtherAccount && (
+              <ProfileOffersMade setTag={setTag} />
+            )}
+            {activeTab === 'offers-received' && !isOtherAccount && (
+              <ProfileOffersReceived setTag={setTag} />
+            )}
             {activeTab === 'settings' && (
               <ProfileSettings profileupdate={setIsProfilUpdated} profileImage={setProfileImage} />
             )}

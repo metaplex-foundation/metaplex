@@ -1,30 +1,20 @@
-import { BuyCard, useConnection } from '@oyster/common'
-import { FC, useEffect, useState } from 'react'
-import { useAhExtendedArt, useExtendedArt } from '../../../hooks'
-import { Connection, programs } from '@metaplex/js'
-import { useAhCollectionVolume } from '../../../hooks/useCollections'
+import { BuyCard } from '@oyster/common'
+import { FC } from 'react'
+import { useAhExtendedArt } from '../../../hooks'
+import { programs } from '@metaplex/js'
 const {
   metadata: { Metadata },
 } = programs
 interface CollectionCardProps {
   collection: any
   hasButton?: boolean
+  collectionVolume: any
 }
 
-const dx = {
-  volume: '472.54',
-  floorPrice: 'Ⓞ 0.25 SOL',
-  dollarValue: '$154.00',
-  link: '#',
-}
-
-const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
+const CollectionCard: FC<CollectionCardProps> = ({ collection, collectionVolume, ...rest }) => {
   const { data } = useAhExtendedArt(collection.nfts[0].metadata)
-  const { collectionVolume } = useAhCollectionVolume(collection.collection)
 
   if (!!data?.collection) {
-    debugger
-    console.log('CollectionCard', data)
     const nameProp: { name: string } = { name: (data?.collection as any).name ?? '' }
 
     if (collection.isExternal && collection._meta?.collection?.name) {
@@ -36,20 +26,26 @@ const CollectionCard: FC<CollectionCardProps> = ({ collection, ...rest }) => {
       nameProp.name = data?.collection?.name
     }
 
+    const findStatForThisCollection = () => {
+      if (!!collectionVolume) {
+        const res = collectionVolume.nftStates.find(val => {
+          return val.NFTName == collection.collection
+        })
+        return res
+      }
+    }
+
     let dx = {
-      volume: '472.54',
-      floorPrice: 'Ⓞ 0.25 SOL',
-      dollarValue: '$154.00',
+      volume: '',
+      floorPrice: '',
+      dollarValue: '',
       link: '#',
     }
-    console.log('--car--', collectionVolume)
     if (!!collectionVolume) {
       dx = {
-        volume: collectionVolume.nftTotalSales.total_sol,
-        floorPrice: '',
-        dollarValue: collectionVolume.nftTotalSales.total_usd
-          ? '$' + collectionVolume.nftTotalSales.total_usd.toString()
-          : '',
+        volume: findStatForThisCollection().volume.volumeAmount,
+        floorPrice: findStatForThisCollection().floorPrice.floorSolAmount,
+        dollarValue: '',
         link: '#',
       }
     }

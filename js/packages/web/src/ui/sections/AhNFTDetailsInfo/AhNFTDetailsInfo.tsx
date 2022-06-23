@@ -17,7 +17,6 @@ export const AhNFTDetailsInfo: FC<NFTDetailsInfoProps> = ({ sale }) => {
   const [owner, setOwner] = useState<any>()
   const [royalties, setRoyalties] = useState<number>()
   const [transactionFee, setTransactionFee] = useState<string>()
-  const { data } = useAhExtendedArt(sale?.metadata)
 
   useEffect(() => {
     if (sale && sale.metadata && sale.metadata.account && sale.metadata.info) {

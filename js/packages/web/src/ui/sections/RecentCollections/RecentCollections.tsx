@@ -9,11 +9,13 @@ import { Link } from 'react-router-dom'
 export interface RecentCollectionsProps {
   className: string
   liveCollections: any[]
+  collectionVolume: any
 }
 
 export const RecentCollections: FC<RecentCollectionsProps> = ({
   className,
   liveCollections,
+  collectionVolume,
   ...restProps
 }) => {
   const RecentCollectionsClasses = CN(`recent-collections w-full`, className)
@@ -29,7 +31,7 @@ export const RecentCollections: FC<RecentCollectionsProps> = ({
         id: collection.collection,
         Component: (
           <Link to={`/collection/${collection.collection}`} key={collection.collection}>
-            <CollectionCard collection={collection} />
+            <CollectionCard collection={collection} collectionVolume={collectionVolume} />
           </Link>
         ),
       }

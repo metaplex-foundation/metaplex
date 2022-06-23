@@ -90,7 +90,6 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
     const nft = getNFT(nftmetadata)
     const auctionHouse = await getAH()
     if (amount && nft) {
-      debugger
       await sdk.listings(auctionHouse).post({ amount: amount, nft })
       const res: any = await sdk.listings(auctionHouse).post({ amount: amount, nft })
       nftmetadata.metadata['holding'] = nftmetadata.holding
@@ -157,11 +156,6 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       tradeState: '',
     }
 
-    await sdk.offers(auctionHouse).accept({
-      nft: nft,
-      offer: ahOffer,
-    })
-
     const updatedOffer = await addSaleEvent(
       {
         offer_id: offer.id,
@@ -171,6 +165,11 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       },
       nftmetadata.id
     )
+    await sdk.offers(auctionHouse).accept({
+      nft: nft,
+      offer: ahOffer,
+    })
+
     return updatedOffer
   }
 
@@ -193,10 +192,7 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       createdAt: '',
       canceledAt: '',
     } as Listing
-    await sdk.listings(auctionHouse).buy({
-      nft: nft,
-      listing: saleList,
-    })
+
     const offer: any = await addOffer({
       mint: nft.mintAddress,
       auction_house_wallet: auctionHouse.address,
@@ -206,15 +202,20 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       collection: nftmetadata.metadata.info.collection?.key,
       receipt: '',
     })
+
     const updatedOffer = await addSaleEvent(
       {
         offer_id: offer.id,
-        tnx_sol_amount: offer.offer_price,
+        tnx_sol_amount: nftmetadata.sale_price,
         active: false,
-        // tnx_usd_amount: offer.tnx_usd_amount,
+        tnx_usd_amount: offer.tnx_usd_amount,
       },
       nftmetadata.id
     )
+    await sdk.listings(auctionHouse).buy({
+      nft: nft,
+      listing: saleList,
+    })
 
     return updatedOffer
   }
@@ -240,12 +241,11 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       canceledAt: '',
     } as Listing
 
+    const listing = await cancelListing(nftmetadata.id)
     await sdk.listings(auctionHouse).cancel({
       listing: saleList,
       nft: nft,
     })
-
-    const listing = await cancelListing(nftmetadata.id)
     return listing
   }
 
@@ -262,14 +262,13 @@ export function listAuctionHouseNFT(connection: Connection, wallet: any): any {
       auctionHouse: auctionHouse.address,
       tradeState: offer.buyerTradeState,
     }
-
+    const offer_ = await cancelOffer(offer.id)
     await sdk.offers(auctionHouse).cancel({
       nft: nft,
       offer: ahOffer,
       amount: offer.offer_price,
     })
 
-    const offer_ = await cancelOffer(offer.id)
     return offer_
   }
 

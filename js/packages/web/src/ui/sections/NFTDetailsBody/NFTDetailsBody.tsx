@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom'
 import { getProfile } from '../../../api'
 import { AhNFTDetailsTabs } from '../AhNFTDetailsTabs'
 import useAhNFTData from '../../../hooks/useAhNFTData'
+import { Spin } from 'antd'
 
 export interface NFTDetailsBodyProps {
   className: string
@@ -165,7 +166,7 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
   const [user, setUser] = useState<any>({})
   const [attributes, setAttributes] = useState<any[]>([])
   console.log('sale?.metadata.pubkey', sale?.metadata.pubkey)
-
+  const [isLoading, setIsLoading] = useState(true)
   const {
     value: { solVal, usdValFormatted },
   } = useAhNFTData(sale)
@@ -175,6 +176,7 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
     setOwner(sale?.seller_wallet)
     if (data) {
       setAttributes(data.attributes || [])
+      setIsLoading(false)
     }
   }, [data?.attributes?.length])
 
@@ -195,7 +197,8 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
       <div className='container flex gap-[40px] rounded border border-slate-200 bg-white p-[40px] shadow-card-light'>
         <div className='sidebar flex w-[400px] flex-shrink-0 flex-col gap-[40px]'>
           <span className='w-full overflow-hidden rounded-[8px]'>
-            <Image src={url} />
+            {!!isLoading && <Spin size='large' />}
+            {!isLoading && <Image src={url} />}
           </span>
 
           <div className='flex flex-col gap-[16px]'>
@@ -234,15 +237,17 @@ export const AhNFTDetailsBody: FC<AhNFTDetailsBodyProps> = ({ className, sale })
               <div className='flex flex-col gap-[4px]'>
                 <h2 className='text-h2 font-500 text-slate-800'>{data?.name}</h2>
                 {data?.collection && (
-                  <div className='flex items-center gap-[4px]'>
-                    <h6 className='text-h6 font-400'>
-                      {
-                        //@ts-ignore
-                        data?.collection?.name
-                      }
-                    </h6>
-                    <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
-                  </div>
+                  <Link to={`/collection/${sale.collection}`}>
+                    <div className='flex items-center gap-[4px]'>
+                      <h6 className='text-h6 font-400'>
+                        {
+                          //@ts-ignore
+                          data?.collection?.name
+                        }
+                      </h6>
+                      <i className='ri-checkbox-circle-fill text-[24px] text-green-400' />
+                    </div>
+                  </Link>
                 )}
               </div>
 

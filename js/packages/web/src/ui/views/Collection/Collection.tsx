@@ -6,17 +6,9 @@ import { CollectionAppliedFilters } from '../../sections/CollectionAppliedFilter
 import { AhCollectionNftList, CollectionNftList } from '../../sections/CollectionNftList'
 import { CollectionChart } from '../../sections/CollectionChart'
 import { CollectionActivityList } from '../../sections/CollectionActivityList'
-import { getCollectionStatistics, getCollectionVolumn } from '../../../api'
+import { getCollectionStatistics, getCollectionVolumn, getTotalStatistics } from '../../../api'
 import { useParams } from 'react-router-dom'
 import CN from 'classnames'
-import {
-  useAhExtendedArt,
-  useArt,
-  useExtendedArt,
-  // useExtendedCollection
-} from '../../../hooks'
-// import { useAuctionsList } from '../../../views/home/components/SalesList/hooks/useAuctionsList'
-// import { LiveAuctionViewState } from '../../../views/home/components/SalesList'
 import {
   cache,
   // fromLamports,
@@ -27,14 +19,9 @@ import {
   // WRAPPED_SOL_MINT,
 } from '@oyster/common'
 import { PublicKey } from '@solana/web3.js'
-// import { BN } from 'bn.js'
-import { useNFTCollections } from '../../../hooks/useCollections'
-// import { useAllSplPrices, useSolPrice } from '../../../contexts'
-// import { useTokenList } from '../../../contexts/tokenList'
 import useCollectionNFT, { NFTItemInterface } from './useCollectionNft'
 import { getCollectionHeaderInfo } from '../../../api'
 import { getAllListingsByCollection } from '../../../api/ahListingApi'
-import { AnyMxRecord } from 'dns'
 import _ from 'lodash'
 
 const ATTRIBUTE_FILTERS = 'Attribute'
@@ -165,59 +152,60 @@ export const Collection: FC<CollectionProps> = () => {
             return undefined
           })
 
-          let attrs: any[] = [];
+        let attrs: any[] = []
 
-          for (const nftListing of listings) {
+        for (const nftListing of listings) {
+          for (const attr of nftListing.extendedData?.attributes) {
+            let foundAttrIndex = _.findIndex(attrs, { trait_type: attr.trait_type })
 
-            for (const attr of nftListing.extendedData?.attributes) {
+            let percentage = findPercentage(listings, attr.trait_type, attr.value)
 
-              let foundAttrIndex = _.findIndex(attrs, { 'trait_type': attr.trait_type });
+            if (foundAttrIndex !== null && foundAttrIndex !== -1) {
+              let foundAttrValueIndex = _.findIndex(attrs[foundAttrIndex]?.values, {
+                name: attr.value,
+              })
 
-              let percentage = findPercentage(listings, attr.trait_type, attr.value) 
-
-              if(foundAttrIndex !== null && foundAttrIndex !== -1){
-                let foundAttrValueIndex = _.findIndex( attrs[foundAttrIndex]?.values, { 'name': attr.value });
-
-                if(foundAttrValueIndex == -1){
-                  attrs[foundAttrIndex]?.values.push({name: attr.value, tagIcon: '🔥', tagValue: percentage+'%'})
-                }
-                
-              }else{
-                attrs.push(
-                  {
-                    "trait_type": attr.trait_type, 
-                    values:[
-                      {name: attr.value, tagIcon: '🔥', tagValue: percentage+'%'}
-                    ]
-                  }
-                )
-              }              
+              if (foundAttrValueIndex == -1) {
+                attrs[foundAttrIndex]?.values.push({
+                  name: attr.value,
+                  tagIcon: '🔥',
+                  tagValue: percentage + '%',
+                })
+              }
+            } else {
+              attrs.push({
+                trait_type: attr.trait_type,
+                values: [{ name: attr.value, tagIcon: '🔥', tagValue: percentage + '%' }],
+              })
             }
           }
+        }
 
-          setNtfAttributesFilter(attrs)
+        setNtfAttributesFilter(attrs)
       }
     }
     fetchData().catch(console.error)
   }, [id])
 
-  const findPercentage = (listings: any, attribute : any, value: any) => {
-    let totalInListing = 0;
-    let total = 0;
+  const findPercentage = (listings: any, attribute: any, value: any) => {
+    let totalInListing = 0
+    let total = 0
     for (const nftListing of listings) {
-
-      let foundAttrValue = _.find(nftListing.extendedData?.attributes, { 'trait_type': attribute, 'value': value });
-      let foundAttr = _.find(nftListing.extendedData?.attributes, { 'trait_type': attribute });
-      if(foundAttrValue){
+      let foundAttrValue = _.find(nftListing.extendedData?.attributes, {
+        trait_type: attribute,
+        value: value,
+      })
+      let foundAttr = _.find(nftListing.extendedData?.attributes, { trait_type: attribute })
+      if (foundAttrValue) {
         totalInListing += 1
       }
 
-      if(foundAttr){
-        total += 1 
+      if (foundAttr) {
+        total += 1
       }
-    } 
+    }
 
-    return ((totalInListing/total)*100);
+    return (totalInListing / total) * 100
   }
 
   useEffect(() => {
@@ -288,11 +276,21 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }, [])
 
+  const findStatForThisCollection = collectionVolume => {
+    if (!!collectionVolume) {
+      const res = collectionVolume.nftStates.find(val => {
+        return val.NFTName == id
+      })
+      return res
+    }
+  }
+
   useEffect(() => {
     const collectionId = id
     if (collectionId) {
-      getCollectionVolumn(collectionId).then(data => {
-        setCollectionVolumn(abbrNum(data.nftTotalSales.total_usd, 4))
+      getTotalStatistics().then(data => {
+        const stat = findStatForThisCollection(data)
+        setCollectionVolumn(abbrNum(stat.volume.volumeAmount, 4))
       })
     }
   }, [])

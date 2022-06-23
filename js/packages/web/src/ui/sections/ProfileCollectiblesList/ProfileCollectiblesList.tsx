@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import { NFTCard, ParsedAccount, pubkeyToString } from '@oyster/common'
 import { useItems } from '../../../views/artworks/hooks/useItems'
 import { ArtworkViewState, Item } from '../../../views/artworks/types'
@@ -6,6 +6,7 @@ import { useCreatorArts, useExtendedArt } from '../../../hooks'
 import { Link, useParams } from 'react-router-dom'
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { Spin } from 'antd'
 
 interface ProfileCollectiblesListProps {
   setTag: (tag: string) => void
@@ -53,7 +54,7 @@ export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({ setT
   const { id } = useParams<{ id: string }>()
   const userItems = id ? useCreatorArts(id) : useItems({ activeKey: ArtworkViewState.Owned })
 
-  console.log('userItems', userItems)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (userItems) {
@@ -61,8 +62,13 @@ export const ProfileCollectiblesList: FC<ProfileCollectiblesListProps> = ({ setT
     }
   }, [userItems.length])
 
+  window.setTimeout(() => {
+    setIsLoading(false)
+  }, 3000)
+
   return (
     <>
+      {!!isLoading && <Spin className='centered' size='large' />}
       {!!userItems && (
         <div className='profile-collectibles-list grid grid-cols-4 gap-[28px]'>
           {(userItems || []).map((i, key) =>
