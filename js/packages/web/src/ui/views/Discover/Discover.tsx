@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import queryString from 'query-string'
 import {
   CollectionView,
+  useAhCollectionVolume,
   useAhNFTCollections,
   useNFTCollections,
 } from '../../../hooks/useCollections'
@@ -36,6 +37,7 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
   const { pathname } = useLocation()
   const { getData } = useExtendedCollection()
   const [filteredCollections, setFilteredCollections] = useState<any[]>()
+  const { collectionVolume } = useAhCollectionVolume()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -117,7 +119,11 @@ export const Discover: FC<DiscoverProps> = ({ tags }) => {
               !!collection && (
                 <li key={collection?.collection}>
                   <Link to={`/collection/${collection?.collection ?? collection?.name}`}>
-                    <CollectionCard hasButton={false} collection={collection} />
+                    <CollectionCard
+                      hasButton={false}
+                      collection={collection}
+                      collectionVolume={collectionVolume}
+                    />
                   </Link>
                 </li>
               )
