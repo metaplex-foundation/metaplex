@@ -40,7 +40,7 @@ export const ENDPOINTS: Array<Endpoint> = [
   {
     name: 'mainnet-beta',
     label: 'mainnet-beta',
-    url: 'https://api.metaplex.solana.com', // clusterApiUrl('mainnet-beta'), //
+    url: 'https://broken-black-breeze.solana-mainnet.quiknode.pro/1d5a28cd2f322a663f9b23e99dda997b9cc95586', // clusterApiUrl('mainnet-beta'), //
     chainId: ChainId.MainnetBeta,
   },
   {
