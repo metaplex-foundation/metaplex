@@ -205,7 +205,7 @@ export const Collection: FC<CollectionProps> = () => {
       }
     }
 
-    return (totalInListing / total) * 100
+    return ((totalInListing / total) * 100).toFixed(2)
   }
 
   useEffect(() => {
@@ -249,7 +249,7 @@ export const Collection: FC<CollectionProps> = () => {
         }) as any
       )
     }
-  }, [searchText, filters])
+  }, [searchText])
 
   // useEffect(() => {
   //   if (!!nftListings) {
@@ -396,39 +396,72 @@ export const Collection: FC<CollectionProps> = () => {
     }
   }
 
+  useEffect(() => {
+    if (!!nftListings) {
+      let nftListingFiltered: any[] = []
+
+      if (filters.length > 0) {
+        for (const nftListing of nftListings as any[]) {
+          for (const filter of filters) {
+            let foundAttrIndex = _.findIndex(nftListing.extendedData.attributes, {
+              trait_type: filter.type,
+              value: filter.text,
+            })
+
+            if (foundAttrIndex !== null && foundAttrIndex !== -1) {
+              let foundFilteredIndex = _.findIndex(nftListingFiltered, {
+                id: nftListing.id,
+              })
+
+              if (foundFilteredIndex === -1) {
+                nftListingFiltered.push(nftListing)
+              }
+            }
+          }
+        }
+
+        setfilteredNftListings(nftListingFiltered as any)
+      } else {
+        setfilteredNftListings(nftListings as any)
+      }
+    }
+  }, [filters])
+
   const addAttributeFilters = (data: { attr: string; label: any }) => {
     // setFilters([
-    //   ...filters.filter(({ type, text }) => type !== data.attr && text !== data.label),
-    //   { category: ATTRIBUTE_FILTERS, type: data.attr, text: data.label },
+    //   { category: ATTRIBUTE_FILTERS, type: data.attr, text: data.label.name },
     // ])
+
+    console.log('--called--', {
+      category: ATTRIBUTE_FILTERS,
+      type: data.attr,
+      text: data.label.name,
+    })
+
+    setFilters([
+      ...filters.filter(({ type, text }) => type !== data.attr && text !== data.label.name),
+      { category: ATTRIBUTE_FILTERS, type: data.attr, text: data.label.name },
+    ])
 
     setSearchAttr(data.attr)
 
-    if (nftListings) {
-      let nftListingFiltered: any[] = []
+    // if (nftListings) {
+    //   let nftListingFiltered: any[] = []
 
-      for (const nftListing of nftListings as any[]) {
-        let foundAttrIndex = _.findIndex(nftListing.extendedData.attributes, {
-          trait_type: data.attr,
-          value: data.label?.name,
-        })
+    //   for (const nftListing of nftListings as any[]) {
+    //     let foundAttrIndex = _.findIndex(nftListing.extendedData.attributes, {
+    //       trait_type: data.attr,
+    //       value: data.label?.name,
+    //     })
 
-        if (foundAttrIndex !== null && foundAttrIndex !== -1) {
-          nftListingFiltered.push(nftListing)
-        }
-      }
+    //     if (foundAttrIndex !== null && foundAttrIndex !== -1) {
+    //       nftListingFiltered.push(nftListing)
+    //     }
+    //   }
 
-      setfilteredNftListings(nftListingFiltered as any)
-      // setfilteredNftListings(
-      //   (nftListings as any[]).filter(elem => {
-      //     // return elem.extendedData.attributes.includes(searchAttr)
-      //     let foundAttrIndex = _.findIndex(elem.extendedData.attributes, { 'trait_type': searchAttr });
-      //     if(foundAttrIndex && foundAttrIndex !== -1){
-      //       return elem;
-      //     }
-      //   }) as any
-      // )
-    }
+    //   setfilteredNftListings(nftListingFiltered as any)
+
+    // }
   }
 
   const removeAppliedAttr = data => {
