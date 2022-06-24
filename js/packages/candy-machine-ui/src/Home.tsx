@@ -51,6 +51,7 @@ export interface HomeProps {
   txTimeout: number;
   rpcHost: string;
   network: WalletAdapterNetwork;
+  error?: string;
 }
 
 const Home = (props: HomeProps) => {
@@ -94,6 +95,15 @@ const Home = (props: HomeProps) => {
   const refreshCandyMachineState = useCallback(
     async (commitment: Commitment = 'confirmed') => {
       if (!anchorWallet) {
+        return;
+      }
+      if (props.error !== undefined) {
+        setAlertState({
+          open: true,
+          message: props.error,
+          severity: 'error',
+          hideDuration: null,
+        });
         return;
       }
 
@@ -286,7 +296,7 @@ const Home = (props: HomeProps) => {
         });
       }
     },
-    [anchorWallet, props.candyMachineId, props.rpcHost],
+    [anchorWallet, props.candyMachineId, props.error, props.rpcHost],
   );
 
   const onMint = async (
