@@ -10,5 +10,5 @@ export async function getAssetCostToStore(files: { size: number }[]) {
   const sizes = files.map(f => f.size);
   const result = await calculate(sizes);
 
-  return LAMPORTS_PER_SOL * result.solana;
+  return Math.ceil(LAMPORTS_PER_SOL * result.solana);
 }
