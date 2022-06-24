@@ -122,8 +122,10 @@ export const awaitTransactionSignatureConfirmation = async (
   });
 
   //@ts-ignore
-  if (connection._signatureSubscriptions[subId]) {
+  try {
     connection.removeSignatureListener(subId);
+  } catch (e) {
+    // ignore
   }
   done = true;
   console.log('Returning status', status);
