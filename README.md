@@ -31,11 +31,14 @@ These high level SDKs make it a breeze to interact with our programs
   
 
 ## UIs
+- ### [Candy Machine UI](https://github.com/metaplex-foundation/candy-machine-ui)
+  A reference minting UI for Candy Machine projects
+
 - ### [Gumdrop](https://github.com/metaplex-foundation/gumdrop)
   The Gumdrop UI and CLI for managing inexpensive token airdrops and NFT airdrops.
 
 - ### [Token Entangler](https://github.com/metaplex-foundation/token-entangler-ui)
-  The Gumdrop UI and CLI for managing inexpensive token airdrops and NFT airdrops.
+  The Token Entangler UI that aims to help de-rug projects.
 
 
 ## Deprecated 
