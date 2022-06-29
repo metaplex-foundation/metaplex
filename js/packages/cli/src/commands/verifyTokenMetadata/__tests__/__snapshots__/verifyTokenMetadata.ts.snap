@@ -1,5 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`\`metaplex verify_token_metadata\` invalidates ../__fixtures__/invalidSchema/invalid-address.json 1`] = `"does not match pattern \\"[1-9A-HJ-NP-Za-km-z]{32,44}\\""`;
-
-exports[`\`metaplex verify_token_metadata\` invalidates ../__fixtures__/invalidSchema/invalid-shares.json 1`] = `"must be strictly greater than 0"`;
