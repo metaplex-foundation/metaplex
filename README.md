@@ -184,3 +184,34 @@ solana airdrop 4 NEW_WALLET_ADDRESS
 ## Reporting security issues
 
 To report a security issue, please follow the guidance on the [SECURITY](.github/SECURITY.md) page.
+
+Commands:
+-- Metaplex install 
+yarn install ~/solana-nft/metaplex/js     (only on mac and linux)
+
+
+
+-- Solana CLI configuration --
+solana config set --url https://api.devnet.solana.com
+solana config set --url https://api.mainnet-beta.solana.com
+solana config set --keypair ~/.config/solana/devnet.json
+
+-- Upload commands --
+Mac or Linux
+( "\" indicates the command continues on the next line, only use on Mac or Linux)
+ts-node ./packages/cli/src/candy-machine-v2-cli.ts upload ./packages/cli/assets -e devnet -k ~/.config/solana/devnet.json -cp config.json  
+
+
+ts-node ./packages/cli/src/candy-machine-v2-cli.ts show -e devnet -k ~/.config/solana/devnet.json 
+
+
+npx ts-node ./packages/cli/src/cli-nft.ts
+
+address DZfWSnN8KL6rLbTBg7bCa7s84bzv2vz8PeXzHd1zEJau
+
+
+Config File: /root/.config/solana/cli/config.yml
+RPC URL: https://api.devnet.solana.com 
+WebSocket URL: wss://api.devnet.solana.com/ (computed)
+Keypair Path: /root/.config/solana/devnet.json 
+Commitment: confirmed 
