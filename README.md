@@ -6,7 +6,7 @@ To learn more, visit our documentation at https://docs.metaplex.com.
 ## Rust Programs
 - **The Metaplex Program Library** - [GitHub](https://github.com/metaplex-foundation/metaplex-program-library)
 
-  A collection of all the Solana programs that the Metaplex Foundation actively maintains. Each program is deployed on https://crates.io.
+  A collection of all the Solana programs that the Metaplex Foundation actively maintains. Each program is published to https://crates.io.
 
 
 ## SDKs
