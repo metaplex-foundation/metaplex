@@ -65,7 +65,7 @@ export async function sendTransactionsWithManualRetry(
 ): Promise<(string | undefined)[]> {
   let stopPoint = 0;
   let tries = 0;
-  let lastInstructionsLength = null;
+  let lastInstructionsLength: null | number = null;
   let toRemoveSigners: Record<number, boolean> = {};
   instructions = instructions.filter((instr, i) => {
     if (instr.length > 0) {

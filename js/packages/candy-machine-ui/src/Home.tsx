@@ -8,6 +8,7 @@ import Alert from '@material-ui/lab/Alert';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import {
+  AccountInfo,
   Commitment,
   Connection,
   PublicKey,
@@ -373,7 +374,7 @@ const Home = (props: HomeProps) => {
         );
 
         let status: any = { err: true };
-        let metadataStatus = null;
+        let metadataStatus: AccountInfo<Buffer> | null = null;
         if (mintResult) {
           status = await awaitTransactionSignatureConfirmation(
             mintResult.mintTxId,

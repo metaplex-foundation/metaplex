@@ -5,6 +5,8 @@ import {
   SystemProgram,
   Transaction,
   SYSVAR_SLOT_HASHES_PUBKEY,
+  PublicKey,
+  TransactionInstruction,
 } from '@solana/web3.js';
 import { sendTransactions, SequenceType } from './connection';
 
@@ -370,8 +372,8 @@ export const mintOneToken = async (
     : payer;
 
   const candyMachineAddress = candyMachine.id;
-  const remainingAccounts = [];
-  const instructions = [];
+  const remainingAccounts: { pubkey: PublicKey, isWritable: boolean, isSigner: boolean }[] = [];
+  const instructions: TransactionInstruction[] = []
   const signers: anchor.web3.Keypair[] = [];
   console.log('SetupState: ', setupState);
   if (!setupState) {
