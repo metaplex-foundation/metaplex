@@ -340,7 +340,7 @@ export const createAccountsForMint = async (
         [signers],
         SequenceType.StopOnFailure,
         'singleGossip',
-        () => { },
+        () => {},
         () => false,
         undefined,
         [],
@@ -373,11 +373,11 @@ export const mintOneToken = async (
 
   const candyMachineAddress = candyMachine.id;
   const remainingAccounts: {
-    pubkey: PublicKey,
-    isWritable: boolean,
-    isSigner: boolean
+    pubkey: PublicKey;
+    isWritable: boolean;
+    isSigner: boolean;
   }[] = [];
-  const instructions: TransactionInstruction[] = []
+  const instructions: TransactionInstruction[] = [];
   const signers: anchor.web3.Keypair[] = [];
   console.log('SetupState: ', setupState);
   if (!setupState) {
@@ -578,7 +578,7 @@ export const mintOneToken = async (
         signersMatrix,
         SequenceType.StopOnFailure,
         'singleGossip',
-        () => { },
+        () => {},
         () => false,
         undefined,
         beforeTransactions,
