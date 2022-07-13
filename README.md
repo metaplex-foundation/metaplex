@@ -92,3 +92,7 @@ The following repositories are no longer maintained by the Metaplex Foundation.
 - **Deprecated JavaScript CLIs** - [GitHub](https://github.com/metaplex-foundation/deprecated-clis)
 
   A collection of JS CLIs that are no longer maintained by the Metaplex Foundation.
+  
+- **The Program Graveyard** - [GitHub](https://github.com/metaplex-foundation/the-graveyard)
+  
+  The Rust programs that are we no longer maintain. 
